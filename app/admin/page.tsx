@@ -3178,11 +3178,11 @@ export default function AdminPage() {
 
               {/* 4 Stat KPI Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {/* KPI 1: Total Revenue */}
+                {/* KPI 1: August Revenue */}
                 <div className="bg-gradient-to-br from-neutral-950 to-neutral-900 text-white border border-neutral-800 rounded-3xl p-6 shadow-md space-y-3 relative overflow-hidden">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-extrabold text-neutral-400 uppercase tracking-wider">
-                      이번 달 총 매출
+                      8월 매출
                     </span>
                     <div className="p-2.5 rounded-2xl bg-white/10 text-amber-400 backdrop-blur-md">
                       <DollarSign className="w-5 h-5" />
@@ -3190,10 +3190,10 @@ export default function AdminPage() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-black text-white font-mono tracking-tight">
-                      ₩48,920,000
+                      0 KRW
                     </h3>
-                    <p className="text-[11px] text-emerald-400 font-extrabold mt-1 flex items-center gap-1">
-                      <ArrowUpRight className="w-3.5 h-3.5" /> +14.8% (전월 대비 증가)
+                    <p className="text-[11px] text-neutral-400 font-extrabold mt-1 flex items-center gap-1">
+                      현재 신규 판매 내역 없음
                     </p>
                   </div>
                 </div>
