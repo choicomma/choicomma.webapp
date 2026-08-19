@@ -90,43 +90,22 @@ export default function CheckoutClientWrapper() {
           : cart.lines[0].merchandise.product.title
         : "초이콤마 오리지널 패션 주문건";
 
-      const isWidgetKey = clientKey.includes("_gck_");
+      // Always use standard payment instance to allow direct PG popup without widget rendering errors
+      const payment = tossPayments.payment({ customerKey });
 
-      if (isWidgetKey) {
-        const widgets = tossPayments.widgets({ customerKey });
-        await widgets.setAmount({ currency: "KRW", value: finalTotalAmount > 0 ? finalTotalAmount : 50000 });
-        await widgets.requestPayment({
-          orderId,
-          orderName,
-          successUrl: `${origin}/order/success`,
-          failUrl: `${origin}/order/fail`,
-          customerEmail: formData.ordererEmail || "customer@choicomma.com",
-          customerName: formData.recipientName || "홍길동",
-        });
-      } else {
-        const payment = tossPayments.payment({ customerKey });
-
-        let method = "CARD";
-        if (formData.paymentMethod === "vbank") {
-          method = "VIRTUAL_ACCOUNT";
-        } else if (formData.paymentMethod === "easypay") {
-          method = "CARD";
-        }
-
-        await (payment as any).requestPayment({
-          method,
-          amount: {
-            currency: "KRW",
-            value: finalTotalAmount > 0 ? finalTotalAmount : 50000,
-          },
-          orderId,
-          orderName,
-          successUrl: `${origin}/order/success`,
-          failUrl: `${origin}/order/fail`,
-          customerEmail: formData.ordererEmail || "customer@choicomma.com",
-          customerName: formData.recipientName || "홍길동",
-        });
-      }
+      await (payment as any).requestPayment({
+        method: "CARD",
+        amount: {
+          currency: "KRW",
+          value: finalTotalAmount > 0 ? finalTotalAmount : 50000,
+        },
+        orderId,
+        orderName,
+        successUrl: `${origin}/order/success`,
+        failUrl: `${origin}/order/fail`,
+        customerEmail: formData.ordererEmail || "customer@choicomma.com",
+        customerName: formData.recipientName || "홍길동",
+      });
     } catch (err: any) {
       // Ignore user cancellation (closing the payment popup/window)
       if (
