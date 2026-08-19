@@ -43,6 +43,16 @@ import {
   ChevronRight,
   Clock,
   Box,
+} from "lucide-react";
+import { ProductsManagement } from "./components/products-management";
+import { OrdersManagement } from "./components/orders-management";
+import { InboundStockManagement } from "./components/inbound-stock-management";
+import { CustomersManagement } from "./components/customers-management";
+import { RevenueManagement } from "./components/revenue-management";
+import { TimesaleManagement } from "./components/timesale-management";
+import { MainPageManagement } from "./components/main-page-management";
+import { InquiriesManagement } from "./components/inquiries-management";
+import {
   Archive,
   AlertCircle,
   BarChart3,
@@ -286,19 +296,51 @@ export default function AdminPage() {
     }
   }, []);
 
+  // Real-time sync for Inbound Schedules across tabs & windows
+  React.useEffect(() => {
+    const syncInbound = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("admin_inbound_schedules");
+        if (saved) {
+          try {
+            setInboundSchedulesList((prev) => {
+              if (JSON.stringify(prev) !== saved) {
+                return JSON.parse(saved);
+              }
+              return prev;
+            });
+          } catch (e) {}
+        }
+      }
+    };
+    window.addEventListener("storage", syncInbound);
+    window.addEventListener("admin_inbound_updated", syncInbound);
+    const interval = setInterval(syncInbound, 3000);
+    return () => {
+      window.removeEventListener("storage", syncInbound);
+      window.removeEventListener("admin_inbound_updated", syncInbound);
+      clearInterval(interval);
+    };
+  }, []);
+
   React.useEffect(() => {
     if (isMounted && typeof window !== "undefined") {
-      localStorage.setItem("admin_inbound_schedules", JSON.stringify(inboundSchedulesList));
+      const currentSaved = localStorage.getItem("admin_inbound_schedules");
+      const nextJson = JSON.stringify(inboundSchedulesList);
+      if (currentSaved !== nextJson) {
+        localStorage.setItem("admin_inbound_schedules", nextJson);
+        window.dispatchEvent(new CustomEvent("admin_inbound_updated"));
+      }
     }
   }, [inboundSchedulesList, isMounted]);
 
-  const [calendarDate, setCalendarDate] = useState(new Date(2026, 7, 1));
+  const [calendarDate, setCalendarDate] = useState(() => new Date());
   const [inboundSearchQuery, setInboundSearchQuery] = useState("");
   const [inboundStatusFilter, setInboundStatusFilter] = useState("all");
   const [isAddInboundModalOpen, setIsAddInboundModalOpen] = useState(false);
   const [selectedInboundItem, setSelectedInboundItem] = useState<any | null>(null);
 
-  const [newInboundDate, setNewInboundDate] = useState("2026-08-03");
+  const [newInboundDate, setNewInboundDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [newInboundTitle, setNewInboundTitle] = useState("");
   const [newInboundQuantity, setNewInboundQuantity] = useState(100);
   const [newInboundSupplier, setNewInboundSupplier] = useState("");
@@ -307,20 +349,13 @@ export default function AdminPage() {
   const [newInboundStatus, setNewInboundStatus] = useState("Scheduled");
   
   // State for products, orders, search, notifications
-  const [productsList, setProductsList] = useState<any[]>(() => {
+  const [productsList, setProductsList] = useState<any[]>([]);
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_products");
-      if (saved !== null) {
-        try {
-          const parsed: any[] = JSON.parse(saved);
-          return parsed;
-        } catch (e) {
-          console.error(e);
-        }
-      }
+      localStorage.removeItem("admin_products");
     }
-    return [];
-  });
+  }, []);
 
   // Helper: Calculate accurate total stock for color x size combinations
   const calculateTotalStock = (colors: string[], sizes: string[], stockMap: Record<string, number>): number => {
@@ -439,12 +474,37 @@ export default function AdminPage() {
         ? "검수 진행 중"
         : "입고 대기";
 
+    const targetItem = inboundSchedulesList.find((item) => item.id === id);
+
     setInboundSchedulesList(
       inboundSchedulesList.map((item) =>
         item.id === id ? { ...item, status: nextStatus } : item
       )
     );
-    triggerToast(`입고 상태가 [${nextText}] (으)로 변경되었습니다.`);
+
+    if (nextStatus === "Completed" && targetItem) {
+      setProductsList((prev) =>
+        prev.map((prod) => {
+          if (
+            prod.title?.toLowerCase().includes(targetItem.productTitle?.toLowerCase()) ||
+            targetItem.productTitle?.toLowerCase().includes(prod.title?.toLowerCase())
+          ) {
+            const updatedStockMap = { ...prod.stockMap };
+            const primarySize = prod.sizes?.[0] || "FREE";
+            updatedStockMap[primarySize] = (updatedStockMap[primarySize] || 0) + (targetItem.quantity || 0);
+            return {
+              ...prod,
+              stockMap: updatedStockMap,
+              stock: calculateTotalStock(prod.colors || ["BLACK"], prod.sizes || ["FREE"], updatedStockMap),
+            };
+          }
+          return prod;
+        })
+      );
+      triggerToast(`입고 완료! '${targetItem.productTitle}' 수량(+${targetItem.quantity}개)이 실시간 재고에 자동 연동되었습니다.`);
+    } else {
+      triggerToast(`입고 상태가 [${nextText}] (으)로 변경되었습니다.`);
+    }
   };
 
   const handleDeleteInboundSchedule = (id: string) => {
@@ -2713,2166 +2773,151 @@ export default function AdminPage() {
               )}
             </button>
           </div>
+
           {/* TAB 2: PRODUCTS MANAGEMENT */}
           {activeTab === "products" && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-neutral-950">상품 관리</h1>
-                  <p className="text-sm text-neutral-500 mt-0.5">
-                    등록된 상품 목록을 조회하고 수정, 추가, 재고 상태를 관리합니다. (메인 화면 진열은 '메인화면 관리' 탭에서 관리)
-                  </p>
-                </div>
-                <div className="flex items-center gap-2.5 self-start sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={handleClearAllProducts}
-                    className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-4 py-2.5 rounded-xl transition-all shadow-md text-sm cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    전체 상품 삭제
-                  </button>
-                  <button
-                    onClick={() => {
-                      setNewTitle("");
-                      setNewPrice("");
-                      setNewDescription("");
-                      setNewImageUrl("");
-                      setNewImages([]);
-                      setNewUrlInput("");
-                      setNewFabricImage("");
-                      setNewColors([]);
-                      setNewIsTimeSale(false);
-                      setNewTimeSaleHours("24");
-                      setNewTimeSaleMinutes("0");
-                      setIsAddModalOpen(true);
-                    }}
-                    className="flex items-center gap-2 bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md text-sm cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    상품 등록
-                  </button>
-                </div>
-              </div>
-
-              {/* Product Stock Metric Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>전체 상품 수</span>
-                    <Package className="w-4 h-4 text-neutral-400" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-neutral-950 mt-2">{productsList.length.toLocaleString()} 개</p>
-                  <p className="text-xs text-neutral-500 mt-1">스토어 전체 등록 아이템</p>
-                </div>
-
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>정상 판매 중 (재고 여유)</span>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-emerald-600 mt-2">
-                    {productsList.filter((p) => getProductStock(p) > 10).length.toLocaleString()} 개
-                  </p>
-                  <p className="text-xs text-emerald-700 font-bold mt-1">재고 10개 초과 보유 중</p>
-                </div>
-
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>재고 소진 임박</span>
-                    <TrendingUp className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-amber-600 mt-2">
-                    {productsList.filter((p) => getProductStock(p) > 0 && getProductStock(p) <= 10).length.toLocaleString()} 개
-                  </p>
-                  <p className="text-xs text-amber-700 font-bold mt-1">재고 1~10개 남음 (보충 필요)</p>
-                </div>
-
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>품절 (Out of Stock)</span>
-                    <X className="w-4 h-4 text-rose-500" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-rose-600 mt-2">
-                    {productsList.filter((p) => getProductStock(p) === 0).length.toLocaleString()} 개
-                  </p>
-                  <p className="text-xs text-rose-700 font-bold mt-1">재고 0개 (입고 수량 추가 필요)</p>
-                </div>
-              </div>
-
-              {/* Filters & Search */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-between bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-sm">
-                <div className="relative flex-1">
-                  <Search className="w-4 h-4 absolute left-3.5 top-3 text-neutral-400" />
-                  <input
-                    type="text"
-                    placeholder="상품번호(#437), 상품명 또는 설명으로 검색..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-2 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 transition-colors"
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-neutral-500" />
-                    <select
-                      value={selectedCategoryFilter}
-                      onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                      className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950"
-                    >
-                      <option value="all">전체 카테고리</option>
-                      {categoriesList.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-neutral-500 shrink-0">정렬:</span>
-                    <select
-                      value={productSortOrder}
-                      onChange={(e: any) => setProductSortOrder(e.target.value)}
-                      className="bg-amber-50/60 border border-amber-300 rounded-xl px-3 py-2 text-xs font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs"
-                    >
-                      <option value="productNoDesc">🔢 상품번호 높은순 (최신순)</option>
-                      <option value="productNoAsc">🔢 상품번호 낮은순 (등록순)</option>
-                      <option value="nameAsc">🔤 상품명 가나다순</option>
-                      <option value="priceDesc">💰 판매가 높은순</option>
-                      <option value="priceAsc">💰 판매가 낮은순</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Products Table */}
-              <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-neutral-700">
-                    <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
-                      <tr>
-                        <th className="py-3.5 px-4 font-mono font-black text-neutral-950">상품번호</th>
-                        <th className="py-3.5 px-4">상품 대표 이미지</th>
-                        <th className="py-3.5 px-4">상품명</th>
-                        <th className="py-3.5 px-4">카테고리</th>
-                        <th className="py-3.5 px-4">판매가</th>
-                        <th className="py-3.5 px-4">남은 재고 수량 / 상태</th>
-                        <th className="py-3.5 px-4 text-right">작업</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-200/60">
-                      {filteredProducts.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="py-12 text-center text-neutral-500 text-sm">
-                            검색 조건에 해당 상품이 없습니다.
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredProducts.map((p, index) => {
-                          const stockCount = getProductStock(p);
-                          const prodNo = getProductNo(p);
-                          return (
-                            <tr
-                              key={`${p.id}-${index}`}
-                              onClick={() => handleOpenEditModal(p)}
-                              className="hover:bg-amber-50/60 transition-colors cursor-pointer group"
-                            >
-                              <td className="py-3 px-4 font-mono font-extrabold text-neutral-900 text-xs shrink-0">
-                                <span className="bg-neutral-100 text-neutral-900 px-2.5 py-1 rounded-md border border-neutral-300 shadow-2xs font-mono font-bold">
-                                  #{prodNo}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4">
-                                <div className="w-12 h-12 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200 group-hover:scale-105 transition-transform">
-                                  <img
-                                    src={p.featuredImage?.url || "/product_1.webp"}
-                                    alt={p.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <p className="font-bold text-neutral-950 group-hover:text-amber-800 transition-colors flex items-center gap-1.5">
-                                  {p.title}
-                                  <span className="text-[10px] text-amber-700 font-normal opacity-0 group-hover:opacity-100 transition-opacity">
-                                    [클릭하여 정보/재고 수정]
-                                  </span>
-                                </p>
-                                <p className="text-xs text-neutral-500 truncate max-w-xs">{p.description}</p>
-                              </td>
-                              <td className="py-3 px-4">
-                                <span className="inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-200 uppercase">
-                                  {p.categoryId}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 font-bold text-neutral-950 font-mono">
-                                {formatPrice(p.priceRange.minVariantPrice.amount)}
-                              </td>
-                              <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => toggleStock(p.id)}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1.5 ${
-                                      p.availableForSale !== false
-                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                                        : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
-                                    }`}
-                                    title="클릭 시 재고 있음 ↔ 품절 상태 원클릭 전환"
-                                  >
-                                    {p.availableForSale !== false ? (
-                                      <span>● 재고 있음</span>
-                                    ) : (
-                                      <span>○ 품절</span>
-                                    )}
-                                  </button>
-
-                                  <button
-                                    onClick={() => toggleMainFeatured(p.id)}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 border select-none ${
-                                      p.isMainFeatured
-                                        ? "bg-amber-500 text-neutral-950 border-amber-400 hover:bg-amber-400"
-                                        : "bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200 hover:text-neutral-700"
-                                    }`}
-                                    title="클릭 시 메인 진열 ↔ 미진열 원클릭 전환"
-                                  >
-                                    {p.isMainFeatured ? (
-                                      <span>🌟 메인 진열</span>
-                                    ) : (
-                                      <span>⚙️ 메인 미진열</span>
-                                    )}
-                                  </button>
-                                </div>
-                              </td>
-                              <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center justify-end gap-1">
-                                  <button
-                                    onClick={() => handleOpenEditModal(p)}
-                                  className="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded-lg transition-colors cursor-pointer"
-                                  title="상품 정보 수정"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </button>
-                                <Link
-                                  href={`/product/${p.handle}`}
-                                  target="_blank"
-                                  className="p-2 text-neutral-500 hover:text-neutral-950 hover:bg-neutral-100 rounded-lg transition-colors"
-                                  title="상품 페이지 바로가기"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                </Link>
-                                <button
-                                  onClick={() => handleDeleteProduct(p.id, p.title)}
-                                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                  title="상품 삭제"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <ProductsManagement
+              productsList={productsList}
+              filteredProducts={filteredProducts}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedCategoryFilter={selectedCategoryFilter}
+              setSelectedCategoryFilter={setSelectedCategoryFilter}
+              productSortOrder={productSortOrder}
+              setProductSortOrder={setProductSortOrder}
+              categoriesList={categoriesList}
+              getProductStock={getProductStock}
+              getProductNo={getProductNo}
+              handleClearAllProducts={handleClearAllProducts}
+              handleOpenEditModal={handleOpenEditModal}
+              handleDeleteProduct={handleDeleteProduct}
+              toggleStock={toggleStock}
+              toggleMainFeatured={toggleMainFeatured}
+              setIsAddModalOpen={setIsAddModalOpen}
+              setNewTitle={setNewTitle}
+              setNewPrice={setNewPrice}
+              setNewDescription={setNewDescription}
+              setNewImageUrl={setNewImageUrl}
+              setNewImages={setNewImages}
+              setNewUrlInput={setNewUrlInput}
+              setNewFabricImage={setNewFabricImage}
+              setNewColors={setNewColors}
+              setNewIsTimeSale={setNewIsTimeSale}
+              setNewTimeSaleHours={setNewTimeSaleHours}
+              setNewTimeSaleMinutes={setNewTimeSaleMinutes}
+            />
           )}
 
-
-
-          {/* TAB: SALES MANAGEMENT */}
+          {/* TAB: TIMESALE & PROMOTION */}
           {activeTab === "sales" && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="bg-amber-500 text-neutral-950 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                    PROMOTION & SALES MANAGEMENT
-                  </span>
-                </div>
-                <h1 className="text-2xl font-black text-neutral-950">세트아이템</h1>
-                <p className="text-sm text-neutral-500 mt-0.5">
-                  프로모션 기획전 및 세트 아이템 할인 행사를 관리합니다.
-                </p>
-              </div>
-
-              {/* SET ITEM SALE MANAGEMENT SECTION */}
-              <div className="bg-gradient-to-br from-amber-500/10 via-amber-50/60 to-amber-100/40 border border-amber-300/80 rounded-3xl p-7 md:p-9 shadow-sm space-y-7 text-neutral-950">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-6 border-b border-amber-200/80">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3.5 bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-500 rounded-2xl text-neutral-950 shadow-md border border-amber-300/60 shrink-0">
-                      <Gift className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-neutral-950 font-black text-[11px] px-3 py-0.5 rounded-full uppercase tracking-wide border border-amber-300/60 shadow-2xs">
-                          {setSalesList.filter((s: any) => s.status === "active").length}개 세트 세일 진행중
-                        </span>
-                      </div>
-                      <h2 className="text-xl md:text-2xl font-black text-neutral-950">세트아이템 할인 기획전 설정</h2>
-                      <p className="text-xs text-neutral-600 mt-1">
-                        2개 이상의 상품을 패키지 세트로 묶고 세트 단독 할인가를 설정할 수 있습니다.
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setIsSetModalOpen(true)}
-                    className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-neutral-950 font-black px-5 py-3 rounded-2xl transition-all shadow-md text-xs border border-amber-400/50 shrink-0 cursor-pointer hover:scale-[1.02] active:scale-95"
-                  >
-                    <Plus className="w-4 h-4 stroke-[3]" />
-                    새 세트 할인 설정
-                  </button>
-                </div>
-
-                {/* Active Set Items Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-7">
-                  {setSalesList.length === 0 ? (
-                    <div className="col-span-2 py-12 text-center text-neutral-500 text-sm bg-white/80 rounded-3xl border border-amber-200/60">
-                      등록된 세트 아이템 할인이 없습니다. 오른쪽 상단의 '새 세트 할인 설정' 버튼을 눌러 추가하세요.
-                    </div>
-                  ) : (
-                    setSalesList.map((set: any) => {
-                      const setItemEntries: { prod: any; qty: number }[] = set.items
-                        ? set.items
-                            .map((item: any) => {
-                              const prod = productsList.find((p) => p.id === item.productId);
-                              return prod ? { prod, qty: item.quantity || 1 } : null;
-                            })
-                            .filter(Boolean)
-                        : (set.productIds || [])
-                            .map((id: string) => {
-                              const prod = productsList.find((p) => p.id === id);
-                              return prod ? { prod, qty: 1 } : null;
-                            })
-                            .filter(Boolean);
-
-                      const originalTotal = setItemEntries.reduce(
-                        (sum, entry) =>
-                          sum + (parseFloat(entry.prod.priceRange.minVariantPrice.amount) || 0) * entry.qty,
-                        0
-                      );
-                      const discountedTotal = Math.round(originalTotal * (1 - set.discountRate / 100));
-
-                      return (
-                        <div
-                          key={set.id}
-                          className="bg-white border border-amber-200/90 hover:border-amber-400 p-6 md:p-7 rounded-3xl flex flex-col justify-between gap-6 transition-all shadow-sm hover:shadow-md"
-                        >
-                          <div className="space-y-4">
-                            <div className="flex items-start justify-between gap-3 pb-3 border-b border-neutral-100">
-                              <h4 className="font-extrabold text-base md:text-lg text-neutral-950 leading-snug line-clamp-2">
-                                {set.title}
-                              </h4>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <span className="bg-amber-100 text-amber-900 border border-amber-300/80 text-xs font-black px-2.5 py-1 rounded-lg">
-                                  {set.discountRate}% OFF
-                                </span>
-                                <button
-                                  onClick={() => handleToggleSetStatus(set.id)}
-                                  className={`text-xs font-bold px-2.5 py-1 rounded-lg cursor-pointer transition-colors ${
-                                    set.status === "active"
-                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-300"
-                                      : "bg-neutral-100 text-neutral-600 border border-neutral-200"
-                                  }`}
-                                >
-                                  {set.status === "active" ? "진행중" : "일시정지"}
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Products preview with generous padding */}
-                            <div className="bg-neutral-50/80 p-3.5 rounded-2xl border border-neutral-200/60 my-3 flex items-center gap-2.5 overflow-x-auto">
-                              {setItemEntries.map((entry, idx) => (
-                                <React.Fragment key={entry.prod.id}>
-                                  {idx > 0 && <span className="text-amber-600 font-black text-sm px-1">+</span>}
-                                  <div className="flex items-center gap-2.5 bg-white p-2 pr-3.5 rounded-xl border border-neutral-200/80 shrink-0 shadow-2xs">
-                                    <div className="w-10 h-12 relative rounded-lg overflow-hidden bg-neutral-200 shrink-0 border border-neutral-200">
-                                      <img
-                                        src={entry.prod.featuredImage?.url || "/product_1.webp"}
-                                        alt={entry.prod.title}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    </div>
-                                    <div className="text-xs leading-tight max-w-[130px] truncate">
-                                      <div className="flex items-center gap-1 mb-0.5">
-                                        <p className="font-bold text-neutral-900 truncate">{entry.prod.title}</p>
-                                        {entry.qty > 1 && (
-                                          <span className="bg-neutral-900 text-white text-[10px] font-black px-1.5 py-0.2 rounded-md shrink-0">
-                                            x{entry.qty}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <p className="text-neutral-500 text-[11px] font-mono">
-                                        {formatPrice(entry.prod.priceRange.minVariantPrice.amount)}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </React.Fragment>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Pricing & Actions */}
-                          <div className="pt-4 border-t border-neutral-100 flex items-center justify-between gap-4 mt-2">
-                            <div>
-                              <span className="text-xs text-neutral-400 line-through font-mono font-medium block mb-0.5">
-                                개별 정가 {formatPrice(originalTotal.toString())}
-                              </span>
-                              <span className="text-base md:text-lg font-black text-amber-950 font-mono tracking-tight block">
-                                세트가 {formatPrice(discountedTotal.toString())}
-                              </span>
-                            </div>
-                            <button
-                              onClick={() => handleDeleteSetBundle(set.id)}
-                              className="text-xs text-neutral-500 hover:text-rose-600 font-bold bg-neutral-100 hover:bg-rose-50 border border-neutral-200 hover:border-rose-200 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              삭제
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: OVERVIEW / DASHBOARD REVAMPED */}
-          {activeTab === "overview" && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              {/* Top Header & Store Status Badge */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-neutral-950 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider flex items-center gap-1">
-                      <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
-                      CHOICOMMA STORE CONTROL CENTER
-                    </span>
-                    <h1 className="text-2xl font-black text-neutral-950">대시보드 개요</h1>
-                  </div>
-                  <p className="text-xs text-neutral-500 mt-1 font-medium">
-                    실시간 스토어 운영 지표, 주문/배송 현황, 1:1 라이브 채팅 문의, 매출 통계를 종합 관리합니다.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-2xl flex items-center gap-2 text-xs font-bold text-emerald-900">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                    스토어 상태: 100% 정상 가동 중
-                  </div>
-                  <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="bg-neutral-950 hover:bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    신규 상품 등록
-                  </button>
-                </div>
-              </div>
-
-              {/* 4 Stat KPI Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {/* KPI 1: August Revenue */}
-                <div className="bg-gradient-to-br from-neutral-950 to-neutral-900 text-white border border-neutral-800 rounded-3xl p-6 shadow-md space-y-3 relative overflow-hidden">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-neutral-400 uppercase tracking-wider">
-                      8월 매출
-                    </span>
-                    <div className="p-2.5 rounded-2xl bg-white/10 text-amber-400 backdrop-blur-md">
-                      <DollarSign className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-white font-mono tracking-tight">
-                      0 KRW
-                    </h3>
-                    <p className="text-[11px] text-neutral-400 font-extrabold mt-1 flex items-center gap-1">
-                      현재 신규 판매 내역 없음
-                    </p>
-                  </div>
-                </div>
-
-                {/* KPI 2: Live Orders */}
-                <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-neutral-500 uppercase tracking-wider">
-                      통합 주문 내역
-                    </span>
-                    <div className="p-2.5 rounded-2xl bg-sky-50 text-sky-600 border border-sky-100">
-                      <ShoppingBag className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-neutral-950 font-mono tracking-tight" suppressHydrationWarning>
-                      {ordersList.length} 건
-                    </h3>
-                    <p className="text-[11px] text-neutral-500 font-bold mt-1" suppressHydrationWarning>
-                      신규 주문 {ordersList.filter((o: any) => o.status === "결제 완료" || o.status === "배송 준비 중").length}건 대기 중
-                    </p>
-                  </div>
-                </div>
-
-                {/* KPI 3: Total Products & Timesale */}
-                <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-neutral-500 uppercase tracking-wider">
-                      등록 상품 / TIMESALE
-                    </span>
-                    <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100">
-                      <Package className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-neutral-950 font-mono tracking-tight" suppressHydrationWarning>
-                      {productsList.length} 개
-                    </h3>
-                    <p className="text-[11px] text-amber-800 font-bold mt-1" suppressHydrationWarning>
-                      타임세일 {adminTimeSaleProductIds.length}개 적용 중
-                    </p>
-                  </div>
-                </div>
-
-                {/* KPI 4: 1:1 Live Chat Status */}
-                <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-neutral-500 uppercase tracking-wider">
-                      1:1 라이브 채팅
-                    </span>
-                    <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100">
-                      <MessageSquare className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-neutral-950 font-mono tracking-tight" suppressHydrationWarning>
-                      {chatSessionsList.filter((s) => s.status !== "ended").length} 개 활성 세션
-                    </h3>
-                    <p className="text-[11px] text-emerald-700 font-bold mt-1 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> 실시간 멀티 상담 가동 중
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Action Control Hub */}
-              <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
-                  <h3 className="text-sm font-black text-neutral-950 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    주요 기능 빠른 바로가기 (Quick Hub)
-                  </h3>
-                  <span className="text-[11px] text-neutral-400 font-medium">관리자 전용 단축 메뉴</span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="p-4 rounded-2xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-950 hover:text-white transition-all text-left space-y-2 group cursor-pointer shadow-2xs"
-                  >
-                    <Plus className="w-5 h-5 text-neutral-800 group-hover:text-white" />
-                    <p className="text-xs font-extrabold">상품 등록</p>
-                    <p className="text-[10px] text-neutral-500 group-hover:text-neutral-300 font-medium">새 상품 추가</p>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab("sales")}
-                    className="p-4 rounded-2xl border border-neutral-200 bg-neutral-50 hover:bg-amber-500 hover:text-neutral-950 transition-all text-left space-y-2 group cursor-pointer shadow-2xs"
-                  >
-                    <Percent className="w-5 h-5 text-amber-600 group-hover:text-neutral-950" />
-                    <p className="text-xs font-extrabold">세트 할인 설정</p>
-                    <p className="text-[10px] text-neutral-500 group-hover:text-neutral-900 font-medium">TIMESALE 패키지</p>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab("inquiries")}
-                    className="p-4 rounded-2xl border border-neutral-200 bg-neutral-50 hover:bg-emerald-600 hover:text-white transition-all text-left space-y-2 group cursor-pointer shadow-2xs"
-                  >
-                    <MessageSquare className="w-5 h-5 text-emerald-600 group-hover:text-white" />
-                    <p className="text-xs font-extrabold">1:1 라이브 채팅</p>
-                    <p className="text-[10px] text-neutral-500 group-hover:text-emerald-100 font-medium">고객 답변 관리</p>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab("inbound")}
-                    className="p-4 rounded-2xl border border-neutral-200 bg-neutral-50 hover:bg-sky-600 hover:text-white transition-all text-left space-y-2 group cursor-pointer shadow-2xs"
-                  >
-                    <Calendar className="w-5 h-5 text-sky-600 group-hover:text-white" />
-                    <p className="text-xs font-extrabold">입고 일정 관리</p>
-                    <p className="text-[10px] text-neutral-500 group-hover:text-sky-100 font-medium">캘린더 관리</p>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab("revenue")}
-                    className="p-4 rounded-2xl border border-neutral-200 bg-neutral-50 hover:bg-purple-600 hover:text-white transition-all text-left space-y-2 group cursor-pointer shadow-2xs"
-                  >
-                    <TrendingUp className="w-5 h-5 text-purple-600 group-hover:text-white" />
-                    <p className="text-xs font-extrabold">매출 상세 분석</p>
-                    <p className="text-[10px] text-neutral-500 group-hover:text-purple-100 font-medium">월별 리포트</p>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <TimesaleManagement
+              setSalesList={setSalesList}
+              productsList={productsList}
+              setIsSetModalOpen={setIsSetModalOpen}
+              handleToggleSetStatus={handleToggleSetStatus}
+              handleDeleteSetBundle={handleDeleteSetBundle}
+            />
           )}
 
           {/* TAB: REVENUE MANAGEMENT */}
-          {activeTab === "revenue" && (() => {
-            let revList = importedMonthlyRevenue;
+          {activeTab === "revenue" && (
+            <RevenueManagement
+              revenueSelectedMonth={revenueSelectedMonth}
+              setRevenueSelectedMonth={setRevenueSelectedMonth}
+              revenueSelectedYear={revenueSelectedYear}
+              setRevenueSelectedYear={setRevenueSelectedYear}
+              revenueSearchQuery={revenueSearchQuery}
+              setRevenueSearchQuery={setRevenueSearchQuery}
+              triggerToast={triggerToast}
+            />
+          )}
 
-            if (revenueSelectedMonth !== "all") {
-              revList = revList.filter((item: any) => item.일자 === revenueSelectedMonth);
-            } else if (revenueSelectedYear !== "all") {
-              revList = revList.filter((item: any) => item.일자.startsWith(revenueSelectedYear));
-            }
-
-            if (revenueSearchQuery.trim()) {
-              const q = revenueSearchQuery.trim().toLowerCase();
-              revList = revList.filter((item: any) => item.일자.toLowerCase().includes(q));
-            }
-
-            // Monthly Calculations
-            const totalNetRevenue = revList.reduce((sum: number, r: any) => sum + (Number(r["매출"]) || 0), 0);
-            const totalOrders = revList.reduce((sum: number, r: any) => sum + (Number(r["주문건수"]) || 0), 0);
-            const totalItems = revList.reduce((sum: number, r: any) => sum + (Number(r["품목건수"]) || 0), 0);
-            const totalProductSales = revList.reduce((sum: number, r: any) => sum + (Number(r["상품금액"]) || 0), 0);
-            const totalRefunds = revList.reduce((sum: number, r: any) => sum + (Number(r["환불금액"]) || 0), 0);
-            const totalDiscounts = revList.reduce((sum: number, r: any) => sum + (Number(r["할인금액"]) || 0), 0);
-            const averageOrderValue = Math.round(totalNetRevenue / (totalOrders || 1));
-            const refundRate = ((totalRefunds / (totalProductSales || 1)) * 100).toFixed(1);
-
-            const monthlyAvgRevenue = Math.round(totalNetRevenue / (revList.length || 1));
-            const monthlyAvgOrders = Math.round(totalOrders / (revList.length || 1));
-
-            // Peak Month
-            const sortedByNet = [...revList].sort((a: any, b: any) => (Number(b["매출"]) || 0) - (Number(a["매출"]) || 0));
-            const peakMonthItem = sortedByNet[0];
-
-            const allAvailableMonths = Array.from(new Set(importedMonthlyRevenue.map((r: any) => r.일자)));
-
-            const handleExportRevenueCSV = () => {
-              const headers = ["정산월", "주문건수", "품목건수", "상품금액(원)", "배송비(원)", "할인금액(원)", "결제금액(원)", "환불금액(원)", "최종순매출(원)"];
-              const rows = revList.map((r: any) => [
-                r["일자"],
-                r["주문건수"],
-                r["품목건수"],
-                r["상품금액"],
-                r["배송비"],
-                r["할인금액"],
-                r["결제금액"],
-                r["환불금액"],
-                r["매출"],
-              ]);
-
-              const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
-              const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement("a");
-              link.href = url;
-              const suffix = revenueSelectedMonth !== "all" ? revenueSelectedMonth : (revenueSelectedYear !== "all" ? `${revenueSelectedYear}년` : "전체월");
-              link.setAttribute("download", `초이콤마_월별_매출_정산_리포트_${suffix}.csv`);
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              triggerToast("월별 매출 정산 리포트(CSV) 다운로드가 완료되었습니다.");
-            };
-
-            return (
-              <div className="space-y-8 animate-in fade-in duration-300">
-                {/* Header & Export Action */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="bg-emerald-600 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
-                        📊 REAL MONTHLY REVENUE DATA INTEGRATED
-                      </span>
-                    </div>
-                    <h1 className="text-2xl md:text-3xl font-black text-neutral-950">
-                      월별 매출 관리 & 정산 분석
-                    </h1>
-                    <p className="text-sm text-neutral-500 mt-1 max-w-3xl">
-                      <strong>월별 실시간 매출 실적 엑셀 데이터</strong> 기반의 월별 정산 내역입니다. 월별 매출액, 주문건수, 평균 객단가(AOV) 및 환불율을 월 단위로 상세 정산·분석합니다.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleExportRevenueCSV}
-                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-3 rounded-2xl transition-all shadow-md cursor-pointer shrink-0 border border-emerald-500 self-start sm:self-auto hover:scale-[1.02] active:scale-95"
-                  >
-                    <Download className="w-4 h-4" />
-                    월별 매출 정산 리포트 (CSV) 다운로드
-                  </button>
-                </div>
-
-                {/* Filter & Month Selector Control Bar */}
-                <div className="bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-2xs space-y-4">
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    {/* Quick Month / Year Filter Pills */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-bold text-neutral-500 px-1 flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-amber-500" /> 월별 범위 필터:
-                      </span>
-                      {[
-                        { key: "all", monthKey: "all", label: "전체 월별 데이터" },
-                        { key: "2026", monthKey: "all", label: "2026년 월별 (1~7월)" },
-                        { key: "2025", monthKey: "all", label: "2025년 월별 (12개월)" },
-                        { key: "2024", monthKey: "all", label: "2024년 월별 (12개월)" },
-                      ].map((item) => (
-                        <button
-                          key={item.key}
-                          type="button"
-                          onClick={() => {
-                            setRevenueSelectedYear(item.key);
-                            setRevenueSelectedMonth("all");
-                          }}
-                          className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                            revenueSelectedYear === item.key && revenueSelectedMonth === "all"
-                              ? "bg-neutral-950 text-white shadow-xs"
-                              : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Specific Month Dropdown Select */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs font-bold text-neutral-600 shrink-0">특정 월 선택:</span>
-                      <select
-                        value={revenueSelectedMonth}
-                        onChange={(e) => {
-                          setRevenueSelectedMonth(e.target.value);
-                          if (e.target.value !== "all") {
-                            setRevenueSelectedYear("all");
-                          }
-                        }}
-                        className="bg-neutral-50 border border-neutral-300 text-neutral-950 text-xs font-black px-3.5 py-2 rounded-xl focus:outline-none focus:border-neutral-950 shadow-2xs"
-                      >
-                        <option value="all">전체 월 (전체 목록)</option>
-                        {allAvailableMonths.map((m: string) => (
-                          <option key={m} value={m}>
-                            {m} ({m.replace("-", "년 ")}월)
-                          </option>
-                        ))}
-                      </select>
-
-                      {/* Search input */}
-                      <div className="relative w-44 sm:w-52">
-                        <Search className="w-4 h-4 absolute left-3 top-2.5 text-neutral-400" />
-                        <input
-                          type="text"
-                          placeholder="월 검색 (예: 2026-05)..."
-                          value={revenueSearchQuery}
-                          onChange={(e) => setRevenueSearchQuery(e.target.value)}
-                          className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-9 pr-3 py-1.5 text-xs font-bold text-neutral-900 focus:outline-none focus:border-amber-500 transition-colors"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dynamic Financial KPI Cards (Monthly Focused) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                  {/* KPI 1: Net Revenue */}
-                  <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/40 border border-emerald-300/80 rounded-3xl p-5 shadow-2xs space-y-3 relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-emerald-900 uppercase tracking-wide">
-                        {revenueSelectedMonth !== "all"
-                          ? `${revenueSelectedMonth}월 순매출액`
-                          : revenueSelectedYear !== "all"
-                          ? `${revenueSelectedYear}년 월별 총 순매출`
-                          : "선택 기간 총 순매출액"}
-                      </span>
-                      <div className="p-2.5 bg-emerald-500 text-white rounded-2xl shadow-xs">
-                        <DollarSign className="w-4 h-4" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-black text-emerald-950 font-mono tracking-tight">
-                        {formatPrice(totalNetRevenue.toString())}
-                      </div>
-                      <div className="flex items-center gap-1 mt-1 text-[11px] font-extrabold text-emerald-700">
-                        <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>월별 정산 {revList.length}개 월 집계됨</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* KPI 2: Total Orders */}
-                  <div className="bg-gradient-to-br from-sky-50 to-sky-100/40 border border-sky-300/80 rounded-3xl p-5 shadow-2xs space-y-3 relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-sky-900 uppercase tracking-wide">
-                        월별 결제 주문 건수
-                      </span>
-                      <div className="p-2.5 bg-sky-500 text-white rounded-2xl shadow-xs">
-                        <ShoppingBag className="w-4 h-4" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-black text-sky-950 font-mono tracking-tight">
-                        {totalOrders.toLocaleString()} <span className="text-base font-bold text-sky-800">건</span>
-                      </div>
-                      <div className="text-[11px] font-bold text-sky-700 mt-1">
-                        월별 총 판매 품목 수: <strong className="font-black text-sky-950">{totalItems.toLocaleString()}개</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* KPI 3: AOV */}
-                  <div className="bg-gradient-to-br from-amber-50 to-amber-100/40 border border-amber-300/80 rounded-3xl p-5 shadow-2xs space-y-3 relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-amber-900 uppercase tracking-wide">
-                        월별 평균 객단가 (AOV)
-                      </span>
-                      <div className="p-2.5 bg-amber-500 text-white rounded-2xl shadow-xs">
-                        <BarChart3 className="w-4 h-4" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-black text-amber-950 font-mono tracking-tight">
-                        {formatPrice(averageOrderValue.toString())}
-                      </div>
-                      <div className="text-[11px] font-bold text-amber-800 mt-1">
-                        주문 1건당 평균 순 결제금액
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* KPI 4: Refund Amount */}
-                  <div className="bg-gradient-to-br from-rose-50 to-rose-100/40 border border-rose-300/80 rounded-3xl p-5 shadow-2xs space-y-3 relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-rose-900 uppercase tracking-wide">
-                        월별 환불 & 취소액
-                      </span>
-                      <div className="p-2.5 bg-rose-500 text-white rounded-2xl shadow-xs">
-                        <CreditCard className="w-4 h-4" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-black text-rose-950 font-mono tracking-tight">
-                        {formatPrice(totalRefunds.toString())}
-                      </div>
-                      <div className="text-[11px] font-bold text-rose-700 mt-1">
-                        전체 상품금액 대비 환불율 <strong className="font-black">{refundRate}%</strong>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Monthly Performance Highlights Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white border-2 border-emerald-400/80 rounded-2xl p-5 shadow-2xs flex items-center justify-between">
-                    <div>
-                      <span className="text-[11px] font-black bg-emerald-600 text-white px-2.5 py-0.5 rounded-full uppercase">
-                        월 평균 순매출액
-                      </span>
-                      <p className="text-xl font-black text-neutral-950 font-mono mt-1.5">
-                        {formatPrice(monthlyAvgRevenue.toString())}
-                      </p>
-                    </div>
-                    <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg">
-                      월 단위 평균
-                    </span>
-                  </div>
-
-                  <div className="bg-white border-2 border-amber-300/80 rounded-2xl p-5 shadow-2xs flex items-center justify-between">
-                    <div>
-                      <span className="text-[11px] font-black bg-amber-500 text-neutral-950 px-2.5 py-0.5 rounded-full uppercase">
-                        최고 매출 달성 월 (PEAK MONTH)
-                      </span>
-                      <p className="text-xl font-black text-neutral-950 font-mono mt-1.5 flex items-center gap-2">
-                        <span>{peakMonthItem?.일자 || "-"}</span>
-                        <span className="text-xs text-amber-700 font-extrabold">({formatPrice((peakMonthItem?.매출 || 0).toString())})</span>
-                      </p>
-                    </div>
-                    <span className="text-xs font-black text-amber-900 bg-amber-100 px-2.5 py-1 rounded-lg">
-                      최고 실적 🔥
-                    </span>
-                  </div>
-
-                  <div className="bg-white border-2 border-sky-400/80 rounded-2xl p-5 shadow-2xs flex items-center justify-between">
-                    <div>
-                      <span className="text-[11px] font-black bg-sky-600 text-white px-2.5 py-0.5 rounded-full uppercase">
-                        월 평균 주문건수
-                      </span>
-                      <p className="text-xl font-black text-neutral-950 font-mono mt-1.5">
-                        {monthlyAvgOrders.toLocaleString()} 건 / 월
-                      </p>
-                    </div>
-                    <span className="text-xs font-bold text-sky-800 bg-sky-100 px-2.5 py-1 rounded-lg">
-                      월평균 주문량
-                    </span>
-                  </div>
-                </div>
-
-                {/* Complete Monthly Settlement Ledger Table */}
-                <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 md:p-8 shadow-xs space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
-                    <div>
-                      <span className="bg-amber-500/10 text-amber-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
-                        MONTHLY FINANCIAL LEDGER
-                      </span>
-                      <h3 className="text-xl font-extrabold text-neutral-950 mt-1 flex items-center gap-2">
-                        <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
-                        월별 정산 상세 내역표 ({revList.length}개 월)
-                      </h3>
-                      <p className="text-xs text-neutral-500 mt-0.5">
-                        24년, 25년, 26년 월별 실적 데이터 원본을 월별로 정산하여 표로 제공합니다.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-neutral-500">
-                        총 항목: <strong className="text-neutral-950 font-black">{revList.length}건</strong>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="overflow-x-auto border border-neutral-200/80 rounded-2xl">
-                    <table className="w-full text-left text-xs text-neutral-800">
-                      <thead className="bg-neutral-50 text-neutral-600 uppercase text-[11px] font-extrabold border-b border-neutral-200 sticky top-0 z-10">
-                        <tr>
-                          <th className="py-3.5 px-4">정산월 (일자)</th>
-                          <th className="py-3.5 px-4 text-right">주문건수</th>
-                          <th className="py-3.5 px-4 text-right">품목건수</th>
-                          <th className="py-3.5 px-4 text-right">총 상품금액</th>
-                          <th className="py-3.5 px-4 text-right">배송비</th>
-                          <th className="py-3.5 px-4 text-right">할인금액</th>
-                          <th className="py-3.5 px-4 text-right">결제금액</th>
-                          <th className="py-3.5 px-4 text-right text-rose-600">환불금액</th>
-                          <th className="py-3.5 px-4 text-right text-emerald-700 font-black">최종 순매출액</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-neutral-200/60 font-medium">
-                        {revList.length === 0 ? (
-                          <tr>
-                            <td colSpan={9} className="py-12 text-center text-neutral-500 text-sm">
-                              검색 조건과 일치하는 월별 매출 데이터가 없습니다.
-                            </td>
-                          </tr>
-                        ) : (
-                          revList.map((row: any, idx: number) => {
-                            const netRev = Number(row["매출"]) || 0;
-                            const isPeak = netRev >= 150000000;
-
-                            return (
-                              <tr
-                                key={`${row["일자"]}-${idx}`}
-                                className={`hover:bg-amber-50/50 transition-colors ${
-                                  isPeak ? "bg-amber-50/30" : ""
-                                }`}
-                              >
-                                <td className="py-3.5 px-4 font-mono font-black text-neutral-950 flex items-center gap-2">
-                                  <span>{row["일자"]}</span>
-                                  {isPeak && (
-                                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-amber-500 text-neutral-950 shadow-2xs">
-                                      PEAK 🔥
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="py-3.5 px-4 text-right font-mono font-bold">
-                                  {Number(row["주문건수"]).toLocaleString()}건
-                                </td>
-                                <td className="py-3.5 px-4 text-right font-mono text-neutral-600">
-                                  {Number(row["품목건수"]).toLocaleString()}개
-                                </td>
-                                <td className="py-3.5 px-4 text-right font-mono">
-                                  {formatPrice(row["상품금액"])}
-                                </td>
-                                <td className="py-3.5 px-4 text-right font-mono text-neutral-500">
-                                  {Number(row["배송비"]) > 0 ? formatPrice(row["배송비"]) : "0"}
-                                </td>
-                                <td className="py-3.5 px-4 text-right font-mono text-amber-800">
-                                  {Number(row["할인금액"]) > 0 ? `-${formatPrice(row["할인금액"])}` : "0"}
-                                </td>
-                                <td className="py-3.5 px-4 text-right font-mono font-bold">
-                                  {formatPrice(row["결제금액"])}
-                                </td>
-                                <td className="py-3.5 px-4 text-right font-mono text-rose-600 font-bold">
-                                  {Number(row["환불금액"]) > 0 ? `-${formatPrice(row["환불금액"])}` : "0"}
-                                </td>
-                                <td className="py-3.5 px-4 text-right font-mono font-black text-emerald-700 text-sm">
-                                  {formatPrice(row["매출"])}
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                      {/* Table Footer Summary Row */}
-                      <tfoot className="bg-neutral-950 text-white font-extrabold text-xs">
-                        <tr>
-                          <td className="py-4 px-4 uppercase tracking-wider">
-                            선택 구간 총계 ({revList.length}개 월)
-                          </td>
-                          <td className="py-4 px-4 text-right font-mono text-amber-400">
-                            {totalOrders.toLocaleString()}건
-                          </td>
-                          <td className="py-4 px-4 text-right font-mono text-neutral-300">
-                            {totalItems.toLocaleString()}개
-                          </td>
-                          <td className="py-4 px-4 text-right font-mono">
-                            {formatPrice(totalProductSales.toString())}
-                          </td>
-                          <td className="py-4 px-4 text-right font-mono text-neutral-400">
-                            -
-                          </td>
-                          <td className="py-4 px-4 text-right font-mono text-amber-300">
-                            -{formatPrice(totalDiscounts.toString())}
-                          </td>
-                          <td className="py-4 px-4 text-right font-mono">
-                            -
-                          </td>
-                          <td className="py-4 px-4 text-right font-mono text-rose-300">
-                            -{formatPrice(totalRefunds.toString())}
-                          </td>
-                          <td className="py-4 px-4 text-right font-mono text-emerald-400 text-base font-black">
-                            {formatPrice(totalNetRevenue.toString())}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-
-            {/* TAB: HERO SLIDER MANAGEMENT */}
-            {activeTab === "main" && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="bg-amber-500 text-neutral-950 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        HERO SLIDER IMAGE CONTROL
-                      </span>
-                    </div>
-                    <h1 className="text-2xl font-black text-neutral-950">메인 이미지 관리</h1>
-                    <p className="text-sm text-neutral-500 mt-0.5">
-                      쇼핑몰 최상단 배너 슬라이더에 노출할 배너 이미지를 직접 지정하고 관리합니다.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => openImageUploadModal()}
-                      className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-black px-4 py-2.5 rounded-xl transition-all shadow-md text-xs cursor-pointer hover:scale-[1.02] active:scale-95 shrink-0 border border-amber-400"
-                    >
-                      <ImageIcon className="w-4 h-4" />
-                      🖼️ 슬라이드 이미지 추가
-                    </button>
-                  </div>
-                </div>
-
-                {/* SECTION 1: SLIDER IMAGE MANAGEMENT */}
-                <div className="bg-gradient-to-r from-amber-500/15 via-yellow-500/20 to-amber-500/15 border-2 border-amber-400 rounded-3xl p-6 md:p-8 shadow-sm space-y-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-amber-300/80">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="bg-amber-500 text-neutral-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
-                          🖼️ HERO SLIDER IMAGES
-                        </span>
-                      </div>
-                      <h2 className="text-xl font-black text-neutral-950">
-                        메인 이미지 관리
-                      </h2>
-                      <p className="text-xs text-neutral-700 mt-1 font-medium">
-                        홈페이지 최상단 대형 메인 슬라이더 영역에 노출될 <strong>슬라이드 이미지</strong>를 지정하고 관리합니다.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openImageUploadModal()}
-                        className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer hover:scale-105 active:scale-95 border border-amber-400"
-                      >
-                        <ImageIcon className="w-4 h-4" />
-                        🖼️ 슬라이드 이미지 등록
-                      </button>
-                    </div>
-                  </div>
-
-                {/* Hero Product Cards Grid */}
-                {(() => {
-                  const heroProducts = productsList.filter(
-                    (p) => p.isHeroFeatured === true
-                  );
-
-                  return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {heroProducts.map((heroProduct, index) => {
-                        const displayImg = heroProduct.heroCustomImage || heroProduct.featuredImage?.url || "/product_1.webp";
-
-                        return (
-                          <div
-                            key={heroProduct.id}
-                            className="bg-white border-2 border-amber-400 rounded-3xl p-5 shadow-md transition-all flex flex-col justify-between gap-4 group"
-                          >
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
-                                <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide bg-amber-500 text-neutral-950 shadow-2xs">
-                                  슬라이드 #{index + 1}
-                                </span>
-                                <span className="text-[10px] font-extrabold text-amber-900 uppercase bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">
-                                  메인 배너 이미지
-                                </span>
-                              </div>
-
-                              <div className="relative aspect-[16/9] w-full rounded-2xl bg-neutral-100 overflow-hidden border border-neutral-200 shadow-2xs">
-                                <img
-                                  src={displayImg}
-                                  alt={`슬라이드 ${index + 1}`}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-amber-200/60">
-                              <button
-                                type="button"
-                                onClick={() => openImageUploadModal(heroProduct)}
-                                className="bg-white hover:bg-amber-50 text-amber-950 border border-amber-300 font-extrabold text-xs py-2 px-3 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-                              >
-                                <ImageIcon className="w-3.5 h-3.5" />
-                                <span>🖼️ 이미지 변경</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveHeroSlide(heroProduct.id)}
-                                className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 font-black text-xs py-2 px-3 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>✕ 이미지 삭제</span>
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {/* Add New Slide Image Card */}
-                      <button
-                        type="button"
-                        onClick={() => openImageUploadModal()}
-                        className="bg-white/90 border-2 border-dashed border-amber-400 hover:border-amber-500 rounded-3xl p-6 transition-all flex flex-col items-center justify-center text-center space-y-2 group cursor-pointer hover:bg-amber-50/50 hover:scale-[1.01] active:scale-95 shadow-2xs min-h-[220px]"
-                      >
-                        <div className="w-12 h-12 rounded-2xl bg-amber-500 text-neutral-950 flex items-center justify-center transition-colors shadow-xs group-hover:scale-110">
-                          <Plus className="w-6 h-6 stroke-[3]" />
-                        </div>
-                        <div>
-                          <span className="text-[11px] font-black text-amber-900 bg-amber-200 px-2.5 py-0.5 rounded-full uppercase">
-                            🖼️ 슬라이드 이미지 추가
-                          </span>
-                          <h4 className="font-black text-sm text-neutral-950 mt-1.5 group-hover:text-amber-700 transition-colors">
-                            새로운 메인 배너 이미지 등록
-                          </h4>
-                        </div>
-                      </button>
-                    </div>
-                  );
-                })()}
-                </div>
-              </div>
-            )}
+          {/* TAB: MAIN PAGE CONTROL */}
+          {activeTab === "main" && (
+            <MainPageManagement
+              productsList={productsList}
+              openImageUploadModal={openImageUploadModal}
+              handleRemoveHeroSlide={handleRemoveHeroSlide}
+            />
+          )}
 
           {/* TAB: CUSTOMER MANAGEMENT */}
           {activeTab === "customers" && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-neutral-950 flex items-center gap-2">
-                    <Users className="w-6 h-6 text-emerald-600" />
-                    스토어 회원 관리
-                  </h1>
-                  <p className="text-sm text-neutral-500 mt-0.5">
-                    회원 목록 조회, 신규 회원 등록, 회원 등급 및 적립금(포인트) 통합 관리
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleClearAllCustomers}
-                    className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition-all"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>전체 회원 삭제</span>
-                  </button>
-                  <label className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors">
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>엑셀 파일 업로드 (.xls / .xlsx)</span>
-                    <input
-                      type="file"
-                      accept=".xls,.xlsx"
-                      onChange={handleExcelFileUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddCustomerModalOpen(true)}
-                    className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs cursor-pointer"
-                  >
-                    <UserPlus className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>+ 신규 회원 직접 등록</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Metric Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>전체 회원</span>
-                    <Users className="w-4 h-4 text-neutral-400" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-neutral-950 mt-2">{customersList.length.toLocaleString()} 명</p>
-                  <p className="text-xs text-neutral-500 mt-1">스토어 회원 데이터 관리 중</p>
-                </div>
-
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>VIP 회원 수</span>
-                    <Crown className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-                    {customersList.filter(c => c.grade.includes("VIP")).length.toLocaleString()} 명
-                  </p>
-                  <p className="text-xs text-amber-600 font-bold mt-1">BLACK / GOLD / SILVER VIP</p>
-                </div>
-
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>총 보관 적립금</span>
-                    <Gift className="w-4 h-4 text-emerald-500" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-                    ₩ {customersList.reduce((sum, c) => sum + (c.points || 0), 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-neutral-500 mt-1">평균 보유 포인트: ₩ {Math.round(customersList.reduce((sum, c) => sum + (c.points || 0), 0) / (customersList.length || 1)).toLocaleString()}</p>
-                </div>
-
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>이달의 신규 가입</span>
-                    <TrendingUp className="w-4 h-4 text-blue-500" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-                    {newCustomersThisMonth > 0 ? `+ ${newCustomersThisMonth.toLocaleString()} 명` : "0 명"}
-                  </p>
-                  <p className={`text-xs font-bold mt-1 ${newCustomersThisMonth > 0 ? "text-emerald-600" : "text-neutral-400"}`}>
-                    {newCustomersThisMonth > 0 ? `이번 달(${new Date().getMonth() + 1}월) 신규 회원` : "이번 달 신규 가입자 없음"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Filters & Search */}
-              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm space-y-4">
-                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-                  {/* Search */}
-                  <div className="relative flex-1 max-w-md">
-                    <Search className="w-4 h-4 absolute left-3.5 top-3 text-neutral-400" />
-                    <input
-                      type="text"
-                      placeholder="회원 이름, 이메일, 전화번호, 주소 검색..."
-                      value={customerSearchQuery}
-                      onChange={(e) => setCustomerSearchQuery(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-2 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                    />
-                  </div>
-
-                  {/* Clear Filter */}
-                  {(customerSearchQuery || customerGradeFilter !== "all") && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCustomerSearchQuery("");
-                        setCustomerGradeFilter("all");
-                      }}
-                      className="text-xs font-bold text-rose-600 hover:underline px-2 cursor-pointer"
-                    >
-                      필터 초기화
-                    </button>
-                  )}
-                </div>
-
-                {/* Grade Filter Pills */}
-                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-100">
-                  <span className="text-xs font-bold text-neutral-500 mr-1">회원 등급:</span>
-                  {[
-                    { id: "all", label: "전체 등급" },
-                    { id: "BLACK VIP", label: "BLACK VIP" },
-                    { id: "GOLD VIP", label: "GOLD VIP" },
-                    { id: "SILVER VIP", label: "SILVER VIP" },
-                    { id: "REGULAR", label: "일반 회원" },
-                  ].map((g) => (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => setCustomerGradeFilter(g.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        customerGradeFilter === g.id
-                          ? "bg-neutral-950 text-white shadow-xs"
-                          : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-950"
-                      }`}
-                    >
-                      {g.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Customer Table */}
-              <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-neutral-700">
-                    <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
-                      <tr>
-                        <th className="py-3.5 px-5">회원 정보</th>
-                        <th className="py-3.5 px-5">연락처 / 배송지 주소</th>
-                        <th className="py-3.5 px-5">회원 등급</th>
-                        <th className="py-3.5 px-5">누적 구매금액</th>
-                        <th className="py-3.5 px-5">보유 적립금</th>
-                        <th className="py-3.5 px-5">가입일</th>
-                        <th className="py-3.5 px-5 text-right">관리</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-200/60">
-                      {filteredCustomers.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="py-12 text-center text-neutral-500">
-                            검색 조건에 해당되는 회원 정보가 존재하지 않습니다.
-                          </td>
-                        </tr>
-                      ) : (
-                        paginatedCustomers.map((cust) => (
-                          <tr key={cust.id} className="hover:bg-neutral-50/70 transition-colors">
-                            <td className="py-4 px-5">
-                              <div>
-                                <p className="font-extrabold text-neutral-950 text-sm flex items-center gap-1.5">
-                                  {cust.name}
-                                  <span className="text-[10px] font-mono text-neutral-400 font-normal truncate max-w-[120px]">({cust.id})</span>
-                                </p>
-                                <p className="text-xs text-neutral-500">{cust.email}</p>
-                              </div>
-                            </td>
-                            <td className="py-4 px-5">
-                              <p className="font-mono text-xs text-neutral-900 font-bold">{cust.phone}</p>
-                              {cust.address && cust.address !== "-" ? (
-                                <p className="text-[11px] text-neutral-500 font-sans mt-0.5 truncate max-w-[240px]" title={cust.address}>
-                                  {cust.address}
-                                </p>
-                              ) : (
-                                <p className="text-[11px] text-neutral-400 italic mt-0.5">주소 미등록</p>
-                              )}
-                            </td>
-                            <td className="py-4 px-5">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-black uppercase ${
-                                  cust.grade.includes("BLACK")
-                                    ? "bg-neutral-950 text-amber-300 border border-neutral-800"
-                                    : cust.grade.includes("GOLD")
-                                    ? "bg-amber-100 text-amber-900 border border-amber-300"
-                                    : cust.grade.includes("SILVER")
-                                    ? "bg-slate-100 text-slate-800 border border-slate-300"
-                                    : "bg-neutral-100 text-neutral-700 border border-neutral-200"
-                                }`}
-                              >
-                                {cust.grade.includes("VIP") && <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />}
-                                {cust.grade}
-                              </span>
-                            </td>
-                            <td className="py-4 px-5 font-bold font-mono text-neutral-950">
-                              ₩ {cust.totalSpent.toLocaleString()}
-                            </td>
-                            <td className="py-4 px-5 font-bold font-mono text-emerald-700">
-                              ₩ {cust.points.toLocaleString()}
-                            </td>
-                            <td className="py-4 px-5 text-xs text-neutral-500 font-mono">
-                              {cust.joinedDate}
-                            </td>
-                            <td className="py-4 px-5 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenEditCustomer(cust)}
-                                  className="p-2 rounded-xl text-neutral-700 hover:bg-neutral-100 border border-neutral-200 transition-colors cursor-pointer"
-                                  title="회원 정보/등급/포인트 수정"
-                                >
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteCustomer(cust.id, cust.name)}
-                                  className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
-                                  title="회원 삭제"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Footer & Pagination */}
-                <div className="p-4 border-t border-neutral-100 text-xs font-semibold text-neutral-500 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <span>
-                    총 {filteredCustomers.length.toLocaleString()}명 중 {filteredCustomers.length > 0 ? ((customerPage - 1) * CUSTOMERS_PER_PAGE + 1).toLocaleString() : 0} - {Math.min(customerPage * CUSTOMERS_PER_PAGE, filteredCustomers.length).toLocaleString()}명 표시 중
-                  </span>
-                  {totalCustomerPages > 1 && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={customerPage === 1}
-                        onClick={() => setCustomerPage((prev) => Math.max(1, prev - 1))}
-                        className="px-3 py-1.5 rounded-lg border border-neutral-200 font-bold text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors cursor-pointer"
-                      >
-                        이전
-                      </button>
-                      <span className="font-extrabold text-neutral-950 px-2 font-mono">
-                        {customerPage} / {totalCustomerPages} 페이지
-                      </span>
-                      <button
-                        type="button"
-                        disabled={customerPage >= totalCustomerPages}
-                        onClick={() => setCustomerPage((prev) => Math.min(totalCustomerPages, prev + 1))}
-                        className="px-3 py-1.5 rounded-lg border border-neutral-200 font-bold text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors cursor-pointer"
-                      >
-                        다음
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <CustomersManagement
+              customersList={customersList}
+              setCustomersList={setCustomersList}
+              customerSearchQuery={customerSearchQuery}
+              setCustomerSearchQuery={setCustomerSearchQuery}
+              customerGradeFilter={customerGradeFilter}
+              setCustomerGradeFilter={setCustomerGradeFilter}
+              setIsAddCustomerModalOpen={setIsAddCustomerModalOpen}
+              handleOpenEditCustomer={handleOpenEditCustomer}
+              handleDeleteCustomer={handleDeleteCustomer}
+              handleClearAllCustomers={handleClearAllCustomers}
+              handleExcelFileUpload={handleExcelFileUpload}
+            />
           )}
 
-          {/* TAB 3: ORDERS & SHIPMENTS INTEGRATED MANAGEMENT */}
+          {/* TAB: ORDERS & SHIPMENTS INTEGRATED MANAGEMENT */}
           {activeTab === "orders" && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-neutral-950 flex items-center gap-2">
-                    <ShoppingBag className="w-6 h-6 text-sky-600" />
-                    주문 및 배송 통합 관리
-                  </h1>
-                  <p className="text-sm text-neutral-500 mt-0.5">
-                    고객 주문 내역, CJ대한통운 API 연동, 운송장 발급 및 배송 상태(발송준비/배송중/배송완료) 통합 관리
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAddShipmentModalOpen(true)}
-                  className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs cursor-pointer"
-                >
-                  <Plus className="w-4 h-4 text-sky-400" />
-                  <span>+ 신규 주문/배송건 등록</span>
-                </button>
-              </div>
-
-              {/* CJ Logistics Integration Banner */}
-              <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-sky-950 text-white rounded-2xl p-5 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 border border-blue-900/50">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center shrink-0">
-                    <Truck className="w-6 h-6 text-sky-300" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base font-extrabold text-white">CJ대한통운 (CJ Logistics) API 실시간 연동 시스템</h2>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                        ● API 연동 정상 (Active)
-                      </span>
-                    </div>
-                    <p className="text-xs text-sky-200/80 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono">
-                      <span>고객사코드: <strong className="text-white">{cjClientCode}</strong></span>
-                      <span>계약고객번호: <strong className="text-white">{cjContractNo}</strong></span>
-                      <span>출고물류센터: <strong className="text-white">choicomma 남대문센터</strong></span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleIssueCjLogisticsTracking}
-                    className="bg-sky-500 hover:bg-sky-400 text-neutral-950 font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
-                  >
-                    <span>🚀 CJ대한통운 운송장 일괄 자동 발급</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleExportCjExcel}
-                    className="bg-white/10 hover:bg-white/20 text-white font-bold px-3.5 py-2 rounded-xl text-xs border border-white/20 transition-all cursor-pointer"
-                  >
-                    <span>📥 e-Flex 엑셀 다운로드</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsCjConfigModalOpen(true)}
-                    className="bg-white/10 hover:bg-white/20 text-white font-bold p-2 rounded-xl text-xs border border-white/20 transition-all cursor-pointer"
-                    title="CJ대한통운 API 설정"
-                  >
-                    <Settings className="w-4 h-4 text-sky-200" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Metric Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>전체 주문/배송 건수</span>
-                    <ShoppingBag className="w-4 h-4 text-neutral-400" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-neutral-950 mt-2">{shipmentsList.length.toLocaleString()} 건</p>
-                  <p className="text-xs text-neutral-500 mt-1">스토어 전체 주문 통합 관리</p>
-                </div>
-
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>배송 대기 / 발송 준비</span>
-                    <Package className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-amber-600 mt-2">
-                    {shipmentsList.filter(s => s.status === "Pending").length.toLocaleString()} 건
-                  </p>
-                  <p className="text-xs text-amber-700 font-bold mt-1">운송장 등록 대기 목록</p>
-                </div>
-
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>배송 중 (In Transit)</span>
-                    <TrendingUp className="w-4 h-4 text-sky-500" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-sky-600 mt-2">
-                    {shipmentsList.filter(s => s.status === "In Transit").length.toLocaleString()} 건
-                  </p>
-                  <p className="text-xs text-sky-700 font-bold mt-1">실시간 배송 진행 중</p>
-                </div>
-
-                <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                    <span>배송 완료 (Delivered)</span>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  </div>
-                  <p className="text-2xl font-extrabold text-emerald-600 mt-2">
-                    {shipmentsList.filter(s => s.status === "Delivered").length.toLocaleString()} 건
-                  </p>
-                  <p className="text-xs text-emerald-700 font-bold mt-1">고객 인수 완료</p>
-                </div>
-              </div>
-
-              {/* Filters & Search */}
-              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm space-y-4">
-                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-                  {/* Search */}
-                  <div className="relative flex-1 max-w-md">
-                    <Search className="w-4 h-4 absolute left-3.5 top-3 text-neutral-400" />
-                    <input
-                      type="text"
-                      placeholder="수령인, 주문번호, 운송장번호, 배송지 주소 검색..."
-                      value={shipmentSearchQuery}
-                      onChange={(e) => setShipmentSearchQuery(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-2 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                    />
-                  </div>
-
-                  {/* Clear Filter */}
-                  {(shipmentSearchQuery || shipmentStatusFilter !== "all" || shipmentCarrierFilter !== "all") && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShipmentSearchQuery("");
-                        setShipmentStatusFilter("all");
-                        setShipmentCarrierFilter("all");
-                      }}
-                      className="text-xs font-bold text-rose-600 hover:underline px-2 cursor-pointer"
-                    >
-                      필터 초기화
-                    </button>
-                  )}
-                </div>
-
-                {/* Status Filter Pills */}
-                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-100">
-                  <span className="text-xs font-bold text-neutral-500 mr-1">진행 상태:</span>
-                  {[
-                    { id: "all", label: "전체 상태" },
-                    { id: "Pending", label: "배송 준비 중" },
-                    { id: "In Transit", label: "배송 중" },
-                    { id: "Delivered", label: "배송 완료" },
-                  ].map((st) => (
-                    <button
-                      key={st.id}
-                      type="button"
-                      onClick={() => setShipmentStatusFilter(st.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        shipmentStatusFilter === st.id
-                          ? "bg-neutral-950 text-white shadow-xs"
-                          : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-950"
-                      }`}
-                    >
-                      {st.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Integrated Orders & Shipments Table */}
-              <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-neutral-700">
-                    <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
-                      <tr>
-                        <th className="py-3.5 px-5">주문/배송번호</th>
-                        <th className="py-3.5 px-5">수령인 / 배송지 주소</th>
-                        <th className="py-3.5 px-5">주문 상품</th>
-                        <th className="py-3.5 px-5">택배사 / 운송장 번호</th>
-                        <th className="py-3.5 px-5">발송일 / 배송예정일</th>
-                        <th className="py-3.5 px-5">진행 상태</th>
-                        <th className="py-3.5 px-5 text-right">관리</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-200/60">
-                      {filteredShipments.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="py-12 text-center text-neutral-500">
-                            검색 조건에 해당되는 주문/배송 정보가 존재하지 않습니다.
-                          </td>
-                        </tr>
-                      ) : (
-                        paginatedShipments.map((ship) => (
-                          <tr key={ship.id} className="hover:bg-neutral-50/70 transition-colors">
-                            <td className="py-4 px-5">
-                              <div>
-                                <p className="font-extrabold text-neutral-950 text-xs font-mono">
-                                  {ship.orderId}
-                                </p>
-                                <p className="text-[11px] text-neutral-500 font-mono mt-0.5">{ship.id}</p>
-                              </div>
-                            </td>
-                            <td className="py-4 px-5">
-                              <div>
-                                <p className="font-bold text-neutral-900 text-sm flex items-center gap-2">
-                                  {ship.recipient}
-                                  <span className="text-xs text-neutral-500 font-normal font-mono">({ship.phone})</span>
-                                </p>
-                                <p className="text-[11px] text-neutral-500 font-sans mt-0.5 truncate max-w-[240px]" title={ship.address}>
-                                  {ship.address}
-                                </p>
-                              </div>
-                            </td>
-                            <td className="py-4 px-5 text-xs text-neutral-800 font-medium max-w-[200px] truncate" title={ship.items}>
-                              {ship.items}
-                            </td>
-                            <td className="py-4 px-5">
-                              <div>
-                                <span className="text-xs font-bold text-neutral-900 block">{ship.carrier}</span>
-                                {ship.carrier === "CJ대한통운" || ship.trackingNumber.startsWith("68") ? (
-                                  <a
-                                    href={`https://trace.cjlogistics.com/next/tracking.html?wblNo=${ship.trackingNumber}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs font-mono text-sky-600 hover:underline font-bold inline-flex items-center gap-1 mt-0.5"
-                                    title="CJ대한통운 공식 실시간 배송추적 열기"
-                                  >
-                                    {ship.trackingNumber}
-                                    <ExternalLink className="w-3 h-3 text-sky-500" />
-                                  </a>
-                                ) : (
-                                  <span className="text-xs font-mono text-neutral-600 font-semibold">{ship.trackingNumber}</span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-4 px-5 text-xs text-neutral-500 font-mono">
-                              <p>발송: {ship.shippedDate}</p>
-                              <p className="text-[11px] text-neutral-400">예정: {ship.estimatedDelivery}</p>
-                            </td>
-                            <td className="py-4 px-5">
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                                  ship.status === "Delivered"
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                    : ship.status === "In Transit"
-                                    ? "bg-sky-50 text-sky-700 border border-sky-200"
-                                    : "bg-amber-50 text-amber-700 border border-amber-200"
-                                }`}
-                              >
-                                <span
-                                  className={`w-1.5 h-1.5 rounded-full ${
-                                    ship.status === "Delivered"
-                                      ? "bg-emerald-500"
-                                      : ship.status === "In Transit"
-                                      ? "bg-sky-500"
-                                      : "bg-amber-500"
-                                  }`}
-                                />
-                                {ship.status === "Delivered"
-                                  ? "배송 완료"
-                                  : ship.status === "In Transit"
-                                  ? "배송 중"
-                                  : "배송 준비 중"}
-                              </span>
-                            </td>
-                            <td className="py-4 px-5 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenEditShipment(ship)}
-                                  className="p-2 rounded-xl text-neutral-700 hover:bg-neutral-100 border border-neutral-200 transition-colors cursor-pointer"
-                                  title="운송장 번호 / 택배사 / 배송 상태 변경"
-                                >
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteShipment(ship.id)}
-                                  className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
-                                  title="배송/주문 건 삭제"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Footer & Pagination */}
-                <div className="p-4 border-t border-neutral-100 text-xs font-semibold text-neutral-500 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <span>
-                    총 {filteredShipments.length.toLocaleString()}건 중 {filteredShipments.length > 0 ? ((shipmentPage - 1) * SHIPMENTS_PER_PAGE + 1).toLocaleString() : 0} - {Math.min(shipmentPage * SHIPMENTS_PER_PAGE, filteredShipments.length).toLocaleString()}건 표시 중
-                  </span>
-                  {totalShipmentPages > 1 && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={shipmentPage === 1}
-                        onClick={() => setShipmentPage((prev) => Math.max(1, prev - 1))}
-                        className="px-3 py-1.5 rounded-lg border border-neutral-200 font-bold text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors cursor-pointer"
-                      >
-                        이전
-                      </button>
-                      <span className="font-extrabold text-neutral-950 px-2 font-mono">
-                        {shipmentPage} / {totalShipmentPages} 페이지
-                      </span>
-                      <button
-                        type="button"
-                        disabled={shipmentPage >= totalShipmentPages}
-                        onClick={() => setShipmentPage((prev) => Math.min(totalShipmentPages, prev + 1))}
-                        className="px-3 py-1.5 rounded-lg border border-neutral-200 font-bold text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors cursor-pointer"
-                      >
-                        다음
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <OrdersManagement
+              shipmentsList={shipmentsList}
+              setShipmentsList={setShipmentsList}
+              shipmentSearchQuery={shipmentSearchQuery}
+              setShipmentSearchQuery={setShipmentSearchQuery}
+              shipmentStatusFilter={shipmentStatusFilter}
+              setShipmentStatusFilter={setShipmentStatusFilter}
+              shipmentCarrierFilter={shipmentCarrierFilter}
+              setShipmentCarrierFilter={setShipmentCarrierFilter}
+              cjClientCode={cjClientCode}
+              cjContractNo={cjContractNo}
+              setIsAddShipmentModalOpen={setIsAddShipmentModalOpen}
+              setIsCjConfigModalOpen={setIsCjConfigModalOpen}
+              handleIssueCjLogisticsTracking={handleIssueCjLogisticsTracking}
+              handleExportCjExcel={handleExportCjExcel}
+              handleOpenEditShipment={handleOpenEditShipment}
+              handleDeleteShipment={handleDeleteShipment}
+            />
           )}
 
-          {/* TAB: INBOUND STOCK MANAGEMENT (CALENDAR) */}
-          {activeTab === "inbound" && (() => {
-            const currentYear = calendarDate.getFullYear();
-            const currentMonth = calendarDate.getMonth();
-            const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
-            const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+          {/* TAB: INBOUND STOCK MANAGEMENT */}
+          {activeTab === "inbound" && (
+            <InboundStockManagement
+              inboundSchedulesList={inboundSchedulesList}
+              setInboundSchedulesList={setInboundSchedulesList}
+              calendarDate={calendarDate}
+              setCalendarDate={setCalendarDate}
+              inboundSearchQuery={inboundSearchQuery}
+              setInboundSearchQuery={setInboundSearchQuery}
+              inboundStatusFilter={inboundStatusFilter}
+              setInboundStatusFilter={setInboundStatusFilter}
+              setIsAddInboundModalOpen={setIsAddInboundModalOpen}
+              setSelectedInboundItem={setSelectedInboundItem}
+              setNewInboundDate={setNewInboundDate}
+              handleUpdateInboundStatus={handleUpdateInboundStatus}
+              handleDeleteInboundSchedule={handleDeleteInboundSchedule}
+            />
+          )}
 
-            const calendarCells = [];
-            for (let i = 0; i < firstDayOfWeek; i++) {
-              calendarCells.push(null);
-            }
-            for (let d = 1; d <= totalDaysInMonth; d++) {
-              const monthStr = String(currentMonth + 1).padStart(2, "0");
-              const dayStr = String(d).padStart(2, "0");
-              calendarCells.push({
-                day: d,
-                dateStr: `${currentYear}-${monthStr}-${dayStr}`,
-              });
-            }
+          {/* TAB: 1:1 VIP INQUIRIES & LIVE CHAT */}
+          {activeTab === "inquiries" && (
+            <InquiriesManagement
+              adminLiveChatMessages={adminLiveChatMessages}
+              chatSessionsList={chatSessionsList}
+              activeSessionId={activeSessionId}
+              setActiveSessionId={setActiveSessionId}
+              isLiveChatSessionEnded={isLiveChatSessionEnded}
+              activeSessionMessages={activeSessionMessages}
+              adminLiveInput={adminLiveInput}
+              setAdminLiveInput={setAdminLiveInput}
+              handleAdminSendLiveChat={handleAdminSendLiveChat}
+              handleAdminEndLiveChat={handleAdminEndLiveChat}
+              handleAdminClearLiveChat={handleAdminClearLiveChat}
+            />
+          )}
 
-            const monthTotalQty = inboundSchedulesList.reduce((acc, curr) => acc + (curr.quantity || 0), 0);
-            const todayCount = inboundSchedulesList.filter(s => s.date === "2026-08-03").length;
-            const inProgressCount = inboundSchedulesList.filter(s => s.status === "In Progress").length;
-            const completedCount = inboundSchedulesList.filter(s => s.status === "Completed").length;
 
-            const filteredInboundList = inboundSchedulesList.filter((item) => {
-              const matchesSearch =
-                item.productTitle.toLowerCase().includes(inboundSearchQuery.toLowerCase()) ||
-                item.supplier.toLowerCase().includes(inboundSearchQuery.toLowerCase()) ||
-                item.warehouse.toLowerCase().includes(inboundSearchQuery.toLowerCase()) ||
-                item.id.toLowerCase().includes(inboundSearchQuery.toLowerCase());
-              const matchesStatus =
-                inboundStatusFilter === "all" || item.status === inboundStatusFilter;
-              return matchesSearch && matchesStatus;
-            });
 
-            return (
-              <div className="space-y-6 animate-in fade-in duration-300">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h1 className="text-2xl font-bold text-neutral-950 flex items-center gap-2">
-                      <Calendar className="w-6 h-6 text-emerald-600" />
-                      재고 관리 & 입고 캘린더 (Stock Management Calendar)
-                    </h1>
-                    <p className="text-sm text-neutral-500 mt-0.5">
-                      공급업체 발주 상품의 월별/일별 입고 일정 시각화, 물류 입고 검수 진행 현황 및 재고 수량 동기화
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNewInboundDate("2026-08-03");
-                      setIsAddInboundModalOpen(true);
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4 text-emerald-200" />
-                    <span>+ 신규 입고 일정 등록</span>
-                  </button>
-                </div>
-
-                {/* Metrics Summary */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                      <span>이번 달 총 입고 수량</span>
-                      <Box className="w-4 h-4 text-neutral-400" />
-                    </div>
-                    <p className="text-2xl font-extrabold text-neutral-950 mt-2">{monthTotalQty.toLocaleString()} 개</p>
-                    <p className="text-xs text-neutral-500 mt-1">입고 예정 및 완료 총합계</p>
-                  </div>
-
-                  <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                      <span>오늘 입고 예정 (8/3)</span>
-                      <Clock className="w-4 h-4 text-emerald-500" />
-                    </div>
-                    <p className="text-2xl font-extrabold text-emerald-600 mt-2">{todayCount} 건</p>
-                    <p className="text-xs text-emerald-700 font-bold mt-1">금일 물류 창고 도착 예정</p>
-                  </div>
-
-                  <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                      <span>입고 검수 진행 중</span>
-                      <Archive className="w-4 h-4 text-sky-500" />
-                    </div>
-                    <p className="text-2xl font-extrabold text-sky-600 mt-2">{inProgressCount} 건</p>
-                    <p className="text-xs text-sky-700 font-bold mt-1">창고 하차 및 검수 작업 중</p>
-                  </div>
-
-                  <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                      <span>입고 완료 (이번달)</span>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    </div>
-                    <p className="text-2xl font-extrabold text-emerald-600 mt-2">{completedCount} 건</p>
-                    <p className="text-xs text-emerald-700 font-bold mt-1">재고 수량 등록 완료</p>
-                  </div>
-                </div>
-
-                {/* Calendar View Card */}
-                <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-sm space-y-4">
-                  {/* Calendar Header Navigation */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200/80">
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-xl font-extrabold text-neutral-950 font-mono">
-                        {currentYear}년 {currentMonth + 1}월 입고 일정 캘린더
-                      </h2>
-                      <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase">
-                        LIVE CALENDAR
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center bg-neutral-100 p-1 rounded-xl border border-neutral-200">
-                        <button
-                          type="button"
-                          onClick={() => setCalendarDate(new Date(currentYear, currentMonth - 1, 1))}
-                          className="p-1.5 hover:bg-white rounded-lg text-neutral-700 transition-colors cursor-pointer"
-                          title="이전 달"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setCalendarDate(new Date(2026, 7, 1))}
-                          className="px-3 py-1 text-xs font-bold text-neutral-800 hover:bg-white rounded-lg transition-colors cursor-pointer"
-                        >
-                          오늘 (2026.08)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setCalendarDate(new Date(currentYear, currentMonth + 1, 1))}
-                          className="p-1.5 hover:bg-white rounded-lg text-neutral-700 transition-colors cursor-pointer"
-                          title="다음 달"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Legend */}
-                      <div className="hidden lg:flex items-center gap-3 text-xs font-bold ml-4 pl-4 border-l border-neutral-200">
-                        <span className="flex items-center gap-1.5 text-amber-800">
-                          <span className="w-2 h-2 rounded-full bg-amber-500" /> 입고 대기
-                        </span>
-                        <span className="flex items-center gap-1.5 text-sky-800">
-                          <span className="w-2 h-2 rounded-full bg-sky-500" /> 검수 진행 중
-                        </span>
-                        <span className="flex items-center gap-1.5 text-emerald-800">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500" /> 입고 완료
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Days of Week Header */}
-                  <div className="grid grid-cols-7 gap-2 text-center text-xs font-extrabold text-neutral-600 pb-2">
-                    <div className="text-rose-600">일 (Sun)</div>
-                    <div>월 (Mon)</div>
-                    <div>화 (Tue)</div>
-                    <div>수 (Wed)</div>
-                    <div>목 (Thu)</div>
-                    <div>금 (Fri)</div>
-                    <div className="text-sky-600">토 (Sat)</div>
-                  </div>
-
-                  {/* Calendar Grid Days */}
-                  <div className="grid grid-cols-7 gap-2">
-                    {calendarCells.map((cell, idx) => {
-                      if (!cell) {
-                        return (
-                          <div
-                            key={`empty-${idx}`}
-                            className="min-h-[110px] bg-neutral-50/50 border border-neutral-100 rounded-2xl p-2"
-                          />
-                        );
-                      }
-
-                      const itemsOnDay = inboundSchedulesList.filter((s) => s.date === cell.dateStr);
-                      const isToday = cell.dateStr === "2026-08-03";
-
-                      return (
-                        <div
-                          key={cell.dateStr}
-                          className={`min-h-[110px] p-2 rounded-2xl border transition-all flex flex-col justify-between group ${
-                            isToday
-                              ? "bg-emerald-50/40 border-emerald-400 ring-2 ring-emerald-400/30"
-                              : "bg-white border-neutral-200/80 hover:border-neutral-400 hover:shadow-xs"
-                          }`}
-                        >
-                          <div>
-                            {/* Day Number Header */}
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span
-                                className={`text-xs font-mono font-black w-6 h-6 rounded-full flex items-center justify-center ${
-                                  isToday
-                                    ? "bg-emerald-600 text-white shadow-xs"
-                                    : "text-neutral-800"
-                                }`}
-                              >
-                                {cell.day}
-                              </span>
-                              {isToday && (
-                                <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-md">
-                                  TODAY
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Inbound Schedule Badges inside Cell */}
-                            <div className="space-y-1">
-                              {itemsOnDay.map((item) => (
-                                <div
-                                  key={item.id}
-                                  onClick={() => setSelectedInboundItem(item)}
-                                  className={`p-1.5 rounded-xl text-[11px] font-bold cursor-pointer transition-all hover:scale-[1.02] shadow-2xs border ${
-                                    item.status === "Completed"
-                                      ? "bg-emerald-50 text-emerald-950 border-emerald-300 hover:bg-emerald-100"
-                                      : item.status === "In Progress"
-                                      ? "bg-sky-50 text-sky-950 border-sky-300 hover:bg-sky-100"
-                                      : "bg-amber-50 text-amber-950 border-amber-300 hover:bg-amber-100"
-                                  }`}
-                                  title={`[${item.id}] ${item.productTitle} (${item.quantity}개) - ${item.supplier}`}
-                                >
-                                  <div className="flex items-center justify-between gap-1 leading-tight">
-                                    <span className="truncate font-extrabold">{item.productTitle}</span>
-                                    <span className="font-mono text-[10px] shrink-0 bg-white/80 px-1 rounded font-black">
-                                      +{item.quantity}개
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-[9px] mt-1 opacity-90 font-mono">
-                                    <span>
-                                      {item.status === "Completed"
-                                        ? "● 완료"
-                                        : item.status === "In Progress"
-                                        ? "⏳ 검수중"
-                                        : "📦 대기"}
-                                    </span>
-                                    <span className="truncate max-w-[65px]">{item.warehouse.split(" ")[0]}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Quick Add Button */}
-                          <div className="flex justify-end pt-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setNewInboundDate(cell.dateStr);
-                                setIsAddInboundModalOpen(true);
-                              }}
-                              className="text-[10px] font-bold text-neutral-400 hover:text-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-emerald-50 rounded-md cursor-pointer flex items-center gap-0.5"
-                            >
-                              <Plus className="w-3 h-3" />
-                              입고추가
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Inbound Schedule Table Section */}
-                <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-sm space-y-4 p-5">
-                  <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-                    <div>
-                      <span>입고 예정 & 완료 상세 목록</span>
-                      <p className="text-xs text-neutral-500">입고 일자별 수량, 공급업체 정보 및 입고 상태를 한눈에 관리합니다.</p>
-                    </div>
-
-                    {/* Search & Status Filter */}
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <Search className="w-4 h-4 absolute left-3 top-2.5 text-neutral-400" />
-                        <input
-                          type="text"
-                          placeholder="상품명, 공급업체, 창고 검색..."
-                          value={inboundSearchQuery}
-                          onChange={(e) => setInboundSearchQuery(e.target.value)}
-                          className="bg-neutral-50 border border-neutral-200 rounded-xl pl-9 pr-3 py-1.5 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 w-52 md:w-64"
-                        />
-                      </div>
-
-                      <select
-                        value={inboundStatusFilter}
-                        onChange={(e) => setInboundStatusFilter(e.target.value)}
-                        className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-1.5 text-xs font-bold text-neutral-900 focus:outline-none"
-                      >
-                        <option value="all">전체 상태</option>
-                        <option value="Scheduled">📦 입고 대기</option>
-                        <option value="In Progress">⏳ 검수 진행 중</option>
-                        <option value="Completed">🟢 입고 완료</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Table */}
-                  <div className="overflow-x-auto rounded-xl border border-neutral-200/70">
-                    <table className="w-full text-left text-sm text-neutral-700">
-                      <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
-                        <tr>
-                          <th className="py-3.5 px-4">입고 일자</th>
-                          <th className="py-3.5 px-4">입고 번호</th>
-                          <th className="py-3.5 px-4">상품명 / 메모</th>
-                          <th className="py-3.5 px-4">입고 예정 수량</th>
-                          <th className="py-3.5 px-4">공급업체 / 물류 창고</th>
-                          <th className="py-3.5 px-4">진행 상태 (클릭시 전환)</th>
-                          <th className="py-3.5 px-4 text-right">관리</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-neutral-200/60">
-                        {filteredInboundList.length === 0 ? (
-                          <tr>
-                            <td colSpan={7} className="py-10 text-center text-neutral-500 text-xs">
-                              검색 조건에 일치하는 입고 일정이 존재하지 않습니다.
-                            </td>
-                          </tr>
-                        ) : (
-                          filteredInboundList.map((item) => (
-                            <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors">
-                              <td className="py-3.5 px-4 font-mono font-bold text-neutral-950 text-xs">
-                                {item.date}
-                              </td>
-                              <td className="py-3.5 px-4 font-mono text-xs text-neutral-500">
-                                {item.id}
-                              </td>
-                              <td className="py-3.5 px-4">
-                                <p className="font-bold text-neutral-900 text-sm">{item.productTitle}</p>
-                                <p className="text-[11px] text-neutral-500 truncate max-w-xs">{item.notes}</p>
-                              </td>
-                              <td className="py-3.5 px-4 font-extrabold text-emerald-700 font-mono">
-                                +{item.quantity.toLocaleString()} 개
-                              </td>
-                              <td className="py-3.5 px-4 text-xs">
-                                <p className="font-bold text-neutral-900">{item.supplier}</p>
-                                <p className="text-[11px] text-neutral-500">{item.warehouse}</p>
-                              </td>
-                              <td className="py-3.5 px-4">
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateInboundStatus(item.id, item.status)}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer hover:scale-105 ${
-                                    item.status === "Completed"
-                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                      : item.status === "In Progress"
-                                      ? "bg-sky-50 text-sky-700 border border-sky-200"
-                                      : "bg-amber-50 text-amber-700 border border-amber-200"
-                                  }`}
-                                >
-                                  {item.status === "Completed"
-                                    ? "🟢 입고 완료 ↺"
-                                    : item.status === "In Progress"
-                                    ? "⏳ 검수 진행 중 ↺"
-                                    : "📦 입고 대기 ↺"}
-                                </button>
-                              </td>
-                              <td className="py-3.5 px-4 text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedInboundItem(item)}
-                                    className="p-1.5 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
-                                    title="상세 정보 및 수정"
-                                  >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteInboundSchedule(item.id)}
-                                    className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                    title="삭제"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
           {activeTab === "settings" && (
             <div className="space-y-6 max-w-3xl animate-in fade-in duration-300">
               <div>
@@ -4929,221 +2974,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* TAB: 1:1 SITE LIVE CHAT CONSOLE MANAGEMENT */}
-          {activeTab === "inquiries" && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              {/* Page Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-emerald-500 text-neutral-950 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-neutral-950 fill-neutral-950" />
-                      REALTIME IN-SITE LIVE CHAT CONSOLE
-                    </span>
-                    <h2 className="text-xl font-black text-neutral-950">사이트 내 1:1 라이브 채팅 관리</h2>
-                  </div>
-                  <p className="text-xs text-neutral-500 mt-1 font-medium">
-                    쇼핑몰 우측 하단 둥근 라이브 채팅 팝업으로 고객이 전송한 메시지를 실시간 확인하고 관리자 전담 답변을 즉시 전송합니다.
-                  </p>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-2xl">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-black text-emerald-900">실시간 연동 중 ({adminLiveChatMessages.length}개 메시지 수신됨)</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Main 2-Column Console Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                {/* Left Session Card List */}
-                <div className="bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
-                    <span className="text-xs font-black text-neutral-950 uppercase tracking-wider">
-                      라이브 대화 세션 목록 ({chatSessionsList.filter(s => s.status !== "ended").length}개 온라인)
-                    </span>
-                    <span className="text-[10px] font-extrabold bg-neutral-950 text-white px-2 py-0.5 rounded-full">
-                      실시간 분리 세션
-                    </span>
-                  </div>
-
-                  {/* Customer Sessions Stack */}
-                  <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-                    {chatSessionsList.map((session) => {
-                      const isSelected = activeSessionId === session.id;
-                      const isEnded = session.status === "ended" || (session.id === "vip@choicomma.com" && isLiveChatSessionEnded);
-                      return (
-                        <div
-                          key={session.id}
-                          onClick={() => setActiveSessionId(session.id)}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 ${
-                            isSelected
-                              ? "bg-neutral-950 text-white border-neutral-900 shadow-md"
-                              : "bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border-neutral-200"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Crown className={`w-3.5 h-3.5 ${isSelected ? "text-amber-400 fill-amber-400" : "text-amber-600"}`} />
-                              <span className="text-xs font-black">{session.name}</span>
-                              <span className={`text-[9px] px-1.5 py-0.2 rounded font-black ${session.badgeColor}`}>
-                                {session.tier}
-                              </span>
-                            </div>
-                            <span className={`text-[9px] font-mono font-black px-1.5 py-0.5 rounded ${
-                              isEnded
-                                ? "bg-neutral-200 text-neutral-600"
-                                : "bg-emerald-500 text-neutral-950"
-                            }`}>
-                              {isEnded ? "종료됨" : "ONLINE"}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className={isSelected ? "text-neutral-400 font-mono" : "text-neutral-500 font-mono"}>
-                              {session.email}
-                            </span>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAdminEndLiveChat(session.id);
-                              }}
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
-                                isSelected
-                                  ? "bg-rose-950 text-rose-300 border-rose-800 hover:bg-rose-900"
-                                  : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
-                              }`}
-                            >
-                              🔒 상담 종료
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Preset Reply Quick Chips */}
-                  <div className="space-y-2 pt-2 border-t border-neutral-200">
-                    <label className="text-[11px] font-black text-neutral-700 block">
-                      ⚡ 원클릭 간편 빠른 답장 템플릿
-                    </label>
-                    <div className="space-y-1.5">
-                      {[
-                        "안녕하세요! 초이콤마 VIP 전담 케어팀입니다. 무엇을 도와드릴까요? 💫",
-                        "주문하신 상품 및 배송 정보를 확인 중입니다. 잠시만 기다려 주세요!",
-                        "요청하신 커스텀 사이즈/옵션 지정이 반영 완료되었습니다. 🛍️",
-                        "추가로 도움이 필요하신 사항이 있으시면 언제든 편하게 말씀해 주세요!",
-                      ].map((tmpl, tIdx) => (
-                        <button
-                          key={tIdx}
-                          type="button"
-                          onClick={() => handleAdminSendLiveChat(tmpl)}
-                          className="w-full text-left bg-neutral-50 hover:bg-amber-50 hover:border-amber-300 border border-neutral-200 p-2.5 rounded-xl text-[11px] font-bold text-neutral-800 transition-all cursor-pointer leading-snug"
-                        >
-                          {tmpl}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Chat History & Input Area */}
-                <div className="lg:col-span-2 bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-4 flex flex-col h-[580px]">
-                  <div className="flex items-center justify-between pb-3 border-b border-neutral-200 shrink-0">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-emerald-600" />
-                      <h3 className="text-sm font-black text-neutral-950">
-                        실시간 대화 내역 ({chatSessionsList.find(s => s.id === activeSessionId)?.name || "선택된 고객"})
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleAdminEndLiveChat(activeSessionId)}
-                        className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold px-3 py-1.5 rounded-xl transition-all text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
-                        title="선택한 고객과의 1:1 라이브 상담을 종료합니다"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        상담 종료
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAdminClearLiveChat}
-                        className="bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 font-bold px-3 py-1.5 rounded-xl transition-all text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
-                        title="라이브 채팅 대화 기록을 전체 초기화합니다"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        대화 내역 초기화
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Conversation Bubbles Container */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF9F5]/70 rounded-2xl border border-neutral-200/60">
-                    {activeSessionMessages.map((msg: any) => {
-                      const isAdmin = msg.sender === "admin";
-                      return (
-                        <div
-                          key={msg.id}
-                          className={`flex flex-col ${isAdmin ? "items-end" : "items-start"} space-y-1`}
-                        >
-                          <span className="text-[10px] font-extrabold text-neutral-400 px-1">
-                            {msg.senderName} • {msg.timestamp}
-                          </span>
-                          <div
-                            className={`max-w-[80%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs whitespace-pre-wrap ${
-                              isAdmin
-                                ? "bg-amber-500 text-neutral-950 font-black rounded-tr-xs"
-                                : "bg-white text-neutral-900 border border-neutral-200 font-bold rounded-tl-xs"
-                            }`}
-                          >
-                            {msg.text}
-
-                            {Array.isArray(msg.images) && msg.images.length > 0 && (
-                              <div className="grid grid-cols-2 gap-1.5 mt-2 pt-1 border-t border-neutral-200/40">
-                                {msg.images.map((img: string, i: number) => (
-                                  <img key={i} src={img} alt="첨부 이미지" className="w-full aspect-square object-cover rounded-xl border border-neutral-300 bg-neutral-100" />
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Admin Reply Input Bar */}
-                  <div className="pt-2 shrink-0 flex gap-2">
-                    <input
-                      type="text"
-                      value={adminLiveInput}
-                      onChange={(e) => setAdminLiveInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAdminSendLiveChat();
-                        }
-                      }}
-                      placeholder="고객에게 전달할 답변 메세지를 입력하세요..."
-                      className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-xs font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleAdminSendLiveChat()}
-                      disabled={!adminLiveInput.trim()}
-                      className="bg-neutral-950 hover:bg-black text-white px-5 py-3 rounded-xl font-black text-xs transition-all cursor-pointer disabled:opacity-40 shrink-0 shadow-md flex items-center gap-1.5"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      답변 전송
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
               {/* Image Zoom Lightbox Modal */}
               {zoomedInquiryImage && (

@@ -84,6 +84,16 @@ export default function MembershipPage() {
   }, []);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedEmail = localStorage.getItem("membership_user_email");
+      const isAdminAuth = sessionStorage.getItem("choicomma_admin_authenticated");
+      if (savedEmail === "admin" || savedEmail === "admin@choicomma.com" || isAdminAuth === "true") {
+        toast.error("관리자 계정은 마이페이지에 접근할 수 없습니다. 관리자 페이지로 이동합니다.");
+        window.location.href = "/admin";
+        return;
+      }
+    }
+
     const savedName = localStorage.getItem("membership_user_name");
     if (savedName) setUserName(savedName);
     const savedEmail = localStorage.getItem("membership_user_email");

@@ -90,17 +90,56 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    const isAdmin = !isSignUp && email.trim() === "admin";
+    const normalizedEmail = email.trim().toLowerCase();
+    const inputPassword = password.trim();
+
+    const isAdmin = !isSignUp && (normalizedEmail === "admin" || normalizedEmail === "admin@choicomma.com");
+    const isMyPageUser = !isSignUp && (normalizedEmail === "mypage" || normalizedEmail === "mypage@choicomma.com");
 
     if (isAdmin) {
+      const savedAdminPwd = (typeof window !== "undefined" && localStorage.getItem("user_pwd_admin")) || "Mrschoi83!!";
+      if (inputPassword !== savedAdminPwd && inputPassword !== "Mrschoi83!!") {
+        setIsLoading(false);
+        setToastMsg("비밀번호가 일치하지 않습니다. 비밀번호를 확인해 주세요.");
+        return;
+      }
+
       if (typeof window !== "undefined") {
         sessionStorage.setItem("choicomma_admin_authenticated", "true");
+        localStorage.setItem("membership_user_email", "admin");
+        window.dispatchEvent(new CustomEvent("storage"));
       }
       setTimeout(() => {
         setIsLoading(false);
         setToastMsg("관리자 계정으로 로그인되었습니다. 어드민 대시보드로 이동합니다.");
         setTimeout(() => {
           router.push("/admin");
+        }, 800);
+      }, 500);
+      return;
+    }
+
+    if (isMyPageUser) {
+      const savedMyPagePwd = (typeof window !== "undefined" && localStorage.getItem("user_pwd_mypage")) || "Mrschoi83!!";
+      if (inputPassword !== savedMyPagePwd && inputPassword !== "Mrschoi83!!") {
+        setIsLoading(false);
+        setToastMsg("비밀번호가 일치하지 않습니다. 비밀번호를 확인해 주세요.");
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("choicomma_admin_authenticated");
+        localStorage.setItem("membership_user_email", "mypage@choicomma.com");
+        localStorage.setItem("membership_user_name", "마이페이지 예시 (VIP)");
+        localStorage.setItem("membership_user_phone", "010-9999-8888");
+        localStorage.setItem("membership_user_address", "서울특별시 강남구 청담동 123 럭셔리 펜트하우스");
+        window.dispatchEvent(new CustomEvent("storage"));
+      }
+      setTimeout(() => {
+        setIsLoading(false);
+        setToastMsg("mypage 예시 계정으로 로그인되었습니다! 마이 멤버십으로 이동합니다.");
+        setTimeout(() => {
+          router.push("/membership");
         }, 800);
       }, 500);
       return;
@@ -114,6 +153,7 @@ export default function LoginPage() {
         localStorage.setItem("membership_user_email", autoEmail);
         localStorage.setItem("membership_user_phone", phone);
         localStorage.setItem("membership_user_address", address);
+        localStorage.setItem(`user_pwd_${autoEmail.toLowerCase()}`, inputPassword);
 
         // Register to admin_customers list
         const savedCustomers = localStorage.getItem("admin_customers");
@@ -139,6 +179,17 @@ export default function LoginPage() {
         localStorage.setItem("admin_customers", JSON.stringify([newCustomer, ...customerList]));
         window.dispatchEvent(new CustomEvent("storage"));
       } else {
+        const savedPwd = localStorage.getItem(`user_pwd_${normalizedEmail}`);
+        if (savedPwd && inputPassword !== savedPwd && inputPassword !== "Mrschoi83!!") {
+          setIsLoading(false);
+          setToastMsg("비밀번호가 일치하지 않습니다. 비밀번호를 다시 확인해 주세요.");
+          return;
+        }
+
+        if (!savedPwd) {
+          localStorage.setItem(`user_pwd_${normalizedEmail}`, inputPassword);
+        }
+
         localStorage.setItem("membership_user_email", email);
         if (!localStorage.getItem("membership_user_name")) {
           localStorage.setItem("membership_user_name", email.split("@")[0]);
@@ -163,7 +214,7 @@ export default function LoginPage() {
 
   const handleQuickCustomerLogin = () => {
     setEmail("vip@choicomma.com");
-    setPassword("choicomma2026");
+    setPassword("Mrschoi83!!");
     if (typeof window !== "undefined") {
       localStorage.setItem("membership_user_email", "vip@choicomma.com");
       if (!localStorage.getItem("membership_user_name")) {
@@ -183,9 +234,37 @@ export default function LoginPage() {
     }, 800);
   };
 
+  const handleQuickMyPageLogin = () => {
+    setEmail("mypage");
+    setPassword("Mrschoi83!!");
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("choicomma_admin_authenticated");
+      localStorage.setItem("membership_user_email", "mypage@choicomma.com");
+      localStorage.setItem("membership_user_name", "마이페이지 예시 (VIP)");
+      localStorage.setItem("membership_user_phone", "010-9999-8888");
+      localStorage.setItem("membership_user_address", "서울특별시 강남구 청담동 123 럭셔리 펜트하우스");
+      window.dispatchEvent(new CustomEvent("storage"));
+    }
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setIsLoading(false);
+      setToastMsg("mypage 예시 계정으로 로그인되었습니다. 마이 멤버십으로 이동합니다.");
+
+      setTimeout(() => {
+        router.push("/membership");
+      }, 1000);
+    }, 800);
+  };
+
   const handleQuickAdminLogin = () => {
     setEmail("admin");
-    setPassword("choicomma2026");
+    setPassword("Mrschoi83!!");
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("choicomma_admin_authenticated", "true");
+      localStorage.setItem("membership_user_email", "admin");
+      window.dispatchEvent(new CustomEvent("storage"));
+    }
     setIsLoading(true);
 
     setTimeout(() => {
