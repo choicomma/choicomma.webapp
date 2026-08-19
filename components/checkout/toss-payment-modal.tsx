@@ -22,9 +22,12 @@ export default function TossPaymentModal({
   orderName,
 }: TossPaymentModalProps) {
   const [widgets, setWidgets] = useState<TossPaymentsWidgets | null>(null);
+  const [paymentInstance, setPaymentInstance] = useState<any>(null);
   const [isSdkLoading, setIsSdkLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sdkError, setSdkError] = useState<string | null>(null);
+
+  const isWidgetKey = clientKey.includes("_gck_");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -36,15 +39,22 @@ export default function TossPaymentModal({
         setSdkError(null);
 
         const tossPayments = await loadTossPayments(clientKey);
-        const tossWidgets = tossPayments.widgets({ customerKey });
 
-        if (isMounted) {
-          setWidgets(tossWidgets);
+        if (isWidgetKey) {
+          const tossWidgets = tossPayments.widgets({ customerKey });
+          if (isMounted) {
+            setWidgets(tossWidgets);
+          }
+        } else {
+          const tossPayment = tossPayments.payment({ customerKey });
+          if (isMounted) {
+            setPaymentInstance(tossPayment);
+          }
         }
       } catch (err: any) {
         console.error("Toss SDK Init Error:", err);
         if (isMounted) {
-          setSdkError("토스페이먼츠 결제 모듈을 로드하지 못했습니다. 클라이언트 키를 확인해 주세요.");
+          setSdkError("토스페이먼츠 결제 모듈을 로드하지 못했습니다. 클라이언트 키 및 모드를 확인해 주세요.");
         }
       } finally {
         if (isMounted) {
@@ -61,7 +71,7 @@ export default function TossPaymentModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!widgets || !isOpen) return;
+    if (!widgets || !isOpen || !isWidgetKey) return;
 
     async function renderPaymentWidgets() {
       try {
@@ -93,22 +103,36 @@ export default function TossPaymentModal({
   if (!isOpen) return null;
 
   const handleRequestPayment = async () => {
-    if (!widgets) return;
+    const orderId = `CHOICOMMA_ORDER_${Date.now()}`;
+    const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
 
     try {
       setIsSubmitting(true);
 
-      const orderId = `CHOICOMMA_ORDER_${Date.now()}`;
-      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-
-      await widgets.requestPayment({
-        orderId,
-        orderName: orderName || "초이콤마 오리지널 패션 주문건",
-        successUrl: `${origin}/order/success`,
-        failUrl: `${origin}/order/fail`,
-        customerEmail: "customer@choicomma.com",
-        customerName: "홍길동 VIP 회원님",
-      });
+      if (isWidgetKey && widgets) {
+        await widgets.requestPayment({
+          orderId,
+          orderName: orderName || "초이콤마 오리지널 패션 주문건",
+          successUrl: `${origin}/order/success`,
+          failUrl: `${origin}/order/fail`,
+          customerEmail: "customer@choicomma.com",
+          customerName: "홍길동 VIP 회원님",
+        });
+      } else if (paymentInstance) {
+        await paymentInstance.requestPayment({
+          method: "CARD",
+          amount: {
+            currency: "KRW",
+            value: totalAmount > 0 ? totalAmount : 50000,
+          },
+          orderId,
+          orderName: orderName || "초이콤마 오리지널 패션 주문건",
+          successUrl: `${origin}/order/success`,
+          failUrl: `${origin}/order/fail`,
+          customerEmail: "customer@choicomma.com",
+          customerName: "홍길동 VIP 회원님",
+        });
+      }
     } catch (err: any) {
       console.error("Payment Request Failed:", err);
       setIsSubmitting(false);

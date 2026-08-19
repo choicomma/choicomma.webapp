@@ -40,76 +40,64 @@ export function CartItemCard({
     new URLSearchParams(merchandiseSearchParams)
   );
 
-  // Find color option if it exists
-  const colorOption = item.merchandise.selectedOptions.find(
-    (option) => option.name.toLowerCase() === "color"
-  );
-
   const imgs = useProductImages(
     item.merchandise.product,
     item.merchandise.selectedOptions
   );
   const [renderImage] = imgs;
 
+  const validOptions = item.merchandise.selectedOptions.filter(
+    (opt) => opt.value !== DEFAULT_OPTION
+  );
+
   return (
-    <div className="bg-card rounded-lg p-2">
-      <div className="flex flex-row gap-6">
-        <div className="relative size-[120px] overflow-hidden rounded-sm shrink-0">
+    <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl p-3 shadow-sm transition-all">
+      <div className="flex flex-row gap-4 items-center">
+        <div className="relative w-24 h-24 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800 shrink-0 border border-neutral-200/60 dark:border-neutral-700">
           <Image
-            className="size-full object-cover"
-            width={240}
-            height={240}
+            className="w-full h-full object-cover"
+            width={180}
+            height={180}
             blurDataURL={renderImage.url}
             alt={renderImage.altText || item.merchandise.product.title}
             src={renderImage.url}
           />
-
-          {/* Color pill overlay */}
-          {colorOption && (
-            <div className="flex absolute bottom-1 left-1">
-              <ColorSwatch
-                color={(() => {
-                  const color = getColorHex(colorOption.value);
-                  return Array.isArray(color)
-                    ? [
-                        { name: colorOption.value, value: color[0] },
-                        { name: colorOption.value, value: color[1] },
-                      ]
-                    : { name: colorOption.value, value: color };
-                })()}
-                isSelected={false}
-                onColorChange={() => {}} // No-op since this is just for display
-                size="sm"
-                atLeastOneColorSelected={false}
-              />
-            </div>
-          )}
         </div>
-        <div className="flex flex-col gap-2 2xl:gap-3 flex-1">
-          <Link
-            href={merchandiseUrl}
-            onClick={onCloseCart}
-            className="z-30 flex flex-col justify-center"
-            prefetch
-          >
-            <span className="2xl:text-lg font-semibold">
-              {item.merchandise.product.title}
-            </span>
-          </Link>
-          <p className="2xl:text-lg font-semibold">
-            {formatPrice(
-              item.cost.totalAmount.amount,
-              item.cost.totalAmount.currencyCode
+        <div className="flex flex-col justify-between flex-1 min-w-0 h-24 py-0.5">
+          <div>
+            <Link
+              href={merchandiseUrl}
+              onClick={onCloseCart}
+              className="block z-30"
+              prefetch
+            >
+              <span className="text-xs font-black text-neutral-900 dark:text-white line-clamp-1 hover:underline">
+                {item.merchandise.product.title}
+              </span>
+            </Link>
+            {validOptions.length > 0 && (
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-bold mt-0.5">
+                {validOptions.map((opt) => opt.value).join(" / ")}
+              </p>
             )}
-          </p>
-          <div className="flex justify-between items-end mt-auto">
-            <div className="flex h-8 flex-row items-center rounded-md border border-neutral-200 dark:border-neutral-700">
+            <p className="text-xs font-black text-neutral-900 dark:text-white font-mono mt-1">
+              {formatPrice(
+                item.cost.totalAmount.amount,
+                item.cost.totalAmount.currencyCode
+              )}
+            </p>
+          </div>
+
+          <div className="flex justify-between items-center mt-auto">
+            <div className="flex h-7 flex-row items-center rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800">
               <EditItemQuantityButton
                 item={item}
                 type="minus"
                 optimisticUpdate={optimisticUpdate}
               />
-              <span className="w-8 text-center text-sm">{item.quantity}</span>
+              <span className="w-7 text-center text-xs font-extrabold text-neutral-900 dark:text-white">
+                {item.quantity}
+              </span>
               <EditItemQuantityButton
                 item={item}
                 type="plus"

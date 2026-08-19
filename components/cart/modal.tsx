@@ -21,11 +21,11 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
 
   return (
     <div className="flex h-full flex-col justify-between overflow-hidden">
-      <div className="flex justify-between text-sm text-muted-foreground px-2">
+      <div className="flex justify-between text-xs font-black uppercase tracking-wider text-neutral-600 dark:text-neutral-400 px-1">
         <span>Products</span>
         <span>{cart.lines.length} items</span>
       </div>
-      <div className="grow overflow-auto py-4 space-y-3">
+      <div className="grow overflow-auto py-3 space-y-3">
         <AnimatePresence>
           {cart.lines
             .sort((a, b) =>
@@ -51,32 +51,32 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
             ))}
         </AnimatePresence>
       </div>
-      <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
-        <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 dark:border-neutral-700">
+      <div className="py-3 text-xs font-bold text-neutral-600 dark:text-neutral-300 border-t border-neutral-200 dark:border-neutral-800">
+        <div className="mb-2 flex items-center justify-between">
           <p>Taxes</p>
-          <p className="text-right text-base text-black dark:text-white">
+          <p className="text-right font-black text-neutral-900 dark:text-white">
             {formatPrice(
               cart.cost.totalTaxAmount.amount,
               cart.cost.totalTaxAmount.currencyCode
             )}
           </p>
         </div>
-        <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
+        <div className="mb-2 flex items-center justify-between">
           <p>Shipping</p>
           {cart.cost.shippingAmount ? (
-            <p className="text-right text-base text-black dark:text-white">
+            <p className="text-right font-black text-neutral-900 dark:text-white">
               {formatPrice(
                 cart.cost.shippingAmount.amount,
                 cart.cost.shippingAmount.currencyCode
               )}
             </p>
           ) : (
-            <p className="text-right">Calculated at checkout</p>
+            <p className="text-right font-bold text-neutral-500">Calculated at checkout</p>
           )}
         </div>
-        <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-          <p>Total</p>
-          <p className="text-right text-base text-black dark:text-white font-extrabold text-emerald-600">
+        <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+          <p className="text-sm font-black text-neutral-900 dark:text-white">Total</p>
+          <p className="text-right text-lg font-black text-neutral-900 dark:text-white font-mono">
             {formatPrice(
               cart.cost.totalAmount.amount,
               cart.cost.totalAmount.currencyCode
@@ -85,18 +85,14 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
         </div>
       </div>
       <div className="pt-2">
-        <Button
-          type="button"
-          onClick={() => {
-            closeCart();
-            openTossModal();
-          }}
-          size="lg"
-          className="w-full relative flex items-center justify-between gap-3 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold cursor-pointer py-3.5 rounded-2xl shadow-md"
+        <Link
+          href="/checkout"
+          onClick={closeCart}
+          className="w-full relative flex items-center justify-between gap-3 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold cursor-pointer py-3.5 px-5 rounded-2xl shadow-md transition-all text-sm"
         >
-          <span>💳 토스페이먼츠 1:1 결제하기</span>
-          <ArrowRight className="size-5 text-amber-400" />
-        </Button>
+          <span>📋 결제하기</span>
+          <ArrowRight className="size-5 text-neutral-300" />
+        </Link>
       </div>
     </div>
   );
@@ -112,6 +108,7 @@ export default function CartModal({
   size?: "default" | "sm" | "lg" | "icon" | "icon-lg";
 } = {}) {
   const { cart, mode } = useCart();
+  const [isOpen, setIsOpen] = useState(false);
   const [isTossModalOpen, setIsTossModalOpen] = useState(false);
   const quantityRef = useRef(cart?.totalQuantity);
   const isInitialLoad = useRef(true);
@@ -206,16 +203,17 @@ export default function CartModal({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="fixed top-0 bottom-0 right-0 flex w-full md:w-[500px] p-modal-sides z-50"
+              className="fixed top-0 bottom-0 right-0 flex w-full md:w-[480px] p-2 md:p-4 z-50"
             >
-              <div className="flex flex-col bg-muted p-3 md:p-4 rounded w-full">
-                <div className="pl-2 flex items-baseline justify-between mb-10">
-                  <p className="text-2xl font-semibold">Cart</p>
+              <div className="flex flex-col bg-neutral-100 dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 p-4 md:p-6 rounded-3xl shadow-2xl w-full">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-200 dark:border-neutral-800">
+                  <p className="text-2xl font-black text-neutral-900 dark:text-white">Cart</p>
                   <Button
                     size="sm"
                     variant="ghost"
                     aria-label="Close cart"
                     onClick={closeCart}
+                    className="font-extrabold text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
                   >
                     Close
                   </Button>

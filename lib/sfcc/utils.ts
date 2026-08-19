@@ -126,9 +126,9 @@ export const years = Array.from({ length: 10 }, (_, i) => {
   };
 });
 
-export const formatPrice = (price: string, currencyCode?: string): string => {
-  const num = parseFloat(price);
-  if (isNaN(num)) return price;
+export const formatPrice = (price: string | number, currencyCode?: string): string => {
+  const num = typeof price === "number" ? price : parseFloat(price);
+  if (isNaN(num)) return String(price);
   const formatted = new Intl.NumberFormat("ko-KR", {
     maximumFractionDigits: 0,
   }).format(num);
