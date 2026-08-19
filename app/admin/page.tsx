@@ -3209,10 +3209,10 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-neutral-950 font-mono tracking-tight">
+                    <h3 className="text-2xl font-black text-neutral-950 font-mono tracking-tight" suppressHydrationWarning>
                       {ordersList.length} 건
                     </h3>
-                    <p className="text-[11px] text-neutral-500 font-bold mt-1">
+                    <p className="text-[11px] text-neutral-500 font-bold mt-1" suppressHydrationWarning>
                       신규 주문 {ordersList.filter((o: any) => o.status === "결제 완료" || o.status === "배송 준비 중").length}건 대기 중
                     </p>
                   </div>
@@ -3229,10 +3229,10 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-neutral-950 font-mono tracking-tight">
+                    <h3 className="text-2xl font-black text-neutral-950 font-mono tracking-tight" suppressHydrationWarning>
                       {productsList.length} 개
                     </h3>
-                    <p className="text-[11px] text-amber-800 font-bold mt-1">
+                    <p className="text-[11px] text-amber-800 font-bold mt-1" suppressHydrationWarning>
                       타임세일 {adminTimeSaleProductIds.length}개 적용 중
                     </p>
                   </div>
@@ -3249,7 +3249,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-neutral-950 font-mono tracking-tight">
+                    <h3 className="text-2xl font-black text-neutral-950 font-mono tracking-tight" suppressHydrationWarning>
                       {chatSessionsList.filter((s) => s.status !== "ended").length} 개 활성 세션
                     </h3>
                     <p className="text-[11px] text-emerald-700 font-bold mt-1 flex items-center gap-1">
