@@ -1,0 +1,117 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-gov.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html, body, button, input, select, textarea {
+    font-family: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif !important;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Hide number input spinner arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+@layer utilities {
+  .base-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--sides);
+  }
+
+  .base-gap {
+    gap: var(--sides);
+  }
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: 223.81 0% 94%;
+  --foreground: 223.81 0% 4%;
+  --card: 0 0% 100%;
+  --card-foreground: 223.81 0% 4%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 223.81 0% 4%;
+  --primary: 223.81 0% 9%;
+  --primary-foreground: 223.81 0% 98%;
+  --secondary: 223.81 0% 96%;
+  --secondary-foreground: 223.81 0% 9%;
+  --muted: 223.81 0% 88%;
+  --muted-foreground: 223.81 0% 45%;
+  --accent: 223.81 0% 90%;
+  --accent-foreground: 223.81 0% 9%;
+  --destructive: 357.18 100% 45%;
+  --border: 223.81 0% 74%;
+  --input: 223.81 0% 90%;
+  --ring: 223.81 0% 63%;
+  --chart-1: 12 76% 61%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+
+  --sides: 24px;
+  --modal-sides: 12px;
+  --top-spacing: 80px;
+  --height-fold: 100vh;
+  --height-fold: 100svh;
+
+  @screen md {
+    --modal-sides: 16px;
+    --top-spacing: 144px;
+  }
+
+  @screen lg {
+    --modal-sides: 24px;
+  }
+}
+
+.dark {
+  --background: 223.81 0% 4%;
+  --foreground: 223.81 0% 98%;
+  --card: 223.81 0% 9%;
+  --card-foreground: 223.81 0% 98%;
+  --popover: 223.81 0% 9%;
+  --popover-foreground: 223.81 0% 98%;
+  --primary: 223.81 0% 90%;
+  --primary-foreground: 223.81 0% 9%;
+  --secondary: 223.81 0% 15%;
+  --secondary-foreground: 223.81 0% 98%;
+  --muted: 223.81 0% 15%;
+  --muted-foreground: 223.81 0% 63%;
+  --accent: 223.81 0% 18%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 223.81 -173% 100% / 0.1;
+  --input: 223.81 -173% 100% / 0.15;
+  --ring: 223.81 0% 45%;
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+}
+
+html,
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
