@@ -27,7 +27,7 @@ interface ProductsManagementProps {
   setProductSortOrder: (val: any) => void;
   categoriesList: any[];
   getProductStock: (product: any) => number;
-  getProductNo: (product: any) => number;
+  getProductNo: (product: any) => string | number;
   handleClearAllProducts: () => void;
   handleOpenEditModal: (product: any) => void;
   handleDeleteProduct: (id: string, title: string) => void;
@@ -88,14 +88,6 @@ export function ProductsManagement({
         </div>
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
           <button
-            type="button"
-            onClick={handleClearAllProducts}
-            className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-4 py-2.5 rounded-xl transition-all shadow-md text-sm cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-            전체 상품 삭제
-          </button>
-          <button
             onClick={() => {
               setNewTitle("");
               setNewPrice("");
@@ -122,7 +114,7 @@ export function ProductsManagement({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>전체 상품 수</span>
+            <span>전체 등록 상품</span>
             <Package className="w-4 h-4 text-neutral-400" />
           </div>
           <p className="text-2xl font-extrabold text-neutral-950 mt-2">{productsList.length.toLocaleString()} 개</p>
@@ -169,7 +161,7 @@ export function ProductsManagement({
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-neutral-400" />
           <input
             type="text"
-            placeholder="상품번호(#437), 상품명 또는 설명으로 검색..."
+            placeholder="상품번호(CC-001), 상품명 또는 설명으로 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-2 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 transition-colors"
@@ -193,20 +185,7 @@ export function ProductsManagement({
             </select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-neutral-500 shrink-0">정렬:</span>
-            <select
-              value={productSortOrder}
-              onChange={(e: any) => setProductSortOrder(e.target.value)}
-              className="bg-amber-50/60 border border-amber-300 rounded-xl px-3 py-2 text-xs font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs"
-            >
-              <option value="productNoDesc">🔢 상품번호 높은순 (최신순)</option>
-              <option value="productNoAsc">🔢 상품번호 낮은순 (등록순)</option>
-              <option value="nameAsc">🔤 상품명 가나다순</option>
-              <option value="priceDesc">💰 판매가 높은순</option>
-              <option value="priceAsc">💰 판매가 낮은순</option>
-            </select>
-          </div>
+
         </div>
       </div>
 
@@ -216,7 +195,7 @@ export function ProductsManagement({
           <table className="w-full text-left text-sm text-neutral-700">
             <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
               <tr>
-                <th className="py-3.5 px-4 font-mono font-black text-neutral-950">상품번호</th>
+                <th className="py-3.5 px-4 font-sans font-black text-neutral-950">상품번호</th>
                 <th className="py-3.5 px-4">상품 대표 이미지</th>
                 <th className="py-3.5 px-4">상품명</th>
                 <th className="py-3.5 px-4">카테고리</th>
@@ -241,9 +220,9 @@ export function ProductsManagement({
                       onClick={() => handleOpenEditModal(p)}
                       className="hover:bg-amber-50/60 transition-colors cursor-pointer group"
                     >
-                      <td className="py-3 px-4 font-mono font-extrabold text-neutral-900 text-xs shrink-0">
-                        <span className="bg-neutral-100 text-neutral-900 px-2.5 py-1 rounded-md border border-neutral-300 shadow-2xs font-mono font-bold">
-                          #{prodNo}
+                      <td className="py-3 px-4 font-sans font-extrabold text-neutral-900 text-xs shrink-0">
+                        <span className="bg-neutral-950 text-white px-2.5 py-1 rounded-md shadow-2xs font-sans font-bold">
+                          {prodNo}
                         </span>
                       </td>
                       <td className="py-3 px-4">

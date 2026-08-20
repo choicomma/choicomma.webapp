@@ -44,14 +44,6 @@ import {
   Clock,
   Box,
 } from "lucide-react";
-import { ProductsManagement } from "./components/products-management";
-import { OrdersManagement } from "./components/orders-management";
-import { InboundStockManagement } from "./components/inbound-stock-management";
-import { CustomersManagement } from "./components/customers-management";
-import { RevenueManagement } from "./components/revenue-management";
-import { TimesaleManagement } from "./components/timesale-management";
-import { MainPageManagement } from "./components/main-page-management";
-import { InquiriesManagement } from "./components/inquiries-management";
 import {
   Archive,
   AlertCircle,
@@ -71,9 +63,19 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { mockProducts } from "@/lib/sfcc/mock/products";
 import { LogoSvg } from "@/components/layout/header/logo-svg";
 import { getRegisteredSetProducts } from "@/lib/sfcc/set-products-helper";
-const initialCustomers: any[] = [];
 import importedMonthlyRevenue from "@/lib/sfcc/monthly-revenue-data.json";
 import * as XLSX from "xlsx";
+
+import { ProductsManagement } from "./components/products-management";
+import { TimesaleManagement } from "./components/timesale-management";
+import { RevenueManagement } from "./components/revenue-management";
+import { MainPageManagement } from "./components/main-page-management";
+import { CustomersManagement } from "./components/customers-management";
+import { OrdersManagement } from "./components/orders-management";
+import { InboundStockManagement } from "./components/inbound-stock-management";
+import { InquiriesManagement } from "./components/inquiries-management";
+
+const initialCustomers: any[] = [];
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -348,14 +350,51 @@ export default function AdminPage() {
   const [newInboundNotes, setNewInboundNotes] = useState("");
   const [newInboundStatus, setNewInboundStatus] = useState("Scheduled");
   
-  // State for products, orders, search, notifications
-  const [productsList, setProductsList] = useState<any[]>([]);
+// Initial default product catalog
+const initialProducts: any[] = [];
 
-  useEffect(() => {
+  // State for products, orders, search, notifications
+  const [productsList, setProductsList] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("admin_products");
+      const saved = localStorage.getItem("admin_products");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            // Filter out default 10 products (CC-001 ~ CC-010) and deduplicate
+            const defaultCodes = new Set(["CC-001", "CC-002", "CC-003", "CC-004", "CC-005", "CC-006", "CC-007", "CC-008", "CC-009", "CC-010"]);
+            const seenIds = new Set<string>();
+            const cleanList: any[] = [];
+
+            for (const item of parsed) {
+              const idStr = String(item.id || item.productCode || "");
+              const codeStr = String(item.productCode || "");
+              if (defaultCodes.has(idStr) || defaultCodes.has(codeStr)) {
+                continue; // Purge default 10 products
+              }
+              if (!idStr || seenIds.has(idStr)) continue;
+              seenIds.add(idStr);
+              cleanList.push(item);
+            }
+
+            localStorage.setItem("admin_products", JSON.stringify(cleanList));
+
+            return cleanList.map((p: any, idx: number) => {
+              const num = p.productNo || idx + 1;
+              return {
+                ...p,
+                productNo: num,
+                productCode: p.productCode || `CC-${String(num).padStart(3, "0")}`,
+              };
+            });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
-  }, []);
+    return initialProducts;
+  });
 
   // Helper: Calculate accurate total stock for color x size combinations
   const calculateTotalStock = (colors: string[], sizes: string[], stockMap: Record<string, number>): number => {
@@ -684,14 +723,23 @@ export default function AdminPage() {
     setIsMainSelectModalOpen(true);
   };
 
-  const getProductNo = React.useCallback((product: any): number => {
-    if (product.productNo !== undefined && !isNaN(Number(product.productNo))) {
+  const getProductNoNum = React.useCallback((product: any): number => {
+    if (product?.productNo !== undefined && !isNaN(Number(product.productNo))) {
       return Number(product.productNo);
     }
-    const match = String(product.id || "").match(/\d+/);
+    const code = product?.productCode || product?.id || "";
+    const match = String(code).match(/\d+/);
     if (match) return parseInt(match[0], 10);
     return 0;
   }, []);
+
+  const getProductNo = React.useCallback((product: any): string => {
+    if (product?.productCode && String(product.productCode).startsWith("CC-")) {
+      return String(product.productCode);
+    }
+    const num = getProductNoNum(product);
+    return `CC-${String(num).padStart(3, "0")}`;
+  }, [getProductNoNum]);
 
   const handleToggleHeroProduct = (id: string) => {
     const targetProduct = productsList.find((p) => p.id === id);
@@ -868,6 +916,8 @@ export default function AdminPage() {
   const [editIsTimeSale, setEditIsTimeSale] = useState(false);
   const [editTimeSaleHours, setEditTimeSaleHours] = useState("24");
   const [editTimeSaleMinutes, setEditTimeSaleMinutes] = useState("0");
+  const [editTimeSaleDiscountPrice, setEditTimeSaleDiscountPrice] = useState("");
+  const [editTimeSaleDiscountRate, setEditTimeSaleDiscountRate] = useState("35");
 
   const handleOpenEditModal = (product: any) => {
     setEditingProduct(product);
@@ -939,6 +989,8 @@ export default function AdminPage() {
     const tsSetting = productTimeSaleSettings[product.id] || { hours: 24, minutes: 0 };
     setEditTimeSaleHours(String(tsSetting.hours));
     setEditTimeSaleMinutes(String(tsSetting.minutes));
+    setEditTimeSaleDiscountPrice(product.timeSaleDiscountPrice || tsSetting.discountPrice || "");
+    setEditTimeSaleDiscountRate(String(product.timeSaleDiscountRate || tsSetting.discountRate || 35));
   };
 
   const handleSaveProductEdit = (e: React.FormEvent) => {
@@ -950,7 +1002,7 @@ export default function AdminPage() {
     const finalImages = editImages.length > 0 ? editImages : ["/product_1.webp"];
 
     const updatedList = productsList.map((p) => {
-      if (p.id === editingProduct.id) {
+      if (String(p.id) === String(editingProduct.id)) {
         return {
           ...p,
           title: editTitle,
@@ -1000,6 +1052,8 @@ export default function AdminPage() {
             maxVariantPrice: { amount: editPrice, currencyCode: "KRW" },
             minVariantPrice: { amount: editPrice, currencyCode: "KRW" },
           },
+          timeSaleDiscountPrice: editIsTimeSale ? editTimeSaleDiscountPrice : undefined,
+          timeSaleDiscountRate: editIsTimeSale ? (editTimeSaleDiscountRate ? parseInt(editTimeSaleDiscountRate) : 35) : undefined,
         };
       }
       return p;
@@ -1011,8 +1065,8 @@ export default function AdminPage() {
 
     // Save or remove Time Sale settings for this product
     if (editIsTimeSale) {
-      if (!adminTimeSaleProductIds.includes(editingProduct.id)) {
-        const updatedIds = [...adminTimeSaleProductIds, editingProduct.id];
+      if (!adminTimeSaleProductIds.includes(String(editingProduct.id))) {
+        const updatedIds = [...adminTimeSaleProductIds, String(editingProduct.id)];
         setAdminTimeSaleProductIds(updatedIds);
         if (typeof window !== "undefined") {
           localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedIds));
@@ -1020,10 +1074,11 @@ export default function AdminPage() {
       }
       const h = parseInt(editTimeSaleHours) || 0;
       const m = parseInt(editTimeSaleMinutes) || 0;
-      handleUpdateProductTimeSetting(editingProduct.id, h, m);
+      const rateNum = editTimeSaleDiscountRate ? parseInt(editTimeSaleDiscountRate) : 35;
+      handleUpdateProductTimeSetting(String(editingProduct.id), h, m, editTimeSaleDiscountPrice, rateNum);
     } else {
-      if (adminTimeSaleProductIds.includes(editingProduct.id)) {
-        const updatedIds = adminTimeSaleProductIds.filter((id) => id !== editingProduct.id);
+      if (adminTimeSaleProductIds.includes(String(editingProduct.id))) {
+        const updatedIds = adminTimeSaleProductIds.filter((id) => String(id) !== String(editingProduct.id));
         setAdminTimeSaleProductIds(updatedIds);
         if (typeof window !== "undefined") {
           localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedIds));
@@ -1094,6 +1149,30 @@ export default function AdminPage() {
   const [newIsTimeSale, setNewIsTimeSale] = useState(false);
   const [newTimeSaleHours, setNewTimeSaleHours] = useState("24");
   const [newTimeSaleMinutes, setNewTimeSaleMinutes] = useState("0");
+  const [newTimeSaleDiscountPrice, setNewTimeSaleDiscountPrice] = useState("");
+  const [newTimeSaleDiscountRate, setNewTimeSaleDiscountRate] = useState("35");
+  const [newTimeSaleStartMonth, setNewTimeSaleStartMonth] = useState("8");
+  const [newTimeSaleStartDay, setNewTimeSaleStartDay] = useState("20");
+  const [newTimeSaleStartAmpm, setNewTimeSaleStartAmpm] = useState("오전");
+  const [newTimeSaleStartHour, setNewTimeSaleStartHour] = useState("09");
+  const [newTimeSaleStartMinute, setNewTimeSaleStartMinute] = useState("00");
+  const [newTimeSaleEndMonth, setNewTimeSaleEndMonth] = useState("8");
+  const [newTimeSaleEndDay, setNewTimeSaleEndDay] = useState("27");
+  const [newTimeSaleEndAmpm, setNewTimeSaleEndAmpm] = useState("오후");
+  const [newTimeSaleEndHour, setNewTimeSaleEndHour] = useState("11");
+  const [newTimeSaleEndMinute, setNewTimeSaleEndMinute] = useState("59");
+
+  // Time sale states for edit product modal
+  const [editTimeSaleStartMonth, setEditTimeSaleStartMonth] = useState("8");
+  const [editTimeSaleStartDay, setEditTimeSaleStartDay] = useState("20");
+  const [editTimeSaleStartAmpm, setEditTimeSaleStartAmpm] = useState("오전");
+  const [editTimeSaleStartHour, setEditTimeSaleStartHour] = useState("09");
+  const [editTimeSaleStartMinute, setEditTimeSaleStartMinute] = useState("00");
+  const [editTimeSaleEndMonth, setEditTimeSaleEndMonth] = useState("8");
+  const [editTimeSaleEndDay, setEditTimeSaleEndDay] = useState("27");
+  const [editTimeSaleEndAmpm, setEditTimeSaleEndAmpm] = useState("오후");
+  const [editTimeSaleEndHour, setEditTimeSaleEndHour] = useState("11");
+  const [editTimeSaleEndMinute, setEditTimeSaleEndMinute] = useState("59");
 
 
   const [adminTimeSaleHours, setAdminTimeSaleHours] = useState("14");
@@ -1106,7 +1185,7 @@ export default function AdminPage() {
 
   // Live Time Sale Countdown Remaining Ticker State
   const [nowTick, setNowTick] = useState(Date.now());
-  const [productTimeSaleSettings, setProductTimeSaleSettings] = useState<Record<string, { hours: number; minutes: number }>>(() => {
+  const [productTimeSaleSettings, setProductTimeSaleSettings] = useState<Record<string, { hours: number; minutes: number; discountPrice?: string; discountRate?: number }>>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("secret_timesale_item_settings");
       if (saved) {
@@ -1335,10 +1414,16 @@ export default function AdminPage() {
     };
   };
 
-  const handleUpdateProductTimeSetting = (productId: string, hours: number, minutes: number) => {
+  const handleUpdateProductTimeSetting = (productId: string, hours: number, minutes: number, discountPrice?: string, discountRate?: number) => {
     const updatedSettings = {
       ...productTimeSaleSettings,
-      [productId]: { hours, minutes },
+      [productId]: {
+        ...productTimeSaleSettings[productId],
+        hours,
+        minutes,
+        ...(discountPrice !== undefined ? { discountPrice } : {}),
+        ...(discountRate !== undefined ? { discountRate } : {}),
+      },
     };
     const newExpiry = Date.now() + (hours * 3600 + minutes * 60) * 1000;
     const updatedExpiries = {
@@ -1694,12 +1779,16 @@ export default function AdminPage() {
 
   const filteredProducts = React.useMemo(() => {
     const list = productsList.filter((p) => {
-      const pNoStr = String(getProductNo(p));
+      const pCode = String(getProductNo(p));
+      const pNoNum = String(getProductNoNum(p));
+      const cleanSearch = searchQuery.toLowerCase().replace("#", "").trim();
       const matchesSearch =
         !searchQuery ||
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        pNoStr.includes(searchQuery.replace("#", ""));
+        pCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        pNoNum === cleanSearch ||
+        cleanSearch === pCode.toLowerCase().replace("cc-", "").replace("cc", "");
       const matchesCategory =
         selectedCategoryFilter === "all" ||
         p.categoryId === selectedCategoryFilter ||
@@ -1708,8 +1797,8 @@ export default function AdminPage() {
     });
 
     list.sort((a, b) => {
-      const pNoA = getProductNo(a);
-      const pNoB = getProductNo(b);
+      const pNoA = getProductNoNum(a);
+      const pNoB = getProductNoNum(b);
 
       if (productSortOrder === "productNoAsc") {
         return pNoA - pNoB;
@@ -1723,12 +1812,12 @@ export default function AdminPage() {
       if (productSortOrder === "priceAsc") {
         return parseFloat(a.priceRange?.minVariantPrice?.amount || "0") - parseFloat(b.priceRange?.minVariantPrice?.amount || "0");
       }
-      // Default: productNoDesc (상품번호 내림차순 / 높은순 - 최신순)
+      // Default: productNoDesc (상품번호 내림차순 / 최신 등록순)
       return pNoB - pNoA;
     });
 
     return list;
-  }, [productsList, searchQuery, selectedCategoryFilter, productSortOrder, getProductNo]);
+  }, [productsList, searchQuery, selectedCategoryFilter, productSortOrder, getProductNo, getProductNoNum]);
 
   // Customer Table Pagination
   const [customerPage, setCustomerPage] = useState(1);
@@ -2216,8 +2305,19 @@ export default function AdminPage() {
     const totalNewStock = calculateTotalStock(newColors, newSizes, newSizeStock);
     const finalImages = newImages.length > 0 ? newImages : ["/product_1.webp"];
 
+    // Find next product sequence number for CC-XXX code
+    const maxNo = productsList.reduce((max, p) => {
+      const num = getProductNoNum(p);
+      return num > max ? num : max;
+    }, 0);
+    const newProdNo = maxNo + 1;
+    const newProductCode = `CC-${String(newProdNo).padStart(3, "0")}`;
+
     const newProd = {
       id: `custom-prod-${Date.now()}`,
+      productNo: newProdNo,
+      productCode: newProductCode,
+      createdAt: new Date().toISOString(),
       handle: newTitle.toLowerCase().replace(/\s+/g, "-"),
       title: newTitle,
       description: newDescription || "새로운 시그니처 상품입니다.",
@@ -2270,6 +2370,8 @@ export default function AdminPage() {
         maxVariantPrice: { amount: newPrice, currencyCode: "KRW" },
         minVariantPrice: { amount: newPrice, currencyCode: "KRW" },
       },
+      timeSaleDiscountPrice: newIsTimeSale ? newTimeSaleDiscountPrice : undefined,
+      timeSaleDiscountRate: newIsTimeSale ? (newTimeSaleDiscountRate ? parseInt(newTimeSaleDiscountRate) : 35) : undefined,
     };
 
     const updatedFullList = [newProd, ...productsList];
@@ -2283,10 +2385,11 @@ export default function AdminPage() {
       setAdminTimeSaleProductIds(updatedIds);
       const h = parseInt(newTimeSaleHours) || 0;
       const m = parseInt(newTimeSaleMinutes) || 0;
+      const rateNum = newTimeSaleDiscountRate ? parseInt(newTimeSaleDiscountRate) : 35;
       
       const updatedSettings = {
         ...productTimeSaleSettings,
-        [newProd.id]: { hours: h, minutes: m },
+        [newProd.id]: { hours: h, minutes: m, discountPrice: newTimeSaleDiscountPrice || undefined, discountRate: rateNum },
       };
       const newExpiry = Date.now() + (h * 3600 + m * 60) * 1000;
       const updatedExpiries = {
@@ -2471,15 +2574,20 @@ export default function AdminPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/"
-            className="flex items-center gap-2 text-xs font-semibold text-neutral-600 hover:text-neutral-950 transition-colors bg-neutral-100 px-3 py-1.5 rounded-full border border-neutral-200"
+            onClick={(e) => {
+              if (typeof window !== "undefined") {
+                window.location.href = "/";
+              }
+            }}
+            className="flex items-center gap-2 text-xs font-semibold text-neutral-600 hover:text-neutral-950 transition-colors bg-neutral-100 px-3 py-1.5 rounded-full border border-neutral-200 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             스토어 바로가기
           </Link>
           <div className="h-4 w-px bg-neutral-200" />
           <div className="flex items-center gap-3">
-            <Link href="/">
-              <LogoSvg className="h-5 w-auto text-neutral-950" />
+            <Link href="/" onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }}>
+              <LogoSvg className="h-5 w-auto text-neutral-950 cursor-pointer" />
             </Link>
             <span className="text-[10px] uppercase font-bold tracking-widest bg-neutral-100 text-neutral-800 border border-neutral-200 px-2 py-0.5 rounded-full">
               ADMIN v1.0
@@ -3074,14 +3182,23 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1">판매가 (KRW) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={newPrice}
-                    onChange={(e) => setNewPrice(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                    placeholder="예: 499000"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      required
+                      value={newPrice ? parseInt(String(newPrice).replace(/[^0-9]/g, ""), 10).toLocaleString("ko-KR") : ""}
+                      onChange={(e) => {
+                        const rawDigits = e.target.value.replace(/[^0-9]/g, "");
+                        setNewPrice(rawDigits);
+                      }}
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-3.5 pr-10 py-2.5 text-sm font-sans font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      placeholder="예: 499,000"
+                    />
+                    <span className="absolute right-3.5 top-2.5 text-xs font-black text-neutral-400 pointer-events-none">
+                      원
+                    </span>
+                  </div>
                 </div>
 
                 <div>
@@ -3844,85 +3961,230 @@ export default function AdminPage() {
                         ⚡ 타임세일을 설정하면 상품 카드 상단에 라이브 카운트다운 타이머와 뱃지가 노출되며, SPECIAL 카테고리에도 자동 연동 노출됩니다.
                       </p>
 
-                      <div className="space-y-2">
-                        <label className="text-[11px] font-extrabold text-neutral-800">타임세일 진행 시간 설정</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="relative">
-                            <input
-                              type="number"
-                              min="0"
-                              max="720"
-                              value={newTimeSaleHours}
-                              onChange={(e) => setNewTimeSaleHours(e.target.value)}
-                              className="w-full h-9 bg-white border border-neutral-200 rounded-xl pl-3 pr-8 text-xs font-black font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                              placeholder="24"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-500">시간</span>
+                      {/* 타임세일 할인율 (%) 설정 영역 */}
+                      <div className="bg-white border border-amber-200/90 rounded-2xl p-4 space-y-3 shadow-2xs">
+                        <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
+                          <label className="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                            <Percent className="w-4 h-4 text-amber-600" />
+                            <span>타임세일 할인율 설정 (%)</span>
+                          </label>
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                            Time Sale Discount Rate
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                          <div>
+                            <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                              할인율 입력 (%)
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                min="1"
+                                max="99"
+                                value={newTimeSaleDiscountRate}
+                                onChange={(e) => setNewTimeSaleDiscountRate(e.target.value)}
+                                placeholder="예: 35"
+                                className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-sans font-bold text-neutral-950 focus:outline-none focus:border-amber-500"
+                              />
+                              <span className="text-xs font-black text-amber-700 shrink-0">% OFF</span>
+                            </div>
                           </div>
 
-                          <div className="relative">
-                            <input
-                              type="number"
-                              min="0"
-                              max="59"
-                              value={newTimeSaleMinutes}
-                              onChange={(e) => setNewTimeSaleMinutes(e.target.value)}
-                              className="w-full h-9 bg-white border border-neutral-200 rounded-xl pl-3 pr-7 text-xs font-black font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                              placeholder="0"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-500">분</span>
+                          <div>
+                            <label className="block text-[10px] font-bold text-neutral-500 mb-1">빠른 할인율 선택</label>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {[10, 20, 30, 40, 50].map((rate) => (
+                                <button
+                                  key={rate}
+                                  type="button"
+                                  onClick={() => setNewTimeSaleDiscountRate(String(rate))}
+                                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
+                                    newTimeSaleDiscountRate === String(rate)
+                                      ? "bg-amber-500 text-neutral-950 border-amber-400 shadow-2xs"
+                                      : "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200"
+                                  }`}
+                                >
+                                  {rate}% OFF
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
 
-                        {/* Preset quick buttons */}
-                        <div className="flex items-center gap-1.5 pt-1 overflow-x-auto">
-                          {[
-                            { label: "12시간", h: "12", m: "0" },
-                            { label: "24시간", h: "24", m: "0" },
-                            { label: "48시간", h: "48", m: "0" },
-                            { label: "72시간", h: "72", m: "0" },
-                          ].map((preset) => (
-                            <button
-                              key={preset.label}
-                              type="button"
-                              onClick={() => {
-                                setNewTimeSaleHours(preset.h);
-                                setNewTimeSaleMinutes(preset.m);
-                              }}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border transition-all shrink-0 ${
-                                newTimeSaleHours === preset.h && newTimeSaleMinutes === preset.m
-                                  ? "bg-neutral-950 text-white border-neutral-950 shadow-2xs"
-                                  : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100"
-                              }`}
+                        {/* Real-time price summary preview box */}
+                        {(() => {
+                          const orig = parseFloat(newPrice) || 0;
+                          const rate = parseInt(newTimeSaleDiscountRate, 10) || 35;
+                          const disc = orig > 0 ? Math.round(orig * (1 - rate / 100)) : 0;
+                          const savings = orig > disc ? orig - disc : 0;
+
+                          return (
+                            <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-sans">
+                              <div className="flex items-center gap-2">
+                                <span className="text-neutral-400 line-through font-sans">정가 {formatPrice(String(orig), "KRW")}</span>
+                                <span className="text-amber-600 font-bold">→</span>
+                                <span className="font-black text-amber-950 font-sans text-sm">타임세일가 {formatPrice(String(disc), "KRW")}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="bg-amber-500 text-neutral-950 font-black text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
+                                  {rate}% OFF
+                                </span>
+                                {savings > 0 && (
+                                  <span className="text-[10px] font-bold text-amber-900 font-sans">
+                                    ({formatPrice(String(savings), "KRW")} 할인)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-[11px] font-extrabold text-neutral-800 flex items-center gap-1 mb-1.5">
+                            <Clock className="w-3.5 h-3.5 text-amber-500" />
+                            타임세일 시작 일정 (00월 00일 00시 00분)
+                          </label>
+                          <div className="grid grid-cols-5 gap-1.5">
+                            <select
+                              value={newTimeSaleStartMonth}
+                              onChange={(e) => setNewTimeSaleStartMonth(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
                             >
-                              {preset.label}
-                            </button>
-                          ))}
+                              {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((m) => (
+                                <option key={m} value={m}>{m}월</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={newTimeSaleStartDay}
+                              onChange={(e) => setNewTimeSaleStartDay(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {Array.from({ length: 31 }, (_, i) => String(i + 1)).map((d) => (
+                                <option key={d} value={d}>{d}일</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={newTimeSaleStartAmpm}
+                              onChange={(e) => setNewTimeSaleStartAmpm(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              <option value="오전">오전</option>
+                              <option value="오후">오후</option>
+                            </select>
+
+                            <select
+                              value={newTimeSaleStartHour}
+                              onChange={(e) => setNewTimeSaleStartHour(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((h) => (
+                                <option key={h} value={h}>{h}시</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={newTimeSaleStartMinute}
+                              onChange={(e) => setNewTimeSaleStartMinute(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {["00", "10", "20", "30", "40", "50", "59"].map((m) => (
+                                <option key={m} value={m}>{m}분</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-extrabold text-neutral-800 flex items-center gap-1 mb-1.5">
+                            <Clock className="w-3.5 h-3.5 text-rose-500" />
+                            타임세일 종료 일정 (00월 00일 00시 00분)
+                          </label>
+                          <div className="grid grid-cols-5 gap-1.5">
+                            <select
+                              value={newTimeSaleEndMonth}
+                              onChange={(e) => setNewTimeSaleEndMonth(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((m) => (
+                                <option key={m} value={m}>{m}월</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={newTimeSaleEndDay}
+                              onChange={(e) => setNewTimeSaleEndDay(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {Array.from({ length: 31 }, (_, i) => String(i + 1)).map((d) => (
+                                <option key={d} value={d}>{d}일</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={newTimeSaleEndAmpm}
+                              onChange={(e) => setNewTimeSaleEndAmpm(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              <option value="오전">오전</option>
+                              <option value="오후">오후</option>
+                            </select>
+
+                            <select
+                              value={newTimeSaleEndHour}
+                              onChange={(e) => setNewTimeSaleEndHour(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((h) => (
+                                <option key={h} value={h}>{h}시</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={newTimeSaleEndMinute}
+                              onChange={(e) => setNewTimeSaleEndMinute(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {["00", "10", "20", "30", "40", "50", "59"].map((m) => (
+                                <option key={m} value={m}>{m}분</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
 
                         {/* Real-time Ticking Remaining Time Display Box */}
                         {(() => {
-                          const h = parseInt(newTimeSaleHours) || 0;
-                          const m = parseInt(newTimeSaleMinutes) || 0;
-                          const totalSec = h * 3600 + m * 60;
-                          
-                          const hours = Math.floor(totalSec / 3600);
+                          const year = new Date().getFullYear();
+                          let startH = parseInt(newTimeSaleStartHour, 10) || 9;
+                          if (newTimeSaleStartAmpm === "오후" && startH < 12) startH += 12;
+                          if (newTimeSaleStartAmpm === "오전" && startH === 12) startH = 0;
+                          const startDate = new Date(year, (parseInt(newTimeSaleStartMonth, 10) || 8) - 1, parseInt(newTimeSaleStartDay, 10) || 20, startH, parseInt(newTimeSaleStartMinute, 10) || 0);
+
+                          let endH = parseInt(newTimeSaleEndHour, 10) || 11;
+                          if (newTimeSaleEndAmpm === "오후" && endH < 12) endH += 12;
+                          if (newTimeSaleEndAmpm === "오전" && endH === 12) endH = 0;
+                          const endDate = new Date(year, (parseInt(newTimeSaleEndMonth, 10) || 8) - 1, parseInt(newTimeSaleEndDay, 10) || 27, endH, parseInt(newTimeSaleEndMinute, 10) || 59);
+
+                          const diffMs = Math.max(0, endDate.getTime() - nowTick);
+                          const totalSec = Math.floor(diffMs / 1000);
+                          const days = Math.floor(totalSec / 86400);
+                          const hours = Math.floor((totalSec % 86400) / 3600);
                           const mins = Math.floor((totalSec % 3600) / 60);
                           const secs = totalSec % 60;
 
+                          const formattedDD = String(days).padStart(2, "0");
                           const formattedHH = String(hours).padStart(2, "0");
                           const formattedMM = String(mins).padStart(2, "0");
                           const formattedSS = String(secs).padStart(2, "0");
 
-                          const expiryDate = new Date(nowTick + totalSec * 1000);
-                          const year = expiryDate.getFullYear();
-                          const month = String(expiryDate.getMonth() + 1).padStart(2, "0");
-                          const day = String(expiryDate.getDate()).padStart(2, "0");
-                          const hoursStr = String(expiryDate.getHours()).padStart(2, "0");
-                          const minsStr = String(expiryDate.getMinutes()).padStart(2, "0");
                           const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
-                          const dayOfWeek = weekDays[expiryDate.getDay()];
-                          const expiryFormatted = `${year}-${month}-${day} ${hoursStr}:${minsStr} (${dayOfWeek}요일)`;
+                          const startFormatted = `${year}-${String(startDate.getMonth() + 1).padStart(2, "0")}-${String(startDate.getDate()).padStart(2, "0")} ${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")} (${weekDays[startDate.getDay()]}요일)`;
+                          const expiryFormatted = `${year}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")} ${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")} (${weekDays[endDate.getDay()]}요일)`;
 
                           return (
                             <div className="bg-neutral-950 text-white p-3.5 rounded-2xl border border-neutral-800 space-y-2 mt-2">
@@ -3930,9 +4192,13 @@ export default function AdminPage() {
                                 <span className="flex items-center gap-1.5 text-xs text-amber-400">
                                   <Clock className="w-4 h-4 text-amber-400" /> 실시간 잔여 남은 시간:
                                 </span>
-                                <div className="flex items-center gap-1 font-mono">
+                                <div className="flex items-center gap-1 font-sans">
                                   <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
-                                    {formattedHH}시간
+                                    {formattedDD}일
+                                  </span>
+                                  <span className="text-white font-black text-xs">:</span>
+                                  <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
+                                    {formattedHH}시
                                   </span>
                                   <span className="text-white font-black text-xs">:</span>
                                   <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
@@ -3944,9 +4210,9 @@ export default function AdminPage() {
                                   </span>
                                 </div>
                               </div>
-                              <div className="text-[11px] font-bold text-neutral-300 flex items-center justify-between font-mono pt-1.5 border-t border-neutral-800">
-                                <span>타임세일 종료 예정 시각:</span>
-                                <span className="text-amber-300 font-black bg-neutral-900 px-2 py-0.5 rounded-md border border-neutral-800">{expiryFormatted}</span>
+                              <div className="text-[11px] font-bold text-neutral-300 flex items-center justify-between font-sans pt-1.5 border-t border-neutral-800">
+                                <span>타임세일 시작/종료 일시:</span>
+                                <span className="text-amber-300 font-black bg-neutral-900 px-2 py-0.5 rounded-md border border-neutral-800">{startFormatted} ~ {expiryFormatted}</span>
                               </div>
                             </div>
                           );
@@ -3957,8 +4223,6 @@ export default function AdminPage() {
                     <p className="text-[11px] text-neutral-400 font-medium">타임세일 비활성화 상태입니다. 카운트다운 타이머 특가를 적용하려면 상단 토글 버튼을 켜주세요.</p>
                   )}
                 </div>
-
-                {/* 2. BULK DISCOUNT RULES */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
@@ -4124,13 +4388,23 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1">판매가 (KRW) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={editPrice}
-                    onChange={(e) => setEditPrice(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      required
+                      value={editPrice ? parseInt(String(editPrice).replace(/[^0-9]/g, ""), 10).toLocaleString("ko-KR") : ""}
+                      onChange={(e) => {
+                        const rawDigits = e.target.value.replace(/[^0-9]/g, "");
+                        setEditPrice(rawDigits);
+                      }}
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-3.5 pr-10 py-2.5 text-sm font-sans font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      placeholder="예: 499,000"
+                    />
+                    <span className="absolute right-3.5 top-2.5 text-xs font-black text-neutral-400 pointer-events-none">
+                      원
+                    </span>
+                  </div>
                 </div>
 
                 <div>
@@ -4296,150 +4570,6 @@ export default function AdminPage() {
                       );
                     })}
                   </div>
-                </div>
-
-                {/* 1.5. TIME SALE CONFIGURATION */}
-                <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-4 h-4 text-amber-500" />
-                      <label className="text-xs font-extrabold text-neutral-900">타임세일 (Time Sale) 특가 지정</label>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setEditIsTimeSale(!editIsTimeSale)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer border ${
-                        editIsTimeSale
-                          ? "bg-amber-500 text-neutral-950 border-amber-400 shadow-xs"
-                          : "bg-white text-neutral-600 border-neutral-300 hover:border-neutral-400"
-                      }`}
-                    >
-                      {editIsTimeSale ? "🔥 타임세일 적용 중" : "일반 상품 (적용 안 함)"}
-                    </button>
-                  </div>
-
-                  {editIsTimeSale ? (
-                    <div className="space-y-3 pt-1">
-                      <p className="text-[11px] text-amber-900 font-bold bg-amber-50 border border-amber-200/80 rounded-xl px-3 py-2">
-                        ⚡ 타임세일을 설정하면 상품 카드 상단에 라이브 카운트다운 타이머와 뱃지가 노출되며, SPECIAL 카테고리에도 자동 연동 노출됩니다.
-                      </p>
-
-                      <div className="space-y-2">
-                        <label className="text-[11px] font-extrabold text-neutral-800">타임세일 진행 시간 설정</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="relative">
-                            <input
-                              type="number"
-                              min="0"
-                              max="720"
-                              value={editTimeSaleHours}
-                              onChange={(e) => setEditTimeSaleHours(e.target.value)}
-                              className="w-full h-9 bg-white border border-neutral-200 rounded-xl pl-3 pr-8 text-xs font-black font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                              placeholder="24"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-500">시간</span>
-                          </div>
-
-                          <div className="relative">
-                            <input
-                              type="number"
-                              min="0"
-                              max="59"
-                              value={editTimeSaleMinutes}
-                              onChange={(e) => setEditTimeSaleMinutes(e.target.value)}
-                              className="w-full h-9 bg-white border border-neutral-200 rounded-xl pl-3 pr-7 text-xs font-black font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                              placeholder="0"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-500">분</span>
-                          </div>
-                        </div>
-
-                        {/* Preset quick buttons */}
-                        <div className="flex items-center gap-1.5 pt-1 overflow-x-auto">
-                          {[
-                            { label: "12시간", h: "12", m: "0" },
-                            { label: "24시간", h: "24", m: "0" },
-                            { label: "48시간", h: "48", m: "0" },
-                            { label: "72시간", h: "72", m: "0" },
-                          ].map((preset) => (
-                            <button
-                              key={preset.label}
-                              type="button"
-                              onClick={() => {
-                                setEditTimeSaleHours(preset.h);
-                                setEditTimeSaleMinutes(preset.m);
-                              }}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border transition-all shrink-0 ${
-                                editTimeSaleHours === preset.h && editTimeSaleMinutes === preset.m
-                                  ? "bg-neutral-950 text-white border-neutral-950 shadow-2xs"
-                                  : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100"
-                              }`}
-                            >
-                              {preset.label}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Real-time Ticking Remaining Time Display Box */}
-                        {(() => {
-                          let totalSec = (parseInt(editTimeSaleHours) || 0) * 3600 + (parseInt(editTimeSaleMinutes) || 0) * 60;
-                          if (editingProduct && productTimeSaleExpiries[editingProduct.id]) {
-                            const exp = productTimeSaleExpiries[editingProduct.id];
-                            if (exp > nowTick) {
-                              totalSec = Math.max(0, Math.floor((exp - nowTick) / 1000));
-                            }
-                          }
-
-                          const hours = Math.floor(totalSec / 3600);
-                          const mins = Math.floor((totalSec % 3600) / 60);
-                          const secs = totalSec % 60;
-
-                          const formattedHH = String(hours).padStart(2, "0");
-                          const formattedMM = String(mins).padStart(2, "0");
-                          const formattedSS = String(secs).padStart(2, "0");
-
-                          const expiryDate = new Date(nowTick + totalSec * 1000);
-                          const year = expiryDate.getFullYear();
-                          const month = String(expiryDate.getMonth() + 1).padStart(2, "0");
-                          const day = String(expiryDate.getDate()).padStart(2, "0");
-                          const hoursStr = String(expiryDate.getHours()).padStart(2, "0");
-                          const minsStr = String(expiryDate.getMinutes()).padStart(2, "0");
-                          const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
-                          const dayOfWeek = weekDays[expiryDate.getDay()];
-                          const expiryFormatted = `${year}-${month}-${day} ${hoursStr}:${minsStr} (${dayOfWeek}요일)`;
-
-                          return (
-                            <div className="bg-neutral-950 text-white p-3.5 rounded-2xl border border-neutral-800 space-y-2 mt-2">
-                              <div className="flex items-center justify-between text-xs font-black text-white">
-                                <span className="flex items-center gap-1.5 text-xs text-amber-400">
-                                  <Clock className="w-4 h-4 text-amber-400" /> 실시간 잔여 남은 시간:
-                                </span>
-                                <div className="flex items-center gap-1 font-mono">
-                                  <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
-                                    {formattedHH}시간
-                                  </span>
-                                  <span className="text-white font-black text-xs">:</span>
-                                  <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
-                                    {formattedMM}분
-                                  </span>
-                                  <span className="text-white font-black text-xs">:</span>
-                                  <span className="bg-amber-500 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs animate-pulse">
-                                    {formattedSS}초
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="text-[11px] font-bold text-neutral-300 flex items-center justify-between font-mono pt-1.5 border-t border-neutral-800">
-                                <span>타임세일 종료 예정 시각:</span>
-                                <span className="text-amber-300 font-black bg-neutral-900 px-2 py-0.5 rounded-md border border-neutral-800">{expiryFormatted}</span>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-[11px] text-neutral-400 font-medium">타임세일 비활성화 상태입니다. 카운트다운 타이머 특가를 적용하려면 상단 토글 버튼을 켜주세요.</p>
-                  )}
                 </div>
               </div>
 
@@ -5005,89 +5135,230 @@ export default function AdminPage() {
                         ⚡ 타임세일을 설정하면 상품 카드 상단에 라이브 카운트다운 타이머와 뱃지가 노출되며, SPECIAL 카테고리에도 자동 연동 노출됩니다.
                       </p>
 
-                      <div className="space-y-2">
-                        <label className="text-[11px] font-extrabold text-neutral-800">타임세일 진행 시간 설정</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="relative">
-                            <input
-                              type="number"
-                              min="0"
-                              max="720"
-                              value={editTimeSaleHours}
-                              onChange={(e) => setEditTimeSaleHours(e.target.value)}
-                              className="w-full h-9 bg-white border border-neutral-200 rounded-xl pl-3 pr-8 text-xs font-black font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                              placeholder="24"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-500">시간</span>
+                      {/* 타임세일 할인율 (%) 설정 영역 */}
+                      <div className="bg-white border border-amber-200/90 rounded-2xl p-4 space-y-3 shadow-2xs">
+                        <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
+                          <label className="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                            <Percent className="w-4 h-4 text-amber-600" />
+                            <span>타임세일 할인율 설정 (%)</span>
+                          </label>
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                            Time Sale Discount Rate
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                          <div>
+                            <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                              할인율 입력 (%)
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                min="1"
+                                max="99"
+                                value={editTimeSaleDiscountRate}
+                                onChange={(e) => setEditTimeSaleDiscountRate(e.target.value)}
+                                placeholder="예: 35"
+                                className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-sans font-bold text-neutral-950 focus:outline-none focus:border-amber-500"
+                              />
+                              <span className="text-xs font-black text-amber-700 shrink-0">% OFF</span>
+                            </div>
                           </div>
 
-                          <div className="relative">
-                            <input
-                              type="number"
-                              min="0"
-                              max="59"
-                              value={editTimeSaleMinutes}
-                              onChange={(e) => setEditTimeSaleMinutes(e.target.value)}
-                              className="w-full h-9 bg-white border border-neutral-200 rounded-xl pl-3 pr-7 text-xs font-black font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                              placeholder="0"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-neutral-500">분</span>
+                          <div>
+                            <label className="block text-[10px] font-bold text-neutral-500 mb-1">빠른 할인율 선택</label>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {[10, 20, 30, 40, 50].map((rate) => (
+                                <button
+                                  key={rate}
+                                  type="button"
+                                  onClick={() => setEditTimeSaleDiscountRate(String(rate))}
+                                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
+                                    editTimeSaleDiscountRate === String(rate)
+                                      ? "bg-amber-500 text-neutral-950 border-amber-400 shadow-2xs"
+                                      : "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200"
+                                  }`}
+                                >
+                                  {rate}% OFF
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
 
-                        {/* Preset quick buttons */}
-                        <div className="flex items-center gap-1.5 pt-1 overflow-x-auto">
-                          {[
-                            { label: "12시간", h: "12", m: "0" },
-                            { label: "24시간", h: "24", m: "0" },
-                            { label: "48시간", h: "48", m: "0" },
-                            { label: "72시간", h: "72", m: "0" },
-                          ].map((preset) => (
-                            <button
-                              key={preset.label}
-                              type="button"
-                              onClick={() => {
-                                setEditTimeSaleHours(preset.h);
-                                setEditTimeSaleMinutes(preset.m);
-                              }}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border transition-all shrink-0 ${
-                                editTimeSaleHours === preset.h && editTimeSaleMinutes === preset.m
-                                  ? "bg-neutral-950 text-white border-neutral-950 shadow-2xs"
-                                  : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100"
-                              }`}
+                        {/* Real-time price summary preview box */}
+                        {(() => {
+                          const orig = parseFloat(editPrice) || 0;
+                          const rate = parseInt(editTimeSaleDiscountRate, 10) || 35;
+                          const disc = orig > 0 ? Math.round(orig * (1 - rate / 100)) : 0;
+                          const savings = orig > disc ? orig - disc : 0;
+
+                          return (
+                            <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-sans">
+                              <div className="flex items-center gap-2">
+                                <span className="text-neutral-400 line-through font-sans">정가 {formatPrice(String(orig), "KRW")}</span>
+                                <span className="text-amber-600 font-bold">→</span>
+                                <span className="font-black text-amber-950 font-sans text-sm">타임세일가 {formatPrice(String(disc), "KRW")}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="bg-amber-500 text-neutral-950 font-black text-[10px] px-2 py-0.5 rounded-md shadow-2xs">
+                                  {rate}% OFF
+                                </span>
+                                {savings > 0 && (
+                                  <span className="text-[10px] font-bold text-amber-900 font-sans">
+                                    ({formatPrice(String(savings), "KRW")} 할인)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-[11px] font-extrabold text-neutral-800 flex items-center gap-1 mb-1.5">
+                            <Clock className="w-3.5 h-3.5 text-amber-500" />
+                            타임세일 시작 일정 (00월 00일 00시 00분)
+                          </label>
+                          <div className="grid grid-cols-5 gap-1.5">
+                            <select
+                              value={editTimeSaleStartMonth}
+                              onChange={(e) => setEditTimeSaleStartMonth(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
                             >
-                              {preset.label}
-                            </button>
-                          ))}
+                              {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((m) => (
+                                <option key={m} value={m}>{m}월</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={editTimeSaleStartDay}
+                              onChange={(e) => setEditTimeSaleStartDay(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {Array.from({ length: 31 }, (_, i) => String(i + 1)).map((d) => (
+                                <option key={d} value={d}>{d}일</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={editTimeSaleStartAmpm}
+                              onChange={(e) => setEditTimeSaleStartAmpm(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              <option value="오전">오전</option>
+                              <option value="오후">오후</option>
+                            </select>
+
+                            <select
+                              value={editTimeSaleStartHour}
+                              onChange={(e) => setEditTimeSaleStartHour(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((h) => (
+                                <option key={h} value={h}>{h}시</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={editTimeSaleStartMinute}
+                              onChange={(e) => setEditTimeSaleStartMinute(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {["00", "10", "20", "30", "40", "50", "59"].map((m) => (
+                                <option key={m} value={m}>{m}분</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-extrabold text-neutral-800 flex items-center gap-1 mb-1.5">
+                            <Clock className="w-3.5 h-3.5 text-rose-500" />
+                            타임세일 종료 일정 (00월 00일 00시 00분)
+                          </label>
+                          <div className="grid grid-cols-5 gap-1.5">
+                            <select
+                              value={editTimeSaleEndMonth}
+                              onChange={(e) => setEditTimeSaleEndMonth(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((m) => (
+                                <option key={m} value={m}>{m}월</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={editTimeSaleEndDay}
+                              onChange={(e) => setEditTimeSaleEndDay(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {Array.from({ length: 31 }, (_, i) => String(i + 1)).map((d) => (
+                                <option key={d} value={d}>{d}일</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={editTimeSaleEndAmpm}
+                              onChange={(e) => setEditTimeSaleEndAmpm(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              <option value="오전">오전</option>
+                              <option value="오후">오후</option>
+                            </select>
+
+                            <select
+                              value={editTimeSaleEndHour}
+                              onChange={(e) => setEditTimeSaleEndHour(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((h) => (
+                                <option key={h} value={h}>{h}시</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={editTimeSaleEndMinute}
+                              onChange={(e) => setEditTimeSaleEndMinute(e.target.value)}
+                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
+                            >
+                              {["00", "10", "20", "30", "40", "50", "59"].map((m) => (
+                                <option key={m} value={m}>{m}분</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
 
                         {/* Real-time Ticking Remaining Time Display Box */}
                         {(() => {
-                          let totalSec = (parseInt(editTimeSaleHours) || 0) * 3600 + (parseInt(editTimeSaleMinutes) || 0) * 60;
-                          if (editingProduct && productTimeSaleExpiries[editingProduct.id]) {
-                            const exp = productTimeSaleExpiries[editingProduct.id];
-                            if (exp > nowTick) {
-                              totalSec = Math.max(0, Math.floor((exp - nowTick) / 1000));
-                            }
-                          }
+                          const year = new Date().getFullYear();
+                          let startH = parseInt(editTimeSaleStartHour, 10) || 9;
+                          if (editTimeSaleStartAmpm === "오후" && startH < 12) startH += 12;
+                          if (editTimeSaleStartAmpm === "오전" && startH === 12) startH = 0;
+                          const startDate = new Date(year, (parseInt(editTimeSaleStartMonth, 10) || 8) - 1, parseInt(editTimeSaleStartDay, 10) || 20, startH, parseInt(editTimeSaleStartMinute, 10) || 0);
 
-                          const hours = Math.floor(totalSec / 3600);
+                          let endH = parseInt(editTimeSaleEndHour, 10) || 11;
+                          if (editTimeSaleEndAmpm === "오후" && endH < 12) endH += 12;
+                          if (editTimeSaleEndAmpm === "오전" && endH === 12) endH = 0;
+                          const endDate = new Date(year, (parseInt(editTimeSaleEndMonth, 10) || 8) - 1, parseInt(editTimeSaleEndDay, 10) || 27, endH, parseInt(editTimeSaleEndMinute, 10) || 59);
+
+                          const diffMs = Math.max(0, endDate.getTime() - nowTick);
+                          const totalSec = Math.floor(diffMs / 1000);
+                          const days = Math.floor(totalSec / 86400);
+                          const hours = Math.floor((totalSec % 86400) / 3600);
                           const mins = Math.floor((totalSec % 3600) / 60);
                           const secs = totalSec % 60;
 
+                          const formattedDD = String(days).padStart(2, "0");
                           const formattedHH = String(hours).padStart(2, "0");
                           const formattedMM = String(mins).padStart(2, "0");
                           const formattedSS = String(secs).padStart(2, "0");
 
-                          const expiryDate = new Date(nowTick + totalSec * 1000);
-                          const year = expiryDate.getFullYear();
-                          const month = String(expiryDate.getMonth() + 1).padStart(2, "0");
-                          const day = String(expiryDate.getDate()).padStart(2, "0");
-                          const hoursStr = String(expiryDate.getHours()).padStart(2, "0");
-                          const minsStr = String(expiryDate.getMinutes()).padStart(2, "0");
                           const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
-                          const dayOfWeek = weekDays[expiryDate.getDay()];
-                          const expiryFormatted = `${year}-${month}-${day} ${hoursStr}:${minsStr} (${dayOfWeek}요일)`;
+                          const startFormatted = `${year}-${String(startDate.getMonth() + 1).padStart(2, "0")}-${String(startDate.getDate()).padStart(2, "0")} ${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")} (${weekDays[startDate.getDay()]}요일)`;
+                          const expiryFormatted = `${year}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")} ${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")} (${weekDays[endDate.getDay()]}요일)`;
 
                           return (
                             <div className="bg-neutral-950 text-white p-3.5 rounded-2xl border border-neutral-800 space-y-2 mt-2">
@@ -5095,9 +5366,13 @@ export default function AdminPage() {
                                 <span className="flex items-center gap-1.5 text-xs text-amber-400">
                                   <Clock className="w-4 h-4 text-amber-400" /> 실시간 잔여 남은 시간:
                                 </span>
-                                <div className="flex items-center gap-1 font-mono">
+                                <div className="flex items-center gap-1 font-sans">
                                   <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
-                                    {formattedHH}시간
+                                    {formattedDD}일
+                                  </span>
+                                  <span className="text-white font-black text-xs">:</span>
+                                  <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
+                                    {formattedHH}시
                                   </span>
                                   <span className="text-white font-black text-xs">:</span>
                                   <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
@@ -5109,9 +5384,9 @@ export default function AdminPage() {
                                   </span>
                                 </div>
                               </div>
-                              <div className="text-[11px] font-bold text-neutral-300 flex items-center justify-between font-mono pt-1.5 border-t border-neutral-800">
-                                <span>타임세일 종료 예정 시각:</span>
-                                <span className="text-amber-300 font-black bg-neutral-900 px-2 py-0.5 rounded-md border border-neutral-800">{expiryFormatted}</span>
+                              <div className="text-[11px] font-bold text-neutral-300 flex items-center justify-between font-sans pt-1.5 border-t border-neutral-800">
+                                <span>타임세일 시작/종료 일시:</span>
+                                <span className="text-amber-300 font-black bg-neutral-900 px-2 py-0.5 rounded-md border border-neutral-800">{startFormatted} ~ {expiryFormatted}</span>
                               </div>
                             </div>
                           );
@@ -5122,8 +5397,6 @@ export default function AdminPage() {
                     <p className="text-[11px] text-neutral-400 font-medium">타임세일 비활성화 상태입니다. 카운트다운 타이머 특가를 적용하려면 상단 토글 버튼을 켜주세요.</p>
                   )}
                 </div>
-
-                {/* 2. BULK PURCHASE DISCOUNT */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">

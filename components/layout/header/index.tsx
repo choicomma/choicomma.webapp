@@ -31,9 +31,66 @@ interface HeaderProps {
   collections: Collection[];
 }
 
+import { LanguageSelector } from "./language-selector";
+import { getCurrentLanguage } from "@/lib/i18n/translation";
+
+const NAV_I18N: Record<string, Record<string, string>> = {
+  ko: {
+    home: "HOME",
+    timesale: "TIMESALE",
+    login: "LOG IN",
+  },
+  en: {
+    home: "HOME",
+    timesale: "TIMESALE",
+    login: "LOG IN",
+  },
+  ja: {
+    home: "ホーム",
+    timesale: "タイムセール",
+    login: "ログイン",
+  },
+  zh: {
+    home: "首页",
+    timesale: "限时特惠",
+    login: "登录",
+  },
+  fr: {
+    home: "ACCUEIL",
+    timesale: "VENTE FLASH",
+    login: "CONNEXION",
+  },
+  de: {
+    home: "START",
+    timesale: "TIMESALE",
+    login: "ANMELDEN",
+  },
+  es: {
+    home: "INICIO",
+    timesale: "OFERTA",
+    login: "ACCESO",
+  },
+};
+
 export function Header({ collections }: HeaderProps) {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
+
+  const getNavItemLabel = (href: string, defaultLabel: string) => {
+    const dict = NAV_I18N[currentLang] || NAV_I18N.ko;
+    if (href === "/") return dict.home;
+    if (href.includes("timesale")) return dict.timesale;
+    if (href.includes("login")) return dict.login;
+    return defaultLabel;
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -61,7 +118,7 @@ export function Header({ collections }: HeaderProps) {
       </div>
 
       {/* Main Header Bar Container */}
-      <div className="relative w-full pointer-events-auto overflow-hidden">
+      <div className="relative w-full pointer-events-auto overflow-visible">
         {/* Animated Black Background Slide-Down Panel */}
         <AnimatePresence>
           {isScrolled && (
@@ -70,7 +127,7 @@ export function Header({ collections }: HeaderProps) {
               animate={{ y: 0 }}
               exit={{ y: "-100%" }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute inset-0 bg-black/95 backdrop-blur-md shadow-xl z-0"
+              className="absolute inset-0 bg-black/95 backdrop-blur-md shadow-xl z-0 overflow-hidden"
             />
           )}
         </AnimatePresence>
@@ -116,11 +173,12 @@ export function Header({ collections }: HeaderProps) {
                     )}
                     prefetch
                   >
-                    <span>{item.label}</span>
+                    <span>{getNavItemLabel(item.href, item.label)}</span>
                   </Link>
                 </li>
               ))}
             </ul>
+            <LanguageSelector isScrolled={isScrolled} />
             <CartModal
               className={cn(
                 "transition-colors duration-400",

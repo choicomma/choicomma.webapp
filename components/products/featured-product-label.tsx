@@ -1,10 +1,12 @@
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
 import { Product } from "@/lib/sfcc/types";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { QuickOptionModal } from "./quick-option-modal";
+import { Clock } from "lucide-react";
+import { translateProductTitle, translateProductDescription, getCurrentLanguage } from "@/lib/i18n/translation";
 
 // Returns badge config by productLabel value
 function getLabelBadge(label?: string) {
@@ -29,10 +31,127 @@ export function FeaturedProductLabel({
   principal?: boolean;
   className?: string;
 }) {
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
+
   const isSetProduct =
     product.tags?.includes("SET_SALE") || product.id.startsWith("set-product-");
 
   const labelBadge = getLabelBadge((product as any).productLabel);
+
+  const [timeSaleDiscount, setTimeSaleDiscount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateTimeSaleStatus = () => {
+      if (typeof window === "undefined") return;
+      try {
+        const linked = (product as any).linkedProduct;
+        const linkedId = (product as any).linkedProductId;
+        const possibleIds = Array.from(
+          new Set(
+            [
+              String(product.id || ""),
+              String(product.handle || ""),
+              linkedId ? String(linkedId) : "",
+              linked?.id ? String(linked.id) : "",
+              linked?.handle ? String(linked.handle) : "",
+            ].filter(Boolean)
+          )
+        );
+
+        const globalStatus = localStorage.getItem("secret_timesale_status");
+        if (globalStatus === "ended" || (product as any).isTimeSale === false) {
+          setTimeSaleDiscount(null);
+          return;
+        }
+
+        let isSelected = false;
+        const savedIds = localStorage.getItem("secret_timesale_product_ids");
+        if (savedIds !== null) {
+          try {
+            const parsedIds: any[] = JSON.parse(savedIds);
+            isSelected = parsedIds.some((id: any) =>
+              possibleIds.includes(String(id))
+            );
+          } catch (e) {}
+        } else {
+          isSelected = (product as any).isTimeSale === true || product.categoryId === "timesale" || product.tags?.includes("TIMESALE");
+        }
+
+        let itemDiscount: number | null = null;
+        const itemSettingsSaved = localStorage.getItem("secret_timesale_item_settings");
+        if (itemSettingsSaved) {
+          try {
+            const parsedSettings = JSON.parse(itemSettingsSaved);
+            for (const pid of possibleIds) {
+              if (parsedSettings[pid]?.discountRate) {
+                itemDiscount = parseInt(parsedSettings[pid].discountRate);
+                break;
+              }
+            }
+          } catch (e) {}
+        }
+
+        const isTimeSale = isSelected || (product as any).isTimeSale === true || (linked as any)?.isTimeSale === true;
+
+        if (isTimeSale) {
+          let discount =
+            itemDiscount ||
+            (product as any).timeSaleDiscountRate ||
+            (linked as any)?.timeSaleDiscountRate ||
+            (product as any).discountRate ||
+            (linked as any)?.discountRate;
+
+          if (!discount) {
+            const savedDisc = localStorage.getItem("secret_timesale_discount");
+            if (savedDisc && !isNaN(parseInt(savedDisc))) {
+              discount = parseInt(savedDisc);
+            } else {
+              discount = 35;
+            }
+          }
+
+          setTimeSaleDiscount(discount);
+        } else {
+          setTimeSaleDiscount(null);
+        }
+      } catch (e) {
+        console.error("Error in FeaturedProductLabel timeSale check", e);
+      }
+    };
+
+    updateTimeSaleStatus();
+    window.addEventListener("storage", updateTimeSaleStatus);
+    window.addEventListener("admin_products_updated", updateTimeSaleStatus);
+    window.addEventListener("focus", updateTimeSaleStatus);
+
+    const interval = setInterval(updateTimeSaleStatus, 1000);
+
+    return () => {
+      window.removeEventListener("storage", updateTimeSaleStatus);
+      window.removeEventListener("admin_products_updated", updateTimeSaleStatus);
+      window.removeEventListener("focus", updateTimeSaleStatus);
+      clearInterval(interval);
+    };
+  }, [product]);
+
+  const basePrice = parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
+  const maxPrice = parseFloat(product.priceRange?.maxVariantPrice?.amount || "0");
+  const origPriceNum = maxPrice > basePrice ? maxPrice : basePrice;
+
+  let finalPriceNum = basePrice;
+  let strikethroughPriceNum: number | null = null;
+
+  if (timeSaleDiscount !== null && timeSaleDiscount > 0) {
+    strikethroughPriceNum = origPriceNum;
+    finalPriceNum = Math.round(origPriceNum * (1 - timeSaleDiscount / 100));
+  }
 
   if (principal) {
     return (
@@ -45,7 +164,13 @@ export function FeaturedProductLabel({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 items-start w-full">
           {/* Left Column: Badge, Title */}
           <div className="flex flex-col items-start min-w-0">
-            <div className="mb-2">
+            <div className="mb-2 flex items-center gap-1.5 flex-wrap">
+              {timeSaleDiscount !== null && (
+                <Badge className="font-extrabold rounded-none text-xs px-3 py-1 bg-white text-neutral-950 border border-neutral-300 shadow-2xs tracking-wider flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-neutral-950 shrink-0" />
+                  <span>TIME SALE {timeSaleDiscount}% OFF</span>
+                </Badge>
+              )}
               {isSetProduct ? (
                 <Badge className="font-extrabold rounded-none text-xs px-3.5 py-1 bg-neutral-950 text-white border-none">
                   SET SALE
@@ -61,24 +186,28 @@ export function FeaturedProductLabel({
               href={`/product/${product.handle}`}
               className="block text-xl md:text-2xl font-bold text-neutral-950 hover:underline leading-snug tracking-tight line-clamp-2"
             >
-              {product.title}
+              {translateProductTitle(product.title, currentLang)}
             </Link>
           </div>
 
           {/* Right Column: Description */}
           <div className="text-xs md:text-sm font-medium text-neutral-700 leading-relaxed line-clamp-3">
-            {product.description || "The Verde Lounge Chair is a bold blend of sculptural form and deep comfort."}
+            {translateProductDescription(product.description || "The Verde Lounge Chair is a bold blend of sculptural form and deep comfort.", currentLang)}
           </div>
         </div>
 
         {/* Bottom Row: Price on Left, Add To Cart Button on Right */}
         <div className="flex items-center justify-between gap-4 pt-2 border-t border-neutral-100/80">
-          <p className="text-2xl md:text-3xl font-extrabold text-neutral-950 font-mono leading-none">
-            {formatPrice(
-              product.priceRange.minVariantPrice.amount,
-              product.currencyCode
+          <div className="flex flex-col items-start leading-none">
+            {strikethroughPriceNum !== null && (
+              <span className="text-xs md:text-sm text-neutral-400 line-through font-semibold mb-1">
+                {formatPrice(strikethroughPriceNum.toString(), product.currencyCode)}
+              </span>
             )}
-          </p>
+            <p className="text-2xl md:text-3xl font-extrabold text-neutral-950 tracking-tight leading-none">
+              {formatPrice(finalPriceNum.toString(), product.currencyCode)}
+            </p>
+          </div>
 
           <Suspense fallback={null}>
             <QuickOptionModal product={product} />
@@ -96,7 +225,13 @@ export function FeaturedProductLabel({
       )}
     >
       <div className="flex flex-col gap-1.5 min-w-0 w-full">
-        <div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {timeSaleDiscount !== null && (
+            <Badge className="bg-white text-neutral-950 font-black text-[10px] px-2.5 py-0.5 rounded-none uppercase border border-neutral-300 shadow-2xs tracking-wider inline-flex items-center gap-1">
+              <Clock className="w-3 h-3 text-neutral-950 shrink-0" />
+              <span>TIME SALE {timeSaleDiscount}% OFF</span>
+            </Badge>
+          )}
           {isSetProduct ? (
             <Badge className="bg-neutral-950 text-white font-extrabold text-[10px] px-2.5 py-0.5 rounded-none uppercase inline-block border-none">
               SET SALE
@@ -111,18 +246,22 @@ export function FeaturedProductLabel({
           href={`/product/${product.handle}`}
           className="block text-sm md:text-base font-bold text-neutral-950 hover:underline leading-tight tracking-tight line-clamp-2"
         >
-          {product.title}
+          {translateProductTitle(product.title, currentLang)}
         </Link>
       </div>
 
       {/* Bottom Row: Price & Add To Cart Button */}
       <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-neutral-100">
-        <p className="text-sm sm:text-base font-extrabold text-neutral-950 font-mono tracking-tight shrink-0">
-          {formatPrice(
-            product.priceRange.minVariantPrice.amount,
-            product.currencyCode
+        <div className="flex flex-col items-start leading-none">
+          {strikethroughPriceNum !== null && (
+            <span className="text-[11px] text-neutral-400 line-through font-semibold mb-0.5">
+              {formatPrice(strikethroughPriceNum.toString(), product.currencyCode)}
+            </span>
           )}
-        </p>
+          <p className="text-sm sm:text-base font-extrabold text-neutral-950 tracking-tight shrink-0">
+            {formatPrice(finalPriceNum.toString(), product.currencyCode)}
+          </p>
+        </div>
 
         <Suspense fallback={null}>
           <QuickOptionModal product={product} />

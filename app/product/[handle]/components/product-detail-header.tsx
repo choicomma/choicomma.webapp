@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Check, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/cart/cart-context";
+import { translateProductTitle, translateProductDescription, getCurrentLanguage } from "@/lib/i18n/translation";
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -23,11 +24,118 @@ const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   PINK: "#EC4899",
 };
 
+const HEADER_I18N: Record<string, Record<string, string>> = {
+  ko: {
+    timeSale: "TIME SALE",
+    timeRemaining: "남은시간",
+    days: "일",
+    hours: "시",
+    minutes: "분",
+    seconds: "초",
+    color: "색상:",
+    size: "사이즈",
+    addToCart: "장바구니 담기",
+    adding: "담는 중...",
+    outOfStock: "품절",
+  },
+  en: {
+    timeSale: "TIME SALE",
+    timeRemaining: "Time Left",
+    days: "d",
+    hours: "h",
+    minutes: "m",
+    seconds: "s",
+    color: "Color:",
+    size: "Size",
+    addToCart: "ADD TO CART",
+    adding: "ADDING...",
+    outOfStock: "OUT OF STOCK",
+  },
+  ja: {
+    timeSale: "タイムセール",
+    timeRemaining: "残り時間",
+    days: "日",
+    hours: "時",
+    minutes: "分",
+    seconds: "秒",
+    color: "色:",
+    size: "サイズ",
+    addToCart: "カートに追加",
+    adding: "追加中...",
+    outOfStock: "売り切れ",
+  },
+  zh: {
+    timeSale: "限时特惠",
+    timeRemaining: "剩余时间",
+    days: "天",
+    hours: "时",
+    minutes: "分",
+    seconds: "秒",
+    color: "颜色:",
+    size: "尺寸",
+    addToCart: "加入购物车",
+    adding: "添加中...",
+    outOfStock: "缺货",
+  },
+  fr: {
+    timeSale: "VENTE FLASH",
+    timeRemaining: "Temps restant",
+    days: "j",
+    hours: "h",
+    minutes: "m",
+    seconds: "s",
+    color: "Couleur:",
+    size: "Taille",
+    addToCart: "AJOUTER AU PANIER",
+    adding: "AJOUT...",
+    outOfStock: "ÉPUISÉ",
+  },
+  de: {
+    timeSale: "TIMESALE",
+    timeRemaining: "Verbleibende Zeit",
+    days: "T",
+    hours: "St",
+    minutes: "Min",
+    seconds: "Sek",
+    color: "Farbe:",
+    size: "Größe",
+    addToCart: "IN DEN WARENKORB",
+    adding: "WIRD HINZUGEFÜGT...",
+    outOfStock: "AUSVERKAUFT",
+  },
+  es: {
+    timeSale: "OFERTA",
+    timeRemaining: "Tiempo restante",
+    days: "d",
+    hours: "h",
+    minutes: "m",
+    seconds: "s",
+    color: "Color:",
+    size: "Talla",
+    addToCart: "AÑADIR AL CARRITO",
+    adding: "AÑADIENDO...",
+    outOfStock: "AGOTADO",
+  },
+};
+
 interface ProductDetailHeaderProps {
   product: Product;
+  hasVariants?: boolean;
 }
 
-export function ProductDetailHeader({ product: initialProduct }: ProductDetailHeaderProps) {
+export function ProductDetailHeader({
+  product: initialProduct,
+  hasVariants = true,
+}: ProductDetailHeaderProps) {
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
+
   const [product, setProduct] = useState<Product>(initialProduct);
   const [timeSaleDiscount, setTimeSaleDiscount] = useState<number>(35);
   const [isTimeSaleItem, setIsTimeSaleItem] = useState<boolean>(false);
@@ -38,10 +146,11 @@ export function ProductDetailHeader({ product: initialProduct }: ProductDetailHe
     product.tags?.includes("SET_SALE") || product.id.startsWith("set-product-");
 
   const [remainingTime, setRemainingTime] = useState<{
+    days: string;
     hours: string;
     minutes: string;
     seconds: string;
-  }>({ hours: "35", minutes: "54", seconds: "02" });
+  }>({ days: "01", hours: "11", minutes: "54", seconds: "02" });
 
   const [colors, setColors] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
@@ -118,6 +227,7 @@ export function ProductDetailHeader({ product: initialProduct }: ProductDetailHe
       setSelectedColor((prev) => (prev && extractedColors.includes(prev) ? prev : extractedColors[0]));
       setSelectedSize((prev) => (prev && extractedSizes.includes(prev) ? prev : extractedSizes[0]));
 
+      let itemSettings: Record<string, { hours?: number; minutes?: number; discountRate?: number; discountPrice?: string }> = {};
       let savedSelectedIds: string[] = [];
       let savedDiscountNum = 35;
 
@@ -133,17 +243,37 @@ export function ProductDetailHeader({ product: initialProduct }: ProductDetailHe
         savedDiscountNum = parseInt(savedDisc);
       }
 
-      setTimeSaleDiscount(savedDiscountNum);
+      const savedSettings = localStorage.getItem("secret_timesale_item_settings");
+      if (savedSettings) {
+        try {
+          itemSettings = JSON.parse(savedSettings);
+        } catch (e) {}
+      }
 
-      const isDirectSelected = savedSelectedIds.includes(activeProd.id);
+      const customDiscountPrice = (activeProd as any).timeSaleDiscountPrice || itemSettings[activeProd.id]?.discountPrice;
+      const basePrice = parseFloat(activeProd.priceRange?.minVariantPrice?.amount || "0");
+      const maxPrice = parseFloat(activeProd.priceRange?.maxVariantPrice?.amount || "0");
+      const origPrice = maxPrice > basePrice ? maxPrice : basePrice;
+
+      let itemRate = (activeProd as any).timeSaleDiscountRate || itemSettings[activeProd.id]?.discountRate || savedDiscountNum || 35;
+      if (customDiscountPrice && !isNaN(parseFloat(customDiscountPrice)) && origPrice > 0) {
+        const discVal = parseFloat(customDiscountPrice);
+        if (discVal < origPrice) {
+          itemRate = Math.round((1 - discVal / origPrice) * 100);
+        }
+      }
+      setTimeSaleDiscount(itemRate);
+
+      const globalStatus = localStorage.getItem("secret_timesale_status");
+      const isGlobalOff = globalStatus === "ended";
+      const isProductOff = (activeProd as any).isTimeSale === false;
+
+      const isDirectSelected = savedSelectedIds.includes(activeProd.id) || savedSelectedIds.includes(activeProd.handle) || savedSelectedIds.includes((activeProd as any).productCode);
       const isSet = activeProd.tags?.includes("SET_SALE") || activeProd.id.startsWith("set-product-");
       const isCategorySale = activeProd.categoryId === "timesale" || activeProd.tags?.includes("TIMESALE");
 
-      const isSaleActive = isDirectSelected || isSet || isCategorySale;
+      const isSaleActive = !isGlobalOff && !isProductOff && (isDirectSelected || isSet || isCategorySale || (activeProd as any).isTimeSale === true);
       setIsTimeSaleItem(isSaleActive);
-
-      const basePrice = parseFloat(activeProd.priceRange?.minVariantPrice?.amount || "0");
-      const maxPrice = parseFloat(activeProd.priceRange?.maxVariantPrice?.amount || "0");
 
       if (isSet) {
         setDiscountedPriceNum(basePrice);
@@ -151,8 +281,9 @@ export function ProductDetailHeader({ product: initialProduct }: ProductDetailHe
         const rate = calcTag ? parseInt(calcTag) || 25 : 25;
         setOriginalPriceNum(Math.round(basePrice / (1 - rate / 100)));
       } else if (isSaleActive) {
-        const origPrice = maxPrice > basePrice ? maxPrice : basePrice;
-        const calcDiscount = Math.round(origPrice * (1 - savedDiscountNum / 100));
+        const calcDiscount = (customDiscountPrice && !isNaN(parseFloat(customDiscountPrice)))
+          ? parseFloat(customDiscountPrice)
+          : Math.round(origPrice * (1 - itemRate / 100));
         setOriginalPriceNum(origPrice);
         setDiscountedPriceNum(calcDiscount);
 
@@ -220,13 +351,15 @@ export function ProductDetailHeader({ product: initialProduct }: ProductDetailHe
       if (!expiryTime) {
         expiryTime = Date.now() + (35 * 3600 + 54 * 60 + 2) * 1000;
       }
-
+      
       const diffSec = Math.max(0, Math.floor((expiryTime - Date.now()) / 1000));
-      const h = Math.floor(diffSec / 3600);
+      const d = Math.floor(diffSec / 86400);
+      const h = Math.floor((diffSec % 86400) / 3600);
       const m = Math.floor((diffSec % 3600) / 60);
       const s = diffSec % 60;
 
       setRemainingTime({
+        days: String(d).padStart(2, "0"),
         hours: String(h).padStart(2, "0"),
         minutes: String(m).padStart(2, "0"),
         seconds: String(s).padStart(2, "0"),
@@ -265,6 +398,8 @@ export function ProductDetailHeader({ product: initialProduct }: ProductDetailHe
 
   const isOutOfStock = !product.availableForSale;
 
+  const t = HEADER_I18N[currentLang] || HEADER_I18N.ko;
+
   return (
     <div className="flex flex-col gap-6 w-full font-sans text-neutral-900">
       
@@ -273,27 +408,27 @@ export function ProductDetailHeader({ product: initialProduct }: ProductDetailHe
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <Badge className="bg-neutral-950 text-white font-black rounded-full px-3.5 py-1 text-xs shadow-sm border border-neutral-800 uppercase flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-white fill-white" />
-              TIME SALE {timeSaleDiscount}% OFF
+              {t.timeSale} {timeSaleDiscount}% OFF
             </Badge>
 
             {!isSetProduct && (
               <Badge className="bg-neutral-950 text-white font-black rounded-full px-3.5 py-1 text-xs shadow-sm border border-neutral-800 uppercase flex items-center gap-1.5 tracking-tight">
                 <Clock className="w-3.5 h-3.5 text-neutral-300" />
-                <span>남은시간</span>
+                <span>{t.timeRemaining}</span>
                 <span className="text-neutral-500">|</span>
                 <span className="font-bold">
-                  {remainingTime.hours}시간 {remainingTime.minutes}분 {remainingTime.seconds}초
+                  {remainingTime.days}{t.days} {remainingTime.hours}{t.hours} {remainingTime.minutes}{t.minutes} {remainingTime.seconds}{t.seconds}
                 </span>
               </Badge>
             )}
           </div>
         )}
         <h1 className="text-2xl md:text-3xl font-normal tracking-tight uppercase">
-          {product.title}
+          {translateProductTitle(product.title, currentLang)}
         </h1>
         {product.description && (
           <p className="text-xs text-neutral-600 leading-relaxed mt-1">
-            {product.description}
+            {translateProductDescription(product.description, currentLang)}
           </p>
         )}
       </div>
@@ -313,7 +448,7 @@ export function ProductDetailHeader({ product: initialProduct }: ProductDetailHe
       {colors.length > 0 && (
         <div className="flex flex-col gap-2.5 mt-4">
           <div className="text-[11px] font-bold uppercase tracking-widest text-neutral-900 flex items-center gap-1.5">
-            <span>색상:</span>
+            <span>{t.color}</span>
             <span className="font-extrabold text-neutral-950">{selectedColor}</span>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -371,7 +506,7 @@ export function ProductDetailHeader({ product: initialProduct }: ProductDetailHe
       {sizes.length > 0 && (
         <div className="flex flex-col gap-2 mt-2">
           <div className="text-[11px] font-bold uppercase tracking-widest text-neutral-900">
-            사이즈
+            {t.size}
           </div>
           <div className="flex flex-wrap gap-2">
             {sizes.map((size, idx) => {
@@ -408,7 +543,7 @@ export function ProductDetailHeader({ product: initialProduct }: ProductDetailHe
           disabled={isOutOfStock || isAdding}
           className="flex-1 bg-[#808080] hover:bg-[#666666] text-white font-normal text-[13px] tracking-widest h-[52px] transition-colors uppercase disabled:opacity-50"
         >
-          {isAdding ? "담는 중..." : "장바구니 담기"}
+          {isOutOfStock ? t.outOfStock : isAdding ? t.adding : t.addToCart}
         </button>
       </div>
 

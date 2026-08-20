@@ -107,7 +107,17 @@ export async function getProduct(handle: string) {
 
   try {
     if (USE_MOCK_DATA) {
-      const product = mockProducts.find((p) => p.handle === handle);
+      let decoded = handle;
+      try {
+        decoded = decodeURIComponent(handle);
+      } catch (e) {}
+      const product = mockProducts.find(
+        (p) =>
+          p.handle === handle ||
+          p.handle === decoded ||
+          p.id === handle ||
+          p.id === decoded
+      );
 
       if (!product) {
         return null;

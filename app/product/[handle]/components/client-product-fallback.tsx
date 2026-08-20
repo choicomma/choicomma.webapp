@@ -7,21 +7,58 @@ import { DesktopGallery } from "./desktop-gallery";
 import { ProductDetailHeader } from "./product-detail-header";
 import { ProductDetailAccordions } from "./product-detail-accordions";
 import { RelatedProducts } from "./related-products";
+import { mockProducts } from "@/lib/sfcc/mock/products";
 
 export function ClientProductFallback({ handle }: { handle: string }) {
   const [product, setProduct] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let decoded = handle;
+    try {
+      decoded = decodeURIComponent(handle);
+    } catch (e) {}
+
     const saved = localStorage.getItem("admin_products");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        const found = parsed.find((p: any) => p.handle === handle || p.id === handle);
+        const found = parsed.find((p: any) => {
+          if (!p) return false;
+          const pHandleDecoded = p.handle ? decodeURIComponent(p.handle) : "";
+          const pTitleSlug = p.title ? p.title.toLowerCase().replace(/\s+/g, "-") : "";
+          return (
+            p.handle === handle ||
+            p.handle === decoded ||
+            pHandleDecoded === decoded ||
+            p.id === handle ||
+            p.id === decoded ||
+            pTitleSlug === decoded.toLowerCase()
+          );
+        });
+
         if (found) {
           setProduct(found);
+          setLoading(false);
+          return;
         }
       } catch (e) {}
+    }
+
+    const mockFound = mockProducts.find((p: any) => {
+      if (!p) return false;
+      const pHandleDecoded = p.handle ? decodeURIComponent(p.handle) : "";
+      return (
+        p.handle === handle ||
+        p.handle === decoded ||
+        pHandleDecoded === decoded ||
+        p.id === handle ||
+        p.id === decoded
+      );
+    });
+
+    if (mockFound) {
+      setProduct(mockFound);
     }
     setLoading(false);
   }, [handle]);
@@ -29,7 +66,6 @@ export function ClientProductFallback({ handle }: { handle: string }) {
   if (loading) return <div className="min-h-screen w-full bg-white animate-pulse" />;
   
   if (!product) {
-    // If not found even in localStorage, go to 404
     if (typeof window !== "undefined") {
       window.location.href = "/404";
     }

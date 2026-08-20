@@ -6,11 +6,21 @@ import { ArrowLeft, ShoppingBag, ShieldCheck, Lock, CreditCard, Truck, CheckCirc
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
+import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+import { useEffect } from "react";
 
 export default function CheckoutClientWrapper() {
   const { cart } = useCart();
   const [isTossModalOpen, setIsTossModalOpen] = useState(false);
   const [isDirectPayLoading, setIsDirectPayLoading] = useState(false);
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -321,13 +331,13 @@ export default function CheckoutClientWrapper() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-extrabold text-neutral-900 dark:text-white truncate">
-                      {item.merchandise.product.title}
+                      {translateProductTitle(item.merchandise.product.title, currentLang)}
                     </p>
                     <p className="text-[11px] text-neutral-400 font-medium">
                       수량: {item.quantity}개
                     </p>
                   </div>
-                  <p className="text-xs font-black text-neutral-900 dark:text-white font-mono">
+                  <p className="text-xs font-black text-neutral-900 dark:text-white">
                     {formatPrice(item.cost.totalAmount.amount, item.cost.totalAmount.currencyCode)}
                   </p>
                 </div>
@@ -366,23 +376,23 @@ export default function CheckoutClientWrapper() {
             <div className="space-y-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800 text-sm font-bold">
               <div className="flex justify-between text-neutral-500">
                 <span>총 상품 금액</span>
-                <span className="font-mono text-neutral-900 dark:text-white">{formatPrice(totalItemAmount)}</span>
+                <span className="font-bold text-neutral-900 dark:text-white">{formatPrice(totalItemAmount)}</span>
               </div>
               <div className="flex justify-between text-neutral-500">
                 <span>배송비</span>
-                <span className="font-mono text-neutral-900 dark:text-white">
+                <span className="font-bold text-neutral-900 dark:text-white">
                   {shippingFee === 0 ? "무료배송 (0원)" : formatPrice(shippingFee)}
                 </span>
               </div>
               {appliedDiscount > 0 && (
                 <div className="flex justify-between text-neutral-900 dark:text-white font-bold">
                   <span>쿠폰 할인</span>
-                  <span className="font-mono">-{formatPrice(appliedDiscount)}</span>
+                  <span className="font-bold text-rose-600">-{formatPrice(appliedDiscount)}</span>
                 </div>
               )}
               <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 flex justify-between items-baseline">
                 <span className="text-base font-black text-neutral-900 dark:text-white">최종 결제 금액</span>
-                <span className="text-2xl font-black text-neutral-900 dark:text-white font-mono">
+                <span className="text-2xl font-black text-neutral-900 dark:text-white">
                   {formatPrice(finalTotalAmount)}
                 </span>
               </div>

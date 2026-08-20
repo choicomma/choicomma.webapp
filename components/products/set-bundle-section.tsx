@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Sparkles, Gift, Percent } from "lucide-react";
 import { toast } from "sonner";
+import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
 
 import { mockProducts } from "@/lib/sfcc/mock/products";
 
@@ -55,6 +56,7 @@ interface SetBundleSectionProps {
 export function SetBundleSection({ products }: SetBundleSectionProps) {
   const [setSales, setSetSales] = useState<SetSaleBundle[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [currentLang, setCurrentLang] = useState("ko");
   const { addCartItem } = useCart();
 
   // Combine provided products with full mockProducts to guarantee resolving any product ID
@@ -76,9 +78,17 @@ export function SetBundleSection({ products }: SetBundleSectionProps) {
 
   useEffect(() => {
     setMounted(true);
+    setCurrentLang(getCurrentLanguage());
     loadSetSales();
+
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
     window.addEventListener("storage", loadSetSales);
-    return () => window.removeEventListener("storage", loadSetSales);
+
+    return () => {
+      window.removeEventListener("language_changed", handleLangChange);
+      window.removeEventListener("storage", loadSetSales);
+    };
   }, []);
 
   if (!mounted || setSales.length === 0) return null;
@@ -223,7 +233,7 @@ export function SetBundleSection({ products }: SetBundleSectionProps) {
                       </div>
                       <div className="min-w-0 max-w-[120px]">
                         <p className="text-[11px] font-bold text-neutral-900 truncate">
-                          {item.product.title}
+                          {translateProductTitle(item.product.title, currentLang)}
                         </p>
                         <p className="text-[11px] text-neutral-500 font-semibold">
                           {formatPrice(item.product.priceRange.minVariantPrice.amount)}

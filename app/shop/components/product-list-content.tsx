@@ -72,6 +72,7 @@ export function ProductListContent({
 
       const registeredSetProducts = getRegisteredSetProducts(categoryFilteredProducts);
 
+      let itemSettings: Record<string, { hours?: number; minutes?: number; discountRate?: number }> = {};
       let savedSelectedIds: string[] = [];
       let savedDiscountNum = 35;
 
@@ -86,24 +87,34 @@ export function ProductListContent({
         if (savedDisc && !isNaN(parseInt(savedDisc))) {
           savedDiscountNum = parseInt(savedDisc);
         }
+        const savedSettings = localStorage.getItem("secret_timesale_item_settings");
+        if (savedSettings) {
+          try {
+            itemSettings = JSON.parse(savedSettings);
+          } catch (e) {}
+        }
       }
 
       // Directly specified TimeSale products transformed with active discount rate
       const directTimeSaleProducts = categoryFilteredProducts
         .filter((p) => savedSelectedIds.includes(p.id))
-        .map((p) => {
-          const origPrice = parseFloat(p.priceRange?.minVariantPrice?.amount || "0");
-          const discountedPrice = Math.round(origPrice * (1 - savedDiscountNum / 100));
+        .map((p: any) => {
+          const itemRate = p.timeSaleDiscountRate || itemSettings[p.id]?.discountRate || savedDiscountNum || 35;
+          const minP = parseFloat(p.priceRange?.minVariantPrice?.amount || "0");
+          const maxP = parseFloat(p.priceRange?.maxVariantPrice?.amount || "0");
+          const origPrice = maxP > minP ? maxP : minP;
+          const discountedPrice = Math.round(origPrice * (1 - itemRate / 100));
           const currencyCode = p.currencyCode || "KRW";
 
           return {
             ...p,
+            timeSaleDiscountRate: itemRate,
             categoryId: "timesale",
             priceRange: {
               minVariantPrice: { amount: discountedPrice.toString(), currencyCode },
               maxVariantPrice: { amount: origPrice.toString(), currencyCode },
             },
-            variants: (p.variants || []).map((v) => ({
+            variants: (p.variants || []).map((v: any) => ({
               ...v,
               price: { amount: discountedPrice.toString(), currencyCode },
             })),
@@ -121,19 +132,23 @@ export function ProductListContent({
         setDisplayProducts(finalProducts);
         setProducts(finalProducts);
       } else {
-        const updatedProducts = categoryFilteredProducts.map((p) => {
+        const updatedProducts = categoryFilteredProducts.map((p: any) => {
           if (savedSelectedIds.includes(p.id)) {
-            const origPrice = parseFloat(p.priceRange?.minVariantPrice?.amount || "0");
-            const discountedPrice = Math.round(origPrice * (1 - savedDiscountNum / 100));
+            const itemRate = p.timeSaleDiscountRate || itemSettings[p.id]?.discountRate || savedDiscountNum || 35;
+            const minP = parseFloat(p.priceRange?.minVariantPrice?.amount || "0");
+            const maxP = parseFloat(p.priceRange?.maxVariantPrice?.amount || "0");
+            const origPrice = maxP > minP ? maxP : minP;
+            const discountedPrice = Math.round(origPrice * (1 - itemRate / 100));
             const currencyCode = p.currencyCode || "KRW";
 
             return {
               ...p,
+              timeSaleDiscountRate: itemRate,
               priceRange: {
                 minVariantPrice: { amount: discountedPrice.toString(), currencyCode },
                 maxVariantPrice: { amount: origPrice.toString(), currencyCode },
               },
-              variants: (p.variants || []).map((v) => ({
+              variants: (p.variants || []).map((v: any) => ({
                 ...v,
                 price: { amount: discountedPrice.toString(), currencyCode },
               })),

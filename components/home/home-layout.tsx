@@ -1,11 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Clock } from "lucide-react";
+import { formatPrice } from "@/lib/sfcc/utils";
+import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
 
 export function HomeLayout({ products = [] }: { products?: any[] }) {
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
+
   // Use first 4 products for the grid, or mock data if not enough
   const gridProducts = products.slice(0, 4);
 
@@ -19,6 +31,90 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   const PAGE_SIZE = 9;
 
   const [isHydrated, setIsHydrated] = React.useState(false);
+
+  const [timeSaleSettings, setTimeSaleSettings] = React.useState<{
+    savedIds: string[];
+    itemSettings: Record<string, { discountRate?: number }>;
+    globalDiscount: number;
+    hasSavedIdsKey: boolean;
+  }>({
+    savedIds: [],
+    itemSettings: {},
+    globalDiscount: 35,
+    hasSavedIdsKey: false,
+  });
+
+  React.useEffect(() => {
+    const updateTimeSaleInfo = () => {
+      if (typeof window === "undefined") return;
+      try {
+        let savedIds: string[] = [];
+        let hasSavedIdsKey = false;
+        const saved = localStorage.getItem("secret_timesale_product_ids");
+        if (saved !== null) {
+          hasSavedIdsKey = true;
+          try { savedIds = JSON.parse(saved); } catch (e) {}
+        }
+        let itemSettings: Record<string, { discountRate?: number }> = {};
+        const savedItem = localStorage.getItem("secret_timesale_item_settings");
+        if (savedItem) {
+          try { itemSettings = JSON.parse(savedItem); } catch (e) {}
+        }
+        let globalDiscount = 35;
+        const savedDisc = localStorage.getItem("secret_timesale_discount");
+        if (savedDisc && !isNaN(parseInt(savedDisc))) {
+          globalDiscount = parseInt(savedDisc);
+        }
+        setTimeSaleSettings({ savedIds, itemSettings, globalDiscount, hasSavedIdsKey });
+      } catch (e) {}
+    };
+
+    updateTimeSaleInfo();
+    window.addEventListener("storage", updateTimeSaleInfo);
+    window.addEventListener("admin_products_updated", updateTimeSaleInfo);
+    window.addEventListener("focus", updateTimeSaleInfo);
+    const interval = setInterval(updateTimeSaleInfo, 1000);
+    return () => {
+      window.removeEventListener("storage", updateTimeSaleInfo);
+      window.removeEventListener("admin_products_updated", updateTimeSaleInfo);
+      window.removeEventListener("focus", updateTimeSaleInfo);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const getTimeSaleDiscount = (product: any): number | null => {
+    if (!product) return null;
+
+    if (typeof window !== "undefined") {
+      const savedStatus = localStorage.getItem("secret_timesale_status");
+      if (savedStatus === "ended") return null;
+    }
+
+    if (product.isTimeSale === false) return null;
+
+    const prodId = String(product.id || "");
+    const handle = String(product.handle || "");
+    const pCode = String(product.productCode || "");
+
+    if (timeSaleSettings.hasSavedIdsKey) {
+      const isSelected = timeSaleSettings.savedIds.some(
+        (id: any) => String(id) === prodId || String(id) === handle || String(id) === pCode
+      );
+      if (!isSelected && product.isTimeSale !== true) return null;
+    } else {
+      if (!product.isTimeSale && product.categoryId !== "timesale" && !product.tags?.includes("TIMESALE")) {
+        return null;
+      }
+    }
+
+    const itemSetting = timeSaleSettings.itemSettings[prodId] || timeSaleSettings.itemSettings[handle] || timeSaleSettings.itemSettings[pCode];
+
+    if (itemSetting?.discountRate) return parseInt(String(itemSetting.discountRate));
+    if (product.timeSaleDiscountRate) return parseInt(String(product.timeSaleDiscountRate));
+    if (product.discountRate) return parseInt(String(product.discountRate));
+
+    return timeSaleSettings.globalDiscount || 35;
+  };
 
   React.useEffect(() => {
     const updateHomeData = () => {
@@ -123,6 +219,22 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       <section className="w-full bg-white">
         <div className="grid grid-cols-2 md:grid-cols-3">
           {allProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((product, idx) => {
+            const timeSaleDiscount = getTimeSaleDiscount(product);
+
+            const basePrice = parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
+            const maxPrice = parseFloat(product.priceRange?.maxVariantPrice?.amount || "0");
+            const origPriceNum = maxPrice > basePrice ? maxPrice : basePrice;
+
+            let finalPriceNum = basePrice;
+            let strikethroughPriceNum: number | null = null;
+
+            if (timeSaleDiscount !== null && timeSaleDiscount > 0) {
+              strikethroughPriceNum = origPriceNum;
+              finalPriceNum = Math.round(origPriceNum * (1 - timeSaleDiscount / 100));
+            }
+
+            const currCode = product.currencyCode || product.priceRange?.minVariantPrice?.currencyCode || "KRW";
+
             return (
               <Link 
                 key={product.id || idx} 
@@ -135,34 +247,52 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
                   fill
                   className="object-contain p-4 md:p-8 transition-transform duration-700 group-hover:scale-105"
                 />
-                
+
                 {/* Product Name & Label (Bottom Left) */}
                 <div className="absolute bottom-0 left-0 p-3 flex flex-col items-start z-10 w-full md:w-auto">
-                  {product.productLabel && (
-                    <span className={`mb-1 text-[8px] md:text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-wider rounded-sm ${
-                      product.productLabel === 'BLACK_LABEL' ? 'bg-black text-white' :
-                      product.productLabel === 'PREMIUM' ? 'bg-neutral-600 text-white' :
-                      'bg-neutral-200 text-neutral-800'
-                    }`}>
-                      {product.productLabel.replace('_', ' ')}
+                  <div className="flex items-center gap-1 mb-1 flex-wrap">
+                    {product.productLabel && (
+                      <span className={`text-[8px] md:text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-wider rounded-sm ${
+                        product.productLabel === 'BLACK_LABEL' ? 'bg-black text-white' :
+                        product.productLabel === 'PREMIUM' ? 'bg-neutral-600 text-white' :
+                        'bg-neutral-200 text-neutral-800'
+                      }`}>
+                        {product.productLabel.replace('_', ' ')}
+                      </span>
+                    )}
+                    {timeSaleDiscount !== null && (
+                      <span className="text-[8px] md:text-[9px] px-1.5 py-0.5 font-black uppercase tracking-wider rounded-sm bg-white text-neutral-950 flex items-center gap-0.5 border border-neutral-300 shadow-2xs">
+                        <Clock className="w-2.5 h-2.5 text-neutral-950 shrink-0" />
+                        <span>TIME SALE {timeSaleDiscount}% OFF</span>
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] md:text-xs font-medium text-neutral-900 uppercase tracking-widest truncate md:pr-0 w-full mb-0.5">
+                    {translateProductTitle(product.title, currentLang) || "Product Name"}
+                  </span>
+                  
+                  {/* Mobile Price Display */}
+                  <div className="flex items-center gap-1 md:hidden">
+                    {strikethroughPriceNum !== null && (
+                      <span className="text-[9px] text-neutral-400 line-through font-semibold">
+                        {formatPrice(strikethroughPriceNum.toString(), currCode)}
+                      </span>
+                    )}
+                    <span className="text-[10px] font-bold text-neutral-900 uppercase">
+                      {formatPrice(finalPriceNum.toString(), currCode)}
                     </span>
-                  )}
-                  <span className="text-[10px] md:text-xs font-medium text-neutral-900 uppercase tracking-widest truncate md:pr-0 w-full">
-                    {product.title || "Product Name"}
-                  </span>
-                  <span className="text-[10px] font-medium text-neutral-600 uppercase leading-tight md:hidden mt-0.5">
-                    {product.priceRange?.minVariantPrice?.amount 
-                      ? `${product.priceRange.minVariantPrice.amount} ${product.priceRange.minVariantPrice.currencyCode || 'KRW'}`
-                      : "5990 KRW"}
-                  </span>
+                  </div>
                 </div>
 
-                {/* Product Price (Bottom Right) - Only visible on PC */}
-                <div className="hidden md:flex absolute bottom-0 right-0 p-3 flex-col z-10">
-                  <span className="text-xs font-medium text-neutral-900 uppercase">
-                    {product.priceRange?.minVariantPrice?.amount 
-                      ? `${product.priceRange.minVariantPrice.amount} ${product.priceRange.minVariantPrice.currencyCode || 'KRW'}`
-                      : "5990 KRW"}
+                {/* Product Price (Bottom Right) - Visible on PC */}
+                <div className="hidden md:flex absolute bottom-0 right-0 p-3 flex-col items-end z-10 leading-tight">
+                  {strikethroughPriceNum !== null && (
+                    <span className="text-[10px] text-neutral-400 line-through font-semibold mb-0.5">
+                      {formatPrice(strikethroughPriceNum.toString(), currCode)}
+                    </span>
+                  )}
+                  <span className="text-xs font-extrabold text-neutral-900 uppercase">
+                    {formatPrice(finalPriceNum.toString(), currCode)}
                   </span>
                 </div>
               </Link>

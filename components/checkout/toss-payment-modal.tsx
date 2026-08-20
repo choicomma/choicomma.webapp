@@ -140,7 +140,7 @@ export default function TossPaymentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/70 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/70 backdrop-blur-md animate-in fade-in duration-200 font-sans">
       <div className="bg-white border border-neutral-200/80 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl space-y-0 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-neutral-200 bg-neutral-950 text-white shrink-0">
@@ -173,7 +173,7 @@ export default function TossPaymentModal({
             </div>
             <div className="text-right">
               <span className="text-[10px] font-black uppercase text-neutral-400 block tracking-wider">최종 결제 금액</span>
-              <p className="text-sm font-black text-emerald-600 font-mono">
+              <p className="text-sm font-black text-emerald-600">
                 {formatPrice(totalAmount > 0 ? totalAmount : 50000)}
               </p>
             </div>

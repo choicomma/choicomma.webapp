@@ -11,6 +11,8 @@ import { UpdateType } from "./cart-context";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { ColorSwatch } from "@/components/ui/color-picker";
 import { useProductImages } from "../products/variant-selector";
+import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+import { useState, useEffect } from "react";
 
 type MerchandiseSearchParams = {
   [key: string]: string;
@@ -27,6 +29,14 @@ export function CartItemCard({
   optimisticUpdate,
   onCloseCart,
 }: CartItemProps) {
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
   const merchandiseSearchParams = {} as MerchandiseSearchParams;
 
   item.merchandise.selectedOptions.forEach(({ name, value }) => {
@@ -72,7 +82,7 @@ export function CartItemCard({
               prefetch
             >
               <span className="text-xs font-black text-neutral-900 dark:text-white line-clamp-1 hover:underline">
-                {item.merchandise.product.title}
+                {translateProductTitle(item.merchandise.product.title, currentLang)}
               </span>
             </Link>
             {validOptions.length > 0 && (

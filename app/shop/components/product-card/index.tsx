@@ -10,7 +10,17 @@ import { FeaturedProductLabel } from "@/components/products/featured-product-lab
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Plus, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 
+import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+
 export const ProductCard = ({ product }: { product: Product }) => {
+  const [currentLang, setCurrentLang] = React.useState("ko");
+
+  React.useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
   const isSetProduct =
     product.tags?.includes("SET_SALE") || product.id.startsWith("set-product-");
 
@@ -44,10 +54,11 @@ export const ProductCard = ({ product }: { product: Product }) => {
   const [currentImgIndex, setCurrentImgIndex] = React.useState(0);
 
   const [remainingTime, setRemainingTime] = React.useState<{
+    days: string;
     hours: string;
     minutes: string;
     seconds: string;
-  }>({ hours: "35", minutes: "54", seconds: "02" });
+  }>({ days: "01", hours: "11", minutes: "54", seconds: "02" });
 
   React.useEffect(() => {
     const updateTime = () => {
@@ -84,11 +95,13 @@ export const ProductCard = ({ product }: { product: Product }) => {
       }
 
       const diffSec = Math.max(0, Math.floor((expiryTime - Date.now()) / 1000));
-      const h = Math.floor(diffSec / 3600);
+      const d = Math.floor(diffSec / 86400);
+      const h = Math.floor((diffSec % 86400) / 3600);
       const m = Math.floor((diffSec % 3600) / 60);
       const s = diffSec % 60;
 
       setRemainingTime({
+        days: String(d).padStart(2, "0"),
         hours: String(h).padStart(2, "0"),
         minutes: String(m).padStart(2, "0"),
         seconds: String(s).padStart(2, "0"),
@@ -142,24 +155,26 @@ export const ProductCard = ({ product }: { product: Product }) => {
   }
 
   // CHOI.ce category items get the gold luxury sale redesign
-  let discountPercent = 35;
+  let discountPercent = (product as any).timeSaleDiscountRate || (product as any).discountRate || 35;
+  let customDiscountPrice = (product as any).timeSaleDiscountPrice;
   if (typeof window !== "undefined") {
-    const savedDiscount = localStorage.getItem("secret_timesale_discount");
-    if (savedDiscount && !isNaN(parseInt(savedDiscount))) {
-      discountPercent = parseInt(savedDiscount);
-    }
-  }
-  let badgeText = `TIME SALE ${discountPercent}% OFF`;
-
-  if (isSetProduct) {
-    const setTag = product.tags?.find((t) => t.includes("% OFF"));
-    if (setTag) {
-      badgeText = `SET SALE ${setTag}`;
-      discountPercent = parseInt(setTag) || 25;
-    } else {
-      badgeText = "SET SALE 25% OFF";
-      discountPercent = 25;
-    }
+    try {
+      const itemSettingsSaved = localStorage.getItem("secret_timesale_item_settings");
+      if (itemSettingsSaved) {
+        const parsedSettings = JSON.parse(itemSettingsSaved);
+        if (parsedSettings[product.id]?.discountRate) {
+          discountPercent = parseInt(parsedSettings[product.id].discountRate);
+        }
+        if (parsedSettings[product.id]?.discountPrice) {
+          customDiscountPrice = parsedSettings[product.id].discountPrice;
+        }
+      } else {
+        const savedDiscount = localStorage.getItem("secret_timesale_discount");
+        if (savedDiscount && !isNaN(parseInt(savedDiscount))) {
+          discountPercent = parseInt(savedDiscount);
+        }
+      }
+    } catch (e) {}
   }
 
   // Calculate original price for strikethrough display and final discounted price
@@ -172,6 +187,12 @@ export const ProductCard = ({ product }: { product: Product }) => {
   if (isSetProduct) {
     finalPriceNum = minPriceNum;
     originalPriceNum = Math.round(finalPriceNum / (1 - discountPercent / 100));
+  } else if (customDiscountPrice && !isNaN(parseFloat(customDiscountPrice))) {
+    finalPriceNum = parseFloat(customDiscountPrice);
+    originalPriceNum = maxPriceNum > minPriceNum ? maxPriceNum : (minPriceNum > finalPriceNum ? minPriceNum : finalPriceNum);
+    if (originalPriceNum > finalPriceNum) {
+      discountPercent = Math.round((1 - finalPriceNum / originalPriceNum) * 100);
+    }
   } else if (maxPriceNum > minPriceNum) {
     finalPriceNum = minPriceNum;
     originalPriceNum = maxPriceNum;
@@ -179,6 +200,8 @@ export const ProductCard = ({ product }: { product: Product }) => {
     originalPriceNum = minPriceNum;
     finalPriceNum = Math.round(originalPriceNum * (1 - discountPercent / 100));
   }
+
+  let badgeText = `TIME SALE ${discountPercent}% OFF`;
 
   return (
     <div className="group border border-neutral-200/80 bg-white rounded-3xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between w-full h-full relative">
@@ -215,16 +238,16 @@ export const ProductCard = ({ product }: { product: Product }) => {
         <div className="absolute top-3 left-3 z-20 flex flex-col items-start gap-1.5 pointer-events-none max-w-[90%]">
           {isSetProduct ? (
             <span className="bg-neutral-950/95 backdrop-blur-xs text-white text-[11px] font-black px-3 py-1.5 rounded-xl uppercase shadow-lg flex items-center gap-1.5 border border-neutral-800 tracking-tight">
-              <Sparkles className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <span className="text-white font-extrabold">{badgeText}</span>
             </span>
           ) : (
-            <span className="bg-neutral-950/95 backdrop-blur-xs text-white text-[11px] font-black px-3 py-1.5 rounded-xl uppercase shadow-lg flex items-center gap-1.5 border border-neutral-800 tracking-tight">
-              <Clock className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
-              <span className="text-white font-extrabold">{badgeText}</span>
-              <span className="text-neutral-500 font-normal">|</span>
-              <span className="text-white font-bold tracking-tight">
-                {remainingTime.hours}시간 {remainingTime.minutes}분 {remainingTime.seconds}초
+            <span className="bg-amber-500 text-neutral-950 text-[11px] font-black px-3 py-1.5 rounded-xl uppercase shadow-lg flex items-center gap-1.5 border border-amber-400 tracking-tight">
+              <Clock className="w-3.5 h-3.5 text-neutral-950 shrink-0 animate-pulse" />
+              <span className="text-neutral-950 font-black">{badgeText}</span>
+              <span className="text-neutral-900 font-bold">|</span>
+              <span className="text-neutral-950 font-black tracking-tight">
+                {remainingTime.days}일 {remainingTime.hours}시 {remainingTime.minutes}분 {remainingTime.seconds}초
               </span>
             </span>
           )}
@@ -258,7 +281,7 @@ export const ProductCard = ({ product }: { product: Product }) => {
         <div>
           <Link href={`/product/${product.handle}`}>
             <h4 className="font-extrabold text-base md:text-lg text-neutral-950 group-hover:text-neutral-700 transition-colors line-clamp-1 mb-1">
-              {product.title}
+              {translateProductTitle(product.title, currentLang)}
             </h4>
           </Link>
           <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed">

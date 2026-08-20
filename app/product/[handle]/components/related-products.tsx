@@ -6,8 +6,18 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { mockProducts } from "@/lib/sfcc/mock/products";
 
+import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+
 export function RelatedProducts() {
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
 
   useEffect(() => {
     const loadRelatedProducts = () => {
@@ -68,7 +78,7 @@ export function RelatedProducts() {
               </div>
               <div className="flex flex-col items-start gap-1">
                 <span className="text-xs font-medium text-neutral-900 uppercase tracking-wider truncate w-full">
-                  {product.title}
+                  {translateProductTitle(product.title, currentLang)}
                 </span>
                 <span className="text-xs text-neutral-600 font-bold">{price}</span>
               </div>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Product } from "@/lib/sfcc/types";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { useCart } from "@/components/cart/cart-context";
+import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,14 @@ const DEFAULT_SIZES = [
 export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
   const [open, setOpen] = useState(false);
   const { addCartItem } = useCart();
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
 
   // Color & Size selection states
   const colors = product.options?.find(
@@ -121,7 +130,7 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
             </div>
             <div className="min-w-0 flex-1">
               <h4 className="text-sm font-bold text-neutral-900 truncate">
-                {product.title}
+                {translateProductTitle(product.title, currentLang)}
               </h4>
               <p className="text-sm font-extrabold text-neutral-950 mt-1">
                 {formatPrice(

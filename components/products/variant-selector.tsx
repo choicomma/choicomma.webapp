@@ -44,7 +44,8 @@ export function VariantOptionSelector({
   variant,
   product,
 }: VariantOptionSelectorProps) {
-  const { variants, options } = product;
+  const variants = product?.variants || [];
+  const options = product?.options || [];
   const searchParams = useSearchParams();
   const pathname = useParams<{ handle?: string }>();
   const optionNameLowerCase = option.name.toLowerCase();
@@ -79,7 +80,7 @@ export function VariantOptionSelector({
   const getCurrentSelectedOptions = () => {
     const state: Record<string, string> = {};
 
-    options.forEach((opt) => {
+    (options || []).forEach((opt) => {
       const key = opt.name.toLowerCase();
       const value = searchParams.get(key);
       if (value) {
@@ -90,10 +91,10 @@ export function VariantOptionSelector({
     return state;
   };
 
-  const combinations: Combination[] = variants.map((variant) => ({
+  const combinations: Combination[] = (variants || []).map((variant) => ({
     id: variant.id,
     availableForSale: variant.availableForSale,
-    ...variant.selectedOptions.reduce(
+    ...(variant.selectedOptions || []).reduce(
       (accumulator, option) => ({
         ...accumulator,
         [option.name.toLowerCase()]: option.value,
@@ -104,8 +105,8 @@ export function VariantOptionSelector({
 
   // Check if this is a color option
   const isColorOption = optionNameLowerCase === "color";
-  const isProductPage = pathname.handle === product.id;
-  const isTargetingProduct = isProductPage || activeProductId === product.id;
+  const isProductPage = pathname.handle === product?.id;
+  const isTargetingProduct = isProductPage || activeProductId === product?.id;
 
   return (
     <dl className={variantOptionSelectorVariants({ variant })}>
@@ -166,7 +167,7 @@ export function VariantOptionSelector({
                   startTransition(() => {
                     setSelectedValue(value.id);
 
-                    if (!isProductPage) {
+                    if (!isProductPage && product?.id) {
                       setActiveProductId(product.id);
                     }
                   });
@@ -204,14 +205,15 @@ export function VariantOptionSelector({
 }
 
 export const useSelectedVariant = (product: Product) => {
-  const { variants, options } = product;
+  const variants = product?.variants || [];
+  const options = product?.options || [];
   const searchParams = useSearchParams();
 
   // Get all current selected options from URL
   const getCurrentSelectedOptions = () => {
     const state: Record<string, string> = {};
 
-    options.forEach((option) => {
+    (options || []).forEach((option) => {
       const key = option.name.toLowerCase();
       const value = searchParams.get(key);
       if (value) {
@@ -225,8 +227,8 @@ export const useSelectedVariant = (product: Product) => {
   const selectedOptions = getCurrentSelectedOptions();
 
   // Find the variant that matches all selected options
-  const selectedVariant = variants.find((variant: ProductVariant) =>
-    variant.selectedOptions.every(
+  const selectedVariant = (variants || []).find((variant: ProductVariant) =>
+    variant.selectedOptions?.every(
       (option) =>
         option.value ===
         selectedOptions[option.name.toLowerCase()]?.toLowerCase()
@@ -247,23 +249,25 @@ export const useProductImages = (
     }, {} as Record<string, string>);
   }, [selectedOptions]);
 
+  const images = product?.images || [];
+
   const variantImages = useMemo(() => {
     if (!optionsObject) return [];
 
-    return product.images.filter((image) => {
+    return images.filter((image) => {
       return Object.entries(optionsObject || {}).every(([key, value]) =>
         image.selectedOptions?.some(
           (option) => option.name === key && option.value === value
         )
       );
     });
-  }, [optionsObject, product.images]);
+  }, [optionsObject, images]);
 
-  const defaultImages = product.images.filter(
+  const defaultImages = images.filter(
     (image) => !image.selectedOptions
   );
 
-  const featuredImage = product.featuredImage;
+  const featuredImage = product?.featuredImage;
 
   if (variantImages.length > 0) {
     return variantImages;

@@ -79,14 +79,6 @@ export function CustomersManagement({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={handleClearAllCustomers}
-            className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition-all"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>전체 회원 삭제</span>
-          </button>
           <label className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors">
             <Upload className="w-3.5 h-3.5" />
             <span>엑셀 파일 업로드 (.xls / .xlsx)</span>
