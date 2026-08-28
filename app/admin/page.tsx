@@ -363,14 +363,6 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
   const isProductsLoadedRef = React.useRef(false);
   const [productsList, setProductsList] = useState<any[]>(INITIAL_CHOICOMMA_PRODUCTS);
 
-  // Client-side hydration sync & product catalog restore
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("admin_products", JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
-      setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
-    }
-  }, []);
-
   // Client-side hydration sync for productsList
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -378,13 +370,17 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0) {
             setProductsList(parsed);
+            isProductsLoadedRef.current = true;
+            return;
           }
         } catch (e) {
           console.error(e);
         }
       }
+      localStorage.setItem("admin_products", JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
+      setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
       isProductsLoadedRef.current = true;
     }
   }, []);
