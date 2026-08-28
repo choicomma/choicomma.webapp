@@ -14,8 +14,18 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import TossPaymentModal from "../checkout/toss-payment-modal";
 
+import { translateUiText, getCurrentLanguage } from "@/lib/i18n/translation";
+
 const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTossModal: () => void }) => {
   const { cart, updateCartItem } = useCart();
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
 
   if (!cart) return <></>;
 
@@ -90,7 +100,7 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
           onClick={closeCart}
           className="w-full relative flex items-center justify-between gap-3 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold cursor-pointer py-3.5 px-5 rounded-2xl shadow-md transition-all text-sm"
         >
-          <span>📋 결제하기</span>
+          <span>📋 {translateUiText("결제하기", currentLang)}</span>
           <ArrowRight className="size-5 text-neutral-300" />
         </Link>
       </div>
@@ -110,6 +120,15 @@ export default function CartModal({
   const { cart, mode } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [isTossModalOpen, setIsTossModalOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
+
   const quantityRef = useRef(cart?.totalQuantity);
   const isInitialLoad = useRef(true);
   const openCart = () => setIsOpen(true);
@@ -156,10 +175,10 @@ export default function CartModal({
                 </div>
                 <div className="flex flex-col gap-2 2xl:gap-3 flex-1 justify-center">
                   <span className="text-lg 2xl:text-xl font-semibold">
-                    Cart is empty
+                    {translateUiText("장바구니", currentLang)}
                   </span>
                   <p className="text-sm text-muted-foreground hover:underline">
-                    Start shopping to get started
+                    {translateUiText("EXPLORE COLLECTION", currentLang)}
                   </p>
                 </div>
               </div>
@@ -181,7 +200,7 @@ export default function CartModal({
         size={size}
         className={cn("uppercase font-bold", className)}
       >
-        <span>CART</span> ({cart?.totalQuantity || 0})
+        <span>{translateUiText("장바구니", currentLang)}</span> ({cart?.totalQuantity || 0})
       </Button>
       <AnimatePresence>
         {isOpen && (
@@ -207,7 +226,9 @@ export default function CartModal({
             >
               <div className="flex flex-col bg-neutral-100 dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 p-4 md:p-6 rounded-3xl shadow-2xl w-full">
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-200 dark:border-neutral-800">
-                  <p className="text-2xl font-black text-neutral-900 dark:text-white">Cart</p>
+                  <p className="text-2xl font-black text-neutral-900 dark:text-white">
+                    {translateUiText("장바구니", currentLang)}
+                  </p>
                   <Button
                     size="sm"
                     variant="ghost"

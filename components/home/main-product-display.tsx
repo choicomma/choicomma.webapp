@@ -5,6 +5,8 @@ import useEmblaCarousel from "embla-carousel-react";
 import { LatestProductCard } from "@/components/products/latest-product-card";
 import { getLabelPosition } from "@/lib/utils";
 
+import { getCurrentLanguage } from "@/lib/i18n/translation";
+
 interface MainProductDisplayProps {
   initialProducts: any[];
 }
@@ -12,9 +14,21 @@ interface MainProductDisplayProps {
 export function MainProductDisplay({ initialProducts }: MainProductDisplayProps) {
   const [heroProducts, setHeroProducts] = useState<any[]>([]);
   const [subProducts, setSubProducts] = useState<any[]>([]);
+  const [currentLang, setCurrentLang] = useState("ko");
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start" });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    window.addEventListener("language-changed", handleLangChange);
+    return () => {
+      window.removeEventListener("language_changed", handleLangChange);
+      window.removeEventListener("language-changed", handleLangChange);
+    };
+  }, []);
 
   const syncProductsFromStorage = () => {
     if (typeof window === "undefined") return;
@@ -28,14 +42,8 @@ export function MainProductDisplay({ initialProducts }: MainProductDisplayProps)
           (p) => p.isHeroFeatured === true && Boolean(p.heroCustomImage || p.featuredImage?.url)
         );
 
-        // 2. Sub-Products Grid: ONLY products with isMainFeatured === true
-        const featuredSubProducts = parsed
-          .filter((p) => p.isMainFeatured === true)
-          .sort((a, b) => {
-            const noA = typeof a.productNo === "number" ? a.productNo : parseInt(String(a.id).replace(/\D/g, "")) || 0;
-            const noB = typeof b.productNo === "number" ? b.productNo : parseInt(String(b.id).replace(/\D/g, "")) || 0;
-            return noB - noA;
-          });
+        // 2. Sub-Products Grid: ONLY products with isMainFeatured === true (preserve admin list order)
+        const featuredSubProducts = parsed.filter((p) => p.isMainFeatured === true);
 
         const resolvedHero = explicitHero.map((p) => {
           if (p.linkedProductId) {
@@ -66,8 +74,10 @@ export function MainProductDisplay({ initialProducts }: MainProductDisplayProps)
       syncProductsFromStorage();
     };
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("admin_products_updated", handleStorageChange);
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("admin_products_updated", handleStorageChange);
     };
   }, []);
 

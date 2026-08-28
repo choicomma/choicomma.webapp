@@ -150,7 +150,7 @@ export function AddToCart({
       action={async () => {
         if (resolvedVariant) {
           addCartItem(resolvedVariant, product);
-          addItemAction();
+          addItemAction(new FormData());
         }
       }}
       className={className}

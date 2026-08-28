@@ -69,11 +69,13 @@ export function SetBundleSection({ products }: SetBundleSectionProps) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setSetSales(parsed.filter((s: SetSaleBundle) => s.status === "active"));
-        return;
+        if (Array.isArray(parsed)) {
+          setSetSales(parsed.filter((s: SetSaleBundle) => s.status === "active"));
+          return;
+        }
       } catch (e) {}
     }
-    setSetSales(DEFAULT_SET_SALES.filter((s) => s.status === "active"));
+    setSetSales([]);
   };
 
   useEffect(() => {
@@ -83,10 +85,12 @@ export function SetBundleSection({ products }: SetBundleSectionProps) {
 
     const handleLangChange = () => setCurrentLang(getCurrentLanguage());
     window.addEventListener("language_changed", handleLangChange);
+    window.addEventListener("language-changed", handleLangChange);
     window.addEventListener("storage", loadSetSales);
 
     return () => {
       window.removeEventListener("language_changed", handleLangChange);
+      window.removeEventListener("language-changed", handleLangChange);
       window.removeEventListener("storage", loadSetSales);
     };
   }, []);

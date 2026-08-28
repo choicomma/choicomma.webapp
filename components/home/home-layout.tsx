@@ -6,7 +6,65 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
-import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+import { translateProductTitle, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
+
+function HomeProductTitle({ title, lang }: { title: string; lang: string }) {
+  const [translated, setTranslated] = useState(() => translateProductTitle(title, lang));
+
+  useEffect(() => {
+    if (lang === "ko") {
+      setTranslated(title);
+      return;
+    }
+    setTranslated(translateProductTitle(title, lang));
+    fetchAsyncTranslation(title, lang, "title").then((res) => {
+      if (res) setTranslated(res);
+    });
+  }, [title, lang]);
+
+  return <>{translated || title || "Product Name"}</>;
+}
+
+function ChoicommaMarqueeTicker() {
+  const marqueeItems = [
+    "CHOICOMMA",
+    "✦",
+    "SIGNATURE COLLECTION",
+    "✦",
+    "CHOICOMMA",
+    "✦",
+    "HIGH-END LUXURY SILHOUETTE",
+    "✦",
+    "CHOICOMMA",
+    "✦",
+    "SEOUL",
+    "✦",
+    "CHOICOMMA",
+    "✦",
+    "PREMIUM TAILORED",
+    "✦",
+  ];
+
+  return (
+    <div className="w-full bg-neutral-950 text-white border-y border-neutral-800 py-3.5 overflow-hidden select-none z-20 shadow-md">
+      <div className="animate-marquee whitespace-nowrap flex items-center gap-8 font-sans">
+        {[...marqueeItems, ...marqueeItems, ...marqueeItems, ...marqueeItems].map((item, idx) => (
+          <span
+            key={idx}
+            className={`text-xs md:text-sm uppercase transition-colors ${item === "CHOICOMMA"
+                ? "text-white font-sans text-xs md:text-sm tracking-[0.35em] font-black"
+                : item === "✦"
+                  ? "text-neutral-500 text-xs"
+                  : "text-neutral-300 font-medium tracking-[0.2em]"
+              }`}
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function HomeLayout({ products = [] }: { products?: any[] }) {
   const [currentLang, setCurrentLang] = useState("ko");
@@ -15,7 +73,11 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     setCurrentLang(getCurrentLanguage());
     const handleLangChange = () => setCurrentLang(getCurrentLanguage());
     window.addEventListener("language_changed", handleLangChange);
-    return () => window.removeEventListener("language_changed", handleLangChange);
+    window.addEventListener("language-changed", handleLangChange);
+    return () => {
+      window.removeEventListener("language_changed", handleLangChange);
+      window.removeEventListener("language-changed", handleLangChange);
+    };
   }, []);
 
   // Use first 4 products for the grid, or mock data if not enough
@@ -53,12 +115,12 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
         const saved = localStorage.getItem("secret_timesale_product_ids");
         if (saved !== null) {
           hasSavedIdsKey = true;
-          try { savedIds = JSON.parse(saved); } catch (e) {}
+          try { savedIds = JSON.parse(saved); } catch (e) { }
         }
         let itemSettings: Record<string, { discountRate?: number }> = {};
         const savedItem = localStorage.getItem("secret_timesale_item_settings");
         if (savedItem) {
-          try { itemSettings = JSON.parse(savedItem); } catch (e) {}
+          try { itemSettings = JSON.parse(savedItem); } catch (e) { }
         }
         let globalDiscount = 35;
         const savedDisc = localStorage.getItem("secret_timesale_discount");
@@ -66,7 +128,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
           globalDiscount = parseInt(savedDisc);
         }
         setTimeSaleSettings({ savedIds, itemSettings, globalDiscount, hasSavedIdsKey });
-      } catch (e) {}
+      } catch (e) { }
     };
 
     updateTimeSaleInfo();
@@ -123,7 +185,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
           const saved = localStorage.getItem("admin_products");
           if (saved) {
             const parsed = JSON.parse(saved);
-            
+
             // Helper to match admin page sorting
             const getProductNo = (product: any): number => {
               if (product.productNo !== undefined && !isNaN(Number(product.productNo))) {
@@ -135,18 +197,16 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
             };
 
             // Filter strictly for products where main display is checked (isMainFeatured === true)
+            // Preserves exact custom order configured by Admin
             const featuredProducts = parsed.filter((p: any) => p.isMainFeatured === true);
 
-            // Sort products to match the 'productNoDesc' order used in Admin
-            const sortedProducts = [...featuredProducts].sort((a, b) => getProductNo(b) - getProductNo(a));
-            
             // Update all products for grid
-            setAllProducts(sortedProducts);
+            setAllProducts(featuredProducts);
 
             // Update hero image ONLY if explicitly set in Admin
             const heroProducts = parsed.filter((p: any) => p.isHeroFeatured === true);
             const urls = heroProducts.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
-            
+
             if (urls.length > 0) {
               setHeroImages(urls);
               setCurrentSlideIndex(0);
@@ -194,7 +254,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       {/* SECTION 1: Auto Slider Hero Image (Only rendered if explicit hero images exist) */}
       {heroImages.length > 0 && (
         <section className="relative w-full h-[95vh] md:h-[105vh] min-h-[800px] border-b border-neutral-200 bg-white overflow-hidden">
-          <div 
+          <div
             className="flex w-full h-full transition-transform duration-1000 ease-in-out"
             style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
           >
@@ -214,6 +274,9 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
           </div>
         </section>
       )}
+
+      {/* INFINITE MARQUEE TICKER BANNER: CHOICOMMA Logo & Luxury Branding */}
+      <ChoicommaMarqueeTicker />
 
       {/* SECTION 2: 3x3 Paginated Grid */}
       <section className="w-full bg-white">
@@ -236,9 +299,9 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
             const currCode = product.currencyCode || product.priceRange?.minVariantPrice?.currencyCode || "KRW";
 
             return (
-              <Link 
-                key={product.id || idx} 
-                href={`/product/${product.handle || "item"}`} 
+              <Link
+                key={product.id || idx}
+                href={`/product/${product.handle || "item"}`}
                 className="group relative flex flex-col items-center justify-center aspect-[4/5] overflow-hidden border-b border-r border-neutral-200 [&:nth-child(2n)]:border-r-0 md:[&:nth-child(2n)]:border-r md:[&:nth-child(3n)]:border-r-0"
               >
                 <Image
@@ -252,11 +315,10 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
                 <div className="absolute bottom-0 left-0 p-3 flex flex-col items-start z-10 w-full md:w-auto">
                   <div className="flex items-center gap-1 mb-1 flex-wrap">
                     {product.productLabel && (
-                      <span className={`text-[8px] md:text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-wider rounded-sm ${
-                        product.productLabel === 'BLACK_LABEL' ? 'bg-black text-white' :
-                        product.productLabel === 'PREMIUM' ? 'bg-neutral-600 text-white' :
-                        'bg-neutral-200 text-neutral-800'
-                      }`}>
+                      <span className={`text-[8px] md:text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-wider rounded-sm ${product.productLabel === 'BLACK_LABEL' ? 'bg-black text-white' :
+                          product.productLabel === 'PREMIUM' ? 'bg-neutral-600 text-white' :
+                            'bg-neutral-200 text-neutral-800'
+                        }`}>
                         {product.productLabel.replace('_', ' ')}
                       </span>
                     )}
@@ -268,30 +330,30 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
                     )}
                   </div>
                   <span className="text-[10px] md:text-xs font-medium text-neutral-900 uppercase tracking-widest truncate md:pr-0 w-full mb-0.5">
-                    {translateProductTitle(product.title, currentLang) || "Product Name"}
+                    {product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
                   </span>
-                  
+
                   {/* Mobile Price Display */}
-                  <div className="flex items-center gap-1 md:hidden">
+                  <div className="flex items-center gap-1 md:hidden notranslate" translate="no">
                     {strikethroughPriceNum !== null && (
-                      <span className="text-[9px] text-neutral-400 line-through font-semibold">
+                      <span className="text-[9px] text-neutral-400 line-through font-semibold notranslate" translate="no">
                         {formatPrice(strikethroughPriceNum.toString(), currCode)}
                       </span>
                     )}
-                    <span className="text-[10px] font-bold text-neutral-900 uppercase">
+                    <span className="text-[10px] font-bold text-neutral-900 uppercase notranslate" translate="no">
                       {formatPrice(finalPriceNum.toString(), currCode)}
                     </span>
                   </div>
                 </div>
 
                 {/* Product Price (Bottom Right) - Visible on PC */}
-                <div className="hidden md:flex absolute bottom-0 right-0 p-3 flex-col items-end z-10 leading-tight">
+                <div className="hidden md:flex absolute bottom-0 right-0 p-3 flex-col items-end z-10 leading-tight notranslate" translate="no">
                   {strikethroughPriceNum !== null && (
-                    <span className="text-[10px] text-neutral-400 line-through font-semibold mb-0.5">
+                    <span className="text-[10px] text-neutral-400 line-through font-semibold mb-0.5 notranslate" translate="no">
                       {formatPrice(strikethroughPriceNum.toString(), currCode)}
                     </span>
                   )}
-                  <span className="text-xs font-extrabold text-neutral-900 uppercase">
+                  <span className="text-xs font-extrabold text-neutral-900 uppercase notranslate" translate="no">
                     {formatPrice(finalPriceNum.toString(), currCode)}
                   </span>
                 </div>
@@ -303,7 +365,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
         {/* Pagination Controls */}
         {allProducts.length > PAGE_SIZE && (
           <div className="flex justify-center items-center py-12 gap-4">
-            <button 
+            <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors"
@@ -313,7 +375,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
             <span className="text-xs text-neutral-900">
               {currentPage} / {Math.ceil(allProducts.length / PAGE_SIZE)}
             </span>
-            <button 
+            <button
               onClick={() => setCurrentPage(p => Math.min(Math.ceil(allProducts.length / PAGE_SIZE), p + 1))}
               disabled={currentPage >= Math.ceil(allProducts.length / PAGE_SIZE)}
               className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors"

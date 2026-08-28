@@ -13,11 +13,26 @@ interface LatestProductCardProps {
   labelPosition?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
 }
 
+import { translateProductTitle, translateUiText, getCurrentLanguage } from "@/lib/i18n/translation";
+
 export function LatestProductCard({
   product,
   principal = false,
   className,
 }: LatestProductCardProps) {
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    window.addEventListener("language-changed", handleLangChange);
+    return () => {
+      window.removeEventListener("language_changed", handleLangChange);
+      window.removeEventListener("language-changed", handleLangChange);
+    };
+  }, []);
+
   const customImg = (product as any).heroCustomImage;
   const displayImage = customImg || product.featuredImage?.url || "/product_1.webp";
   const linkedProduct = (product as any).linkedProduct || product;
@@ -157,7 +172,7 @@ export function LatestProductCard({
           {isOutOfStock && (
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
               <span className="bg-neutral-950 text-white font-black text-xs md:text-sm px-4 py-2 rounded-2xl border border-neutral-700 shadow-2xl tracking-widest uppercase">
-                품절 (SOLD OUT)
+                {translateUiText("SOLD OUT", currentLang)}
               </span>
             </div>
           )}
@@ -195,7 +210,7 @@ export function LatestProductCard({
         {isOutOfStock && (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <span className="bg-neutral-950 text-white font-black text-xs px-3 py-1.5 rounded-xl border border-neutral-700 shadow-xl tracking-widest uppercase">
-              품절 (SOLD OUT)
+              {translateUiText("SOLD OUT", currentLang)}
             </span>
           </div>
         )}

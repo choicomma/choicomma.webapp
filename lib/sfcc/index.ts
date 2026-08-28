@@ -123,10 +123,36 @@ export async function getProduct(handle: string) {
         return null;
       }
 
+      if (!product.tags || !Array.isArray(product.tags)) {
+        (product as any).tags = [];
+      }
+      if (!product.seo) {
+        (product as any).seo = {
+          title: product.title,
+          description: product.description,
+        };
+      }
+      if (!product.currencyCode) {
+        (product as any).currencyCode = product.priceRange?.minVariantPrice?.currencyCode || "KRW";
+      }
+
+      if (!product.variants || !Array.isArray(product.variants) || product.variants.length === 0) {
+        const pPrice = product.priceRange?.minVariantPrice?.amount || "0";
+        const pCurr = product.priceRange?.minVariantPrice?.currencyCode || "KRW";
+        const variantsList = (product.sizes || ["FREE"]).map((sz: string, idx: number) => ({
+          id: `${product.id}-variant-${idx + 1}`,
+          title: sz,
+          availableForSale: product.availableForSale ?? true,
+          selectedOptions: [{ name: "Size", value: sz }],
+          price: { amount: String(pPrice), currencyCode: pCurr },
+        }));
+        (product as any).variants = variantsList;
+      }
+
       return product;
     }
 
-    return getSFCCProduct(handle);
+    return null;
   } catch {
     return null;
   }
@@ -156,31 +182,21 @@ export async function getCollectionProducts({
       }
 
       if (collectionHandle === "top-seller" || collectionHandle === "main") {
-        return mockProducts.filter((p) => p.isMainFeatured === true);
+        return mockProducts.filter((p) => (p as any).isMainFeatured === true);
       }
 
       if (collectionHandle === "choice" || collectionHandle === "timesale" || collectionHandle === "new" || collectionHandle === "special") {
         return mockProducts;
       }
 
-      // Find all child categories that have this collection in their parentCategoryTree
-      const childCategoryIds = mockCollections
-        .filter((c) =>
-          c.parentCategoryTree.some((parent) => parent.id === collection.handle)
-        )
-        .map((c) => c.handle);
-
-      // Include the current collection + all its child categories
-      const categoryIdsToSearch = [collection.handle, ...childCategoryIds];
-
-      const filteredProducts = mockProducts.filter(
-        (p) => p.categoryId && categoryIdsToSearch.includes(p.categoryId)
+      const categoryProducts = mockProducts.filter(
+        (p) => p.categoryId === collectionHandle || ((p as any).categoryIds && (p as any).categoryIds.includes(collectionHandle))
       );
 
-      // Ensure unique products by id
-      const uniqueProductIds = [...new Set(filteredProducts.map((p) => p.id))];
-      const uniqueProducts = uniqueProductIds
-        .map((id) => filteredProducts.find((p) => p.id === id))
+      const uniqueProducts = [
+        ...new Set(categoryProducts.map((product) => product.id)),
+      ]
+        .map((id) => categoryProducts.find((product) => product.id === id))
         .filter(
           (product): product is NonNullable<typeof product> => product != null
         );
@@ -188,8 +204,8 @@ export async function getCollectionProducts({
       return uniqueProducts;
     }
 
-    return await searchProducts({
-      categoryId: collectionHandle,
+    return await getSFCCCollectionProducts({
+      collection: collectionHandle,
       limit,
       sortKey,
     });
@@ -209,7 +225,7 @@ export async function getProducts({
   "use cache";
   cacheTag(TAGS.products);
   cacheLife("days");
-  return await searchProducts({ query, sortKey });
+  return await getSFCCCollectionProducts({ query, sortKey });
 }
 
 function createEmptyMockCart(): Cart {
@@ -258,17 +274,19 @@ export async function createCart() {
     if (!guestToken) {
       const tokenResponse = await getGuestUserAuthToken();
       guestToken = tokenResponse.access_token;
-      (await cookies()).set("guest_token", guestToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 60 * 30,
-        path: "/",
-      });
+      if (guestToken) {
+        (await cookies()).set("guest_token", guestToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 60 * 30,
+          path: "/",
+        });
+      }
     }
 
     // get the guest config
-    const config = await getGuestUserConfig(guestToken);
+    const config = await getGuestUserConfig(guestToken || undefined);
 
     // initialize the basket client
     const basketClient = new ShopperBaskets(config);
@@ -282,23 +300,28 @@ export async function createCart() {
 
     return reshapeBasket(createdBasket, cartItems);
   } catch {
-    return null;
+    return createEmptyMockCart();
   }
 }
 
-export async function getCart() {
+export async function getCart(): Promise<Cart | null> {
+  "use cache";
+  cacheTag(TAGS.cart);
+  cacheLife("seconds");
+
   if (USE_MOCK_DATA) {
-    return getMockCart();
+    return createEmptyMockCart();
+  }
+
+  const cartId = (await cookies()).get("cartId")?.value;
+  const guestToken = (await cookies()).get("guest_token")?.value;
+
+  if (!cartId) {
+    return null;
   }
 
   try {
-    const cookieStore = await cookies();
-    const cartId = cookieStore.get("cartId")?.value;
-    if (!cartId) return null;
-
-    const guestToken = cookieStore.get("guest_token")?.value;
-    const config = await getGuestUserConfig(guestToken);
-
+    const config = await getGuestUserConfig(guestToken || undefined);
     const basketClient = new ShopperBaskets(config);
 
     const basket = await basketClient.getBasket({
@@ -307,13 +330,15 @@ export async function getCart() {
       },
     });
 
-    if (!basket?.basketId) return null;
-
     const cartItems = await getCartItems(basket);
+
     return reshapeBasket(basket, cartItems);
-  } catch (e: any) {
-    console.error("Error in getCart:", e);
-    return null;
+  } catch (e) {
+    const sdkError = await ensureSDKResponseError(e);
+    if (sdkError) {
+      return null;
+    }
+    throw e;
   }
 }
 
@@ -600,7 +625,7 @@ async function getGuestUserAuthToken() {
   const loginClient = new ShopperLogin(apiConfig);
 
   try {
-    return await helpers.loginGuestUserPrivate(
+    return await (helpers as any).loginGuestUserPrivate(
       loginClient,
       {},
       { clientSecret: process.env.SFCC_SECRET || "" }
@@ -634,7 +659,7 @@ async function getSFCCCollections() {
 
   const result = await productsClient.getCategories({
     parameters: {
-      ids: storeCatalog.ids,
+      ids: storeCatalog.ids as any,
     },
   });
 
@@ -642,44 +667,33 @@ async function getSFCCCollections() {
 }
 
 async function getSFCCCollection(id: string) {
+  if (USE_MOCK_DATA) {
+    return null;
+  }
+
   const config = await getGuestUserConfig();
   const productsClient = new ShopperProducts(config);
   const result = await productsClient.getCategory({
     parameters: {
       id,
+      levels: 2,
     },
   });
 
   return reshapeCategory(result);
 }
 
-async function getSFCCProduct(id: string) {
-  const config = await getGuestUserConfig();
-  const productsClient = new ShopperProducts(config);
-
-  const product = await productsClient.getProduct({
-    parameters: {
-      id,
-      allImages: true,
-    },
-  });
-
-  return reshapeProduct(product);
-}
-
-async function searchProducts(options: {
-  query?: string;
-  categoryId?: string;
-  sortKey?: string;
+async function getSFCCCollectionProducts({
+  collection: categoryId,
+  limit,
+  sortKey,
+  query,
+}: {
+  collection?: string;
   limit?: number;
+  sortKey?: string;
+  query?: string;
 }) {
-  const {
-    query,
-    categoryId,
-    sortKey = defaultSort.sortKey,
-    limit = 100,
-  } = options;
-
   if (USE_MOCK_DATA) {
     return [];
   }
@@ -687,7 +701,7 @@ async function searchProducts(options: {
   const config = await getGuestUserConfig();
 
   const searchClient = new ShopperSearch(config);
-  const searchResults = await searchClient.productSearch({
+  const searchResults = await (searchClient as any).productSearch({
     parameters: {
       q: query || "",
       refine: categoryId ? [`cgid=${categoryId}`] : [],
@@ -697,10 +711,10 @@ async function searchProducts(options: {
   });
 
   const uniqueHits = [
-    ...new Set(searchResults.hits?.map((hit) => hit.productId)),
+    ...new Set(searchResults.hits?.map((hit: any) => hit.productId)),
   ]
-    .map((id) => searchResults.hits?.find((hit) => hit.productId === id))
-    .filter((hit): hit is NonNullable<typeof hit> => hit != null);
+    .map((id) => searchResults.hits?.find((hit: any) => hit.productId === id))
+    .filter((hit: any): hit is NonNullable<typeof hit> => hit != null);
 
   const productsClient = new ShopperProducts(config);
 
@@ -937,7 +951,7 @@ export async function placeOrder() {
       body: { basketId: cartId },
     })) as ShopperOrdersTypes.Order;
 
-    const cartItems = await getCartItems(order);
+    const cartItems = await getCartItems(order as any);
     return reshapeOrder(order, cartItems);
   } catch (e) {
     const error = await ensureSDKResponseError(e, "Error placing order");
@@ -964,7 +978,7 @@ export async function getCheckoutOrder() {
       },
     })) as ShopperOrdersTypes.Order;
 
-    const cartItems = await getCartItems(order);
+    const cartItems = await getCartItems(order as any);
     return reshapeOrder(order, cartItems);
   } catch (e) {
     const sdkError = await ensureSDKResponseError(e);

@@ -14,7 +14,7 @@ import { getCurrentLanguage, translateProductDescription } from "@/lib/i18n/tran
 
 const ACCORDION_I18N: Record<string, Record<string, string>> = {
   ko: {
-    designerDesc: "디자이너 설명",
+    designerDesc: "제품 상세 사진",
     fabricInfo: "원단 정보",
     fabricComp: "소재 구성 (FABRIC)",
     elasticity: "신축성",
@@ -32,7 +32,7 @@ const ACCORDION_I18N: Record<string, Record<string, string>> = {
     nonReturnableNotice: "다음과 같은 내용은 불량 사유가 아니오니 구입 전 확인해 주시기 바랍니다.",
   },
   en: {
-    designerDesc: "DESIGNER DESCRIPTION",
+    designerDesc: "PRODUCT DETAIL PHOTOS",
     fabricInfo: "FABRIC DETAILS",
     fabricComp: "FABRIC COMPOSITION",
     elasticity: "ELASTICITY",
@@ -173,6 +173,8 @@ export function ProductDetailAccordions({ product }: ProductDetailAccordionsProp
     ? prod.detailedInfo
     : `• 디자이너 노트: 본 상품(${product.title})은 choicomma 오리지널 실루엣 디자인으로 섬세하게 디테일을 더해 연출된 메인 컬렉션 작품입니다.\n• 소재 및 아웃핏: 최고급 소재와 감각적인 핏 설계로 바디 라인을 아름답게 잡아줍니다.\n• 관리 안내: 전문 드라이클리닝을 권장합니다.`;
 
+  const isHtmlContent = typeof detailText === "string" && (detailText.includes("<img") || detailText.includes("<p>") || detailText.includes("<div"));
+
   return (
     <div className="w-full mt-12 border-t border-neutral-200">
       <Accordion type="single" collapsible className="w-full" defaultValue="details">
@@ -182,9 +184,16 @@ export function ProductDetailAccordions({ product }: ProductDetailAccordionsProp
             {t.designerDesc}
           </AccordionTrigger>
           <AccordionContent className="text-xs text-neutral-600 leading-relaxed pb-6">
-            <div className="whitespace-pre-wrap leading-relaxed text-xs text-neutral-700">
-              {translateProductDescription(detailText, currentLang)}
-            </div>
+            {isHtmlContent ? (
+              <div
+                className="w-full max-w-full overflow-hidden text-neutral-800 leading-relaxed space-y-4 [&_img]:max-w-full [&_img]:h-auto [&_img]:mx-auto [&_img]:rounded-2xl [&_img]:my-3 [&_p]:my-2"
+                dangerouslySetInnerHTML={{ __html: detailText }}
+              />
+            ) : (
+              <div className="whitespace-pre-wrap leading-relaxed text-xs text-neutral-700">
+                {translateProductDescription(detailText, currentLang)}
+              </div>
+            )}
           </AccordionContent>
         </AccordionItem>
 

@@ -35,7 +35,11 @@ export function CartItemCard({
     setCurrentLang(getCurrentLanguage());
     const handleLangChange = () => setCurrentLang(getCurrentLanguage());
     window.addEventListener("language_changed", handleLangChange);
-    return () => window.removeEventListener("language_changed", handleLangChange);
+    window.addEventListener("language-changed", handleLangChange);
+    return () => {
+      window.removeEventListener("language_changed", handleLangChange);
+      window.removeEventListener("language-changed", handleLangChange);
+    };
   }, []);
   const merchandiseSearchParams = {} as MerchandiseSearchParams;
 
@@ -82,7 +86,7 @@ export function CartItemCard({
               prefetch
             >
               <span className="text-xs font-black text-neutral-900 dark:text-white line-clamp-1 hover:underline">
-                {translateProductTitle(item.merchandise.product.title, currentLang)}
+                {item.merchandise.product.title}
               </span>
             </Link>
             {validOptions.length > 0 && (

@@ -11,6 +11,7 @@ import {
   Paperclip,
   CheckCheck,
   Minimize2,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
@@ -175,14 +176,23 @@ export function LiveChatWidget() {
     }
   };
 
+  const getUserChatKey = () => {
+    if (typeof window === "undefined") return "site_live_chat_messages_guest";
+    const email = localStorage.getItem("membership_user_email");
+    const phone = localStorage.getItem("membership_user_phone");
+    const id = email || phone || "guest";
+    return `site_live_chat_messages_${id.trim().toLowerCase()}`;
+  };
+
   // Load chat messages from localStorage
   const loadMessages = () => {
     if (typeof window === "undefined") return;
-    const saved = localStorage.getItem("site_live_chat_messages");
-    if (saved) {
+    const chatKey = getUserChatKey();
+    const saved = localStorage.getItem(chatKey);
+    if (saved !== null) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setMessages(parsed);
           const lastMsg = parsed[parsed.length - 1];
           if (lastMsg && (lastMsg.id?.startsWith("admin-close") || lastMsg.text?.includes("상담이 종료되었습니다"))) {
@@ -192,7 +202,8 @@ export function LiveChatWidget() {
         }
       } catch (e) {}
     }
-    // Default initial message
+
+    // Default initial message on first ever visit
     const defaultInit: ChatMessage[] = [
       {
         id: "msg-welcome-1",
@@ -203,24 +214,33 @@ export function LiveChatWidget() {
       },
     ];
     setMessages(defaultInit);
-    localStorage.setItem("site_live_chat_messages", JSON.stringify(defaultInit));
+    localStorage.setItem(chatKey, JSON.stringify(defaultInit));
   };
 
   useEffect(() => {
     checkAuth();
     loadMessages();
 
-    const handleStorageChange = () => {
-      checkAuth();
-      loadMessages();
+    const handleStorageChange = (e: Event) => {
+      setTimeout(() => {
+        checkAuth();
+        loadMessages();
+      }, 0);
+    };
+
+    const handleChatEnded = () => {
+      setIsOpen(false);
+      setIsMinimized(false);
     };
 
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("live_chat_updated", handleStorageChange);
+    window.addEventListener("live_chat_ended", handleChatEnded);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("live_chat_updated", handleStorageChange);
+      window.removeEventListener("live_chat_ended", handleChatEnded);
     };
   }, [currentLang]);
 
@@ -232,9 +252,7 @@ export function LiveChatWidget() {
     }
   }, [messages, isOpen]);
 
-  if (!isLoggedIn) {
-    return null;
-  }
+  // LiveChatWidget is always visible for all users and members
 
   const handleSendMessage = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -256,7 +274,31 @@ export function LiveChatWidget() {
 
     const updated = [...messages, newMsg];
     setMessages(updated);
-    localStorage.setItem("site_live_chat_messages", JSON.stringify(updated));
+    const chatKey = getUserChatKey();
+    localStorage.setItem(chatKey, JSON.stringify(updated));
+
+    // Register active user to admin chat sessions list
+    if (typeof window !== "undefined") {
+      const uEmail = localStorage.getItem("membership_user_email") || "guest@choicomma.com";
+      const uName = localStorage.getItem("membership_user_name") || "고객님";
+      const savedSessions = localStorage.getItem("admin_chat_sessions");
+      let sessionList: any[] = [];
+      if (savedSessions) {
+        try { sessionList = JSON.parse(savedSessions); } catch (err) {}
+      }
+      if (!sessionList.some((s) => s.email?.toLowerCase() === uEmail.toLowerCase() || s.id?.toLowerCase() === uEmail.toLowerCase())) {
+        const newSession = {
+          id: uEmail,
+          name: `${uName} 회원님`,
+          email: uEmail,
+          tier: "VIP",
+          badgeColor: "bg-amber-400 text-neutral-950 font-black",
+          status: "online",
+        };
+        localStorage.setItem("admin_chat_sessions", JSON.stringify([newSession, ...sessionList]));
+      }
+    }
+
     window.dispatchEvent(new CustomEvent("live_chat_updated"));
 
     setInputText("");
@@ -264,7 +306,7 @@ export function LiveChatWidget() {
 
     // Auto simulated response if admin has not replied yet
     setTimeout(() => {
-      const savedLatest = localStorage.getItem("site_live_chat_messages");
+      const savedLatest = localStorage.getItem(chatKey);
       let latestList: ChatMessage[] = updated;
       try {
         if (savedLatest) latestList = JSON.parse(savedLatest);
@@ -281,10 +323,29 @@ export function LiveChatWidget() {
         };
         const updatedWithAuto = [...latestList, autoReply];
         setMessages(updatedWithAuto);
-        localStorage.setItem("site_live_chat_messages", JSON.stringify(updatedWithAuto));
+        localStorage.setItem(chatKey, JSON.stringify(updatedWithAuto));
         window.dispatchEvent(new CustomEvent("live_chat_updated"));
       }
     }, 1500);
+  };
+
+  const handleResetChat = () => {
+    const defaultInit: ChatMessage[] = [
+      {
+        id: "msg-welcome-1",
+        sender: "admin",
+        senderName: t.teamName,
+        text: t.welcomeText,
+        timestamp: "NOW",
+      },
+    ];
+    setMessages(defaultInit);
+    if (typeof window !== "undefined") {
+      const chatKey = getUserChatKey();
+      localStorage.setItem(chatKey, JSON.stringify(defaultInit));
+      localStorage.removeItem("site_live_chat_ended");
+      window.dispatchEvent(new CustomEvent("live_chat_updated"));
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -359,6 +420,13 @@ export function LiveChatWidget() {
             </div>
 
             <div className="flex items-center gap-1">
+              <button
+                onClick={handleResetChat}
+                className="text-neutral-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
+                title="Reset Chat"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
               <button
                 onClick={() => setIsOpen(false)}
                 className="text-neutral-400 hover:text-white p-1.5 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"

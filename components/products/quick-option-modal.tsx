@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Product } from "@/lib/sfcc/types";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { useCart } from "@/components/cart/cart-context";
-import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+import { translateProductTitle, translateUiText, getCurrentLanguage } from "@/lib/i18n/translation";
 import {
   Dialog,
   DialogContent,
@@ -86,7 +86,7 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
       setIsAdding(false);
       setOpen(false);
       toast.success(
-        `${product.title} (${selectedColor} / ${selectedSize}) ${quantity}개가 장바구니에 담겼습니다.`
+        `${translateProductTitle(product.title, currentLang)} (${selectedColor} / ${selectedSize})`
       );
     }, 300);
   };
@@ -109,10 +109,10 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
         <DialogHeader className="p-5 pb-3 border-b border-neutral-100 flex flex-row items-center justify-between">
           <div>
             <DialogTitle className="text-base font-extrabold text-neutral-950">
-              옵션 & 수량 선택
+              {translateUiText("옵션 & 수량 선택", currentLang)}
             </DialogTitle>
             <p className="text-xs text-neutral-500 font-medium mt-0.5">
-              원하시는 컬러, 사이즈 및 수량을 선택해 주세요.
+              {translateUiText("원하시는 컬러, 사이즈 및 수량을 선택해 주세요.", currentLang)}
             </p>
           </div>
         </DialogHeader>
@@ -144,7 +144,7 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
           {/* Color Selection */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-neutral-700">컬러 (Color)</span>
+              <span className="text-neutral-700">{translateUiText("컬러", currentLang)}</span>
               <span className="text-neutral-950 font-black">{selectedColor}</span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -172,7 +172,7 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
           {/* Size Selection */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-neutral-700">사이즈 (Size)</span>
+              <span className="text-neutral-700">{translateUiText("사이즈", currentLang)}</span>
               <span className="text-neutral-950 font-black">{selectedSize}</span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -200,8 +200,8 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
           {/* Quantity Selection Counter */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-neutral-700">수량 (Quantity)</span>
-              <span className="text-neutral-950 font-black">{quantity}개</span>
+              <span className="text-neutral-700">{translateUiText("수량", currentLang)}</span>
+              <span className="text-neutral-950 font-black">{quantity}</span>
             </div>
             <div className="flex items-center gap-3 bg-neutral-50 p-1.5 rounded-2xl border border-neutral-200/80 max-w-[150px]">
               <button
@@ -225,13 +225,13 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
           {/* Selection Summary Pill & Realtime Total Price */}
           <div className="p-3 bg-neutral-900 text-white border border-neutral-800 rounded-2xl flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <span className="text-neutral-300 font-extrabold">선택 조합:</span>
+              <span className="text-neutral-300 font-extrabold">{translateUiText("선택 조합", currentLang)}:</span>
               <Badge className="bg-white text-neutral-950 font-black px-2.5 py-0.5 rounded-lg text-[11px]">
-                {selectedColor} / {selectedSize} / {quantity}개
+                {selectedColor} / {selectedSize} / {quantity}
               </Badge>
             </div>
             <div className="text-right">
-              <span className="text-[10px] text-neutral-400 font-bold block">총 금액</span>
+              <span className="text-[10px] text-neutral-400 font-bold block">{translateUiText("총 금액", currentLang)}</span>
               <span className="text-sm font-black text-white font-mono">
                 {formatPrice(
                   (parseFloat(product.priceRange.minVariantPrice.amount) * quantity).toString(),
@@ -248,7 +248,7 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
             className="w-full h-12 bg-neutral-950 hover:bg-black text-white font-extrabold text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <ShoppingBag className="w-4 h-4" />
-            {isAdding ? "담는 중..." : `${quantity}개 장바구니에 담기`}
+            {isAdding ? translateUiText("담는 중...", currentLang) : translateUiText("ADD TO CART", currentLang)}
           </Button>
         </div>
       </DialogContent>

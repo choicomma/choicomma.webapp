@@ -11,18 +11,19 @@ import { NavItem } from "@/lib/types";
 import { Collection } from "@/lib/sfcc/types";
 import { MainNoticeBanner } from "@/components/home/main-client-features";
 import { motion, AnimatePresence } from "motion/react";
+import { LanguageSelector } from "./language-selector";
 
 export const navItems: NavItem[] = [
   {
-    label: "home",
+    label: "홈",
     href: "/",
   },
   {
-    label: "TIMESALE",
+    label: "타임세일",
     href: "/shop/timesale",
   },
   {
-    label: "LOG IN",
+    label: "로그인",
     href: "/login",
   },
 ];
@@ -31,66 +32,11 @@ interface HeaderProps {
   collections: Collection[];
 }
 
-import { LanguageSelector } from "./language-selector";
-import { getCurrentLanguage } from "@/lib/i18n/translation";
 
-const NAV_I18N: Record<string, Record<string, string>> = {
-  ko: {
-    home: "HOME",
-    timesale: "TIMESALE",
-    login: "LOG IN",
-  },
-  en: {
-    home: "HOME",
-    timesale: "TIMESALE",
-    login: "LOG IN",
-  },
-  ja: {
-    home: "ホーム",
-    timesale: "タイムセール",
-    login: "ログイン",
-  },
-  zh: {
-    home: "首页",
-    timesale: "限时特惠",
-    login: "登录",
-  },
-  fr: {
-    home: "ACCUEIL",
-    timesale: "VENTE FLASH",
-    login: "CONNEXION",
-  },
-  de: {
-    home: "START",
-    timesale: "TIMESALE",
-    login: "ANMELDEN",
-  },
-  es: {
-    home: "INICIO",
-    timesale: "OFERTA",
-    login: "ACCESO",
-  },
-};
 
 export function Header({ collections }: HeaderProps) {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [currentLang, setCurrentLang] = useState("ko");
-
-  useEffect(() => {
-    setCurrentLang(getCurrentLanguage());
-    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
-    window.addEventListener("language_changed", handleLangChange);
-    return () => window.removeEventListener("language_changed", handleLangChange);
-  }, []);
-
-  const getNavItemLabel = (href: string, defaultLabel: string) => {
-    const dict = NAV_I18N[currentLang] || NAV_I18N.ko;
-    if (href === "/") return dict.home;
-    if (href.includes("timesale")) return dict.timesale;
-    if (href.includes("login")) return dict.login;
-    return defaultLabel;
-  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -173,7 +119,7 @@ export function Header({ collections }: HeaderProps) {
                     )}
                     prefetch
                   >
-                    <span>{getNavItemLabel(item.href, item.label)}</span>
+                    <span>{item.label}</span>
                   </Link>
                 </li>
               ))}
@@ -187,8 +133,9 @@ export function Header({ collections }: HeaderProps) {
             />
           </nav>
 
-          {/* Mobile: MENU on far right */}
-          <div className="flex items-center md:hidden">
+          {/* Mobile: MENU & Language Selector on far right */}
+          <div className="flex items-center gap-2 md:hidden">
+            <LanguageSelector isScrolled={isScrolled} />
             <MobileMenu collections={collections} isScrolled={isScrolled} />
           </div>
         </div>

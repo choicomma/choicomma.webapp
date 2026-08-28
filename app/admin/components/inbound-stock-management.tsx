@@ -355,7 +355,7 @@ export function InboundStockManagement({
                 <th className="py-3.5 px-4 text-right">관리</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200/60">
+            <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
               {filteredInboundList.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-10 text-center text-neutral-500 text-xs">

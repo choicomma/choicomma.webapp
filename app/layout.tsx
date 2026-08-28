@@ -42,7 +42,42 @@ export default async function RootLayout({
   const cart = getCart();
 
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                if (typeof window === 'undefined') return;
+                if (Node.prototype.removeChild) {
+                  var origRemoveChild = Node.prototype.removeChild;
+                  Node.prototype.removeChild = function(child) {
+                    if (child.parentNode !== this) {
+                      if (child.parentNode) {
+                        return child.parentNode.removeChild(child);
+                      }
+                      return child;
+                    }
+                    return origRemoveChild.apply(this, arguments);
+                  };
+                }
+                if (Node.prototype.insertBefore) {
+                  var origInsertBefore = Node.prototype.insertBefore;
+                  Node.prototype.insertBefore = function(newNode, refNode) {
+                    if (refNode && refNode.parentNode !== this) {
+                      if (refNode.parentNode) {
+                        return refNode.parentNode.insertBefore(newNode, refNode);
+                      }
+                      return newNode;
+                    }
+                    return origInsertBefore.apply(this, arguments);
+                  };
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${notoSansKR.variable} antialiased min-h-screen`}
         suppressHydrationWarning
@@ -52,7 +87,7 @@ export default async function RootLayout({
             <HeaderWithData />
             {children}
             <LiveChatWidget />
-            <Toaster closeButton position="bottom-right" />
+            <Toaster closeButton position="top-center" />
             {isDevelopment && <DebugGrid />}
           </NuqsAdapter>
         </CartProvider>

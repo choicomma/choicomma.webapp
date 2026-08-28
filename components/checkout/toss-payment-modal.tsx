@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loadTossPayments, TossPaymentsWidgets } from "@tosspayments/tosspayments-sdk";
 import { X, CreditCard, ShieldCheck, Lock } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
+import { getCalculatedNumericPrice } from "@/lib/currency/currency-service";
 
 interface TossPaymentModalProps {
   isOpen: boolean;
@@ -74,24 +75,32 @@ export default function TossPaymentModal({
     if (!widgets || !isOpen || !isWidgetKey) return;
 
     async function renderPaymentWidgets() {
+      const activeWidgets = widgets as any;
+      if (!activeWidgets) return;
       try {
         // Set Payment Amount
-        await widgets.setAmount({
-          currency: "KRW",
-          value: totalAmount > 0 ? totalAmount : 50000,
-        });
+        if (typeof activeWidgets.setAmount === "function") {
+          await activeWidgets.setAmount({
+            currency: "KRW",
+            value: totalAmount > 0 ? totalAmount : 50000,
+          });
+        }
 
         // Render Payment Methods
-        await widgets.renderPaymentMethods({
-          containerId: "#toss-payment-methods",
-          variantKey: "DEFAULT",
-        });
+        if (typeof activeWidgets.renderPaymentMethods === "function") {
+          await activeWidgets.renderPaymentMethods({
+            selector: "#toss-payment-methods",
+            variantKey: "DEFAULT",
+          });
+        }
 
         // Render Agreement
-        await widgets.renderAgreement({
-          containerId: "#toss-agreement",
-          variantKey: "AGREEMENT",
-        });
+        if (typeof activeWidgets.renderAgreement === "function") {
+          await activeWidgets.renderAgreement({
+            selector: "#toss-agreement",
+            variantKey: "AGREEMENT",
+          });
+        }
       } catch (err: any) {
         console.error("Payment Widget Render Error:", err);
       }

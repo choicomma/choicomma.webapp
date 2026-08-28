@@ -82,19 +82,55 @@ export default function LoginPage() {
     e.preventDefault();
 
     if (isSignUp) {
+      if (!phone.trim()) {
+        alert("휴대폰 번호를 입력해 주세요.");
+        return;
+      }
+      if (!email.trim()) {
+        alert("이메일 주소를 입력해 주세요.");
+        return;
+      }
       if (password !== confirmPassword) {
         alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
         return;
+      }
+
+      // Check for duplicate phone or email in registered customers
+      if (typeof window !== "undefined") {
+        const cleanPhone = phone.replace(/[^0-9]/g, "");
+        const targetEmail = email.trim().toLowerCase();
+        const savedCustomers = localStorage.getItem("admin_customers");
+        if (savedCustomers) {
+          try {
+            const customerList: any[] = JSON.parse(savedCustomers);
+            const isDuplicatePhone = customerList.some(
+              (c) => c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhone
+            );
+            if (isDuplicatePhone) {
+              setToastMsg("이미 가입된 휴대폰 번호입니다. 기존 번호로 로그인해 주세요.");
+              return;
+            }
+
+            const isDuplicateEmail = customerList.some(
+              (c) => c.email && c.email.trim().toLowerCase() === targetEmail
+            );
+            if (isDuplicateEmail) {
+              setToastMsg("이미 가입된 이메일 주소입니다. 다른 이메일을 입력해 주세요.");
+              return;
+            }
+          } catch (e) {}
+        }
       }
     }
 
     setIsLoading(true);
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const inputLoginId = email.trim().toLowerCase();
+    const cleanPhoneId = phone.replace(/[^0-9]/g, "");
     const inputPassword = password.trim();
 
-    const isAdmin = !isSignUp && (normalizedEmail === "admin" || normalizedEmail === "admin@choicomma.com");
-    const isMyPageUser = !isSignUp && (normalizedEmail === "mypage" || normalizedEmail === "mypage@choicomma.com");
+    const isAdmin = !isSignUp && (inputLoginId === "admin" || inputLoginId === "admin@choicomma.com");
+    const isMyPageUser = !isSignUp && (inputLoginId === "mypage" || inputLoginId === "mypage@choicomma.com");
 
     if (isAdmin) {
       const savedAdminPwd = (typeof window !== "undefined" && localStorage.getItem("user_pwd_admin")) || "Mrschoi83!!";
@@ -148,12 +184,21 @@ export default function LoginPage() {
     if (typeof window !== "undefined") {
       if (isSignUp) {
         const displayName = name.trim() || "신규회원";
-        const autoEmail = phone ? `${phone.replace(/[^0-9]/g, "")}@choicomma.com` : `user_${Date.now()}@choicomma.com`;
+        const finalEmail = email.trim() ? email.trim() : `${cleanPhoneId || Date.now()}@choicomma.com`;
+        
         localStorage.setItem("membership_user_name", displayName);
-        localStorage.setItem("membership_user_email", autoEmail);
-        localStorage.setItem("membership_user_phone", phone);
-        localStorage.setItem("membership_user_address", address);
-        localStorage.setItem(`user_pwd_${autoEmail.toLowerCase()}`, inputPassword);
+        localStorage.setItem("membership_user_phone", phone.trim());
+        localStorage.setItem("membership_user_email", finalEmail);
+        localStorage.setItem("membership_user_address", address.trim());
+        
+        // Save password under both phone and email
+        if (cleanPhoneId) {
+          localStorage.setItem(`user_pwd_${cleanPhoneId}`, inputPassword);
+          localStorage.setItem(`user_pwd_${phone.trim()}`, inputPassword);
+        }
+        if (finalEmail) {
+          localStorage.setItem(`user_pwd_${finalEmail.toLowerCase()}`, inputPassword);
+        }
 
         // Register to admin_customers list
         const savedCustomers = localStorage.getItem("admin_customers");
@@ -166,9 +211,9 @@ export default function LoginPage() {
         const newCustomer = {
           id: `CUST-${1000 + customerList.length + 1}`,
           name: displayName,
-          email: autoEmail,
-          phone: phone || "010-1234-5678",
-          address: address || "서울특별시 강남구 압구정로 100",
+          email: finalEmail,
+          phone: phone.trim() || "010-1234-5678",
+          address: address.trim() || "서울특별시 강남구 압구정로 100",
           joinedDate: new Date().toISOString().split("T")[0],
           totalOrders: 0,
           totalSpent: 0,
@@ -179,7 +224,11 @@ export default function LoginPage() {
         localStorage.setItem("admin_customers", JSON.stringify([newCustomer, ...customerList]));
         window.dispatchEvent(new CustomEvent("storage"));
       } else {
-        const savedPwd = localStorage.getItem(`user_pwd_${normalizedEmail}`);
+        // Login flow: match by phone or email
+        const phoneKey = `user_pwd_${inputLoginId.replace(/[^0-9]/g, "")}`;
+        const emailKey = `user_pwd_${inputLoginId}`;
+        const savedPwd = localStorage.getItem(phoneKey) || localStorage.getItem(emailKey);
+        
         if (savedPwd && inputPassword !== savedPwd && inputPassword !== "Mrschoi83!!") {
           setIsLoading(false);
           setToastMsg("비밀번호가 일치하지 않습니다. 비밀번호를 다시 확인해 주세요.");
@@ -187,12 +236,18 @@ export default function LoginPage() {
         }
 
         if (!savedPwd) {
-          localStorage.setItem(`user_pwd_${normalizedEmail}`, inputPassword);
+          localStorage.setItem(emailKey, inputPassword);
         }
 
-        localStorage.setItem("membership_user_email", email);
+        if (inputLoginId.includes("@")) {
+          localStorage.setItem("membership_user_email", inputLoginId);
+        } else {
+          localStorage.setItem("membership_user_phone", inputLoginId);
+          localStorage.setItem("membership_user_email", `${inputLoginId.replace(/[^0-9]/g, "")}@choicomma.com`);
+        }
+        
         if (!localStorage.getItem("membership_user_name")) {
-          localStorage.setItem("membership_user_name", email.split("@")[0]);
+          localStorage.setItem("membership_user_name", "회원");
         }
         window.dispatchEvent(new CustomEvent("storage"));
       }
@@ -279,9 +334,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F5] text-neutral-900 flex flex-col justify-between p-6 relative font-sans">
-      {/* Toast Notification */}
+      {/* Toast Notification (Top Center Floating) */}
       {toastMsg && (
-        <div className="fixed top-8 right-8 z-50 bg-neutral-900 text-white font-bold px-6 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-neutral-900 text-white font-bold px-6 py-3.5 rounded-xl shadow-2xl flex items-center justify-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 max-w-lg w-auto text-center border border-neutral-800">
           <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
           <span>{toastMsg}</span>
         </div>
@@ -338,62 +393,75 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
-              <div>
-                <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  이름 (성함)
-                </label>
-                <div className="relative">
-                  <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="홍길동"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold"
-                  />
+              <>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                    이름 (성함) <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="홍길동"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Phone Number Field (When Sign Up) */}
-            {isSignUp && (
-              <div>
-                <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  휴대폰 번호
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="010-0000-0000"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold"
-                  />
+                <div>
+                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                    휴대폰 번호 <span className="text-sky-600 font-extrabold">(로그인 ID) *</span>
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-sky-500" />
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="010-0000-0000"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold font-mono"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Home Address Field (When Sign Up) */}
-            {isSignUp && (
-              <div>
-                <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  집 주소 (기본 배송지)
-                </label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                  <input
-                    type="text"
-                    required
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="서울특별시 강남구 압구정로 100 럭셔리 타워 1001호"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold text-xs"
-                  />
+                <div>
+                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                    이메일 주소 <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="example@choicomma.com"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium"
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                    집 주소 (기본 배송지) <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <MapPin className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                    <input
+                      type="text"
+                      required
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="서울특별시 강남구 압구정로 100 럭셔리 타워 1001호"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold text-xs"
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             {!isSignUp && (
@@ -402,14 +470,14 @@ export default function LoginPage() {
                   휴대폰 번호 또는 이메일
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                  <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-sky-600" />
                   <input
                     type="text"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder=""
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium"
+                    placeholder="010-0000-0000 또는 이메일 입력"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium font-mono"
                   />
                 </div>
               </div>

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Check, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/cart/cart-context";
-import { translateProductTitle, translateProductDescription, getCurrentLanguage } from "@/lib/i18n/translation";
+import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -161,6 +161,47 @@ export function ProductDetailHeader({
 
   const { addCartItem } = useCart();
   const [isAdding, setIsAdding] = useState(false);
+
+  const [displayTitle, setDisplayTitle] = useState(product.title);
+  const [displayDesc, setDisplayDesc] = useState(product.description || "");
+
+  useEffect(() => {
+    const lang = getCurrentLanguage();
+
+    const updateTranslations = (targetLang: string) => {
+      if (targetLang === "ko") {
+        setDisplayTitle(product.title);
+        setDisplayDesc(product.description || "");
+        return;
+      }
+      setDisplayTitle(translateProductTitle(product.title, targetLang));
+      setDisplayDesc(translateProductDescription(product.description || "", targetLang));
+
+      fetchAsyncTranslation(product.title, targetLang, "title").then((res) => {
+        if (res) setDisplayTitle(res);
+      });
+      if (product.description) {
+        fetchAsyncTranslation(product.description, targetLang, "ui").then((res) => {
+          if (res) setDisplayDesc(res);
+        });
+      }
+    };
+
+    updateTranslations(lang);
+
+    const handleLangChange = () => {
+      const newLang = getCurrentLanguage();
+      setCurrentLang(newLang);
+      updateTranslations(newLang);
+    };
+
+    window.addEventListener("language_changed", handleLangChange);
+    window.addEventListener("language-changed", handleLangChange);
+    return () => {
+      window.removeEventListener("language_changed", handleLangChange);
+      window.removeEventListener("language-changed", handleLangChange);
+    };
+  }, [product.title, product.description]);
 
   useEffect(() => {
     const updateTimeSaleProduct = () => {
@@ -424,12 +465,19 @@ export function ProductDetailHeader({
           </div>
         )}
         <h1 className="text-2xl md:text-3xl font-normal tracking-tight uppercase">
-          {translateProductTitle(product.title, currentLang)}
+          {product.title}
         </h1>
         {product.description && (
-          <p className="text-xs text-neutral-600 leading-relaxed mt-1">
-            {translateProductDescription(product.description, currentLang)}
-          </p>
+          typeof product.description === "string" && (product.description.includes("<img") || product.description.includes("<p>")) ? (
+            <div
+              className="text-xs text-neutral-600 leading-relaxed mt-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:my-2"
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
+          ) : (
+            <p className="text-xs text-neutral-600 leading-relaxed mt-1">
+              {product.description}
+            </p>
+          )
         )}
       </div>
 

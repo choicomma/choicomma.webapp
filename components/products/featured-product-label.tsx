@@ -6,7 +6,7 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { QuickOptionModal } from "./quick-option-modal";
 import { Clock } from "lucide-react";
-import { translateProductTitle, translateProductDescription, getCurrentLanguage } from "@/lib/i18n/translation";
+import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 
 // Returns badge config by productLabel value
 function getLabelBadge(label?: string) {
@@ -22,6 +22,11 @@ function getLabelBadge(label?: string) {
   }
 }
 
+function cleanTitleText(t: string): string {
+  if (!t) return "";
+  return t.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim();
+}
+
 export function FeaturedProductLabel({
   product,
   principal = false,
@@ -32,13 +37,48 @@ export function FeaturedProductLabel({
   className?: string;
 }) {
   const [currentLang, setCurrentLang] = useState("ko");
+  const [displayTitle, setDisplayTitle] = useState(cleanTitleText(product.title));
+  const [displayDesc, setDisplayDesc] = useState(product.description || "The Verde Lounge Chair is a bold blend of sculptural form and deep comfort.");
 
   useEffect(() => {
-    setCurrentLang(getCurrentLanguage());
-    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    const lang = getCurrentLanguage();
+    setCurrentLang(lang);
+
+    const updateTranslations = (targetLang: string) => {
+      const cleanOriginal = cleanTitleText(product.title);
+      if (targetLang === "ko") {
+        setDisplayTitle(cleanOriginal);
+        setDisplayDesc(product.description || "The Verde Lounge Chair is a bold blend of sculptural form and deep comfort.");
+        return;
+      }
+      setDisplayTitle(cleanTitleText(translateProductTitle(cleanOriginal, targetLang)));
+      setDisplayDesc(translateProductDescription(product.description || "The Verde Lounge Chair is a bold blend of sculptural form and deep comfort.", targetLang));
+
+      fetchAsyncTranslation(product.title, targetLang, "title").then((res) => {
+        if (res) setDisplayTitle(res);
+      });
+      if (product.description) {
+        fetchAsyncTranslation(product.description, targetLang, "ui").then((res) => {
+          if (res) setDisplayDesc(res);
+        });
+      }
+    };
+
+    updateTranslations(lang);
+
+    const handleLangChange = () => {
+      const newLang = getCurrentLanguage();
+      setCurrentLang(newLang);
+      updateTranslations(newLang);
+    };
+
     window.addEventListener("language_changed", handleLangChange);
-    return () => window.removeEventListener("language_changed", handleLangChange);
-  }, []);
+    window.addEventListener("language-changed", handleLangChange);
+    return () => {
+      window.removeEventListener("language_changed", handleLangChange);
+      window.removeEventListener("language-changed", handleLangChange);
+    };
+  }, [product.title, product.description]);
 
   const isSetProduct =
     product.tags?.includes("SET_SALE") || product.id.startsWith("set-product-");
@@ -186,25 +226,25 @@ export function FeaturedProductLabel({
               href={`/product/${product.handle}`}
               className="block text-xl md:text-2xl font-bold text-neutral-950 hover:underline leading-snug tracking-tight line-clamp-2"
             >
-              {translateProductTitle(product.title, currentLang)}
+              {product.title}
             </Link>
           </div>
 
           {/* Right Column: Description */}
           <div className="text-xs md:text-sm font-medium text-neutral-700 leading-relaxed line-clamp-3">
-            {translateProductDescription(product.description || "The Verde Lounge Chair is a bold blend of sculptural form and deep comfort.", currentLang)}
+            {product.description || "The Verde Lounge Chair is a bold blend of sculptural form and deep comfort."}
           </div>
         </div>
 
         {/* Bottom Row: Price on Left, Add To Cart Button on Right */}
         <div className="flex items-center justify-between gap-4 pt-2 border-t border-neutral-100/80">
-          <div className="flex flex-col items-start leading-none">
+          <div className="flex flex-col items-start leading-none notranslate" translate="no">
             {strikethroughPriceNum !== null && (
-              <span className="text-xs md:text-sm text-neutral-400 line-through font-semibold mb-1">
+              <span className="text-xs md:text-sm text-neutral-400 line-through font-semibold mb-1 notranslate" translate="no">
                 {formatPrice(strikethroughPriceNum.toString(), product.currencyCode)}
               </span>
             )}
-            <p className="text-2xl md:text-3xl font-extrabold text-neutral-950 tracking-tight leading-none">
+            <p className="text-2xl md:text-3xl font-extrabold text-neutral-950 tracking-tight leading-none notranslate" translate="no">
               {formatPrice(finalPriceNum.toString(), product.currencyCode)}
             </p>
           </div>
@@ -246,19 +286,19 @@ export function FeaturedProductLabel({
           href={`/product/${product.handle}`}
           className="block text-sm md:text-base font-bold text-neutral-950 hover:underline leading-tight tracking-tight line-clamp-2"
         >
-          {translateProductTitle(product.title, currentLang)}
+          {product.title}
         </Link>
       </div>
 
       {/* Bottom Row: Price & Add To Cart Button */}
       <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-neutral-100">
-        <div className="flex flex-col items-start leading-none">
+        <div className="flex flex-col items-start leading-none notranslate" translate="no">
           {strikethroughPriceNum !== null && (
-            <span className="text-[11px] text-neutral-400 line-through font-semibold mb-0.5">
+            <span className="text-[11px] text-neutral-400 line-through font-semibold mb-0.5 notranslate" translate="no">
               {formatPrice(strikethroughPriceNum.toString(), product.currencyCode)}
             </span>
           )}
-          <p className="text-sm sm:text-base font-extrabold text-neutral-950 tracking-tight shrink-0">
+          <p className="text-sm sm:text-base font-extrabold text-neutral-950 tracking-tight shrink-0 notranslate" translate="no">
             {formatPrice(finalPriceNum.toString(), product.currencyCode)}
           </p>
         </div>

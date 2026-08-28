@@ -126,13 +126,12 @@ export const years = Array.from({ length: 10 }, (_, i) => {
   };
 });
 
+import { formatCurrencyWithTariff } from "@/lib/currency/currency-service";
+
 export const formatPrice = (price: string | number, currencyCode?: string): string => {
   const num = typeof price === "number" ? price : parseFloat(price);
   if (isNaN(num)) return String(price);
-  const formatted = new Intl.NumberFormat("ko-KR", {
-    maximumFractionDigits: 0,
-  }).format(num);
-  return `${formatted} KRW`;
+  return formatCurrencyWithTariff(num);
 };
 
 export const formatUSZip = (value: string): string => {

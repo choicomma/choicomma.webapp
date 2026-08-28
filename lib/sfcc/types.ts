@@ -49,6 +49,8 @@ export type SalesforceProduct = {
   variationValues?: Record<string, string>;
   productLabel?: "" | "BLACK_LABEL" | "PREMIUM" | "ESSENTIAL";
   sizes?: string[];
+  colors?: string[];
+  isMainFeatured?: boolean;
   bulkDiscount?: { enabled: boolean; rules: { qty: number; rate: number }[] };
 };
 

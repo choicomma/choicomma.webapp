@@ -42,11 +42,11 @@ export async function generateMetadata(props: {
   }
 
   const { url, width, height, altText: alt } = product.featuredImage || {};
-  const indexable = !product.tags.includes(HIDDEN_PRODUCT_TAG);
+  const indexable = !product.tags?.includes(HIDDEN_PRODUCT_TAG);
 
   return {
-    title: product.seo.title || product.title,
-    description: product.seo.description || product.description,
+    title: product.seo?.title || product.title,
+    description: product.seo?.description || product.description,
     robots: {
       index: indexable,
       follow: indexable,
@@ -107,7 +107,7 @@ export default async function ProductPage(props: {
     (c) => c.id !== storeCatalog.rootCategoryId
   ) ?? [undefined];
 
-  const hasVariants = product.variants.length > 1;
+  const hasVariants = (product?.variants?.length ?? 0) > 1;
 
   return (
     <PageLayout className="bg-white" hideFooter={false}>

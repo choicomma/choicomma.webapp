@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import excelParsedProducts from "@/lib/sfcc/mock/parsed-products.json";
 import {
   LayoutDashboard,
   Package,
@@ -58,6 +59,7 @@ import {
   MessageSquare,
   Truck,
   Sliders,
+  Globe,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { mockProducts } from "@/lib/sfcc/mock/products";
@@ -74,6 +76,8 @@ import { CustomersManagement } from "./components/customers-management";
 import { OrdersManagement } from "./components/orders-management";
 import { InboundStockManagement } from "./components/inbound-stock-management";
 import { InquiriesManagement } from "./components/inquiries-management";
+import { GlobalSalesManagement } from "./components/global-sales-management";
+import { LanguageSelector } from "@/components/layout/header/language-selector";
 
 const initialCustomers: any[] = [];
 
@@ -234,24 +238,26 @@ const initialInboundSchedules: any[] = [];
 const initialDailySettlements: any[] = [];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "revenue" | "main" | "customers" | "inquiries" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "revenue" | "main" | "customers" | "inquiries" | "settings" | "global_sales">("orders");
 
   // VIP Customer Inquiry State
-  const [inquiriesList, setInquiriesList] = useState<any[]>(() => {
+  const [inquiriesList, setInquiriesList] = useState<any[]>([]);
+  const [zoomedInquiryImage, setZoomedInquiryImage] = useState<string | null>(null);
+  const [inquiriesFilter, setInquiriesFilter] = useState<"all" | "pending" | "completed">("all");
+
+  React.useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("admin_customer_inquiries");
       if (saved) {
         try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error(e);
-        }
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setInquiriesList(parsed);
+          }
+        } catch (e) {}
       }
     }
-    return [];
-  });
-  const [zoomedInquiryImage, setZoomedInquiryImage] = useState<string | null>(null);
-  const [inquiriesFilter, setInquiriesFilter] = useState<"all" | "pending" | "completed">("all");
+  }, []);
 
   // Sync inquiries state to localStorage & live refresh
   React.useEffect(() => {
@@ -350,51 +356,38 @@ export default function AdminPage() {
   const [newInboundNotes, setNewInboundNotes] = useState("");
   const [newInboundStatus, setNewInboundStatus] = useState("Scheduled");
   
-// Initial default product catalog
-const initialProducts: any[] = [];
+// Initial default product catalog from public/상품전체정보.xlsx
+const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
 
   // State for products, orders, search, notifications
-  const [productsList, setProductsList] = useState<any[]>(() => {
+  const isProductsLoadedRef = React.useRef(false);
+  const [productsList, setProductsList] = useState<any[]>(INITIAL_CHOICOMMA_PRODUCTS);
+
+  // Client-side hydration sync & product catalog restore
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_products", JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
+      setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
+    }
+  }, []);
+
+  // Client-side hydration sync for productsList
+  React.useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("admin_products");
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            // Filter out default 10 products (CC-001 ~ CC-010) and deduplicate
-            const defaultCodes = new Set(["CC-001", "CC-002", "CC-003", "CC-004", "CC-005", "CC-006", "CC-007", "CC-008", "CC-009", "CC-010"]);
-            const seenIds = new Set<string>();
-            const cleanList: any[] = [];
-
-            for (const item of parsed) {
-              const idStr = String(item.id || item.productCode || "");
-              const codeStr = String(item.productCode || "");
-              if (defaultCodes.has(idStr) || defaultCodes.has(codeStr)) {
-                continue; // Purge default 10 products
-              }
-              if (!idStr || seenIds.has(idStr)) continue;
-              seenIds.add(idStr);
-              cleanList.push(item);
-            }
-
-            localStorage.setItem("admin_products", JSON.stringify(cleanList));
-
-            return cleanList.map((p: any, idx: number) => {
-              const num = p.productNo || idx + 1;
-              return {
-                ...p,
-                productNo: num,
-                productCode: p.productCode || `CC-${String(num).padStart(3, "0")}`,
-              };
-            });
+            setProductsList(parsed);
           }
         } catch (e) {
           console.error(e);
         }
       }
+      isProductsLoadedRef.current = true;
     }
-    return initialProducts;
-  });
+  }, []);
 
   // Helper: Calculate accurate total stock for color x size combinations
   const calculateTotalStock = (colors: string[], sizes: string[], stockMap: Record<string, number>): number => {
@@ -454,24 +447,28 @@ const initialProducts: any[] = [];
     if (typeof window === "undefined") return;
     try {
       localStorage.setItem("admin_products", JSON.stringify(list));
-      window.dispatchEvent(new CustomEvent("storage"));
-      window.dispatchEvent(new CustomEvent("admin_products_updated"));
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("admin_products_updated"));
+      }, 0);
     } catch (e) {
       console.warn("QuotaExceededError in localStorage, attempting cleanup save...", e);
       try {
         localStorage.removeItem("admin_products");
         localStorage.setItem("admin_products", JSON.stringify(list));
-        window.dispatchEvent(new CustomEvent("storage"));
-        window.dispatchEvent(new CustomEvent("admin_products_updated"));
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("admin_products_updated"));
+        }, 0);
       } catch (err) {
         console.error("Failed to write to localStorage after retry", err);
       }
     }
   };
 
-  // Sync productsList with localStorage safely
+  // Sync productsList with localStorage safely only after initial load
   React.useEffect(() => {
-    saveProductsToStorage(productsList);
+    if (isProductsLoadedRef.current) {
+      saveProductsToStorage(productsList);
+    }
   }, [productsList]);
 
   const handleAddInboundSchedule = (e: React.FormEvent) => {
@@ -569,7 +566,7 @@ const initialProducts: any[] = [];
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
-  const [productSortOrder, setProductSortOrder] = useState<"productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc">("productNoDesc");
+  const [productSortOrder, setProductSortOrder] = useState<"productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom">("productNoDesc");
   const [topSellerFilter, setTopSellerFilter] = useState<"all" | "topSeller" | "normal">("all");
   const [selectedCategoryForProducts, setSelectedCategoryForProducts] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -883,6 +880,7 @@ const initialProducts: any[] = [];
 
   // Edit Product Modal State
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [editProductNoInput, setEditProductNoInput] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [editCategories, setEditCategories] = useState<string[]>(["outer"]);
   const [editPrice, setEditPrice] = useState("");
@@ -921,6 +919,9 @@ const initialProducts: any[] = [];
 
   const handleOpenEditModal = (product: any) => {
     setEditingProduct(product);
+    setEditProductNoInput(
+      product.productCode || (product.productNo ? `CC-${String(product.productNo).padStart(3, "0")}` : "")
+    );
     setEditTitle(product.title || "");
     const initialCats = Array.isArray(product.categoryIds) && product.categoryIds.length > 0
       ? product.categoryIds
@@ -1003,8 +1004,16 @@ const initialProducts: any[] = [];
 
     const updatedList = productsList.map((p) => {
       if (String(p.id) === String(editingProduct.id)) {
+        let updatedProdNo = p.productNo;
+        let updatedProductCode = editProductNoInput.trim() || p.productCode;
+        if (editProductNoInput.trim()) {
+          const match = editProductNoInput.trim().match(/\d+/);
+          if (match) updatedProdNo = parseInt(match[0], 10);
+        }
         return {
           ...p,
+          productNo: updatedProdNo,
+          productCode: updatedProductCode,
           title: editTitle,
           categoryId: editCategories[0] || "outer",
           categoryIds: editCategories,
@@ -1082,7 +1091,7 @@ const initialProducts: any[] = [];
         setAdminTimeSaleProductIds(updatedIds);
         if (typeof window !== "undefined") {
           localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedIds));
-          window.dispatchEvent(new CustomEvent("storage"));
+          setTimeout(() => window.dispatchEvent(new CustomEvent("admin_products_updated")), 0);
         }
       }
     }
@@ -1091,17 +1100,21 @@ const initialProducts: any[] = [];
   };
 
   // Set Item Sale Admin State
-  const [setSalesList, setSetSalesList] = useState(() => {
+  const [setSalesList, setSetSalesList] = useState<any[]>(initialSetSales);
+
+  React.useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("admin_set_sales");
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setSetSalesList(parsed);
+          }
         } catch (e) {}
       }
     }
-    return initialSetSales;
-  });
+  }, []);
 
   const [isSetModalOpen, setIsSetModalOpen] = useState(false);
   const [setBundleTitle, setSetBundleTitle] = useState("");
@@ -1117,6 +1130,7 @@ const initialProducts: any[] = [];
 
   // New Product Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newProductNoInput, setNewProductNoInput] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [newCategories, setNewCategories] = useState<string[]>(["new"]);
   const [newPrice, setNewPrice] = useState("");
@@ -1207,86 +1221,43 @@ const initialProducts: any[] = [];
 
   // Multi-Customer Live Chat Sessions State
   const [activeSessionId, setActiveSessionId] = useState<string>("vip@choicomma.com");
-  const [chatSessionsList, setChatSessionsList] = useState<any[]>([
-    {
-      id: "vip@choicomma.com",
-      name: "최상위 VIP 회원님",
-      email: "vip@choicomma.com",
-      tier: "VIP",
-      badgeColor: "bg-amber-400 text-neutral-950 font-black",
-      status: "online",
-    },
-    {
-      id: "minji.kim@gmail.com",
-      name: "김민지 회원님",
-      email: "minji.kim@gmail.com",
-      tier: "GOLD",
-      badgeColor: "bg-amber-100 text-amber-900 border border-amber-300 font-bold",
-      status: "online",
-    },
-    {
-      id: "seojun.park@naver.com",
-      name: "박서준 회원님",
-      email: "seojun.park@naver.com",
-      tier: "SILVER",
-      badgeColor: "bg-neutral-100 text-neutral-800 border border-neutral-300 font-bold",
-      status: "online",
-    },
-  ]);
-
-  const [demoSessionMessages, setDemoSessionMessages] = useState<Record<string, any[]>>({
-    "minji.kim@gmail.com": [
+  const [chatSessionsList, setChatSessionsList] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("admin_chat_sessions");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {}
+      }
+    }
+    return [
       {
-        id: "msg-m1",
-        sender: "user",
-        senderName: "김민지 회원님",
-        text: "안녕하세요! 지난 주 주문건 배송 시작되었을까요?",
-        timestamp: "14:20",
+        id: "vip@choicomma.com",
+        name: "최상위 VIP 회원님",
+        email: "vip@choicomma.com",
+        tier: "VIP",
+        badgeColor: "bg-amber-400 text-neutral-950 font-black",
+        status: "online",
       },
-      {
-        id: "msg-m2",
-        sender: "admin",
-        senderName: "choicomma VIP 케어팀",
-        text: "안녕하세요 김민지 회원님! CJ대한통운 송장번호 5839201948로 어제 발송되었습니다. 🚚",
-        timestamp: "14:22",
-      },
-    ],
-    "seojun.park@naver.com": [
-      {
-        id: "msg-s1",
-        sender: "user",
-        senderName: "박서준 회원님",
-        text: "코스탈 워시드 트위드 베스트 L사이즈 재입고 문의드립니다.",
-        timestamp: "15:05",
-      },
-    ],
+    ];
   });
-  const activeSessionMessages = activeSessionId === "vip@choicomma.com"
-    ? adminLiveChatMessages
-    : (demoSessionMessages[activeSessionId] || []);
+
+  const [demoSessionMessages, setDemoSessionMessages] = useState<Record<string, any[]>>({});
 
   const syncAdminLiveChat = () => {
-    if (typeof window === "undefined") return;
-    const saved = localStorage.getItem("site_live_chat_messages");
+    if (typeof window === "undefined" || !activeSessionId) return;
+    const sessionKey = `site_live_chat_messages_${activeSessionId.trim().toLowerCase()}`;
+    const saved = localStorage.getItem(sessionKey) || localStorage.getItem("site_live_chat_messages");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setAdminLiveChatMessages(parsed);
           return;
         }
       } catch (e) {}
     }
-    const defaultMsgs = [
-      {
-        id: "welcome-1",
-        sender: "admin",
-        senderName: "choicomma VIP 케어팀",
-        text: "안녕하세요! 초이콤마 오리지널 1:1 라이브 전담 케어 팀입니다. 💫\n상품 문의, 주문/배송, 커스텀 사이즈 등 어떤 내용이든 편하게 말씀해 주세요.",
-        timestamp: "방금 전",
-      },
-    ];
-    setAdminLiveChatMessages(defaultMsgs);
+    setAdminLiveChatMessages([]);
   };
 
   useEffect(() => {
@@ -1297,11 +1268,13 @@ const initialProducts: any[] = [];
       window.removeEventListener("storage", syncAdminLiveChat);
       window.removeEventListener("live_chat_updated", syncAdminLiveChat);
     };
-  }, []);
+  }, [activeSessionId]);
+
+  const activeSessionMessages = adminLiveChatMessages;
 
   const handleAdminSendLiveChat = (presetText?: string) => {
     const textToSend = presetText || adminLiveInput;
-    if (!textToSend.trim()) return;
+    if (!textToSend.trim() || !activeSessionId) return;
 
     const dateNow = new Date();
     const hours = String(dateNow.getHours()).padStart(2, "0");
@@ -1315,16 +1288,12 @@ const initialProducts: any[] = [];
       timestamp: `${hours}:${mins}`,
     };
 
-    if (activeSessionId === "vip@choicomma.com") {
-      const updated = [...adminLiveChatMessages, newReply];
-      setAdminLiveChatMessages(updated);
-      localStorage.setItem("site_live_chat_messages", JSON.stringify(updated));
+    const sessionKey = `site_live_chat_messages_${activeSessionId.trim().toLowerCase()}`;
+    const updated = [...adminLiveChatMessages, newReply];
+    setAdminLiveChatMessages(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(sessionKey, JSON.stringify(updated));
       window.dispatchEvent(new CustomEvent("live_chat_updated"));
-    } else {
-      setDemoSessionMessages((prev) => ({
-        ...prev,
-        [activeSessionId]: [...(prev[activeSessionId] || []), newReply],
-      }));
     }
     setAdminLiveInput("");
     triggerToast("💬 고객 라이브 채팅방으로 답변이 성공적으로 전송되었습니다!");
@@ -1336,38 +1305,31 @@ const initialProducts: any[] = [];
     const sessionName = targetSession?.name || "고객";
 
     const isConfirmed = window.confirm(
-      `정말로 '${sessionName}'님과의 1:1 라이브 상담을 종료하시겠습니까?\n해당 고객의 채팅창으로 상담 종료 안내가 전달됩니다.`
+      `정말로 '${sessionName}'님과의 1:1 라이브 상담을 종료하고 대화 내역 및 세션을 삭제하시겠습니까?`
     );
     if (!isConfirmed) return;
 
-    const dateNow = new Date();
-    const hours = String(dateNow.getHours()).padStart(2, "0");
-    const mins = String(dateNow.getMinutes()).padStart(2, "0");
-
-    const closingMsg = {
-      id: `admin-close-${Date.now()}`,
-      sender: "admin",
-      senderName: "choicomma VIP 케어팀",
-      text: `🔒 [안내] ${sessionName}님과의 1:1 상담이 종료되었습니다. 추가 문의 사항이 있으시면 언제든지 편하게 새 메시지를 남겨주세요. 이용해 주셔서 감사합니다! 💫`,
-      timestamp: `${hours}:${mins}`,
-    };
-
-    if (targetId === "vip@choicomma.com") {
-      const updated = [...adminLiveChatMessages, closingMsg];
-      setAdminLiveChatMessages(updated);
-      localStorage.setItem("site_live_chat_messages", JSON.stringify(updated));
+    const sessionKey = `site_live_chat_messages_${targetId.trim().toLowerCase()}`;
+    setAdminLiveChatMessages([]);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(sessionKey, JSON.stringify([]));
+      localStorage.setItem("site_live_chat_messages", JSON.stringify([]));
+      localStorage.setItem("site_live_chat_ended", "true");
       window.dispatchEvent(new CustomEvent("live_chat_updated"));
-    } else {
-      setDemoSessionMessages((prev) => ({
-        ...prev,
-        [targetId]: [...(prev[targetId] || []), closingMsg],
-      }));
+      window.dispatchEvent(new CustomEvent("live_chat_ended"));
     }
 
-    setChatSessionsList((prev) =>
-      prev.map((s) => (s.id === targetId ? { ...s, status: "ended" } : s))
-    );
-    triggerToast(`🔒 '${sessionName}'님과의 1:1 라이브 상담이 성공적으로 종료되었습니다.`);
+    setChatSessionsList((prev) => {
+      const filtered = prev.filter((s) => s.id !== targetId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("admin_chat_sessions", JSON.stringify(filtered));
+      }
+      if (activeSessionId === targetId) {
+        setActiveSessionId(filtered.length > 0 ? filtered[0].id : "");
+      }
+      return filtered;
+    });
+    triggerToast(`🔒 '${sessionName}'님과의 1:1 라이브 상담 및 대화 내역이 성공적으로 삭제되었습니다.`);
   };
 
   const handleAdminClearLiveChat = () => {
@@ -1376,7 +1338,11 @@ const initialProducts: any[] = [];
     );
     if (!isConfirmed) return;
 
-    localStorage.removeItem("site_live_chat_messages");
+    if (activeSessionId && typeof window !== "undefined") {
+      const sessionKey = `site_live_chat_messages_${activeSessionId.trim().toLowerCase()}`;
+      localStorage.setItem(sessionKey, JSON.stringify([]));
+      localStorage.setItem("site_live_chat_messages", JSON.stringify([]));
+    }
     setAdminLiveChatMessages([]);
     window.dispatchEvent(new CustomEvent("live_chat_updated"));
     triggerToast("🧹 라이브 채팅 기록이 전체 초기화되었습니다.");
@@ -1503,26 +1469,28 @@ const initialProducts: any[] = [];
   const [isMainNoticeActive, setIsMainNoticeActive] = useState(true);
 
   // Customer Management Admin State
-  const [customersList, setCustomersList] = useState<any[]>(() => {
+  const [customersList, setCustomersList] = useState<any[]>([]);
+
+  React.useEffect(() => {
     if (typeof window !== "undefined") {
       const isCleared = localStorage.getItem("admin_customers_cleared_v2");
       if (!isCleared) {
         localStorage.setItem("admin_customers", JSON.stringify([]));
         localStorage.setItem("admin_customers_cleared_v2", "true");
-        return [];
+        setCustomersList([]);
+        return;
       }
       const saved = localStorage.getItem("admin_customers");
       if (saved) {
         try {
           const parsed: any[] = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            return parsed;
+            setCustomersList(parsed);
           }
         } catch (e) {}
       }
     }
-    return [];
-  });
+  }, []);
 
 
 
@@ -1796,6 +1764,10 @@ const initialProducts: any[] = [];
       return matchesSearch && matchesCategory;
     });
 
+    if (productSortOrder === "custom") {
+      return list;
+    }
+
     list.sort((a, b) => {
       const pNoA = getProductNoNum(a);
       const pNoB = getProductNoNum(b);
@@ -1833,17 +1805,21 @@ const initialProducts: any[] = [];
   }, [filteredCustomers, customerPage]);
 
   // Shipment Management State & Handlers
-  const [shipmentsList, setShipmentsList] = useState<any[]>(() => {
+  const [shipmentsList, setShipmentsList] = useState<any[]>(initialShipments);
+
+  React.useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("admin_shipments");
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setShipmentsList(parsed);
+          }
         } catch (e) {}
       }
     }
-    return initialShipments;
-  });
+  }, []);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -2305,13 +2281,25 @@ const initialProducts: any[] = [];
     const totalNewStock = calculateTotalStock(newColors, newSizes, newSizeStock);
     const finalImages = newImages.length > 0 ? newImages : ["/product_1.webp"];
 
-    // Find next product sequence number for CC-XXX code
-    const maxNo = productsList.reduce((max, p) => {
-      const num = getProductNoNum(p);
-      return num > max ? num : max;
-    }, 0);
-    const newProdNo = maxNo + 1;
-    const newProductCode = `CC-${String(newProdNo).padStart(3, "0")}`;
+    // Determine product sequence number or code
+    let newProdNo: number;
+    let newProductCode: string;
+
+    if (newProductNoInput.trim()) {
+      const inputStr = newProductNoInput.trim();
+      const match = inputStr.match(/\d+/);
+      newProdNo = match ? parseInt(match[0], 10) : Date.now();
+      newProductCode = inputStr.toUpperCase().startsWith("CC-")
+        ? inputStr.toUpperCase()
+        : `CC-${inputStr.padStart(3, "0")}`;
+    } else {
+      const maxNo = productsList.reduce((max, p) => {
+        const num = getProductNoNum(p);
+        return num > max ? num : max;
+      }, 0);
+      newProdNo = maxNo + 1;
+      newProductCode = `CC-${String(newProdNo).padStart(3, "0")}`;
+    }
 
     const newProd = {
       id: `custom-prod-${Date.now()}`,
@@ -2403,10 +2391,11 @@ const initialProducts: any[] = [];
         localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedIds));
         localStorage.setItem("secret_timesale_item_settings", JSON.stringify(updatedSettings));
         localStorage.setItem("secret_timesale_item_expiries", JSON.stringify(updatedExpiries));
-        window.dispatchEvent(new CustomEvent("storage"));
+        setTimeout(() => window.dispatchEvent(new CustomEvent("admin_products_updated")), 0);
       }
     }
 
+    setNewProductNoInput("");
     setNewTitle("");
     setNewPrice("");
     setNewDescription("");
@@ -2442,14 +2431,52 @@ const initialProducts: any[] = [];
   };
 
   const handleClearAllProducts = () => {
+    const totalCount = productsList.length;
     const isConfirmed = window.confirm(
-      "정말로 상품관리에 있는 전체 상품을 일괄 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다."
+      `정말로 상품관리에 등록된 전체 상품 (${totalCount}개)을 일괄 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.`
     );
     if (!isConfirmed) return;
 
     setProductsList([]);
     saveProductsToStorage([]);
-    triggerToast("상품관리에 등록된 전체 상품이 모두 삭제되었습니다.");
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_products", "[]");
+      localStorage.removeItem("secret_timesale_product_ids");
+    }
+    triggerToast(`🗑️ 상품관리에 등록된 전체 상품 ${totalCount}개가 모두 성공적으로 삭제되었습니다.`);
+  };
+
+  const handleRestoreDefaultProducts = () => {
+    setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
+    saveProductsToStorage(INITIAL_CHOICOMMA_PRODUCTS);
+    triggerToast("✨ 초이콤마 대표 시그니처 상품 10종이 모두 성공적으로 복원되었습니다!");
+  };
+
+  const handleBulkAddProducts = (newProducts: any[]) => {
+    if (!newProducts || newProducts.length === 0) return;
+    setProductsList((prev) => {
+      const updatedList = [...newProducts, ...prev];
+      saveProductsToStorage(updatedList);
+      return updatedList;
+    });
+    triggerToast(`📊 엑셀 일괄 업로드 완료! ${newProducts.length}개의 신규 상품이 성공적으로 등록되었습니다.`);
+  };
+
+  const handleMoveProduct = (id: string, direction: "up" | "down") => {
+    const idx = productsList.findIndex((p) => String(p.id) === String(id));
+    if (idx === -1) return;
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= productsList.length) return;
+
+    const newList = [...productsList];
+    const temp = newList[idx];
+    newList[idx] = newList[targetIdx];
+    newList[targetIdx] = temp;
+
+    setProductsList(newList);
+    saveProductsToStorage(newList);
+    setProductSortOrder("custom");
+    triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
   };
 
   // Order Status Cycle
@@ -2560,7 +2587,7 @@ const initialProducts: any[] = [];
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F5] text-neutral-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#FAF9F5] text-neutral-900 flex flex-col font-sans" suppressHydrationWarning>
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-6 right-6 z-50 bg-neutral-950 text-white font-bold px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -2595,7 +2622,12 @@ const initialProducts: any[] = [];
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Multi-Language Selector for Admin */}
+          <div className="notranslate" translate="no">
+            <LanguageSelector />
+          </div>
+
           <button
             onClick={() => triggerToast("새로운 알림이 없습니다.")}
             className="p-2 text-neutral-500 hover:text-neutral-950 hover:bg-neutral-100 rounded-lg transition-colors relative"
@@ -2629,36 +2661,7 @@ const initialProducts: any[] = [];
           <div className="px-3 py-2 text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
             Menu
           </div>
-          {/* Dashboard Overview */}
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-              activeTab === "overview"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-            }`}
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            대시보드 개요
-          </button>
-
-          {/* 1. 회원관리 */}
-          <button
-            onClick={() => setActiveTab("customers")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-              activeTab === "customers"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-            }`}
-          >
-            <Users className="w-4 h-4 text-emerald-500" />
-            회원 관리
-            <span suppressHydrationWarning className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-              {customersList.length.toLocaleString()}
-            </span>
-          </button>
-
-          {/* 2. 주문 및 배송 관리 */}
+          {/* 1. 주문 및 배송 관리 */}
           <button
             onClick={() => setActiveTab("orders")}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
@@ -2671,6 +2674,22 @@ const initialProducts: any[] = [];
             주문 및 배송 관리
             <span suppressHydrationWarning className="ml-auto text-xs px-2 py-0.5 rounded-full bg-sky-100 text-sky-900 font-bold">
               {shipmentsList.length}
+            </span>
+          </button>
+
+          {/* 2. 회원 관리 */}
+          <button
+            onClick={() => setActiveTab("customers")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
+              activeTab === "customers"
+                ? "bg-neutral-950 text-white font-bold shadow-md"
+                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
+            }`}
+          >
+            <Users className="w-4 h-4 text-emerald-500" />
+            회원 관리
+            <span suppressHydrationWarning className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+              {customersList.length.toLocaleString()}
             </span>
           </button>
 
@@ -2756,7 +2775,23 @@ const initialProducts: any[] = [];
             </span>
           </button>
 
-          {/* 9. 1:1 라이브 채팅 콘솔 */}
+          {/* 9. 해외 판매가 */}
+          <button
+            onClick={() => setActiveTab("global_sales")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all cursor-pointer ${
+              activeTab === "global_sales"
+                ? "bg-neutral-950 text-white font-bold shadow-md"
+                : "text-neutral-700 hover:bg-sky-50 hover:text-neutral-950"
+            }`}
+          >
+            <Globe className="w-4 h-4 text-sky-500" />
+            해외 판매가
+            <span suppressHydrationWarning className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-500 text-neutral-950 shadow-2xs">
+              GLOBAL
+            </span>
+          </button>
+
+          {/* 10. 1:1 라이브 채팅 콘솔 */}
           <button
             onClick={() => setActiveTab("inquiries")}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all cursor-pointer ${
@@ -2792,12 +2827,12 @@ const initialProducts: any[] = [];
           {/* Mobile Horizontal Tab Navigation */}
           <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-neutral-200/80 scrollbar-thin">
             <button
-              onClick={() => setActiveTab("overview")}
+              onClick={() => setActiveTab("orders")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                activeTab === "overview" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                activeTab === "orders" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
               }`}
             >
-              대시보드
+              주문 및 배송
             </button>
             <button
               onClick={() => setActiveTab("revenue")}
@@ -2833,14 +2868,6 @@ const initialProducts: any[] = [];
               상품
             </button>
             <button
-              onClick={() => setActiveTab("orders")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                activeTab === "orders" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-              }`}
-            >
-              주문
-            </button>
-            <button
               onClick={() => setActiveTab("sales")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
                 activeTab === "sales" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
@@ -2863,6 +2890,17 @@ const initialProducts: any[] = [];
               }`}
             >
               회원
+            </button>
+            <button
+              onClick={() => setActiveTab("global_sales")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${
+                activeTab === "global_sales"
+                  ? "bg-sky-500 text-neutral-950 font-black shadow-xs"
+                  : "bg-sky-50 text-sky-900 border border-sky-200"
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              해외 판매가
             </button>
             <button
               onClick={() => setActiveTab("inquiries")}
@@ -2913,6 +2951,8 @@ const initialProducts: any[] = [];
               setNewIsTimeSale={setNewIsTimeSale}
               setNewTimeSaleHours={setNewTimeSaleHours}
               setNewTimeSaleMinutes={setNewTimeSaleMinutes}
+              handleBulkAddProducts={handleBulkAddProducts}
+              handleMoveProduct={handleMoveProduct}
             />
           )}
 
@@ -3025,6 +3065,10 @@ const initialProducts: any[] = [];
           )}
 
 
+
+          {activeTab === "global_sales" && (
+            <GlobalSalesManagement />
+          )}
 
           {activeTab === "settings" && (
             <div className="space-y-6 max-w-3xl animate-in fade-in duration-300">
@@ -3143,16 +3187,30 @@ const initialProducts: any[] = [];
                   <span className="text-[11px] font-bold text-neutral-400">Basic Details & Images</span>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">상품명 *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="예: 클린 컷 트위드 재킷"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">
+                      상품 번호 (미입력 시 자동 부여)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="예: 001, CC-001"
+                      value={newProductNoInput}
+                      onChange={(e) => setNewProductNoInput(e.target.value)}
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950 font-mono"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">상품명 *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="예: 클린 컷 트위드 재킷"
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -3168,12 +3226,12 @@ const initialProducts: any[] = [];
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1 flex items-center justify-between">
-                    <span>디자이너 설명 (하단 아코디언 '디자이너 설명' 메뉴 노출)</span>
+                    <span>제품 상세 사진 (하단 아코디언 '제품 상세 사진' 메뉴 노출)</span>
                     <span className="text-[11px] font-extrabold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">하단 드롭다운 연동</span>
                   </label>
                   <textarea
                     rows={3}
-                    placeholder="상세 페이지 하단 '디자이너 설명' 아코디언 메뉴에 표시될 상세 설명 및 노트를 입력하세요."
+                    placeholder="상세 페이지 하단 '제품 상세 사진' 아코디언 메뉴에 표시될 상세 사진/HTML 코드를 입력하세요."
                     value={newDetailDescription}
                     onChange={(e) => setNewDetailDescription(e.target.value)}
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950 leading-relaxed"
@@ -4350,15 +4408,30 @@ const initialProducts: any[] = [];
                   <span className="text-[11px] font-bold text-neutral-400">Basic Details & Images</span>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">상품명 *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">
+                      상품 번호 / 코드 *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="예: 001, CC-001"
+                      value={editProductNoInput}
+                      onChange={(e) => setEditProductNoInput(e.target.value)}
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950 font-mono"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">상품명 *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -4374,12 +4447,12 @@ const initialProducts: any[] = [];
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1 flex items-center justify-between">
-                    <span>디자이너 설명 (하단 아코디언 '디자이너 설명' 메뉴 노출)</span>
+                    <span>제품 상세 사진 (하단 아코디언 '제품 상세 사진' 메뉴 노출)</span>
                     <span className="text-[11px] font-extrabold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">하단 드롭다운 연동</span>
                   </label>
                   <textarea
                     rows={3}
-                    placeholder="상세 페이지 하단 '디자이너 설명' 아코디언 메뉴에 표시될 상세 설명 및 노트를 입력하세요."
+                    placeholder="상세 페이지 하단 '제품 상세 사진' 아코디언 메뉴에 표시될 상세 사진/HTML 코드를 입력하세요."
                     value={editDetailDescription}
                     onChange={(e) => setEditDetailDescription(e.target.value)}
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950 leading-relaxed"

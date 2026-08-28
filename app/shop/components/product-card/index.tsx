@@ -10,17 +10,53 @@ import { FeaturedProductLabel } from "@/components/products/featured-product-lab
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Plus, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 
-import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+import { translateProductTitle, translateProductDescription, translateUiText, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 
 export const ProductCard = ({ product }: { product: Product }) => {
   const [currentLang, setCurrentLang] = React.useState("ko");
+  const [displayTitle, setDisplayTitle] = React.useState(product.title);
+  const [displayDesc, setDisplayDesc] = React.useState(
+    product.description || "감성적인 디자인과 세련된 실루엣이 돋보이는 대표 베스트 아이템."
+  );
 
   React.useEffect(() => {
-    setCurrentLang(getCurrentLanguage());
-    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    const lang = getCurrentLanguage();
+    setCurrentLang(lang);
+
+    const updateTranslations = (targetLang: string) => {
+      if (targetLang === "ko") {
+        setDisplayTitle(product.title);
+        setDisplayDesc(product.description || "감성적인 디자인과 세련된 실루엣이 돋보이는 대표 베스트 아이템.");
+        return;
+      }
+      setDisplayTitle(translateProductTitle(product.title, targetLang));
+      setDisplayDesc(translateProductDescription(product.description || "감성적인 디자인과 세련된 실루엣이 돋보이는 대표 베스트 아이템.", targetLang));
+
+      fetchAsyncTranslation(product.title, targetLang, "title").then((res) => {
+        if (res) setDisplayTitle(res);
+      });
+      if (product.description) {
+        fetchAsyncTranslation(product.description, targetLang, "ui").then((res) => {
+          if (res) setDisplayDesc(res);
+        });
+      }
+    };
+
+    updateTranslations(lang);
+
+    const handleLangChange = () => {
+      const newLang = getCurrentLanguage();
+      setCurrentLang(newLang);
+      updateTranslations(newLang);
+    };
+
     window.addEventListener("language_changed", handleLangChange);
-    return () => window.removeEventListener("language_changed", handleLangChange);
-  }, []);
+    window.addEventListener("language-changed", handleLangChange);
+    return () => {
+      window.removeEventListener("language_changed", handleLangChange);
+      window.removeEventListener("language-changed", handleLangChange);
+    };
+  }, [product.title, product.description]);
   const isSetProduct =
     product.tags?.includes("SET_SALE") || product.id.startsWith("set-product-");
 
@@ -141,7 +177,7 @@ export const ProductCard = ({ product }: { product: Product }) => {
           {isOutOfStock && (
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
               <span className="bg-neutral-950 text-white font-black text-xs px-3.5 py-1.5 rounded-xl border border-neutral-700 shadow-xl tracking-widest uppercase">
-                품절 (SOLD OUT)
+                {translateUiText("품절 (SOLD OUT)", currentLang)}
               </span>
             </div>
           )}
@@ -225,11 +261,11 @@ export const ProductCard = ({ product }: { product: Product }) => {
           ))}
         </Link>
 
-        {/* OUT OF STOCK BADGE ONLY (No dark background overlay) */}
+        {/* OUT OF STOCK BADGE ONLY */}
         {isOutOfStock && (
           <div className="absolute inset-0 z-15 flex items-center justify-center pointer-events-none">
             <span className="bg-neutral-950 text-white font-black text-xs md:text-sm px-4 py-2 rounded-2xl border border-neutral-700 shadow-2xl tracking-widest uppercase">
-              품절 (SOLD OUT)
+              {translateUiText("품절 (SOLD OUT)", currentLang)}
             </span>
           </div>
         )}
@@ -247,7 +283,7 @@ export const ProductCard = ({ product }: { product: Product }) => {
               <span className="text-neutral-950 font-black">{badgeText}</span>
               <span className="text-neutral-900 font-bold">|</span>
               <span className="text-neutral-950 font-black tracking-tight">
-                {remainingTime.days}일 {remainingTime.hours}시 {remainingTime.minutes}분 {remainingTime.seconds}초
+                {remainingTime.days}{translateUiText("일", currentLang)} {remainingTime.hours}{translateUiText("시", currentLang)} {remainingTime.minutes}{translateUiText("분", currentLang)} {remainingTime.seconds}{translateUiText("초", currentLang)}
               </span>
             </span>
           )}
@@ -281,7 +317,7 @@ export const ProductCard = ({ product }: { product: Product }) => {
         <div>
           <Link href={`/product/${product.handle}`}>
             <h4 className="font-extrabold text-base md:text-lg text-neutral-950 group-hover:text-neutral-700 transition-colors line-clamp-1 mb-1">
-              {translateProductTitle(product.title, currentLang)}
+              {product.title}
             </h4>
           </Link>
           <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed">
@@ -306,7 +342,7 @@ export const ProductCard = ({ product }: { product: Product }) => {
               disabled
               className="bg-neutral-200 text-neutral-500 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-none cursor-not-allowed border border-neutral-300"
             >
-              품절 (SOLD OUT)
+              {translateUiText("품절 (SOLD OUT)", currentLang)}
             </button>
           ) : (
             <Suspense fallback={null}>
@@ -318,7 +354,7 @@ export const ProductCard = ({ product }: { product: Product }) => {
                     className="bg-neutral-950 hover:bg-neutral-800 text-white font-black text-xs px-4 py-2.5 rounded-2xl shadow-sm flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
                   >
                     <Plus className="w-4 h-4 stroke-[3]" />
-                    {isSetProduct ? "세트할인 담기" : "타임세일 담기"}
+                    {translateUiText(isSetProduct ? "세트할인 담기" : "타임세일 담기", currentLang)}
                   </button>
                 }
               />
