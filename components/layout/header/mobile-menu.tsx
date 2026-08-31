@@ -131,8 +131,8 @@ export default function MobileMenu({ collections, isScrolled }: MobileMenuProps)
                     className="uppercase bg-background/60 justify-start font-bold py-5 text-sm truncate"
                     asChild
                   >
-                    <Link href={isLoggedIn ? "/membership" : "/login"} prefetch>
-                      {isLoggedIn ? (userName ? `MY PAGE (${userName})` : "MY PAGE") : "LOG IN"}
+                    <Link href={isLoggedIn ? (isAdmin ? "/admin" : "/membership") : "/login"} prefetch>
+                      {isLoggedIn ? (isAdmin ? "어드민" : (userName ? `MY PAGE (${userName})` : "MY PAGE")) : "LOG IN"}
                     </Link>
                   </Button>
 
