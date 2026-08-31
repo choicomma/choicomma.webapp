@@ -326,6 +326,17 @@ export default function MembershipPage() {
   };
 
   const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("membership_user_name");
+      localStorage.removeItem("membership_user_email");
+      localStorage.removeItem("membership_user_phone");
+      localStorage.removeItem("membership_user_address");
+      localStorage.removeItem("membership_user_points");
+      localStorage.removeItem("is_logged_in");
+      sessionStorage.removeItem("choicomma_admin_authenticated");
+      window.dispatchEvent(new CustomEvent("storage"));
+      window.dispatchEvent(new CustomEvent("auth_changed"));
+    }
     toast.info("성공적으로 로그아웃되었습니다.");
     window.location.href = "/login";
   };
@@ -693,41 +704,48 @@ export default function MembershipPage() {
         </div>
 
         {/* Order Price & Checkout - Fixed at the BOTTOM (하단 고정) */}
-        <div className="mt-auto space-y-3 bg-neutral-50 border border-neutral-200/80 p-4 rounded-2xl shadow-xs shrink-0">
-          <div className="flex justify-between text-xs text-neutral-500 font-medium">
-            <span>상품 금액</span>
-            <span className="font-bold text-neutral-800">
-              {formatPrice(
-                cart?.cost.subtotalAmount.amount || "0",
-                cart?.cost.subtotalAmount.currencyCode || "KRW"
-              )}
-            </span>
-          </div>
-          <div className="flex justify-between text-xs text-neutral-500 font-medium">
-            <span>배송비</span>
-            <span className="text-emerald-600 font-bold">무료배송</span>
-          </div>
-          <Separator className="bg-neutral-200" />
-          <div className="flex justify-between text-sm font-extrabold text-black">
-            <span>총 결제금액</span>
-            <span className="text-base font-black text-rose-600">
-              {formatPrice(
-                cart?.cost.totalAmount.amount || "0",
-                cart?.cost.totalAmount.currencyCode || "KRW"
-              )}
-            </span>
-          </div>
+        {(() => {
+          const hasItems = cart?.lines && cart.lines.length > 0;
+          const itemSubtotal = hasItems ? parseFloat(cart?.cost?.subtotalAmount?.amount || cart?.cost?.totalAmount?.amount || "0") : 0;
+          const freeThresh = shippingPolicy.freeShippingThreshold !== undefined ? shippingPolicy.freeShippingThreshold : 100000;
+          const baseFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 3000;
+          const currentShipFee = !hasItems || itemSubtotal === 0 || baseFee === 0 || (freeThresh > 0 && itemSubtotal >= freeThresh) ? 0 : baseFee;
+          const grandTotal = itemSubtotal + currentShipFee;
 
-          <Link href="/checkout" className="block w-full pt-1">
-            <Button
-              disabled={!cart || cart.lines.length === 0}
-              className="w-full bg-black hover:bg-neutral-800 text-white rounded-xl font-bold py-3 text-xs flex items-center justify-between px-4 shadow-md transition-all disabled:opacity-50"
-            >
-              <span>주문하기</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
-        </div>
+          return (
+            <div className="mt-auto space-y-3 bg-neutral-50 border border-neutral-200/80 p-4 rounded-2xl shadow-xs shrink-0">
+              <div className="flex justify-between text-xs text-neutral-500 font-medium">
+                <span>상품 금액</span>
+                <span className="font-bold text-neutral-800">
+                  {formatPrice(itemSubtotal, cart?.cost?.subtotalAmount?.currencyCode || "KRW")}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs text-neutral-500 font-medium">
+                <span>배송비</span>
+                <span className={currentShipFee === 0 ? "text-emerald-600 font-bold" : "font-bold text-neutral-800"}>
+                  {currentShipFee === 0 ? "무료배송" : formatPrice(currentShipFee)}
+                </span>
+              </div>
+              <Separator className="bg-neutral-200" />
+              <div className="flex justify-between text-sm font-extrabold text-black">
+                <span>총 결제예정금액</span>
+                <span className="text-base font-black text-rose-600">
+                  {formatPrice(grandTotal, cart?.cost?.totalAmount?.currencyCode || "KRW")}
+                </span>
+              </div>
+
+              <Link href="/checkout" className="block w-full pt-1">
+                <Button
+                  disabled={!hasItems}
+                  className="w-full bg-black hover:bg-neutral-800 text-white rounded-xl font-bold py-3 text-xs flex items-center justify-between px-4 shadow-md transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  <span>주문하기</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+          );
+        })()}
       </aside>
     </div>
   );

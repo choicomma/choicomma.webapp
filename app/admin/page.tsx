@@ -60,6 +60,7 @@ import {
   Truck,
   Sliders,
   Globe,
+  User2,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { mockProducts } from "@/lib/sfcc/mock/products";
@@ -2600,9 +2601,15 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
   const handleAdminLogout = () => {
     setIsAdminAuthenticated(false);
     if (typeof window !== "undefined") {
-      sessionStorage.setItem("choicomma_admin_authenticated", "false");
+      sessionStorage.removeItem("choicomma_admin_authenticated");
+      localStorage.removeItem("user_role");
+      localStorage.removeItem("membership_user_email");
+      localStorage.removeItem("membership_user_name");
+      localStorage.removeItem("is_logged_in");
+      window.dispatchEvent(new CustomEvent("storage"));
+      window.dispatchEvent(new CustomEvent("auth_changed"));
+      window.location.href = "/";
     }
-    triggerToast("🔒 관리자 세션이 종료되었습니다.");
   };
 
   if (!isAdminAuthenticated) {
@@ -2878,7 +2885,16 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
             </span>
           </button>
 
-          <div className="mt-auto pt-4 border-t border-neutral-200">
+          <div className="mt-auto pt-4 border-t border-neutral-200 space-y-1.5">
+            <Link
+              href="/membership"
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950 transition-all border border-neutral-200/80 bg-white"
+            >
+              <User2 className="w-4 h-4 text-purple-600" />
+              <span>마이페이지 바로가기</span>
+              <ExternalLink className="w-3.5 h-3.5 ml-auto text-neutral-400" />
+            </Link>
+
             <button
               onClick={() => setActiveTab("settings")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${

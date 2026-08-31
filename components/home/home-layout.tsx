@@ -93,9 +93,9 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   const [heroImages, setHeroImages] = React.useState<string[]>(initialHeroUrls);
   const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
 
-  // Pagination and all products state - strictly filter isMainFeatured === true
   const initialMainFeatured = (products || []).filter((p: any) => p.isMainFeatured === true);
-  const [allProducts, setAllProducts] = React.useState<any[]>(initialMainFeatured);
+  const fallbackList = initialMainFeatured.length > 0 ? initialMainFeatured : (products || []);
+  const [allProducts, setAllProducts] = React.useState<any[]>(fallbackList);
   const [currentPage, setCurrentPage] = React.useState(1);
   const PAGE_SIZE = 9;
 
@@ -197,12 +197,9 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
             }
           }
 
-          // Filter strictly for products where main display is checked (isMainFeatured === true)
-          // Preserves exact custom order configured by Admin
+          // Filter for products where main display is checked (isMainFeatured === true), fallback to parsed list if none selected
           const featuredProducts = parsed.filter((p: any) => p.isMainFeatured === true);
-
-          // Update all products for grid
-          setAllProducts(featuredProducts);
+          setAllProducts(featuredProducts.length > 0 ? featuredProducts : parsed);
 
           const heroProducts = parsed.filter((p: any) => Boolean(p.heroCustomImage) || p.categoryId === "main_banner");
           heroProducts.sort((a: any, b: any) => {

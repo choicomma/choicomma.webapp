@@ -142,8 +142,12 @@ export default function LoginPage() {
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem("choicomma_admin_authenticated", "true");
+        localStorage.setItem("membership_user_name", "관리자");
         localStorage.setItem("membership_user_email", "admin");
+        localStorage.setItem("user_role", "admin");
+        localStorage.setItem("is_logged_in", "true");
         window.dispatchEvent(new CustomEvent("storage"));
+        window.dispatchEvent(new CustomEvent("auth_changed"));
       }
       setTimeout(() => {
         setIsLoading(false);

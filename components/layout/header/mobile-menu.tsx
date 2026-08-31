@@ -28,12 +28,21 @@ export default function MobileMenu({ collections, isScrolled }: MobileMenuProps)
   const openMobileMenu = () => setIsOpen(true);
   const closeMobileMenu = () => setIsOpen(false);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     const checkAuth = () => {
       if (typeof window !== "undefined") {
         const name = localStorage.getItem("membership_user_name");
         const email = localStorage.getItem("membership_user_email");
-        const isLogged = Boolean(name || email || localStorage.getItem("is_logged_in") === "true");
+        const role = localStorage.getItem("user_role");
+        const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
+        const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+        const isAdm = role === "admin" || (email === "admin" && isLoggedInFlag) || isAdminSession;
+        const isLogged = isLoggedInFlag || Boolean(name && name.trim().length > 0);
+
+        setIsAdmin(isAdm);
         setIsLoggedIn(isLogged);
         setUserName(name || "");
       }

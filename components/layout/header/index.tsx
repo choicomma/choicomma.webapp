@@ -54,12 +54,21 @@ export function Header({ collections }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     const checkAuth = () => {
       if (typeof window !== "undefined") {
         const name = localStorage.getItem("membership_user_name");
         const email = localStorage.getItem("membership_user_email");
-        const isLogged = Boolean(name || email || localStorage.getItem("is_logged_in") === "true");
+        const role = localStorage.getItem("user_role");
+        const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
+        const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+        const isAdm = role === "admin" || (email === "admin" && isLoggedInFlag) || isAdminSession;
+        const isLogged = isLoggedInFlag || Boolean(name && name.trim().length > 0);
+
+        setIsAdmin(isAdm);
         setIsLoggedIn(isLogged);
         setUserName(name || "");
       }
@@ -78,15 +87,18 @@ export function Header({ collections }: HeaderProps) {
     return null;
   }
 
-  const activeNavItems = navItems.map((item) => {
-    if (item.href === "/login" && isLoggedIn) {
-      return {
-        label: userName ? `마이페이지 (${userName})` : "마이페이지",
-        href: "/membership",
-      };
-    }
-    return item;
-  });
+  const activeNavItems = [
+    ...navItems.map((item) => {
+      if (item.href === "/login" && isLoggedIn) {
+        return {
+          label: userName ? `마이페이지 (${userName})` : "마이페이지",
+          href: "/membership",
+        };
+      }
+      return item;
+    }),
+    ...(isAdmin ? [{ label: "어드민", href: "/admin" }] : []),
+  ];
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
@@ -156,6 +168,7 @@ export function Header({ collections }: HeaderProps) {
                 </li>
               ))}
             </ul>
+
             <LanguageSelector isScrolled={isScrolled} />
             <CartModal
               className={cn(

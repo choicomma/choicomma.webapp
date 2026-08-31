@@ -201,36 +201,21 @@ export default function CheckoutClientWrapper() {
           : cart.lines[0].merchandise.product.title
         : "초이콤마 오리지널 패션 주문건";
 
-      if (isWidgetKey) {
-        const widgets = tossPayments.widgets({ customerKey });
-        await widgets.setAmount({
+      // Use direct Payment window request (Card & EasyPay supported)
+      const payment = tossPayments.payment({ customerKey });
+      await (payment as any).requestPayment({
+        method: "CARD",
+        amount: {
           currency: "KRW",
           value: finalTotalAmount > 0 ? finalTotalAmount : 50000,
-        });
-        await widgets.requestPayment({
-          orderId,
-          orderName,
-          successUrl: `${origin}/order/success`,
-          failUrl: `${origin}/order/fail`,
-          customerEmail: formData.ordererEmail || "customer@choicomma.com",
-          customerName: formData.recipientName || "홍길동",
-        });
-      } else {
-        const payment = tossPayments.payment({ customerKey });
-        await (payment as any).requestPayment({
-          method: "CARD",
-          amount: {
-            currency: "KRW",
-            value: finalTotalAmount > 0 ? finalTotalAmount : 50000,
-          },
-          orderId,
-          orderName,
-          successUrl: `${origin}/order/success`,
-          failUrl: `${origin}/order/fail`,
-          customerEmail: formData.ordererEmail || "customer@choicomma.com",
-          customerName: formData.recipientName || "홍길동",
-        });
-      }
+        },
+        orderId,
+        orderName,
+        successUrl: `${origin}/order/success`,
+        failUrl: `${origin}/order/fail`,
+        customerEmail: formData.ordererEmail || "customer@choicomma.com",
+        customerName: formData.recipientName || "홍길동",
+      });
     } catch (err: any) {
       // Ignore user cancellation (closing the payment popup/window)
       if (
