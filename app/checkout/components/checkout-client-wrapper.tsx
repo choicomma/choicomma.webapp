@@ -80,6 +80,24 @@ export default function CheckoutClientWrapper() {
     shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
   });
 
+  // Rewards Points (적립금) State
+  const [availablePoints, setAvailablePoints] = useState(5000);
+  const [usedPointsInput, setUsedPointsInput] = useState("");
+  const [appliedPoints, setAppliedPoints] = useState(0);
+  const [pointsMessage, setPointsMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedPoints = localStorage.getItem("membership_user_points");
+      if (savedPoints && !isNaN(parseInt(savedPoints))) {
+        setAvailablePoints(parseInt(savedPoints));
+      } else {
+        localStorage.setItem("membership_user_points", "5000");
+        setAvailablePoints(5000);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const updateShippingPolicy = () => {
       if (typeof window !== "undefined") {
@@ -104,7 +122,33 @@ export default function CheckoutClientWrapper() {
   const freeThreshold = shippingPolicy.freeShippingThreshold || 100000;
   const baseShippingFee = shippingPolicy.baseFee || 3000;
   const shippingFee = totalItemAmount >= freeThreshold || totalItemAmount === 0 ? 0 : baseShippingFee;
-  const finalTotalAmount = Math.max(0, totalItemAmount + shippingFee - appliedDiscount);
+
+  const handleApplyPoints = (amountToUse?: number) => {
+    const amount = amountToUse !== undefined ? amountToUse : parseInt(usedPointsInput) || 0;
+    if (amount <= 0) {
+      setAppliedPoints(0);
+      setPointsMessage(null);
+      return;
+    }
+    if (amount > availablePoints) {
+      setPointsMessage(`❌ 보유 적립금(${availablePoints.toLocaleString()}P) 초과 사용은 불가능합니다.`);
+      return;
+    }
+    const maxUsable = Math.max(0, totalItemAmount + shippingFee - appliedDiscount);
+    const finalUse = Math.min(amount, maxUsable);
+    setAppliedPoints(finalUse);
+    setPointsMessage(`🎉 ${finalUse.toLocaleString()}P 적립금이 적용되었습니다.`);
+  };
+
+  const handleUseAllPoints = () => {
+    const maxUsable = Math.max(0, totalItemAmount + shippingFee - appliedDiscount);
+    const finalUse = Math.min(availablePoints, maxUsable);
+    setUsedPointsInput(String(finalUse));
+    handleApplyPoints(finalUse);
+  };
+
+  const finalTotalAmount = Math.max(0, totalItemAmount + shippingFee - appliedDiscount - appliedPoints);
+  const earnedPoints = Math.floor(finalTotalAmount * 0.01);
 
   let rawClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_docs_Oabc1234567890";
   if (rawClientKey.includes("yL0qZ4G1VOlDEDezkwPProWb2MQY")) {
@@ -391,6 +435,27 @@ export default function CheckoutClientWrapper() {
               ))}
             </div>
 
+            {/* Shipping Policy Banner inside Checkout */}
+            <div className="p-3 bg-sky-50/80 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800 rounded-2xl text-xs space-y-1.5">
+              <div className="flex items-center justify-between font-extrabold text-sky-950 dark:text-sky-200">
+                <span className="flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-sky-600" />
+                  {shippingPolicy.courierName}
+                </span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white dark:bg-neutral-800 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700 font-bold">
+                  {totalItemAmount >= freeThreshold ? "🎉 무료 배송 조건 달성" : `기본 배송비 ${baseShippingFee.toLocaleString()}원`}
+                </span>
+              </div>
+              <p className="text-[11px] text-sky-800 dark:text-sky-300 font-medium">
+                {shippingPolicy.shippingNotice || "평일 14:00 이전 결제 완료 시 당일 출고됩니다."}
+              </p>
+              {totalItemAmount < freeThreshold && (
+                <p className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">
+                  💡 {(freeThreshold - totalItemAmount).toLocaleString()}원 추가 주문 시 무료 배송!
+                </p>
+              )}
+            </div>
+
             {/* Coupon Code Section inside Order Summary */}
             <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
               <label className="block text-xs font-extrabold text-neutral-700 dark:text-neutral-300">
@@ -419,6 +484,39 @@ export default function CheckoutClientWrapper() {
               )}
             </div>
 
+            {/* Rewards Points (적립금) Section */}
+            <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
+              <div className="flex items-center justify-between text-xs font-extrabold text-neutral-700 dark:text-neutral-300">
+                <span>💰 보유 적립금 사용</span>
+                <span className="text-neutral-500 font-bold">보유: <strong className="text-neutral-900 dark:text-white">{availablePoints.toLocaleString()}P</strong></span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={usedPointsInput}
+                  onChange={(e) => {
+                    setUsedPointsInput(e.target.value);
+                    const val = parseInt(e.target.value) || 0;
+                    handleApplyPoints(val);
+                  }}
+                  placeholder="0 P"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={handleUseAllPoints}
+                  className="px-3.5 py-2.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-900 dark:text-white rounded-xl text-xs font-black transition-colors border border-neutral-200 dark:border-neutral-700 shrink-0"
+                >
+                  전액사용
+                </button>
+              </div>
+              {pointsMessage && (
+                <p className={`text-[11px] font-bold ${pointsMessage.startsWith("🎉") ? "text-neutral-900 dark:text-white" : "text-rose-500"}`}>
+                  {pointsMessage}
+                </p>
+              )}
+            </div>
+
             {/* Price Calculations */}
             <div className="space-y-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800 text-sm font-bold">
               <div className="flex justify-between text-neutral-500">
@@ -437,6 +535,16 @@ export default function CheckoutClientWrapper() {
                   <span className="font-bold text-rose-600">-{formatPrice(appliedDiscount)}</span>
                 </div>
               )}
+              {appliedPoints > 0 && (
+                <div className="flex justify-between text-neutral-900 dark:text-white font-bold">
+                  <span>적립금 사용</span>
+                  <span className="font-bold text-amber-600">-{appliedPoints.toLocaleString()}P</span>
+                </div>
+              )}
+              <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/80 dark:border-emerald-800 flex justify-between items-center text-xs text-emerald-900 dark:text-emerald-300 font-extrabold">
+                <span>🎁 구매 시 적립 예정 혜택 (1%)</span>
+                <span>+{earnedPoints.toLocaleString()}P</span>
+              </div>
               <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 flex justify-between items-baseline">
                 <span className="text-base font-black text-neutral-900 dark:text-white">최종 결제 금액</span>
                 <span className="text-2xl font-black text-neutral-900 dark:text-white">
