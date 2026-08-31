@@ -20,11 +20,33 @@ interface MobileMenuProps {
 
 export default function MobileMenu({ collections, isScrolled }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("");
   const pathname = usePathname();
   const { cart } = useCart();
 
   const openMobileMenu = () => setIsOpen(true);
   const closeMobileMenu = () => setIsOpen(false);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      if (typeof window !== "undefined") {
+        const name = localStorage.getItem("membership_user_name");
+        const email = localStorage.getItem("membership_user_email");
+        const isLogged = Boolean(name || email || localStorage.getItem("is_logged_in") === "true");
+        setIsLoggedIn(isLogged);
+        setUserName(name || "");
+      }
+    };
+
+    checkAuth();
+    window.addEventListener("storage", checkAuth);
+    window.addEventListener("auth_changed", checkAuth);
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("auth_changed", checkAuth);
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -91,16 +113,18 @@ export default function MobileMenu({ collections, isScrolled }: MobileMenuProps)
                   </Button>
                 </div>
 
-                {/* Top Buttons: LOG IN, CART, and LANGUAGE */}
+                {/* Top Buttons: LOG IN / MY PAGE, CART, and LANGUAGE */}
                 <nav className="grid grid-cols-2 gap-3 mb-6">
                   <Button
                     size="sm"
                     variant="secondary"
                     onClick={closeMobileMenu}
-                    className="uppercase bg-background/60 justify-start font-bold py-5 text-sm"
+                    className="uppercase bg-background/60 justify-start font-bold py-5 text-sm truncate"
                     asChild
                   >
-                    <Link href="/login" prefetch>LOG IN</Link>
+                    <Link href={isLoggedIn ? "/membership" : "/login"} prefetch>
+                      {isLoggedIn ? (userName ? `MY PAGE (${userName})` : "MY PAGE") : "LOG IN"}
+                    </Link>
                   </Button>
 
                   {/* Integrated Cart Item inside Menu Drawer - Identical style and size as LOG IN */}

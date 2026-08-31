@@ -37,6 +37,8 @@ interface HeaderProps {
 export function Header({ collections }: HeaderProps) {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,9 +54,39 @@ export function Header({ collections }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const checkAuth = () => {
+      if (typeof window !== "undefined") {
+        const name = localStorage.getItem("membership_user_name");
+        const email = localStorage.getItem("membership_user_email");
+        const isLogged = Boolean(name || email || localStorage.getItem("is_logged_in") === "true");
+        setIsLoggedIn(isLogged);
+        setUserName(name || "");
+      }
+    };
+
+    checkAuth();
+    window.addEventListener("storage", checkAuth);
+    window.addEventListener("auth_changed", checkAuth);
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("auth_changed", checkAuth);
+    };
+  }, []);
+
   if (pathname === "/login" || pathname === "/admin" || pathname === "/membership") {
     return null;
   }
+
+  const activeNavItems = navItems.map((item) => {
+    if (item.href === "/login" && isLoggedIn) {
+      return {
+        label: userName ? `마이페이지 (${userName})` : "마이페이지",
+        href: "/membership",
+      };
+    }
+    return item;
+  });
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
@@ -103,7 +135,7 @@ export function Header({ collections }: HeaderProps) {
                 isScrolled ? "bg-white/10 text-white" : "bg-black/5 text-neutral-900"
               )}
             >
-              {navItems.map((item) => (
+              {activeNavItems.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
