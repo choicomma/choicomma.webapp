@@ -46,7 +46,7 @@ function ChoicommaMarqueeTicker() {
   ];
 
   return (
-    <div className="w-full bg-neutral-950 text-white border-y border-neutral-800 py-3.5 overflow-hidden select-none z-20 shadow-md">
+    <div className="w-full bg-neutral-950 text-white border-y border-neutral-800 py-3.5 overflow-hidden select-none z-20 shadow-md -mt-px">
       <div className="animate-marquee whitespace-nowrap flex items-center gap-8 font-sans">
         {[...marqueeItems, ...marqueeItems, ...marqueeItems, ...marqueeItems].map((item, idx) => (
           <span
@@ -253,7 +253,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     <div className="w-full flex flex-col bg-white">
       {/* SECTION 1: Auto Slider Hero Image (Only rendered if explicit hero images exist) */}
       {heroImages.length > 0 && (
-        <section className="relative w-full h-[95vh] md:h-[105vh] min-h-[800px] border-b border-neutral-200 bg-white overflow-hidden">
+        <section className="relative w-full h-[95vh] md:h-[105vh] min-h-[800px] bg-white overflow-hidden">
           <div
             className="flex w-full h-full transition-transform duration-1000 ease-in-out"
             style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
