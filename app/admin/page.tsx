@@ -610,7 +610,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
     let updatedList: any[] = [];
     if (targetHeroProduct) {
       updatedList = productsList.map((p) => {
-        if (p.id === targetHeroProduct.id) {
+        if (String(p.id) === String(targetHeroProduct.id)) {
           return {
             ...p,
             heroCustomImage: newImage,
@@ -621,24 +621,22 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
       });
       triggerToast("슬라이드 이미지가 성공적으로 변경되었습니다.");
     } else {
-      let target = productsList.find((p) => !p.isHeroFeatured);
-      if (!target) {
-        target = productsList[0];
-      }
-      if (target) {
-        updatedList = productsList.map((p) => {
-          if (p.id === target.id) {
-            return {
-              ...p,
-              heroCustomImage: newImage,
-              isHeroFeatured: true,
-            };
-          }
-          return p;
-        });
-      } else {
-        updatedList = [...productsList];
-      }
+      const newHeroId = `hero-slide-${Date.now()}`;
+      const newHeroSlide = {
+        id: newHeroId,
+        productNo: 9000 + productsList.length,
+        productCode: `HERO-${Date.now()}`,
+        handle: `hero-slide-${Date.now()}`,
+        title: `메인 배너 슬라이드 ${productsList.filter((p) => p.isHeroFeatured).length + 1}`,
+        categoryId: "main_banner",
+        description: "초이콤마 오리지널 메인 슬라이드 배너입니다.",
+        heroCustomImage: newImage,
+        featuredImage: { url: newImage },
+        isHeroFeatured: true,
+        availableForSale: false,
+      };
+
+      updatedList = [newHeroSlide, ...productsList];
       triggerToast("새로운 슬라이드 이미지가 성공적으로 등록되었습니다.");
     }
 
@@ -651,20 +649,22 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
     const isConfirmed = window.confirm("해당 슬라이드 이미지를 삭제하시겠습니까?");
     if (!isConfirmed) return;
 
-    const updatedList = productsList.map((p) => {
-      if (p.id === id) {
-        return {
-          ...p,
-          isHeroFeatured: false,
-          heroCustomImage: undefined,
-        };
-      }
-      return p;
-    });
+    const updatedList = productsList
+      .map((p) => {
+        if (String(p.id) === String(id)) {
+          return {
+            ...p,
+            isHeroFeatured: false,
+            heroCustomImage: undefined,
+          };
+        }
+        return p;
+      })
+      .filter((p) => !(String(p.id).startsWith("hero-slide-") && !p.isHeroFeatured));
 
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);
-    triggerToast("슬라이드 이미지가 삭제되었습니다.");
+    triggerToast("슬라이드 이미지가 성공적으로 삭제되었습니다.");
   };
 
   const handleHeroImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
