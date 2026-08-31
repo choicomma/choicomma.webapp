@@ -67,11 +67,40 @@ export default function CheckoutClientWrapper() {
       setCouponMessage("🎉 5,000원 웰컴 쿠폰이 적용되었습니다!");
     } else {
       setCouponMessage("❌ 유효하지 않은 쿠폰 코드입니다. (테스트용 추천 코드: CHOI10, WELCOME)");
-    }
-  };
+  // Dynamic Shipping Policy State
+  const [shippingPolicy, setShippingPolicy] = useState({
+    baseFee: 3000,
+    freeShippingThreshold: 100000,
+    islandExtraFee: 3000,
+    returnExchangeFee: 6000,
+    courierName: "CJ대한통운 (주계약)",
+    shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
+  });
+
+  useEffect(() => {
+    const updateShippingPolicy = () => {
+      if (typeof window !== "undefined") {
+        const savedPolicy = localStorage.getItem("shipping_policy");
+        if (savedPolicy) {
+          try {
+            setShippingPolicy(JSON.parse(savedPolicy));
+          } catch (e) {}
+        }
+      }
+    };
+    updateShippingPolicy();
+    window.addEventListener("storage", updateShippingPolicy);
+    window.addEventListener("shipping_policy_updated", updateShippingPolicy);
+    return () => {
+      window.removeEventListener("storage", updateShippingPolicy);
+      window.removeEventListener("shipping_policy_updated", updateShippingPolicy);
+    };
+  }, []);
 
   const totalItemAmount = Number(cart?.cost?.totalAmount?.amount || 0);
-  const shippingFee = totalItemAmount >= 100000 || totalItemAmount === 0 ? 0 : 3000;
+  const freeThreshold = shippingPolicy.freeShippingThreshold || 100000;
+  const baseShippingFee = shippingPolicy.baseFee || 3000;
+  const shippingFee = totalItemAmount >= freeThreshold || totalItemAmount === 0 ? 0 : baseShippingFee;
   const finalTotalAmount = Math.max(0, totalItemAmount + shippingFee - appliedDiscount);
 
   let rawClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_docs_Oabc1234567890";

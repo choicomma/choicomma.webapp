@@ -83,6 +83,15 @@ export default function MembershipPage() {
     };
   }, []);
 
+  const [shippingPolicy, setShippingPolicy] = useState({
+    baseFee: 3000,
+    freeShippingThreshold: 100000,
+    islandExtraFee: 3000,
+    returnExchangeFee: 6000,
+    courierName: "CJ대한통운 (주계약)",
+    shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
+  });
+
   useEffect(() => {
     const savedName = localStorage.getItem("membership_user_name");
     if (savedName) setUserName(savedName);
@@ -92,6 +101,20 @@ export default function MembershipPage() {
     if (savedPhone) setUserPhone(savedPhone);
     const savedAddress = localStorage.getItem("membership_user_address");
     if (savedAddress) setUserAddress(savedAddress);
+
+    const updatePolicy = () => {
+      const saved = localStorage.getItem("shipping_policy");
+      if (saved) {
+        try { setShippingPolicy(JSON.parse(saved)); } catch (e) {}
+      }
+    };
+    updatePolicy();
+    window.addEventListener("storage", updatePolicy);
+    window.addEventListener("shipping_policy_updated", updatePolicy);
+    return () => {
+      window.removeEventListener("storage", updatePolicy);
+      window.removeEventListener("shipping_policy_updated", updatePolicy);
+    };
   }, []);
 
   const handleSaveProfile = () => {
@@ -509,6 +532,48 @@ export default function MembershipPage() {
               >
                 변경사항 저장
               </Button>
+            </Card>
+
+            {/* Shipping Policy & Benefits Card */}
+            <Card className="border border-sky-200/80 bg-sky-50/40 rounded-3xl p-6 space-y-4 shadow-2xs">
+              <div className="flex items-center gap-3 pb-3 border-b border-sky-100">
+                <div className="p-2 bg-sky-950 text-white rounded-xl">
+                  <Truck className="w-4 h-4 text-sky-400" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-sm text-neutral-900">회원 배송 혜택 & 기본 정책</h4>
+                  <p className="text-[11px] text-neutral-500">스토어에 적용된 최신 배송 정책 정보입니다.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="bg-white/80 p-3 rounded-2xl border border-sky-100/80">
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase block">주계약 지정 택배사</span>
+                  <span className="font-extrabold text-neutral-900 text-sm mt-0.5 block">{shippingPolicy.courierName}</span>
+                </div>
+                <div className="bg-white/80 p-3 rounded-2xl border border-sky-100/80">
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase block">무료 배송 혜택</span>
+                  <span className="font-extrabold text-amber-600 text-sm mt-0.5 block">
+                    {shippingPolicy.freeShippingThreshold.toLocaleString()}원 이상 구매 시 무료
+                  </span>
+                </div>
+                <div className="bg-white/80 p-3 rounded-2xl border border-sky-100/80">
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase block">기본 배송비</span>
+                  <span className="font-extrabold text-neutral-900 text-sm mt-0.5 block">{shippingPolicy.baseFee.toLocaleString()}원</span>
+                </div>
+                <div className="bg-white/80 p-3 rounded-2xl border border-sky-100/80">
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase block">반품/교환 왕복 배송비</span>
+                  <span className="font-extrabold text-neutral-900 text-sm mt-0.5 block">{shippingPolicy.returnExchangeFee.toLocaleString()}원</span>
+                </div>
+              </div>
+              {shippingPolicy.shippingNotice && (
+                <div className="p-3 bg-white/90 rounded-2xl border border-sky-100 text-xs text-neutral-700 font-medium">
+                  <span className="font-bold text-sky-900 block mb-0.5">📦 출고 및 배송 안내</span>
+                  {shippingPolicy.shippingNotice}
+                </div>
+              )}
+            </Card>
+
+            <Card className="border border-neutral-200/80 bg-white rounded-3xl p-6 shadow-sm">
 
               <div className="pt-6 border-t border-neutral-100 space-y-2 mt-6">
                 <h5 className="text-xs font-bold text-rose-600 uppercase tracking-wider">
