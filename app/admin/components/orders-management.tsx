@@ -159,11 +159,10 @@ export function OrdersManagement({
           <button
             type="button"
             onClick={() => setIsCjConfigModalOpen(true)}
-            className="bg-white/10 hover:bg-white/20 text-white font-bold px-3.5 py-2 rounded-xl text-xs border border-white/20 transition-all cursor-pointer flex items-center gap-1.5"
-            title="CJ대한통운 API 설정"
+            className="bg-white/10 hover:bg-white/20 text-white font-bold p-2.5 rounded-xl text-xs border border-white/20 transition-all cursor-pointer flex items-center justify-center shadow-2xs hover:scale-105 active:scale-95"
+            title="배송 정책 & CJ대한통운 API 연동 설정"
           >
             <Settings className="w-4 h-4 text-sky-200" />
-            <span>⚙️ CJ대한통운 API 연동 설정</span>
           </button>
         </div>
       </div>

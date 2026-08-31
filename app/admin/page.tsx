@@ -1865,12 +1865,30 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
   const [editShipmentTracking, setEditShipmentTracking] = useState("");
   const [editShipmentStatus, setEditShipmentStatus] = useState("Pending");
 
-  // CJ Logistics (CJ대한통운) Integration State
+  // Shipping Policy & CJ Logistics (배송 정책 및 CJ대한통운) Integration State
   const [isCjConfigModalOpen, setIsCjConfigModalOpen] = useState(false);
+  const [configModalTab, setConfigModalTab] = useState<"policy" | "cj">("policy");
+  const [shippingPolicy, setShippingPolicy] = useState({
+    baseFee: 3000,
+    freeShippingThreshold: 100000,
+    islandExtraFee: 3000,
+    returnExchangeFee: 6000,
+    courierName: "CJ대한통운 (주계약)",
+    shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
+  });
   const [cjClientCode, setCjClientCode] = useState("CJ-882910");
   const [cjContractNo, setCjContractNo] = useState("30291049");
   const [cjApiKey, setCjApiKey] = useState("cj_live_sk_89201948201948");
   const [cjSenderAddress, setCjSenderAddress] = useState("(04512) 서울 중구 남대문로 81 choicomma 물류센터");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedPolicy = localStorage.getItem("shipping_policy");
+      if (savedPolicy) {
+        try { setShippingPolicy(JSON.parse(savedPolicy)); } catch (e) { }
+      }
+    }
+  }, []);
 
   const handleIssueCjLogisticsTracking = async () => {
     try {
@@ -6745,18 +6763,18 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
           </div>
         )}
 
-        {/* CJ LOGISTICS API CONFIG MODAL */}
+        {/* SHIPPING POLICY & CJ LOGISTICS CONFIG MODAL */}
         {isCjConfigModalOpen && (
           <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl space-y-6">
               <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-blue-950 text-white rounded-2xl shadow-sm">
                     <Truck className="w-5 h-5 text-sky-400" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-extrabold text-neutral-950">CJ대한통운 API 연동 설정</h3>
-                    <p className="text-xs text-neutral-500">CJ대한통운 고객사 코드 및 Open API 키</p>
+                    <h3 className="text-xl font-extrabold text-neutral-950">배송 정책 & CJ대한통운 설정</h3>
+                    <p className="text-xs text-neutral-500">기본 배송비, 무료배송 기준 및 CJ대한통운 API 연동 정보</p>
                   </div>
                 </div>
                 <button
@@ -6768,91 +6786,204 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
                 </button>
               </div>
 
+              {/* TAB SELECTION */}
+              <div className="flex bg-neutral-100 p-1 rounded-2xl gap-1">
+                <button
+                  type="button"
+                  onClick={() => setConfigModalTab("policy")}
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    configModalTab === "policy"
+                      ? "bg-white text-neutral-950 shadow-xs"
+                      : "text-neutral-500 hover:text-neutral-900"
+                  }`}
+                >
+                  <Truck className="w-3.5 h-3.5 text-sky-600" />
+                  배송 정책 설정
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfigModalTab("cj")}
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    configModalTab === "cj"
+                      ? "bg-white text-neutral-950 shadow-xs"
+                      : "text-neutral-500 hover:text-neutral-900"
+                  }`}
+                >
+                  <Settings className="w-3.5 h-3.5 text-neutral-700" />
+                  CJ대한통운 API 설정
+                </button>
+              </div>
+
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem("shipping_policy", JSON.stringify(shippingPolicy));
+                    window.dispatchEvent(new CustomEvent("shipping_policy_updated"));
+                  }
                   setIsCjConfigModalOpen(false);
-                  triggerToast("CJ대한통운 API 연동 정보가 설정되었습니다.");
+                  triggerToast("배송 정책 및 CJ대한통운 설정이 저장되었습니다.");
                 }}
                 className="space-y-4"
               >
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">고객사 코드 (Client Code) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={cjClientCode}
-                    onChange={(e) => setCjClientCode(e.target.value)}
-                    placeholder="예: CJ-882910"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
+                {configModalTab === "policy" ? (
+                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-neutral-700 mb-1">기본 배송비 (원) *</label>
+                        <input
+                          type="number"
+                          required
+                          value={shippingPolicy.baseFee}
+                          onChange={(e) => setShippingPolicy({ ...shippingPolicy, baseFee: parseInt(e.target.value) || 0 })}
+                          placeholder="3000"
+                          className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-neutral-700 mb-1">무료 배송 기준 금액 (원) *</label>
+                        <input
+                          type="number"
+                          required
+                          value={shippingPolicy.freeShippingThreshold}
+                          onChange={(e) => setShippingPolicy({ ...shippingPolicy, freeShippingThreshold: parseInt(e.target.value) || 0 })}
+                          placeholder="100000"
+                          className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-amber-600 focus:outline-none focus:border-neutral-950"
+                        />
+                        <span className="text-[11px] text-neutral-400 mt-0.5 block">예: 100,000원 이상 결제 시 무료배송</span>
+                      </div>
+                    </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">계약 고객 번호 (Contract No) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={cjContractNo}
-                    onChange={(e) => setCjContractNo(e.target.value)}
-                    placeholder="예: 30291049"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-neutral-700 mb-1">도서산간/제주 추가 배송비 (원)</label>
+                        <input
+                          type="number"
+                          value={shippingPolicy.islandExtraFee}
+                          onChange={(e) => setShippingPolicy({ ...shippingPolicy, islandExtraFee: parseInt(e.target.value) || 0 })}
+                          placeholder="3000"
+                          className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-neutral-700 mb-1">반품/교환 왕복 배송비 (원)</label>
+                        <input
+                          type="number"
+                          value={shippingPolicy.returnExchangeFee}
+                          onChange={(e) => setShippingPolicy({ ...shippingPolicy, returnExchangeFee: parseInt(e.target.value) || 0 })}
+                          placeholder="6000"
+                          className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                        />
+                      </div>
+                    </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">Open API Secret Key</label>
-                  <input
-                    type="password"
-                    value={cjApiKey}
-                    onChange={(e) => setCjApiKey(e.target.value)}
-                    placeholder="cj_live_sk_..."
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">기본 지정 택배사</label>
+                      <input
+                        type="text"
+                        value={shippingPolicy.courierName}
+                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, courierName: e.target.value })}
+                        placeholder="CJ대한통운 (주계약)"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">출고 주소지 (기본 발송지)</label>
-                  <input
-                    type="text"
-                    value={cjSenderAddress}
-                    onChange={(e) => setCjSenderAddress(e.target.value)}
-                    placeholder="출고 물류센터 주소"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">배송 안내 문구 (고객 노출)</label>
+                      <textarea
+                        rows={2}
+                        value={shippingPolicy.shippingNotice}
+                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, shippingNotice: e.target.value })}
+                        placeholder="평일 14:00 이전 결제 완료 시 당일 출고됩니다."
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-3 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-none"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">고객사 코드 (Client Code) *</label>
+                      <input
+                        type="text"
+                        required
+                        value={cjClientCode}
+                        onChange={(e) => setCjClientCode(e.target.value)}
+                        placeholder="예: CJ-882910"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
 
-                <div className="p-3 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-900 font-semibold space-y-1">
-                  <p className="font-extrabold flex items-center gap-1.5 text-sky-950">
-                    <CheckCircle2 className="w-4 h-4 text-sky-600" />
-                    CJ대한통운 (LoIS e-Flex / CNPlus) 연동 완료
-                  </p>
-                  <p className="text-[11px] text-sky-700 font-normal">
-                    운송장 자동 채번, 택배 집하 요청 및 실시간 배송 추적 조회가 정상 연동되어 있습니다.
-                  </p>
-                </div>
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">계약 고객 번호 (Contract No) *</label>
+                      <input
+                        type="text"
+                        required
+                        value={cjContractNo}
+                        onChange={(e) => setCjContractNo(e.target.value)}
+                        placeholder="예: 30291049"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">Open API Secret Key</label>
+                      <input
+                        type="password"
+                        value={cjApiKey}
+                        onChange={(e) => setCjApiKey(e.target.value)}
+                        placeholder="cj_live_sk_..."
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">출고 주소지 (기본 발송지)</label>
+                      <input
+                        type="text"
+                        value={cjSenderAddress}
+                        onChange={(e) => setCjSenderAddress(e.target.value)}
+                        placeholder="출고 물류센터 주소"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
+
+                    <div className="p-3 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-900 font-semibold space-y-1">
+                      <p className="font-extrabold flex items-center gap-1.5 text-sky-950">
+                        <CheckCircle2 className="w-4 h-4 text-sky-600" />
+                        CJ대한통운 (LoIS e-Flex / CNPlus) 연동 완료
+                      </p>
+                      <p className="text-[11px] text-sky-700 font-normal">
+                        운송장 자동 채번, 택배 집하 요청 및 실시간 배송 추적 조회가 정상 연동되어 있습니다.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="pt-3 flex justify-between items-center border-t border-neutral-100">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      triggerToast("CJ대한통운 API 통신 상태 점검 중...");
-                      const res = await fetch("/api/admin/shipping/cj-logistics", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: "test_connection", config: { clientCode: cjClientCode, contractNo: cjContractNo } }),
-                      });
-                      const data = await res.json();
-                      if (data.success) {
-                        triggerToast(data.message);
-                      } else {
-                        triggerToast(data.message || "연동 테스트 실패");
-                      }
-                    }}
-                    className="px-3.5 py-2 rounded-xl bg-sky-50 text-sky-700 font-bold text-xs hover:bg-sky-100 transition-colors cursor-pointer border border-sky-200"
-                  >
-                    API 연동 테스트
-                  </button>
+                  {configModalTab === "cj" ? (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        triggerToast("CJ대한통운 API 통신 상태 점검 중...");
+                        const res = await fetch("/api/admin/shipping/cj-logistics", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ action: "test_connection", config: { clientCode: cjClientCode, contractNo: cjContractNo } }),
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          triggerToast(data.message);
+                        } else {
+                          triggerToast(data.message || "연동 테스트 실패");
+                        }
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-sky-50 text-sky-700 font-bold text-xs hover:bg-sky-100 transition-colors cursor-pointer border border-sky-200"
+                    >
+                      API 연동 테스트
+                    </button>
+                  ) : (
+                    <div />
+                  )}
                   <div className="flex gap-2">
                     <button
                       type="button"
