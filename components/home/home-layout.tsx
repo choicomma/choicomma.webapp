@@ -203,15 +203,21 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
             // Update all products for grid
             setAllProducts(featuredProducts);
 
-            // Update hero image ONLY if explicitly set in Admin
-            const heroProducts = parsed.filter((p: any) => p.isHeroFeatured === true);
+            // Update hero image (either explicitly marked or has custom image, fallback to defaults)
+            const DEFAULT_HERO_IMAGES = [
+              "https://cdn.imweb.me/thumbnail/20260825/a947ed8906a74ea3.jpg",
+              "/product_1.webp",
+              "/product_2.webp",
+            ];
+
+            const heroProducts = parsed.filter((p: any) => p.isHeroFeatured === true || Boolean(p.heroCustomImage));
             const urls = heroProducts.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
 
             if (urls.length > 0) {
               setHeroImages(urls);
               setCurrentSlideIndex(0);
             } else {
-              setHeroImages([]);
+              setHeroImages(DEFAULT_HERO_IMAGES);
             }
           }
         } catch (e) {
