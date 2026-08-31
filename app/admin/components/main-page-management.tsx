@@ -27,7 +27,7 @@ export function MainPageManagement({
           </div>
           <h1 className="text-2xl font-black text-neutral-950">메인 이미지 관리</h1>
           <p className="text-sm text-neutral-500 mt-0.5">
-            쇼핑몰 최상단 배너 슬라이더에 노출할 배너 이미지를 직접 지정하고 관리합니다.
+            쇼핑몰 최상단 배너 슬라이더에 노출할 배너 이미지(1920*1080)를 직접 지정하고 관리합니다.
           </p>
         </div>
         <div className="flex items-center gap-2">
