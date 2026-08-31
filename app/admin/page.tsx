@@ -2445,7 +2445,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
     );
     if (!isConfirmed) return;
 
-    const updatedList = productsList.filter((p) => p.id !== id);
+    const updatedList = productsList.filter((p) => String(p.id) !== String(id));
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);
     triggerToast(`'${title}' 상품이 성공적으로 삭제되었습니다.`);
