@@ -68,6 +68,7 @@ interface ProductsManagementProps {
   setNewTitle: (val: string) => void;
   setNewPrice: (val: string) => void;
   setNewDescription: (val: string) => void;
+  setNewDetailDescription?: (val: string) => void;
   setNewImageUrl: (val: string) => void;
   setNewImages: (val: string[]) => void;
   setNewUrlInput: (val: string) => void;
@@ -103,6 +104,7 @@ export function ProductsManagement({
   setNewTitle,
   setNewPrice,
   setNewDescription,
+  setNewDetailDescription,
   setNewImageUrl,
   setNewImages,
   setNewUrlInput,
@@ -497,6 +499,7 @@ export function ProductsManagement({
               setNewTitle("");
               setNewPrice("");
               setNewDescription("");
+              if (setNewDetailDescription) setNewDetailDescription("");
               setNewImageUrl("");
               setNewImages([]);
               setNewUrlInput("");

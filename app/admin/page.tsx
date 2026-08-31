@@ -2391,10 +2391,16 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
       }
     }
 
+    resetAddProductForm();
+    triggerToast(`"${newTitle}" 상품 (옵션: ${newColors.length}컬러 / ${newSizes.length}사이즈 / 총 재고 ${totalNewStock}개)이 추가되었습니다.`);
+  };
+
+  const resetAddProductForm = () => {
     setNewProductNoInput("");
     setNewTitle("");
     setNewPrice("");
     setNewDescription("");
+    setNewDetailDescription("");
     setNewImageUrl("");
     setNewImages([]);
     setNewUrlInput("");
@@ -2408,7 +2414,6 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
     setNewIsTimeSale(false);
     setNewTimeSaleHours("24");
     setNewTimeSaleMinutes("0");
-    triggerToast(`"${newTitle}" 상품 (옵션: ${newColors.length}컬러 / ${newSizes.length}사이즈 / 총 재고 ${totalNewStock}개)이 추가되었습니다.`);
   };
 
 
@@ -2970,6 +2975,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
               setNewTitle={setNewTitle}
               setNewPrice={setNewPrice}
               setNewDescription={setNewDescription}
+              setNewDetailDescription={setNewDetailDescription}
               setNewImageUrl={setNewImageUrl}
               setNewImages={setNewImages}
               setNewUrlInput={setNewUrlInput}
@@ -3196,7 +3202,10 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
               </div>
               <button
                 type="button"
-                onClick={() => setIsAddModalOpen(false)}
+                onClick={() => {
+                  resetAddProductForm();
+                  setIsAddModalOpen(false);
+                }}
                 className="text-neutral-400 hover:text-neutral-950 text-sm p-1 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
               >
                 ✕
@@ -4383,7 +4392,10 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
               <div className="pt-4 border-t border-neutral-200 flex justify-end gap-3 sticky bottom-0 bg-white py-3 px-2 z-20 rounded-b-2xl">
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
+                  onClick={() => {
+                    resetAddProductForm();
+                    setIsAddModalOpen(false);
+                  }}
                   className="px-5 py-2.5 rounded-xl text-xs font-bold text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 cursor-pointer"
                 >
                   취소
