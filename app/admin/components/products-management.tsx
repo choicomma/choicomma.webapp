@@ -79,7 +79,7 @@ interface ProductsManagementProps {
   handleBulkAddProducts?: (newProducts: any[]) => void;
   handleMoveProduct?: (id: string, direction: "up" | "down") => void;
   handleBulkDeleteProducts?: (targetIds: string[]) => void;
-  handleReorderProducts?: (fromIndex: number, toIndex: number) => void;
+  handleReorderProducts?: (fromId: string, toId: string) => void;
 }
 
 export function ProductsManagement({
@@ -174,8 +174,10 @@ export function ProductsManagement({
   const handleDrop = (e: React.DragEvent, targetIndex: number) => {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === targetIndex) return;
-    if (handleReorderProducts) {
-      handleReorderProducts(draggedIndex, targetIndex);
+    const fromItem = filteredProducts[draggedIndex];
+    const toItem = filteredProducts[targetIndex];
+    if (fromItem && toItem && handleReorderProducts) {
+      handleReorderProducts(String(fromItem.id), String(toItem.id));
     }
     setDraggedIndex(null);
   };
@@ -738,31 +740,28 @@ export function ProductsManagement({
                         </div>
                       </td>
                       <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => handleOpenEditModal(p)}
-                            className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-amber-950 bg-amber-100/90 hover:bg-amber-200 rounded-lg transition-all border border-amber-300 cursor-pointer shadow-2xs"
+                            className="p-1.5 text-amber-900 hover:text-amber-950 hover:bg-amber-100/90 rounded-lg transition-colors cursor-pointer border border-amber-200"
                             title="상품 정보 및 재고 수정"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
-                            <span>수정</span>
+                            <Pencil className="w-4 h-4" />
                           </button>
                           <Link
                             href={`/product/${p.handle}`}
                             target="_blank"
-                            className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-neutral-800 bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-all border border-neutral-300 shadow-2xs"
+                            className="p-1.5 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 rounded-lg transition-colors border border-neutral-200"
                             title="쇼핑몰 상품 페이지 미리보기"
                           >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span>미리보기</span>
+                            <ExternalLink className="w-4 h-4" />
                           </Link>
                           <button
                             onClick={() => handleDeleteProduct(p.id, p.title)}
-                            className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-all border border-rose-200 cursor-pointer shadow-2xs"
+                            className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer border border-rose-200"
                             title="상품 완전 삭제"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>삭제</span>
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

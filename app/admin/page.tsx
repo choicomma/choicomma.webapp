@@ -2440,13 +2440,19 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
     triggerToast(`🗑️ 선택한 ${targetIds.length}개 상품이 성공적으로 삭제되었습니다.`);
   };
 
-  const handleReorderProducts = (fromIndex: number, toIndex: number) => {
-    const updated = [...productsList];
-    const [movedItem] = updated.splice(fromIndex, 1);
-    updated.splice(toIndex, 0, movedItem);
-    setProductsList(updated);
-    saveProductsToStorage(updated);
-    triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
+  const handleReorderProducts = (fromId: string, toId: string) => {
+    setProductSortOrder("custom");
+    setProductsList((prev) => {
+      const fromIdx = prev.findIndex((p) => String(p.id) === String(fromId));
+      const toIdx = prev.findIndex((p) => String(p.id) === String(toId));
+      if (fromIdx === -1 || toIdx === -1) return prev;
+      const updated = [...prev];
+      const [movedItem] = updated.splice(fromIdx, 1);
+      updated.splice(toIdx, 0, movedItem);
+      saveProductsToStorage(updated);
+      triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
+      return updated;
+    });
   };
 
   const handleClearAllProducts = () => {
