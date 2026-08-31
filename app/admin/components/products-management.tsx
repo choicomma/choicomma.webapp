@@ -160,29 +160,35 @@ export function ProductsManagement({
     }
   };
 
-  // Real-time Drag & Drop Handlers
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
+  // ID-based Drag & Drop Handlers
+  const [draggedProductId, setDraggedProductId] = useState<string | null>(null);
+  const [dragOverProductId, setDragOverProductId] = useState<string | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedProductId(id);
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, id: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-  };
-
-  const handleDragEnter = (targetIndex: number) => {
-    if (draggedIndex === null || draggedIndex === targetIndex) return;
-    const fromItem = filteredProducts[draggedIndex];
-    const toItem = filteredProducts[targetIndex];
-    if (fromItem && toItem && handleReorderProducts) {
-      handleReorderProducts(String(fromItem.id), String(toItem.id), false);
-      setDraggedIndex(targetIndex);
+    if (dragOverProductId !== id) {
+      setDragOverProductId(id);
     }
   };
 
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (draggedProductId && draggedProductId !== targetId && handleReorderProducts) {
+      handleReorderProducts(draggedProductId, targetId);
+    }
+    setDraggedProductId(null);
+    setDragOverProductId(null);
+  };
+
   const handleDragEnd = () => {
-    setDraggedIndex(null);
+    setDraggedProductId(null);
+    setDragOverProductId(null);
   };
 
   // Calculate maximum existing productNo integer
@@ -647,20 +653,23 @@ export function ProductsManagement({
                 filteredProducts.map((p, index) => {
                   const prodNo = getProductNo(p);
                   const isSelected = selectedProductIds.includes(String(p.id));
-                  const isDragging = draggedIndex === index;
+                  const isDragging = draggedProductId === String(p.id);
+                  const isDragOver = dragOverProductId === String(p.id) && !isDragging;
 
                   return (
                     <tr
                       key={`${p.id}-${index}`}
                       draggable
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragOver={handleDragOver}
-                      onDragEnter={() => handleDragEnter(index)}
+                      onDragStart={(e) => handleDragStart(e, String(p.id))}
+                      onDragOver={(e) => handleDragOver(e, String(p.id))}
+                      onDrop={(e) => handleDrop(e, String(p.id))}
                       onDragEnd={handleDragEnd}
                       onClick={() => handleOpenEditModal(p)}
-                      className={`hover:bg-amber-50/60 transition-all duration-200 cursor-pointer group ${
+                      className={`hover:bg-amber-50/60 transition-all cursor-pointer group ${
                         isSelected ? "bg-amber-50/80" : ""
-                      } ${isDragging ? "opacity-30 bg-amber-200 scale-[0.99]" : ""}`}
+                      } ${isDragging ? "opacity-30 bg-amber-200" : ""} ${
+                        isDragOver ? "border-t-2 border-amber-500 bg-amber-100/70" : ""
+                      }`}
                     >
                       <td
                         className="py-2 px-2 w-8 text-center cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-950 transition-colors"
