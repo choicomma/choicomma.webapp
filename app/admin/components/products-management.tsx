@@ -583,31 +583,31 @@ export function ProductsManagement({
       {/* Products Table */}
       <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-neutral-700">
-            <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
+          <table className="w-full text-left text-xs text-neutral-700">
+            <thead className="bg-neutral-50 text-neutral-500 text-[11px] uppercase font-semibold border-b border-neutral-200">
               <tr>
-                <th className="py-3.5 px-3 w-10 text-center">
+                <th className="py-3 px-3 w-10 text-center">
                   <input
                     type="checkbox"
                     checked={isAllSelected}
                     onChange={handleSelectAll}
-                    className="w-4 h-4 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
+                    className="w-3.5 h-3.5 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
                     title="전체 선택 / 해제"
                   />
                 </th>
-                <th className="py-3.5 px-4 font-sans font-black text-neutral-950">상품번호</th>
-                <th className="py-3.5 px-4">상품 대표 이미지</th>
-                <th className="py-3.5 px-4">상품명</th>
-                <th className="py-3.5 px-4">카테고리</th>
-                <th className="py-3.5 px-4">판매가</th>
-                <th className="py-3.5 px-4">남은 재고 수량 / 상태</th>
-                <th className="py-3.5 px-4 text-right">작업 / 순서 이동</th>
+                <th className="py-3 px-4 font-sans font-black text-neutral-950">상품번호</th>
+                <th className="py-3 px-4">상품 대표 이미지</th>
+                <th className="py-3 px-4">상품명</th>
+                <th className="py-3 px-4">카테고리</th>
+                <th className="py-3 px-4">판매가</th>
+                <th className="py-3 px-4">남은 재고 수량 / 상태</th>
+                <th className="py-3 px-4 text-right">작업 / 순서 이동</th>
               </tr>
             </thead>
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-neutral-500 text-sm">
+                  <td colSpan={8} className="py-12 text-center text-neutral-500 text-xs">
                     검색 조건에 해당 상품이 없습니다.
                   </td>
                 </tr>
@@ -624,21 +624,19 @@ export function ProductsManagement({
                         isSelected ? "bg-amber-50/80" : ""
                       }`}
                     >
-                      <td className="py-3 px-3 w-10 text-center" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-2.5 px-3 w-10 text-center" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={(e) => handleToggleSelect(String(p.id), e)}
-                          className="w-4 h-4 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
+                          className="w-3.5 h-3.5 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
                         />
                       </td>
-                      <td className="py-3 px-4 font-sans font-extrabold text-neutral-900 text-xs shrink-0">
-                        <span className="bg-neutral-950 text-white px-2.5 py-1 rounded-md shadow-2xs font-sans font-bold">
-                          {prodNo}
-                        </span>
+                      <td className="py-2.5 px-4 font-sans font-extrabold text-neutral-950 text-xs shrink-0">
+                        {prodNo}
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="w-12 h-12 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200 group-hover:scale-105 transition-transform">
+                      <td className="py-2.5 px-4">
+                        <div className="w-10 h-10 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200 group-hover:scale-105 transition-transform">
                           <img
                             src={p.featuredImage?.url || "/product_1.webp"}
                             alt={p.title}
@@ -646,28 +644,28 @@ export function ProductsManagement({
                           />
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        <p className="font-bold text-neutral-950 group-hover:text-amber-800 transition-colors flex items-center gap-1.5">
+                      <td className="py-2.5 px-4">
+                        <p className="font-bold text-neutral-950 text-xs group-hover:text-amber-800 transition-colors flex items-center gap-1.5">
                           {p.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim()}
                           <span className="text-[10px] text-amber-700 font-normal opacity-0 group-hover:opacity-100 transition-opacity">
                             [클릭하여 정보/재고 수정]
                           </span>
                         </p>
-                        <p className="text-xs text-neutral-500 truncate max-w-xs">{p.description}</p>
+                        <p className="text-[11px] text-neutral-500 truncate max-w-xs">{p.description}</p>
                       </td>
-                      <td className="py-3 px-4">
-                        <span className="inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-200 uppercase">
+                      <td className="py-2.5 px-4">
+                        <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-neutral-100 text-neutral-900 border border-neutral-200 uppercase">
                           {p.categoryId}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-bold text-neutral-950 font-mono">
+                      <td className="py-2.5 px-4 font-bold text-neutral-950 font-mono text-xs">
                         {formatPrice(p.priceRange?.minVariantPrice?.amount || 0)}
                       </td>
-                      <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-2.5 px-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => toggleStock(p.id)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1.5 ${
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1.5 ${
                               p.availableForSale !== false
                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
                                 : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
@@ -683,7 +681,7 @@ export function ProductsManagement({
 
                           <button
                             onClick={() => toggleMainFeatured(p.id)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 border select-none ${
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-black transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 border select-none ${
                               p.isMainFeatured
                                 ? "bg-amber-500 text-neutral-950 border-amber-400 hover:bg-amber-400"
                                 : "bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200 hover:text-neutral-700"
