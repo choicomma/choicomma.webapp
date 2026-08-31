@@ -627,13 +627,13 @@ export function ProductsManagement({
                     title="전체 선택 / 해제"
                   />
                 </th>
-                <th className="py-3 px-2 text-center whitespace-nowrap">관리</th>
                 <th className="py-3 px-3 font-sans font-black text-neutral-950 whitespace-nowrap">상품번호</th>
                 <th className="py-3 px-3 whitespace-nowrap">이미지</th>
                 <th className="py-3 px-4 w-full">상품명</th>
                 <th className="py-3 px-3 whitespace-nowrap">카테고리</th>
                 <th className="py-3 px-3 whitespace-nowrap">판매가</th>
                 <th className="py-3 px-3 whitespace-nowrap">남은 재고 수량 / 상태</th>
+                <th className="py-3 px-3 text-right whitespace-nowrap">관리</th>
               </tr>
             </thead>
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
@@ -676,32 +676,6 @@ export function ProductsManagement({
                           onChange={(e) => handleToggleSelect(String(p.id), e)}
                           className="w-3.5 h-3.5 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
                         />
-                      </td>
-                      <td className="py-2 px-2 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => handleOpenEditModal(p)}
-                            className="p-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100 rounded-md transition-colors cursor-pointer border border-amber-200"
-                            title="상품 정보 및 재고 수정"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <Link
-                            href={`/product/${p.handle}`}
-                            target="_blank"
-                            className="p-1 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 rounded-md transition-colors border border-neutral-200"
-                            title="쇼핑몰 상품 페이지 미리보기"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteProduct(p.id, p.title)}
-                            className="p-1 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer border border-rose-200"
-                            title="상품 완전 삭제"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
                       </td>
                       <td className="py-2 px-3 font-sans font-extrabold text-neutral-950 text-xs whitespace-nowrap">
                         {prodNo}
@@ -766,6 +740,32 @@ export function ProductsManagement({
                             ) : (
                               <span>⚙️ 미진열</span>
                             )}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="py-2 px-3 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleOpenEditModal(p)}
+                            className="p-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100 rounded-md transition-colors cursor-pointer border border-amber-200"
+                            title="상품 정보 및 재고 수정"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <Link
+                            href={`/product/${p.handle}`}
+                            target="_blank"
+                            className="p-1 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 rounded-md transition-colors border border-neutral-200"
+                            title="쇼핑몰 상품 페이지 미리보기"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteProduct(p.id, p.title)}
+                            className="p-1 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer border border-rose-200"
+                            title="상품 완전 삭제"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
