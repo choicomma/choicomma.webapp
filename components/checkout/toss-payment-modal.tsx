@@ -13,7 +13,7 @@ interface TossPaymentModalProps {
   orderName: string;
 }
 
-const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_gck_docs_Oabc1234567890";
+const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_docs_Oabc1234567890";
 const customerKey = "CHOICOMMA_TEST_USER_99";
 
 export default function TossPaymentModal({

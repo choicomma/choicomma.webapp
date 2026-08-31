@@ -74,8 +74,9 @@ export default function CheckoutClientWrapper() {
   const shippingFee = totalItemAmount >= 100000 || totalItemAmount === 0 ? 0 : 3000;
   const finalTotalAmount = Math.max(0, totalItemAmount + shippingFee - appliedDiscount);
 
-  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_gck_docs_Oabc1234567890";
+  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_docs_Oabc1234567890";
   const customerKey = "CHOICOMMA_TEST_USER_99";
+  const isWidgetKey = clientKey.includes("_gck_");
 
   const handlePayment = async () => {
     if (!agreedTerms.privacy || !agreedTerms.thirdParty || !agreedTerms.paymentService) {
@@ -94,28 +95,38 @@ export default function CheckoutClientWrapper() {
       const tossPayments = await loadTossPayments(clientKey);
       const orderId = `CHOICOMMA_ORDER_${Date.now()}`;
       const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-      const orderName = cart.lines[0]?.merchandise?.product?.title
+      const orderName = cart?.lines?.[0]?.merchandise?.product?.title
         ? cart.lines.length > 1
           ? `${cart.lines[0].merchandise.product.title} 외 ${cart.lines.length - 1}건`
           : cart.lines[0].merchandise.product.title
         : "초이콤마 오리지널 패션 주문건";
 
-      // Always use standard payment instance to allow direct PG popup without widget rendering errors
-      const payment = tossPayments.payment({ customerKey });
-
-      await (payment as any).requestPayment({
-        method: "CARD",
-        amount: {
-          currency: "KRW",
-          value: finalTotalAmount > 0 ? finalTotalAmount : 50000,
-        },
-        orderId,
-        orderName,
-        successUrl: `${origin}/order/success`,
-        failUrl: `${origin}/order/fail`,
-        customerEmail: formData.ordererEmail || "customer@choicomma.com",
-        customerName: formData.recipientName || "홍길동",
-      });
+      if (isWidgetKey) {
+        const widgets = tossPayments.widgets({ customerKey });
+        await widgets.requestPayment({
+          orderId,
+          orderName,
+          successUrl: `${origin}/order/success`,
+          failUrl: `${origin}/order/fail`,
+          customerEmail: formData.ordererEmail || "customer@choicomma.com",
+          customerName: formData.recipientName || "홍길동",
+        });
+      } else {
+        const payment = tossPayments.payment({ customerKey });
+        await (payment as any).requestPayment({
+          method: "CARD",
+          amount: {
+            currency: "KRW",
+            value: finalTotalAmount > 0 ? finalTotalAmount : 50000,
+          },
+          orderId,
+          orderName,
+          successUrl: `${origin}/order/success`,
+          failUrl: `${origin}/order/fail`,
+          customerEmail: formData.ordererEmail || "customer@choicomma.com",
+          customerName: formData.recipientName || "홍길동",
+        });
+      }
     } catch (err: any) {
       // Ignore user cancellation (closing the payment popup/window)
       if (
