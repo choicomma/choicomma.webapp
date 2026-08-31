@@ -167,10 +167,6 @@ export async function getCollectionProducts({
   limit?: number;
   sortKey?: string;
 }) {
-  "use cache";
-  cacheTag(TAGS.products, TAGS.collections);
-  cacheLife("days");
-
   try {
     if (USE_MOCK_DATA) {
       const collection = mockCollections.find(
