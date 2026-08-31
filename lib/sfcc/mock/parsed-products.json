@@ -48,7 +48,8 @@
     "sheerness": "없음",
     "thickness": "적당함",
     "lining": "전체안감",
-    "isTimeSale": false
+    "isTimeSale": false,
+    "isHeroFeatured": true
   },
   {
     "id": "excel-product-451",
