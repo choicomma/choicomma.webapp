@@ -83,7 +83,14 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   // Use first 4 products for the grid, or mock data if not enough
   const gridProducts = products.slice(0, 4);
 
-  const initialHeroProducts = (products || []).filter((p: any) => p.isHeroFeatured === true || Boolean(p.heroCustomImage));
+  const initialHeroProducts = (products || []).filter((p: any) => p.isHeroFeatured === true || Boolean(p.heroCustomImage) || p.categoryId === "main_banner");
+  initialHeroProducts.sort((a: any, b: any) => {
+    const aCustom = Boolean(a.heroCustomImage);
+    const bCustom = Boolean(b.heroCustomImage);
+    if (aCustom && !bCustom) return -1;
+    if (!aCustom && bCustom) return 1;
+    return 0;
+  });
   const initialHeroUrls = initialHeroProducts.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
   const DEFAULT_HERO_IMAGES = [
     "https://cdn.imweb.me/thumbnail/20260825/a947ed8906a74ea3.jpg",
@@ -217,7 +224,14 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
             "/product_2.webp",
           ];
 
-          const heroProducts = parsed.filter((p: any) => p.isHeroFeatured === true || Boolean(p.heroCustomImage));
+          const heroProducts = parsed.filter((p: any) => p.isHeroFeatured === true || Boolean(p.heroCustomImage) || p.categoryId === "main_banner");
+          heroProducts.sort((a: any, b: any) => {
+            const aCustom = Boolean(a.heroCustomImage);
+            const bCustom = Boolean(b.heroCustomImage);
+            if (aCustom && !bCustom) return -1;
+            if (!aCustom && bCustom) return 1;
+            return 0;
+          });
           const urls = heroProducts.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
 
           if (urls.length > 0) {

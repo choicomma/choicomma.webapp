@@ -1763,6 +1763,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
 
   const filteredProducts = React.useMemo(() => {
     const list = productsList.filter((p) => {
+      if (p.categoryId === "main_banner" || String(p.id).startsWith("hero-slide-")) return false;
       const pCode = String(getProductNo(p));
       const pNoNum = String(getProductNoNum(p));
       const cleanSearch = searchQuery.toLowerCase().replace("#", "").trim();
