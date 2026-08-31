@@ -20,6 +20,7 @@ import {
   ChevronUp,
   ChevronDown,
   RotateCcw,
+  GripVertical,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import * as XLSX from "xlsx";
@@ -78,6 +79,7 @@ interface ProductsManagementProps {
   handleBulkAddProducts?: (newProducts: any[]) => void;
   handleMoveProduct?: (id: string, direction: "up" | "down") => void;
   handleBulkDeleteProducts?: (targetIds: string[]) => void;
+  handleReorderProducts?: (fromIndex: number, toIndex: number) => void;
 }
 
 export function ProductsManagement({
@@ -112,9 +114,13 @@ export function ProductsManagement({
   handleBulkAddProducts,
   handleMoveProduct,
   handleBulkDeleteProducts,
+  handleReorderProducts,
 }: ProductsManagementProps) {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [excelPreviewItems, setExcelPreviewItems] = useState<any[]>([]);
+
+  // Drag & Drop Reordering State
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // Bulk Selection State
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -152,6 +158,26 @@ export function ProductsManagement({
       selectedProductIds.forEach((id) => handleDeleteProduct(id, ""));
       setSelectedProductIds([]);
     }
+  };
+
+  // Drag & Drop Handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+    if (handleReorderProducts) {
+      handleReorderProducts(draggedIndex, targetIndex);
+    }
+    setDraggedIndex(null);
   };
 
   // Calculate maximum existing productNo integer
@@ -583,9 +609,10 @@ export function ProductsManagement({
       {/* Products Table */}
       <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-neutral-700 min-w-[1050px]">
+          <table className="w-full text-left text-xs text-neutral-700 min-w-[1300px]">
             <thead className="bg-neutral-50 text-neutral-500 text-[11px] uppercase font-semibold border-b border-neutral-200">
               <tr>
+                <th className="py-3 px-2 w-8 text-center whitespace-nowrap">순서</th>
                 <th className="py-3 px-3 w-10 text-center whitespace-nowrap">
                   <input
                     type="checkbox"
@@ -595,19 +622,19 @@ export function ProductsManagement({
                     title="전체 선택 / 해제"
                   />
                 </th>
-                <th className="py-3 px-3 font-sans font-black text-neutral-950 whitespace-nowrap min-w-[90px]">상품번호</th>
-                <th className="py-3 px-3 whitespace-nowrap min-w-[90px]">상품 대표 이미지</th>
+                <th className="py-3 px-3 font-sans font-black text-neutral-950 whitespace-nowrap min-w-[80px]">상품번호</th>
+                <th className="py-3 px-3 whitespace-nowrap min-w-[70px]">이미지</th>
                 <th className="py-3 px-4 min-w-[280px]">상품명</th>
-                <th className="py-3 px-3 whitespace-nowrap min-w-[100px]">카테고리</th>
-                <th className="py-3 px-3 whitespace-nowrap min-w-[110px]">판매가</th>
+                <th className="py-3 px-3 whitespace-nowrap min-w-[90px]">카테고리</th>
+                <th className="py-3 px-3 whitespace-nowrap min-w-[100px]">판매가</th>
                 <th className="py-3 px-3 whitespace-nowrap min-w-[220px]">남은 재고 수량 / 상태</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap min-w-[120px]">작업 / 순서 이동</th>
+                <th className="py-3 px-4 text-right whitespace-nowrap min-w-[220px]">관리 작업</th>
               </tr>
             </thead>
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-neutral-500 text-xs">
+                  <td colSpan={9} className="py-12 text-center text-neutral-500 text-xs">
                     검색 조건에 해당 상품이 없습니다.
                   </td>
                 </tr>
@@ -615,15 +642,27 @@ export function ProductsManagement({
                 filteredProducts.map((p, index) => {
                   const prodNo = getProductNo(p);
                   const isSelected = selectedProductIds.includes(String(p.id));
+                  const isDragging = draggedIndex === index;
 
                   return (
                     <tr
                       key={`${p.id}-${index}`}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, index)}
                       onClick={() => handleOpenEditModal(p)}
                       className={`hover:bg-amber-50/60 transition-colors cursor-pointer group ${
                         isSelected ? "bg-amber-50/80" : ""
-                      }`}
+                      } ${isDragging ? "opacity-40 bg-amber-100" : ""}`}
                     >
+                      <td
+                        className="py-2.5 px-2 w-8 text-center cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-950 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                        title="드래그하여 순서 변경"
+                      >
+                        <GripVertical className="w-4 h-4 mx-auto" />
+                      </td>
                       <td className="py-2.5 px-3 w-10 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
@@ -698,57 +737,32 @@ export function ProductsManagement({
                           </button>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1">
-                          {/* Order Up/Down Movement Buttons */}
-                          <div className="flex items-center bg-neutral-100 rounded-lg p-0.5 border border-neutral-200 mr-1.5 shadow-2xs">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleMoveProduct && handleMoveProduct(p.id, "up");
-                              }}
-                              disabled={index === 0}
-                              className="p-1 text-neutral-600 hover:text-neutral-950 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white rounded transition-colors cursor-pointer"
-                              title="순서 위로 이동 (▲)"
-                            >
-                              <ChevronUp className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleMoveProduct && handleMoveProduct(p.id, "down");
-                              }}
-                              disabled={index === filteredProducts.length - 1}
-                              className="p-1 text-neutral-600 hover:text-neutral-950 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white rounded transition-colors cursor-pointer"
-                              title="순서 아래로 이동 (▼)"
-                            >
-                              <ChevronDown className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-
+                      <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => handleOpenEditModal(p)}
-                            className="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded-lg transition-colors cursor-pointer"
-                            title="상품 정보 수정"
+                            className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-amber-950 bg-amber-100/90 hover:bg-amber-200 rounded-lg transition-all border border-amber-300 cursor-pointer shadow-2xs"
+                            title="상품 정보 및 재고 수정"
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
+                            <span>수정</span>
                           </button>
                           <Link
                             href={`/product/${p.handle}`}
                             target="_blank"
-                            className="p-2 text-neutral-500 hover:text-neutral-950 hover:bg-neutral-100 rounded-lg transition-colors"
-                            title="상품 페이지 바로가기"
+                            className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-neutral-800 bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-all border border-neutral-300 shadow-2xs"
+                            title="쇼핑몰 상품 페이지 미리보기"
                           >
-                            <ExternalLink className="w-4 h-4" />
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>미리보기</span>
                           </Link>
                           <button
                             onClick={() => handleDeleteProduct(p.id, p.title)}
-                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                            title="상품 삭제"
+                            className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-all border border-rose-200 cursor-pointer shadow-2xs"
+                            title="상품 완전 삭제"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>삭제</span>
                           </button>
                         </div>
                       </td>
