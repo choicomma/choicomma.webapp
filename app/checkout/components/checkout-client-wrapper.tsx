@@ -67,6 +67,9 @@ export default function CheckoutClientWrapper() {
       setCouponMessage("🎉 5,000원 웰컴 쿠폰이 적용되었습니다!");
     } else {
       setCouponMessage("❌ 유효하지 않은 쿠폰 코드입니다. (테스트용 추천 코드: CHOI10, WELCOME)");
+    }
+  };
+
   // Dynamic Shipping Policy State
   const [shippingPolicy, setShippingPolicy] = useState({
     baseFee: 3000,
