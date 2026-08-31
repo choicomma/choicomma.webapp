@@ -438,7 +438,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
     });
   };
 
-  // Helper: Safely save to localStorage with try-catch fallback against QuotaExceededError
+  // Helper: Safely save to localStorage and persist to server JSON file for Git commit/push
   const saveProductsToStorage = (list: any[]) => {
     if (typeof window === "undefined") return;
     try {
@@ -446,6 +446,13 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("admin_products_updated"));
       }, 0);
+
+      // Persist to server disk JSON file so Git sees all added/edited products & main images!
+      fetch("/api/admin/save-products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(list),
+      }).catch((err) => console.error("Failed to persist products to disk JSON:", err));
     } catch (e) {
       console.warn("QuotaExceededError in localStorage, attempting cleanup save...", e);
       try {
@@ -454,6 +461,11 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent("admin_products_updated"));
         }, 0);
+        fetch("/api/admin/save-products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(list),
+        }).catch((err) => console.error("Failed to persist products to disk JSON:", err));
       } catch (err) {
         console.error("Failed to write to localStorage after retry", err);
       }
