@@ -44,31 +44,7 @@ export function MainPageManagement({
 
       {/* SECTION 1: SLIDER IMAGE MANAGEMENT */}
       <div className="bg-gradient-to-r from-amber-500/15 via-yellow-500/20 to-amber-500/15 border-2 border-amber-400 rounded-3xl p-6 md:p-8 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-amber-300/80">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="bg-amber-500 text-neutral-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
-                🖼️ HERO SLIDER IMAGES
-              </span>
-            </div>
-            <h2 className="text-xl font-black text-neutral-950">
-              메인 이미지 관리
-            </h2>
-            <p className="text-xs text-neutral-700 mt-1 font-medium">
-              홈페이지 최상단 대형 메인 슬라이더 영역에 노출될 <strong>슬라이드 이미지</strong>를 지정하고 관리합니다.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => openImageUploadModal()}
-              className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer hover:scale-105 active:scale-95 border border-amber-400"
-            >
-              <ImageIcon className="w-4 h-4" />
-              🖼️ 슬라이드 이미지 등록
-            </button>
-          </div>
-        </div>
+
 
         {/* Hero Product Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
