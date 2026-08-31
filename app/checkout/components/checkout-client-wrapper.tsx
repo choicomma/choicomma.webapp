@@ -74,7 +74,11 @@ export default function CheckoutClientWrapper() {
   const shippingFee = totalItemAmount >= 100000 || totalItemAmount === 0 ? 0 : 3000;
   const finalTotalAmount = Math.max(0, totalItemAmount + shippingFee - appliedDiscount);
 
-  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_docs_Oabc1234567890";
+  let rawClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "test_ck_docs_Oabc1234567890";
+  if (rawClientKey.includes("yL0qZ4G1VOlDEDezkwPProWb2MQY")) {
+    rawClientKey = "test_ck_docs_Oabc1234567890";
+  }
+  const clientKey = rawClientKey;
   const customerKey = "CHOICOMMA_TEST_USER_99";
   const isWidgetKey = clientKey.includes("_gck_");
 
