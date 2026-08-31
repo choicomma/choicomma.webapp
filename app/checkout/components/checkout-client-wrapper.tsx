@@ -25,20 +25,40 @@ export default function CheckoutClientWrapper() {
   // Form State
   const [formData, setFormData] = useState({
     // Orderer
-    ordererName: "홍길동",
-    ordererEmail: "customer@choicomma.com",
-    ordererPhone: "010-1234-5678",
+    ordererName: "",
+    ordererEmail: "",
+    ordererPhone: "",
     // Shipping
-    recipientName: "홍길동",
-    recipientPhone: "010-1234-5678",
+    recipientName: "",
+    recipientPhone: "",
     postcode: "06123",
-    address: "서울특별시 강남구 테헤란로 123",
-    addressDetail: "초이콤마 타워 8층 801호",
+    address: "",
+    addressDetail: "",
     deliveryMemo: "문 앞에 놓아주세요 (배송 전 연락 부탁드립니다)",
     customDeliveryMemo: "",
     // Payment
     paymentMethod: "easypay", // easypay | card | vbank
   });
+
+  // Sync Member Profile from My Page (membership_user_*)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedName = localStorage.getItem("membership_user_name") || "홍길동";
+      const savedEmail = localStorage.getItem("membership_user_email") || "customer@choicomma.com";
+      const savedPhone = localStorage.getItem("membership_user_phone") || "010-1234-5678";
+      const savedAddress = localStorage.getItem("membership_user_address") || "서울특별시 강남구 테헤란로 123";
+
+      setFormData((prev) => ({
+        ...prev,
+        ordererName: prev.ordererName || savedName,
+        ordererEmail: prev.ordererEmail || savedEmail,
+        ordererPhone: prev.ordererPhone || savedPhone,
+        recipientName: prev.recipientName || savedName,
+        recipientPhone: prev.recipientPhone || savedPhone,
+        address: prev.address || savedAddress,
+      }));
+    }
+  }, []);
 
   // Coupon / Discount State
   const [couponCode, setCouponCode] = useState("");
