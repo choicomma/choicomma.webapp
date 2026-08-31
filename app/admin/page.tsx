@@ -373,6 +373,14 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
           if (Array.isArray(parsed) && parsed.length > 0) {
             setProductsList(parsed);
             isProductsLoadedRef.current = true;
+
+            // Sync user's current browser localStorage data directly to parsed-products.json disk file for Git push
+            fetch("/api/admin/save-products", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(parsed),
+            }).catch((e) => console.error("Sync disk on load failed", e));
+
             return;
           }
         } catch (e) {

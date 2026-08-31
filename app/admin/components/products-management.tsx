@@ -15,6 +15,7 @@ import {
   ExternalLink,
   FileSpreadsheet,
   Download,
+  Save,
   AlertCircle,
   ArrowUpDown,
   ChevronUp,
@@ -473,6 +474,37 @@ export function ProductsManagement({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={async () => {
+              if (typeof window !== "undefined") {
+                const saved = localStorage.getItem("admin_products");
+                if (saved) {
+                  try {
+                    const parsed = JSON.parse(saved);
+                    const res = await fetch("/api/admin/save-products", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(parsed),
+                    });
+                    if (res.ok) {
+                      alert("현재 localhost의 모든 상품 및 메인 배너 데이터가 소스 파일(parsed-products.json)로 저장되었습니다! 이제 채팅창에서 '푸시해줘'라고 요청해 주시면 그대로 반영됩니다.");
+                    } else {
+                      alert("저장 실패");
+                    }
+                  } catch (e) {
+                    alert("오류 발생");
+                  }
+                }
+              }
+            }}
+            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-bold px-3.5 py-2.5 rounded-xl transition-all shadow-md text-xs cursor-pointer"
+            title="현재 브라우저에 등록된 상품 및 메인 배너 데이터를 소스 파일로 동기화"
+          >
+            <Save className="w-4 h-4" />
+            <span>💾 소스 파일 저장</span>
+          </button>
+
           <button
             type="button"
             onClick={handleDownloadExcelTemplate}
