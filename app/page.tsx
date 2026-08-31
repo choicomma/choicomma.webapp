@@ -7,13 +7,15 @@ export const revalidate = 0;
 
 export default async function Home() {
   const [allProducts] = await Promise.all([
-    getCollectionProducts({ collection: "all" }),
+    getCollectionProducts({ collection: "top-seller" }),
   ]);
+
+  const mainFeaturedProducts = allProducts.filter((p: any) => p.isMainFeatured === true);
 
   return (
     <PageLayout className="w-full">
       <div className="w-full mx-auto">
-        <HomeLayout products={allProducts} />
+        <HomeLayout products={mainFeaturedProducts} />
       </div>
     </PageLayout>
   );

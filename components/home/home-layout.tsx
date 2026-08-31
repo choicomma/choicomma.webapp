@@ -183,40 +183,42 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       if (typeof window !== "undefined") {
         try {
           const saved = localStorage.getItem("admin_products");
-          let parsed = products || [];
           if (saved) {
-            try {
-              const localParsed = JSON.parse(saved);
-              if (Array.isArray(localParsed) && localParsed.length > 0) {
-                parsed = localParsed;
+            const parsed = JSON.parse(saved);
+
+            // Helper to match admin page sorting
+            const getProductNo = (product: any): number => {
+              if (product.productNo !== undefined && !isNaN(Number(product.productNo))) {
+                return Number(product.productNo);
               }
-            } catch (err) {
-              console.error("Error parsing admin_products from localStorage:", err);
+              const match = String(product.id || "").match(/\d+/);
+              if (match) return parseInt(match[0], 10);
+              return 0;
+            };
+
+            // Filter strictly for products where main display is checked (isMainFeatured === true)
+            // Preserves exact custom order configured by Admin
+            const featuredProducts = parsed.filter((p: any) => p.isMainFeatured === true);
+
+            // Update all products for grid
+            setAllProducts(featuredProducts);
+
+            // Update hero image (either explicitly marked or has custom image, fallback to defaults)
+            const DEFAULT_HERO_IMAGES = [
+              "https://cdn.imweb.me/thumbnail/20260825/a947ed8906a74ea3.jpg",
+              "/product_1.webp",
+              "/product_2.webp",
+            ];
+
+            const heroProducts = parsed.filter((p: any) => p.isHeroFeatured === true || Boolean(p.heroCustomImage));
+            const urls = heroProducts.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
+
+            if (urls.length > 0) {
+              setHeroImages(urls);
+              setCurrentSlideIndex(0);
+            } else {
+              setHeroImages(DEFAULT_HERO_IMAGES);
             }
-          }
-
-          // Filter strictly for products where main display is checked (isMainFeatured === true)
-          // Preserves exact custom order configured by Admin
-          const featuredProducts = parsed.filter((p: any) => p.isMainFeatured === true);
-
-          // Update all products for grid
-          setAllProducts(featuredProducts);
-
-          // Update hero image (either explicitly marked or has custom image, fallback to defaults)
-          const DEFAULT_HERO_IMAGES = [
-            "https://cdn.imweb.me/thumbnail/20260825/a947ed8906a74ea3.jpg",
-            "/product_1.webp",
-            "/product_2.webp",
-          ];
-
-          const heroProducts = parsed.filter((p: any) => p.isHeroFeatured === true || Boolean(p.heroCustomImage));
-          const urls = heroProducts.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
-
-          if (urls.length > 0) {
-            setHeroImages(urls);
-            setCurrentSlideIndex(0);
-          } else {
-            setHeroImages(DEFAULT_HERO_IMAGES);
           }
         } catch (e) {
           console.error(e);
@@ -235,7 +237,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       window.removeEventListener("storage", updateHomeData);
       window.removeEventListener("admin_products_updated", updateHomeData);
     };
-  }, [products]);
+  }, []);
 
   React.useEffect(() => {
     if (heroImages.length <= 1) return;
