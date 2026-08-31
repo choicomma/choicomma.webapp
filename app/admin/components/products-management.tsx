@@ -79,7 +79,7 @@ interface ProductsManagementProps {
   handleBulkAddProducts?: (newProducts: any[]) => void;
   handleMoveProduct?: (id: string, direction: "up" | "down") => void;
   handleBulkDeleteProducts?: (targetIds: string[]) => void;
-  handleReorderProducts?: (fromId: string, toId: string) => void;
+  handleReorderProducts?: (fromId: string, toId: string, showToast?: boolean) => void;
 }
 
 export function ProductsManagement({
@@ -160,7 +160,7 @@ export function ProductsManagement({
     }
   };
 
-  // Drag & Drop Handlers
+  // Real-time Drag & Drop Handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = "move";
@@ -171,14 +171,17 @@ export function ProductsManagement({
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
+  const handleDragEnter = (targetIndex: number) => {
     if (draggedIndex === null || draggedIndex === targetIndex) return;
     const fromItem = filteredProducts[draggedIndex];
     const toItem = filteredProducts[targetIndex];
     if (fromItem && toItem && handleReorderProducts) {
-      handleReorderProducts(String(fromItem.id), String(toItem.id));
+      handleReorderProducts(String(fromItem.id), String(toItem.id), false);
+      setDraggedIndex(targetIndex);
     }
+  };
+
+  const handleDragEnd = () => {
     setDraggedIndex(null);
   };
 
@@ -611,11 +614,11 @@ export function ProductsManagement({
       {/* Products Table */}
       <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-neutral-700 min-w-[1300px]">
+          <table className="w-full text-left text-xs text-neutral-700">
             <thead className="bg-neutral-50 text-neutral-500 text-[11px] uppercase font-semibold border-b border-neutral-200">
               <tr>
                 <th className="py-3 px-2 w-8 text-center whitespace-nowrap">순서</th>
-                <th className="py-3 px-3 w-10 text-center whitespace-nowrap">
+                <th className="py-3 px-2 w-8 text-center whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={isAllSelected}
@@ -624,13 +627,13 @@ export function ProductsManagement({
                     title="전체 선택 / 해제"
                   />
                 </th>
-                <th className="py-3 px-3 font-sans font-black text-neutral-950 whitespace-nowrap min-w-[80px]">상품번호</th>
-                <th className="py-3 px-3 whitespace-nowrap min-w-[70px]">이미지</th>
-                <th className="py-3 px-4 min-w-[280px]">상품명</th>
-                <th className="py-3 px-3 whitespace-nowrap min-w-[90px]">카테고리</th>
-                <th className="py-3 px-3 whitespace-nowrap min-w-[100px]">판매가</th>
-                <th className="py-3 px-3 whitespace-nowrap min-w-[220px]">남은 재고 수량 / 상태</th>
-                <th className="py-3 px-4 text-right whitespace-nowrap min-w-[220px]">관리 작업</th>
+                <th className="py-3 px-2 text-center whitespace-nowrap">관리</th>
+                <th className="py-3 px-3 font-sans font-black text-neutral-950 whitespace-nowrap">상품번호</th>
+                <th className="py-3 px-3 whitespace-nowrap">이미지</th>
+                <th className="py-3 px-4 w-full">상품명</th>
+                <th className="py-3 px-3 whitespace-nowrap">카테고리</th>
+                <th className="py-3 px-3 whitespace-nowrap">판매가</th>
+                <th className="py-3 px-3 whitespace-nowrap">남은 재고 수량 / 상태</th>
               </tr>
             </thead>
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
@@ -652,20 +655,21 @@ export function ProductsManagement({
                       draggable
                       onDragStart={(e) => handleDragStart(e, index)}
                       onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, index)}
+                      onDragEnter={() => handleDragEnter(index)}
+                      onDragEnd={handleDragEnd}
                       onClick={() => handleOpenEditModal(p)}
-                      className={`hover:bg-amber-50/60 transition-colors cursor-pointer group ${
+                      className={`hover:bg-amber-50/60 transition-all duration-200 cursor-pointer group ${
                         isSelected ? "bg-amber-50/80" : ""
-                      } ${isDragging ? "opacity-40 bg-amber-100" : ""}`}
+                      } ${isDragging ? "opacity-30 bg-amber-200 scale-[0.99]" : ""}`}
                     >
                       <td
-                        className="py-2.5 px-2 w-8 text-center cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-950 transition-colors"
+                        className="py-2 px-2 w-8 text-center cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-950 transition-colors"
                         onClick={(e) => e.stopPropagation()}
-                        title="드래그하여 순서 변경"
+                        title="드래그하여 실시간 순서 변경"
                       >
                         <GripVertical className="w-4 h-4 mx-auto" />
                       </td>
-                      <td className="py-2.5 px-3 w-10 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-2 px-2 w-8 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -673,11 +677,37 @@ export function ProductsManagement({
                           className="w-3.5 h-3.5 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
                         />
                       </td>
-                      <td className="py-2.5 px-3 font-sans font-extrabold text-neutral-950 text-xs whitespace-nowrap">
+                      <td className="py-2 px-2 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => handleOpenEditModal(p)}
+                            className="p-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100 rounded-md transition-colors cursor-pointer border border-amber-200"
+                            title="상품 정보 및 재고 수정"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <Link
+                            href={`/product/${p.handle}`}
+                            target="_blank"
+                            className="p-1 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 rounded-md transition-colors border border-neutral-200"
+                            title="쇼핑몰 상품 페이지 미리보기"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteProduct(p.id, p.title)}
+                            className="p-1 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer border border-rose-200"
+                            title="상품 완전 삭제"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="py-2 px-3 font-sans font-extrabold text-neutral-950 text-xs whitespace-nowrap">
                         {prodNo}
                       </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        <div className="w-10 h-10 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200 group-hover:scale-105 transition-transform">
+                      <td className="py-2 px-3 whitespace-nowrap">
+                        <div className="w-9 h-9 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200 group-hover:scale-105 transition-transform">
                           <img
                             src={p.featuredImage?.url || "/product_1.webp"}
                             alt={p.title}
@@ -685,7 +715,7 @@ export function ProductsManagement({
                           />
                         </div>
                       </td>
-                      <td className="py-2.5 px-4 min-w-[280px]">
+                      <td className="py-2 px-4">
                         <p className="font-bold text-neutral-950 text-xs group-hover:text-amber-800 transition-colors flex items-center gap-1.5 whitespace-normal">
                           <span>{p.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim()}</span>
                           <span className="text-[10px] text-amber-700 font-normal shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -693,22 +723,22 @@ export function ProductsManagement({
                           </span>
                         </p>
                         {p.description && (
-                          <p className="text-[11px] text-neutral-500 truncate max-w-md mt-0.5">{p.description}</p>
+                          <p className="text-[11px] text-neutral-500 truncate max-w-sm mt-0.5">{p.description}</p>
                         )}
                       </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">
+                      <td className="py-2 px-3 whitespace-nowrap">
                         <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-neutral-100 text-neutral-900 border border-neutral-200 uppercase">
                           {p.categoryId}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 font-bold text-neutral-950 font-mono text-xs whitespace-nowrap">
+                      <td className="py-2 px-3 font-bold text-neutral-950 font-mono text-xs whitespace-nowrap">
                         {formatPrice(p.priceRange?.minVariantPrice?.amount || 0)}
                       </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-2">
+                      <td className="py-2 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => toggleStock(p.id)}
-                            className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1.5 whitespace-nowrap ${
+                            className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 whitespace-nowrap ${
                               p.availableForSale !== false
                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
                                 : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
@@ -716,7 +746,7 @@ export function ProductsManagement({
                             title="클릭 시 재고 있음 ↔ 품절 상태 원클릭 전환"
                           >
                             {p.availableForSale !== false ? (
-                              <span>● 재고 있음 ({getProductStock(p)}개)</span>
+                              <span>● 재고 ({getProductStock(p)}개)</span>
                             ) : (
                               <span>○ 품절</span>
                             )}
@@ -724,7 +754,7 @@ export function ProductsManagement({
 
                           <button
                             onClick={() => toggleMainFeatured(p.id)}
-                            className={`px-2.5 py-1 rounded-full text-[11px] font-black transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 border select-none whitespace-nowrap ${
+                            className={`px-2 py-0.5 rounded-full text-[11px] font-black transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 border select-none whitespace-nowrap ${
                               p.isMainFeatured
                                 ? "bg-amber-500 text-neutral-950 border-amber-400 hover:bg-amber-400"
                                 : "bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200 hover:text-neutral-700"
@@ -732,36 +762,10 @@ export function ProductsManagement({
                             title="클릭 시 메인 진열 ↔ 미진열 원클릭 전환"
                           >
                             {p.isMainFeatured ? (
-                              <span>🌟 메인 진열</span>
+                              <span>🌟 메인진열</span>
                             ) : (
-                              <span>⚙️ 메인 미진열</span>
+                              <span>⚙️ 미진열</span>
                             )}
-                          </button>
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => handleOpenEditModal(p)}
-                            className="p-1.5 text-amber-900 hover:text-amber-950 hover:bg-amber-100/90 rounded-lg transition-colors cursor-pointer border border-amber-200"
-                            title="상품 정보 및 재고 수정"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <Link
-                            href={`/product/${p.handle}`}
-                            target="_blank"
-                            className="p-1.5 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 rounded-lg transition-colors border border-neutral-200"
-                            title="쇼핑몰 상품 페이지 미리보기"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteProduct(p.id, p.title)}
-                            className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer border border-rose-200"
-                            title="상품 완전 삭제"
-                          >
-                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
