@@ -77,6 +77,7 @@ interface ProductsManagementProps {
   setNewTimeSaleMinutes: (val: string) => void;
   handleBulkAddProducts?: (newProducts: any[]) => void;
   handleMoveProduct?: (id: string, direction: "up" | "down") => void;
+  handleBulkDeleteProducts?: (targetIds: string[]) => void;
 }
 
 export function ProductsManagement({
@@ -110,9 +111,48 @@ export function ProductsManagement({
   setNewTimeSaleMinutes,
   handleBulkAddProducts,
   handleMoveProduct,
+  handleBulkDeleteProducts,
 }: ProductsManagementProps) {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [excelPreviewItems, setExcelPreviewItems] = useState<any[]>([]);
+
+  // Bulk Selection State
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+
+  const isAllSelected =
+    filteredProducts.length > 0 &&
+    filteredProducts.every((p) => selectedProductIds.includes(String(p.id)));
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const allIds = filteredProducts.map((p) => String(p.id));
+      setSelectedProductIds(allIds);
+    } else {
+      setSelectedProductIds([]);
+    }
+  };
+
+  const handleToggleSelect = (id: string, e?: React.MouseEvent | React.ChangeEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleExecuteBulkDelete = () => {
+    if (selectedProductIds.length === 0) return;
+    if (handleBulkDeleteProducts) {
+      handleBulkDeleteProducts(selectedProductIds);
+      setSelectedProductIds([]);
+    } else {
+      const isConfirmed = window.confirm(
+        `정말로 선택한 ${selectedProductIds.length}개의 상품을 완전히 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.`
+      );
+      if (!isConfirmed) return;
+      selectedProductIds.forEach((id) => handleDeleteProduct(id, ""));
+      setSelectedProductIds([]);
+    }
+  };
 
   // Calculate maximum existing productNo integer
   const getNextBaseProductNo = (): number => {
@@ -525,6 +565,18 @@ export function ProductsManagement({
               <option value="priceAsc">낮은 가격순</option>
             </select>
           </div>
+
+          {selectedProductIds.length > 0 && (
+            <button
+              type="button"
+              onClick={handleExecuteBulkDelete}
+              className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer animate-in fade-in"
+              title="선택한 상품들을 일괄 삭제합니다"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>선택 상품 일괄 삭제 ({selectedProductIds.length}개)</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -534,6 +586,15 @@ export function ProductsManagement({
           <table className="w-full text-left text-sm text-neutral-700">
             <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
               <tr>
+                <th className="py-3.5 px-3 w-10 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
+                    title="전체 선택 / 해제"
+                  />
+                </th>
                 <th className="py-3.5 px-4 font-sans font-black text-neutral-950">상품번호</th>
                 <th className="py-3.5 px-4">상품 대표 이미지</th>
                 <th className="py-3.5 px-4">상품명</th>
@@ -546,19 +607,31 @@ export function ProductsManagement({
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-neutral-500 text-sm">
+                  <td colSpan={8} className="py-12 text-center text-neutral-500 text-sm">
                     검색 조건에 해당 상품이 없습니다.
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((p, index) => {
                   const prodNo = getProductNo(p);
+                  const isSelected = selectedProductIds.includes(String(p.id));
+
                   return (
                     <tr
                       key={`${p.id}-${index}`}
                       onClick={() => handleOpenEditModal(p)}
-                      className="hover:bg-amber-50/60 transition-colors cursor-pointer group"
+                      className={`hover:bg-amber-50/60 transition-colors cursor-pointer group ${
+                        isSelected ? "bg-amber-50/80" : ""
+                      }`}
                     >
+                      <td className="py-3 px-3 w-10 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => handleToggleSelect(String(p.id), e)}
+                          className="w-4 h-4 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
+                        />
+                      </td>
                       <td className="py-3 px-4 font-sans font-extrabold text-neutral-900 text-xs shrink-0">
                         <span className="bg-neutral-950 text-white px-2.5 py-1 rounded-md shadow-2xs font-sans font-bold">
                           {prodNo}

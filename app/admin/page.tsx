@@ -2426,6 +2426,20 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
     triggerToast(`'${title}' 상품이 성공적으로 삭제되었습니다.`);
   };
 
+  const handleBulkDeleteProducts = (targetIds: string[]) => {
+    if (!targetIds || targetIds.length === 0) return;
+    const isConfirmed = window.confirm(
+      `정말로 선택한 ${targetIds.length}개의 상품을 일괄 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.`
+    );
+    if (!isConfirmed) return;
+
+    const idSet = new Set(targetIds.map(String));
+    const updatedList = productsList.filter((p) => !idSet.has(String(p.id)));
+    setProductsList(updatedList);
+    saveProductsToStorage(updatedList);
+    triggerToast(`🗑️ 선택한 ${targetIds.length}개 상품이 성공적으로 삭제되었습니다.`);
+  };
+
   const handleClearAllProducts = () => {
     const totalCount = productsList.length;
     const isConfirmed = window.confirm(
@@ -2949,6 +2963,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
               setNewTimeSaleMinutes={setNewTimeSaleMinutes}
               handleBulkAddProducts={handleBulkAddProducts}
               handleMoveProduct={handleMoveProduct}
+              handleBulkDeleteProducts={handleBulkDeleteProducts}
             />
           )}
 

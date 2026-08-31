@@ -118,7 +118,7 @@ export default function LoginPage() {
               setToastMsg("이미 가입된 이메일 주소입니다. 다른 이메일을 입력해 주세요.");
               return;
             }
-          } catch (e) {}
+          } catch (e) { }
         }
       }
     }
@@ -185,12 +185,12 @@ export default function LoginPage() {
       if (isSignUp) {
         const displayName = name.trim() || "신규회원";
         const finalEmail = email.trim() ? email.trim() : `${cleanPhoneId || Date.now()}@choicomma.com`;
-        
+
         localStorage.setItem("membership_user_name", displayName);
         localStorage.setItem("membership_user_phone", phone.trim());
         localStorage.setItem("membership_user_email", finalEmail);
         localStorage.setItem("membership_user_address", address.trim());
-        
+
         // Save password under both phone and email
         if (cleanPhoneId) {
           localStorage.setItem(`user_pwd_${cleanPhoneId}`, inputPassword);
@@ -206,7 +206,7 @@ export default function LoginPage() {
         if (savedCustomers) {
           try {
             customerList = JSON.parse(savedCustomers);
-          } catch (err) {}
+          } catch (err) { }
         }
         const newCustomer = {
           id: `CUST-${1000 + customerList.length + 1}`,
@@ -228,7 +228,7 @@ export default function LoginPage() {
         const phoneKey = `user_pwd_${inputLoginId.replace(/[^0-9]/g, "")}`;
         const emailKey = `user_pwd_${inputLoginId}`;
         const savedPwd = localStorage.getItem(phoneKey) || localStorage.getItem(emailKey);
-        
+
         if (savedPwd && inputPassword !== savedPwd && inputPassword !== "Mrschoi83!!") {
           setIsLoading(false);
           setToastMsg("비밀번호가 일치하지 않습니다. 비밀번호를 다시 확인해 주세요.");
@@ -245,7 +245,7 @@ export default function LoginPage() {
           localStorage.setItem("membership_user_phone", inputLoginId);
           localStorage.setItem("membership_user_email", `${inputLoginId.replace(/[^0-9]/g, "")}@choicomma.com`);
         }
-        
+
         if (!localStorage.getItem("membership_user_name")) {
           localStorage.setItem("membership_user_name", "회원");
         }
@@ -373,8 +373,8 @@ export default function LoginPage() {
             <button
               onClick={() => setIsSignUp(false)}
               className={`py-2.5 rounded-xl transition-all ${!isSignUp
-                  ? "bg-white text-neutral-950 shadow-sm border border-neutral-200/80"
-                  : "text-neutral-500 hover:text-neutral-950"
+                ? "bg-white text-neutral-950 shadow-sm border border-neutral-200/80"
+                : "text-neutral-500 hover:text-neutral-950"
                 }`}
             >
               로그인 (Sign In)
@@ -382,8 +382,8 @@ export default function LoginPage() {
             <button
               onClick={() => setIsSignUp(true)}
               className={`py-2.5 rounded-xl transition-all ${isSignUp
-                  ? "bg-white text-neutral-950 shadow-sm border border-neutral-200/80"
-                  : "text-neutral-500 hover:text-neutral-950"
+                ? "bg-white text-neutral-950 shadow-sm border border-neutral-200/80"
+                : "text-neutral-500 hover:text-neutral-950"
                 }`}
             >
               회원가입 (Sign Up)
@@ -476,7 +476,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="010-0000-0000 또는 이메일 입력"
+                    placeholder="휴대폰 번호 또는 이메일 입력"
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium font-mono"
                   />
                 </div>
@@ -520,13 +520,12 @@ export default function LoginPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder=""
-                    className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-mono ${
-                      confirmPassword && confirmPassword !== password
+                    className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-mono ${confirmPassword && confirmPassword !== password
                         ? "border-rose-500 focus:border-rose-500 bg-rose-50/20"
                         : confirmPassword && confirmPassword === password
-                        ? "border-emerald-500 focus:border-emerald-500 bg-emerald-50/20"
-                        : "border-neutral-200 focus:border-neutral-950"
-                    }`}
+                          ? "border-emerald-500 focus:border-emerald-500 bg-emerald-50/20"
+                          : "border-neutral-200 focus:border-neutral-950"
+                      }`}
                   />
                   <button
                     type="button"
