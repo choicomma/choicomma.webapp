@@ -203,6 +203,10 @@ export default function CheckoutClientWrapper() {
 
       if (isWidgetKey) {
         const widgets = tossPayments.widgets({ customerKey });
+        await widgets.setAmount({
+          currency: "KRW",
+          value: finalTotalAmount > 0 ? finalTotalAmount : 50000,
+        });
         await widgets.requestPayment({
           orderId,
           orderName,
