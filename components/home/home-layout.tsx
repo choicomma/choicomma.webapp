@@ -80,10 +80,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     };
   }, []);
 
-  // Use first 4 products for the grid, or mock data if not enough
-  const gridProducts = products.slice(0, 4);
-
-  const initialHeroProducts = (products || []).filter((p: any) => p.isHeroFeatured === true || Boolean(p.heroCustomImage) || p.categoryId === "main_banner");
+  const initialHeroProducts = (products || []).filter((p: any) => Boolean(p.heroCustomImage) || p.categoryId === "main_banner");
   initialHeroProducts.sort((a: any, b: any) => {
     const aCustom = Boolean(a.heroCustomImage);
     const bCustom = Boolean(b.heroCustomImage);
@@ -91,14 +88,9 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     if (!aCustom && bCustom) return 1;
     return 0;
   });
-  const initialHeroUrls = initialHeroProducts.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
-  const DEFAULT_HERO_IMAGES = [
-    "https://cdn.imweb.me/thumbnail/20260825/a947ed8906a74ea3.jpg",
-    "/product_1.webp",
-    "/product_2.webp",
-  ];
+  const initialHeroUrls = initialHeroProducts.map((p: any) => p.heroCustomImage || (p.categoryId === "main_banner" ? p.featuredImage?.url : null)).filter(Boolean);
 
-  const [heroImages, setHeroImages] = React.useState<string[]>(initialHeroUrls.length > 0 ? initialHeroUrls : DEFAULT_HERO_IMAGES);
+  const [heroImages, setHeroImages] = React.useState<string[]>(initialHeroUrls);
   const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
 
   // Pagination and all products state - strictly filter isMainFeatured === true
@@ -133,14 +125,15 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
           try { savedIds = JSON.parse(saved); } catch (e) { }
         }
         let itemSettings: Record<string, { discountRate?: number }> = {};
-        const savedItem = localStorage.getItem("secret_timesale_item_settings");
-        if (savedItem) {
-          try { itemSettings = JSON.parse(savedItem); } catch (e) { }
+        const savedSettings = localStorage.getItem("secret_timesale_item_settings");
+        if (savedSettings) {
+          try { itemSettings = JSON.parse(savedSettings); } catch (e) { }
         }
         let globalDiscount = 35;
-        const savedDisc = localStorage.getItem("secret_timesale_discount");
-        if (savedDisc && !isNaN(parseInt(savedDisc))) {
-          globalDiscount = parseInt(savedDisc);
+        const savedGlobal = localStorage.getItem("secret_timesale_global_discount");
+        if (savedGlobal) {
+          const parsedG = parseInt(savedGlobal, 10);
+          if (!isNaN(parsedG)) globalDiscount = parsedG;
         }
         setTimeSaleSettings({ savedIds, itemSettings, globalDiscount, hasSavedIdsKey });
       } catch (e) { }
@@ -149,19 +142,13 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     updateTimeSaleInfo();
     window.addEventListener("storage", updateTimeSaleInfo);
     window.addEventListener("admin_products_updated", updateTimeSaleInfo);
-    window.addEventListener("focus", updateTimeSaleInfo);
-    const interval = setInterval(updateTimeSaleInfo, 1000);
     return () => {
       window.removeEventListener("storage", updateTimeSaleInfo);
       window.removeEventListener("admin_products_updated", updateTimeSaleInfo);
-      window.removeEventListener("focus", updateTimeSaleInfo);
-      clearInterval(interval);
     };
   }, []);
 
   const getTimeSaleDiscount = (product: any): number | null => {
-    if (!product) return null;
-
     if (typeof window !== "undefined") {
       const savedStatus = localStorage.getItem("secret_timesale_status");
       if (savedStatus === "ended") return null;
@@ -217,14 +204,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
           // Update all products for grid
           setAllProducts(featuredProducts);
 
-          // Update hero image (either explicitly marked or has custom image, fallback to defaults)
-          const DEFAULT_HERO_IMAGES = [
-            "https://cdn.imweb.me/thumbnail/20260825/a947ed8906a74ea3.jpg",
-            "/product_1.webp",
-            "/product_2.webp",
-          ];
-
-          const heroProducts = parsed.filter((p: any) => p.isHeroFeatured === true || Boolean(p.heroCustomImage) || p.categoryId === "main_banner");
+          const heroProducts = parsed.filter((p: any) => Boolean(p.heroCustomImage) || p.categoryId === "main_banner");
           heroProducts.sort((a: any, b: any) => {
             const aCustom = Boolean(a.heroCustomImage);
             const bCustom = Boolean(b.heroCustomImage);
@@ -232,13 +212,9 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
             if (!aCustom && bCustom) return 1;
             return 0;
           });
-          const urls = heroProducts.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
+          const urls = heroProducts.map((p: any) => p.heroCustomImage || (p.categoryId === "main_banner" ? p.featuredImage?.url : null)).filter(Boolean);
 
-          if (urls.length > 0) {
-            setHeroImages(urls);
-          } else {
-            setHeroImages(DEFAULT_HERO_IMAGES);
-          }
+          setHeroImages(urls);
         } catch (e) {
           console.error(e);
         }

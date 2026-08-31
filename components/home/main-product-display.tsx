@@ -42,10 +42,6 @@ export function MainProductDisplay({ initialProducts }: MainProductDisplayProps)
           (p) => (p.isHeroFeatured === true || Boolean(p.heroCustomImage)) && Boolean(p.heroCustomImage || p.featuredImage?.url)
         );
 
-        if (explicitHero.length === 0) {
-          explicitHero = parsed.slice(0, 3);
-        }
-
         // 2. Sub-Products Grid: ONLY products with isMainFeatured === true (preserve admin list order)
         const featuredSubProducts = parsed.filter((p) => p.isMainFeatured === true);
 
@@ -68,7 +64,7 @@ export function MainProductDisplay({ initialProducts }: MainProductDisplayProps)
     const explicitHeroInitial = initialProducts.filter(
       (p) => (p.isHeroFeatured === true || Boolean((p as any).heroCustomImage)) && Boolean((p as any).heroCustomImage || p.featuredImage?.url)
     );
-    setHeroProducts(explicitHeroInitial.length > 0 ? explicitHeroInitial : initialProducts.slice(0, 3));
+    setHeroProducts(explicitHeroInitial);
     setSubProducts(initialProducts.filter((p) => p.isMainFeatured === true));
   };
 
