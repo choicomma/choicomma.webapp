@@ -668,7 +668,7 @@ export function ProductsManagement({
                       onClick={() => handleOpenEditModal(p)}
                       className={`hover:bg-amber-50/60 transition-all duration-200 cursor-pointer group ${
                         isSelected ? "bg-amber-50/80" : ""
-                      } ${isDragging ? "opacity-30 bg-amber-200 scale-[0.99]" : ""}`}
+                      }`}
                     >
                       <td
                         className="py-2 px-2 w-8 text-center cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-950 transition-colors"
