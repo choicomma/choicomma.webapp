@@ -119,9 +119,9 @@ export default function CheckoutClientWrapper() {
   }, []);
 
   const totalItemAmount = Number(cart?.cost?.totalAmount?.amount || 0);
-  const freeThreshold = shippingPolicy.freeShippingThreshold || 100000;
-  const baseShippingFee = shippingPolicy.baseFee || 3000;
-  const shippingFee = totalItemAmount >= freeThreshold || totalItemAmount === 0 ? 0 : baseShippingFee;
+  const freeThreshold = shippingPolicy.freeShippingThreshold !== undefined ? shippingPolicy.freeShippingThreshold : 100000;
+  const baseShippingFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 3000;
+  const shippingFee = (freeThreshold > 0 && totalItemAmount >= freeThreshold) || totalItemAmount === 0 || baseShippingFee === 0 ? 0 : baseShippingFee;
 
   const handleApplyPoints = (amountToUse?: number) => {
     const amount = amountToUse !== undefined ? amountToUse : parseInt(usedPointsInput) || 0;
@@ -443,13 +443,13 @@ export default function CheckoutClientWrapper() {
                   {shippingPolicy.courierName}
                 </span>
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-white dark:bg-neutral-800 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700 font-bold">
-                  {totalItemAmount >= freeThreshold ? "🎉 무료 배송 조건 달성" : `기본 배송비 ${baseShippingFee.toLocaleString()}원`}
+                  {baseShippingFee === 0 || (freeThreshold > 0 && totalItemAmount >= freeThreshold) ? "🎉 전 상품 무료 배송" : `기본 배송비 ${baseShippingFee.toLocaleString()}원`}
                 </span>
               </div>
               <p className="text-[11px] text-sky-800 dark:text-sky-300 font-medium">
                 {shippingPolicy.shippingNotice || "평일 14:00 이전 결제 완료 시 당일 출고됩니다."}
               </p>
-              {totalItemAmount < freeThreshold && (
+              {baseShippingFee > 0 && totalItemAmount < freeThreshold && (
                 <p className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">
                   💡 {(freeThreshold - totalItemAmount).toLocaleString()}원 추가 주문 시 무료 배송!
                 </p>
