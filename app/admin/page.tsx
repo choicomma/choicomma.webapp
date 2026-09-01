@@ -861,19 +861,20 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
 
     const nextAvailable = !isCurrentlyAvailable;
 
-    setProductsList((prev) =>
-      prev.map((p) => {
-        if (p.id === id) {
-          triggerToast(
-            nextAvailable
-              ? `'${p.title}' 상태가 [재고 있음]으로 변경되었습니다.`
-              : `'${p.title}' 상품이 [품절] 처리되었습니다.`
-          );
-          return { ...p, availableForSale: nextAvailable };
-        }
-        return p;
-      })
-    );
+    const updated = productsList.map((p) => {
+      if (p.id === id) {
+        triggerToast(
+          nextAvailable
+            ? `'${p.title}' 상태가 [재고 있음]으로 변경되었습니다.`
+            : `'${p.title}' 상품이 [품절] 처리되었습니다.`
+        );
+        return { ...p, availableForSale: nextAvailable };
+      }
+      return p;
+    });
+
+    setProductsList(updated);
+    saveProductsToStorage(updated);
   };
 
   const toggleMainFeatured = (id: string) => {
@@ -889,19 +890,20 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
 
     if (!window.confirm(confirmMsg)) return;
 
-    setProductsList((prev) =>
-      prev.map((p) => {
-        if (p.id === id) {
-          triggerToast(
-            nextFeatured
-              ? `'${p.title}' 상품이 쇼핑몰 메인 화면 [전시 중]으로 설정되었습니다.`
-              : `'${p.title}' 상품이 메인 화면 [미전시]로 변경되었습니다.`
-          );
-          return { ...p, isMainFeatured: nextFeatured };
-        }
-        return p;
-      })
-    );
+    const updated = productsList.map((p) => {
+      if (p.id === id) {
+        triggerToast(
+          nextFeatured
+            ? `'${p.title}' 상품이 쇼핑몰 메인 화면 [전시 중]으로 설정되었습니다.`
+            : `'${p.title}' 상품이 메인 화면 [미전시]로 변경되었습니다.`
+        );
+        return { ...p, isMainFeatured: nextFeatured };
+      }
+      return p;
+    });
+
+    setProductsList(updated);
+    saveProductsToStorage(updated);
   };
 
   // Edit Product Modal State
