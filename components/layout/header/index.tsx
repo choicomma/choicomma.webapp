@@ -19,6 +19,10 @@ export const navItems: NavItem[] = [
     href: "/",
   },
   {
+    label: "전체보기",
+    href: "/shop",
+  },
+  {
     label: "타임세일",
     href: "/shop/timesale",
   },
@@ -100,6 +104,8 @@ export function Header({ collections }: HeaderProps) {
     ...(isAdmin ? [{ label: "어드민", href: "/admin" }] : []),
   ];
 
+  const isShopRoute = pathname?.startsWith("/shop");
+
   return (
     <header className="fixed top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
       {/* Dynamic Main Announcement Banner */}
@@ -108,10 +114,13 @@ export function Header({ collections }: HeaderProps) {
       </div>
 
       {/* Main Header Bar Container */}
-      <div className="relative w-full pointer-events-auto overflow-visible">
-        {/* Animated Black Background Slide-Down Panel */}
+      <div className={cn(
+        "relative w-full pointer-events-auto overflow-visible transition-colors duration-300",
+        isShopRoute ? "bg-white/95 backdrop-blur-md border-b border-neutral-200/60 shadow-xs" : ""
+      )}>
+        {/* Animated Black Background Slide-Down Panel (Only on non-shop pages or when dark mode desired) */}
         <AnimatePresence>
-          {isScrolled && (
+          {isScrolled && !isShopRoute && (
             <motion.div
               initial={{ y: "-100%" }}
               animate={{ y: 0 }}
@@ -125,25 +134,23 @@ export function Header({ collections }: HeaderProps) {
         {/* Header Content Bar */}
         <div
           className={cn(
-            "relative z-10 w-full p-sides flex items-center justify-between md:grid md:grid-cols-12 md:gap-sides transition-colors duration-400 py-3.5",
-            isScrolled ? "text-white" : "text-neutral-900"
+            "relative z-10 w-full pl-2 sm:pl-4 md:pl-6 pr-sides flex items-center justify-between md:grid md:grid-cols-12 md:gap-sides transition-colors duration-400 pt-0.5 pb-1 md:py-1",
+            isShopRoute ? "text-neutral-900" : isScrolled ? "text-white" : "text-neutral-900"
           )}
         >
-          {/* Mobile: Logo on far left / Desktop: col-span-2 */}
-          <Link href="/" className="md:col-span-2 flex items-center" prefetch>
+          {/* Mobile: Logo on far left / Desktop: col-span-5 */}
+          <Link href="/" className="md:col-span-5 flex items-center justify-start py-0 -ml-1 sm:ml-0" prefetch>
             <LogoSvg
-              className={cn(
-                "h-6 w-auto md:size-full md:max-w-[400px] transition-colors duration-400",
-                isScrolled ? "text-white fill-white" : "text-black fill-black"
-              )}
+              isScrolled={isShopRoute ? false : isScrolled}
+              className="cursor-pointer justify-start"
             />
           </Link>
 
-          {/* Desktop Navigation & Cart */}
-          <nav className="hidden md:flex items-center md:col-span-10 justify-end gap-3">
+          {/* Desktop Navigation & Cart (Shifted further up to the top edge) */}
+          <nav className="hidden md:flex items-center md:col-span-7 justify-end gap-3.5 -mt-6 md:-mt-8">
             <ul
               className={cn(
-                "items-center gap-6 py-1.5 px-5 rounded-full backdrop-blur-md flex transition-colors duration-400",
+                "items-center gap-6 py-2 px-6 rounded-full backdrop-blur-md flex transition-colors duration-400 shadow-sm",
                 isScrolled ? "bg-white/10 text-white" : "bg-black/5 text-neutral-900"
               )}
             >
@@ -152,13 +159,13 @@ export function Header({ collections }: HeaderProps) {
                   <Link
                     href={item.href}
                     className={cn(
-                      "font-semibold text-base transition-colors duration-300 uppercase flex items-center gap-1.5",
+                      "font-bold text-base transition-colors duration-300 uppercase flex items-center gap-1.5",
                       isScrolled
                         ? pathname === item.href
-                          ? "text-white font-bold"
+                          ? "text-white font-black"
                           : "text-neutral-300 hover:text-white"
                         : pathname === item.href
-                          ? "text-black font-bold"
+                          ? "text-black font-black"
                           : "text-neutral-700 hover:text-black"
                     )}
                     prefetch
@@ -171,16 +178,24 @@ export function Header({ collections }: HeaderProps) {
 
             <LanguageSelector isScrolled={isScrolled} />
             <CartModal
+              variant="ghost"
               className={cn(
-                "transition-colors duration-400",
-                isScrolled ? "bg-white text-black hover:bg-neutral-200" : ""
+                "transition-colors duration-400 p-2.5 border-0 bg-transparent hover:bg-transparent shadow-none scale-110",
+                isScrolled ? "text-white hover:text-neutral-300" : "text-neutral-900 hover:text-black"
               )}
             />
           </nav>
 
-          {/* Mobile: MENU & Language Selector on far right */}
-          <div className="flex items-center gap-2 md:hidden">
+          {/* Mobile: Language Selector, Cart Icon & MENU on far right */}
+          <div className="flex items-center gap-1.5 md:hidden">
             <LanguageSelector isScrolled={isScrolled} />
+            <CartModal
+              variant="ghost"
+              className={cn(
+                "transition-colors duration-400 p-2 border-0 bg-transparent hover:bg-transparent shadow-none",
+                isScrolled ? "text-white hover:text-neutral-300" : "text-neutral-900 hover:text-black"
+              )}
+            />
             <MobileMenu collections={collections} isScrolled={isScrolled} />
           </div>
         </div>

@@ -1,4 +1,5 @@
 const nextConfig = {
+  allowedDevOrigins: ["localhost", "127.0.0.1", "172.30.1.74"],
   experimental: {
     useCache: true,
   },

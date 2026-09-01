@@ -365,7 +365,7 @@ export function LiveChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-sans">
+    <div className="fixed bottom-6 right-5 sm:bottom-6 sm:right-6 z-50 font-sans">
       {/* Floating Toggle Button */}
       {!isOpen && (
         <button
@@ -396,7 +396,7 @@ export function LiveChatWidget() {
 
       {/* Floating Chat Box Window */}
       {isOpen && (
-        <div className="bg-white border border-neutral-200/90 rounded-3xl shadow-2xl w-[360px] sm:w-[400px] h-[540px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 backdrop-blur-xl">
+        <div className="bg-white border border-neutral-200/90 rounded-3xl shadow-2xl w-[calc(100vw-32px)] max-w-[360px] sm:w-[400px] h-[78vh] max-h-[540px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 backdrop-blur-xl">
           {/* Header Bar */}
           <div className="bg-neutral-950 text-white px-5 py-4 flex items-center justify-between shrink-0 shadow-md">
             <div className="flex items-center gap-3">

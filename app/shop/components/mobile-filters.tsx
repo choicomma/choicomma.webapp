@@ -5,11 +5,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Collection } from "@/lib/sfcc/types";
 import Link from "next/link";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { CategoryFilter } from "./category-filter";
 import { ColorFilter } from "./color-filter";
@@ -28,52 +23,60 @@ export function MobileFilters({ collections, className }: MobileFiltersProps) {
   const { products } = useProducts();
 
   return (
-    <div className="pt-top-spacing bg-background sticky top-0 z-10 md:hidden overflow-x-clip">
-      <ResultsControls
-        className="px-sides"
-        collections={collections}
-        products={products}
-      />
-
-      <Collapsible
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        className={cn("relative", className)}
-      >
-        {/* Always visible header */}
-        <div className="flex items-center justify-between px-4 py-3">
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="font-semibold text-foreground">
-              Filters{" "}
-              {filterCount > 0 && (
-                <span className="text-foreground/50">({filterCount})</span>
-              )}
-              {isOpen ? (
-                <ChevronUp className="ml-2 h-4 w-4" />
-              ) : (
-                <ChevronDown className="ml-2 h-4 w-4" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-
+    <div className="pt-16 sm:pt-20 bg-white sticky top-0 z-30 md:hidden overflow-visible w-full border-b border-neutral-200/80 -mt-px">
+      <div className={cn("relative w-full", className)}>
+        {/* Single Line Header on Mobile: Filters Button on Left, Sort Dropdown on Right */}
+        <div className="flex items-center justify-between px-4 py-2.5 w-full bg-white">
           <Button
-            size="sm"
+            type="button"
             variant="ghost"
-            className="font-medium text-foreground/50 hover:text-foreground/60"
-            asChild
+            size="sm"
+            onClick={() => setIsOpen(!isOpen)}
+            className="font-bold text-xs text-neutral-900 hover:bg-neutral-100 p-1.5 h-auto rounded-lg flex items-center gap-1 cursor-pointer"
           >
-            <Link href="/shop" prefetch>
-              Clear
-            </Link>
+            <span>필터</span>
+            {filterCount > 0 && (
+              <span className="text-neutral-500 font-normal">({filterCount})</span>
+            )}
+            {isOpen ? (
+              <ChevronUp className="w-3.5 h-3.5 text-neutral-600" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 text-neutral-600" />
+            )}
           </Button>
+
+          <div className="flex items-center">
+            <ResultsControls
+              className="p-0 m-0 grid-cols-1"
+              collections={collections}
+              products={products}
+            />
+          </div>
         </div>
 
-        {/* Collapsible content */}
-        <CollapsibleContent className="absolute top-full left-0 right-0 bg-background border-b px-4 pb-4 space-y-4 z-20">
-          <CategoryFilter collections={collections} />
-          <ColorFilter products={products} />
-        </CollapsibleContent>
-      </Collapsible>
+        {/* Dropdown Content with Clean UI & Top-Right Reset Button */}
+        {isOpen && (
+          <div className="absolute top-full left-0 right-0 bg-white border-b border-neutral-200 px-4 py-4 space-y-4 z-40 shadow-2xl max-h-[75vh] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Category Filter with Top-Right Reset Button */}
+            <div className="relative">
+              <div className="absolute top-0 right-0 z-10">
+                <Link
+                  href="/shop"
+                  prefetch
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <span>초기화</span>
+                </Link>
+              </div>
+
+              <CategoryFilter collections={collections} hideCategoryTitle={true} />
+            </div>
+
+            <ColorFilter products={products} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

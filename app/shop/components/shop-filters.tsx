@@ -24,7 +24,7 @@ export function DesktopFilters({
     >
       <div className="flex flex-col gap-3 col-span-2">
         <div className="flex items-center justify-between pl-1 min-h-[28px] mb-1">
-          <h2 className="text-lg md:text-xl font-extrabold leading-none text-neutral-950">Filter</h2>
+          <h2 className="text-lg md:text-xl font-extrabold leading-none text-neutral-950">필터</h2>
           <Button
             size={"sm"}
             variant="ghost"
@@ -33,7 +33,7 @@ export function DesktopFilters({
             asChild
           >
             <Link href="/shop" prefetch>
-              Clear
+              초기화
             </Link>
           </Button>
         </div>

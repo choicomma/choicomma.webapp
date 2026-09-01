@@ -4,7 +4,7 @@ import { Instagram } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="w-full bg-[#1E1514] text-white px-4 md:px-12 py-10 md:py-16 flex flex-col font-sans uppercase tracking-widest text-[10px] leading-relaxed mt-auto text-left">
+    <footer className="w-full bg-black text-white px-4 md:px-12 py-10 md:py-16 flex flex-col font-sans uppercase tracking-widest text-[10px] leading-relaxed mt-auto text-left border-t border-neutral-900">
       {/* Top Section: Huge Brand Text Logo (Left aligned) */}
       <div className="flex flex-col items-start justify-start text-left mb-8 md:mb-12">
         <h1 className="text-4xl sm:text-6xl md:text-[120px] lg:text-[140px] font-normal leading-none tracking-normal text-left">CHOICOMMA</h1>
@@ -33,6 +33,7 @@ export function Footer() {
             <input
               type="email"
               placeholder="EMAIL"
+              suppressHydrationWarning
               className="bg-transparent outline-none border-none w-full text-[10px] placeholder:text-white uppercase tracking-widest text-left"
             />
             <button aria-label="Subscribe" className="hover:opacity-70 transition-opacity">

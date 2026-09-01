@@ -60,7 +60,7 @@ export function convertSetBundleToProduct(
   const originalTotal = resolvedItems.reduce((sum, item) => {
     return (
       sum +
-      parseFloat(item.product.priceRange.minVariantPrice.amount) *
+      parseFloat(item.product.priceRange?.minVariantPrice?.amount || (item.product as any).price || "0") *
         item.config.quantity
     );
   }, 0);

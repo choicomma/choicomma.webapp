@@ -260,11 +260,11 @@ export function FeaturedProductLabel({
   return (
     <div
       className={cn(
-        "p-3.5 md:p-4 bg-white w-full rounded-none flex flex-col justify-between gap-3 border border-neutral-200/80 shadow-2xs transition-all",
+        "p-2 sm:p-3 bg-white w-full rounded-none flex flex-col justify-between gap-2 transition-all",
         className
       )}
     >
-      <div className="flex flex-col gap-1.5 min-w-0 w-full">
+      <div className="flex flex-col gap-1 min-w-0 w-full">
         <div className="flex items-center gap-1.5 flex-wrap">
           {timeSaleDiscount !== null && (
             <Badge className="bg-white text-neutral-950 font-black text-[10px] px-2.5 py-0.5 rounded-none uppercase border border-neutral-300 shadow-2xs tracking-wider inline-flex items-center gap-1">

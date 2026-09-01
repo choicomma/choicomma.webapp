@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, TriangleAlert, PlusCircleIcon } from "lucide-react";
+import { ArrowRight, TriangleAlert, PlusCircleIcon, ShoppingBag } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -110,12 +110,16 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
 
 export default function CartModal({
   className,
-  variant = "default",
+  variant = "ghost",
   size = "sm",
+  showText = false,
+  onOpenCallback,
 }: {
   className?: string;
   variant?: "default" | "secondary" | "outline" | "ghost" | "link";
   size?: "default" | "sm" | "lg" | "icon" | "icon-lg";
+  showText?: boolean;
+  onOpenCallback?: () => void;
 } = {}) {
   const { cart, mode } = useCart();
   const [isOpen, setIsOpen] = useState(false);
@@ -131,7 +135,10 @@ export default function CartModal({
 
   const quantityRef = useRef(cart?.totalQuantity);
   const isInitialLoad = useRef(true);
-  const openCart = () => setIsOpen(true);
+  const openCart = () => {
+    if (onOpenCallback) onOpenCallback();
+    setIsOpen(true);
+  };
   const closeCart = () => setIsOpen(false);
   const pathname = usePathname();
 
@@ -145,8 +152,15 @@ export default function CartModal({
     const handleCartUpdate = () => {
       setIsOpen(true);
     };
+    const handleOpenCartEvent = () => {
+      setIsOpen(true);
+    };
     window.addEventListener("choicomma_cart_updated", handleCartUpdate);
-    return () => window.removeEventListener("choicomma_cart_updated", handleCartUpdate);
+    window.addEventListener("choicomma_open_cart", handleOpenCartEvent);
+    return () => {
+      window.removeEventListener("choicomma_cart_updated", handleCartUpdate);
+      window.removeEventListener("choicomma_open_cart", handleOpenCartEvent);
+    };
   }, []);
 
   useEffect(() => {
@@ -198,9 +212,22 @@ export default function CartModal({
         onClick={openCart}
         variant={variant}
         size={size}
-        className={cn("uppercase font-bold", className)}
+        className={cn("uppercase font-bold relative flex items-center justify-center gap-2", className)}
       >
-        <span>{translateUiText("장바구니", currentLang)}</span> ({cart?.totalQuantity || 0})
+        {/* Shopping Bag Icon */}
+        <ShoppingBag className="w-4 h-4 shrink-0" />
+
+        {/* Text rendering: always show if showText is true, otherwise hide on mobile / show on desktop */}
+        <span className={showText ? "inline-flex items-center gap-1" : "hidden md:inline-flex items-center gap-1"}>
+          <span>{translateUiText("장바구니", currentLang)}</span> ({cart?.totalQuantity || 0})
+        </span>
+
+        {/* Mobile Badge (only when showText is false) */}
+        {!showText && (cart?.totalQuantity || 0) > 0 && (
+          <span className="md:hidden absolute -top-1.5 -right-1.5 bg-neutral-950 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
+            {cart?.totalQuantity}
+          </span>
+        )}
       </Button>
       <AnimatePresence>
         {isOpen && (

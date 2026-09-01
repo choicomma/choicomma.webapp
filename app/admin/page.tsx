@@ -367,11 +367,19 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
   // Client-side hydration sync for productsList
   React.useEffect(() => {
     if (typeof window !== "undefined") {
+      const colorsResetKey = "admin_colors_reset_v2";
+      const hasReset = localStorage.getItem(colorsResetKey);
       const saved = localStorage.getItem("admin_products");
       if (saved) {
         try {
-          const parsed = JSON.parse(saved);
+          let parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
+            // Always strip colors on fresh load or version bump
+            if (!hasReset) {
+              parsed = parsed.map((p: any) => ({ ...p, colors: [] }));
+              localStorage.setItem("admin_products", JSON.stringify(parsed));
+              localStorage.setItem(colorsResetKey, "true");
+            }
             setProductsList(parsed);
             isProductsLoadedRef.current = true;
 
@@ -389,6 +397,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
         }
       }
       localStorage.setItem("admin_products", JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
+      localStorage.setItem(colorsResetKey, "true");
       setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
       isProductsLoadedRef.current = true;
     }
@@ -657,7 +666,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
         availableForSale: false,
       };
 
-      updatedList = [newHeroSlide, ...productsList];
+      updatedList = [...productsList, newHeroSlide];
       triggerToast("새로운 슬라이드 이미지가 성공적으로 등록되었습니다.");
     }
 
@@ -910,7 +919,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
   const [editAvailable, setEditAvailable] = useState(true);
   const [editIsMainFeatured, setEditIsMainFeatured] = useState(true);
   const [editLabel, setEditLabel] = useState<"" | "BLACK_LABEL" | "PREMIUM" | "ESSENTIAL">("PREMIUM");
-  const [editColors, setEditColors] = useState<string[]>(["BLACK", "CREAM", "CHARCOAL"]);
+  const [editColors, setEditColors] = useState<string[]>([]);
   const [editColorHexMap, setEditColorHexMap] = useState<Record<string, string>>(DEFAULT_COLOR_HEX_MAP);
   const [editCustomColorInput, setEditCustomColorInput] = useState("");
   const [editSizes, setEditSizes] = useState<string[]>(["1", "2", "3"]);
@@ -922,6 +931,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
   const [editBulkRules, setEditBulkRules] = useState<{qty: number; rate: number}[]>([{ qty: 2, rate: 5 }]);
   // Fabric info states for edit modal
   const [editFabricComposition, setEditFabricComposition] = useState("COTTON 100% (프리미엄 콤마 코튼)");
+  const [editShowFabricBadge, setEditShowFabricBadge] = useState<boolean>(false);
   const [editElasticity, setEditElasticity] = useState("보통");
   const [editSheerness, setEditSheerness] = useState("없음");
   const [editThickness, setEditThickness] = useState("적당함");
@@ -957,7 +967,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
     setEditAvailable(product.availableForSale !== false);
     setEditIsMainFeatured(product.isMainFeatured !== false);
     setEditLabel(product.productLabel || "PREMIUM");
-    const initialColors = product.colors?.length ? product.colors : ["BLACK", "CREAM", "CHARCOAL"];
+    const initialColors = Array.isArray(product.colors) ? product.colors : [];
     setEditColors(initialColors);
     const initialHexMap = product.colorHexMap ? { ...DEFAULT_COLOR_HEX_MAP, ...product.colorHexMap } : DEFAULT_COLOR_HEX_MAP;
     setEditColorHexMap(initialHexMap);
@@ -997,6 +1007,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
     setEditBulkEnabled(product.bulkDiscount?.enabled || false);
     setEditBulkRules(product.bulkDiscount?.rules?.length ? product.bulkDiscount.rules : [{ qty: 2, rate: 5 }]);
     setEditFabricComposition(product.fabricComposition || "COTTON 100% (프리미엄 콤마 코튼)");
+    setEditShowFabricBadge(product.showFabricBadge === true);
     setEditElasticity(product.elasticity || "보통");
     setEditSheerness(product.sheerness || "없음");
     setEditThickness(product.thickness || "적당함");
@@ -1063,6 +1074,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
           ),
           bulkDiscount: { enabled: editBulkEnabled, rules: editBulkRules },
           fabricComposition: editFabricComposition,
+          showFabricBadge: editShowFabricBadge,
           elasticity: editElasticity,
           sheerness: editSheerness,
           thickness: editThickness,
@@ -1171,6 +1183,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
   const [newBulkRules, setNewBulkRules] = useState<{qty: number; rate: number}[]>([{ qty: 2, rate: 5 }]);
   // Fabric info states for new product modal
   const [newFabricComposition, setNewFabricComposition] = useState("COTTON 100% (프리미엄 콤마 코튼)");
+  const [newShowFabricBadge, setNewShowFabricBadge] = useState<boolean>(false);
   const [newElasticity, setNewElasticity] = useState("보통");
   const [newSheerness, setNewSheerness] = useState("없음");
   const [newThickness, setNewThickness] = useState("적당함");
@@ -2376,6 +2389,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
       productLabel: newLabel,
       bulkDiscount: { enabled: newBulkEnabled, rules: newBulkRules },
       fabricComposition: newFabricComposition,
+      showFabricBadge: newShowFabricBadge,
       elasticity: newElasticity,
       sheerness: newSheerness,
       thickness: newThickness,
@@ -2445,6 +2459,8 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
     setNewImages([]);
     setNewUrlInput("");
     setNewFabricImage("");
+    setNewFabricComposition("COTTON 100% (프리미엄 콤마 코튼)");
+    setNewShowFabricBadge(false);
     setNewColors([]);
     setNewSizes(["1", "2", "3"]);
     setNewSizeStock({ "1": 10, "2": 10, "3": 10 });
@@ -2599,7 +2615,6 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
   };
 
   const handleAdminLogout = () => {
-    setIsAdminAuthenticated(false);
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("choicomma_admin_authenticated");
       localStorage.removeItem("user_role");
@@ -2608,7 +2623,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
       localStorage.removeItem("is_logged_in");
       window.dispatchEvent(new CustomEvent("storage"));
       window.dispatchEvent(new CustomEvent("auth_changed"));
-      window.location.href = "/";
+      window.location.replace("/");
     }
   };
 
@@ -2691,8 +2706,8 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
           </Link>
           <div className="h-4 w-px bg-neutral-200" />
           <div className="flex items-center gap-3">
-            <Link href="/" onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }}>
-              <LogoSvg className="h-5 w-auto text-neutral-950 cursor-pointer" />
+            <Link href="/" onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }} className="font-extrabold text-base tracking-tight text-neutral-950 hover:text-black">
+              CHOICOMMA
             </Link>
             <span className="text-[10px] uppercase font-bold tracking-widest bg-neutral-100 text-neutral-800 border border-neutral-200 px-2 py-0.5 rounded-full">
               ADMIN v1.0
@@ -3610,11 +3625,21 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
 
                 {/* 🧵 FABRIC INFORMATION */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                  <div className="flex items-center justify-between border-b border-neutral-200 pb-2 flex-wrap gap-2">
                     <span className="text-xs font-black text-neutral-950 flex items-center gap-1.5 uppercase tracking-wider">
                       🧵 원단 정보 설정 (Fabric Details)
                     </span>
-                    <span className="text-[10px] font-bold text-neutral-400">상세페이지 드롭다운 노출</span>
+                    <label className="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shadow-2xs hover:border-black transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={newShowFabricBadge}
+                        onChange={(e) => setNewShowFabricBadge(e.target.checked)}
+                        className="w-3.5 h-3.5 accent-black rounded cursor-pointer"
+                      />
+                      <span className="text-[11px] font-extrabold text-neutral-900">
+                        🏷️ 상품 카드에 원단 뱃지 노출
+                      </span>
+                    </label>
                   </div>
 
                   <div>
@@ -4802,11 +4827,21 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
 
                 {/* 🧵 FABRIC INFORMATION */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                  <div className="flex items-center justify-between border-b border-neutral-200 pb-2 flex-wrap gap-2">
                     <span className="text-xs font-black text-neutral-950 flex items-center gap-1.5 uppercase tracking-wider">
                       🧵 원단 정보 설정 (Fabric Details)
                     </span>
-                    <span className="text-[10px] font-bold text-neutral-400">상세페이지 드롭다운 노출</span>
+                    <label className="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shadow-2xs hover:border-black transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={editShowFabricBadge}
+                        onChange={(e) => setEditShowFabricBadge(e.target.checked)}
+                        className="w-3.5 h-3.5 accent-black rounded cursor-pointer"
+                      />
+                      <span className="text-[11px] font-extrabold text-neutral-900">
+                        🏷️ 상품 카드에 원단 뱃지 노출
+                      </span>
+                    </label>
                   </div>
 
                   <div>
@@ -5968,7 +6003,7 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
                       <ImageIcon className="w-4 h-4 text-amber-500" />
                       메인 대표 노출 이미지 (Custom Image)
                     </label>
-                    <span className="text-[11px] font-bold text-neutral-500">권장 비율 4:5</span>
+                    <span className="text-[11px] font-bold text-neutral-500">권장 해상도 1920 x 1080</span>
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center gap-5">

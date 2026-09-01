@@ -224,17 +224,9 @@ export function ProductDetailHeader({
       }
 
       // Extract colors and sizes from active product
-      let rawColors: any[] = activeProd.colors || [];
-      let rawSizes: any[] = activeProd.sizes || [];
+      let rawColors: any[] = Array.isArray(activeProd.colors) ? activeProd.colors : [];
+      let rawSizes: any[] = Array.isArray(activeProd.sizes) ? activeProd.sizes : [];
 
-      if (rawColors.length === 0 && activeProd.options) {
-        const colorOpt = activeProd.options.find(
-          (o: any) => o.name?.toLowerCase() === "color" || o.name === "색상"
-        );
-        if (colorOpt && Array.isArray(colorOpt.values)) {
-          rawColors = colorOpt.values;
-        }
-      }
       if (rawSizes.length === 0 && activeProd.options) {
         const sizeOpt = activeProd.options.find(
           (o: any) => o.name?.toLowerCase() === "size" || o.name === "사이즈"
@@ -260,13 +252,13 @@ export function ProductDetailHeader({
         )
       );
 
-      const extractedColors = parsedColors.length > 0 ? parsedColors : ["BLACK", "CREAM", "CHARCOAL"];
+      const extractedColors = parsedColors;
       const extractedSizes = parsedSizes.length > 0 ? parsedSizes : ["1", "2", "3", "FREE"];
 
       setColors(extractedColors);
       setSizes(extractedSizes);
-      setSelectedColor((prev) => (prev && extractedColors.includes(prev) ? prev : extractedColors[0]));
-      setSelectedSize((prev) => (prev && extractedSizes.includes(prev) ? prev : extractedSizes[0]));
+      setSelectedColor((prev) => (prev && extractedColors.includes(prev) ? prev : (extractedColors[0] || "")));
+      setSelectedSize((prev) => (prev && extractedSizes.includes(prev) ? prev : (extractedSizes[0] || "")));
 
       let itemSettings: Record<string, { hours?: number; minutes?: number; discountRate?: number; discountPrice?: string }> = {};
       let savedSelectedIds: string[] = [];
@@ -442,7 +434,7 @@ export function ProductDetailHeader({
   const t = HEADER_I18N[currentLang] || HEADER_I18N.ko;
 
   return (
-    <div className="flex flex-col gap-6 w-full font-sans text-neutral-900">
+    <div className="flex flex-col gap-4 md:gap-6 w-full font-sans text-neutral-900">
       
       <div className="flex flex-col items-start gap-1">
         {isTimeSaleItem && (

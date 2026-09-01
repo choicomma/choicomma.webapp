@@ -142,7 +142,7 @@ function cartReducer(state: Cart | undefined, action: CartAction): Cart {
       const { merchandiseId, updateType } = action.payload;
       const updatedLines = currentCart.lines
         .map((item) =>
-          item.merchandise.id === merchandiseId
+          item.merchandise.id === merchandiseId || item.id === merchandiseId || item.merchandise.product.id === merchandiseId
             ? updateCartItem(item, updateType)
             : item
         )
@@ -210,13 +210,34 @@ export function CartProvider({
     return initialCartFromPromise || createEmptyCart();
   });
 
-  // Hydrate from localStorage on client load
+  // Hydrate from localStorage on client load with sanitation against deleted admin products
   useEffect(() => {
     const saved = localStorage.getItem("choicomma_cart");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.lines)) {
+          const adminProductsRaw = localStorage.getItem("admin_products");
+          if (adminProductsRaw) {
+            try {
+              const adminList = JSON.parse(adminProductsRaw);
+              if (Array.isArray(adminList) && adminList.length >= 0) {
+                const validIds = new Set(adminList.map((p: any) => String(p.id)));
+                const filteredLines = parsed.lines.filter((item: CartItem) => {
+                  const pid = String(item.merchandise?.product?.id || "");
+                  return validIds.has(pid);
+                });
+                const cleanedCart = {
+                  ...parsed,
+                  ...updateCartTotals(filteredLines),
+                  lines: filteredLines,
+                };
+                localStorage.setItem("choicomma_cart", JSON.stringify(cleanedCart));
+                setCartState(cleanedCart);
+                return;
+              }
+            } catch (e) {}
+          }
           setCartState(parsed);
         }
       } catch (e) {}
@@ -264,6 +285,30 @@ export function CartProvider({
         try {
           const parsed = JSON.parse(saved);
           if (parsed && Array.isArray(parsed.lines)) {
+            // If admin_products exist in storage, filter out cart lines for deleted products
+            const adminProductsRaw = localStorage.getItem("admin_products");
+            if (adminProductsRaw) {
+              try {
+                const adminList = JSON.parse(adminProductsRaw);
+                if (Array.isArray(adminList) && adminList.length > 0) {
+                  const validIds = new Set(adminList.map((p: any) => String(p.id)));
+                  const filteredLines = parsed.lines.filter((item: CartItem) => {
+                    const pid = String(item.merchandise?.product?.id || "");
+                    return validIds.has(pid);
+                  });
+                  if (filteredLines.length !== parsed.lines.length) {
+                    const cleanedCart = {
+                      ...parsed,
+                      ...updateCartTotals(filteredLines),
+                      lines: filteredLines,
+                    };
+                    localStorage.setItem("choicomma_cart", JSON.stringify(cleanedCart));
+                    setCartState(cleanedCart);
+                    return;
+                  }
+                }
+              } catch (e) {}
+            }
             setCartState(parsed);
           }
         } catch (e) {}

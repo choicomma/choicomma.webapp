@@ -169,6 +169,10 @@ export async function getCollectionProducts({
 }) {
   try {
     if (USE_MOCK_DATA) {
+      if (collectionHandle === "all" || collectionHandle === "choice" || collectionHandle === "timesale" || collectionHandle === "new" || collectionHandle === "special") {
+        return mockProducts;
+      }
+
       const collection = mockCollections.find(
         (c) => c.handle === collectionHandle
       );
@@ -179,10 +183,6 @@ export async function getCollectionProducts({
 
       if (collectionHandle === "top-seller" || collectionHandle === "main") {
         return mockProducts.filter((p) => (p as any).isMainFeatured === true);
-      }
-
-      if (collectionHandle === "choice" || collectionHandle === "timesale" || collectionHandle === "new" || collectionHandle === "special") {
-        return mockProducts;
       }
 
       const categoryProducts = mockProducts.filter(

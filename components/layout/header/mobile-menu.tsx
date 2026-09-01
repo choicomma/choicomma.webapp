@@ -11,7 +11,8 @@ import { ShopLinks } from "../shop-links";
 import { Collection } from "@/lib/sfcc/types";
 import { useCart } from "@/components/cart/cart-context";
 import CartModal from "@/components/cart/modal";
-import { ShoppingBag } from "lucide-react";
+import { LanguageSelector } from "./language-selector";
+import { ShoppingBag, Menu } from "lucide-react";
 
 interface MobileMenuProps {
   collections: Collection[];
@@ -77,84 +78,97 @@ export default function MobileMenu({ collections, isScrolled }: MobileMenuProps)
       <Button
         onClick={openMobileMenu}
         aria-label="Open mobile menu"
-        variant="secondary"
+        variant="ghost"
         size="sm"
-        className={`md:hidden uppercase font-bold transition-colors duration-300 ${
-          isScrolled ? "bg-white text-black hover:bg-neutral-200" : ""
+        className={`md:hidden p-2 border-0 bg-transparent hover:bg-transparent shadow-none transition-colors duration-300 ${
+          isScrolled ? "text-white hover:text-neutral-300" : "text-neutral-900 hover:text-black"
         }`}
       >
-        MENU
+        <Menu className="w-5 h-5" />
       </Button>
 
       <AnimatePresence>
         {isOpen && (
-          <>
+          <div className="fixed inset-0 z-[100] pointer-events-auto">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="fixed inset-0 bg-foreground/30 z-50"
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs"
               onClick={closeMobileMenu}
               aria-hidden="true"
             />
 
-            {/* Panel - Slides from Right */}
+            {/* Full-Height Drawer Panel - Slides from Right */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="fixed top-0 bottom-0 right-0 flex w-full md:w-[400px] p-modal-sides z-50"
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed top-0 bottom-0 right-0 w-full sm:w-[380px] md:w-[420px] h-[100dvh] bg-white flex flex-col shadow-2xl z-[101]"
             >
-              <div className="flex flex-col bg-muted p-4 rounded w-full shadow-2xl">
-                <div className="pl-2 flex items-baseline justify-between mb-8">
-                  <p className="text-2xl font-bold">MENU</p>
+              {/* Header Row: MENU title, Language Selector, Close button */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-100 shrink-0">
+                <p className="text-xl font-black text-neutral-950 tracking-tight">MENU</p>
+                <div className="flex items-center gap-2">
+                  <LanguageSelector isScrolled={false} align="right" />
                   <Button
                     size="sm"
                     variant="ghost"
                     aria-label="Close menu"
                     onClick={closeMobileMenu}
-                    className="font-bold"
+                    className="font-extrabold text-sm hover:bg-neutral-100 text-neutral-900 px-3 py-1.5 rounded-xl cursor-pointer"
                   >
                     닫기
                   </Button>
                 </div>
+              </div>
 
-                {/* Top Buttons: LOG IN / MY PAGE, CART, and LANGUAGE */}
-                <nav className="grid grid-cols-2 gap-3 mb-6">
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Top Quick Actions Grid: 로그인 / MY PAGE + 장바구니 */}
+                <nav className="grid grid-cols-2 gap-2.5">
                   <Button
-                    size="sm"
+                    size="lg"
                     variant="secondary"
                     onClick={closeMobileMenu}
-                    className="uppercase bg-background/60 justify-start font-bold py-5 text-sm truncate"
+                    className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm truncate shadow-2xs rounded-xl"
                     asChild
                   >
                     <Link href={isLoggedIn ? (isAdmin ? "/admin" : "/membership") : "/login"} prefetch>
-                      {isLoggedIn ? (isAdmin ? "어드민" : (userName ? `MY PAGE (${userName})` : "MY PAGE")) : "LOG IN"}
+                      {isLoggedIn ? (isAdmin ? "어드민" : (userName ? `마이페이지 (${userName})` : "마이페이지")) : "로그인"}
                     </Link>
                   </Button>
 
-                  {/* Integrated Cart Item inside Menu Drawer - Identical style and size as LOG IN */}
-                  <div onClick={closeMobileMenu} className="w-full">
-                    <CartModal
-                      variant="secondary"
-                      size="sm"
-                      className="w-full uppercase bg-background/60 justify-start font-bold py-5 text-sm"
-                    />
-                  </div>
+                  {/* Cart Item inside Menu Drawer with Korean Label */}
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    onClick={() => {
+                      closeMobileMenu();
+                      setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent("choicomma_open_cart"));
+                      }, 100);
+                    }}
+                    className="w-full bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer"
+                  >
+                    <ShoppingBag className="w-4 h-4 shrink-0" />
+                    <span>장바구니 ({cart?.totalQuantity || 0})</span>
+                  </Button>
                 </nav>
 
+                {/* Category Links with Larger Text & Increased Spacing */}
+                <div className="space-y-3 pt-2 border-t border-neutral-100">
+                  <ShopLinks label="" collections={collections} includeShopAll={true} />
+                </div>
 
-
-                <ShopLinks label="카테고리" collections={collections} includeShopAll={true} />
-
-                <div className="mt-auto pt-4 border-t border-border/40" />
-                <SidebarLinks className="gap-6 max-w-max" />
+                <div className="pt-4 border-t border-neutral-100" />
+                <SidebarLinks className="gap-6 max-w-max text-sm" />
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
     </>

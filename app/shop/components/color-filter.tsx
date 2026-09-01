@@ -17,31 +17,24 @@ export function ColorFilter({ products = [], className }: ColorFilterProps) {
     useAvailableColors(products);
 
   const isLoading = products.length === 0;
-
   const atLeastOneColor = availableColors.length > 0;
 
+  if (!atLeastOneColor && !isLoading) {
+    return null;
+  }
+
   return (
-    <AnimatePresence initial={false}>
-      {(atLeastOneColor || isLoading) && (
-        <motion.div
-          layoutId="color-filter"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className={cn("bg-muted rounded-md py-4 px-3", className)}
-        >
-          <h3 className="mb-4 font-semibold">Color</h3>
-          {isLoading ? (
-            <ColorSwatchSkeleton count={4} />
-          ) : (
-            <ColorPicker
-              colors={availableColors}
-              selectedColors={selectedColors}
-              onColorChange={toggleColor}
-            />
-          )}
-        </motion.div>
+    <div className={cn("bg-muted rounded-md py-4 px-3", className)}>
+      <h3 className="mb-4 font-semibold text-xs uppercase tracking-wider text-neutral-900">컬러 (Color)</h3>
+      {isLoading ? (
+        <ColorSwatchSkeleton count={4} />
+      ) : (
+        <ColorPicker
+          colors={availableColors}
+          selectedColors={selectedColors}
+          onColorChange={toggleColor}
+        />
       )}
-    </AnimatePresence>
+    </div>
   );
 }

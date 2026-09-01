@@ -17,6 +17,13 @@
   }
 }
 
+/* Hide Next.js Development Error Overlay Portal on mobile */
+nextjs-portal,
+#nextjs__container_errors_label,
+[data-nextjs-dialog-overlay] {
+  display: none !important;
+}
+
 /* Hide number input spinner arrows */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {

@@ -80,24 +80,43 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     };
   }, []);
 
-  const initialHeroProducts = (products || []).filter((p: any) => Boolean(p.heroCustomImage) || p.categoryId === "main_banner");
-  initialHeroProducts.sort((a: any, b: any) => {
-    const aCustom = Boolean(a.heroCustomImage);
-    const bCustom = Boolean(b.heroCustomImage);
-    if (aCustom && !bCustom) return -1;
-    if (!aCustom && bCustom) return 1;
-    return 0;
-  });
-  const initialHeroUrls = initialHeroProducts.map((p: any) => p.heroCustomImage || (p.categoryId === "main_banner" ? p.featuredImage?.url : null)).filter(Boolean);
-
-  const [heroImages, setHeroImages] = React.useState<string[]>(initialHeroUrls);
+  // Initial Hero Images: Strictly filter for dedicated main banner images or custom hero images
+  const initialHeroCandidates = (products || []).filter((p: any) =>
+    p.isHeroFeatured ||
+    Boolean(p.heroCustomImage) ||
+    p.categoryId === "main_banner" ||
+    String(p.id).startsWith("hero-slide-")
+  );
+  let heroUrlsFiltered = initialHeroCandidates.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
+  if (heroUrlsFiltered.length === 0) {
+    heroUrlsFiltered = ["/model_1.jpg", "/model_2.jpg"];
+  }
+  const [heroImages, setHeroImages] = React.useState<string[]>(heroUrlsFiltered);
   const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
 
-  const initialMainFeatured = (products || []).filter((p: any) => p.isMainFeatured === true);
-  const fallbackList = initialMainFeatured.length > 0 ? initialMainFeatured : (products || []);
-  const [allProducts, setAllProducts] = React.useState<any[]>(fallbackList);
+  // Initial Grid Products
+  let initialGrid = (products || []).filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));
+  if (initialGrid.length === 0) {
+    initialGrid = (products || []).filter((p: any) => p.isMainFeatured === true);
+  }
+  if (initialGrid.length === 0) {
+    initialGrid = (products || []).filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-"));
+  }
+  if (initialGrid.length === 0) {
+    initialGrid = products || [];
+  }
+  const [allProducts, setAllProducts] = React.useState<any[]>(initialGrid);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const PAGE_SIZE = 9;
+  const [pageSize, setPageSize] = React.useState(9);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setPageSize(window.innerWidth < 768 ? 10 : 9);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const [isHydrated, setIsHydrated] = React.useState(false);
 
@@ -197,19 +216,31 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
             }
           }
 
-          // Filter for products where main display is checked (isMainFeatured === true), fallback to parsed list if none selected
-          const featuredProducts = parsed.filter((p: any) => p.isMainFeatured === true);
-          setAllProducts(featuredProducts.length > 0 ? featuredProducts : parsed);
+          // 1. Grid Products: Display bottom-featured products (isBottomFeatured) or isMainFeatured products, fallback to full product list if none explicitly selected
+          let gridProducts = parsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));
+          if (gridProducts.length === 0) {
+            gridProducts = parsed.filter((p: any) => p.isMainFeatured === true);
+          }
+          if (gridProducts.length === 0) {
+            gridProducts = parsed.filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-"));
+          }
+          setAllProducts(gridProducts.length > 0 ? gridProducts : parsed);
 
-          const heroProducts = parsed.filter((p: any) => Boolean(p.heroCustomImage) || p.categoryId === "main_banner");
-          heroProducts.sort((a: any, b: any) => {
-            const aCustom = Boolean(a.heroCustomImage);
-            const bCustom = Boolean(b.heroCustomImage);
-            if (aCustom && !bCustom) return -1;
-            if (!aCustom && bCustom) return 1;
-            return 0;
-          });
-          const urls = heroProducts.map((p: any) => p.heroCustomImage || (p.categoryId === "main_banner" ? p.featuredImage?.url : null)).filter(Boolean);
+          // 2. Hero Slider Images: Strictly display dedicated main banners or custom hero images
+          const heroCandidates = parsed.filter((p: any) =>
+            p.isHeroFeatured ||
+            Boolean(p.heroCustomImage) ||
+            p.categoryId === "main_banner" ||
+            String(p.id).startsWith("hero-slide-")
+          );
+
+          let urls = heroCandidates
+            .map((p: any) => p.heroCustomImage || p.featuredImage?.url)
+            .filter(Boolean);
+
+          if (urls.length === 0) {
+            urls = ["/model_1.jpg", "/model_2.jpg"];
+          }
 
           setHeroImages(urls);
         } catch (e) {
@@ -231,41 +262,63 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     };
   }, [products]);
 
+  const [isTransitioning, setIsTransitioning] = React.useState(true);
+
+  // Extend slides with clones for seamless infinite loop (Clone of first at end, clone of last at front)
+  const displaySlides = React.useMemo(() => {
+    if (heroImages.length <= 1) return heroImages;
+    return [heroImages[heroImages.length - 1], ...heroImages, heroImages[0]];
+  }, [heroImages]);
+
+  // Index inside displaySlides (starts at 1 because index 0 is the clone of the last item)
+  const [slideIndex, setSlideIndex] = React.useState(1);
+
+  React.useEffect(() => {
+    setSlideIndex(1);
+    setIsTransitioning(true);
+  }, [heroImages]);
+
   React.useEffect(() => {
     if (heroImages.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentSlideIndex((prev) => (prev + 1) % heroImages.length);
-    }, 5000);
+      setIsTransitioning(true);
+      setSlideIndex((prev) => prev + 1);
+    }, 3000);
     return () => clearInterval(interval);
   }, [heroImages.length]);
 
-  if (!isHydrated) {
-    return (
-      <div className="w-full flex flex-col bg-white min-h-screen animate-pulse">
-        <section className="relative w-full h-[95vh] md:h-[105vh] min-h-[800px] border-b border-neutral-200 bg-neutral-100" />
-      </div>
-    );
-  }
+  const handleTransitionEnd = () => {
+    if (slideIndex >= displaySlides.length - 1) {
+      // Reached clone of the first slide -> jump instantly to real first slide (index 1) without animation
+      setIsTransitioning(false);
+      setSlideIndex(1);
+    } else if (slideIndex <= 0) {
+      // Reached clone of the last slide -> jump instantly to real last slide without animation
+      setIsTransitioning(false);
+      setSlideIndex(displaySlides.length - 2);
+    }
+  };
 
   return (
     <div className="w-full flex flex-col bg-white">
-      {/* SECTION 1: Auto Slider Hero Image (Only rendered if explicit hero images exist) */}
+      {/* SECTION 1: Auto Slider Hero Image (Infinite Seamless Loop) */}
       {heroImages.length > 0 && (
-        <section className="relative w-full h-[95vh] md:h-[105vh] min-h-[800px] bg-white overflow-hidden">
+        <section className="relative w-full h-[80vh] md:h-[105vh] min-h-[500px] md:min-h-[800px] bg-white overflow-hidden">
           <div
-            className="flex w-full h-full transition-transform duration-1000 ease-in-out"
-            style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+            className={`flex w-full h-full ${isTransitioning ? "transition-transform duration-1000 ease-in-out" : ""}`}
+            style={{ transform: `translateX(-${slideIndex * 100}%)` }}
+            onTransitionEnd={handleTransitionEnd}
           >
-            {heroImages.map((src, idx) => (
+            {displaySlides.map((src, idx) => (
               <div key={`${src}-${idx}`} className="relative min-w-full h-full">
                 <Image
                   src={src}
-                  alt={`Main Hero ${idx + 1}`}
+                  alt={`Main Hero ${idx}`}
                   fill
                   quality={100}
-                  unoptimized={src.startsWith('data:')}
+                  unoptimized={true}
                   className="object-cover object-center"
-                  priority={idx === 0}
+                  priority={idx === 1}
                 />
               </div>
             ))}
@@ -276,10 +329,10 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       {/* INFINITE MARQUEE TICKER BANNER: CHOICOMMA Logo & Luxury Branding */}
       <ChoicommaMarqueeTicker />
 
-      {/* SECTION 2: 3x3 Paginated Grid */}
+      {/* SECTION 2: Responsive Paginated Grid */}
       <section className="w-full bg-white">
         <div className="grid grid-cols-2 md:grid-cols-3">
-          {allProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((product, idx) => {
+          {allProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((product, idx) => {
             const timeSaleDiscount = getTimeSaleDiscount(product);
 
             const basePrice = parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
@@ -306,18 +359,29 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
                   src={product.featuredImage?.url || `/product_${(idx % 4) + 1}.webp`}
                   alt={product.title || `Product ${idx}`}
                   fill
+                  unoptimized={true}
                   className="object-contain p-4 md:p-8 transition-transform duration-700 group-hover:scale-105"
                 />
 
                 {/* Product Name & Label (Bottom Left) */}
                 <div className="absolute bottom-0 left-0 p-3 flex flex-col items-start z-10 w-full md:w-auto">
                   <div className="flex items-center gap-1 mb-1 flex-wrap">
+                    {product.availableForSale === false && (
+                      <span className="text-[8px] md:text-[9px] px-1.5 py-0.5 font-black uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-2xs">
+                        품절
+                      </span>
+                    )}
                     {product.productLabel && (
                       <span className={`text-[8px] md:text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-wider rounded-sm ${product.productLabel === 'BLACK_LABEL' ? 'bg-black text-white' :
                           product.productLabel === 'PREMIUM' ? 'bg-neutral-600 text-white' :
                             'bg-neutral-200 text-neutral-800'
                         }`}>
                         {product.productLabel.replace('_', ' ')}
+                      </span>
+                    )}
+                    {(product as any).showFabricBadge && Boolean(product.fabricComposition || product.fabric || product.fabricMaterial) && (
+                      <span className="text-[8px] md:text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-sm bg-white text-black border border-black shadow-2xs">
+                        {String(product.fabricComposition || product.fabric || product.fabricMaterial).replace(/^ORIGIN:\s*/i, "").trim()}
                       </span>
                     )}
                     {timeSaleDiscount !== null && (
@@ -361,7 +425,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
         </div>
 
         {/* Pagination Controls */}
-        {allProducts.length > PAGE_SIZE && (
+        {allProducts.length > pageSize && (
           <div className="flex justify-center items-center py-12 gap-4">
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -371,11 +435,11 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
               &lt; Prev
             </button>
             <span className="text-xs text-neutral-900">
-              {currentPage} / {Math.ceil(allProducts.length / PAGE_SIZE)}
+              {currentPage} / {Math.ceil(allProducts.length / pageSize)}
             </span>
             <button
-              onClick={() => setCurrentPage(p => Math.min(Math.ceil(allProducts.length / PAGE_SIZE), p + 1))}
-              disabled={currentPage >= Math.ceil(allProducts.length / PAGE_SIZE)}
+              onClick={() => setCurrentPage(p => Math.min(Math.ceil(allProducts.length / pageSize), p + 1))}
+              disabled={currentPage >= Math.ceil(allProducts.length / pageSize)}
               className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors"
             >
               Next &gt;

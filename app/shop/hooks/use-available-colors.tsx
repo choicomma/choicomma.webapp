@@ -37,14 +37,17 @@ export function useAvailableColors(products: Product[]) {
   const availableColorNames = new Set<string>();
 
   products.forEach((product) => {
+    if (!product || !Array.isArray(product.options)) return;
     const colorOption = product.options.find(
-      (option) => option.name.toLowerCase() === "color"
+      (option) => option && option.name && option.name.toLowerCase() === "color"
     );
 
-    if (colorOption) {
+    if (colorOption && Array.isArray(colorOption.values)) {
       colorOption.values.forEach((value) => {
+        if (!value) return;
         // Map product color values to our color names
-        const colorName = value.name.toLowerCase();
+        const rawName = typeof value === "string" ? value : (value.name || "");
+        const colorName = String(rawName).toLowerCase();
         const matchingColor = allColors.find(
           (c) => c.name.toLowerCase() === colorName
         );

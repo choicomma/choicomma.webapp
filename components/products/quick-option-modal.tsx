@@ -69,6 +69,9 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
   const handleAddToCart = () => {
     setIsAdding(true);
 
+    const rawPrice = product.priceRange?.minVariantPrice?.amount || (product as any).price || "0";
+    const currCode = product.currencyCode || product.priceRange?.minVariantPrice?.currencyCode || "KRW";
+
     const variant = {
       id: `${product.id}-${selectedColor.toLowerCase()}-${selectedSize.toLowerCase()}`,
       title: `${product.title} (${selectedColor} / ${selectedSize})`,
@@ -77,7 +80,7 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
         { name: "Color", value: selectedColor },
         { name: "Size", value: selectedSize },
       ],
-      price: product.priceRange.minVariantPrice,
+      price: { amount: String(rawPrice), currencyCode: currCode },
     };
 
     addCartItem(variant, product, quantity);
@@ -122,10 +125,11 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
           <div className="flex gap-4 items-center bg-neutral-50 p-3.5 rounded-2xl border border-neutral-200/80">
             <div className="relative aspect-[4/5] w-16 overflow-hidden rounded-xl bg-neutral-200 shrink-0">
               <Image
-                src={product.featuredImage.url}
-                alt={product.title}
+                src={product.featuredImage?.url || "/product_1.webp"}
+                alt={product.title || "Product"}
                 fill
                 className="object-cover"
+                unoptimized={true}
               />
             </div>
             <div className="min-w-0 flex-1">
@@ -134,8 +138,8 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
               </h4>
               <p className="text-sm font-extrabold text-neutral-950 mt-1">
                 {formatPrice(
-                  product.priceRange.minVariantPrice.amount,
-                  product.currencyCode
+                  product.priceRange?.minVariantPrice?.amount || (product as any).price || "0",
+                  product.currencyCode || "KRW"
                 )}
               </p>
             </div>
@@ -234,8 +238,8 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
               <span className="text-[10px] text-neutral-400 font-bold block">{translateUiText("총 금액", currentLang)}</span>
               <span className="text-sm font-black text-white font-mono">
                 {formatPrice(
-                  (parseFloat(product.priceRange.minVariantPrice.amount) * quantity).toString(),
-                  product.currencyCode
+                  (parseFloat(product.priceRange?.minVariantPrice?.amount || (product as any).price || "0") * quantity).toString(),
+                  product.currencyCode || "KRW"
                 )}
               </span>
             </div>

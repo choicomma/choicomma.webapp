@@ -41,9 +41,9 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
   const hasVariants = (product.variants && product.variants.length > 1) || false;
 
   return (
-    <div className="flex flex-col md:grid md:grid-cols-2 gap-8 md:gap-16 px-4 md:px-12 py-8 md:py-12 bg-white max-w-[1600px] mx-auto">
+    <div className="flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-16 px-4 md:px-12 pt-24 sm:pt-28 md:pt-36 pb-12 md:pb-24 bg-white max-w-[1600px] mx-auto">
       {/* Mobile Gallery Slider */}
-      <div className="md:hidden h-[70vh] min-h-[480px]">
+      <div className="md:hidden h-[60vh] min-h-[380px]">
         <Suspense fallback={null}>
           <MobileGallerySlider product={product} />
         </Suspense>

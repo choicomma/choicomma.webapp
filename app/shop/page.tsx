@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default async function Shop() {
-  return <ProductList collection={storeCatalog.rootCategoryId} />;
+  return <ProductList collection="all" />;
 }

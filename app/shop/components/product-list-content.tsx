@@ -27,24 +27,21 @@ export function ProductListContent({
 
   useEffect(() => {
     const loadAdminChoiceProducts = () => {
-      let activeSourceProducts: Product[] = products;
+      let activeSourceProducts: Product[] = products || [];
 
       if (typeof window !== "undefined") {
         const savedAdmin = localStorage.getItem("admin_products");
         if (savedAdmin) {
           try {
             const parsedAdmin: any[] = JSON.parse(savedAdmin);
-            const activeAdminIds = new Set(parsedAdmin.map((p) => String(p.id)));
-
-            // Filter out any products from initial props that were deleted in admin
-            const remainingInitial = products.filter((p) => activeAdminIds.has(String(p.id)));
-            
-            // Also merge any custom products created in admin
-            const customAdminProducts = parsedAdmin.filter(
-              (p) => !products.some((initP) => String(initP.id) === String(p.id))
-            );
-
-            activeSourceProducts = [...remainingInitial, ...customAdminProducts];
+            if (Array.isArray(parsedAdmin) && parsedAdmin.length > 0) {
+              const nonBannerAdmin = parsedAdmin.filter(
+                (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+              );
+              if (nonBannerAdmin.length > 0) {
+                activeSourceProducts = nonBannerAdmin;
+              }
+            }
           } catch (e) {
             console.error("Error loading admin_products in ProductListContent", e);
           }
@@ -171,6 +168,14 @@ export function ProductListContent({
     };
   }, [collectionHandle, products, setProducts]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  // Reset page to 1 if search query or collection changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, collectionHandle]);
+
   // Deduplicate products & filter by search query
   const uniqueProducts = displayProducts
     .filter((p, index, self) => index === self.findIndex((t) => t.id === p.id))
@@ -183,6 +188,12 @@ export function ProductListContent({
       return titleMatch || descMatch || tagMatch;
     });
 
+  const totalPages = Math.ceil(uniqueProducts.length / PAGE_SIZE);
+  const paginatedProducts = uniqueProducts.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
   return (
     <>
       <Suspense>
@@ -193,10 +204,43 @@ export function ProductListContent({
         />
       </Suspense>
       {uniqueProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 pb-16 md:pb-24">
-          {uniqueProducts.map((product, idx) => (
-            <ProductCard key={`${product.id}-${idx}`} product={product} />
-          ))}
+        <div className="flex flex-col w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
+            {paginatedProducts.map((product, idx) => (
+              <ProductCard key={`${product.id}-${idx}`} product={product} />
+            ))}
+          </div>
+
+          {/* Pagination Controls (Matching Home Layout: < Prev  X / Y  Next >) */}
+          {uniqueProducts.length > PAGE_SIZE && (
+            <div className="flex justify-center items-center py-12 gap-4 border-t border-neutral-200/80 mt-4 mb-16">
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                disabled={currentPage === 1}
+                className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
+              >
+                &lt; Prev
+              </button>
+              <span className="text-xs text-neutral-900 font-medium font-mono">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                disabled={currentPage >= totalPages}
+                className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
+              >
+                Next &gt;
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="col-span-full py-20 text-center flex flex-col items-center justify-center border border-dashed border-neutral-300 rounded-3xl bg-neutral-50/50 my-4">
