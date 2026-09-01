@@ -26,24 +26,41 @@ export function ProductListContent({
   const query = searchParams?.get("q") || "";
 
   useEffect(() => {
-    const loadAdminChoiceProducts = () => {
+    const loadAdminChoiceProducts = async () => {
       let activeSourceProducts: Product[] = products || [];
 
-      if (typeof window !== "undefined") {
-        const savedAdmin = localStorage.getItem("admin_products");
-        if (savedAdmin) {
-          try {
-            const parsedAdmin: any[] = JSON.parse(savedAdmin);
-            if (Array.isArray(parsedAdmin) && parsedAdmin.length > 0) {
-              const nonBannerAdmin = parsedAdmin.filter(
-                (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
-              );
-              if (nonBannerAdmin.length > 0) {
-                activeSourceProducts = nonBannerAdmin;
+      // Fetch live authoritative products from Central Server API
+      try {
+        const res = await fetch("/api/products", { cache: "no-store" });
+        if (res.ok) {
+          const serverData: any[] = await res.json();
+          if (Array.isArray(serverData) && serverData.length > 0) {
+            const nonBanner = serverData.filter(
+              (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+            );
+            if (nonBanner.length > 0) {
+              activeSourceProducts = nonBanner;
+              if (typeof window !== "undefined") {
+                localStorage.setItem("admin_products", JSON.stringify(serverData));
               }
             }
-          } catch (e) {
-            console.error("Error loading admin_products in ProductListContent", e);
+          }
+        }
+      } catch (e) {
+        if (typeof window !== "undefined") {
+          const savedAdmin = localStorage.getItem("admin_products");
+          if (savedAdmin) {
+            try {
+              const parsedAdmin: any[] = JSON.parse(savedAdmin);
+              if (Array.isArray(parsedAdmin) && parsedAdmin.length > 0) {
+                const nonBannerAdmin = parsedAdmin.filter(
+                  (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+                );
+                if (nonBannerAdmin.length > 0) {
+                  activeSourceProducts = nonBannerAdmin;
+                }
+              }
+            } catch (err) {}
           }
         }
       }

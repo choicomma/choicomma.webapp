@@ -200,53 +200,63 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   };
 
   React.useEffect(() => {
-    const updateHomeData = () => {
-      if (typeof window !== "undefined") {
-        try {
+    const updateHomeData = async () => {
+      let parsed = products || [];
+
+      // Fetch live authoritative products from Central Server API
+      try {
+        const res = await fetch("/api/products", { cache: "no-store" });
+        if (res.ok) {
+          const serverData = await res.json();
+          if (Array.isArray(serverData) && serverData.length > 0) {
+            parsed = serverData;
+            if (typeof window !== "undefined") {
+              localStorage.setItem("admin_products", JSON.stringify(serverData));
+            }
+          }
+        }
+      } catch (e) {
+        // Fallback to localStorage
+        if (typeof window !== "undefined") {
           const saved = localStorage.getItem("admin_products");
-          let parsed = products || [];
           if (saved) {
             try {
               const localParsed = JSON.parse(saved);
               if (Array.isArray(localParsed) && localParsed.length > 0) {
                 parsed = localParsed;
               }
-            } catch (err) {
-              console.error("Error parsing admin_products from localStorage:", err);
-            }
+            } catch (err) {}
           }
-
-          // 1. Grid Products: Display bottom-featured products (isBottomFeatured) or isMainFeatured products, fallback to full product list if none explicitly selected
-          let gridProducts = parsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));
-          if (gridProducts.length === 0) {
-            gridProducts = parsed.filter((p: any) => p.isMainFeatured === true);
-          }
-          if (gridProducts.length === 0) {
-            gridProducts = parsed.filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-"));
-          }
-          setAllProducts(gridProducts.length > 0 ? gridProducts : parsed);
-
-          // 2. Hero Slider Images: Strictly display dedicated main banners or custom hero images
-          const heroCandidates = parsed.filter((p: any) =>
-            p.isHeroFeatured ||
-            Boolean(p.heroCustomImage) ||
-            p.categoryId === "main_banner" ||
-            String(p.id).startsWith("hero-slide-")
-          );
-
-          let urls = heroCandidates
-            .map((p: any) => p.heroCustomImage || p.featuredImage?.url)
-            .filter(Boolean);
-
-          if (urls.length === 0) {
-            urls = ["/model_1.jpg", "/model_2.jpg"];
-          }
-
-          setHeroImages(urls);
-        } catch (e) {
-          console.error(e);
         }
       }
+
+      // 1. Grid Products: Display bottom-featured products (isBottomFeatured) or isMainFeatured products, fallback to full product list if none explicitly selected
+      let gridProducts = parsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));
+      if (gridProducts.length === 0) {
+        gridProducts = parsed.filter((p: any) => p.isMainFeatured === true);
+      }
+      if (gridProducts.length === 0) {
+        gridProducts = parsed.filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-"));
+      }
+      setAllProducts(gridProducts.length > 0 ? gridProducts : parsed);
+
+      // 2. Hero Slider Images: Strictly display dedicated main banners or custom hero images
+      const heroCandidates = parsed.filter((p: any) =>
+        p.isHeroFeatured ||
+        Boolean(p.heroCustomImage) ||
+        p.categoryId === "main_banner" ||
+        String(p.id).startsWith("hero-slide-")
+      );
+
+      let urls = heroCandidates
+        .map((p: any) => p.heroCustomImage || p.featuredImage?.url)
+        .filter(Boolean);
+
+      if (urls.length === 0) {
+        urls = ["/model_1.jpg", "/model_2.jpg"];
+      }
+
+      setHeroImages(urls);
     };
 
     // Initial load

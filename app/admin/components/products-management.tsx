@@ -82,6 +82,7 @@ interface ProductsManagementProps {
   handleMoveProduct?: (id: string, direction: "up" | "down") => void;
   handleBulkDeleteProducts?: (targetIds: string[]) => void;
   handleReorderProducts?: (fromId: string, toId: string, showToast?: boolean) => void;
+  onSaveToDisk?: () => void;
 }
 
 export function ProductsManagement({
@@ -118,6 +119,7 @@ export function ProductsManagement({
   handleMoveProduct,
   handleBulkDeleteProducts,
   handleReorderProducts,
+  onSaveToDisk,
 }: ProductsManagementProps) {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [excelPreviewItems, setExcelPreviewItems] = useState<any[]>([]);
@@ -474,6 +476,18 @@ export function ProductsManagement({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+          {onSaveToDisk && (
+            <button
+              type="button"
+              onClick={onSaveToDisk}
+              className="flex items-center gap-2 bg-neutral-900 hover:bg-black text-white font-bold px-3.5 py-2.5 rounded-xl transition-all shadow-md text-xs cursor-pointer border border-neutral-700 hover:border-white"
+              title="현재 브라우저에 저장된 모든 상품 수정/추가/삭제 상태를 서버 JSON 파일로 즉시 영구 저장합니다."
+            >
+              <Download className="w-3.5 h-3.5 text-amber-400 rotate-180" />
+              <span>💾 서버/깃 데이터 영구저장</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleDownloadExcelTemplate}

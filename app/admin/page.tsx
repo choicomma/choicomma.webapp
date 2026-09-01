@@ -357,50 +357,42 @@ export default function AdminPage() {
   const [newInboundNotes, setNewInboundNotes] = useState("");
   const [newInboundStatus, setNewInboundStatus] = useState("Scheduled");
   
-// Initial default product catalog from public/상품전체정보.xlsx
-const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
+  // Initial default product catalog from public/상품전체정보.xlsx
+  const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
 
   // State for products, orders, search, notifications
   const isProductsLoadedRef = React.useRef(false);
   const [productsList, setProductsList] = useState<any[]>(INITIAL_CHOICOMMA_PRODUCTS);
 
-  // Client-side hydration sync for productsList
+  // Client-side hydration sync for productsList (Source of Truth: Central Server API /api/products)
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const colorsResetKey = "admin_colors_reset_v2";
-      const hasReset = localStorage.getItem(colorsResetKey);
-      const saved = localStorage.getItem("admin_products");
-      if (saved) {
-        try {
-          let parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            // Always strip colors on fresh load or version bump
-            if (!hasReset) {
-              parsed = parsed.map((p: any) => ({ ...p, colors: [] }));
-              localStorage.setItem("admin_products", JSON.stringify(parsed));
-              localStorage.setItem(colorsResetKey, "true");
+    const fetchServerProducts = async () => {
+      try {
+        const res = await fetch("/api/products", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setProductsList(data);
+            if (typeof window !== "undefined") {
+              localStorage.setItem("admin_products", JSON.stringify(data));
             }
-            setProductsList(parsed);
             isProductsLoadedRef.current = true;
-
-            // Sync user's current browser localStorage data directly to parsed-products.json disk file for Git push
-            fetch("/api/admin/save-products", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(parsed),
-            }).catch((e) => console.error("Sync disk on load failed", e));
-
             return;
           }
-        } catch (e) {
-          console.error(e);
         }
+      } catch (err) {
+        console.error("Failed to fetch products from /api/products", err);
       }
-      localStorage.setItem("admin_products", JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
-      localStorage.setItem(colorsResetKey, "true");
-      setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
-      isProductsLoadedRef.current = true;
-    }
+
+      // Fallback
+      if (typeof window !== "undefined") {
+        localStorage.setItem("admin_products", JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
+        setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
+        isProductsLoadedRef.current = true;
+      }
+    };
+
+    fetchServerProducts();
   }, []);
 
   // Helper: Calculate accurate total stock for color x size combinations
@@ -441,22 +433,15 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, width, height);
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressed = canvas.toDataURL("image/jpeg", quality);
-          resolve(compressed);
-        } else {
-          resolve(dataUrl);
-        }
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
       };
       img.onerror = () => resolve(dataUrl);
       img.src = dataUrl;
     });
   };
 
-  // Helper: Safely save to localStorage and persist to server JSON file for Git commit/push
+  // Helper: Safely save to Central Server API (/api/products) and mirror to localStorage
   const saveProductsToStorage = (list: any[]) => {
     if (typeof window === "undefined") return;
     try {
@@ -465,12 +450,12 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
         window.dispatchEvent(new CustomEvent("admin_products_updated"));
       }, 0);
 
-      // Persist to server disk JSON file so Git sees all added/edited products & main images!
-      fetch("/api/admin/save-products", {
+      // Persist to Central Server API so ALL devices (PC, Mobile, Live web) immediately see the change
+      fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(list),
-      }).catch((err) => console.error("Failed to persist products to disk JSON:", err));
+      }).catch((err) => console.error("Failed to persist products to /api/products:", err));
     } catch (e) {
       console.warn("QuotaExceededError in localStorage, attempting cleanup save...", e);
       try {
@@ -479,11 +464,6 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent("admin_products_updated"));
         }, 0);
-        fetch("/api/admin/save-products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(list),
-        }).catch((err) => console.error("Failed to persist products to disk JSON:", err));
       } catch (err) {
         console.error("Failed to write to localStorage after retry", err);
       }
@@ -3060,6 +3040,10 @@ const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
               handleMoveProduct={handleMoveProduct}
               handleBulkDeleteProducts={handleBulkDeleteProducts}
               handleReorderProducts={handleReorderProducts}
+              onSaveToDisk={() => {
+                saveProductsToStorage(productsList);
+                triggerToast("💾 현재 모든 상품 데이터가 서버 JSON 파일에 성공적으로 저장되었습니다!");
+              }}
             />
           )}
 

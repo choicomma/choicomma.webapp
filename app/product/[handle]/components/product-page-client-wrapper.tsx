@@ -12,7 +12,25 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
   const [product, setProduct] = useState<Product>(initialProduct);
 
   useEffect(() => {
-    const syncProductFromStorage = () => {
+    const syncProductFromStorage = async () => {
+      // 1. Try Central Server API first
+      try {
+        const res = await fetch("/api/products", { cache: "no-store" });
+        if (res.ok) {
+          const serverData = await res.json();
+          if (Array.isArray(serverData)) {
+            const found = serverData.find(
+              (p: any) => p.id === initialProduct.id || p.handle === initialProduct.handle
+            );
+            if (found) {
+              setProduct(found);
+              return;
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 2. Fallback to localStorage
       if (typeof window === "undefined") return;
       const saved = localStorage.getItem("admin_products");
       if (saved) {
