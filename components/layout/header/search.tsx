@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import Form from "next/form";
 import { useSearchParams } from "next/navigation";
 import { SearchIcon } from "lucide-react";
 
-export default function Search() {
+function SearchInput() {
   const searchParams = useSearchParams();
 
   return (
@@ -26,6 +27,14 @@ export default function Search() {
         <SearchIcon className="h-4" />
       </div>
     </Form>
+  );
+}
+
+export default function Search() {
+  return (
+    <Suspense fallback={<SearchSkeleton />}>
+      <SearchInput />
+    </Suspense>
   );
 }
 

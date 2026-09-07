@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -19,7 +19,7 @@ interface MobileMenuProps {
   isScrolled?: boolean;
 }
 
-export default function MobileMenu({ collections, isScrolled }: MobileMenuProps) {
+function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
@@ -239,5 +239,23 @@ export default function MobileMenu({ collections, isScrolled }: MobileMenuProps)
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+export default function MobileMenu(props: MobileMenuProps) {
+  return (
+    <Suspense
+      fallback={
+        <button
+          type="button"
+          aria-label="Open mobile menu"
+          className="flex items-center justify-center p-2 rounded-full transition-colors text-inherit"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      }
+    >
+      <MobileMenuContent {...props} />
+    </Suspense>
   );
 }
