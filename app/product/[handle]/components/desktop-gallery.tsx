@@ -21,37 +21,34 @@ export const DesktopGallery = ({ product }: { product: Product }) => {
   if (!images.length) return null;
 
   return (
-    <div className="flex gap-4 md:gap-8 h-full">
+    <div className="flex gap-4 md:gap-6 w-full items-start">
       {/* Thumbnails (Left Column) */}
-      <div className="w-1/4 md:w-1/5 flex flex-col gap-4 overflow-y-auto no-scrollbar h-full max-h-[85vh]">
-        {images.map((image, index) => (
-          <button
-            key={`${image.url}-${index}`}
-            onClick={() => setActiveIndex(index)}
-            className={`relative w-full aspect-square overflow-hidden transition-all duration-300 bg-white border border-neutral-100 focus:outline-none focus:ring-0 ${
-              activeIndex === index ? "opacity-100 border-neutral-400" : "opacity-50 hover:opacity-100"
-            }`}
-          >
-            <Image
-              src={image.url}
-              alt={image.altText || `Thumbnail ${index + 1}`}
-              fill
-              className="object-contain p-1"
-              sizes="(max-width: 768px) 25vw, 15vw"
-            />
-          </button>
-        ))}
-      </div>
+      {images.length > 1 && (
+        <div className="w-16 sm:w-20 shrink-0 flex flex-col gap-2.5 overflow-y-auto no-scrollbar max-h-[500px]">
+          {images.map((image, index) => (
+            <button
+              key={`${image.url}-${index}`}
+              onClick={() => setActiveIndex(index)}
+              className={`relative w-full aspect-square overflow-hidden transition-all duration-300 bg-transparent rounded-sm focus:outline-none focus:ring-0 cursor-pointer ${
+                activeIndex === index ? "opacity-100" : "opacity-40 hover:opacity-80"
+              }`}
+            >
+              <img
+                src={image.url}
+                alt={image.altText || `Thumbnail ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Main Image (Center Column) */}
-      <div className="w-3/4 md:w-4/5 relative h-[75vh] md:h-[90vh] overflow-hidden bg-white flex items-start justify-center">
-        <Image
+      {/* Main Image (Center Column: Exact 1:1 aspect-square without outline/border) */}
+      <div className="flex-1 max-w-[500px] aspect-square relative bg-transparent overflow-hidden">
+        <img
           src={images[activeIndex].url}
           alt={images[activeIndex].altText || product.title}
-          fill
-          className="object-contain object-top p-0 transition-all duration-500"
-          priority
-          sizes="(max-width: 768px) 75vw, 50vw"
+          className="w-full h-full object-cover object-top transition-all duration-300 block"
         />
       </div>
     </div>

@@ -633,7 +633,7 @@ export function ProductDetailHeader({
               const stockMap = (product as any).sizeStock || {};
               const curStock = stockMap[comboKey] !== undefined ? stockMap[comboKey] : (stockMap[selectedSize] !== undefined ? stockMap[selectedSize] : null);
               if (curStock === 0) {
-                return <span className="text-rose-600 font-extrabold text-[10px]">품절</span>;
+                return <span className="text-neutral-900 font-extrabold text-[10px]">품절</span>;
               }
               return null;
             })()}
@@ -656,10 +656,10 @@ export function ProductDetailHeader({
                   className={cn(
                     "min-w-[2.5rem] h-9 px-3 flex items-center justify-center border text-xs font-semibold transition-all uppercase tracking-wider cursor-pointer select-none rounded-sm",
                     isSoldOut
-                      ? "opacity-40 line-through bg-neutral-100 border-neutral-200 text-neutral-400 cursor-not-allowed"
+                      ? "opacity-30 line-through bg-neutral-100 border-neutral-200 text-neutral-400 cursor-not-allowed"
                       : isSelected
-                      ? "border-neutral-900 text-neutral-900 border-[1.5px] font-extrabold bg-neutral-50 shadow-2xs"
-                      : "border-neutral-300 text-neutral-600 hover:border-neutral-900 bg-white"
+                      ? "border-neutral-950 text-neutral-950 border-[1.5px] font-extrabold bg-neutral-100 shadow-2xs"
+                      : "border-neutral-300 text-neutral-700 hover:border-neutral-950 bg-white"
                   )}
                 >
                   {sizeStr}
@@ -677,8 +677,8 @@ export function ProductDetailHeader({
         const curStock = stockMap[comboKey] !== undefined ? stockMap[comboKey] : (stockMap[selectedSize] !== undefined ? stockMap[selectedSize] : null);
         if (curStock === 0) {
           return (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold px-3 py-2 rounded-xl text-center mt-2">
-              ⚠️ 선택하신 [{selectedColor ? `${selectedColor} / ` : ""}{selectedSize}] 옵션은 현재 재고가 모두 소진되었습니다.
+            <div className="bg-neutral-900 text-white text-xs font-medium px-4 py-2.5 rounded-sm text-center mt-2 tracking-wide">
+              선택하신 [{selectedColor ? `${selectedColor} / ` : ""}{selectedSize}] 옵션은 현재 재고가 모두 소진되었습니다.
             </div>
           );
         }
@@ -687,7 +687,7 @@ export function ProductDetailHeader({
 
       {/* Bottom Action Row: Quantity + Add To Cart button */}
       <div className="flex items-center gap-4 mt-8">
-        <div className="flex items-center border border-neutral-300 px-4 py-3 h-[52px] min-w-[120px] justify-between text-neutral-900 bg-white">
+        <div className="flex items-center border border-neutral-900 px-4 py-3 h-[52px] min-w-[120px] justify-between text-neutral-900 bg-white">
           <button
             type="button"
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -707,7 +707,7 @@ export function ProductDetailHeader({
         <button
           onClick={handleAddToCart}
           disabled={isOutOfStock || isAdding}
-          className="flex-1 bg-[#808080] hover:bg-[#666666] text-white font-normal text-[13px] tracking-widest h-[52px] transition-colors uppercase disabled:opacity-50 cursor-pointer"
+          className="flex-1 bg-black hover:bg-neutral-800 text-white font-normal text-[13px] tracking-widest h-[52px] transition-colors uppercase disabled:bg-neutral-300 disabled:text-neutral-500 disabled:opacity-100 cursor-pointer"
         >
           {isOutOfStock ? t.outOfStock : isAdding ? t.adding : t.addToCart}
         </button>

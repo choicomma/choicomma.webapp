@@ -1,17 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Users,
-  Crown,
-  Gift,
-  TrendingUp,
-  Search,
-  Pencil,
-  Trash2,
-  Upload,
-  UserPlus,
-} from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface CustomersManagementProps {
   customersList: any[];
@@ -43,6 +33,38 @@ export function CustomersManagement({
   const [customerPage, setCustomerPage] = useState(1);
   const CUSTOMERS_PER_PAGE = 25;
 
+  const handleDownloadCustomersExcel = () => {
+    if (customersList.length === 0) {
+      alert("다운로드할 회원 데이터가 없습니다.");
+      return;
+    }
+
+    try {
+      const exportData = customersList.map((c, index) => ({
+        "번호": index + 1,
+        "회원ID": c.id,
+        "이름": c.name,
+        "이메일": c.email,
+        "전화번호": c.phone,
+        "배송지주소": c.address || "",
+        "회원등급": c.grade || "GENERAL",
+        "누적구매금액": Number(c.totalSpent || 0),
+        "보유적립금": Number(c.points || 0),
+        "가입일": c.joinedDate || "",
+        "관리자여부": c.isAdmin || c.role === "ADMIN" ? "Y" : "N",
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "회원목록");
+      const today = new Date().toISOString().split("T")[0];
+      XLSX.writeFile(wb, `스토어_회원목록_${today}.xlsx`);
+    } catch (e) {
+      console.error(e);
+      alert("회원 목록 엑셀 다운로드 중 오류가 발생했습니다.");
+    }
+  };
+
   const newCustomersThisMonth = React.useMemo(() => {
     const currentYM = new Date().toISOString().slice(0, 7);
     return customersList.filter((c) => c.joinedDate && c.joinedDate.startsWith(currentYM)).length;
@@ -55,7 +77,11 @@ export function CustomersManagement({
         c.email.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
         c.phone.includes(customerSearchQuery) ||
         (c.address && c.address.toLowerCase().includes(customerSearchQuery.toLowerCase()));
-      const matchesGrade = customerGradeFilter === "all" || c.grade === customerGradeFilter;
+      const matchesGrade =
+        customerGradeFilter === "all" ||
+        (customerGradeFilter === "GENERAL" && (c.grade === "GENERAL" || c.grade === "REGULAR" || !c.grade)) ||
+        (customerGradeFilter === "VVIP" && (c.grade === "VVIP" || c.grade?.includes("VIP") || c.role === "ADMIN")) ||
+        c.grade === customerGradeFilter;
       return matchesSearch && matchesGrade;
     });
   }, [customersList, customerSearchQuery, customerGradeFilter]);
@@ -70,8 +96,7 @@ export function CustomersManagement({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-950 flex items-center gap-2">
-            <Users className="w-6 h-6 text-emerald-600" />
+          <h1 className="text-2xl font-bold text-neutral-950">
             스토어 회원 관리
           </h1>
           <p className="text-sm text-neutral-500 mt-0.5">
@@ -79,8 +104,14 @@ export function CustomersManagement({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors">
-            <Upload className="w-3.5 h-3.5" />
+          <button
+            type="button"
+            onClick={handleDownloadCustomersExcel}
+            className="bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center justify-center cursor-pointer shadow-xs transition-colors"
+          >
+            <span>회원정보 다운로드 (.xlsx)</span>
+          </button>
+          <label className="bg-neutral-900 hover:bg-black text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center justify-center cursor-pointer shadow-xs transition-colors">
             <span>엑셀 파일 업로드 (.xls / .xlsx)</span>
             <input
               type="file"
@@ -92,58 +123,107 @@ export function CustomersManagement({
           <button
             type="button"
             onClick={() => setIsAddCustomerModalOpen(true)}
-            className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs cursor-pointer"
+            className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md flex items-center justify-center text-xs cursor-pointer"
           >
-            <UserPlus className="w-3.5 h-3.5 text-neutral-400" />
-            <span>+ 신규 회원 직접 등록</span>
+            <span>신규 회원 직접 등록</span>
           </button>
         </div>
       </div>
 
-      {/* Metric Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
+      {/* Metric Summary Cards: General, Silver, Gold, Platinum, VVIP & Overview */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+        {/* Total Customers */}
+        <div
+          onClick={() => setCustomerGradeFilter("all")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
+            customerGradeFilter === "all" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          }`}
+        >
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>전체 회원</span>
-            <Users className="w-4 h-4 text-neutral-900" />
           </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">{customersList.length.toLocaleString()} 명</p>
-          <p className="text-xs text-neutral-500 mt-1">스토어 회원 데이터 관리 중</p>
+          <p className="text-xl font-extrabold text-neutral-950 mt-1.5">{customersList.length.toLocaleString()} 명</p>
+          <p className="text-[11px] text-neutral-400 mt-0.5">스토어 전체 등록 회원</p>
         </div>
 
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
+        {/* General (일반) */}
+        <div
+          onClick={() => setCustomerGradeFilter("GENERAL")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
+            customerGradeFilter === "GENERAL" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          }`}
+        >
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>VIP 회원 수</span>
-            <Crown className="w-4 h-4 text-neutral-900" />
+            <span>일반 (GENERAL)</span>
           </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-            {customersList.filter((c) => ["SILVER", "GOLD", "PLATINUM", "VVIP"].includes(c.grade) || c.grade?.includes("VIP")).length.toLocaleString()} 명
+          <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
+            {customersList.filter((c) => c.grade === "GENERAL" || c.grade === "REGULAR" || !c.grade).length.toLocaleString()} 명
           </p>
-          <p className="text-xs text-neutral-600 font-bold mt-1">SILVER / GOLD / PLATINUM / VVIP</p>
+          <p className="text-[11px] text-neutral-500 font-bold mt-0.5">기본 회원</p>
         </div>
 
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
+        {/* Silver (실버) */}
+        <div
+          onClick={() => setCustomerGradeFilter("SILVER")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
+            customerGradeFilter === "SILVER" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          }`}
+        >
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>총 보관 적립금</span>
-            <Gift className="w-4 h-4 text-neutral-900" />
+            <span>실버 (SILVER)</span>
           </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-            ₩ {customersList.reduce((sum, c) => sum + (c.points || 0), 0).toLocaleString()}
+          <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
+            {customersList.filter((c) => c.grade === "SILVER").length.toLocaleString()} 명
           </p>
-          <p className="text-xs text-neutral-500 mt-1">
-            평균 보유 포인트: ₩ {Math.round(customersList.reduce((sum, c) => sum + (c.points || 0), 0) / (customersList.length || 1)).toLocaleString()}
-          </p>
+          <p className="text-[11px] text-neutral-500 font-bold mt-0.5">실버 등급 회원</p>
         </div>
 
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
+        {/* Gold (골드) */}
+        <div
+          onClick={() => setCustomerGradeFilter("GOLD")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
+            customerGradeFilter === "GOLD" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          }`}
+        >
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>이달의 신규 가입</span>
-            <TrendingUp className="w-4 h-4 text-neutral-900" />
+            <span>골드 (GOLD)</span>
           </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-            {newCustomersThisMonth > 0 ? `+ ${newCustomersThisMonth.toLocaleString()} 명` : "0 명"}
+          <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
+            {customersList.filter((c) => c.grade === "GOLD").length.toLocaleString()} 명
           </p>
-          <p className="text-xs text-neutral-500 mt-1">이번 달 신규 등록 회원</p>
+          <p className="text-[11px] text-neutral-500 font-bold mt-0.5">골드 등급 회원</p>
+        </div>
+
+        {/* Platinum (플래티넘) */}
+        <div
+          onClick={() => setCustomerGradeFilter("PLATINUM")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
+            customerGradeFilter === "PLATINUM" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          }`}
+        >
+          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
+            <span>플래티넘 (PLATINUM)</span>
+          </div>
+          <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
+            {customersList.filter((c) => c.grade === "PLATINUM").length.toLocaleString()} 명
+          </p>
+          <p className="text-[11px] text-neutral-500 font-bold mt-0.5">플래티넘 등급 회원</p>
+        </div>
+
+        {/* VVIP */}
+        <div
+          onClick={() => setCustomerGradeFilter("VVIP")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
+            customerGradeFilter === "VVIP" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          }`}
+        >
+          <div className="flex items-center justify-between text-xs font-bold text-neutral-950 uppercase tracking-wider">
+            <span className="font-black">VVIP</span>
+          </div>
+          <p className="text-xl font-black text-neutral-950 mt-1.5">
+            {customersList.filter((c) => c.grade === "VVIP" || c.grade?.includes("VIP") || c.role === "ADMIN").length.toLocaleString()} 명
+          </p>
+          <p className="text-[11px] text-neutral-900 font-extrabold mt-0.5">최상위 VIP 회원</p>
         </div>
       </div>
 
@@ -151,13 +231,12 @@ export function CustomersManagement({
       <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3.5 top-3 text-neutral-400" />
             <input
               type="text"
               placeholder="회원 이름, 이메일, 전화번호, 주소 검색..."
               value={customerSearchQuery}
               onChange={(e) => setCustomerSearchQuery(e.target.value)}
-              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-2 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
             />
           </div>
 
@@ -173,31 +252,6 @@ export function CustomersManagement({
               필터 초기화
             </button>
           )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-100">
-          <span className="text-xs font-bold text-neutral-500 mr-1">회원 등급:</span>
-          {[
-            { id: "all", label: "전체 등급" },
-            { id: "GENERAL", label: "일반 (GENERAL)" },
-            { id: "SILVER", label: "실버 (SILVER)" },
-            { id: "GOLD", label: "골드 (GOLD)" },
-            { id: "PLATINUM", label: "플래티넘 (PLATINUM)" },
-            { id: "VVIP", label: "VVIP" },
-          ].map((g) => (
-            <button
-              key={g.id}
-              type="button"
-              onClick={() => setCustomerGradeFilter(g.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                customerGradeFilter === g.id
-                  ? "bg-neutral-950 text-white shadow-xs"
-                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-950"
-              }`}
-            >
-              {g.label}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -264,7 +318,6 @@ export function CustomersManagement({
                             : "bg-white text-neutral-600 border border-neutral-300"
                         }`}
                       >
-                        {["PLATINUM", "VVIP"].includes(cust.grade) && <Crown className="w-3.5 h-3.5 text-white" />}
                         {cust.grade || "GENERAL"}
                       </span>
                     </td>
@@ -282,18 +335,16 @@ export function CustomersManagement({
                         <button
                           type="button"
                           onClick={() => handleOpenEditCustomer(cust)}
-                          className="p-2 rounded-xl text-neutral-700 hover:bg-neutral-100 border border-neutral-200 transition-colors cursor-pointer"
-                          title="회원 정보/등급/포인트 수정"
+                          className="px-2.5 py-1 text-xs font-bold rounded-lg text-neutral-700 hover:bg-neutral-100 border border-neutral-200 transition-colors cursor-pointer"
                         >
-                          <Pencil className="w-3.5 h-3.5" />
+                          수정
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteCustomer(cust.id, cust.name)}
-                          className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
-                          title="회원 삭제"
+                          className="px-2.5 py-1 text-xs font-bold rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          삭제
                         </button>
                       </div>
                     </td>

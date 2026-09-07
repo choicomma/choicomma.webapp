@@ -9,6 +9,8 @@ import { ProductDetailAccordions } from "./product-detail-accordions";
 import { RelatedProducts } from "./related-products";
 import { mockProducts } from "@/lib/sfcc/mock/products";
 
+import { ProductComments } from "./product-comments";
+
 export function ClientProductFallback({ handle }: { handle: string }) {
   const [product, setProduct] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,15 +78,30 @@ export function ClientProductFallback({ handle }: { handle: string }) {
 
   return (
     <PageLayout className="bg-white" hideFooter={false}>
-      <div className="flex flex-col md:grid md:grid-cols-2 gap-8 md:gap-16 px-4 md:px-12 py-8 md:py-12 bg-white max-w-[1600px] mx-auto">
-        <div className="md:hidden h-[70vh] min-h-[480px]">
-          <MobileGallerySlider product={product} />
+      <div className="flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-16 px-4 md:px-12 pt-24 sm:pt-28 md:pt-36 pb-12 md:pb-24 bg-white max-w-[1600px] mx-auto items-start">
+        {/* Left Column: Product Images + Desktop Comments */}
+        <div className="flex flex-col w-full">
+          <div className="md:hidden h-[60vh] min-h-[380px]">
+            <MobileGallerySlider product={product} />
+          </div>
+          <div className="hidden md:block w-full">
+            <DesktopGallery product={product} />
+          </div>
+          {/* Desktop only */}
+          <div className="hidden md:block w-full">
+            <ProductComments productId={product.id} productTitle={product.title} />
+          </div>
         </div>
-        <div className="hidden md:block w-full h-[90vh]">
-          <DesktopGallery product={product} />
-        </div>
+
+        {/* Right Column: Product Details + Mobile Comments */}
         <div className="flex flex-col md:pl-8 md:pt-8 w-full max-w-xl">
           <ProductDetailHeader product={product} hasVariants={hasVariants} />
+          
+          {/* Mobile only: Right under Add to Cart button */}
+          <div className="md:hidden w-full mt-4">
+            <ProductComments productId={product.id} productTitle={product.title} />
+          </div>
+
           <ProductDetailAccordions product={product} />
         </div>
       </div>

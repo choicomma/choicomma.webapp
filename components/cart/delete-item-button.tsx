@@ -28,10 +28,10 @@ export function DeleteItemButton({
         type="submit"
         size="sm"
         variant="ghost"
-        aria-label="Close cart"
-        className="px-2 text-sm"
+        aria-label="상품 삭제"
+        className="px-2 text-xs font-bold text-neutral-400 hover:text-neutral-900 transition-colors"
       >
-        Remove
+        삭제
       </Button>
       <p aria-live="polite" className="sr-only" role="status">
         {message}

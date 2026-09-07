@@ -66,9 +66,9 @@ export function AddToCart({
   ]);
 
   const getButtonText = () => {
-    if (!availableForSale) return "Out Of Stock";
-    if (!resolvedVariant) return "Select an option";
-    return "Add To Cart";
+    if (!availableForSale) return "품절";
+    if (!resolvedVariant) return "옵션 선택";
+    return "장바구니 담기";
   };
 
   const isDisabled = !availableForSale || !resolvedVariant || isLoading;
@@ -97,7 +97,7 @@ export function AddToCart({
   const buttonElement = (
     <Button
       type="submit"
-      aria-label={!resolvedVariant ? "Please select an option" : "Add to cart"}
+      aria-label={!resolvedVariant ? "옵션을 선택해주세요" : "장바구니 담기"}
       disabled={isDisabled}
       className={
         iconOnly

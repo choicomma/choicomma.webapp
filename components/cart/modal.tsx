@@ -33,8 +33,8 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
   return (
     <div className="flex h-full flex-col justify-between overflow-hidden">
       <div className="flex justify-between text-xs font-black uppercase tracking-wider text-neutral-600 dark:text-neutral-400 px-1">
-        <span>Products</span>
-        <span>{cart.lines.length} items</span>
+        <span>담은 상품</span>
+        <span>{cart.lines.length}개</span>
       </div>
       <div className="grow overflow-auto py-3 space-y-3">
         <AnimatePresence>
@@ -63,30 +63,8 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
         </AnimatePresence>
       </div>
       <div className="py-3 text-xs font-bold text-neutral-600 dark:text-neutral-300 border-t border-neutral-200 dark:border-neutral-800">
-        <div className="mb-2 flex items-center justify-between">
-          <p>Taxes</p>
-          <p className="text-right font-black text-neutral-900 dark:text-white">
-            {formatPrice(
-              cart.cost.totalTaxAmount.amount,
-              cart.cost.totalTaxAmount.currencyCode
-            )}
-          </p>
-        </div>
-        <div className="mb-2 flex items-center justify-between">
-          <p>Shipping</p>
-          {cart.cost.shippingAmount ? (
-            <p className="text-right font-black text-neutral-900 dark:text-white">
-              {formatPrice(
-                cart.cost.shippingAmount.amount,
-                cart.cost.shippingAmount.currencyCode
-              )}
-            </p>
-          ) : (
-            <p className="text-right font-bold text-neutral-500">Calculated at checkout</p>
-          )}
-        </div>
-        <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-          <p className="text-sm font-black text-neutral-900 dark:text-white">Total</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-black text-neutral-900 dark:text-white">총 결제금액</p>
           <p className="text-right text-lg font-black text-neutral-900 dark:text-white font-mono">
             {formatPrice(
               cart.cost.totalAmount.amount,
@@ -192,10 +170,10 @@ export default function CartModal({
                 </div>
                 <div className="flex flex-col gap-2 2xl:gap-3 flex-1 justify-center">
                   <span className="text-lg 2xl:text-xl font-semibold">
-                    {translateUiText("장바구니", currentLang)}
+                    {translateUiText("장바구니가 비어 있습니다.", currentLang)}
                   </span>
                   <p className="text-sm text-muted-foreground hover:underline">
-                    {translateUiText("EXPLORE COLLECTION", currentLang)}
+                    {translateUiText("쇼핑 계속하기", currentLang)}
                   </p>
                 </div>
               </div>
@@ -211,7 +189,7 @@ export default function CartModal({
   return (
     <>
       <Button
-        aria-label="Open cart"
+        aria-label="장바구니 열기"
         onClick={openCart}
         variant={variant}
         size={size}
@@ -263,11 +241,11 @@ export default function CartModal({
                     <Button
                       size="sm"
                       variant="ghost"
-                      aria-label="Close cart"
+                      aria-label="장바구니 닫기"
                       onClick={closeCart}
                       className="font-extrabold text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer"
                     >
-                      Close
+                      닫기
                     </Button>
                   </div>
 
@@ -307,7 +285,7 @@ function CheckoutButton() {
       size="lg"
       className="w-full relative flex items-center justify-between gap-3"
     >
-      {pending ? "Processing..." : "Proceed to Checkout"}
+      {pending ? "처리 중..." : "결제하기"}
       <ArrowRight className="size-6" />
     </Button>
   );

@@ -80,7 +80,9 @@ import { InquiriesManagement } from "./components/inquiries-management";
 import { GlobalSalesManagement } from "./components/global-sales-management";
 import { LanguageSelector } from "@/components/layout/header/language-selector";
 
-const initialCustomers: any[] = [];
+import initialCustomersData from "@/lib/sfcc/mock/customers-data.json";
+
+const initialCustomers: any[] = initialCustomersData;
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -2658,6 +2660,96 @@ export default function AdminPage() {
     triggerToast(`'${title}' 상품이 성공적으로 삭제되었습니다.`);
   };
 
+  const handleBulkUpdateMainFeatured = (targetIds: string[], isFeatured: boolean) => {
+    if (!targetIds || targetIds.length === 0) return;
+    const actionLabel = isFeatured ? "메인화면 진열" : "메인화면 미진열";
+    const isConfirmed = window.confirm(
+      `선택한 ${targetIds.length}개 상품을 [${actionLabel}]로 일괄 변경하시겠습니까?`
+    );
+    if (!isConfirmed) return;
+
+    const idSet = new Set(targetIds.map(String));
+    const updatedList = productsList.map((p) => {
+      if (idSet.has(String(p.id))) {
+        const existingTags = Array.isArray(p.tags) ? p.tags : [];
+        let newTags = [...existingTags];
+        if (isFeatured) {
+          if (!newTags.includes("top-seller")) {
+            newTags.push("top-seller");
+          }
+        } else {
+          newTags = newTags.filter((t: string) => t !== "top-seller");
+        }
+        return {
+          ...p,
+          isMainFeatured: isFeatured,
+          tags: newTags,
+        };
+      }
+      return p;
+    });
+
+    setProductsList(updatedList);
+    saveProductsToStorage(updatedList);
+    triggerToast(
+      isFeatured
+        ? `✨ 선택한 ${targetIds.length}개 상품이 쇼핑몰 메인 화면 [진열]로 일괄 등록되었습니다.`
+        : `🚫 선택한 ${targetIds.length}개 상품이 메인 화면 [미진열]로 일괄 해제되었습니다.`
+    );
+  };
+
+  const handleBulkUpdateStock = (targetIds: string[], stockQty: number) => {
+    if (!targetIds || targetIds.length === 0) return;
+    const actionLabel = stockQty === 0 ? "품절 (재고 0개)" : `정상 판매중 (재고 ${stockQty}개)`;
+    const isConfirmed = window.confirm(
+      `선택한 ${targetIds.length}개 상품의 재고를 [${actionLabel}]으로 일괄 설정하시겠습니까?`
+    );
+    if (!isConfirmed) return;
+
+    const idSet = new Set(targetIds.map(String));
+    const isSoldOut = stockQty === 0;
+    const updatedList = productsList.map((p) => {
+      if (idSet.has(String(p.id))) {
+        let updatedStockMap = p.stockMap;
+        let updatedSizeStock = p.sizeStock;
+
+        if (isSoldOut) {
+          if (p.sizeStock && typeof p.sizeStock === "object") {
+            const clearedSizeStock: Record<string, number> = {};
+            Object.keys(p.sizeStock).forEach((k) => {
+              clearedSizeStock[k] = 0;
+            });
+            updatedSizeStock = clearedSizeStock;
+          }
+          if (p.stockMap && typeof p.stockMap === "object") {
+            const clearedStockMap: Record<string, number> = {};
+            Object.keys(p.stockMap).forEach((k) => {
+              clearedStockMap[k] = 0;
+            });
+            updatedStockMap = clearedStockMap;
+          }
+        }
+
+        return {
+          ...p,
+          stock: stockQty,
+          availableForSale: !isSoldOut,
+          sizeStock: updatedSizeStock,
+          stockMap: updatedStockMap,
+        };
+      }
+      return p;
+    });
+
+    setProductsList(updatedList);
+    saveProductsToStorage(updatedList);
+    triggerToast(
+      isSoldOut
+        ? `🔒 선택한 ${targetIds.length}개 상품이 [품절] 상태로 일괄 변경되었습니다.`
+        : `📦 선택한 ${targetIds.length}개 상품의 재고가 [${stockQty}개]로 일괄 변경되었습니다.`
+    );
+  };
+
   const handleBulkDeleteProducts = (targetIds: string[]) => {
     if (!targetIds || targetIds.length === 0) return;
     const isConfirmed = window.confirm(
@@ -3118,6 +3210,8 @@ export default function AdminPage() {
               handleBulkAddProducts={handleBulkAddProducts}
               handleMoveProduct={handleMoveProduct}
               handleBulkDeleteProducts={handleBulkDeleteProducts}
+              handleBulkUpdateMainFeatured={handleBulkUpdateMainFeatured}
+              handleBulkUpdateStock={handleBulkUpdateStock}
               handleReorderProducts={handleReorderProducts}
               handleQuickUpdateCategory={(id: string, newCategory: string) => {
                 const targetProd = productsList.find((p) => String(p.id) === String(id));

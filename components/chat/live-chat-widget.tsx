@@ -408,8 +408,8 @@ export function LiveChatWidget() {
           <div className="bg-neutral-950 text-white px-5 py-4 flex items-center justify-between shrink-0 shadow-md">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 text-neutral-950 font-black text-xs flex items-center justify-center shadow-xs">
-                  <Crown className="w-4 h-4 fill-neutral-950 text-neutral-950" />
+                <div className="w-9 h-9 rounded-full bg-neutral-800 text-white font-black text-xs flex items-center justify-center shadow-xs border border-neutral-700">
+                  <MessageSquare className="w-4 h-4 text-white" />
                 </div>
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-neutral-950" />
               </div>

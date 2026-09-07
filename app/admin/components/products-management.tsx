@@ -23,6 +23,9 @@ import {
   RotateCcw,
   GripVertical,
   Box,
+  Sparkles,
+  EyeOff,
+  Layers,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import * as XLSX from "xlsx";
@@ -82,6 +85,8 @@ interface ProductsManagementProps {
   handleBulkAddProducts?: (newProducts: any[]) => void;
   handleMoveProduct?: (id: string, direction: "up" | "down") => void;
   handleBulkDeleteProducts?: (targetIds: string[]) => void;
+  handleBulkUpdateMainFeatured?: (targetIds: string[], isFeatured: boolean) => void;
+  handleBulkUpdateStock?: (targetIds: string[], stockQty: number) => void;
   handleReorderProducts?: (fromId: string, toId: string, showToast?: boolean) => void;
   handleQuickUpdateCategory?: (id: string, newCategory: string) => void;
   handleQuickUpdatePrice?: (id: string, newPrice: number | string) => boolean | void;
@@ -391,6 +396,8 @@ export function ProductsManagement({
   handleBulkAddProducts,
   handleMoveProduct,
   handleBulkDeleteProducts,
+  handleBulkUpdateMainFeatured,
+  handleBulkUpdateStock,
   handleReorderProducts,
   handleQuickUpdateCategory,
   handleQuickUpdatePrice,
@@ -429,6 +436,8 @@ export function ProductsManagement({
     );
   };
 
+  const [isBulkActionMenuOpen, setIsBulkActionMenuOpen] = useState(false);
+
   const handleExecuteBulkDelete = () => {
     if (selectedProductIds.length === 0) return;
     if (handleBulkDeleteProducts) {
@@ -442,6 +451,91 @@ export function ProductsManagement({
       selectedProductIds.forEach((id) => handleDeleteProduct(id, ""));
       setSelectedProductIds([]);
     }
+    setIsBulkActionMenuOpen(false);
+  };
+
+  // Bulk Register Main Featured (Single Batch Update)
+  const handleExecuteBulkMainFeatured = () => {
+    if (selectedProductIds.length === 0) return;
+    if (handleBulkUpdateMainFeatured) {
+      handleBulkUpdateMainFeatured(selectedProductIds, true);
+    } else {
+      const isConfirmed = window.confirm(
+        `선택한 ${selectedProductIds.length}개 상품을 [메인화면 진열]로 일괄 등록하시겠습니까?`
+      );
+      if (!isConfirmed) return;
+      selectedProductIds.forEach((id) => {
+        const target = productsList.find((p) => String(p.id) === String(id));
+        if (target && !target.isMainFeatured) {
+          toggleMainFeatured(target.id);
+        }
+      });
+    }
+    setIsBulkActionMenuOpen(false);
+    setSelectedProductIds([]);
+  };
+
+  // Bulk Unregister Main Featured (Single Batch Update)
+  const handleExecuteBulkUnfeatured = () => {
+    if (selectedProductIds.length === 0) return;
+    if (handleBulkUpdateMainFeatured) {
+      handleBulkUpdateMainFeatured(selectedProductIds, false);
+    } else {
+      const isConfirmed = window.confirm(
+        `선택한 ${selectedProductIds.length}개 상품을 [메인화면 미진열]로 일괄 해제하시겠습니까?`
+      );
+      if (!isConfirmed) return;
+      selectedProductIds.forEach((id) => {
+        const target = productsList.find((p) => String(p.id) === String(id));
+        if (target && target.isMainFeatured) {
+          toggleMainFeatured(target.id);
+        }
+      });
+    }
+    setIsBulkActionMenuOpen(false);
+    setSelectedProductIds([]);
+  };
+
+  // Bulk Mark as Sold Out (Single Batch Update)
+  const handleExecuteBulkSoldOut = () => {
+    if (selectedProductIds.length === 0) return;
+    if (handleBulkUpdateStock) {
+      handleBulkUpdateStock(selectedProductIds, 0);
+    } else {
+      const isConfirmed = window.confirm(
+        `선택한 ${selectedProductIds.length}개 상품을 [품절 (재고 0개)] 처리하시겠습니까?`
+      );
+      if (!isConfirmed) return;
+      selectedProductIds.forEach((id) => {
+        if (handleQuickUpdateStock) {
+          handleQuickUpdateStock(String(id), 0);
+        } else {
+          toggleStock(id);
+        }
+      });
+    }
+    setIsBulkActionMenuOpen(false);
+    setSelectedProductIds([]);
+  };
+
+  // Bulk Mark as In Stock (Single Batch Update)
+  const handleExecuteBulkInStock = () => {
+    if (selectedProductIds.length === 0) return;
+    if (handleBulkUpdateStock) {
+      handleBulkUpdateStock(selectedProductIds, 50);
+    } else {
+      const isConfirmed = window.confirm(
+        `선택한 ${selectedProductIds.length}개 상품의 재고를 [정상 판매중 (재고 50개)]으로 일괄 설정하시겠습니까?`
+      );
+      if (!isConfirmed) return;
+      selectedProductIds.forEach((id) => {
+        if (handleQuickUpdateStock) {
+          handleQuickUpdateStock(String(id), 50);
+        }
+      });
+    }
+    setIsBulkActionMenuOpen(false);
+    setSelectedProductIds([]);
   };
 
   // Real-Time Drag & Drop Handlers (Live Shifting of Other Items)
@@ -873,15 +967,81 @@ export function ProductsManagement({
           </div>
 
           {selectedProductIds.length > 0 && (
-            <button
-              type="button"
-              onClick={handleExecuteBulkDelete}
-              className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer animate-in fade-in"
-              title="선택한 상품들을 일괄 삭제합니다"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>선택 상품 일괄 삭제 ({selectedProductIds.length}개)</span>
-            </button>
+            <div className="relative inline-block text-left animate-in fade-in">
+              <button
+                type="button"
+                onClick={() => setIsBulkActionMenuOpen(!isBulkActionMenuOpen)}
+                className="flex items-center gap-2 bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer"
+                title="선택한 상품 일괄 관리 메뉴"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>선택 관리 ({selectedProductIds.length}개)</span>
+                <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
+              </button>
+
+              {isBulkActionMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsBulkActionMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-neutral-200 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3 py-1.5 border-b border-neutral-100 text-[11px] font-black text-neutral-400 uppercase tracking-wider">
+                      선택 상품 ({selectedProductIds.length}개) 일괄 작업
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleExecuteBulkMainFeatured}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      <span>메인화면 진열 등록</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleExecuteBulkUnfeatured}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-100 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <EyeOff className="w-3.5 h-3.5 text-neutral-500" />
+                      <span>메인화면 진열 해제</span>
+                    </button>
+
+                    <div className="my-1 border-t border-neutral-100" />
+
+                    <button
+                      type="button"
+                      onClick={handleExecuteBulkSoldOut}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-neutral-900 hover:bg-neutral-100 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5 text-neutral-600" />
+                      <span>품절 처리 (재고 0개)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleExecuteBulkInStock}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>판매 재개 (재고 50개)</span>
+                    </button>
+
+                    <div className="my-1 border-t border-neutral-100" />
+
+                    <button
+                      type="button"
+                      onClick={handleExecuteBulkDelete}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>선택 상품 일괄 삭제</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>
