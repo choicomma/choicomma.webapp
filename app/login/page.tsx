@@ -35,6 +35,95 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  const [postcode, setPostcode] = useState("");
+  const [addressDetail, setAddressDetail] = useState("");
+  const [isPhoneChecked, setIsPhoneChecked] = useState(false);
+  const [phoneCheckMessage, setPhoneCheckMessage] = useState<{ status: "success" | "error"; text: string } | null>(null);
+
+  // Load Daum Postcode script dynamically
+  useEffect(() => {
+    if (typeof window !== "undefined" && !(window as any).daum) {
+      const script = document.createElement("script");
+      script.id = "daum-postcode-script";
+      script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  // Daum Postcode Open API Handler
+  const handleOpenPostcode = () => {
+    if (typeof window !== "undefined" && (window as any).daum?.Postcode) {
+      new (window as any).daum.Postcode({
+        oncomplete: function (data: any) {
+          let fullAddress = data.address;
+          let extraAddress = "";
+
+          if (data.addressType === "R") {
+            if (data.bname !== "") {
+              extraAddress += data.bname;
+            }
+            if (data.buildingName !== "") {
+              extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
+            }
+            fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
+          }
+
+          setPostcode(data.zonecode || "");
+          setAddress(fullAddress);
+          setToastMsg(`주소가 선택되었습니다: ${fullAddress}`);
+        },
+      }).open();
+    } else {
+      setToastMsg("우편번호 검색 서비스를 불러오는 중입니다. 잠시 후 다시 클릭해 주세요.");
+    }
+  };
+
+  // Check ID (Phone Number) Duplicate
+  const handleCheckIdDuplicate = () => {
+    const cleanPhone = phone.replace(/[^0-9]/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      setPhoneCheckMessage({
+        status: "error",
+        text: "올바른 휴대폰 번호(10~11자리)를 입력해 주세요.",
+      });
+      setIsPhoneChecked(false);
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      const savedCustomers = localStorage.getItem("admin_customers");
+      let isDuplicate = false;
+      if (savedCustomers) {
+        try {
+          const customerList: any[] = JSON.parse(savedCustomers);
+          isDuplicate = customerList.some(
+            (c) => c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhone
+          );
+        } catch (e) {}
+      }
+
+      // Also check local storage saved user password keys
+      if (localStorage.getItem(`user_pwd_${cleanPhone}`)) {
+        isDuplicate = true;
+      }
+
+      if (isDuplicate) {
+        setPhoneCheckMessage({
+          status: "error",
+          text: "이미 가입된 휴대폰 번호(ID)입니다. 다른 번호를 입력해 주세요.",
+        });
+        setIsPhoneChecked(false);
+      } else {
+        setPhoneCheckMessage({
+          status: "success",
+          text: "사용 가능한 로그인 ID(휴대폰 번호)입니다.",
+        });
+        setIsPhoneChecked(true);
+      }
+    }
+  };
+
   // Password Reset Modal state
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [resetInputEmail, setResetInputEmail] = useState("");
@@ -189,11 +278,13 @@ export default function LoginPage() {
       if (isSignUp) {
         const displayName = name.trim() || "신규회원";
         const finalEmail = email.trim() ? email.trim() : `${cleanPhoneId || Date.now()}@choicomma.com`;
+        const fullCombinedAddress = addressDetail.trim() ? `${address.trim()} ${addressDetail.trim()}` : address.trim();
 
         localStorage.setItem("membership_user_name", displayName);
         localStorage.setItem("membership_user_phone", phone.trim());
         localStorage.setItem("membership_user_email", finalEmail);
-        localStorage.setItem("membership_user_address", address.trim());
+        localStorage.setItem("membership_user_postcode", postcode.trim() || "06306");
+        localStorage.setItem("membership_user_address", fullCombinedAddress);
 
         // Save password under both phone and email
         if (cleanPhoneId) {
@@ -217,16 +308,17 @@ export default function LoginPage() {
           name: displayName,
           email: finalEmail,
           phone: phone.trim() || "010-1234-5678",
-          address: address.trim() || "서울특별시 강남구 압구정로 100",
+          address: fullCombinedAddress || "서울특별시 강남구 압구정로 100",
           joinedDate: new Date().toISOString().split("T")[0],
           totalOrders: 0,
           totalSpent: 0,
-          grade: "Regular",
+          grade: "GENERAL",
           points: 5000,
           status: "Active",
         };
         localStorage.setItem("admin_customers", JSON.stringify([newCustomer, ...customerList]));
         window.dispatchEvent(new CustomEvent("storage"));
+        window.dispatchEvent(new CustomEvent("admin_customers_updated"));
       } else {
         // Login flow: match by phone or email
         const phoneKey = `user_pwd_${inputLoginId.replace(/[^0-9]/g, "")}`;
@@ -416,20 +508,54 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                    휴대폰 번호 <span className="text-sky-600 font-extrabold">(로그인 ID) *</span>
-                  </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-sky-500" />
-                    <input
-                      type="tel"
-                      required
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="010-0000-0000"
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold font-mono"
-                    />
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                      휴대폰 번호 <span className="text-sky-600 font-extrabold">(로그인 ID) *</span>
+                    </label>
+                    <span className="text-[10px] text-neutral-400 font-medium">로그인 아이디로 사용됩니다</span>
                   </div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-sky-500" />
+                      <input
+                        type="tel"
+                        required
+                        value={phone}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          setIsPhoneChecked(false);
+                          setPhoneCheckMessage(null);
+                        }}
+                        placeholder="010-0000-0000"
+                        className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold font-mono ${
+                          phoneCheckMessage?.status === "success"
+                            ? "border-emerald-500 bg-emerald-50/20"
+                            : phoneCheckMessage?.status === "error"
+                            ? "border-rose-500 bg-rose-50/20"
+                            : "border-neutral-200 focus:border-neutral-950"
+                        }`}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCheckIdDuplicate}
+                      className="px-3.5 py-3 bg-neutral-900 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer"
+                    >
+                      중복 확인
+                    </button>
+                  </div>
+                  {phoneCheckMessage && (
+                    <p
+                      className={`text-[11px] font-bold mt-1.5 flex items-center gap-1 ${
+                        phoneCheckMessage.status === "success"
+                          ? "text-emerald-600"
+                          : "text-rose-600"
+                      }`}
+                    >
+                      {phoneCheckMessage.status === "success" ? "✓" : "✕"}{" "}
+                      {phoneCheckMessage.text}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -450,20 +576,57 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                    집 주소 (기본 배송지) <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                      집 주소 (기본 배송지) <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[10px] text-emerald-600 font-bold">오픈 API 주소검색</span>
+                  </div>
+
+                  {/* Postcode & Address Search Button Row */}
+                  <div className="flex gap-2 mb-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        readOnly
+                        value={postcode}
+                        placeholder="우편번호"
+                        onClick={handleOpenPostcode}
+                        className="w-full bg-neutral-100 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-800 font-bold font-mono cursor-pointer"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleOpenPostcode}
+                      className="px-3.5 py-2.5 bg-neutral-900 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>주소 검색 (Open API)</span>
+                    </button>
+                  </div>
+
+                  {/* Main Road Address Input */}
+                  <div className="relative mb-2">
                     <MapPin className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                     <input
                       type="text"
                       required
                       value={address}
+                      onClick={handleOpenPostcode}
                       onChange={(e) => setAddress(e.target.value)}
-                      placeholder="서울특별시 강남구 압구정로 100 럭셔리 타워 1001호"
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold text-xs"
+                      placeholder="주소 검색 버튼을 눌러 도로명 주소를 입력하세요"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-xs text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold cursor-pointer"
                     />
                   </div>
+
+                  {/* Detail Address Input */}
+                  <input
+                    type="text"
+                    value={addressDetail}
+                    onChange={(e) => setAddressDetail(e.target.value)}
+                    placeholder="상세 주소를 입력하세요 (동·호수, 층수 등)"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium"
+                  />
                 </div>
               </>
             )}
