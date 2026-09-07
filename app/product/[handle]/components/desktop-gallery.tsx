@@ -28,8 +28,8 @@ export const DesktopGallery = ({ product }: { product: Product }) => {
           <button
             key={`${image.url}-${index}`}
             onClick={() => setActiveIndex(index)}
-            className={`relative w-full aspect-[3/4] overflow-hidden transition-all duration-300 bg-white focus:outline-none focus:ring-0 ${
-              activeIndex === index ? "opacity-100" : "opacity-40 hover:opacity-100"
+            className={`relative w-full aspect-square overflow-hidden transition-all duration-300 bg-white border border-neutral-100 focus:outline-none focus:ring-0 ${
+              activeIndex === index ? "opacity-100 border-neutral-400" : "opacity-50 hover:opacity-100"
             }`}
           >
             <Image

@@ -102,11 +102,24 @@ export interface SizeMeasurementRow {
   values: Record<string, string>;
 }
 
+const MEASUREMENT_KO_MAP: Record<string, string> = {
+  "SHOULDER": "어깨단면",
+  "어깨너비": "어깨단면",
+  "CHEST": "가슴단면",
+  "SLEEVE": "팔길이",
+  "소매길이": "팔길이",
+  "LENGTH": "총장",
+  "WAIST": "허리단면",
+  "HIP": "힙단면",
+  "THIGH": "허벅지단면",
+  "HEM": "밑단단면",
+};
+
 const DEFAULT_SIZE_MEASUREMENTS: SizeMeasurementRow[] = [
-  { name: "SHOULDER", values: { "1": "50", "2": "52", "3": "54", "FREE": "56" } },
-  { name: "CHEST", values: { "1": "56.5", "2": "58.5", "3": "60.5", "FREE": "62.5" } },
-  { name: "SLEEVE", values: { "1": "59", "2": "60", "3": "61", "FREE": "61.5" } },
-  { name: "LENGTH", values: { "1": "58/62.5", "2": "60/64.5", "3": "62/66.5", "FREE": "63/67.5" } },
+  { name: "어깨단면", values: { "1": "50", "2": "52", "3": "54", "FREE": "56" } },
+  { name: "가슴단면", values: { "1": "56.5", "2": "58.5", "3": "60.5", "FREE": "62.5" } },
+  { name: "팔길이", values: { "1": "59", "2": "60", "3": "61", "FREE": "61.5" } },
+  { name: "총장", values: { "1": "58/62.5", "2": "60/64.5", "3": "62/66.5", "FREE": "63/67.5" } },
 ];
 
 // Initial orders data
@@ -255,7 +268,7 @@ export default function AdminPage() {
           if (Array.isArray(parsed)) {
             setInquiriesList(parsed);
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     }
   }, []);
@@ -268,7 +281,7 @@ export default function AdminPage() {
         if (saved) {
           try {
             setInquiriesList(JSON.parse(saved));
-          } catch (e) {}
+          } catch (e) { }
         }
       }
     };
@@ -318,7 +331,7 @@ export default function AdminPage() {
               }
               return prev;
             });
-          } catch (e) {}
+          } catch (e) { }
         }
       }
     };
@@ -356,7 +369,7 @@ export default function AdminPage() {
   const [newInboundWarehouse, setNewInboundWarehouse] = useState("제1물류센터 A구역");
   const [newInboundNotes, setNewInboundNotes] = useState("");
   const [newInboundStatus, setNewInboundStatus] = useState("Scheduled");
-  
+
   // Initial default product catalog from public/상품전체정보.xlsx
   const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
 
@@ -395,17 +408,25 @@ export default function AdminPage() {
     fetchServerProducts();
   }, []);
 
-  // Helper: Calculate accurate total stock for color x size combinations
+  // Helper: Calculate accurate total stock for color x size combinations or direct size stock
   const calculateTotalStock = (colors: string[], sizes: string[], stockMap: Record<string, number>): number => {
-    if (!colors?.length || !sizes?.length) return 0;
+    const effectiveSizes = sizes?.length ? sizes : ["FREE"];
     let total = 0;
-    colors.forEach((c) => {
-      sizes.forEach((s) => {
-        const comboKey = `${c}-${s}`;
-        const qty = stockMap[comboKey] !== undefined ? stockMap[comboKey] : (stockMap[s] !== undefined ? stockMap[s] : 10);
+
+    if (colors && colors.length > 0) {
+      colors.forEach((c) => {
+        effectiveSizes.forEach((s) => {
+          const comboKey = `${c}-${s}`;
+          const qty = stockMap[comboKey] !== undefined ? stockMap[comboKey] : (stockMap[s] !== undefined ? stockMap[s] : 10);
+          total += (qty || 0);
+        });
+      });
+    } else {
+      effectiveSizes.forEach((s) => {
+        const qty = stockMap[s] !== undefined ? stockMap[s] : 10;
         total += (qty || 0);
       });
-    });
+    }
     return total;
   };
 
@@ -507,14 +528,14 @@ export default function AdminPage() {
       currentStatus === "Scheduled"
         ? "In Progress"
         : currentStatus === "In Progress"
-        ? "Completed"
-        : "Scheduled";
+          ? "Completed"
+          : "Scheduled";
     const nextText =
       nextStatus === "Completed"
         ? "입고 완료"
         : nextStatus === "In Progress"
-        ? "검수 진행 중"
-        : "입고 대기";
+          ? "검수 진행 중"
+          : "입고 대기";
 
     const targetItem = inboundSchedulesList.find((item) => item.id === id);
 
@@ -565,7 +586,7 @@ export default function AdminPage() {
           if (Array.isArray(parsed) && parsed.length > 0) {
             return parsed;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     }
     return initialOrders;
@@ -576,6 +597,49 @@ export default function AdminPage() {
   const [topSellerFilter, setTopSellerFilter] = useState<"all" | "topSeller" | "normal">("all");
   const [selectedCategoryForProducts, setSelectedCategoryForProducts] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Time sale states
+  const [adminTimeSaleHours, setAdminTimeSaleHours] = useState("14");
+  const [adminTimeSaleMinutes, setAdminTimeSaleMinutes] = useState("55");
+  const [adminTimeSaleDiscount, setAdminTimeSaleDiscount] = useState("35");
+  const [adminTimeSaleTitle, setAdminTimeSaleTitle] = useState("VIP 회원만을 위해 준비된 파격 할인 한정 단독 시크릿 타임세일");
+  const [adminTimeSaleStatus, setAdminTimeSaleStatus] = useState("active");
+  const [adminTimeSaleCategory, setAdminTimeSaleCategory] = useState("all");
+  const [adminTimeSaleProductIds, setAdminTimeSaleProductIds] = useState<string[]>([]);
+
+  // Secret Time Sale states (Member Target Specific)
+  const [secretSalesList, setSecretSalesList] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("admin_secret_timesales");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return parsed;
+        } catch (e) { }
+      }
+    }
+    return [
+      {
+        id: "SECRET-TS-001",
+        title: "[VIP 단독] 2026 S/S 시즌 프라이빗 40% 한정 특가",
+        discountRate: 40,
+        productIds: ["product-1", "product-2", "product-3"],
+        targetCustomerEmails: ["vip@example.com", "gold@example.com"],
+        targetGrades: ["VIP", "VVIP"],
+        durationHours: 24,
+        durationMinutes: 0,
+        status: "active",
+        createdAt: new Date().toISOString(),
+      },
+    ];
+  });
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_secret_timesales", JSON.stringify(secretSalesList));
+      window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
+    }
+  }, [secretSalesList]);
 
   function triggerToast(msg: string) {
     setToastMessage(msg);
@@ -812,6 +876,68 @@ export default function AdminPage() {
     handleToggleHeroProduct(id);
   };
 
+  const filteredProducts = React.useMemo(() => {
+    return productsList.filter((p) => {
+      // Ignore main banner slides from product catalog
+      if (p.categoryId === "main_banner" || String(p.id).startsWith("hero-slide-")) {
+        return false;
+      }
+
+      // 1. Search Query Filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const code = (p.productCode || "").toLowerCase();
+        const no = String(p.productNo || "");
+        const title = (p.title || "").toLowerCase();
+        const desc = (p.description || "").toLowerCase();
+        if (!code.includes(q) && !no.includes(q) && !title.includes(q) && !desc.includes(q)) {
+          return false;
+        }
+      }
+
+      // 2. Category Filter
+      if (selectedCategoryFilter !== "all") {
+        if (selectedCategoryFilter === "timesale") {
+          const isTimeSale =
+            p.categoryId === "timesale" ||
+            (Array.isArray(p.categoryIds) && p.categoryIds.includes("timesale")) ||
+            p.isTimeSale === true ||
+            adminTimeSaleProductIds.includes(String(p.id)) ||
+            (p.timeSaleDiscountRate !== undefined && Number(p.timeSaleDiscountRate) > 0);
+          if (!isTimeSale) return false;
+        } else {
+          const hasCategory =
+            p.categoryId === selectedCategoryFilter ||
+            (Array.isArray(p.categoryIds) && p.categoryIds.includes(selectedCategoryFilter));
+          if (!hasCategory) return false;
+        }
+      }
+
+      return true;
+    }).sort((a, b) => {
+      if (productSortOrder === "productNoDesc") {
+        return getProductNoNum(b) - getProductNoNum(a);
+      }
+      if (productSortOrder === "productNoAsc") {
+        return getProductNoNum(a) - getProductNoNum(b);
+      }
+      if (productSortOrder === "nameAsc") {
+        return (a.title || "").localeCompare(b.title || "");
+      }
+      if (productSortOrder === "priceDesc") {
+        const pA = Number(a.priceRange?.minVariantPrice?.amount || a.price?.amount || 0);
+        const pB = Number(b.priceRange?.minVariantPrice?.amount || b.price?.amount || 0);
+        return pB - pA;
+      }
+      if (productSortOrder === "priceAsc") {
+        const pA = Number(a.priceRange?.minVariantPrice?.amount || a.price?.amount || 0);
+        const pB = Number(b.priceRange?.minVariantPrice?.amount || b.price?.amount || 0);
+        return pA - pB;
+      }
+      return 0;
+    });
+  }, [productsList, searchQuery, selectedCategoryFilter, productSortOrder, adminTimeSaleProductIds, getProductNoNum]);
+
   const categoryProducts = React.useMemo(() => {
     if (!selectedCategoryForProducts) return [];
     if (selectedCategoryForProducts === "timesale") {
@@ -903,17 +1029,20 @@ export default function AdminPage() {
   const [editLabel, setEditLabel] = useState<"" | "BLACK_LABEL" | "PREMIUM" | "ESSENTIAL">("PREMIUM");
   const [editColors, setEditColors] = useState<string[]>([]);
   const [editColorHexMap, setEditColorHexMap] = useState<Record<string, string>>(DEFAULT_COLOR_HEX_MAP);
+  const [editColorImages, setEditColorImages] = useState<Record<string, string>>({});
   const [editCustomColorInput, setEditCustomColorInput] = useState("");
+  const [editCustomColorImg, setEditCustomColorImg] = useState("");
   const [editSizes, setEditSizes] = useState<string[]>(["1", "2", "3"]);
   const [editSizeMeasurements, setEditSizeMeasurements] = useState<SizeMeasurementRow[]>(DEFAULT_SIZE_MEASUREMENTS);
   const [editNewMeasurementName, setEditNewMeasurementName] = useState("");
   const [editSizeStock, setEditSizeStock] = useState<Record<string, number>>({});
   // Bulk discount states for edit modal
   const [editBulkEnabled, setEditBulkEnabled] = useState(false);
-  const [editBulkRules, setEditBulkRules] = useState<{qty: number; rate: number}[]>([{ qty: 2, rate: 5 }]);
+  const [editBulkRules, setEditBulkRules] = useState<{ qty: number; rate: number }[]>([{ qty: 2, rate: 5 }]);
   // Fabric info states for edit modal
   const [editFabricComposition, setEditFabricComposition] = useState("COTTON 100% (프리미엄 콤마 코튼)");
   const [editShowFabricBadge, setEditShowFabricBadge] = useState<boolean>(false);
+  const [editShowSizeGuide, setEditShowSizeGuide] = useState<boolean>(false);
   const [editElasticity, setEditElasticity] = useState("보통");
   const [editSheerness, setEditSheerness] = useState("없음");
   const [editThickness, setEditThickness] = useState("적당함");
@@ -953,36 +1082,54 @@ export default function AdminPage() {
     setEditColors(initialColors);
     const initialHexMap = product.colorHexMap ? { ...DEFAULT_COLOR_HEX_MAP, ...product.colorHexMap } : DEFAULT_COLOR_HEX_MAP;
     setEditColorHexMap(initialHexMap);
+    setEditColorImages(product.colorImages || {});
     setEditCustomColorInput("");
+    setEditCustomColorImg("");
     const initialSizes = product.sizes?.length ? product.sizes : ["1", "2", "3"];
     setEditSizes(initialSizes);
     const initialMeasurements = product.sizeMeasurements && product.sizeMeasurements.length > 0
-      ? product.sizeMeasurements
+      ? product.sizeMeasurements.map((m: any) => ({
+        ...m,
+        name: MEASUREMENT_KO_MAP[m.name] || m.name,
+      }))
       : DEFAULT_SIZE_MEASUREMENTS;
     setEditSizeMeasurements(initialMeasurements);
     setEditNewMeasurementName("");
-    
+
     const initialSizeStock: Record<string, number> = {};
-    if (product.sizeStock) {
-      initialColors.forEach((c: string) => {
-        initialSizes.forEach((s: string) => {
-          const comboKey = `${c}-${s}`;
-          if (product.sizeStock[comboKey] !== undefined) {
-            initialSizeStock[comboKey] = product.sizeStock[comboKey];
-          } else if (product.sizeStock[s] !== undefined) {
-            initialSizeStock[comboKey] = product.sizeStock[s];
-          } else {
-            initialSizeStock[comboKey] = 10;
-          }
+    if (initialColors.length > 0) {
+      if (product.sizeStock) {
+        initialColors.forEach((c: string) => {
+          initialSizes.forEach((s: string) => {
+            const comboKey = `${c}-${s}`;
+            if (product.sizeStock[comboKey] !== undefined) {
+              initialSizeStock[comboKey] = product.sizeStock[comboKey];
+            } else if (product.sizeStock[s] !== undefined) {
+              initialSizeStock[comboKey] = product.sizeStock[s];
+            } else {
+              initialSizeStock[comboKey] = 10;
+            }
+          });
         });
-      });
+      } else {
+        const baseStock = getProductStock(product) || 50;
+        const perCombo = Math.floor(baseStock / Math.max(1, initialColors.length * initialSizes.length)) || 10;
+        initialColors.forEach((c: string) => {
+          initialSizes.forEach((s: string) => {
+            initialSizeStock[`${c}-${s}`] = perCombo;
+          });
+        });
+      }
     } else {
+      // Products with no color option (size only)
       const baseStock = getProductStock(product) || 50;
-      const perCombo = Math.floor(baseStock / Math.max(1, initialColors.length * initialSizes.length)) || 10;
-      initialColors.forEach((c: string) => {
-        initialSizes.forEach((s: string) => {
-          initialSizeStock[`${c}-${s}`] = perCombo;
-        });
+      const perSize = Math.floor(baseStock / Math.max(1, initialSizes.length)) || 10;
+      initialSizes.forEach((s: string) => {
+        if (product.sizeStock && product.sizeStock[s] !== undefined) {
+          initialSizeStock[s] = product.sizeStock[s];
+        } else {
+          initialSizeStock[s] = perSize;
+        }
       });
     }
     setEditSizeStock(initialSizeStock);
@@ -990,6 +1137,7 @@ export default function AdminPage() {
     setEditBulkRules(product.bulkDiscount?.rules?.length ? product.bulkDiscount.rules : [{ qty: 2, rate: 5 }]);
     setEditFabricComposition(product.fabricComposition || "COTTON 100% (프리미엄 콤마 코튼)");
     setEditShowFabricBadge(product.showFabricBadge === true);
+    setEditShowSizeGuide(product.showSizeGuide === true);
     setEditElasticity(product.elasticity || "보통");
     setEditSheerness(product.sheerness || "없음");
     setEditThickness(product.thickness || "적당함");
@@ -1036,8 +1184,10 @@ export default function AdminPage() {
           productLabel: editLabel,
           colors: editColors,
           colorHexMap: editColorHexMap,
+          colorImages: editColorImages,
           sizes: editSizes,
           sizeMeasurements: editSizeMeasurements,
+          showSizeGuide: editShowSizeGuide,
           options: [
             { id: "color", name: "Color", values: editColors },
             { id: "size", name: "Size", values: editSizes },
@@ -1047,6 +1197,7 @@ export default function AdminPage() {
               id: `${editingProduct.id}-${color}-${size}`,
               title: `${editTitle} - ${color} / ${size}`,
               availableForSale: totalStock > 0,
+              image: editColorImages[color] ? { url: editColorImages[color], altText: `${editTitle} - ${color}` } : undefined,
               selectedOptions: [
                 { name: "Color", value: color },
                 { name: "Size", value: size },
@@ -1122,7 +1273,7 @@ export default function AdminPage() {
           if (Array.isArray(parsed)) {
             setSetSalesList(parsed);
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     }
   }, []);
@@ -1154,7 +1305,9 @@ export default function AdminPage() {
   const [newIsMainFeatured, setNewIsMainFeatured] = useState(true);
   const [newColors, setNewColors] = useState<string[]>([]);
   const [newColorHexMap, setNewColorHexMap] = useState<Record<string, string>>(DEFAULT_COLOR_HEX_MAP);
+  const [newColorImages, setNewColorImages] = useState<Record<string, string>>({});
   const [newCustomColor, setNewCustomColor] = useState("");
+  const [newCustomColorImg, setNewCustomColorImg] = useState("");
   const [newLabel, setNewLabel] = useState<"" | "BLACK_LABEL" | "PREMIUM" | "ESSENTIAL">("PREMIUM");
   const [newSizes, setNewSizes] = useState<string[]>(["1", "2", "3"]);
   const [newSizeMeasurements, setNewSizeMeasurements] = useState<SizeMeasurementRow[]>(DEFAULT_SIZE_MEASUREMENTS);
@@ -1162,10 +1315,11 @@ export default function AdminPage() {
   const [newSizeStock, setNewSizeStock] = useState<Record<string, number>>({ "1": 10, "2": 10, "3": 10 });
   // Bulk discount states for new product modal
   const [newBulkEnabled, setNewBulkEnabled] = useState(false);
-  const [newBulkRules, setNewBulkRules] = useState<{qty: number; rate: number}[]>([{ qty: 2, rate: 5 }]);
+  const [newBulkRules, setNewBulkRules] = useState<{ qty: number; rate: number }[]>([{ qty: 2, rate: 5 }]);
   // Fabric info states for new product modal
   const [newFabricComposition, setNewFabricComposition] = useState("COTTON 100% (프리미엄 콤마 코튼)");
   const [newShowFabricBadge, setNewShowFabricBadge] = useState<boolean>(false);
+  const [newShowSizeGuide, setNewShowSizeGuide] = useState<boolean>(false);
   const [newElasticity, setNewElasticity] = useState("보통");
   const [newSheerness, setNewSheerness] = useState("없음");
   const [newThickness, setNewThickness] = useState("적당함");
@@ -1201,14 +1355,6 @@ export default function AdminPage() {
   const [editTimeSaleEndMinute, setEditTimeSaleEndMinute] = useState("59");
 
 
-  const [adminTimeSaleHours, setAdminTimeSaleHours] = useState("14");
-  const [adminTimeSaleMinutes, setAdminTimeSaleMinutes] = useState("55");
-  const [adminTimeSaleDiscount, setAdminTimeSaleDiscount] = useState("35");
-  const [adminTimeSaleTitle, setAdminTimeSaleTitle] = useState("VIP 회원만을 위해 준비된 파격 할인 한정 단독 시크릿 타임세일");
-  const [adminTimeSaleStatus, setAdminTimeSaleStatus] = useState("active");
-  const [adminTimeSaleCategory, setAdminTimeSaleCategory] = useState("all");
-  const [adminTimeSaleProductIds, setAdminTimeSaleProductIds] = useState<string[]>([]);
-
   // Live Time Sale Countdown Remaining Ticker State
   const [nowTick, setNowTick] = useState(Date.now());
   const [productTimeSaleSettings, setProductTimeSaleSettings] = useState<Record<string, { hours: number; minutes: number; discountPrice?: string; discountRate?: number }>>(() => {
@@ -1239,7 +1385,7 @@ export default function AdminPage() {
       if (saved) {
         try {
           return JSON.parse(saved);
-        } catch (e) {}
+        } catch (e) { }
       }
     }
     return [
@@ -1267,7 +1413,7 @@ export default function AdminPage() {
           setAdminLiveChatMessages(parsed);
           return;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     setAdminLiveChatMessages([]);
   };
@@ -1480,27 +1626,54 @@ export default function AdminPage() {
   const [mainNoticeBanner, setMainNoticeBanner] = useState("전 상품 무료배송 & VIP 회원 추가 10% 할인이 진행 중입니다.");
   const [isMainNoticeActive, setIsMainNoticeActive] = useState(true);
 
+  // Default Admin Account
+  const DEFAULT_ADMIN_CUSTOMER = {
+    id: "ADMIN-001",
+    name: "최고관리자 (Admin)",
+    email: "admin@choicomma.com",
+    phone: "010-1234-5678",
+    address: "서울특별시 강남구 개포로22길 12 6층 (주)초이콤마 본사",
+    grade: "VVIP",
+    totalSpent: 25000000,
+    points: 100000,
+    couponsCount: 5,
+    joinedDate: "2026-01-01",
+    status: "Active",
+    role: "ADMIN",
+    isAdmin: true,
+  };
+
   // Customer Management Admin State
-  const [customersList, setCustomersList] = useState<any[]>([]);
+  const [customersList, setCustomersList] = useState<any[]>([DEFAULT_ADMIN_CUSTOMER]);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
-      const isCleared = localStorage.getItem("admin_customers_cleared_v2");
-      if (!isCleared) {
-        localStorage.setItem("admin_customers", JSON.stringify([]));
-        localStorage.setItem("admin_customers_cleared_v2", "true");
-        setCustomersList([]);
-        return;
-      }
       const saved = localStorage.getItem("admin_customers");
       if (saved) {
         try {
           const parsed: any[] = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            setCustomersList(parsed);
+            // Check if admin account exists, if not, prepend it
+            const hasAdmin = parsed.some(
+              (c) =>
+                (c.email && c.email.toLowerCase() === "admin@choicomma.com") ||
+                c.id === "ADMIN-001" ||
+                c.isAdmin === true
+            );
+            if (!hasAdmin) {
+              const updated = [DEFAULT_ADMIN_CUSTOMER, ...parsed];
+              setCustomersList(updated);
+              localStorage.setItem("admin_customers", JSON.stringify(updated));
+            } else {
+              setCustomersList(parsed);
+            }
+            return;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
+      // If no saved customers, initialize with default admin account
+      setCustomersList([DEFAULT_ADMIN_CUSTOMER]);
+      localStorage.setItem("admin_customers", JSON.stringify([DEFAULT_ADMIN_CUSTOMER]));
     }
   }, []);
 
@@ -1522,7 +1695,7 @@ export default function AdminPage() {
           if (Array.isArray(parsed)) {
             setCustomersList(parsed);
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     };
 
@@ -1550,7 +1723,7 @@ export default function AdminPage() {
           if (Array.isArray(parsed)) {
             setOrdersList(parsed);
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     };
 
@@ -1575,8 +1748,8 @@ export default function AdminPage() {
   const [newCustEmail, setNewCustEmail] = useState("");
   const [newCustPhone, setNewCustPhone] = useState("010-");
   const [newCustAddress, setNewCustAddress] = useState("");
-  const [newCustGrade, setNewCustGrade] = useState("REGULAR");
-  const [newCustPoints, setNewCustPoints] = useState("10000");
+  const [newCustGrade, setNewCustGrade] = useState("SILVER");
+  const [newCustPoints, setNewCustPoints] = useState("0");
   const [newCustStatus, setNewCustStatus] = useState("Active");
 
   // Edit Customer Modal State
@@ -1603,7 +1776,7 @@ export default function AdminPage() {
       grade: newCustGrade,
       totalSpent: 0,
       points: parseInt(newCustPoints) || 0,
-      couponsCount: 1,
+      couponsCount: 0,
       joinedDate: new Date().toISOString().split("T")[0],
       status: newCustStatus,
     };
@@ -1615,10 +1788,9 @@ export default function AdminPage() {
     setNewCustEmail("");
     setNewCustPhone("010-");
     setNewCustAddress("");
-    setNewCustGrade("REGULAR");
-    setNewCustPoints("10000");
-    setNewCustStatus("Active");
-    triggerToast(`신규 회원 '${newCust.name}'님 정보가 성공적으로 등록되었습니다!`);
+    setNewCustGrade("SILVER");
+    setNewCustPoints("0");
+    triggerToast(`[${newCust.name}] 회원이 정상적으로 등록되었습니다.`);
   };
 
   const handleOpenEditCustomer = (customer: any) => {
@@ -1626,7 +1798,7 @@ export default function AdminPage() {
     setEditCustGrade(customer.grade);
     setEditCustAddress(customer.address || "");
     setEditCustPointsDelta("0");
-    setEditCustStatus(customer.status);
+    setEditCustStatus(customer.status || "Active");
   };
 
   const handleSaveEditCustomer = (e: React.FormEvent) => {
@@ -1634,14 +1806,16 @@ export default function AdminPage() {
     if (!editingCustomer) return;
 
     const delta = parseInt(editCustPointsDelta) || 0;
+    const currentPoints = editingCustomer.points || 0;
+    const calculatedPoints = Math.max(0, currentPoints + delta);
+
     const updatedList = customersList.map((c) => {
       if (c.id === editingCustomer.id) {
-        const newPoints = Math.max(0, c.points + delta);
         return {
           ...c,
           grade: editCustGrade,
           address: editCustAddress,
-          points: newPoints,
+          points: calculatedPoints,
           status: editCustStatus,
         };
       }
@@ -1649,6 +1823,11 @@ export default function AdminPage() {
     });
 
     setCustomersList(updatedList);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_customers", JSON.stringify(updatedList));
+      window.dispatchEvent(new CustomEvent("storage"));
+      window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+    }
     setEditingCustomer(null);
     triggerToast(`회원 '${editingCustomer.name}'님의 정보가 반영되었습니다.`);
   };
@@ -1657,6 +1836,11 @@ export default function AdminPage() {
     if (window.confirm(`정말로 회원 '${name}'님의 계정 정보를 삭제하시겠습니까?`)) {
       const updated = customersList.filter((c) => c.id !== id);
       setCustomersList(updated);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("admin_customers", JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent("storage"));
+        window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+      }
       triggerToast(`회원 '${name}'님의 정보가 삭제되었습니다.`);
     }
   };
@@ -1675,14 +1859,18 @@ export default function AdminPage() {
         const rows: any[] = XLSX.utils.sheet_to_json(ws);
 
         const parsedCustomers = rows.map((row, idx) => {
-          const rawGrade = String(row["회원 등급"] || row["회원 그룹"] || "REGULAR").trim();
-          let grade = "REGULAR";
-          if (rawGrade.includes("BLACK") || rawGrade.includes("블랙")) grade = "BLACK VIP";
-          else if (rawGrade.includes("GOLD") || rawGrade.includes("골드")) grade = "GOLD VIP";
-          else if (rawGrade.includes("SILVER") || rawGrade.includes("실버")) grade = "SILVER VIP";
-          else if (rawGrade.includes("VIP") || rawGrade.includes("우수")) grade = "GOLD VIP";
-          else if (parseFloat(row["구매금액(KRW)"]) >= 1000000) grade = "GOLD VIP";
-          else if (parseFloat(row["구매금액(KRW)"]) >= 500000) grade = "SILVER VIP";
+          const rawGrade = String(row["회원 등급"] || row["회원 그룹"] || "").toUpperCase().trim();
+          let grade = "GENERAL";
+          if (rawGrade.includes("VVIP") || rawGrade.includes("BLACK") || rawGrade.includes("블랙")) grade = "VVIP";
+          else if (rawGrade.includes("PLATINUM") || rawGrade.includes("플래티넘")) grade = "PLATINUM";
+          else if (rawGrade.includes("GOLD") || rawGrade.includes("골드")) grade = "GOLD";
+          else if (rawGrade.includes("SILVER") || rawGrade.includes("실버")) grade = "SILVER";
+          else if (rawGrade.includes("GENERAL") || rawGrade.includes("일반") || rawGrade.includes("REGULAR")) grade = "GENERAL";
+          else if (parseFloat(row["구매금액(KRW)"]) >= 20000000) grade = "VVIP";
+          else if (parseFloat(row["구매금액(KRW)"]) >= 10000000) grade = "PLATINUM";
+          else if (parseFloat(row["구매금액(KRW)"]) >= 5000000) grade = "GOLD";
+          else if (parseFloat(row["구매금액(KRW)"]) >= 1000000) grade = "SILVER";
+          else grade = "GENERAL";
 
           const rawPhone = String(row["연락처"] || "").trim();
           const rawDate = String(row["가입일"] || "").trim();
@@ -1757,53 +1945,6 @@ export default function AdminPage() {
     });
   }, [customersList, customerSearchQuery, customerGradeFilter, customerStatusFilter]);
 
-  const filteredProducts = React.useMemo(() => {
-    const list = productsList.filter((p) => {
-      if (p.categoryId === "main_banner" || String(p.id).startsWith("hero-slide-")) return false;
-      const pCode = String(getProductNo(p));
-      const pNoNum = String(getProductNoNum(p));
-      const cleanSearch = searchQuery.toLowerCase().replace("#", "").trim();
-      const matchesSearch =
-        !searchQuery ||
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        pCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        pNoNum === cleanSearch ||
-        cleanSearch === pCode.toLowerCase().replace("cc-", "").replace("cc", "");
-      const matchesCategory =
-        selectedCategoryFilter === "all" ||
-        p.categoryId === selectedCategoryFilter ||
-        (Array.isArray(p.categoryIds) && p.categoryIds.includes(selectedCategoryFilter));
-      return matchesSearch && matchesCategory;
-    });
-
-    if (productSortOrder === "custom") {
-      return list;
-    }
-
-    list.sort((a, b) => {
-      const pNoA = getProductNoNum(a);
-      const pNoB = getProductNoNum(b);
-
-      if (productSortOrder === "productNoAsc") {
-        return pNoA - pNoB;
-      }
-      if (productSortOrder === "nameAsc") {
-        return a.title.localeCompare(b.title, "ko");
-      }
-      if (productSortOrder === "priceDesc") {
-        return parseFloat(b.priceRange?.minVariantPrice?.amount || "0") - parseFloat(a.priceRange?.minVariantPrice?.amount || "0");
-      }
-      if (productSortOrder === "priceAsc") {
-        return parseFloat(a.priceRange?.minVariantPrice?.amount || "0") - parseFloat(b.priceRange?.minVariantPrice?.amount || "0");
-      }
-      // Default: productNoDesc (상품번호 내림차순 / 최신 등록순)
-      return pNoB - pNoA;
-    });
-
-    return list;
-  }, [productsList, searchQuery, selectedCategoryFilter, productSortOrder, getProductNo, getProductNoNum]);
-
   // Customer Table Pagination
   const [customerPage, setCustomerPage] = useState(1);
   const CUSTOMERS_PER_PAGE = 25;
@@ -1829,7 +1970,7 @@ export default function AdminPage() {
           if (Array.isArray(parsed) && parsed.length > 0) {
             setShipmentsList(parsed);
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     }
   }, []);
@@ -1875,7 +2016,7 @@ export default function AdminPage() {
   const [cjClientCode, setCjClientCode] = useState("CJ-882910");
   const [cjContractNo, setCjContractNo] = useState("30291049");
   const [cjApiKey, setCjApiKey] = useState("cj_live_sk_89201948201948");
-  const [cjSenderAddress, setCjSenderAddress] = useState("(04512) 서울 중구 남대문로 81 choicomma 물류센터");
+  const [cjSenderAddress, setCjSenderAddress] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -1883,8 +2024,46 @@ export default function AdminPage() {
       if (savedPolicy) {
         try { setShippingPolicy(JSON.parse(savedPolicy)); } catch (e) { }
       }
+      const savedClientCode = localStorage.getItem("cj_client_code");
+      if (savedClientCode) setCjClientCode(savedClientCode);
+      const savedContractNo = localStorage.getItem("cj_contract_no");
+      if (savedContractNo) setCjContractNo(savedContractNo);
+      const savedSenderAddress = localStorage.getItem("cj_sender_address");
+      if (savedSenderAddress) setCjSenderAddress(savedSenderAddress);
+
+      // Load Daum Postcode API script for address search
+      if (!document.getElementById("daum-postcode-script")) {
+        const script = document.createElement("script");
+        script.id = "daum-postcode-script";
+        script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+        script.async = true;
+        document.body.appendChild(script);
+      }
     }
   }, []);
+
+  // Handler for Daum Postcode Address Search for Sender/Warehouse Address
+  const handleOpenSenderPostcode = () => {
+    if (typeof window !== "undefined" && (window as any).daum?.Postcode) {
+      new (window as any).daum.Postcode({
+        oncomplete: function (data: any) {
+          let fullAddress = data.roadAddress || data.jibunAddress;
+          let extraAddress = "";
+          if (data.addressType === "R") {
+            if (data.bname !== "") extraAddress += data.bname;
+            if (data.buildingName !== "") {
+              extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
+            }
+            fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
+          }
+          const formatted = `(${data.zonecode || "04512"}) ${fullAddress}`;
+          setCjSenderAddress(formatted);
+        },
+      }).open();
+    } else {
+      triggerToast("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
+    }
+  };
 
   const handleIssueCjLogisticsTracking = async () => {
     try {
@@ -1893,7 +2072,7 @@ export default function AdminPage() {
         triggerToast("배송 준비 중인 주문 건이 없습니다.");
         return;
       }
-      triggerToast("CJ대한통운 Open API 통신 중... 운송장 번호 일괄 채번/발급 중입니다.");
+      triggerToast("CJ대한통운 (DeliveryAPI) 실시간 통신 중... 운송장 번호 채번 중입니다.");
       const res = await fetch("/api/admin/shipping/cj-logistics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1902,7 +2081,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.success && data.shipments) {
         setShipmentsList(data.shipments);
-        triggerToast(`CJ대한통운 운송장 번호(${pendingShipments.length}건)가 자동 생성 및 '배송 중'으로 연동되었습니다!`);
+        triggerToast(data.message || `CJ대한통운 운송장 번호(${pendingShipments.length}건)가 실시간 자동 연동되었습니다!`);
       } else {
         triggerToast(data.message || "CJ대한통운 연동 중 오류가 발생했습니다.");
       }
@@ -1915,24 +2094,27 @@ export default function AdminPage() {
     try {
       const pendingShipments = shipmentsList.filter((s) => s.status === "Pending");
       if (pendingShipments.length === 0) {
-        triggerToast("다운로드할 배송 준비 건이 없습니다.");
+        triggerToast("다운로드할 배송 준비 중인 주문 건이 없습니다.");
         return;
       }
       const exportData = pendingShipments.map((s) => ({
-        "주문번호": s.orderId,
+        "주문번호": s.orderId || s.id,
         "받는분성명": s.recipient,
         "받는분전화번호": s.phone,
         "받는분주소": s.address,
         "상품명": s.items,
         "수량": 1,
-        "배송메세지": "부재시 문앞에 놓아주세요",
+        "배송메세지": "부재시 문앞에 놓아주세요 (안전배송)",
         "택배사": "CJ대한통운",
+        "보내는분": "주식회사 초이콤마",
+        "보내는분전화번호": "02-1588-0000",
+        "보내는분주소": cjSenderAddress || "",
       }));
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "CJ대한통운_eFlex");
-      XLSX.writeFile(wb, `CJ대한통운_발송요청_${new Date().toISOString().split("T")[0]}.xlsx`);
-      triggerToast(`CJ대한통운 LoIS e-Flex 양식 엑셀 파일(${pendingShipments.length}건)이 다운로드되었습니다.`);
+      XLSX.utils.book_append_sheet(wb, ws, "CJ대한통운_로이스파셀");
+      XLSX.writeFile(wb, `CJ대한통운_로이스파셀_발송접수_${new Date().toISOString().split("T")[0]}.xlsx`);
+      triggerToast(`CJ대한통운 로이스 파셀(LoIS Parcel) 접수용 엑셀 파일(${pendingShipments.length}건)이 다운로드되었습니다.`);
     } catch (e) {
       triggerToast("엑셀 파일 생성 중 오류가 발생했습니다.");
     }
@@ -2042,7 +2224,7 @@ export default function AdminPage() {
       try {
         const parsed = JSON.parse(savedProductIds);
         if (Array.isArray(parsed)) setAdminTimeSaleProductIds(parsed);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // Main Page Settings Load
@@ -2208,7 +2390,7 @@ export default function AdminPage() {
     if (saved) {
       try {
         savedIds = JSON.parse(saved);
-      } catch (e) {}
+      } catch (e) { }
     }
     if (!savedIds.includes(setProdId)) {
       const updatedIds = [setProdId, ...savedIds];
@@ -2350,8 +2532,10 @@ export default function AdminPage() {
       isMainFeatured: newIsMainFeatured,
       colors: newColors,
       colorHexMap: newColorHexMap,
+      colorImages: newColorImages,
       sizes: newSizes,
       sizeMeasurements: newSizeMeasurements,
+      showSizeGuide: newShowSizeGuide,
       options: [
         { id: "color", name: "Color", values: newColors },
         { id: "size", name: "Size", values: newSizes },
@@ -2361,6 +2545,7 @@ export default function AdminPage() {
           id: `custom-prod-${Date.now()}-${color}-${size}`,
           title: `${newTitle} - ${color} / ${size}`,
           availableForSale: totalNewStock > 0,
+          image: newColorImages[color] ? { url: newColorImages[color], altText: `${newTitle} - ${color}` } : undefined,
           selectedOptions: [
             { name: "Color", value: color },
             { name: "Size", value: size },
@@ -2406,7 +2591,7 @@ export default function AdminPage() {
       const h = parseInt(newTimeSaleHours) || 0;
       const m = parseInt(newTimeSaleMinutes) || 0;
       const rateNum = newTimeSaleDiscountRate ? parseInt(newTimeSaleDiscountRate) : 35;
-      
+
       const updatedSettings = {
         ...productTimeSaleSettings,
         [newProd.id]: { hours: h, minutes: m, discountPrice: newTimeSaleDiscountPrice || undefined, discountRate: rateNum },
@@ -2444,6 +2629,10 @@ export default function AdminPage() {
     setNewFabricComposition("COTTON 100% (프리미엄 콤마 코튼)");
     setNewShowFabricBadge(false);
     setNewColors([]);
+    setNewColorHexMap(DEFAULT_COLOR_HEX_MAP);
+    setNewColorImages({});
+    setNewCustomColor("");
+    setNewCustomColorImg("");
     setNewSizes(["1", "2", "3"]);
     setNewSizeStock({ "1": 10, "2": 10, "3": 10 });
     setNewLabel("PREMIUM");
@@ -2567,35 +2756,6 @@ export default function AdminPage() {
     triggerToast("주문 상태가 업데이트되었습니다.");
   };
 
-
-
-  // Admin Authentication State
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("choicomma_admin_authenticated");
-      if (saved === "false") return false;
-    }
-    return true;
-  });
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
-
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loginEmail.trim() === "admin" && loginPassword === "Mrschoi83!!") {
-      setIsAdminAuthenticated(true);
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem("choicomma_admin_authenticated", "true");
-      }
-      setLoginError("");
-      triggerToast("🔐 관리자 인증 성공! 초이콤마 어드민 시스템에 접속되었습니다.");
-    } else {
-      setLoginError("아이디 또는 비밀번호가 올바르지 않습니다.");
-      triggerToast("❌ 인증 실패: 아이디 또는 비밀번호를 다시 확인해 주세요.");
-    }
-  };
-
   const handleAdminLogout = () => {
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("choicomma_admin_authenticated");
@@ -2608,58 +2768,6 @@ export default function AdminPage() {
       window.location.replace("/");
     }
   };
-
-  if (!isAdminAuthenticated) {
-    return (
-      <div className="min-h-screen bg-[#FAF9F5] text-neutral-900 flex items-center justify-center p-4 font-sans">
-        <div className="bg-white border border-neutral-200/80 rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6">
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-neutral-950 text-white mb-2">
-              <LockIcon className="w-6 h-6 text-amber-400" />
-            </div>
-            <h1 className="text-2xl font-black text-neutral-950">CHOICOMMA ADMIN</h1>
-            <p className="text-xs text-neutral-500 font-medium">관리자 전용 스토어 통합 제어 시스템 접속</p>
-          </div>
-
-          <form onSubmit={handleAdminLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-neutral-700 mb-1">관리자 계정 (ID)</label>
-              <input
-                type="text"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="관리자 ID 입력 (예: admin)"
-                className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-xs font-bold text-neutral-950 focus:outline-none focus:border-black"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-neutral-700 mb-1">비밀번호 (Password)</label>
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="비밀번호 입력"
-                className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-xs font-bold text-neutral-950 focus:outline-none focus:border-black"
-                required
-              />
-            </div>
-            {loginError && (
-              <p className="text-xs text-rose-600 font-bold bg-rose-50 border border-rose-200 p-3 rounded-xl">
-                {loginError}
-              </p>
-            )}
-            <button
-              type="submit"
-              className="w-full bg-neutral-950 hover:bg-black text-white font-extrabold text-xs py-3.5 rounded-xl shadow-md transition-all cursor-pointer"
-            >
-              🔐 관리자 로그인
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F5] text-neutral-900 flex flex-col font-sans" suppressHydrationWarning>
@@ -2739,15 +2847,14 @@ export default function AdminPage() {
           {/* 1. 주문 및 배송 관리 */}
           <button
             onClick={() => setActiveTab("orders")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-              activeTab === "orders"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-            }`}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "orders"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
           >
-            <ShoppingBag className="w-4 h-4 text-sky-400" />
+            <ShoppingBag className="w-4 h-4 text-neutral-900" />
             주문 및 배송 관리
-            <span suppressHydrationWarning className="ml-auto text-xs px-2 py-0.5 rounded-full bg-sky-100 text-sky-900 font-bold">
+            <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
               {shipmentsList.length}
             </span>
           </button>
@@ -2755,15 +2862,14 @@ export default function AdminPage() {
           {/* 2. 회원 관리 */}
           <button
             onClick={() => setActiveTab("customers")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-              activeTab === "customers"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-            }`}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "customers"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
           >
-            <Users className="w-4 h-4 text-emerald-500" />
+            <Users className="w-4 h-4 text-neutral-900" />
             회원 관리
-            <span suppressHydrationWarning className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+            <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
               {customersList.length.toLocaleString()}
             </span>
           </button>
@@ -2771,136 +2877,124 @@ export default function AdminPage() {
           {/* 3. 재고 및 입고 캘린더 */}
           <button
             onClick={() => setActiveTab("inbound")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-              activeTab === "inbound"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-            }`}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "inbound"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
           >
-            <Calendar className="w-4 h-4 text-emerald-500" />
+            <Calendar className="w-4 h-4 text-neutral-900" />
             재고 및 입고 캘린더
-            <span suppressHydrationWarning className="ml-auto text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold">
-              {inboundSchedulesList.filter((s) => s.status === "Scheduled" || s.status === "In Progress").length}
-            </span>
           </button>
 
           {/* 4. 메인 슬라이더 */}
           <button
             onClick={() => setActiveTab("main")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-              activeTab === "main"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-            }`}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "main"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
           >
-            <Layers className="w-4 h-4 text-amber-500" />
+            <Layers className="w-4 h-4 text-neutral-900" />
             메인 이미지 관리
-            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-400 text-neutral-950">
-              IMAGE
-            </span>
           </button>
 
           {/* 5. 상품관리 */}
           <button
             onClick={() => setActiveTab("products")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-              activeTab === "products"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-            }`}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "products"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
           >
-            <Package className="w-4 h-4" />
+            <Package className="w-4 h-4 text-neutral-900" />
             상품 관리
-            <span suppressHydrationWarning className="ml-auto text-xs px-2 py-0.5 rounded-full bg-neutral-200/70 text-neutral-800">
+            <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
               {productsList.length}
             </span>
           </button>
 
-
-
-          {/* 7. 세트아이템 */}
+          {/* 7. 프로모션 */}
           <button
             onClick={() => setActiveTab("sales")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-              activeTab === "sales"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-            }`}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "sales"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
           >
-            <Percent className="w-4 h-4 text-amber-500" />
-            세트아이템
-            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-400 text-neutral-950">
-              SET
-            </span>
+            <Percent className="w-4 h-4 text-neutral-900" />
+            프로모션
           </button>
 
           {/* 8. 매출 관리 */}
           <button
             onClick={() => setActiveTab("revenue")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-              activeTab === "revenue"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-            }`}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "revenue"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
           >
-            <TrendingUp className="w-4 h-4 text-emerald-500" />
+            <TrendingUp className="w-4 h-4 text-neutral-900" />
             매출 관리
-            <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-              REVENUE
-            </span>
           </button>
 
           {/* 9. 해외 판매가 */}
           <button
             onClick={() => setActiveTab("global_sales")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all cursor-pointer ${
-              activeTab === "global_sales"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-700 hover:bg-sky-50 hover:text-neutral-950"
-            }`}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "global_sales"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
           >
-            <Globe className="w-4 h-4 text-sky-500" />
+            <Globe className="w-4 h-4 text-neutral-900" />
             해외 판매가
-            <span suppressHydrationWarning className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-500 text-neutral-950 shadow-2xs">
-              GLOBAL
-            </span>
           </button>
 
-          {/* 10. 1:1 라이브 채팅 콘솔 */}
+          {/* 10. CS 관리 (고객 문의 및 라이브 채팅) */}
           <button
             onClick={() => setActiveTab("inquiries")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all cursor-pointer ${
-              activeTab === "inquiries"
-                ? "bg-neutral-950 text-white font-bold shadow-md"
-                : "text-neutral-700 hover:bg-amber-50 hover:text-neutral-950"
-            }`}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "inquiries"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
           >
-            <MessageSquare className="w-4 h-4 text-emerald-500" />
-            1:1 라이브 채팅
-            <span suppressHydrationWarning className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500 text-neutral-950 shadow-2xs animate-pulse">
-              LIVE ONLINE
-            </span>
+            <MessageSquare className="w-4 h-4 text-neutral-900" />
+            CS
           </button>
 
           <div className="mt-auto pt-4 border-t border-neutral-200 space-y-1.5">
             <Link
               href="/membership"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("membership_user_name", "최고관리자");
+                  localStorage.setItem("membership_user_email", "admin@choicomma.com");
+                  localStorage.setItem("membership_user_phone", "010-1234-5678");
+                  localStorage.setItem("membership_user_postcode", "06306");
+                  localStorage.setItem("membership_user_address", "서울특별시 강남구 개포로22길 12");
+                  localStorage.setItem("membership_user_address_detail", "6층 (주)초이콤마 본사");
+                  localStorage.setItem("user_grade", "VVIP");
+                  localStorage.setItem("user_role", "admin");
+                  localStorage.setItem("is_logged_in", "true");
+                  localStorage.setItem("membership_user_points", "100000");
+                  window.dispatchEvent(new CustomEvent("storage"));
+                  window.dispatchEvent(new CustomEvent("auth_changed"));
+                }
+              }}
               className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950 transition-all border border-neutral-200/80 bg-white"
             >
-              <User2 className="w-4 h-4 text-purple-600" />
+              <User2 className="w-4 h-4 text-neutral-900" />
               <span>마이페이지 바로가기</span>
               <ExternalLink className="w-3.5 h-3.5 ml-auto text-neutral-400" />
             </Link>
 
             <button
               onClick={() => setActiveTab("settings")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-                activeTab === "settings"
-                  ? "bg-neutral-950 text-white font-bold shadow-md"
-                  : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
-              }`}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "settings"
+                  ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                  : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+                }`}
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-4 h-4 text-neutral-900" />
               스토어 설정
             </button>
           </div>
@@ -2912,95 +3006,80 @@ export default function AdminPage() {
           <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-neutral-200/80 scrollbar-thin">
             <button
               onClick={() => setActiveTab("orders")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                activeTab === "orders" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "orders" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
             >
               주문 및 배송
             </button>
             <button
               onClick={() => setActiveTab("revenue")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                activeTab === "revenue" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "revenue" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
             >
               매출 관리
             </button>
             <button
               onClick={() => setActiveTab("timesale")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-1 ${
-                activeTab === "timesale" ? "bg-amber-500 text-neutral-950 shadow-xs" : "bg-amber-100/70 text-amber-900"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-1 ${activeTab === "timesale" ? "bg-amber-500 text-neutral-950 shadow-xs" : "bg-amber-100/70 text-amber-900"
+                }`}
             >
               <Sparkles className="w-3.5 h-3.5 fill-neutral-950 text-neutral-950" />
               타임세일
             </button>
             <button
               onClick={() => setActiveTab("inbound")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                activeTab === "inbound" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "inbound" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
             >
               재고
             </button>
             <button
               onClick={() => setActiveTab("products")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                activeTab === "products" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "products" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
             >
               상품
             </button>
             <button
               onClick={() => setActiveTab("sales")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                activeTab === "sales" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "sales" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
             >
-              세트아이템
+              프로모션
             </button>
             <button
               onClick={() => setActiveTab("main")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                activeTab === "main" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "main" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
             >
               메인
             </button>
             <button
               onClick={() => setActiveTab("customers")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${
-                activeTab === "customers" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "customers" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
             >
               회원
             </button>
             <button
               onClick={() => setActiveTab("global_sales")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${
-                activeTab === "global_sales"
-                  ? "bg-sky-500 text-neutral-950 font-black shadow-xs"
-                  : "bg-sky-50 text-sky-900 border border-sky-200"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "global_sales"
+                  ? "bg-neutral-950 text-white"
+                  : "bg-neutral-100 text-neutral-600"
+                }`}
             >
-              <Globe className="w-3.5 h-3.5" />
+              <Globe className="w-3.5 h-3.5 text-neutral-900" />
               해외 판매가
             </button>
             <button
               onClick={() => setActiveTab("inquiries")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-1.5 ${
-                activeTab === "inquiries"
-                  ? "bg-neutral-950 text-white shadow-xs"
-                  : "bg-amber-100/70 text-amber-900 border border-amber-200 hover:bg-amber-100"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "inquiries"
+                  ? "bg-neutral-950 text-white"
+                  : "bg-neutral-100 text-neutral-600"
+                }`}
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              1:1 VIP 문의
-              {inquiriesList.filter((i) => i.status === "대기").length > 0 && (
-                <span className="bg-amber-500 text-neutral-950 text-[10px] font-mono font-black px-1.5 py-0.2 rounded-full">
-                  {inquiriesList.filter((i) => i.status === "대기").length}
-                </span>
-              )}
+              <MessageSquare className="w-3.5 h-3.5 text-neutral-900" />
+              CS 관리
             </button>
           </div>
 
@@ -3040,6 +3119,119 @@ export default function AdminPage() {
               handleMoveProduct={handleMoveProduct}
               handleBulkDeleteProducts={handleBulkDeleteProducts}
               handleReorderProducts={handleReorderProducts}
+              handleQuickUpdateCategory={(id: string, newCategory: string) => {
+                const targetProd = productsList.find((p) => String(p.id) === String(id));
+                const updatedList = productsList.map((p) => {
+                  if (String(p.id) === String(id)) {
+                    return {
+                      ...p,
+                      categoryId: newCategory,
+                      categoryIds: [newCategory],
+                      isTimeSale: newCategory === "timesale" ? true : p.isTimeSale,
+                    };
+                  }
+                  return p;
+                });
+
+                if (newCategory === "timesale") {
+                  if (!adminTimeSaleProductIds.includes(String(id))) {
+                    const updatedIds = [...adminTimeSaleProductIds, String(id)];
+                    setAdminTimeSaleProductIds(updatedIds);
+                    if (typeof window !== "undefined") {
+                      localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedIds));
+                    }
+                  }
+                  const h = parseInt(adminTimeSaleHours) || 24;
+                  const m = parseInt(adminTimeSaleMinutes) || 0;
+                  const rateNum = parseInt(adminTimeSaleDiscount) || 35;
+                  handleUpdateProductTimeSetting(String(id), h, m, undefined, rateNum);
+                }
+
+                setProductsList(updatedList);
+                saveProductsToStorage(updatedList);
+                triggerToast(`카테고리가 [${newCategory.toUpperCase()}] (으)로 즉시 변경되었습니다.`);
+              }}
+              handleQuickUpdatePrice={(id: string, newPrice: number | string): boolean => {
+                const priceNum = String(newPrice).replace(/[^0-9]/g, "");
+                const targetProduct = productsList.find((p) => String(p.id) === String(id));
+                const currentPrice = targetProduct?.priceRange?.minVariantPrice?.amount || targetProduct?.price?.amount || "0";
+                if (!priceNum || priceNum === String(currentPrice)) return false;
+
+                const origFormatted = Number(currentPrice).toLocaleString();
+                const newFormatted = Number(priceNum).toLocaleString();
+                const isConfirmed = window.confirm(
+                  `[${targetProduct?.title || "상품"}]\n판매가를 ${origFormatted}원 ➡️ ${newFormatted}원으로 변경하시겠습니까?`
+                );
+                if (!isConfirmed) return false;
+
+                const updatedList = productsList.map((p) => {
+                  if (String(p.id) === String(id)) {
+                    return {
+                      ...p,
+                      price: { amount: priceNum, currencyCode: "KRW" },
+                      priceRange: {
+                        maxVariantPrice: { amount: priceNum, currencyCode: "KRW" },
+                        minVariantPrice: { amount: priceNum, currencyCode: "KRW" },
+                      },
+                      variants: Array.isArray(p.variants)
+                        ? p.variants.map((v: any) => ({
+                          ...v,
+                          price: { amount: priceNum, currencyCode: "KRW" },
+                        }))
+                        : p.variants,
+                    };
+                  }
+                  return p;
+                });
+                setProductsList(updatedList);
+                saveProductsToStorage(updatedList);
+                triggerToast(`판매가가 ${newFormatted}원으로 변경되었습니다.`);
+                return true;
+              }}
+              handleQuickUpdateStock={(id: string, newTotalStock: number, newSizeStock?: Record<string, number>) => {
+                const targetProduct = productsList.find((p) => String(p.id) === String(id));
+                if (!targetProduct) return;
+
+                const isAvailable = newTotalStock > 0;
+
+                const updatedList = productsList.map((p) => {
+                  if (String(p.id) === String(id)) {
+                    return {
+                      ...p,
+                      stock: newTotalStock,
+                      sizeStock: newSizeStock !== undefined ? newSizeStock : p.sizeStock,
+                      availableForSale: isAvailable,
+                      variants: Array.isArray(p.variants)
+                        ? p.variants.map((v: any) => {
+                          let variantAvailable = isAvailable;
+                          if (newSizeStock && v.selectedOptions) {
+                            const colOpt = v.selectedOptions.find((o: any) => o.name === "Color")?.value;
+                            const szOpt = v.selectedOptions.find((o: any) => o.name === "Size")?.value;
+                            if (colOpt && szOpt && newSizeStock[`${colOpt}-${szOpt}`] !== undefined) {
+                              variantAvailable = Number(newSizeStock[`${colOpt}-${szOpt}`]) > 0;
+                            } else if (szOpt && newSizeStock[szOpt] !== undefined) {
+                              variantAvailable = Number(newSizeStock[szOpt]) > 0;
+                            }
+                          }
+                          return {
+                            ...v,
+                            availableForSale: variantAvailable,
+                          };
+                        })
+                        : p.variants,
+                    };
+                  }
+                  return p;
+                });
+
+                setProductsList(updatedList);
+                saveProductsToStorage(updatedList);
+                if (newTotalStock === 0) {
+                  triggerToast(`[${targetProduct.title}] 상품이 품절 처리되었습니다.`);
+                } else {
+                  triggerToast(`[${targetProduct.title}] 재고가 ${newTotalStock}개로 업데이트되었습니다.`);
+                }
+              }}
               onSaveToDisk={() => {
                 saveProductsToStorage(productsList);
                 triggerToast("💾 현재 모든 상품 데이터가 서버 JSON 파일에 성공적으로 저장되었습니다!");
@@ -3047,14 +3239,14 @@ export default function AdminPage() {
             />
           )}
 
-          {/* TAB: TIMESALE & PROMOTION */}
+          {/* TAB: TIMESALE & PROMOTION (SECRET TIME SALE) */}
           {activeTab === "sales" && (
             <TimesaleManagement
-              setSalesList={setSalesList}
               productsList={productsList}
-              setIsSetModalOpen={setIsSetModalOpen}
-              handleToggleSetStatus={handleToggleSetStatus}
-              handleDeleteSetBundle={handleDeleteSetBundle}
+              customersList={customersList}
+              secretSalesList={secretSalesList}
+              setSecretSalesList={setSecretSalesList}
+              triggerToast={triggerToast}
             />
           )}
 
@@ -3219,29 +3411,29 @@ export default function AdminPage() {
 
 
 
-              {/* Image Zoom Lightbox Modal */}
-              {zoomedInquiryImage && (
-                <div
-                  className="fixed inset-0 z-50 bg-neutral-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          {/* Image Zoom Lightbox Modal */}
+          {zoomedInquiryImage && (
+            <div
+              className="fixed inset-0 z-50 bg-neutral-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+              onClick={() => setZoomedInquiryImage(null)}
+            >
+              <div
+                className="relative max-w-4xl max-h-[90vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-neutral-800 p-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img src={zoomedInquiryImage} alt="확대 이미지" className="w-full h-full object-contain max-h-[85vh] rounded-2xl" />
+                <button
+                  type="button"
                   onClick={() => setZoomedInquiryImage(null)}
+                  className="absolute top-4 right-4 bg-black/70 hover:bg-rose-600 text-white rounded-full p-2 transition-colors cursor-pointer"
                 >
-                  <div
-                    className="relative max-w-4xl max-h-[90vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-neutral-800 p-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <img src={zoomedInquiryImage} alt="확대 이미지" className="w-full h-full object-contain max-h-[85vh] rounded-2xl" />
-                    <button
-                      type="button"
-                      onClick={() => setZoomedInquiryImage(null)}
-                      className="absolute top-4 right-4 bg-black/70 hover:bg-rose-600 text-white rounded-full p-2 transition-colors cursor-pointer"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              )}
-          </main>
-        </div>
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
 
       {/* Modal: Add Product Form */}
       {isAddModalOpen && (
@@ -3373,11 +3565,10 @@ export default function AdminPage() {
                         >
                           <img src={url} alt={`상품 이미지 ${idx + 1}`} className="w-full h-full object-cover" />
                           <span
-                            className={`absolute top-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded-md ${
-                              idx === 0
+                            className={`absolute top-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded-md ${idx === 0
                                 ? "bg-amber-500 text-neutral-950 shadow-xs"
                                 : "bg-black/60 text-white backdrop-blur-xs"
-                            }`}
+                              }`}
                           >
                             {idx === 0 ? "대표" : `#${idx + 1}`}
                           </span>
@@ -3496,16 +3687,14 @@ export default function AdminPage() {
                               setNewCategories([...newCategories, c.id]);
                             }
                           }}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer select-none ${
-                            isChecked
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer select-none ${isChecked
                               ? "bg-amber-500 text-neutral-950 border-amber-500 shadow-xs font-black"
                               : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-400"
-                          }`}
+                            }`}
                         >
                           <div
-                            className={`w-4 h-4 rounded-md flex items-center justify-center border transition-all shrink-0 ${
-                              isChecked ? "bg-neutral-950 border-neutral-950 text-white" : "border-neutral-300 bg-white"
-                            }`}
+                            className={`w-4 h-4 rounded-md flex items-center justify-center border transition-all shrink-0 ${isChecked ? "bg-neutral-950 border-neutral-950 text-white" : "border-neutral-300 bg-white"
+                              }`}
                           >
                             {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                           </div>
@@ -3521,19 +3710,17 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={() => setNewIsMainFeatured((prev) => !prev)}
-                    className={`w-full flex items-center justify-between p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer select-none ${
-                      newIsMainFeatured
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer select-none ${newIsMainFeatured
                         ? "bg-amber-500/15 border-amber-400 text-neutral-950 shadow-2xs font-black"
                         : "bg-neutral-50 border-neutral-200 text-neutral-600 hover:border-neutral-300"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <div
-                        className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all shrink-0 ${
-                          newIsMainFeatured
+                        className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all shrink-0 ${newIsMainFeatured
                             ? "bg-neutral-950 border-neutral-950 text-white"
                             : "border-neutral-300 bg-white"
-                        }`}
+                          }`}
                       >
                         {newIsMainFeatured && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </div>
@@ -3542,9 +3729,8 @@ export default function AdminPage() {
                         <span className="block text-[10px] font-semibold text-neutral-500">체크 시 메인 홈 대표 영역에 노출됩니다.</span>
                       </div>
                     </div>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
-                      newIsMainFeatured ? "bg-amber-500 text-neutral-950 border-amber-400" : "bg-neutral-200 text-neutral-600 border-neutral-300"
-                    }`}>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${newIsMainFeatured ? "bg-amber-500 text-neutral-950 border-amber-400" : "bg-neutral-200 text-neutral-600 border-neutral-300"
+                      }`}>
                       {newIsMainFeatured ? "전시 중" : "미전시"}
                     </span>
                   </button>
@@ -3590,11 +3776,10 @@ export default function AdminPage() {
                           key={opt.value}
                           type="button"
                           onClick={() => setNewLabel(opt.value as any)}
-                          className={`relative flex flex-col items-center justify-center gap-1 py-3 px-3 rounded-2xl border-2 transition-all cursor-pointer text-center ${
-                            isSelected
+                          className={`relative flex flex-col items-center justify-center gap-1 py-3 px-3 rounded-2xl border-2 transition-all cursor-pointer text-center ${isSelected
                               ? "bg-neutral-950 text-white border-neutral-950 shadow-md scale-[1.02]"
                               : "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400"
-                          }`}
+                            }`}
                         >
                           {isSelected && (
                             <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-white/30 flex items-center justify-center">
@@ -3749,87 +3934,173 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* 2. COLOR OPTIONS */}
+                {/* 2. OPTION / PRODUCT CUTS (제품컷 사진 등록) */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
-                      <Palette className="w-4 h-4 text-purple-500" />
-                      <span>컬러 (Color) 옵션 선택 및 헥사코드 추가</span>
+                      <ImageIcon className="w-4 h-4 text-purple-600" />
+                      <span>옵션별 제품컷 사진 등록 (컬러 / 모델 착용 제품컷)</span>
                     </label>
                     <span className="text-[11px] font-mono font-extrabold text-neutral-500">
-                      {newColors.length}개 컬러 등록됨
+                      {newColors.length}개 제품컷 옵션 등록됨
                     </span>
                   </div>
 
-                  {/* Custom Color Input */}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="컬러 직접 입력 (예: KHAKI, RED)"
-                      value={newCustomColor}
-                      onChange={(e) => setNewCustomColor(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          if (newCustomColor.trim() && !newColors.includes(newCustomColor.trim().toUpperCase())) {
-                            setNewColors([...newColors, newCustomColor.trim().toUpperCase()]);
-                            setNewCustomColor("");
-                          }
-                        }
-                      }}
-                      className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 font-bold"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (newCustomColor.trim() && !newColors.includes(newCustomColor.trim().toUpperCase())) {
-                          setNewColors([...newColors, newCustomColor.trim().toUpperCase()]);
-                          setNewCustomColor("");
-                        }
-                      }}
-                      className="px-3.5 py-2 bg-neutral-950 hover:bg-black text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0"
-                    >
-                      + 추가
-                    </button>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
+                    💡 단순 텍스트/색상칩 대신, 각 옵션별 <strong>실제 제품컷 사진</strong>을 등록하세요. 상세페이지에서 고객이 제품컷 사진을 보고 클릭하여 직관적으로 구매할 수 있습니다.
+                  </p>
+
+                  {/* Add New Variant Option with Product Cut */}
+                  <div className="bg-white border border-neutral-200 rounded-2xl p-3.5 space-y-3 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                      <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
+                        {newCustomColorImg ? (
+                          <div className="relative w-12 h-12 rounded-xl overflow-hidden border-2 border-neutral-900 bg-neutral-100 shrink-0">
+                            <img src={newCustomColorImg} alt="제품컷 미리보기" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setNewCustomColorImg("")}
+                              className="absolute top-0.5 right-0.5 bg-rose-600 text-white rounded-full p-0.5"
+                            >
+                              <X className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="w-12 h-12 rounded-xl border-2 border-dashed border-neutral-300 hover:border-black flex flex-col items-center justify-center cursor-pointer bg-neutral-50 hover:bg-neutral-100 transition-colors shrink-0">
+                            <Upload className="w-4 h-4 text-neutral-500" />
+                            <span className="text-[8px] font-bold text-neutral-500 mt-0.5">제품컷</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = async (evt) => {
+                                    const raw = evt.target?.result as string;
+                                    if (raw) {
+                                      const compressed = await compressImageDataUrl(raw, 800, 0.8);
+                                      setNewCustomColorImg(compressed);
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                        <input
+                          type="text"
+                          placeholder="또는 이미지 URL 직접 입력"
+                          value={newCustomColorImg}
+                          onChange={(e) => setNewCustomColorImg(e.target.value)}
+                          className="flex-1 sm:w-48 bg-neutral-50 border border-neutral-200 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-neutral-800 focus:outline-none focus:border-neutral-950"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 w-full flex-1">
+                        <input
+                          type="text"
+                          placeholder="옵션/컬러명 입력 (예: 블랙, 크림, 올리브)"
+                          value={newCustomColor}
+                          onChange={(e) => setNewCustomColor(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              const trimmed = newCustomColor.trim().toUpperCase();
+                              if (trimmed && !newColors.includes(trimmed)) {
+                                setNewColors([...newColors, trimmed]);
+                                if (newCustomColorImg) {
+                                  setNewColorImages((prev) => ({ ...prev, [trimmed]: newCustomColorImg }));
+                                }
+                                setNewCustomColor("");
+                                setNewCustomColorImg("");
+                              }
+                            }
+                          }}
+                          className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 font-bold"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const trimmed = newCustomColor.trim().toUpperCase();
+                            if (trimmed && !newColors.includes(trimmed)) {
+                              setNewColors([...newColors, trimmed]);
+                              if (newCustomColorImg) {
+                                setNewColorImages((prev) => ({ ...prev, [trimmed]: newCustomColorImg }));
+                              }
+                              setNewCustomColor("");
+                              setNewCustomColorImg("");
+                            }
+                          }}
+                          className="px-4 py-2 bg-neutral-950 hover:bg-black text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0"
+                        >
+                          + 제품컷 추가
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Registered Colors Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                    {newColors.map((color) => {
-                      const hexVal = newColorHexMap[color] || DEFAULT_COLOR_HEX_MAP[color] || "#000000";
-                      return (
-                        <div
-                          key={color}
-                          className="flex items-center justify-between bg-white border border-neutral-200 rounded-xl px-2.5 py-2 shadow-2xs"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <input
-                              type="color"
-                              value={hexVal}
-                              onChange={(e) => {
-                                setNewColorHexMap((prev) => ({
-                                  ...prev,
-                                  [color]: e.target.value.toUpperCase(),
-                                }));
-                              }}
-                              className="w-5 h-5 rounded-full border-0 p-0 cursor-pointer shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <span className="block text-xs font-black text-neutral-900 truncate">{color}</span>
-                              <span className="block text-[9px] font-mono text-neutral-400 uppercase">{hexVal}</span>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setNewColors(newColors.filter((c) => c !== color))}
-                            className="text-neutral-400 hover:text-rose-600 p-1 rounded-md transition-colors cursor-pointer"
+                  {/* Registered Option Product Cuts Grid */}
+                  {newColors.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pt-1">
+                      {newColors.map((color) => {
+                        const imgUrl = newColorImages[color] || newImages[0] || "/product_1.webp";
+                        return (
+                          <div
+                            key={color}
+                            className="flex items-center justify-between bg-white border border-neutral-200 rounded-2xl p-2 shadow-2xs hover:border-neutral-400 transition-colors"
                           >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <label className="relative w-10 h-10 rounded-xl overflow-hidden border border-neutral-200 bg-neutral-50 shrink-0 cursor-pointer group" title="클릭하여 제품컷 변경">
+                                <img src={imgUrl} alt={color} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Upload className="w-3 h-3 text-white" />
+                                </div>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = async (evt) => {
+                                        const raw = evt.target?.result as string;
+                                        if (raw) {
+                                          const compressed = await compressImageDataUrl(raw, 800, 0.8);
+                                          setNewColorImages((prev) => ({ ...prev, [color]: compressed }));
+                                        }
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                  className="hidden"
+                                />
+                              </label>
+                              <div className="min-w-0">
+                                <span className="block text-xs font-black text-neutral-950 truncate">{color}</span>
+                                <span className="block text-[10px] text-neutral-400 font-semibold truncate">제품컷 연동</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewColors(newColors.filter((c) => c !== color));
+                                const updatedMap = { ...newColorImages };
+                                delete updatedMap[color];
+                                setNewColorImages(updatedMap);
+                              }}
+                              className="text-neutral-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="옵션 삭제"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* 3. SIZE OPTIONS */}
@@ -3844,7 +4115,7 @@ export default function AdminPage() {
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {["1", "2", "3", "FREE", "S", "M", "L", "XL"].map((sz) => {
+                    {["1", "2", "3", "FREE"].map((sz) => {
                       const isSelected = newSizes.includes(sz);
                       return (
                         <button
@@ -3859,11 +4130,10 @@ export default function AdminPage() {
                               setNewSizes([...newSizes, sz]);
                             }
                           }}
-                          className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                            isSelected
+                          className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${isSelected
                               ? "bg-neutral-950 text-white shadow-md scale-105"
                               : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
-                          }`}
+                            }`}
                         >
                           {sz}
                         </button>
@@ -3874,10 +4144,23 @@ export default function AdminPage() {
 
                 {/* 4. SIZE MEASUREMENTS TABLE */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5 cursor-pointer">
                       <Ruler className="w-4 h-4 text-indigo-500" />
                       <span>사이즈별 실측 치수 가이드 (Size Chart Measurement Table)</span>
+                    </label>
+
+                    {/* Inline Checkbox directly beside the title */}
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none bg-white px-2.5 py-1 rounded-lg border border-neutral-200 hover:border-neutral-400 transition-colors shadow-2xs">
+                      <input
+                        type="checkbox"
+                        checked={newShowSizeGuide}
+                        onChange={(e) => setNewShowSizeGuide(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
+                      />
+                      <span className={`text-[11px] font-extrabold ${newShowSizeGuide ? "text-neutral-900" : "text-neutral-400"}`}>
+                        {newShowSizeGuide ? "상세페이지 노출" : "미노출"}
+                      </span>
                     </label>
                   </div>
 
@@ -3885,7 +4168,7 @@ export default function AdminPage() {
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
-                      placeholder="부위명 입력 (예: SHOULDER, CHEST, SLEEVE, LENGTH, 허리, 총장)"
+                      placeholder="부위명 입력 (예: 어깨너비, 가슴단면, 소매길이, 총장, 허리단면, 밑단단면)"
                       value={newNewMeasurementName}
                       onChange={(e) => setNewNewMeasurementName(e.target.value)}
                       onKeyDown={(e) => {
@@ -4068,11 +4351,10 @@ export default function AdminPage() {
                         setNewSizeStock(updated);
                         triggerToast(total > 0 ? "전체 재고가 🔴 품절(0개)로 변경되었습니다." : "전체 재고가 🟢 판매 중(각 10개)으로 변경되었습니다.");
                       }}
-                      className={`w-full py-2.5 rounded-xl text-xs font-extrabold border transition-all cursor-pointer h-10 ${
-                        calculateTotalStock(newColors, newSizes, newSizeStock) > 0
+                      className={`w-full py-2.5 rounded-xl text-xs font-extrabold border transition-all cursor-pointer h-10 ${calculateTotalStock(newColors, newSizes, newSizeStock) > 0
                           ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
                           : "bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100"
-                      }`}
+                        }`}
                     >
                       {calculateTotalStock(newColors, newSizes, newSizeStock) > 0 ? "🟢 전체 판매 중 (In Stock)" : "🔴 전체 품절 (Out of Stock)"}
                     </button>
@@ -4107,11 +4389,10 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => setNewIsTimeSale(!newIsTimeSale)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer border ${
-                        newIsTimeSale
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer border ${newIsTimeSale
                           ? "bg-amber-500 text-neutral-950 border-amber-400 shadow-xs"
                           : "bg-white text-neutral-600 border-neutral-300 hover:border-neutral-400"
-                      }`}
+                        }`}
                     >
                       {newIsTimeSale ? "🔥 타임세일 적용 중" : "일반 상품 (적용 안 함)"}
                     </button>
@@ -4162,11 +4443,10 @@ export default function AdminPage() {
                                   key={rate}
                                   type="button"
                                   onClick={() => setNewTimeSaleDiscountRate(String(rate))}
-                                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
-                                    newTimeSaleDiscountRate === String(rate)
+                                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${newTimeSaleDiscountRate === String(rate)
                                       ? "bg-amber-500 text-neutral-950 border-amber-400 shadow-2xs"
                                       : "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200"
-                                  }`}
+                                    }`}
                                 >
                                   {rate}% OFF
                                 </button>
@@ -4394,11 +4674,10 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => setNewBulkEnabled(!newBulkEnabled)}
-                      className={`px-3 py-1 rounded-full text-xs font-black transition-all cursor-pointer ${
-                        newBulkEnabled
+                      className={`px-3 py-1 rounded-full text-xs font-black transition-all cursor-pointer ${newBulkEnabled
                           ? "bg-emerald-600 text-white shadow-xs"
                           : "bg-neutral-200 text-neutral-600"
-                      }`}
+                        }`}
                     >
                       {newBulkEnabled ? "활성화됨" : "비활성화됨"}
                     </button>
@@ -4607,11 +4886,10 @@ export default function AdminPage() {
                         >
                           <img src={url} alt={`상품 이미지 ${idx + 1}`} className="w-full h-full object-cover" />
                           <span
-                            className={`absolute top-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded-md ${
-                              idx === 0
+                            className={`absolute top-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded-md ${idx === 0
                                 ? "bg-amber-500 text-neutral-950 shadow-xs"
                                 : "bg-black/60 text-white backdrop-blur-xs"
-                            }`}
+                              }`}
                           >
                             {idx === 0 ? "대표" : `#${idx + 1}`}
                           </span>
@@ -4732,16 +5010,14 @@ export default function AdminPage() {
                               setEditCategories([...editCategories, c.id]);
                             }
                           }}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer select-none ${
-                            isChecked
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer select-none ${isChecked
                               ? "bg-amber-500 text-neutral-950 border-amber-500 shadow-xs font-black"
                               : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-400"
-                          }`}
+                            }`}
                         >
                           <div
-                            className={`w-4 h-4 rounded-md flex items-center justify-center border transition-all shrink-0 ${
-                              isChecked ? "bg-neutral-950 border-neutral-950 text-white" : "border-neutral-300 bg-white"
-                            }`}
+                            className={`w-4 h-4 rounded-md flex items-center justify-center border transition-all shrink-0 ${isChecked ? "bg-neutral-950 border-neutral-950 text-white" : "border-neutral-300 bg-white"
+                              }`}
                           >
                             {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                           </div>
@@ -4792,11 +5068,10 @@ export default function AdminPage() {
                           key={opt.value}
                           type="button"
                           onClick={() => setEditLabel(opt.value as any)}
-                          className={`relative flex flex-col items-center justify-center gap-1 py-3 px-3 rounded-2xl border-2 transition-all cursor-pointer text-center ${
-                            isSelected
+                          className={`relative flex flex-col items-center justify-center gap-1 py-3 px-3 rounded-2xl border-2 transition-all cursor-pointer text-center ${isSelected
                               ? "bg-neutral-950 text-white border-neutral-950 shadow-md scale-[1.02]"
                               : "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400"
-                          }`}
+                            }`}
                         >
                           {isSelected && (
                             <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-white/30 flex items-center justify-center">
@@ -4951,87 +5226,173 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* 2. COLOR OPTIONS */}
+                {/* 2. OPTION / PRODUCT CUTS (제품컷 사진 등록) */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
-                      <Palette className="w-4 h-4 text-purple-500" />
-                      <span>컬러 (Color) 옵션 선택 및 헥사코드 추가</span>
+                      <ImageIcon className="w-4 h-4 text-purple-600" />
+                      <span>옵션별 제품컷 사진 등록 (컬러 / 모델 착용 제품컷)</span>
                     </label>
                     <span className="text-[11px] font-mono font-extrabold text-neutral-500">
-                      {editColors.length}개 컬러 등록됨
+                      {editColors.length}개 제품컷 옵션 등록됨
                     </span>
                   </div>
 
-                  {/* Custom Color Input */}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="컬러 직접 입력 (예: KHAKI, RED)"
-                      value={editCustomColorInput}
-                      onChange={(e) => setEditCustomColorInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          if (editCustomColorInput.trim() && !editColors.includes(editCustomColorInput.trim().toUpperCase())) {
-                            setEditColors([...editColors, editCustomColorInput.trim().toUpperCase()]);
-                            setEditCustomColorInput("");
-                          }
-                        }
-                      }}
-                      className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 font-bold"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (editCustomColorInput.trim() && !editColors.includes(editCustomColorInput.trim().toUpperCase())) {
-                          setEditColors([...editColors, editCustomColorInput.trim().toUpperCase()]);
-                          setEditCustomColorInput("");
-                        }
-                      }}
-                      className="px-3.5 py-2 bg-neutral-950 hover:bg-black text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0"
-                    >
-                      + 추가
-                    </button>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
+                    💡 단순 텍스트/색상칩 대신, 각 옵션별 <strong>실제 제품컷 사진</strong>을 등록하세요. 상세페이지에서 고객이 제품컷 사진을 보고 클릭하여 직관적으로 구매할 수 있습니다.
+                  </p>
+
+                  {/* Add New Variant Option with Product Cut */}
+                  <div className="bg-white border border-neutral-200 rounded-2xl p-3.5 space-y-3 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                      <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
+                        {editCustomColorImg ? (
+                          <div className="relative w-12 h-12 rounded-xl overflow-hidden border-2 border-neutral-900 bg-neutral-100 shrink-0">
+                            <img src={editCustomColorImg} alt="제품컷 미리보기" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setEditCustomColorImg("")}
+                              className="absolute top-0.5 right-0.5 bg-rose-600 text-white rounded-full p-0.5"
+                            >
+                              <X className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="w-12 h-12 rounded-xl border-2 border-dashed border-neutral-300 hover:border-black flex flex-col items-center justify-center cursor-pointer bg-neutral-50 hover:bg-neutral-100 transition-colors shrink-0">
+                            <Upload className="w-4 h-4 text-neutral-500" />
+                            <span className="text-[8px] font-bold text-neutral-500 mt-0.5">제품컷</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = async (evt) => {
+                                    const raw = evt.target?.result as string;
+                                    if (raw) {
+                                      const compressed = await compressImageDataUrl(raw, 800, 0.8);
+                                      setEditCustomColorImg(compressed);
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                        <input
+                          type="text"
+                          placeholder="또는 이미지 URL 직접 입력"
+                          value={editCustomColorImg}
+                          onChange={(e) => setEditCustomColorImg(e.target.value)}
+                          className="flex-1 sm:w-48 bg-neutral-50 border border-neutral-200 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-neutral-800 focus:outline-none focus:border-neutral-950"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 w-full flex-1">
+                        <input
+                          type="text"
+                          placeholder="옵션/컬러명 입력 (예: 블랙, 크림, 올리브)"
+                          value={editCustomColorInput}
+                          onChange={(e) => setEditCustomColorInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              const trimmed = editCustomColorInput.trim().toUpperCase();
+                              if (trimmed && !editColors.includes(trimmed)) {
+                                setEditColors([...editColors, trimmed]);
+                                if (editCustomColorImg) {
+                                  setEditColorImages((prev) => ({ ...prev, [trimmed]: editCustomColorImg }));
+                                }
+                                setEditCustomColorInput("");
+                                setEditCustomColorImg("");
+                              }
+                            }
+                          }}
+                          className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 font-bold"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const trimmed = editCustomColorInput.trim().toUpperCase();
+                            if (trimmed && !editColors.includes(trimmed)) {
+                              setEditColors([...editColors, trimmed]);
+                              if (editCustomColorImg) {
+                                setEditColorImages((prev) => ({ ...prev, [trimmed]: editCustomColorImg }));
+                              }
+                              setEditCustomColorInput("");
+                              setEditCustomColorImg("");
+                            }
+                          }}
+                          className="px-4 py-2 bg-neutral-950 hover:bg-black text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0"
+                        >
+                          + 제품컷 추가
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Registered Colors Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                    {editColors.map((color) => {
-                      const hexVal = editColorHexMap[color] || DEFAULT_COLOR_HEX_MAP[color] || "#000000";
-                      return (
-                        <div
-                          key={color}
-                          className="flex items-center justify-between bg-white border border-neutral-200 rounded-xl px-2.5 py-2 shadow-2xs"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <input
-                              type="color"
-                              value={hexVal}
-                              onChange={(e) => {
-                                setEditColorHexMap((prev) => ({
-                                  ...prev,
-                                  [color]: e.target.value.toUpperCase(),
-                                }));
-                              }}
-                              className="w-5 h-5 rounded-full border-0 p-0 cursor-pointer shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <span className="block text-xs font-black text-neutral-900 truncate">{color}</span>
-                              <span className="block text-[9px] font-mono text-neutral-400 uppercase">{hexVal}</span>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setEditColors(editColors.filter((c) => c !== color))}
-                            className="text-neutral-400 hover:text-rose-600 p-1 rounded-md transition-colors cursor-pointer"
+                  {/* Registered Option Product Cuts Grid */}
+                  {editColors.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pt-1">
+                      {editColors.map((color) => {
+                        const imgUrl = editColorImages[color] || editImages[0] || "/product_1.webp";
+                        return (
+                          <div
+                            key={color}
+                            className="flex items-center justify-between bg-white border border-neutral-200 rounded-2xl p-2 shadow-2xs hover:border-neutral-400 transition-colors"
                           >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <label className="relative w-10 h-10 rounded-xl overflow-hidden border border-neutral-200 bg-neutral-50 shrink-0 cursor-pointer group" title="클릭하여 제품컷 변경">
+                                <img src={imgUrl} alt={color} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Upload className="w-3 h-3 text-white" />
+                                </div>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = async (evt) => {
+                                        const raw = evt.target?.result as string;
+                                        if (raw) {
+                                          const compressed = await compressImageDataUrl(raw, 800, 0.8);
+                                          setEditColorImages((prev) => ({ ...prev, [color]: compressed }));
+                                        }
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                  className="hidden"
+                                />
+                              </label>
+                              <div className="min-w-0">
+                                <span className="block text-xs font-black text-neutral-950 truncate">{color}</span>
+                                <span className="block text-[10px] text-neutral-400 font-semibold truncate">제품컷 연동</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditColors(editColors.filter((c) => c !== color));
+                                const updatedMap = { ...editColorImages };
+                                delete updatedMap[color];
+                                setEditColorImages(updatedMap);
+                              }}
+                              className="text-neutral-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="옵션 삭제"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* 3. SIZE OPTIONS */}
@@ -5046,7 +5407,7 @@ export default function AdminPage() {
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {["1", "2", "3", "FREE", "S", "M", "L", "XL"].map((sz) => {
+                    {["1", "2", "3", "FREE"].map((sz) => {
                       const isSelected = editSizes.includes(sz);
                       return (
                         <button
@@ -5061,11 +5422,10 @@ export default function AdminPage() {
                               setEditSizes([...editSizes, sz]);
                             }
                           }}
-                          className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                            isSelected
+                          className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${isSelected
                               ? "bg-neutral-950 text-white shadow-md scale-105"
                               : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400"
-                          }`}
+                            }`}
                         >
                           {sz}
                         </button>
@@ -5076,10 +5436,23 @@ export default function AdminPage() {
 
                 {/* 4. SIZE MEASUREMENTS TABLE */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5 cursor-pointer">
                       <Ruler className="w-4 h-4 text-indigo-500" />
                       <span>사이즈별 실측 치수 가이드 (Size Chart Measurement Table)</span>
+                    </label>
+
+                    {/* Inline Checkbox directly beside the title */}
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none bg-white px-2.5 py-1 rounded-lg border border-neutral-200 hover:border-neutral-400 transition-colors shadow-2xs">
+                      <input
+                        type="checkbox"
+                        checked={editShowSizeGuide}
+                        onChange={(e) => setEditShowSizeGuide(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
+                      />
+                      <span className={`text-[11px] font-extrabold ${editShowSizeGuide ? "text-neutral-900" : "text-neutral-400"}`}>
+                        {editShowSizeGuide ? "상세페이지 노출" : "미노출"}
+                      </span>
                     </label>
                   </div>
 
@@ -5087,7 +5460,7 @@ export default function AdminPage() {
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
-                      placeholder="부위명 입력 (예: SHOULDER, CHEST, SLEEVE, LENGTH, 허리, 총장)"
+                      placeholder="부위명 입력 (예: 어깨너비, 가슴단면, 소매길이, 총장, 허리단면, 밑단단면)"
                       value={editNewMeasurementName}
                       onChange={(e) => setEditNewMeasurementName(e.target.value)}
                       onKeyDown={(e) => {
@@ -5206,8 +5579,28 @@ export default function AdminPage() {
                     </span>
                   </div>
 
-                  {editColors.length === 0 || editSizes.length === 0 ? (
-                    <p className="text-xs text-neutral-400 py-2">컬러와 사이즈를 1개 이상 선택해야 옵션별 재고를 설정할 수 있습니다.</p>
+                  {editSizes.length === 0 ? (
+                    <p className="text-xs text-neutral-400 py-2">사이즈를 1개 이상 선택해야 옵션별 재고를 설정할 수 있습니다.</p>
+                  ) : editColors.length === 0 ? (
+                    <div className="bg-neutral-50/80 border border-neutral-200/80 rounded-xl p-3 space-y-2">
+                      <span className="text-xs font-extrabold text-neutral-900">사이즈별 재고 수량</span>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {editSizes.map((size) => {
+                          const currentQty = editSizeStock[size] !== undefined ? editSizeStock[size] : 10;
+                          return (
+                            <StockInputItem
+                              key={size}
+                              size={`사이즈 ${size}`}
+                              currentStock={currentQty}
+                              onConfirmStock={(sz, val) => {
+                                setEditSizeStock((prev) => ({ ...prev, [size]: val }));
+                                triggerToast(`[${sz}] 재고 수량이 ${val}개로 설정되었습니다.`);
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-3">
                       {editColors.map((color) => {
@@ -5262,19 +5655,24 @@ export default function AdminPage() {
 
                         const updated: Record<string, number> = {};
                         const targetQty = total > 0 ? 0 : 10;
-                        editColors.forEach((c) => {
-                          editSizes.forEach((s) => {
-                            updated[`${c}-${s}`] = targetQty;
+                        if (editColors.length > 0) {
+                          editColors.forEach((c) => {
+                            editSizes.forEach((s) => {
+                              updated[`${c}-${s}`] = targetQty;
+                            });
                           });
-                        });
+                        } else {
+                          editSizes.forEach((s) => {
+                            updated[s] = targetQty;
+                          });
+                        }
                         setEditSizeStock(updated);
                         triggerToast(total > 0 ? "전체 재고가 🔴 품절(0개)로 변경되었습니다." : "전체 재고가 🟢 판매 중(각 10개)으로 변경되었습니다.");
                       }}
-                      className={`w-full py-2.5 rounded-xl text-xs font-extrabold border transition-all cursor-pointer h-10 ${
-                        calculateTotalStock(editColors, editSizes, editSizeStock) > 0
+                      className={`w-full py-2.5 rounded-xl text-xs font-extrabold border transition-all cursor-pointer h-10 ${calculateTotalStock(editColors, editSizes, editSizeStock) > 0
                           ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
                           : "bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100"
-                      }`}
+                        }`}
                     >
                       {calculateTotalStock(editColors, editSizes, editSizeStock) > 0 ? "🟢 전체 판매 중 (In Stock)" : "🔴 전체 품절 (Out of Stock)"}
                     </button>
@@ -5309,11 +5707,10 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => setEditIsTimeSale(!editIsTimeSale)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer border ${
-                        editIsTimeSale
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer border ${editIsTimeSale
                           ? "bg-amber-500 text-neutral-950 border-amber-400 shadow-xs"
                           : "bg-white text-neutral-600 border-neutral-300 hover:border-neutral-400"
-                      }`}
+                        }`}
                     >
                       {editIsTimeSale ? "🔥 타임세일 적용 중" : "일반 상품 (적용 안 함)"}
                     </button>
@@ -5364,11 +5761,10 @@ export default function AdminPage() {
                                   key={rate}
                                   type="button"
                                   onClick={() => setEditTimeSaleDiscountRate(String(rate))}
-                                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
-                                    editTimeSaleDiscountRate === String(rate)
+                                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${editTimeSaleDiscountRate === String(rate)
                                       ? "bg-amber-500 text-neutral-950 border-amber-400 shadow-2xs"
                                       : "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200"
-                                  }`}
+                                    }`}
                                 >
                                   {rate}% OFF
                                 </button>
@@ -5596,14 +5992,12 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => setEditBulkEnabled((v) => !v)}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
-                        editBulkEnabled ? "bg-emerald-500" : "bg-neutral-300"
-                      }`}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${editBulkEnabled ? "bg-emerald-500" : "bg-neutral-300"
+                        }`}
                     >
                       <span
-                        className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
-                          editBulkEnabled ? "translate-x-4.5" : "translate-x-0.5"
-                        }`}
+                        className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${editBulkEnabled ? "translate-x-4.5" : "translate-x-0.5"
+                          }`}
                       />
                     </button>
                   </div>
@@ -5687,1066 +6081,978 @@ export default function AdminPage() {
         </div>
       )}
 
-        {/* SET ITEM CREATION MODAL */}
-        {isSetModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white text-neutral-950 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 max-h-[90vh] flex flex-col">
-              {/* Modal Header */}
-              <div className="p-5 border-b border-neutral-100 flex items-center justify-between bg-neutral-900 text-white">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-amber-500 text-neutral-950 rounded-xl font-bold">
-                    <Gift className="w-5 h-5" />
+      {/* SET ITEM CREATION MODAL */}
+      {isSetModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white text-neutral-950 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-neutral-100 flex items-center justify-between bg-neutral-900 text-white">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-amber-500 text-neutral-950 rounded-xl font-bold">
+                  <Gift className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base">세트 아이템 할인 기획전 등록</h3>
+                  <p className="text-xs text-neutral-400">조합할 상품 2개 이상을 선택하고 할인율을 설정해 주세요.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSetModalOpen(false)}
+                className="p-2 hover:bg-neutral-800 rounded-full text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveSetBundle} className="p-6 overflow-y-auto space-y-6 flex-1">
+              {/* Set Title */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-neutral-700">세트 기획전 명칭</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="예: [초이콤마 룩북 세트] 코트 + 블레이저 패키지 25% OFF"
+                  value={setBundleTitle}
+                  onChange={(e) => setSetBundleTitle(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm font-bold text-neutral-900 focus:outline-none focus:border-black"
+                />
+              </div>
+
+              {/* Discount Rate */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs font-bold">
+                  <span className="text-neutral-700">세트 할인율 설정</span>
+                  <span className="text-amber-600 font-extrabold text-sm">{setDiscountRate}% 할인 적용</span>
+                </div>
+                <div className="flex gap-2">
+                  {[15, 20, 25, 30, 35, 40, 50].map((rate) => (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() => setSetDiscountRate(rate)}
+                      className={`flex-1 py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${setDiscountRate === rate
+                          ? "bg-neutral-950 text-white border-neutral-950 shadow-sm"
+                          : "bg-neutral-50 text-neutral-700 border-neutral-200 hover:border-neutral-400"
+                        }`}
+                    >
+                      {rate}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Product Selection List with Category Filter & Quantity Selector */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs font-bold">
+                  <span className="text-neutral-700">세트 구성 상품 & 수량 선택</span>
+                  <span className="text-neutral-500 font-mono">
+                    {selectedSetProductIds.length}개 상품 선택됨 (총 {Object.values(setProductQuantities).reduce((a, b) => a + b, 0)}개)
+                  </span>
+                </div>
+
+                {/* Category Filter & Search Header */}
+                <div className="flex flex-col sm:flex-row items-center gap-2">
+                  <div className="relative flex-1 w-full">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-neutral-400" />
+                    <input
+                      type="text"
+                      placeholder="상품명 검색..."
+                      value={setProductSearchQuery}
+                      onChange={(e) => setSetProductSearchQuery(e.target.value)}
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-neutral-900 focus:outline-none focus:border-black"
+                    />
                   </div>
-                  <div>
-                    <h3 className="font-extrabold text-base">세트 아이템 할인 기획전 등록</h3>
-                    <p className="text-xs text-neutral-400">조합할 상품 2개 이상을 선택하고 할인율을 설정해 주세요.</p>
+                  <select
+                    value={setModalCategoryFilter}
+                    onChange={(e) => setSetModalCategoryFilter(e.target.value)}
+                    className="w-full sm:w-auto bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-1.5 text-xs font-bold text-neutral-900 focus:outline-none focus:border-black"
+                  >
+                    <option value="all">전체 카테고리</option>
+                    {categoriesList.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Filtered Products List */}
+                <div className="max-h-60 overflow-y-auto border border-neutral-200 rounded-2xl divide-y divide-neutral-100 p-2 bg-neutral-50">
+                  {productsList
+                    .filter((p) => {
+                      const matchCategory =
+                        setModalCategoryFilter === "all" || p.categoryId === setModalCategoryFilter;
+                      const matchQuery =
+                        !setProductSearchQuery ||
+                        p.title.toLowerCase().includes(setProductSearchQuery.toLowerCase());
+                      return matchCategory && matchQuery;
+                    })
+                    .map((p) => {
+                      const isChecked = selectedSetProductIds.includes(p.id);
+                      const qty = setProductQuantities[p.id] || 1;
+                      return (
+                        <div
+                          key={p.id}
+                          className={`p-2.5 rounded-xl flex items-center justify-between transition-colors ${isChecked ? "bg-amber-50/90 border border-amber-300 shadow-2xs" : "hover:bg-neutral-100"
+                            }`}
+                        >
+                          <div
+                            onClick={() => handleToggleProductInSet(p.id)}
+                            className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all shrink-0 ${isChecked ? "bg-neutral-950 border-neutral-950 text-white" : "border-neutral-300 bg-white"
+                                }`}
+                            >
+                              {isChecked && <Check className="w-3.5 h-3.5" />}
+                            </div>
+                            <div className="w-9 h-11 relative rounded-lg overflow-hidden bg-neutral-200 shrink-0">
+                              <img
+                                src={p.featuredImage?.url || "/product_1.webp"}
+                                alt={p.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-xs text-neutral-900 truncate">{p.title}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] font-extrabold text-neutral-400 uppercase">
+                                  {p.categoryId}
+                                </span>
+                                <span className="text-[11px] font-extrabold text-neutral-900">
+                                  {formatPrice(p.priceRange.minVariantPrice.amount)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Quantity Selector Counter */}
+                          {isChecked && (
+                            <div
+                              className="flex items-center gap-1.5 bg-white border border-amber-300 p-1 rounded-xl shadow-2xs shrink-0 ml-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateProductQuantityInSet(p.id, -1)}
+                                className="size-6 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-800 flex items-center justify-center font-black text-xs cursor-pointer"
+                              >
+                                -
+                              </button>
+                              <span className="w-5 text-center text-xs font-black font-mono">{qty}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateProductQuantityInSet(p.id, 1)}
+                                className="size-6 rounded-lg bg-neutral-950 hover:bg-black text-white flex items-center justify-center font-black text-xs cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Real-time Calculation Summary with Quantities */}
+              {selectedSetProductIds.length > 0 && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-1.5">
+                  <div className="flex justify-between text-xs text-neutral-600">
+                    <span>선택 상품 (수량 포함) 개별 정가 합계</span>
+                    <span className="line-through font-mono font-bold">
+                      {formatPrice(
+                        selectedSetProductIds
+                          .reduce((sum, id) => {
+                            const p = productsList.find((item) => item.id === id);
+                            const qty = setProductQuantities[id] || 1;
+                            return sum + parseFloat(p?.priceRange.minVariantPrice.amount || "0") * qty;
+                          }, 0)
+                          .toString()
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm font-extrabold text-amber-950 pt-1.5 border-t border-amber-200/60">
+                    <span>세트 최종 할인가 ({setDiscountRate}% 적용)</span>
+                    <span className="text-base text-amber-700">
+                      {formatPrice(
+                        Math.round(
+                          selectedSetProductIds.reduce((sum, id) => {
+                            const p = productsList.find((item) => item.id === id);
+                            const qty = setProductQuantities[id] || 1;
+                            return sum + parseFloat(p?.priceRange.minVariantPrice.amount || "0") * qty;
+                          }, 0) *
+                          (1 - setDiscountRate / 100)
+                        ).toString()
+                      )}
+                    </span>
                   </div>
                 </div>
+              )}
+
+              {/* Modal Submit */}
+              <div className="pt-2 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsSetModalOpen(false)}
-                  className="p-2 hover:bg-neutral-800 rounded-full text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-sm text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-sm shadow-md transition-all cursor-pointer"
+                >
+                  세트 할인 등록 완료
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-              {/* Modal Form */}
-              <form onSubmit={handleSaveSetBundle} className="p-6 overflow-y-auto space-y-6 flex-1">
-                {/* Set Title */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral-700">세트 기획전 명칭</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="예: [초이콤마 룩북 세트] 코트 + 블레이저 패키지 25% OFF"
-                    value={setBundleTitle}
-                    onChange={(e) => setSetBundleTitle(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm font-bold text-neutral-900 focus:outline-none focus:border-black"
-                  />
+      {/* MODAL 1: REGISTER / EDIT HERO CUSTOM IMAGE */}
+      {isImageUploadModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/70 backdrop-blur-xs flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] flex flex-col space-y-5 shadow-2xl border border-amber-400 animate-in zoom-in-95 duration-200 overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="bg-amber-500 text-neutral-950 text-xs font-black px-3 py-0.5 rounded-full uppercase tracking-wide">
+                    HERO BANNER IMAGE MANAGER
+                  </span>
+                </div>
+                <h3 className="text-2xl font-black text-neutral-950">
+                  🖼️ 메인 대표 이미지 등록 / 변경
+                </h3>
+                <p className="text-xs md:text-sm text-neutral-500 mt-0.5">
+                  상단 대형 메인 슬라이더 영역에 노출할 대표 이미지를 선택 및 변경합니다.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImageUploadModalOpen(false)}
+                className="p-2 text-neutral-400 hover:text-neutral-950 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveImageUpload} className="space-y-5">
+              {/* 1. Target Product Slot Selection */}
+              <div className="bg-amber-50/80 border border-amber-200 p-4 rounded-2xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
+                    🎯 이미지 변경 대상 슬롯 / 상품 선택
+                  </label>
+                  <span className="text-[10px] font-bold text-amber-700">
+                    {targetHeroProduct ? `현재 선택: ${targetHeroProduct.title}` : "상품을 선택해 주세요"}
+                  </span>
+                </div>
+                <select
+                  value={targetHeroProduct?.id || ""}
+                  onChange={(e) => {
+                    const p = productsList.find((item) => item.id === e.target.value);
+                    if (p) {
+                      setTargetHeroProduct(p);
+                      setCustomHeroImageUrl(p.heroCustomImage || p.featuredImage?.url || "");
+                    }
+                  }}
+                  className="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-amber-500 cursor-pointer shadow-2xs"
+                >
+                  {productsList.map((p, idx) => {
+                    const isHero = p.isHeroFeatured || (p.isMainFeatured && !p.isBottomFeatured);
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {isHero ? `🌟 [상단 대표 슬롯 #${idx + 1}] ` : `[일반 상품] `}{p.title} ({formatPrice(p.priceRange?.minVariantPrice?.amount)})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* 2. Image Upload & Preview Container */}
+              <div className="bg-neutral-50 border border-neutral-200 p-5 rounded-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black text-neutral-950 uppercase tracking-wide flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-amber-500" />
+                    메인 대표 노출 이미지 (Custom Image)
+                  </label>
+                  <span className="text-[11px] font-bold text-neutral-500">권장 해상도 1920 x 1080</span>
                 </div>
 
-                {/* Discount Rate */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-xs font-bold">
-                    <span className="text-neutral-700">세트 할인율 설정</span>
-                    <span className="text-amber-600 font-extrabold text-sm">{setDiscountRate}% 할인 적용</span>
-                  </div>
-                  <div className="flex gap-2">
-                    {[15, 20, 25, 30, 35, 40, 50].map((rate) => (
-                      <button
-                        key={rate}
-                        type="button"
-                        onClick={() => setSetDiscountRate(rate)}
-                        className={`flex-1 py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${
-                          setDiscountRate === rate
-                            ? "bg-neutral-950 text-white border-neutral-950 shadow-sm"
-                            : "bg-neutral-50 text-neutral-700 border-neutral-200 hover:border-neutral-400"
-                        }`}
-                      >
-                        {rate}%
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Product Selection List with Category Filter & Quantity Selector */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-xs font-bold">
-                    <span className="text-neutral-700">세트 구성 상품 & 수량 선택</span>
-                    <span className="text-neutral-500 font-mono">
-                      {selectedSetProductIds.length}개 상품 선택됨 (총 {Object.values(setProductQuantities).reduce((a, b) => a + b, 0)}개)
-                    </span>
+                <div className="flex flex-col sm:flex-row items-center gap-5">
+                  <div className="w-32 h-40 rounded-xl bg-neutral-100 border-2 border-dashed border-amber-400 overflow-hidden flex flex-col items-center justify-center relative shrink-0 shadow-xs">
+                    {customHeroImageUrl ? (
+                      <img
+                        src={customHeroImageUrl}
+                        alt="Custom Hero Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center p-2 text-neutral-400">
+                        <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                        <span className="text-[10px] font-bold block">미리보기</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Category Filter & Search Header */}
-                  <div className="flex flex-col sm:flex-row items-center gap-2">
-                    <div className="relative flex-1 w-full">
-                      <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-neutral-400" />
+                  <div className="flex-1 space-y-3.5 w-full">
+                    {/* Prominent Enlarged File Upload Button */}
+                    <div>
+                      <label className="block text-xs font-black text-neutral-900 mb-1.5 flex items-center gap-1">
+                        📁 이미지 파일 업로드 (컴퓨터에서 선택)
+                      </label>
+                      <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-amber-400 hover:border-amber-500 rounded-2xl cursor-pointer bg-amber-50/50 hover:bg-amber-100/70 transition-all group shadow-2xs">
+                        <div className="flex items-center gap-2 text-amber-950 font-black text-xs md:text-sm">
+                          <Upload className="w-5 h-5 text-amber-600 group-hover:scale-110 transition-transform" />
+                          <span>내 컴퓨터에서 이미지 파일 선택 / 업로드</span>
+                        </div>
+                        <span className="text-[11px] text-neutral-500 mt-1 font-semibold">
+                          클릭하여 파일(.jpg, .png, .webp) 선택
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleHeroImageUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    {/* Image URL Input */}
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">
+                        🌐 또는 이미지 웹 URL 직접 입력
+                      </label>
                       <input
                         type="text"
-                        placeholder="상품명 검색..."
-                        value={setProductSearchQuery}
-                        onChange={(e) => setSetProductSearchQuery(e.target.value)}
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-neutral-900 focus:outline-none focus:border-black"
+                        placeholder="/model_1.jpg 또는 https://..."
+                        value={customHeroImageUrl}
+                        onChange={(e) => setCustomHeroImageUrl(e.target.value)}
+                        className="w-full bg-white border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-neutral-900 focus:outline-none focus:border-amber-500 font-bold"
                       />
                     </div>
-                    <select
-                      value={setModalCategoryFilter}
-                      onChange={(e) => setSetModalCategoryFilter(e.target.value)}
-                      className="w-full sm:w-auto bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-1.5 text-xs font-bold text-neutral-900 focus:outline-none focus:border-black"
-                    >
-                      <option value="all">전체 카테고리</option>
-                      {categoriesList.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Filtered Products List */}
-                  <div className="max-h-60 overflow-y-auto border border-neutral-200 rounded-2xl divide-y divide-neutral-100 p-2 bg-neutral-50">
-                    {productsList
-                      .filter((p) => {
-                        const matchCategory =
-                          setModalCategoryFilter === "all" || p.categoryId === setModalCategoryFilter;
-                        const matchQuery =
-                          !setProductSearchQuery ||
-                          p.title.toLowerCase().includes(setProductSearchQuery.toLowerCase());
-                        return matchCategory && matchQuery;
-                      })
-                      .map((p) => {
-                        const isChecked = selectedSetProductIds.includes(p.id);
-                        const qty = setProductQuantities[p.id] || 1;
-                        return (
-                          <div
-                            key={p.id}
-                            className={`p-2.5 rounded-xl flex items-center justify-between transition-colors ${
-                              isChecked ? "bg-amber-50/90 border border-amber-300 shadow-2xs" : "hover:bg-neutral-100"
-                            }`}
-                          >
-                            <div
-                              onClick={() => handleToggleProductInSet(p.id)}
-                              className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
-                            >
-                              <div
-                                className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all shrink-0 ${
-                                  isChecked ? "bg-neutral-950 border-neutral-950 text-white" : "border-neutral-300 bg-white"
-                                }`}
-                              >
-                                {isChecked && <Check className="w-3.5 h-3.5" />}
-                              </div>
-                              <div className="w-9 h-11 relative rounded-lg overflow-hidden bg-neutral-200 shrink-0">
-                                <img
-                                  src={p.featuredImage?.url || "/product_1.webp"}
-                                  alt={p.title}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="font-bold text-xs text-neutral-900 truncate">{p.title}</p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[10px] font-extrabold text-neutral-400 uppercase">
-                                    {p.categoryId}
-                                  </span>
-                                  <span className="text-[11px] font-extrabold text-neutral-900">
-                                    {formatPrice(p.priceRange.minVariantPrice.amount)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Quantity Selector Counter */}
-                            {isChecked && (
-                              <div
-                                className="flex items-center gap-1.5 bg-white border border-amber-300 p-1 rounded-xl shadow-2xs shrink-0 ml-2"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateProductQuantityInSet(p.id, -1)}
-                                  className="size-6 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-800 flex items-center justify-center font-black text-xs cursor-pointer"
-                                >
-                                  -
-                                </button>
-                                <span className="w-5 text-center text-xs font-black font-mono">{qty}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateProductQuantityInSet(p.id, 1)}
-                                  className="size-6 rounded-lg bg-neutral-950 hover:bg-black text-white flex items-center justify-center font-black text-xs cursor-pointer"
-                                >
-                                  +
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
                   </div>
                 </div>
+              </div>
 
-                {/* Real-time Calculation Summary with Quantities */}
-                {selectedSetProductIds.length > 0 && (
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-1.5">
-                    <div className="flex justify-between text-xs text-neutral-600">
-                      <span>선택 상품 (수량 포함) 개별 정가 합계</span>
-                      <span className="line-through font-mono font-bold">
-                        {formatPrice(
-                          selectedSetProductIds
-                            .reduce((sum, id) => {
-                              const p = productsList.find((item) => item.id === id);
-                              const qty = setProductQuantities[id] || 1;
-                              return sum + parseFloat(p?.priceRange.minVariantPrice.amount || "0") * qty;
-                            }, 0)
-                            .toString()
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm font-extrabold text-amber-950 pt-1.5 border-t border-amber-200/60">
-                      <span>세트 최종 할인가 ({setDiscountRate}% 적용)</span>
-                      <span className="text-base text-amber-700">
-                        {formatPrice(
-                          Math.round(
-                            selectedSetProductIds.reduce((sum, id) => {
-                              const p = productsList.find((item) => item.id === id);
-                              const qty = setProductQuantities[id] || 1;
-                              return sum + parseFloat(p?.priceRange.minVariantPrice.amount || "0") * qty;
-                            }, 0) *
-                              (1 - setDiscountRate / 100)
-                          ).toString()
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Modal Submit */}
-                <div className="pt-2 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsSetModalOpen(false)}
-                    className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-sm text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-sm shadow-md transition-all cursor-pointer"
-                  >
-                    세트 할인 등록 완료
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* MODAL 1: REGISTER / EDIT HERO CUSTOM IMAGE */}
-        {isImageUploadModalOpen && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/70 backdrop-blur-xs flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] flex flex-col space-y-5 shadow-2xl border border-amber-400 animate-in zoom-in-95 duration-200 overflow-y-auto">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="bg-amber-500 text-neutral-950 text-xs font-black px-3 py-0.5 rounded-full uppercase tracking-wide">
-                      HERO BANNER IMAGE MANAGER
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-black text-neutral-950">
-                    🖼️ 메인 대표 이미지 등록 / 변경
-                  </h3>
-                  <p className="text-xs md:text-sm text-neutral-500 mt-0.5">
-                    상단 대형 메인 슬라이더 영역에 노출할 대표 이미지를 선택 및 변경합니다.
-                  </p>
-                </div>
+              {/* Footer Buttons */}
+              <div className="pt-3 border-t border-neutral-100 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsImageUploadModalOpen(false)}
-                  className="p-2 text-neutral-400 hover:text-neutral-950 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-neutral-200 text-xs font-bold text-neutral-600 hover:bg-neutral-100 transition-colors cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  취소
                 </button>
-              </div>
-
-              <form onSubmit={handleSaveImageUpload} className="space-y-5">
-                {/* 1. Target Product Slot Selection */}
-                <div className="bg-amber-50/80 border border-amber-200 p-4 rounded-2xl space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-black text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
-                      🎯 이미지 변경 대상 슬롯 / 상품 선택
-                    </label>
-                    <span className="text-[10px] font-bold text-amber-700">
-                      {targetHeroProduct ? `현재 선택: ${targetHeroProduct.title}` : "상품을 선택해 주세요"}
-                    </span>
-                  </div>
-                  <select
-                    value={targetHeroProduct?.id || ""}
-                    onChange={(e) => {
-                      const p = productsList.find((item) => item.id === e.target.value);
-                      if (p) {
-                        setTargetHeroProduct(p);
-                        setCustomHeroImageUrl(p.heroCustomImage || p.featuredImage?.url || "");
-                      }
-                    }}
-                    className="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-amber-500 cursor-pointer shadow-2xs"
-                  >
-                    {productsList.map((p, idx) => {
-                      const isHero = p.isHeroFeatured || (p.isMainFeatured && !p.isBottomFeatured);
-                      return (
-                        <option key={p.id} value={p.id}>
-                          {isHero ? `🌟 [상단 대표 슬롯 #${idx + 1}] ` : `[일반 상품] `}{p.title} ({formatPrice(p.priceRange?.minVariantPrice?.amount)})
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-
-                {/* 2. Image Upload & Preview Container */}
-                <div className="bg-neutral-50 border border-neutral-200 p-5 rounded-2xl space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-black text-neutral-950 uppercase tracking-wide flex items-center gap-1.5">
-                      <ImageIcon className="w-4 h-4 text-amber-500" />
-                      메인 대표 노출 이미지 (Custom Image)
-                    </label>
-                    <span className="text-[11px] font-bold text-neutral-500">권장 해상도 1920 x 1080</span>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-center gap-5">
-                    <div className="w-32 h-40 rounded-xl bg-neutral-100 border-2 border-dashed border-amber-400 overflow-hidden flex flex-col items-center justify-center relative shrink-0 shadow-xs">
-                      {customHeroImageUrl ? (
-                        <img
-                          src={customHeroImageUrl}
-                          alt="Custom Hero Preview"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="text-center p-2 text-neutral-400">
-                          <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                          <span className="text-[10px] font-bold block">미리보기</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 space-y-3.5 w-full">
-                      {/* Prominent Enlarged File Upload Button */}
-                      <div>
-                        <label className="block text-xs font-black text-neutral-900 mb-1.5 flex items-center gap-1">
-                          📁 이미지 파일 업로드 (컴퓨터에서 선택)
-                        </label>
-                        <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-amber-400 hover:border-amber-500 rounded-2xl cursor-pointer bg-amber-50/50 hover:bg-amber-100/70 transition-all group shadow-2xs">
-                          <div className="flex items-center gap-2 text-amber-950 font-black text-xs md:text-sm">
-                            <Upload className="w-5 h-5 text-amber-600 group-hover:scale-110 transition-transform" />
-                            <span>내 컴퓨터에서 이미지 파일 선택 / 업로드</span>
-                          </div>
-                          <span className="text-[11px] text-neutral-500 mt-1 font-semibold">
-                            클릭하여 파일(.jpg, .png, .webp) 선택
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleHeroImageUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-
-                      {/* Image URL Input */}
-                      <div>
-                        <label className="block text-xs font-bold text-neutral-700 mb-1">
-                          🌐 또는 이미지 웹 URL 직접 입력
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="/model_1.jpg 또는 https://..."
-                          value={customHeroImageUrl}
-                          onChange={(e) => setCustomHeroImageUrl(e.target.value)}
-                          className="w-full bg-white border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-neutral-900 focus:outline-none focus:border-amber-500 font-bold"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer Buttons */}
-                <div className="pt-3 border-t border-neutral-100 flex items-center justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsImageUploadModalOpen(false)}
-                    className="px-5 py-2.5 rounded-xl border border-neutral-200 text-xs font-bold text-neutral-600 hover:bg-neutral-100 transition-colors cursor-pointer"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-neutral-950 font-black text-xs shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
-                  >
-                    💾 이미지 저장
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* MODAL 2: SELECT & CONFIGURE LINKED PRODUCT */}
-        {isProductLinkModalOpen && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/70 backdrop-blur-xs flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl p-6 md:p-8 max-w-5xl w-full max-h-[85vh] flex flex-col space-y-6 shadow-2xl border border-emerald-500 animate-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="bg-emerald-600 text-white text-xs font-black px-3 py-0.5 rounded-full uppercase tracking-wide">
-                      PRODUCT LINK CONFIGURATION
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-black text-neutral-950">
-                    🔗 상품 연동 설정 및 변경
-                  </h3>
-                  <p className="text-xs md:text-sm text-neutral-500 mt-0.5">
-                    상단 대표 이미지를 클릭했을 때 이동할 스토어 상품을 선택하세요.
-                  </p>
-                </div>
                 <button
-                  type="button"
-                  onClick={() => setIsProductLinkModalOpen(false)}
-                  className="p-2.5 text-neutral-400 hover:text-neutral-950 rounded-2xl hover:bg-neutral-100 transition-colors cursor-pointer"
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-neutral-950 font-black text-xs shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
                 >
-                  <X className="w-6 h-6" />
+                  💾 이미지 저장
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-              {/* Filter & Search Controls */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-between bg-neutral-50 p-4 rounded-2xl border border-neutral-200/80">
-                <div className="relative flex-1">
-                  <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                  <input
-                    type="text"
-                    placeholder="연동할 상품명 검색..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white border border-neutral-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-neutral-500" />
-                  <select
-                    value={selectedCategoryFilter}
-                    onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                    className="bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="all">전체 카테고리</option>
-                    {categoriesList.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Product List Selector Table */}
-              <div className="flex-1 overflow-y-auto border border-neutral-200/80 rounded-2xl">
-                <table className="w-full text-left text-sm text-neutral-700">
-                  <thead className="bg-neutral-50 text-neutral-500 uppercase text-xs font-semibold border-b border-neutral-200 sticky top-0 z-10">
-                    <tr>
-                      <th className="py-3.5 px-5">상품 이미지</th>
-                      <th className="py-3.5 px-5">상품명</th>
-                      <th className="py-3.5 px-5">카테고리</th>
-                      <th className="py-3.5 px-5">판매가</th>
-                      <th className="py-3.5 px-5 text-right">연동 선택</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-neutral-200/60">
-                    {filteredProducts.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="py-12 text-center text-neutral-500 text-sm">
-                          검색 조건에 일치하는 상품이 없습니다.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredProducts.map((p) => {
-                        const isCurrentlyLinked = selectedLinkedProductId === p.id;
-
-                        return (
-                          <tr key={p.id} className="hover:bg-emerald-50/50 transition-colors">
-                            <td className="py-3.5 px-5">
-                              <div className="w-16 h-20 rounded-xl bg-white overflow-hidden border border-neutral-200 shadow-2xs flex items-center justify-center p-1">
-                                <img
-                                  src={p.featuredImage?.url || "/product_1.webp"}
-                                  alt={p.title}
-                                  className="w-full h-full object-contain"
-                                />
-                              </div>
-                            </td>
-                            <td className="py-3.5 px-5">
-                              <p className="font-black text-base text-neutral-950">{p.title}</p>
-                              <p className="text-xs text-neutral-500 truncate max-w-md mt-0.5">{p.description}</p>
-                            </td>
-                            <td className="py-3.5 px-5">
-                              <span className="inline-block px-3 py-1 rounded-md text-xs font-extrabold bg-neutral-100 text-neutral-800 uppercase border border-neutral-200">
-                                {p.categoryId}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-5 font-black text-base text-neutral-950 font-mono">
-                              {formatPrice(p.priceRange?.minVariantPrice?.amount)}
-                            </td>
-                            <td className="py-3.5 px-5 text-right">
-                              <button
-                                type="button"
-                                onClick={() => handleSaveProductLink(p.id)}
-                                className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer shadow-xs inline-flex items-center gap-1.5 shrink-0 ${
-                                  isCurrentlyLinked
-                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-600/20 font-black"
-                                    : "bg-neutral-950 hover:bg-neutral-800 text-white border-neutral-950 font-black"
-                                }`}
-                              >
-                                <span>{isCurrentlyLinked ? "✓ 현재 연동됨" : "🔗 이 상품으로 연동"}</span>
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Footer */}
-              <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
-                <p className="text-sm font-bold text-neutral-500">
-                  선택된 연동 상품:{" "}
-                  <span className="text-emerald-700 font-black text-base">
-                    {productsList.find((p) => p.id === selectedLinkedProductId)?.title || "선택 안됨"}
+      {/* MODAL 2: SELECT & CONFIGURE LINKED PRODUCT */}
+      {isProductLinkModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/70 backdrop-blur-xs flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-5xl w-full max-h-[85vh] flex flex-col space-y-6 shadow-2xl border border-emerald-500 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="bg-emerald-600 text-white text-xs font-black px-3 py-0.5 rounded-full uppercase tracking-wide">
+                    PRODUCT LINK CONFIGURATION
                   </span>
+                </div>
+                <h3 className="text-2xl font-black text-neutral-950">
+                  🔗 상품 연동 설정 및 변경
+                </h3>
+                <p className="text-xs md:text-sm text-neutral-500 mt-0.5">
+                  상단 대표 이미지를 클릭했을 때 이동할 스토어 상품을 선택하세요.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setIsProductLinkModalOpen(false)}
-                  className="px-6 py-3 rounded-2xl bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-sm shadow-md transition-all cursor-pointer"
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsProductLinkModalOpen(false)}
+                className="p-2.5 text-neutral-400 hover:text-neutral-950 rounded-2xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Filter & Search Controls */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-between bg-neutral-50 p-4 rounded-2xl border border-neutral-200/80">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                <input
+                  type="text"
+                  placeholder="연동할 상품명 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white border border-neutral-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-neutral-500" />
+                <select
+                  value={selectedCategoryFilter}
+                  onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                  className="bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-emerald-500"
                 >
-                  설정 완료 및 닫기
-                </button>
+                  <option value="all">전체 카테고리</option>
+                  {categoriesList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* MODAL: SELECT & REGISTER MAIN DISPLAY PRODUCTS (SEPARATED HERO / BOTTOM) */}
-        {isMainSelectModalOpen && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/65 backdrop-blur-xs flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl p-6 md:p-8 max-w-5xl w-full max-h-[85vh] flex flex-col space-y-6 shadow-2xl border border-amber-300 animate-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="bg-amber-500 text-neutral-950 text-xs font-black px-3 py-0.5 rounded-full uppercase tracking-wide">
-                      {mainSelectMode === "hero" ? "🌟 TOP HERO MAIN PRODUCT SELECTOR" : "🛍️ BOTTOM SUB PRODUCT SELECTOR"}
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-black text-neutral-950">
-                    {mainSelectMode === "hero" ? "상단 메인 대표 상품 선택 및 지정" : "하단 상품 선택 및 지정"}
-                  </h3>
-                  <p className="text-xs md:text-sm text-neutral-500 mt-0.5">
-                    {mainSelectMode === "hero"
-                      ? "쇼핑몰 메인 상단 대형 히어로 슬라이더 영역에 대표로 노출할 상품을 선택하세요."
-                      : "메인 화면 하단 3열 그리드 영역에 노출할 상품을 선택하세요."}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsMainSelectModalOpen(false)}
-                  className="p-2.5 text-neutral-400 hover:text-neutral-950 rounded-2xl hover:bg-neutral-100 transition-colors cursor-pointer"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              {/* Filter & Search */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-between bg-neutral-50 p-4 rounded-2xl border border-neutral-200/80">
-                <div className="relative flex-1">
-                  <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                  <input
-                    type="text"
-                    placeholder="상품명으로 검색..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white border border-neutral-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-amber-500 transition-colors"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-neutral-500" />
-                  <select
-                    value={selectedCategoryFilter}
-                    onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                    className="bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-amber-500"
-                  >
-                    <option value="all">전체 카테고리</option>
-                    {categoriesList.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Products List Table */}
-              <div className="flex-1 overflow-y-auto border border-neutral-200/80 rounded-2xl">
-                <table className="w-full text-left text-sm text-neutral-700">
-                  <thead className="bg-neutral-50 text-neutral-500 uppercase text-xs font-semibold border-b border-neutral-200 sticky top-0 z-10">
+            {/* Product List Selector Table */}
+            <div className="flex-1 overflow-y-auto border border-neutral-200/80 rounded-2xl">
+              <table className="w-full text-left text-sm text-neutral-700">
+                <thead className="bg-neutral-50 text-neutral-500 uppercase text-xs font-semibold border-b border-neutral-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="py-3.5 px-5">상품 이미지</th>
+                    <th className="py-3.5 px-5">상품명</th>
+                    <th className="py-3.5 px-5">카테고리</th>
+                    <th className="py-3.5 px-5">판매가</th>
+                    <th className="py-3.5 px-5 text-right">연동 선택</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-200/60">
+                  {filteredProducts.length === 0 ? (
                     <tr>
-                      <th className="py-3.5 px-5">상품 이미지</th>
-                      <th className="py-3.5 px-5">상품명</th>
-                      <th className="py-3.5 px-5">카테고리</th>
-                      <th className="py-3.5 px-5">판매가</th>
-                      <th className="py-3.5 px-5 text-right">
-                        {mainSelectMode === "hero" ? "상단 대표 지정" : "하단 상품 지정"}
-                      </th>
+                      <td colSpan={5} className="py-12 text-center text-neutral-500 text-sm">
+                        검색 조건에 일치하는 상품이 없습니다.
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-neutral-200/60">
-                    {filteredProducts.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="py-12 text-center text-neutral-500 text-sm">
-                          검색 조건에 일치하는 상품이 없습니다.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredProducts.map((p, index) => {
-                        const isSelectedInCurrentMode =
-                          mainSelectMode === "hero"
-                            ? p.isHeroFeatured || (p.isMainFeatured && !p.isBottomFeatured)
-                            : p.isBottomFeatured;
+                  ) : (
+                    filteredProducts.map((p) => {
+                      const isCurrentlyLinked = selectedLinkedProductId === p.id;
 
-                        return (
-                          <tr key={`${p.id}-${index}`} className="hover:bg-amber-50/50 transition-colors">
-                            <td className="py-3.5 px-5">
-                              <div className="w-16 h-20 md:w-20 md:h-24 rounded-xl bg-white overflow-hidden border border-neutral-200 shadow-2xs flex items-center justify-center p-1">
-                                <img
-                                  src={p.featuredImage?.url || "/product_1.webp"}
-                                  alt={p.title}
-                                  className="w-full h-full object-contain"
-                                />
-                              </div>
-                            </td>
-                            <td className="py-3.5 px-5">
-                              <p className="font-black text-base text-neutral-950">{p.title}</p>
-                              <p className="text-xs md:text-sm text-neutral-500 truncate max-w-sm mt-0.5">{p.description}</p>
-                            </td>
-                            <td className="py-3.5 px-5">
-                              <span className="inline-block px-2.5 py-1 rounded-md text-xs font-extrabold bg-neutral-100 text-neutral-800 border border-neutral-200 uppercase">
-                                {p.categoryId}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-5 font-black text-base text-neutral-950 font-mono">
-                              {formatPrice(p.priceRange?.minVariantPrice?.amount)}
-                            </td>
-                            <td className="py-3.5 px-5 text-right">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  mainSelectMode === "hero"
-                                    ? handleToggleHeroProduct(p.id)
-                                    : handleToggleBottomProduct(p.id)
-                                }
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer shadow-xs inline-flex items-center gap-1.5 shrink-0 ${
-                                  isSelectedInCurrentMode
-                                    ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
-                                    : mainSelectMode === "hero"
+                      return (
+                        <tr key={p.id} className="hover:bg-emerald-50/50 transition-colors">
+                          <td className="py-3.5 px-5">
+                            <div className="w-16 h-20 rounded-xl bg-white overflow-hidden border border-neutral-200 shadow-2xs flex items-center justify-center p-1">
+                              <img
+                                src={p.featuredImage?.url || "/product_1.webp"}
+                                alt={p.title}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-5">
+                            <p className="font-black text-base text-neutral-950">{p.title}</p>
+                            <p className="text-xs text-neutral-500 truncate max-w-md mt-0.5">{p.description}</p>
+                          </td>
+                          <td className="py-3.5 px-5">
+                            <span className="inline-block px-3 py-1 rounded-md text-xs font-extrabold bg-neutral-100 text-neutral-800 uppercase border border-neutral-200">
+                              {p.categoryId}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-5 font-black text-base text-neutral-950 font-mono">
+                            {formatPrice(p.priceRange?.minVariantPrice?.amount)}
+                          </td>
+                          <td className="py-3.5 px-5 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleSaveProductLink(p.id)}
+                              className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer shadow-xs inline-flex items-center gap-1.5 shrink-0 ${isCurrentlyLinked
+                                  ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-600/20 font-black"
+                                  : "bg-neutral-950 hover:bg-neutral-800 text-white border-neutral-950 font-black"
+                                }`}
+                            >
+                              <span>{isCurrentlyLinked ? "✓ 현재 연동됨" : "🔗 이 상품으로 연동"}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
+              <p className="text-sm font-bold text-neutral-500">
+                선택된 연동 상품:{" "}
+                <span className="text-emerald-700 font-black text-base">
+                  {productsList.find((p) => p.id === selectedLinkedProductId)?.title || "선택 안됨"}
+                </span>
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsProductLinkModalOpen(false)}
+                className="px-6 py-3 rounded-2xl bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-sm shadow-md transition-all cursor-pointer"
+              >
+                설정 완료 및 닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: SELECT & REGISTER MAIN DISPLAY PRODUCTS (SEPARATED HERO / BOTTOM) */}
+      {isMainSelectModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/65 backdrop-blur-xs flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-5xl w-full max-h-[85vh] flex flex-col space-y-6 shadow-2xl border border-amber-300 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="bg-amber-500 text-neutral-950 text-xs font-black px-3 py-0.5 rounded-full uppercase tracking-wide">
+                    {mainSelectMode === "hero" ? "🌟 TOP HERO MAIN PRODUCT SELECTOR" : "🛍️ BOTTOM SUB PRODUCT SELECTOR"}
+                  </span>
+                </div>
+                <h3 className="text-2xl font-black text-neutral-950">
+                  {mainSelectMode === "hero" ? "상단 메인 대표 상품 선택 및 지정" : "하단 상품 선택 및 지정"}
+                </h3>
+                <p className="text-xs md:text-sm text-neutral-500 mt-0.5">
+                  {mainSelectMode === "hero"
+                    ? "쇼핑몰 메인 상단 대형 히어로 슬라이더 영역에 대표로 노출할 상품을 선택하세요."
+                    : "메인 화면 하단 3열 그리드 영역에 노출할 상품을 선택하세요."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMainSelectModalOpen(false)}
+                className="p-2.5 text-neutral-400 hover:text-neutral-950 rounded-2xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Filter & Search */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-between bg-neutral-50 p-4 rounded-2xl border border-neutral-200/80">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                <input
+                  type="text"
+                  placeholder="상품명으로 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white border border-neutral-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-amber-500 transition-colors"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-neutral-500" />
+                <select
+                  value={selectedCategoryFilter}
+                  onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                  className="bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-900 focus:outline-none focus:border-amber-500"
+                >
+                  <option value="all">전체 카테고리</option>
+                  {categoriesList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Products List Table */}
+            <div className="flex-1 overflow-y-auto border border-neutral-200/80 rounded-2xl">
+              <table className="w-full text-left text-sm text-neutral-700">
+                <thead className="bg-neutral-50 text-neutral-500 uppercase text-xs font-semibold border-b border-neutral-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="py-3.5 px-5">상품 이미지</th>
+                    <th className="py-3.5 px-5">상품명</th>
+                    <th className="py-3.5 px-5">카테고리</th>
+                    <th className="py-3.5 px-5">판매가</th>
+                    <th className="py-3.5 px-5 text-right">
+                      {mainSelectMode === "hero" ? "상단 대표 지정" : "하단 상품 지정"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-200/60">
+                  {filteredProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-neutral-500 text-sm">
+                        검색 조건에 일치하는 상품이 없습니다.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredProducts.map((p, index) => {
+                      const isSelectedInCurrentMode =
+                        mainSelectMode === "hero"
+                          ? p.isHeroFeatured || (p.isMainFeatured && !p.isBottomFeatured)
+                          : p.isBottomFeatured;
+
+                      return (
+                        <tr key={`${p.id}-${index}`} className="hover:bg-amber-50/50 transition-colors">
+                          <td className="py-3.5 px-5">
+                            <div className="w-16 h-20 md:w-20 md:h-24 rounded-xl bg-white overflow-hidden border border-neutral-200 shadow-2xs flex items-center justify-center p-1">
+                              <img
+                                src={p.featuredImage?.url || "/product_1.webp"}
+                                alt={p.title}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-5">
+                            <p className="font-black text-base text-neutral-950">{p.title}</p>
+                            <p className="text-xs md:text-sm text-neutral-500 truncate max-w-sm mt-0.5">{p.description}</p>
+                          </td>
+                          <td className="py-3.5 px-5">
+                            <span className="inline-block px-2.5 py-1 rounded-md text-xs font-extrabold bg-neutral-100 text-neutral-800 border border-neutral-200 uppercase">
+                              {p.categoryId}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-5 font-black text-base text-neutral-950 font-mono">
+                            {formatPrice(p.priceRange?.minVariantPrice?.amount)}
+                          </td>
+                          <td className="py-3.5 px-5 text-right">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                mainSelectMode === "hero"
+                                  ? handleToggleHeroProduct(p.id)
+                                  : handleToggleBottomProduct(p.id)
+                              }
+                              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer shadow-xs inline-flex items-center gap-1.5 shrink-0 ${isSelectedInCurrentMode
+                                  ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                                  : mainSelectMode === "hero"
                                     ? "bg-amber-500 text-neutral-950 border-amber-400 hover:bg-amber-600 shadow-amber-500/20 font-black"
                                     : "bg-neutral-950 text-white border-neutral-900 hover:bg-neutral-800 font-black"
                                 }`}
-                              >
-                                <span>{isSelectedInCurrentMode ? "선택 해제" : "선택"}</span>
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Footer */}
-              <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
-                <p className="text-xs md:text-sm font-bold text-neutral-500">
-                  {mainSelectMode === "hero" ? (
-                    <>
-                      상단 대표 메인 상품 수:{" "}
-                      <span className="text-amber-600 font-black text-base">
-                        {productsList.filter((p) => p.isHeroFeatured || (p.isMainFeatured && !p.isBottomFeatured)).length}개
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      하단 상품 수:{" "}
-                      <span className="text-neutral-950 font-black text-base">
-                        {productsList.filter((p) => p.isBottomFeatured).length}개
-                      </span>
-                    </>
+                            >
+                              <span>{isSelectedInCurrentMode ? "선택 해제" : "선택"}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIsMainSelectModalOpen(false)}
-                  className="px-6 py-3 rounded-2xl bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs md:text-sm shadow-md transition-all cursor-pointer"
-                >
-                  설정 완료 및 닫기
-                </button>
-              </div>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
+              <p className="text-xs md:text-sm font-bold text-neutral-500">
+                {mainSelectMode === "hero" ? (
+                  <>
+                    상단 대표 메인 상품 수:{" "}
+                    <span className="text-amber-600 font-black text-base">
+                      {productsList.filter((p) => p.isHeroFeatured || (p.isMainFeatured && !p.isBottomFeatured)).length}개
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    하단 상품 수:{" "}
+                    <span className="text-neutral-950 font-black text-base">
+                      {productsList.filter((p) => p.isBottomFeatured).length}개
+                    </span>
+                  </>
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsMainSelectModalOpen(false)}
+                className="px-6 py-3 rounded-2xl bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs md:text-sm shadow-md transition-all cursor-pointer"
+              >
+                설정 완료 및 닫기
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
 
-        {/* ADD CUSTOMER MODAL */}
-        {isAddCustomerModalOpen && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-emerald-500 text-white rounded-2xl shadow-sm">
-                    <UserPlus className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-extrabold text-neutral-950">신규 회원 등록</h3>
-                    <p className="text-xs text-neutral-500">관리자가 직접 회원 계정을 새로 생성합니다.</p>
-                  </div>
+      {/* ADD CUSTOMER MODAL */}
+      {isAddCustomerModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-500 text-white rounded-2xl shadow-sm">
+                  <UserPlus className="w-5 h-5" />
                 </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-neutral-950">신규 회원 등록</h3>
+                  <p className="text-xs text-neutral-500">관리자가 직접 회원 계정을 새로 생성합니다.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddCustomerModalOpen(false)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCustomerSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">회원 이름 *</label>
+                <input
+                  type="text"
+                  required
+                  value={newCustName}
+                  onChange={(e) => setNewCustName(e.target.value)}
+                  placeholder="예: 홍길동"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">이메일 주소 *</label>
+                <input
+                  type="email"
+                  required
+                  value={newCustEmail}
+                  onChange={(e) => setNewCustEmail(e.target.value)}
+                  placeholder="hong@example.com"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">전화번호</label>
+                <input
+                  type="text"
+                  value={newCustPhone}
+                  onChange={(e) => setNewCustPhone(e.target.value)}
+                  placeholder="010-0000-0000"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">배송지 주소</label>
+                <input
+                  type="text"
+                  value={newCustAddress}
+                  onChange={(e) => setNewCustAddress(e.target.value)}
+                  placeholder="(우편번호) 주소 상세주소"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">초기 회원 등급</label>
+                  <select
+                    value={newCustGrade}
+                    onChange={(e) => setNewCustGrade(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  >
+                    <option value="GENERAL">일반 (GENERAL)</option>
+                    <option value="SILVER">실버 (SILVER)</option>
+                    <option value="GOLD">골드 (GOLD)</option>
+                    <option value="PLATINUM">플래티넘 (PLATINUM)</option>
+                    <option value="VVIP">VVIP</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">초기 적립금 (₩)</label>
+                  <input
+                    type="number"
+                    value={newCustPoints}
+                    onChange={(e) => setNewCustPoints(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
                 <button
                   type="button"
                   onClick={() => setIsAddCustomerModalOpen(false)}
-                  className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <UserPlus className="w-4 h-4 text-emerald-400" />
+                  <span>회원 등록 완료</span>
                 </button>
               </div>
-
-              <form onSubmit={handleAddCustomerSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">회원 이름 *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newCustName}
-                    onChange={(e) => setNewCustName(e.target.value)}
-                    placeholder="예: 홍길동"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">이메일 주소 *</label>
-                  <input
-                    type="email"
-                    required
-                    value={newCustEmail}
-                    onChange={(e) => setNewCustEmail(e.target.value)}
-                    placeholder="hong@example.com"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">전화번호</label>
-                  <input
-                    type="text"
-                    value={newCustPhone}
-                    onChange={(e) => setNewCustPhone(e.target.value)}
-                    placeholder="010-0000-0000"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">배송지 주소</label>
-                  <input
-                    type="text"
-                    value={newCustAddress}
-                    onChange={(e) => setNewCustAddress(e.target.value)}
-                    placeholder="(우편번호) 주소 상세주소"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">초기 회원 등급</label>
-                    <select
-                      value={newCustGrade}
-                      onChange={(e) => setNewCustGrade(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                    >
-                      <option value="REGULAR">REGULAR (일반)</option>
-                      <option value="SILVER VIP">SILVER VIP</option>
-                      <option value="GOLD VIP">GOLD VIP</option>
-                      <option value="BLACK VIP">BLACK VIP</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">초기 적립금 (₩)</label>
-                    <input
-                      type="number"
-                      value={newCustPoints}
-                      onChange={(e) => setNewCustPoints(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      placeholder="10000"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddCustomerModalOpen(false)}
-                    className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
-                  >
-                    <UserPlus className="w-4 h-4 text-emerald-400" />
-                    <span>회원 등록 완료</span>
-                  </button>
-                </div>
-              </form>
-            </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* EDIT CUSTOMER MODAL */}
-        {editingCustomer && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
-                    <Pencil className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-extrabold text-neutral-950">회원 정보 / 등급 수정</h3>
-                    <p className="text-xs text-neutral-500 font-mono">{editingCustomer.name} ({editingCustomer.email})</p>
-                  </div>
+      {/* EDIT CUSTOMER MODAL */}
+      {editingCustomer && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
+                  <Pencil className="w-5 h-5" />
                 </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-neutral-950">회원 정보 / 등급 수정</h3>
+                  <p className="text-xs text-neutral-500 font-mono">{editingCustomer.name} ({editingCustomer.email})</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingCustomer(null)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditCustomer} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">회원 등급 변경</label>
+                <select
+                  value={editCustGrade}
+                  onChange={(e) => setEditCustGrade(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                >
+                  <option value="GENERAL">일반 (GENERAL)</option>
+                  <option value="SILVER">실버 (SILVER)</option>
+                  <option value="GOLD">골드 (GOLD)</option>
+                  <option value="PLATINUM">플래티넘 (PLATINUM)</option>
+                  <option value="VVIP">VVIP</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">배송지 주소 수정</label>
+                <input
+                  type="text"
+                  value={editCustAddress}
+                  onChange={(e) => setEditCustAddress(e.target.value)}
+                  placeholder="(우편번호) 주소 상세주소"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">
+                  적립금 추가 / 차감 (현재: ₩{editingCustomer.points.toLocaleString()})
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={editCustPointsDelta}
+                    onChange={(e) => setEditCustPointsDelta(e.target.value)}
+                    placeholder="예: 5000 또는 -2000"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                  <span className="text-xs font-bold text-neutral-500 shrink-0">원</span>
+                </div>
+                <p className="text-[11px] text-neutral-400 mt-1">양수(+) 입력 시 지급, 음수(-) 입력 시 차감됩니다.</p>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
                 <button
                   type="button"
                   onClick={() => setEditingCustomer(null)}
-                  className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  취소
                 </button>
-              </div>
-
-              <form onSubmit={handleSaveEditCustomer} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">회원 등급 변경</label>
-                  <select
-                    value={editCustGrade}
-                    onChange={(e) => setEditCustGrade(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  >
-                    <option value="REGULAR">REGULAR (일반 회원)</option>
-                    <option value="SILVER VIP">SILVER VIP</option>
-                    <option value="GOLD VIP">GOLD VIP</option>
-                    <option value="BLACK VIP">BLACK VIP</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">배송지 주소 수정</label>
-                  <input
-                    type="text"
-                    value={editCustAddress}
-                    onChange={(e) => setEditCustAddress(e.target.value)}
-                    placeholder="(우편번호) 주소 상세주소"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">
-                    적립금 추가 / 차감 (현재: ₩{editingCustomer.points.toLocaleString()})
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      value={editCustPointsDelta}
-                      onChange={(e) => setEditCustPointsDelta(e.target.value)}
-                      placeholder="예: 5000 또는 -2000"
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                    />
-                    <span className="text-xs font-bold text-neutral-500 shrink-0">원</span>
-                  </div>
-                  <p className="text-[11px] text-neutral-400 mt-1">양수(+) 입력 시 지급, 음수(-) 입력 시 차감됩니다.</p>
-                </div>
-
-                <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
-                  <button
-                    type="button"
-                    onClick={() => setEditingCustomer(null)}
-                    className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
-                  >
-                    변경사항 저장
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* ADD SHIPMENT MODAL */}
-        {isAddShipmentModalOpen && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
-                    <Truck className="w-5 h-5 text-sky-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-extrabold text-neutral-950">신규 배송건 / 운송장 등록</h3>
-                    <p className="text-xs text-neutral-500">배송 정보 및 택배사 운송장 등록</p>
-                  </div>
-                </div>
                 <button
-                  type="button"
-                  onClick={() => setIsAddShipmentModalOpen(false)}
-                  className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  변경사항 저장
                 </button>
               </div>
-
-              <form onSubmit={handleAddShipmentSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">수령인 성명 *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newShipmentRecipient}
-                    onChange={(e) => setNewShipmentRecipient(e.target.value)}
-                    placeholder="예: 홍길동"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">연락처</label>
-                  <input
-                    type="text"
-                    value={newShipmentPhone}
-                    onChange={(e) => setNewShipmentPhone(e.target.value)}
-                    placeholder="010-0000-0000"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">배송지 주소</label>
-                  <input
-                    type="text"
-                    value={newShipmentAddress}
-                    onChange={(e) => setNewShipmentAddress(e.target.value)}
-                    placeholder="(우편번호) 주소 상세주소"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">주문 상품 명칭</label>
-                  <input
-                    type="text"
-                    value={newShipmentItems}
-                    onChange={(e) => setNewShipmentItems(e.target.value)}
-                    placeholder="예: 클래식 울 재킷 x 1"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">택배사 선택</label>
-                    <select
-                      value={newShipmentCarrier}
-                      onChange={(e) => setNewShipmentCarrier(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                    >
-                      <option value="CJ대한통운">CJ대한통운</option>
-                      <option value="우체국택배">우체국택배</option>
-                      <option value="한진택배">한진택배</option>
-                      <option value="로젠택배">로젠택배</option>
-                      <option value="롯데택배">롯데택배</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">운송장 번호</label>
-                    <input
-                      type="text"
-                      value={newShipmentTracking}
-                      onChange={(e) => setNewShipmentTracking(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      placeholder="숫자 입력 (미입력시 자동생성)"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">초기 배송 상태</label>
-                  <select
-                    value={newShipmentStatus}
-                    onChange={(e) => setNewShipmentStatus(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  >
-                    <option value="Pending">배송 준비 중</option>
-                    <option value="In Transit">배송 중 (In Transit)</option>
-                    <option value="Delivered">배송 완료 (Delivered)</option>
-                  </select>
-                </div>
-
-                <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddShipmentModalOpen(false)}
-                    className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Truck className="w-4 h-4 text-sky-400" />
-                    <span>배송 등록 완료</span>
-                  </button>
-                </div>
-              </form>
-            </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* EDIT SHIPMENT MODAL */}
-        {editingShipment && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
-                    <Pencil className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-extrabold text-neutral-950">운송장 / 배송 상태 변경</h3>
-                    <p className="text-xs text-neutral-500 font-mono">{editingShipment.id} ({editingShipment.recipient}님)</p>
-                  </div>
+      {/* ADD SHIPMENT MODAL */}
+      {isAddShipmentModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
+                  <Truck className="w-5 h-5 text-sky-400" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setEditingShipment(null)}
-                  className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div>
+                  <h3 className="text-xl font-extrabold text-neutral-950">신규 배송건 / 운송장 등록</h3>
+                  <p className="text-xs text-neutral-500">배송 정보 및 택배사 운송장 등록</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddShipmentModalOpen(false)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddShipmentSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">수령인 성명 *</label>
+                <input
+                  type="text"
+                  required
+                  value={newShipmentRecipient}
+                  onChange={(e) => setNewShipmentRecipient(e.target.value)}
+                  placeholder="예: 홍길동"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                />
               </div>
 
-              <form onSubmit={handleSaveEditShipment} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">연락처</label>
+                <input
+                  type="text"
+                  value={newShipmentPhone}
+                  onChange={(e) => setNewShipmentPhone(e.target.value)}
+                  placeholder="010-0000-0000"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">배송지 주소</label>
+                <input
+                  type="text"
+                  value={newShipmentAddress}
+                  onChange={(e) => setNewShipmentAddress(e.target.value)}
+                  placeholder="(우편번호) 주소 상세주소"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">주문 상품 명칭</label>
+                <input
+                  type="text"
+                  value={newShipmentItems}
+                  onChange={(e) => setNewShipmentItems(e.target.value)}
+                  placeholder="예: 클래식 울 재킷 x 1"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1">택배사 선택</label>
                   <select
-                    value={editShipmentCarrier}
-                    onChange={(e) => setEditShipmentCarrier(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    value={newShipmentCarrier}
+                    onChange={(e) => setNewShipmentCarrier(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
                   >
                     <option value="CJ대한통운">CJ대한통운</option>
                     <option value="우체국택배">우체국택배</option>
@@ -6760,692 +7066,744 @@ export default function AdminPage() {
                   <label className="block text-xs font-bold text-neutral-700 mb-1">운송장 번호</label>
                   <input
                     type="text"
-                    value={editShipmentTracking}
-                    onChange={(e) => setEditShipmentTracking(e.target.value)}
-                    placeholder="운송장 번호 입력"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    value={newShipmentTracking}
+                    onChange={(e) => setNewShipmentTracking(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    placeholder="숫자 입력 (미입력시 자동생성)"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">배송 상태 변경</label>
-                  <select
-                    value={editShipmentStatus}
-                    onChange={(e) => setEditShipmentStatus(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                  >
-                    <option value="Pending">배송 준비 중 (Pending)</option>
-                    <option value="In Transit">배송 중 (In Transit)</option>
-                    <option value="Delivered">배송 완료 (Delivered)</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">초기 배송 상태</label>
+                <select
+                  value={newShipmentStatus}
+                  onChange={(e) => setNewShipmentStatus(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                >
+                  <option value="Pending">배송 준비 중</option>
+                  <option value="In Transit">배송 중 (In Transit)</option>
+                  <option value="Delivered">배송 완료 (Delivered)</option>
+                </select>
+              </div>
 
-                <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
-                  <button
-                    type="button"
-                    onClick={() => setEditingShipment(null)}
-                    className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
-                  >
-                    변경사항 저장
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddShipmentModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Truck className="w-4 h-4 text-sky-400" />
+                  <span>배송 등록 완료</span>
+                </button>
+              </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* SHIPPING POLICY & CJ LOGISTICS CONFIG MODAL */}
-        {isCjConfigModalOpen && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-blue-950 text-white rounded-2xl shadow-sm">
-                    <Truck className="w-5 h-5 text-sky-400" />
+      {/* EDIT SHIPMENT MODAL */}
+      {editingShipment && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
+                  <Pencil className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-neutral-950">운송장 / 배송 상태 변경</h3>
+                  <p className="text-xs text-neutral-500 font-mono">{editingShipment.id} ({editingShipment.recipient}님)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingShipment(null)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditShipment} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">택배사 선택</label>
+                <select
+                  value={editShipmentCarrier}
+                  onChange={(e) => setEditShipmentCarrier(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                >
+                  <option value="CJ대한통운">CJ대한통운</option>
+                  <option value="우체국택배">우체국택배</option>
+                  <option value="한진택배">한진택배</option>
+                  <option value="로젠택배">로젠택배</option>
+                  <option value="롯데택배">롯데택배</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">운송장 번호</label>
+                <input
+                  type="text"
+                  value={editShipmentTracking}
+                  onChange={(e) => setEditShipmentTracking(e.target.value)}
+                  placeholder="운송장 번호 입력"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">배송 상태 변경</label>
+                <select
+                  value={editShipmentStatus}
+                  onChange={(e) => setEditShipmentStatus(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                >
+                  <option value="Pending">배송 준비 중 (Pending)</option>
+                  <option value="In Transit">배송 중 (In Transit)</option>
+                  <option value="Delivered">배송 완료 (Delivered)</option>
+                </select>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingShipment(null)}
+                  className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
+                >
+                  변경사항 저장
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* SHIPPING POLICY & CJ LOGISTICS CONFIG MODAL */}
+      {isCjConfigModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-950 text-white rounded-2xl shadow-sm">
+                  <Truck className="w-5 h-5 text-sky-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-neutral-950">배송 정책 & CJ대한통운 설정</h3>
+                  <p className="text-xs text-neutral-500">기본 배송비, 무료배송 기준 및 CJ대한통운 API 연동 정보</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCjConfigModalOpen(false)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* TAB SELECTION */}
+            <div className="flex bg-neutral-100 p-1 rounded-2xl gap-1">
+              <button
+                type="button"
+                onClick={() => setConfigModalTab("policy")}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${configModalTab === "policy"
+                    ? "bg-white text-neutral-950 shadow-xs"
+                    : "text-neutral-500 hover:text-neutral-900"
+                  }`}
+              >
+                <Truck className="w-3.5 h-3.5 text-sky-600" />
+                배송비 및 정책 설정
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfigModalTab("cj")}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${configModalTab === "cj"
+                    ? "bg-white text-neutral-950 shadow-xs"
+                    : "text-neutral-500 hover:text-neutral-900"
+                  }`}
+              >
+                <Settings className="w-3.5 h-3.5 text-neutral-700" />
+                CJ대한통운 (로이스 파셀) 설정
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("shipping_policy", JSON.stringify(shippingPolicy));
+                  localStorage.setItem("cj_client_code", cjClientCode);
+                  localStorage.setItem("cj_contract_no", cjContractNo);
+                  localStorage.setItem("cj_sender_address", cjSenderAddress);
+                  window.dispatchEvent(new CustomEvent("shipping_policy_updated"));
+                }
+                setIsCjConfigModalOpen(false);
+                triggerToast("배송 정책 및 CJ대한통운 설정이 저장되었습니다.");
+              }}
+              className="space-y-4"
+            >
+              {configModalTab === "policy" ? (
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">기본 배송비 (원) *</label>
+                      <input
+                        type="number"
+                        required
+                        value={shippingPolicy.baseFee}
+                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, baseFee: parseInt(e.target.value) || 0 })}
+                        placeholder="3000"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">무료 배송 기준 금액 (원) *</label>
+                      <input
+                        type="number"
+                        required
+                        value={shippingPolicy.freeShippingThreshold}
+                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, freeShippingThreshold: parseInt(e.target.value) || 0 })}
+                        placeholder="100000"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-amber-600 focus:outline-none focus:border-neutral-950"
+                      />
+                      <span className="text-[11px] text-neutral-400 mt-0.5 block">예: 100,000원 이상 결제 시 무료배송</span>
+                    </div>
                   </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">도서산간/제주 추가 배송비 (원)</label>
+                      <input
+                        type="number"
+                        value={shippingPolicy.islandExtraFee}
+                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, islandExtraFee: parseInt(e.target.value) || 0 })}
+                        placeholder="3000"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">반품/교환 왕복 배송비 (원)</label>
+                      <input
+                        type="number"
+                        value={shippingPolicy.returnExchangeFee}
+                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, returnExchangeFee: parseInt(e.target.value) || 0 })}
+                        placeholder="6000"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <h3 className="text-xl font-extrabold text-neutral-950">배송 정책 & CJ대한통운 설정</h3>
-                    <p className="text-xs text-neutral-500">기본 배송비, 무료배송 기준 및 CJ대한통운 API 연동 정보</p>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">기본 지정 택배사</label>
+                    <input
+                      type="text"
+                      value={shippingPolicy.courierName}
+                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, courierName: e.target.value })}
+                      placeholder="CJ대한통운 (주계약)"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">배송 안내 문구 (고객 노출)</label>
+                    <textarea
+                      rows={2}
+                      value={shippingPolicy.shippingNotice}
+                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, shippingNotice: e.target.value })}
+                      placeholder="평일 14:00 이전 결제 완료 시 당일 출고됩니다."
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-3 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-none"
+                    />
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsCjConfigModalOpen(false)}
-                  className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* TAB SELECTION */}
-              <div className="flex bg-neutral-100 p-1 rounded-2xl gap-1">
-                <button
-                  type="button"
-                  onClick={() => setConfigModalTab("policy")}
-                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                    configModalTab === "policy"
-                      ? "bg-white text-neutral-950 shadow-xs"
-                      : "text-neutral-500 hover:text-neutral-900"
-                  }`}
-                >
-                  <Truck className="w-3.5 h-3.5 text-sky-600" />
-                  배송 정책 설정
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfigModalTab("cj")}
-                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                    configModalTab === "cj"
-                      ? "bg-white text-neutral-950 shadow-xs"
-                      : "text-neutral-500 hover:text-neutral-900"
-                  }`}
-                >
-                  <Settings className="w-3.5 h-3.5 text-neutral-700" />
-                  CJ대한통운 API 설정
-                </button>
-              </div>
-
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (typeof window !== "undefined") {
-                    localStorage.setItem("shipping_policy", JSON.stringify(shippingPolicy));
-                    window.dispatchEvent(new CustomEvent("shipping_policy_updated"));
-                  }
-                  setIsCjConfigModalOpen(false);
-                  triggerToast("배송 정책 및 CJ대한통운 설정이 저장되었습니다.");
-                }}
-                className="space-y-4"
-              >
-                {configModalTab === "policy" ? (
-                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-neutral-700 mb-1">기본 배송비 (원) *</label>
-                        <input
-                          type="number"
-                          required
-                          value={shippingPolicy.baseFee}
-                          onChange={(e) => setShippingPolicy({ ...shippingPolicy, baseFee: parseInt(e.target.value) || 0 })}
-                          placeholder="3000"
-                          className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-neutral-700 mb-1">무료 배송 기준 금액 (원) *</label>
-                        <input
-                          type="number"
-                          required
-                          value={shippingPolicy.freeShippingThreshold}
-                          onChange={(e) => setShippingPolicy({ ...shippingPolicy, freeShippingThreshold: parseInt(e.target.value) || 0 })}
-                          placeholder="100000"
-                          className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-amber-600 focus:outline-none focus:border-neutral-950"
-                        />
-                        <span className="text-[11px] text-neutral-400 mt-0.5 block">예: 100,000원 이상 결제 시 무료배송</span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-neutral-700 mb-1">도서산간/제주 추가 배송비 (원)</label>
-                        <input
-                          type="number"
-                          value={shippingPolicy.islandExtraFee}
-                          onChange={(e) => setShippingPolicy({ ...shippingPolicy, islandExtraFee: parseInt(e.target.value) || 0 })}
-                          placeholder="3000"
-                          className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-neutral-700 mb-1">반품/교환 왕복 배송비 (원)</label>
-                        <input
-                          type="number"
-                          value={shippingPolicy.returnExchangeFee}
-                          onChange={(e) => setShippingPolicy({ ...shippingPolicy, returnExchangeFee: parseInt(e.target.value) || 0 })}
-                          placeholder="6000"
-                          className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">기본 지정 택배사</label>
-                      <input
-                        type="text"
-                        value={shippingPolicy.courierName}
-                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, courierName: e.target.value })}
-                        placeholder="CJ대한통운 (주계약)"
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">배송 안내 문구 (고객 노출)</label>
-                      <textarea
-                        rows={2}
-                        value={shippingPolicy.shippingNotice}
-                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, shippingNotice: e.target.value })}
-                        placeholder="평일 14:00 이전 결제 완료 시 당일 출고됩니다."
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-3 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-none"
-                      />
-                    </div>
+              ) : (
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">CJ대한통운 고객사 코드 (Client Code) *</label>
+                    <input
+                      type="text"
+                      required
+                      value={cjClientCode}
+                      onChange={(e) => setCjClientCode(e.target.value)}
+                      placeholder="예: CJ-882910"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    />
                   </div>
-                ) : (
-                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                    <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">고객사 코드 (Client Code) *</label>
-                      <input
-                        type="text"
-                        required
-                        value={cjClientCode}
-                        onChange={(e) => setCjClientCode(e.target.value)}
-                        placeholder="예: CJ-882910"
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      />
-                    </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">계약 고객 번호 (Contract No) *</label>
-                      <input
-                        type="text"
-                        required
-                        value={cjContractNo}
-                        onChange={(e) => setCjContractNo(e.target.value)}
-                        placeholder="예: 30291049"
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">계약 고객 번호 (Contract No) *</label>
+                    <input
+                      type="text"
+                      required
+                      value={cjContractNo}
+                      onChange={(e) => setCjContractNo(e.target.value)}
+                      placeholder="예: 30291049"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    />
+                  </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">Open API Secret Key</label>
-                      <input
-                        type="password"
-                        value={cjApiKey}
-                        onChange={(e) => setCjApiKey(e.target.value)}
-                        placeholder="cj_live_sk_..."
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">출고 주소지 (기본 발송지)</label>
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1.5">출고지 / 보내는 분 주소</label>
+                    <div className="flex gap-2">
                       <input
                         type="text"
                         value={cjSenderAddress}
                         onChange={(e) => setCjSenderAddress(e.target.value)}
-                        placeholder="출고 물류센터 주소"
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+                        placeholder="주소 찾기 버튼을 눌러 출고지 주소를 입력해 주세요"
+                        className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
                       />
+                      <button
+                        type="button"
+                        onClick={handleOpenSenderPostcode}
+                        className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0 shadow-xs flex items-center gap-1.5 hover:scale-105 active:scale-95"
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        <span>주소 찾기</span>
+                      </button>
                     </div>
-
-                    <div className="p-3 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-900 font-semibold space-y-1">
-                      <p className="font-extrabold flex items-center gap-1.5 text-sky-950">
-                        <CheckCircle2 className="w-4 h-4 text-sky-600" />
-                        CJ대한통운 (LoIS e-Flex / CNPlus) 연동 완료
-                      </p>
-                      <p className="text-[11px] text-sky-700 font-normal">
-                        운송장 자동 채번, 택배 집하 요청 및 실시간 배송 추적 조회가 정상 연동되어 있습니다.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-3 flex justify-between items-center border-t border-neutral-100">
-                  {configModalTab === "cj" ? (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        triggerToast("CJ대한통운 API 통신 상태 점검 중...");
-                        const res = await fetch("/api/admin/shipping/cj-logistics", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ action: "test_connection", config: { clientCode: cjClientCode, contractNo: cjContractNo } }),
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                          triggerToast(data.message);
-                        } else {
-                          triggerToast(data.message || "연동 테스트 실패");
-                        }
-                      }}
-                      className="px-3.5 py-2 rounded-xl bg-sky-50 text-sky-700 font-bold text-xs hover:bg-sky-100 transition-colors cursor-pointer border border-sky-200"
-                    >
-                      API 연동 테스트
-                    </button>
-                  ) : (
-                    <div />
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsCjConfigModalOpen(false)}
-                      className="px-4 py-2 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
-                    >
-                      취소
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-5 py-2 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
-                    >
-                      설정 저장
-                    </button>
+                    <p className="text-[11px] text-neutral-500 mt-1.5">
+                      * 주소 찾기 버튼을 누르면 우편번호 및 도로명 주소가 자동으로 완성됩니다.
+                    </p>
                   </div>
                 </div>
-              </form>
-            </div>
-          </div>
-        )}
+              )}
 
-        {/* ADD INBOUND SCHEDULE MODAL */}
-        {isAddInboundModalOpen && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-emerald-600 text-white rounded-2xl shadow-sm">
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-extrabold text-neutral-950">신규 입고 일정 등록</h3>
-                    <p className="text-xs text-neutral-500">입고 예정 상품과 날짜, 수량 및 공급업체를 등록합니다.</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAddInboundModalOpen(false)}
-                  className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleAddInboundSchedule} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">입고 예정 일자 *</label>
-                  <input
-                    type="date"
-                    required
-                    value={newInboundDate}
-                    onChange={(e) => setNewInboundDate(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-900 focus:outline-none focus:border-emerald-600 font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">입고 상품명 *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="예: 클래식 울 블렌드 트위드 재킷"
-                    value={newInboundTitle}
-                    onChange={(e) => setNewInboundTitle(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-emerald-600"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">입고 수량 (개) *</label>
-                    <input
-                      type="number"
-                      required
-                      min={1}
-                      value={newInboundQuantity}
-                      onChange={(e) => setNewInboundQuantity(Number(e.target.value))}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-emerald-600"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">입고 상태</label>
-                    <select
-                      value={newInboundStatus}
-                      onChange={(e) => setNewInboundStatus(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-emerald-600"
-                    >
-                      <option value="Scheduled">📦 입고 대기</option>
-                      <option value="In Progress">⏳ 검수 진행 중</option>
-                      <option value="Completed">🟢 입고 완료</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">공급업체 (발주처)</label>
-                    <input
-                      type="text"
-                      placeholder="예: (주)한진방직 / 성수공장"
-                      value={newInboundSupplier}
-                      onChange={(e) => setNewInboundSupplier(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-emerald-600"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">도착 창고 / 구역</label>
-                    <select
-                      value={newInboundWarehouse}
-                      onChange={(e) => setNewInboundWarehouse(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-emerald-600"
-                    >
-                      <option value="제1물류센터 A구역">제1물류센터 A구역</option>
-                      <option value="제2물류센터 B구역">제2물류센터 B구역</option>
-                      <option value="제1물류센터 C구역">제1물류센터 C구역</option>
-                      <option value="제3물류센터 (잡화)">제3물류센터 (잡화)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">특이사항 / 입고 메모</label>
-                  <textarea
-                    rows={2}
-                    placeholder="검수 수량, 패키징 사양, 비고 메모 등"
-                    value={newInboundNotes}
-                    onChange={(e) => setNewInboundNotes(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs text-neutral-950 focus:outline-none focus:border-emerald-600"
-                  />
-                </div>
-
-                <div className="pt-4 border-t border-neutral-100 flex items-center justify-end gap-2">
+              <div className="pt-3 flex justify-end items-center border-t border-neutral-100">
+                <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setIsAddInboundModalOpen(false)}
+                    onClick={() => setIsCjConfigModalOpen(false)}
                     className="px-4 py-2 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
                   >
                     취소
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-5 py-2 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
                   >
-                    <Calendar className="w-4 h-4 text-emerald-200" />
-                    <span>입고 일정 등록</span>
+                    설정 저장
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* INBOUND ITEM DETAIL & EDIT MODAL */}
-        {selectedInboundItem && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-5">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
-                    <Box className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-extrabold text-neutral-950">입고 상세 정보</h3>
-                    <p className="text-xs text-neutral-500 font-mono">{selectedInboundItem.id}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedInboundItem(null)}
-                  className="p-2 text-neutral-400 hover:text-neutral-950 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-              <div className="space-y-3 text-xs">
-                <div className="bg-neutral-50 p-3.5 rounded-2xl border border-neutral-200/80 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-neutral-500 font-bold">입고 일자:</span>
-                    <span className="font-mono font-extrabold text-neutral-950">{selectedInboundItem.date}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-neutral-500 font-bold">입고 상품명:</span>
-                    <span className="font-extrabold text-neutral-950">{selectedInboundItem.productTitle}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-neutral-500 font-bold">입고 예정 수량:</span>
-                    <span className="font-mono font-black text-emerald-600 text-sm">+{selectedInboundItem.quantity.toLocaleString()} 개</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-neutral-500 font-bold">공급업체 (발주처):</span>
-                    <span className="font-bold text-neutral-900">{selectedInboundItem.supplier}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-neutral-500 font-bold">도착 창고:</span>
-                    <span className="font-bold text-neutral-900">{selectedInboundItem.warehouse}</span>
-                  </div>
-                  {selectedInboundItem.notes && (
-                    <div className="pt-2 border-t border-neutral-200/60 text-[11px] text-neutral-600">
-                      <span className="font-bold text-neutral-500 block mb-0.5">메모 / 특이사항:</span>
-                      {selectedInboundItem.notes}
-                    </div>
-                  )}
+      {/* ADD INBOUND SCHEDULE MODAL */}
+      {isAddInboundModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-600 text-white rounded-2xl shadow-sm">
+                  <Calendar className="w-5 h-5" />
                 </div>
-
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">입고 진행 상태 원클릭 변경</label>
-                  <button
-                    type="button"
-                    onClick={() => handleUpdateInboundStatus(selectedInboundItem.id, selectedInboundItem.status)}
-                    className={`w-full py-3 rounded-2xl font-extrabold text-xs transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer ${
-                      selectedInboundItem.status === "Completed"
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
-                        : selectedInboundItem.status === "In Progress"
-                        ? "bg-sky-50 text-sky-800 border border-sky-300 hover:bg-sky-100"
-                        : "bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100"
-                    }`}
-                  >
-                    <span>
-                      {selectedInboundItem.status === "Completed"
-                        ? "🟢 입고 완료 상태 (클릭하여 📦 대기 상태로 변경)"
-                        : selectedInboundItem.status === "In Progress"
-                        ? "⏳ 검수 진행 중 (클릭하여 🟢 입고 완료로 변경)"
-                        : "📦 입고 대기 상태 (클릭하여 ⏳ 검수 진행으로 변경)"}
-                    </span>
-                  </button>
+                  <h3 className="text-xl font-extrabold text-neutral-950">신규 입고 일정 등록</h3>
+                  <p className="text-xs text-neutral-500">입고 예정 상품과 날짜, 수량 및 공급업체를 등록합니다.</p>
                 </div>
               </div>
-
-              <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => handleDeleteInboundSchedule(selectedInboundItem.id)}
-                  className="px-3.5 py-2 rounded-xl text-rose-600 hover:bg-rose-50 font-bold text-xs transition-colors cursor-pointer border border-rose-200 flex items-center gap-1"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>일정 삭제</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedInboundItem(null)}
-                  className="px-5 py-2 rounded-xl bg-neutral-950 text-white font-bold text-xs hover:bg-black transition-colors cursor-pointer"
-                >
-                  닫기
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddInboundModalOpen(false)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          </div>
-        )}
 
-        {/* TIMESALE DIRECT PRODUCT SELECTION MODAL */}
-        {isTimeSaleItemModalOpen && (
-          <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-3xl w-full shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 rounded-2xl shadow-sm">
-                    <Sparkles className="w-5 h-5 text-neutral-950" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-extrabold text-neutral-950">타임세일 적용 상품 직접 지정</h3>
-                    <p className="text-xs text-neutral-500">
-                      타임세일 특가 이벤트에 포함할 상품을 직접 선택하세요. ({adminTimeSaleProductIds.length}개 선택됨)
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsTimeSaleItemModalOpen(false)}
-                  className="p-2 text-neutral-400 hover:text-neutral-950 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+            <form onSubmit={handleAddInboundSchedule} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">입고 예정 일자 *</label>
+                <input
+                  type="date"
+                  required
+                  value={newInboundDate}
+                  onChange={(e) => setNewInboundDate(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-900 focus:outline-none focus:border-emerald-600 font-mono"
+                />
               </div>
 
-              {/* Filters & Search */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 bg-neutral-50 p-3 rounded-2xl border border-neutral-200/80">
-                <div className="relative w-full sm:w-72">
-                  <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">입고 상품명 *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="예: 클래식 울 블렌드 트위드 재킷"
+                  value={newInboundTitle}
+                  onChange={(e) => setNewInboundTitle(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">입고 수량 (개) *</label>
                   <input
-                    type="text"
-                    placeholder="상품명 또는 상품ID 검색..."
-                    value={timeSaleItemSearchQuery}
-                    onChange={(e) => setTimeSaleItemSearchQuery(e.target.value)}
-                    className="w-full bg-white border border-neutral-200 rounded-xl pl-9 pr-3 py-1.5 text-xs text-neutral-950 focus:outline-none focus:border-amber-500"
+                    type="number"
+                    required
+                    min={1}
+                    value={newInboundQuantity}
+                    onChange={(e) => setNewInboundQuantity(Number(e.target.value))}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-emerald-600"
                   />
                 </div>
 
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">입고 상태</label>
                   <select
-                    value={timeSaleItemCategoryFilter}
-                    onChange={(e) => setTimeSaleItemCategoryFilter(e.target.value)}
-                    className="bg-white border border-neutral-200 rounded-xl px-3 py-1.5 text-xs font-bold text-neutral-900 focus:outline-none focus:border-amber-500"
+                    value={newInboundStatus}
+                    onChange={(e) => setNewInboundStatus(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-emerald-600"
                   >
-                    <option value="all">전체 카테고리</option>
-                    {categoriesList.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
+                    <option value="Scheduled">📦 입고 대기</option>
+                    <option value="In Progress">⏳ 검수 진행 중</option>
+                    <option value="Completed">🟢 입고 완료</option>
                   </select>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const filteredIds = productsList
-                        .filter((p) => {
-                          const matchesQuery =
-                            p.title.toLowerCase().includes(timeSaleItemSearchQuery.toLowerCase()) ||
-                            p.id.toLowerCase().includes(timeSaleItemSearchQuery.toLowerCase());
-                          const matchesCat =
-                            timeSaleItemCategoryFilter === "all" || p.categoryId === timeSaleItemCategoryFilter;
-                          return matchesQuery && matchesCat;
-                        })
-                        .map((p) => p.id);
-
-                      const allSelected = filteredIds.every((id) => adminTimeSaleProductIds.includes(id));
-                      if (allSelected) {
-                        setAdminTimeSaleProductIds(adminTimeSaleProductIds.filter((id) => !filteredIds.includes(id)));
-                      } else {
-                        const merged = Array.from(new Set([...adminTimeSaleProductIds, ...filteredIds]));
-                        setAdminTimeSaleProductIds(merged);
-                      }
-                    }}
-                    className="text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer shrink-0"
-                  >
-                    현재 목록 전체 선택/해제
-                  </button>
                 </div>
               </div>
 
-              {/* Product Grid List */}
-              <div className="overflow-y-auto grow pr-1 space-y-2 max-h-[50vh] scrollbar-thin">
-                {productsList
-                  .filter((p) => {
-                    const matchesQuery =
-                      p.title.toLowerCase().includes(timeSaleItemSearchQuery.toLowerCase()) ||
-                      p.id.toLowerCase().includes(timeSaleItemSearchQuery.toLowerCase());
-                    const matchesCat =
-                      timeSaleItemCategoryFilter === "all" || p.categoryId === timeSaleItemCategoryFilter;
-                    return matchesQuery && matchesCat;
-                  })
-                  .map((product) => {
-                    const isSelected = adminTimeSaleProductIds.includes(product.id);
-                    const originalPriceNum = parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
-                    const discountRate = parseInt(adminTimeSaleDiscount) || 35;
-                    const discountedPrice = Math.round(originalPriceNum * (1 - discountRate / 100));
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">공급업체 (발주처)</label>
+                  <input
+                    type="text"
+                    placeholder="예: (주)한진방직 / 성수공장"
+                    value={newInboundSupplier}
+                    onChange={(e) => setNewInboundSupplier(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-emerald-600"
+                  />
+                </div>
 
-                    return (
-                      <div
-                        key={product.id}
-                        onClick={() => handleToggleTimeSaleProduct(product.id)}
-                        className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer ${
-                          isSelected
-                            ? "bg-amber-500/10 border-amber-400 shadow-2xs"
-                            : "bg-white border-neutral-200/80 hover:border-neutral-300 hover:bg-neutral-50/50"
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">도착 창고 / 구역</label>
+                  <select
+                    value={newInboundWarehouse}
+                    onChange={(e) => setNewInboundWarehouse(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-emerald-600"
+                  >
+                    <option value="제1물류센터 A구역">제1물류센터 A구역</option>
+                    <option value="제2물류센터 B구역">제2물류센터 B구역</option>
+                    <option value="제1물류센터 C구역">제1물류센터 C구역</option>
+                    <option value="제3물류센터 (잡화)">제3물류센터 (잡화)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">특이사항 / 입고 메모</label>
+                <textarea
+                  rows={2}
+                  placeholder="검수 수량, 패키징 사양, 비고 메모 등"
+                  value={newInboundNotes}
+                  onChange={(e) => setNewInboundNotes(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs text-neutral-950 focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-neutral-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddInboundModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Calendar className="w-4 h-4 text-emerald-200" />
+                  <span>입고 일정 등록</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* INBOUND ITEM DETAIL & EDIT MODAL */}
+      {selectedInboundItem && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-5">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
+                  <Box className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-neutral-950">입고 상세 정보</h3>
+                  <p className="text-xs text-neutral-500 font-mono">{selectedInboundItem.id}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedInboundItem(null)}
+                className="p-2 text-neutral-400 hover:text-neutral-950 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="bg-neutral-50 p-3.5 rounded-2xl border border-neutral-200/80 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-neutral-500 font-bold">입고 일자:</span>
+                  <span className="font-mono font-extrabold text-neutral-950">{selectedInboundItem.date}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-neutral-500 font-bold">입고 상품명:</span>
+                  <span className="font-extrabold text-neutral-950">{selectedInboundItem.productTitle}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-neutral-500 font-bold">입고 예정 수량:</span>
+                  <span className="font-mono font-black text-emerald-600 text-sm">+{selectedInboundItem.quantity.toLocaleString()} 개</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-neutral-500 font-bold">공급업체 (발주처):</span>
+                  <span className="font-bold text-neutral-900">{selectedInboundItem.supplier}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-neutral-500 font-bold">도착 창고:</span>
+                  <span className="font-bold text-neutral-900">{selectedInboundItem.warehouse}</span>
+                </div>
+                {selectedInboundItem.notes && (
+                  <div className="pt-2 border-t border-neutral-200/60 text-[11px] text-neutral-600">
+                    <span className="font-bold text-neutral-500 block mb-0.5">메모 / 특이사항:</span>
+                    {selectedInboundItem.notes}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">입고 진행 상태 원클릭 변경</label>
+                <button
+                  type="button"
+                  onClick={() => handleUpdateInboundStatus(selectedInboundItem.id, selectedInboundItem.status)}
+                  className={`w-full py-3 rounded-2xl font-extrabold text-xs transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer ${selectedInboundItem.status === "Completed"
+                      ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
+                      : selectedInboundItem.status === "In Progress"
+                        ? "bg-sky-50 text-sky-800 border border-sky-300 hover:bg-sky-100"
+                        : "bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100"
+                    }`}
+                >
+                  <span>
+                    {selectedInboundItem.status === "Completed"
+                      ? "🟢 입고 완료 상태 (클릭하여 📦 대기 상태로 변경)"
+                      : selectedInboundItem.status === "In Progress"
+                        ? "⏳ 검수 진행 중 (클릭하여 🟢 입고 완료로 변경)"
+                        : "📦 입고 대기 상태 (클릭하여 ⏳ 검수 진행으로 변경)"}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => handleDeleteInboundSchedule(selectedInboundItem.id)}
+                className="px-3.5 py-2 rounded-xl text-rose-600 hover:bg-rose-50 font-bold text-xs transition-colors cursor-pointer border border-rose-200 flex items-center gap-1"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>일정 삭제</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedInboundItem(null)}
+                className="px-5 py-2 rounded-xl bg-neutral-950 text-white font-bold text-xs hover:bg-black transition-colors cursor-pointer"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TIMESALE DIRECT PRODUCT SELECTION MODAL */}
+      {isTimeSaleItemModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-3xl w-full shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 rounded-2xl shadow-sm">
+                  <Sparkles className="w-5 h-5 text-neutral-950" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-neutral-950">타임세일 적용 상품 직접 지정</h3>
+                  <p className="text-xs text-neutral-500">
+                    타임세일 특가 이벤트에 포함할 상품을 직접 선택하세요. ({adminTimeSaleProductIds.length}개 선택됨)
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTimeSaleItemModalOpen(false)}
+                className="p-2 text-neutral-400 hover:text-neutral-950 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Filters & Search */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 bg-neutral-50 p-3 rounded-2xl border border-neutral-200/80">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="상품명 또는 상품ID 검색..."
+                  value={timeSaleItemSearchQuery}
+                  onChange={(e) => setTimeSaleItemSearchQuery(e.target.value)}
+                  className="w-full bg-white border border-neutral-200 rounded-xl pl-9 pr-3 py-1.5 text-xs text-neutral-950 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <select
+                  value={timeSaleItemCategoryFilter}
+                  onChange={(e) => setTimeSaleItemCategoryFilter(e.target.value)}
+                  className="bg-white border border-neutral-200 rounded-xl px-3 py-1.5 text-xs font-bold text-neutral-900 focus:outline-none focus:border-amber-500"
+                >
+                  <option value="all">전체 카테고리</option>
+                  {categoriesList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const filteredIds = productsList
+                      .filter((p) => {
+                        const matchesQuery =
+                          p.title.toLowerCase().includes(timeSaleItemSearchQuery.toLowerCase()) ||
+                          p.id.toLowerCase().includes(timeSaleItemSearchQuery.toLowerCase());
+                        const matchesCat =
+                          timeSaleItemCategoryFilter === "all" || p.categoryId === timeSaleItemCategoryFilter;
+                        return matchesQuery && matchesCat;
+                      })
+                      .map((p) => p.id);
+
+                    const allSelected = filteredIds.every((id) => adminTimeSaleProductIds.includes(id));
+                    if (allSelected) {
+                      setAdminTimeSaleProductIds(adminTimeSaleProductIds.filter((id) => !filteredIds.includes(id)));
+                    } else {
+                      const merged = Array.from(new Set([...adminTimeSaleProductIds, ...filteredIds]));
+                      setAdminTimeSaleProductIds(merged);
+                    }
+                  }}
+                  className="text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer shrink-0"
+                >
+                  현재 목록 전체 선택/해제
+                </button>
+              </div>
+            </div>
+
+            {/* Product Grid List */}
+            <div className="overflow-y-auto grow pr-1 space-y-2 max-h-[50vh] scrollbar-thin">
+              {productsList
+                .filter((p) => {
+                  const matchesQuery =
+                    p.title.toLowerCase().includes(timeSaleItemSearchQuery.toLowerCase()) ||
+                    p.id.toLowerCase().includes(timeSaleItemSearchQuery.toLowerCase());
+                  const matchesCat =
+                    timeSaleItemCategoryFilter === "all" || p.categoryId === timeSaleItemCategoryFilter;
+                  return matchesQuery && matchesCat;
+                })
+                .map((product) => {
+                  const isSelected = adminTimeSaleProductIds.includes(product.id);
+                  const originalPriceNum = parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
+                  const discountRate = parseInt(adminTimeSaleDiscount) || 35;
+                  const discountedPrice = Math.round(originalPriceNum * (1 - discountRate / 100));
+
+                  return (
+                    <div
+                      key={product.id}
+                      onClick={() => handleToggleTimeSaleProduct(product.id)}
+                      className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer ${isSelected
+                          ? "bg-amber-500/10 border-amber-400 shadow-2xs"
+                          : "bg-white border-neutral-200/80 hover:border-neutral-300 hover:bg-neutral-50/50"
                         }`}
-                      >
-                        <div className="flex items-center gap-3.5">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => {}}
-                            className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 accent-amber-600 cursor-pointer"
-                          />
-                          <img
-                            src={product.featuredImage?.url || "/product_1.webp"}
-                            alt={product.title}
-                            className="w-12 h-14 object-cover rounded-xl border border-neutral-200/80 bg-neutral-100"
-                          />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-xs font-bold text-neutral-900">{product.title}</h4>
-                              <span className="text-[10px] bg-neutral-100 text-neutral-600 font-bold px-2 py-0.5 rounded-full uppercase">
-                                {product.categoryId}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-neutral-500 font-mono mt-0.5">ID: {product.id}</p>
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => { }}
+                          className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 accent-amber-600 cursor-pointer"
+                        />
+                        <img
+                          src={product.featuredImage?.url || "/product_1.webp"}
+                          alt={product.title}
+                          className="w-12 h-14 object-cover rounded-xl border border-neutral-200/80 bg-neutral-100"
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-neutral-900">{product.title}</h4>
+                            <span className="text-[10px] bg-neutral-100 text-neutral-600 font-bold px-2 py-0.5 rounded-full uppercase">
+                              {product.categoryId}
+                            </span>
                           </div>
-                        </div>
-
-                        <div className="text-right pl-3">
-                          <span className="block text-[11px] text-neutral-400 line-through font-medium">
-                            {formatPrice(String(originalPriceNum), "KRW")}
-                          </span>
-                          <span className="font-black text-xs text-amber-800">
-                            {formatPrice(String(discountedPrice), "KRW")}{" "}
-                            <span className="text-[10px] text-amber-600 font-bold">({discountRate}% OFF)</span>
-                          </span>
+                          <p className="text-[11px] text-neutral-500 font-mono mt-0.5">ID: {product.id}</p>
                         </div>
                       </div>
-                    );
-                  })}
-              </div>
 
-              {/* Modal Footer */}
-              <div className="pt-4 border-t border-neutral-100 flex items-center justify-between shrink-0">
-                <span className="text-xs font-bold text-neutral-600">
-                  총 <strong className="text-amber-700">{adminTimeSaleProductIds.length}개</strong> 상품 지정됨
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsTimeSaleItemModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleSaveTimeSaleDetailSettings();
-                      setIsTimeSaleItemModalOpen(false);
-                    }}
-                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-neutral-950 font-black text-xs shadow-md transition-all cursor-pointer border border-amber-400/50"
-                  >
-                    지정 완료 및 저장 ({adminTimeSaleProductIds.length}개)
-                  </button>
-                </div>
+                      <div className="text-right pl-3">
+                        <span className="block text-[11px] text-neutral-400 line-through font-medium">
+                          {formatPrice(String(originalPriceNum), "KRW")}
+                        </span>
+                        <span className="font-black text-xs text-amber-800">
+                          {formatPrice(String(discountedPrice), "KRW")}{" "}
+                          <span className="text-[10px] text-amber-600 font-bold">({discountRate}% OFF)</span>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-4 border-t border-neutral-100 flex items-center justify-between shrink-0">
+              <span className="text-xs font-bold text-neutral-600">
+                총 <strong className="text-amber-700">{adminTimeSaleProductIds.length}개</strong> 상품 지정됨
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTimeSaleItemModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSaveTimeSaleDetailSettings();
+                    setIsTimeSaleItemModalOpen(false);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-neutral-950 font-black text-xs shadow-md transition-all cursor-pointer border border-amber-400/50"
+                >
+                  지정 완료 및 저장 ({adminTimeSaleProductIds.length}개)
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 }

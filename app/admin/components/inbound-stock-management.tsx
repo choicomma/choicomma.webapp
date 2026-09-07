@@ -103,9 +103,9 @@ export function InboundStockManagement({
             setNewInboundDate(realTodayStr);
             setIsAddInboundModalOpen(true);
           }}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs cursor-pointer"
+          className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs cursor-pointer"
         >
-          <Plus className="w-4 h-4 text-emerald-200" />
+          <Plus className="w-4 h-4 text-white" />
           <span>+ 신규 입고 일정 등록</span>
         </button>
       </div>
@@ -115,7 +115,7 @@ export function InboundStockManagement({
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>이번 달 총 입고 수량</span>
-            <Box className="w-4 h-4 text-neutral-400" />
+            <Box className="w-4 h-4 text-neutral-900" />
           </div>
           <p className="text-2xl font-extrabold text-neutral-950 mt-2">{monthTotalQty.toLocaleString()} 개</p>
           <p className="text-xs text-neutral-500 mt-1">입고 예정 및 완료 총합계</p>
@@ -124,28 +124,28 @@ export function InboundStockManagement({
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>오늘 입고 예정 ({realTodayFormattedMMDD})</span>
-            <Clock className="w-4 h-4 text-emerald-500" />
+            <Clock className="w-4 h-4 text-neutral-900" />
           </div>
-          <p className="text-2xl font-extrabold text-emerald-600 mt-2">{todayCount} 건</p>
-          <p className="text-xs text-emerald-700 font-bold mt-1">금일 물류 창고 도착 예정</p>
+          <p className="text-2xl font-extrabold text-neutral-950 mt-2">{todayCount} 건</p>
+          <p className="text-xs text-neutral-600 font-bold mt-1">금일 물류 창고 도착 예정</p>
         </div>
 
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>입고 검수 진행 중</span>
-            <Archive className="w-4 h-4 text-sky-500" />
+            <Archive className="w-4 h-4 text-neutral-900" />
           </div>
-          <p className="text-2xl font-extrabold text-sky-600 mt-2">{inProgressCount} 건</p>
-          <p className="text-xs text-sky-700 font-bold mt-1">창고 하차 및 검수 작업 중</p>
+          <p className="text-2xl font-extrabold text-neutral-950 mt-2">{inProgressCount} 건</p>
+          <p className="text-xs text-neutral-600 font-bold mt-1">창고 하차 및 검수 작업 중</p>
         </div>
 
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>입고 완료 (이번달)</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <CheckCircle2 className="w-4 h-4 text-neutral-900" />
           </div>
-          <p className="text-2xl font-extrabold text-emerald-600 mt-2">{completedCount} 건</p>
-          <p className="text-xs text-emerald-700 font-bold mt-1">재고 수량 등록 완료</p>
+          <p className="text-2xl font-extrabold text-neutral-950 mt-2">{completedCount} 건</p>
+          <p className="text-xs text-neutral-600 font-bold mt-1">재고 수량 등록 완료</p>
         </div>
       </div>
 
@@ -156,8 +156,8 @@ export function InboundStockManagement({
             <h2 className="text-xl font-extrabold text-neutral-950 font-mono">
               {currentYear}년 {currentMonth + 1}월 입고 일정 캘린더
             </h2>
-            <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase">
-              LIVE CALENDAR
+            <span className="bg-neutral-900 text-white border border-neutral-800 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase">
+              CALENDAR
             </span>
           </div>
 

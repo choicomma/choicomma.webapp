@@ -137,13 +137,13 @@ export function GlobalSalesManagement() {
       {/* Top Banner Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-neutral-200/80 shadow-xs">
         <div className="flex items-center gap-4">
-          <div className="p-3.5 bg-sky-50 text-sky-600 rounded-2xl border border-sky-100 shrink-0">
+          <div className="p-3.5 bg-neutral-100 text-neutral-900 rounded-2xl border border-neutral-200 shrink-0">
             <Globe className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-xl font-extrabold text-neutral-950 flex items-center gap-2">
               <span>해외 판매가</span>
-              <span className="text-xs bg-sky-100 text-sky-800 font-bold px-2.5 py-0.5 rounded-full">
+              <span className="text-xs bg-neutral-900 text-white font-bold px-2.5 py-0.5 rounded-full">
                 Global Commerce
               </span>
             </h1>
@@ -157,7 +157,7 @@ export function GlobalSalesManagement() {
           <button
             type="button"
             onClick={handleSave}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 shadow-md transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-neutral-950 hover:bg-neutral-800 shadow-md transition-all cursor-pointer"
           >
             <Save className="w-3.5 h-3.5" />
             <span>설정 저장하기</span>

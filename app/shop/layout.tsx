@@ -13,17 +13,16 @@ export default async function ShopLayout({
   const collections = await getCollections();
 
   return (
-    <PageLayout>
+    <PageLayout className="bg-white min-h-screen">
       <ProductsProvider>
-        <div className="w-full flex flex-col md:grid grid-cols-12 md:gap-sides items-start pb-20 md:pb-32">
-          <DesktopFilters
-            collections={collections}
-            className="col-span-3 max-md:hidden"
-          />
-          <Suspense fallback={null}>
-            <MobileFilters collections={collections} />
-          </Suspense>
-          <div className="w-full col-span-9 h-full md:pt-top-spacing pb-16 md:pb-24">
+        <div className="w-full flex flex-col md:grid grid-cols-12 md:gap-sides pt-16 md:pt-36 pb-20 md:pb-32 bg-white relative">
+          <div className="col-span-3 max-md:hidden sticky top-36 md:top-40 self-start z-20">
+            <DesktopFilters
+              collections={collections}
+              className="bg-white"
+            />
+          </div>
+          <div className="w-full col-span-9 min-h-screen pb-16 md:pb-24">
             <Suspense fallback={null}>{children}</Suspense>
           </div>
         </div>

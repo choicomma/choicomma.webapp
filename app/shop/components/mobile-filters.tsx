@@ -23,10 +23,10 @@ export function MobileFilters({ collections, className }: MobileFiltersProps) {
   const { products } = useProducts();
 
   return (
-    <div className="pt-16 sm:pt-20 bg-white sticky top-0 z-30 md:hidden overflow-visible w-full border-b border-neutral-200/80 -mt-px">
+    <div className="bg-white sticky top-[48px] sm:top-[52px] z-30 md:hidden overflow-visible w-full border-b border-neutral-200/80">
       <div className={cn("relative w-full", className)}>
         {/* Single Line Header on Mobile: Filters Button on Left, Sort Dropdown on Right */}
-        <div className="flex items-center justify-between px-4 py-2.5 w-full bg-white">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2 w-full bg-white">
           <Button
             type="button"
             variant="ghost"
@@ -34,7 +34,7 @@ export function MobileFilters({ collections, className }: MobileFiltersProps) {
             onClick={() => setIsOpen(!isOpen)}
             className="font-bold text-xs text-neutral-900 hover:bg-neutral-100 p-1.5 h-auto rounded-lg flex items-center gap-1 cursor-pointer"
           >
-            <span>필터</span>
+            <span>카테고리</span>
             {filterCount > 0 && (
               <span className="text-neutral-500 font-normal">({filterCount})</span>
             )}

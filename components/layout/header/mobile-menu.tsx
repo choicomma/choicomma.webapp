@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Collection } from "@/lib/sfcc/types";
 import { useCart } from "@/components/cart/cart-context";
 import CartModal from "@/components/cart/modal";
 import { LanguageSelector } from "./language-selector";
-import { ShoppingBag, Menu } from "lucide-react";
+import { ShoppingBag, Menu, Search, X } from "lucide-react";
 
 interface MobileMenuProps {
   collections: Collection[];
@@ -24,12 +24,37 @@ export default function MobileMenu({ collections, isScrolled }: MobileMenuProps)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryVal = searchParams?.get("q") || "";
+  const [searchTerm, setSearchTerm] = useState(queryVal);
   const { cart } = useCart();
 
   const openMobileMenu = () => setIsOpen(true);
   const closeMobileMenu = () => setIsOpen(false);
 
   const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    setSearchTerm(queryVal);
+  }, [queryVal]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = searchTerm.trim();
+    closeMobileMenu();
+    if (trimmed) {
+      router.push(`/shop?q=${encodeURIComponent(trimmed)}`);
+    } else {
+      router.push("/shop");
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    closeMobileMenu();
+    router.push("/shop");
+  };
 
   useEffect(() => {
     const checkAuth = () => {
@@ -128,7 +153,7 @@ export default function MobileMenu({ collections, isScrolled }: MobileMenuProps)
 
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Top Quick Actions Grid: 로그인 / MY PAGE + 장바구니 */}
+                {/* Top Quick Actions Grid: 로그인 / MY PAGE + 주문내역/배송조회 + 장바구니 */}
                 <nav className="grid grid-cols-2 gap-2.5">
                   <Button
                     size="lg"
@@ -138,7 +163,19 @@ export default function MobileMenu({ collections, isScrolled }: MobileMenuProps)
                     asChild
                   >
                     <Link href={isLoggedIn ? (isAdmin ? "/admin" : "/membership") : "/login"} prefetch>
-                      {isLoggedIn ? (isAdmin ? "어드민" : (userName ? `마이페이지 (${userName})` : "마이페이지")) : "로그인"}
+                      {isLoggedIn ? (isAdmin ? "마이페이지 (관리자)" : (userName ? `마이페이지 (${userName})` : "마이페이지")) : "로그인"}
+                    </Link>
+                  </Button>
+
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    onClick={closeMobileMenu}
+                    className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm truncate shadow-2xs rounded-xl"
+                    asChild
+                  >
+                    <Link href="/membership?tab=orders" prefetch>
+                      <span>주문내역 / 배송조회</span>
                     </Link>
                   </Button>
 
@@ -152,12 +189,42 @@ export default function MobileMenu({ collections, isScrolled }: MobileMenuProps)
                         window.dispatchEvent(new CustomEvent("choicomma_open_cart"));
                       }, 100);
                     }}
-                    className="w-full bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer"
+                    className="col-span-2 w-full bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer"
                   >
                     <ShoppingBag className="w-4 h-4 shrink-0" />
                     <span>장바구니 ({cart?.totalQuantity || 0})</span>
                   </Button>
                 </nav>
+
+                {/* Mobile Search Bar */}
+                <div className="pt-2">
+                  <form onSubmit={handleSearchSubmit} className="relative w-full">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="상품 검색어 입력..."
+                      className="w-full bg-neutral-50 hover:bg-neutral-100/80 focus:bg-white text-neutral-900 placeholder:text-neutral-400 text-sm font-medium pl-10 pr-9 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-neutral-900 transition-all"
+                    />
+                    <button
+                      type="submit"
+                      aria-label="검색"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                    >
+                      <Search className="w-4 h-4" />
+                    </button>
+                    {searchTerm && (
+                      <button
+                        type="button"
+                        onClick={handleClearSearch}
+                        aria-label="검색어 지우기"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </form>
+                </div>
 
                 {/* Category Links with Larger Text & Increased Spacing */}
                 <div className="space-y-3 pt-2 border-t border-neutral-100">

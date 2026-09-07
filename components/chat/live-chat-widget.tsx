@@ -200,7 +200,7 @@ export function LiveChatWidget() {
           }
           return;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // Default initial message on first ever visit
@@ -284,7 +284,7 @@ export function LiveChatWidget() {
       const savedSessions = localStorage.getItem("admin_chat_sessions");
       let sessionList: any[] = [];
       if (savedSessions) {
-        try { sessionList = JSON.parse(savedSessions); } catch (err) {}
+        try { sessionList = JSON.parse(savedSessions); } catch (err) { }
       }
       if (!sessionList.some((s) => s.email?.toLowerCase() === uEmail.toLowerCase() || s.id?.toLowerCase() === uEmail.toLowerCase())) {
         const newSession = {
@@ -310,7 +310,7 @@ export function LiveChatWidget() {
       let latestList: ChatMessage[] = updated;
       try {
         if (savedLatest) latestList = JSON.parse(savedLatest);
-      } catch (e) {}
+      } catch (e) { }
 
       // If last message is still user's message, add automated acknowledgement
       if (latestList[latestList.length - 1]?.id === newMsg.id) {
@@ -366,32 +366,39 @@ export function LiveChatWidget() {
 
   return (
     <div className="fixed bottom-6 right-5 sm:bottom-6 sm:right-6 z-50 font-sans">
-      {/* Floating Toggle Button */}
+      {/* Floating Toggle Button with Speech Bubble Tooltip */}
       {!isOpen && (
-        <button
-          type="button"
-          onClick={() => {
-            setIsOpen(true);
-            setIsMinimized(false);
-            setUnreadCount(0);
-          }}
-          className="group relative bg-neutral-950 hover:bg-black text-white px-4 py-2.5 rounded-full shadow-2xl transition-all duration-300 flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 border border-neutral-800"
-          title={t.floatingButton}
-        >
-          <div className="relative shrink-0 flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-white group-hover:rotate-6 transition-transform" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-neutral-950 animate-pulse" />
-          </div>
-          <span className="text-xs font-bold text-white tracking-tight whitespace-nowrap">
+        <div className="relative flex flex-col items-center">
+          {/* Speech Bubble above the button */}
+          <div className="mb-2 bg-neutral-900 text-white text-xs font-black px-3.5 py-1.5 rounded-full shadow-2xl border border-neutral-700/80 animate-bounce tracking-tight whitespace-nowrap relative select-none pointer-events-none">
             {t.floatingButton}
-          </span>
+            {/* Speech bubble bottom tail */}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-neutral-900 rotate-45 border-r border-b border-neutral-700/80" />
+          </div>
 
-          {unreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white font-mono text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-white animate-bounce shadow-md">
-              {unreadCount}
-            </span>
-          )}
-        </button>
+          {/* Circular Icon-only Button (Clean Large Circle) */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(true);
+              setIsMinimized(false);
+              setUnreadCount(0);
+            }}
+            className="group relative w-[60px] h-[60px] rounded-full bg-neutral-950 hover:bg-black text-white shadow-2xl transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 border-2 border-neutral-700 shrink-0"
+            title={t.floatingButton}
+          >
+            <div className="relative flex items-center justify-center">
+              <MessageSquare className="w-7 h-7 text-white group-hover:rotate-6 transition-transform" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-neutral-950 animate-pulse" />
+            </div>
+
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-mono text-xs font-black px-2 py-0.5 rounded-full border-2 border-white animate-bounce shadow-md">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+        </div>
       )}
 
       {/* Floating Chat Box Window */}
@@ -452,10 +459,10 @@ export function LiveChatWidget() {
                 msg.id === "msg-welcome-1" || (msg.sender === "admin" && (msg.text?.includes("안녕하세요") || msg.text?.includes("Hello") || msg.text?.includes("こんにちは") || msg.text?.includes("您好") || msg.text?.includes("Bonjour") || msg.text?.includes("Hallo") || msg.text?.includes("¡Hola")))
                   ? t.welcomeText
                   : msg.id?.startsWith("admin-msg-auto-") || (msg.sender === "admin" && (msg.text?.includes("확인하였습니다") || msg.text?.includes("received") || msg.text?.includes("確認") || msg.text?.includes("reçu") || msg.text?.includes("Vielen Dank") || msg.text?.includes("recibido")))
-                  ? t.autoReplyText
-                  : msg.id?.startsWith("admin-close") || (msg.sender === "admin" && (msg.text?.includes("상담이 종료되었습니다") || msg.text?.includes("consultation session") || msg.text?.includes("相談セッション") || msg.text?.includes("咨询已结束") || msg.text?.includes("est terminée") || msg.text?.includes("wurde beendet") || msg.text?.includes("ha finalizado")))
-                  ? t.closeNoticeText
-                  : msg.text;
+                    ? t.autoReplyText
+                    : msg.id?.startsWith("admin-close") || (msg.sender === "admin" && (msg.text?.includes("상담이 종료되었습니다") || msg.text?.includes("consultation session") || msg.text?.includes("相談セッション") || msg.text?.includes("咨询已结束") || msg.text?.includes("est terminée") || msg.text?.includes("wurde beendet") || msg.text?.includes("ha finalizado")))
+                      ? t.closeNoticeText
+                      : msg.text;
               const displayTime =
                 msg.timestamp === "방금 전" || msg.timestamp === "NOW" || msg.timestamp === "Just now" || msg.timestamp === "たった今" || msg.timestamp === "刚刚"
                   ? t.nowText
@@ -471,11 +478,10 @@ export function LiveChatWidget() {
                   </span>
 
                   <div
-                    className={`max-w-[82%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs whitespace-pre-wrap ${
-                      isUser
+                    className={`max-w-[82%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs whitespace-pre-wrap ${isUser
                         ? "bg-neutral-950 text-white rounded-tr-xs font-medium"
                         : "bg-white text-neutral-900 border border-neutral-200/80 rounded-tl-xs font-medium"
-                    }`}
+                      }`}
                   >
                     {displayText}
 

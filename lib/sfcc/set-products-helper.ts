@@ -15,28 +15,7 @@ export interface SetSaleBundle {
   createdAt?: string;
 }
 
-export const INITIAL_SET_SALES: SetSaleBundle[] = [
-  {
-    id: "SET-1",
-    title: "[초이콤마 룩북 세트 1]",
-    items: [
-      { productId: "outer-product-1", quantity: 1 },
-      { productId: "outer-product-27", quantity: 1 },
-    ],
-    discountRate: 25,
-    status: "active",
-  },
-  {
-    id: "SET-2",
-    title: "[초이콤마 럭셔리 무드 세트 2]",
-    items: [
-      { productId: "outer-product-38", quantity: 1 },
-      { productId: "outer-product-14", quantity: 2 },
-    ],
-    discountRate: 30,
-    status: "active",
-  },
-];
+export const INITIAL_SET_SALES: SetSaleBundle[] = [];
 
 /**
  * Convert a SetSaleBundle configuration into a full Product object

@@ -122,13 +122,13 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
 
         <div className="p-5 space-y-5">
           {/* Product Header Card */}
-          <div className="flex gap-4 items-center bg-neutral-50 p-3.5 rounded-2xl border border-neutral-200/80">
-            <div className="relative aspect-[4/5] w-16 overflow-hidden rounded-xl bg-neutral-200 shrink-0">
+          <div className="flex gap-4 items-center bg-white p-3.5 rounded-2xl border border-neutral-200/80">
+            <div className="relative aspect-square w-16 overflow-hidden rounded-xl bg-white border border-neutral-100 shrink-0">
               <Image
                 src={product.featuredImage?.url || "/product_1.webp"}
                 alt={product.title || "Product"}
                 fill
-                className="object-cover"
+                className="object-contain p-1"
                 unoptimized={true}
               />
             </div>
@@ -145,28 +145,34 @@ export function QuickOptionModal({ product, trigger }: QuickOptionModalProps) {
             </div>
           </div>
 
-          {/* Color Selection */}
+          {/* Color / Product Cut Selection */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-neutral-700">{translateUiText("컬러", currentLang)}</span>
+              <span className="text-neutral-700">{translateUiText("컬러 / 제품컷", currentLang)}</span>
               <span className="text-neutral-950 font-black">{selectedColor}</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {colors.map((c) => {
+              {colors.map((c, idx) => {
                 const isSelected = selectedColor === c.name;
+                const cutImg = (product as any).colorImages?.[c.name] || product.images?.[idx]?.url || product.featuredImage?.url;
                 return (
                   <button
                     key={c.id}
                     type="button"
                     onClick={() => setSelectedColor(c.name)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer ${
+                    className={`p-1.5 pr-3 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 cursor-pointer ${
                       isSelected
-                        ? "bg-neutral-950 text-white border-neutral-950 shadow-xs"
+                        ? "bg-neutral-950 text-white border-neutral-950 shadow-xs ring-2 ring-neutral-950/20"
                         : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-400"
                     }`}
                   >
-                    {isSelected && <Check className="w-3.5 h-3.5" />}
-                    {c.name}
+                    {cutImg && (
+                      <div className="relative w-6 h-6 rounded-lg overflow-hidden border border-neutral-300 bg-neutral-100 shrink-0">
+                        <img src={cutImg} alt={c.name} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                    <span>{c.name}</span>
                   </button>
                 );
               })}

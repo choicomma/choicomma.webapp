@@ -144,23 +144,22 @@ export function LatestProductCard({
     return (
       <div
         className={cn(
-          "relative w-full aspect-[4/5] overflow-hidden rounded-none border-none shadow-none group",
+          "relative w-full aspect-[4/5] overflow-hidden rounded-none border-none shadow-none group bg-white flex flex-col justify-between",
           className
         )}
       >
         <Link
           href={`/product/${targetHandle}`}
-          className="absolute inset-0 w-full h-full block"
+          className="relative w-full aspect-square block bg-white flex items-center justify-center p-4"
           prefetch
         >
           <Image
             priority
             src={displayImage}
             alt={product.featuredImage?.altText || product.title}
-            width={1600}
-            height={1200}
+            fill
             quality={100}
-            className="object-cover w-full h-full"
+            className="object-contain size-full"
           />
           {/* TIME SALE BADGE OVERLAY ON PRODUCT IMAGE */}
           {(timeSaleDiscount !== null || (product as any).isTimeSale || (product as any).productLabel === "TIME SALE" || (product as any).categoryId === "timesale") && (
@@ -184,21 +183,20 @@ export function LatestProductCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 p-3 md:p-4 bg-white border border-neutral-200/60 rounded-none shadow-sm hover:shadow-md transition-all group overflow-hidden relative",
+        "flex flex-col gap-3 p-3 md:p-4 bg-white border border-neutral-200/60 rounded-none shadow-sm hover:shadow-md transition-all group overflow-hidden relative aspect-[4/5] justify-between",
         className
       )}
     >
       <Link
         href={`/product/${product.handle}`}
-        className="block w-full aspect-[4/5] overflow-hidden rounded-none bg-neutral-100 relative"
+        className="block w-full aspect-square overflow-hidden rounded-none bg-white relative flex items-center justify-center"
         prefetch
       >
         <Image
           src={product.featuredImage.url}
           alt={product.featuredImage.altText}
-          width={1000}
-          height={1250}
-          className="object-cover size-full"
+          fill
+          className="object-contain size-full"
         />
         {/* TIME SALE BADGE OVERLAY ON PRODUCT IMAGE */}
         {(timeSaleDiscount !== null || (product as any).isTimeSale || (product as any).productLabel === "TIME SALE" || (product as any).categoryId === "timesale") && (

@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { translateProductTitle, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
+import useEmblaCarousel from "embla-carousel-react";
+import { ProductCard } from "@/app/shop/components/product-card";
 
 function HomeProductTitle({ title, lang }: { title: string; lang: string }) {
   const [translated, setTranslated] = useState(() => translateProductTitle(title, lang));
@@ -169,6 +171,42 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
 
   const getTimeSaleDiscount = (product: any): number | null => {
     if (typeof window !== "undefined") {
+      const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+      const userRole = localStorage.getItem("user_role") || "";
+      const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+      // 1. Check Secret Time Sales first
+      const secretSalesRaw = localStorage.getItem("admin_secret_timesales");
+      if (secretSalesRaw) {
+        try {
+          const secretSalesList: any[] = JSON.parse(secretSalesRaw);
+          for (const sale of secretSalesList) {
+            if (sale.status !== "active") continue;
+            const matchesProduct = (sale.productIds || []).some(
+              (id: string) => String(id) === String(product.id) || String(id) === String(product.handle)
+            );
+            if (!matchesProduct) continue;
+
+            const isEmailTargeted = Boolean(
+              userEmail &&
+                (sale.targetCustomerEmails || []).some(
+                  (em: string) => em.toLowerCase().trim() === userEmail
+                )
+            );
+            const isGradeTargeted = Boolean(
+              (sale.targetGrades || []).length > 0 &&
+                (sale.targetGrades.includes("ALL") ||
+                  sale.targetGrades.includes(userRole?.toUpperCase()) ||
+                  (userRole?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")))
+            );
+
+            if (isEmailTargeted || isGradeTargeted || isAdmin) {
+              return Number(sale.discountRate) || 30;
+            }
+          }
+        } catch (e) {}
+      }
+
       const savedStatus = localStorage.getItem("secret_timesale_status");
       if (savedStatus === "ended") return null;
     }
@@ -272,66 +310,81 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     };
   }, [products]);
 
-  const [isTransitioning, setIsTransitioning] = React.useState(true);
+  // True Infinite Loop Carousel with Embla (Native Auto-slide)
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    duration: 35,
+    skipSnaps: false,
+  });
 
-  // Extend slides with clones for seamless infinite loop (Clone of first at end, clone of last at front)
-  const displaySlides = React.useMemo(() => {
-    if (heroImages.length <= 1) return heroImages;
-    return [heroImages[heroImages.length - 1], ...heroImages, heroImages[0]];
-  }, [heroImages]);
+  useEffect(() => {
+    if (!emblaApi || heroImages.length <= 1) return;
 
-  // Index inside displaySlides (starts at 1 because index 0 is the clone of the last item)
-  const [slideIndex, setSlideIndex] = React.useState(1);
+    let timer: NodeJS.Timeout | null = null;
 
-  React.useEffect(() => {
-    setSlideIndex(1);
-    setIsTransitioning(true);
-  }, [heroImages]);
+    const startAutoSlide = () => {
+      stopAutoSlide();
+      timer = setInterval(() => {
+        if (document.visibilityState === "visible") {
+          emblaApi.scrollNext();
+        }
+      }, 3500);
+    };
 
-  React.useEffect(() => {
-    if (heroImages.length <= 1) return;
-    const interval = setInterval(() => {
-      setIsTransitioning(true);
-      setSlideIndex((prev) => prev + 1);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [heroImages.length]);
+    const stopAutoSlide = () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
 
-  const handleTransitionEnd = () => {
-    if (slideIndex >= displaySlides.length - 1) {
-      // Reached clone of the first slide -> jump instantly to real first slide (index 1) without animation
-      setIsTransitioning(false);
-      setSlideIndex(1);
-    } else if (slideIndex <= 0) {
-      // Reached clone of the last slide -> jump instantly to real last slide without animation
-      setIsTransitioning(false);
-      setSlideIndex(displaySlides.length - 2);
-    }
-  };
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopAutoSlide();
+      } else {
+        // Reset and restart timer freshly when tab becomes active again
+        startAutoSlide();
+      }
+    };
+
+    startAutoSlide();
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", startAutoSlide);
+    window.addEventListener("blur", stopAutoSlide);
+
+    return () => {
+      stopAutoSlide();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", startAutoSlide);
+      window.removeEventListener("blur", stopAutoSlide);
+    };
+  }, [emblaApi, heroImages.length]);
 
   return (
     <div className="w-full flex flex-col bg-white">
-      {/* SECTION 1: Auto Slider Hero Image (Infinite Seamless Loop) */}
+      {/* SECTION 1: Auto Slider Hero Image (True Infinite Seamless Loop) */}
       {heroImages.length > 0 && (
         <section className="relative w-full h-[80vh] md:h-[105vh] min-h-[500px] md:min-h-[800px] bg-white overflow-hidden">
-          <div
-            className={`flex w-full h-full ${isTransitioning ? "transition-transform duration-1000 ease-in-out" : ""}`}
-            style={{ transform: `translateX(-${slideIndex * 100}%)` }}
-            onTransitionEnd={handleTransitionEnd}
-          >
-            {displaySlides.map((src, idx) => (
-              <div key={`${src}-${idx}`} className="relative min-w-full h-full">
-                <Image
-                  src={src}
-                  alt={`Main Hero ${idx}`}
-                  fill
-                  quality={100}
-                  unoptimized={true}
-                  className="object-cover object-center"
-                  priority={idx === 1}
-                />
-              </div>
-            ))}
+          <div className="w-full h-full overflow-hidden" ref={emblaRef}>
+            <div className="flex w-full h-full touch-pan-y">
+              {heroImages.map((src, idx) => (
+                <div
+                  key={`${src}-${idx}`}
+                  className="relative min-w-full h-full flex-[0_0_100%]"
+                >
+                  <Image
+                    src={src}
+                    alt={`Main Hero ${idx}`}
+                    fill
+                    quality={100}
+                    unoptimized={true}
+                    className="object-cover object-center pointer-events-none select-none"
+                    priority={idx === 0}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -339,118 +392,39 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       {/* INFINITE MARQUEE TICKER BANNER: CHOICOMMA Logo & Luxury Branding */}
       <ChoicommaMarqueeTicker />
 
-      {/* SECTION 2: Responsive Paginated Grid */}
+      {/* SECTION 2: Responsive Paginated Grid (Matching Shop Page Exactly: 1 Column on Mobile, 3 Columns on PC) */}
       <section className="w-full bg-white">
-        <div className="grid grid-cols-2 md:grid-cols-3">
-          {allProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((product, idx) => {
-            const timeSaleDiscount = getTimeSaleDiscount(product);
-
-            const basePrice = parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
-            const maxPrice = parseFloat(product.priceRange?.maxVariantPrice?.amount || "0");
-            const origPriceNum = maxPrice > basePrice ? maxPrice : basePrice;
-
-            let finalPriceNum = basePrice;
-            let strikethroughPriceNum: number | null = null;
-
-            if (timeSaleDiscount !== null && timeSaleDiscount > 0) {
-              strikethroughPriceNum = origPriceNum;
-              finalPriceNum = Math.round(origPriceNum * (1 - timeSaleDiscount / 100));
-            }
-
-            const currCode = product.currencyCode || product.priceRange?.minVariantPrice?.currencyCode || "KRW";
-
-            return (
-              <Link
-                key={product.id || idx}
-                href={`/product/${product.handle || "item"}`}
-                className="group relative flex flex-col items-center justify-center aspect-[4/5] overflow-hidden border-b border-r border-neutral-200 [&:nth-child(2n)]:border-r-0 md:[&:nth-child(2n)]:border-r md:[&:nth-child(3n)]:border-r-0"
-              >
-                <Image
-                  src={product.featuredImage?.url || `/product_${(idx % 4) + 1}.webp`}
-                  alt={product.title || `Product ${idx}`}
-                  fill
-                  unoptimized={true}
-                  className="object-contain p-4 md:p-8 transition-transform duration-700 group-hover:scale-105"
-                />
-
-                {/* Product Name & Label (Bottom Left) */}
-                <div className="absolute bottom-0 left-0 p-3 flex flex-col items-start z-10 w-full md:w-auto">
-                  <div className="flex items-center gap-1 mb-1 flex-wrap">
-                    {product.availableForSale === false && (
-                      <span className="text-[8px] md:text-[9px] px-1.5 py-0.5 font-black uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-2xs">
-                        품절
-                      </span>
-                    )}
-                    {product.productLabel && (
-                      <span className={`text-[8px] md:text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-wider rounded-sm ${product.productLabel === 'BLACK_LABEL' ? 'bg-black text-white' :
-                          product.productLabel === 'PREMIUM' ? 'bg-neutral-600 text-white' :
-                            'bg-neutral-200 text-neutral-800'
-                        }`}>
-                        {product.productLabel.replace('_', ' ')}
-                      </span>
-                    )}
-                    {(product as any).showFabricBadge && Boolean(product.fabricComposition || product.fabric || product.fabricMaterial) && (
-                      <span className="text-[8px] md:text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-sm bg-white text-black border border-black shadow-2xs">
-                        {String(product.fabricComposition || product.fabric || product.fabricMaterial).replace(/^ORIGIN:\s*/i, "").trim()}
-                      </span>
-                    )}
-                    {timeSaleDiscount !== null && (
-                      <span className="text-[8px] md:text-[9px] px-1.5 py-0.5 font-black uppercase tracking-wider rounded-sm bg-white text-neutral-950 flex items-center gap-0.5 border border-neutral-300 shadow-2xs">
-                        <Clock className="w-2.5 h-2.5 text-neutral-950 shrink-0" />
-                        <span>TIME SALE {timeSaleDiscount}% OFF</span>
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] md:text-xs font-medium text-neutral-900 uppercase tracking-widest truncate md:pr-0 w-full mb-0.5">
-                    {product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
-                  </span>
-
-                  {/* Mobile Price Display */}
-                  <div className="flex items-center gap-1 md:hidden notranslate" translate="no">
-                    {strikethroughPriceNum !== null && (
-                      <span className="text-[9px] text-neutral-400 line-through font-semibold notranslate" translate="no">
-                        {formatPrice(strikethroughPriceNum.toString(), currCode)}
-                      </span>
-                    )}
-                    <span className="text-[10px] font-bold text-neutral-900 uppercase notranslate" translate="no">
-                      {formatPrice(finalPriceNum.toString(), currCode)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Product Price (Bottom Right) - Visible on PC */}
-                <div className="hidden md:flex absolute bottom-0 right-0 p-3 flex-col items-end z-10 leading-tight notranslate" translate="no">
-                  {strikethroughPriceNum !== null && (
-                    <span className="text-[10px] text-neutral-400 line-through font-semibold mb-0.5 notranslate" translate="no">
-                      {formatPrice(strikethroughPriceNum.toString(), currCode)}
-                    </span>
-                  )}
-                  <span className="text-xs font-extrabold text-neutral-900 uppercase notranslate" translate="no">
-                    {formatPrice(finalPriceNum.toString(), currCode)}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+        <div className="grid grid-cols-1 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
+          {allProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((product, idx) => (
+            <ProductCard key={`${product.id || idx}-${currentPage}`} product={product} />
+          ))}
         </div>
 
-        {/* Pagination Controls */}
+        {/* Pagination Controls (Matching Shop Page Layout: < Prev  X / Y  Next >) */}
         {allProducts.length > pageSize && (
-          <div className="flex justify-center items-center py-12 gap-4">
+          <div className="flex justify-center items-center py-12 gap-4 border-t border-neutral-200/80 mt-4 mb-16">
             <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              type="button"
+              onClick={() => {
+                setCurrentPage((p) => Math.max(1, p - 1));
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
               disabled={currentPage === 1}
-              className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors"
+              className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
             >
               &lt; Prev
             </button>
-            <span className="text-xs text-neutral-900">
+            <span className="text-xs text-neutral-900 font-medium font-mono">
               {currentPage} / {Math.ceil(allProducts.length / pageSize)}
             </span>
             <button
-              onClick={() => setCurrentPage(p => Math.min(Math.ceil(allProducts.length / pageSize), p + 1))}
+              type="button"
+              onClick={() => {
+                setCurrentPage((p) => Math.min(Math.ceil(allProducts.length / pageSize), p + 1));
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
               disabled={currentPage >= Math.ceil(allProducts.length / pageSize)}
-              className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors"
+              className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
             >
               Next &gt;
             </button>

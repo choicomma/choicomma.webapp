@@ -27,6 +27,10 @@ export const navItems: NavItem[] = [
     href: "/shop/timesale",
   },
   {
+    label: "주문내역/배송조회",
+    href: "/membership?tab=orders",
+  },
+  {
     label: "로그인",
     href: "/login",
   },
@@ -60,30 +64,68 @@ export function Header({ collections }: HeaderProps) {
 
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const [hasSecretTimeSale, setHasSecretTimeSale] = useState(false);
+
   useEffect(() => {
     const checkAuth = () => {
       if (typeof window !== "undefined") {
         const name = localStorage.getItem("membership_user_name");
-        const email = localStorage.getItem("membership_user_email");
-        const role = localStorage.getItem("user_role");
+        const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const role = localStorage.getItem("user_role") || "";
         const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
         const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
 
-        const isAdm = role === "admin" || (email === "admin" && isLoggedInFlag) || isAdminSession;
+        const isAdm =
+          role === "admin" ||
+          (email === "admin" && isLoggedInFlag) ||
+          name === "관리자" ||
+          isAdminSession;
+
         const isLogged = isLoggedInFlag || Boolean(name && name.trim().length > 0);
 
         setIsAdmin(isAdm);
         setIsLoggedIn(isLogged);
         setUserName(name || "");
+
+        // Check secret timesale applicability for this user
+        const secretSalesRaw = localStorage.getItem("admin_secret_timesales");
+        let hasTargetedSale = false;
+        if (secretSalesRaw) {
+          try {
+            const secretSalesList: any[] = JSON.parse(secretSalesRaw);
+            for (const sale of secretSalesList) {
+              if (sale.status !== "active") continue;
+              const isEmailTargeted = Boolean(
+                email &&
+                  (sale.targetCustomerEmails || []).some(
+                    (em: string) => em.toLowerCase().trim() === email
+                  )
+              );
+              const isGradeTargeted = Boolean(
+                (sale.targetGrades || []).length > 0 &&
+                  (sale.targetGrades.includes("ALL") ||
+                    sale.targetGrades.includes(role?.toUpperCase()) ||
+                    (role?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")))
+              );
+              if (isEmailTargeted || isGradeTargeted || isAdm) {
+                hasTargetedSale = true;
+                break;
+              }
+            }
+          } catch (e) {}
+        }
+        setHasSecretTimeSale(hasTargetedSale);
       }
     };
 
     checkAuth();
     window.addEventListener("storage", checkAuth);
     window.addEventListener("auth_changed", checkAuth);
+    window.addEventListener("secret_timesales_updated", checkAuth);
     return () => {
       window.removeEventListener("storage", checkAuth);
       window.removeEventListener("auth_changed", checkAuth);
+      window.removeEventListener("secret_timesales_updated", checkAuth);
     };
   }, []);
 
@@ -95,13 +137,16 @@ export function Header({ collections }: HeaderProps) {
     ...navItems.map((item) => {
       if (item.href === "/login" && isLoggedIn) {
         return {
-          label: userName ? `마이페이지 (${userName})` : "마이페이지",
-          href: "/membership",
+          label: isAdmin
+            ? `마이페이지 (관리자)`
+            : userName
+            ? `마이페이지 (${userName})`
+            : "마이페이지",
+          href: isAdmin ? "/admin" : "/membership",
         };
       }
       return item;
     }),
-    ...(isAdmin ? [{ label: "어드민", href: "/admin" }] : []),
   ];
 
   const isShopRoute = pathname?.startsWith("/shop");
@@ -146,44 +191,53 @@ export function Header({ collections }: HeaderProps) {
             />
           </Link>
 
-          {/* Desktop Navigation & Cart (Shifted further up to the top edge) */}
-          <nav className="hidden md:flex items-center md:col-span-7 justify-end gap-3.5 -mt-6 md:-mt-8">
-            <ul
+          {/* Desktop Navigation & Cart (Single Unified Pill Bar) */}
+          <nav className="hidden md:flex items-center md:col-span-7 justify-end gap-2.5 -mt-6 md:-mt-8">
+            <div
               className={cn(
-                "items-center gap-6 py-2 px-6 rounded-full backdrop-blur-md flex transition-colors duration-400 shadow-sm",
+                "items-center gap-2 h-11 px-4 rounded-full backdrop-blur-md flex transition-colors duration-400 shadow-sm",
                 isScrolled ? "bg-white/10 text-white" : "bg-black/5 text-neutral-900"
               )}
             >
-              {activeNavItems.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "font-bold text-base transition-colors duration-300 uppercase flex items-center gap-1.5",
-                      isScrolled
-                        ? pathname === item.href
-                          ? "text-white font-black"
-                          : "text-neutral-300 hover:text-white"
-                        : pathname === item.href
-                          ? "text-black font-black"
-                          : "text-neutral-700 hover:text-black"
-                    )}
-                    prefetch
-                  >
-                    <span>{item.label}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+              <ul className="flex items-center gap-6">
+                {activeNavItems.map((item: any) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "font-bold text-sm transition-colors duration-300 uppercase flex items-center gap-1.5 whitespace-nowrap",
+                        item.isSecret
+                          ? "bg-amber-400 text-neutral-950 px-2.5 py-0.5 rounded-full font-black shadow-xs hover:bg-amber-300"
+                          : isScrolled
+                          ? pathname === item.href
+                            ? "text-white font-black"
+                            : "text-neutral-300 hover:text-white"
+                          : pathname === item.href
+                            ? "text-black font-black"
+                            : "text-neutral-700 hover:text-black"
+                      )}
+                      prefetch
+                    >
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
 
-            <LanguageSelector isScrolled={isScrolled} />
-            <CartModal
-              variant="ghost"
-              className={cn(
-                "transition-colors duration-400 p-2.5 border-0 bg-transparent hover:bg-transparent shadow-none scale-110",
-                isScrolled ? "text-white hover:text-neutral-300" : "text-neutral-900 hover:text-black"
-              )}
-            />
+              <div className={cn("w-px h-4 mx-2", isScrolled ? "bg-white/20" : "bg-black/10")} />
+
+              <LanguageSelector isScrolled={isScrolled} />
+
+              <div className={cn("w-px h-4 mx-2", isScrolled ? "bg-white/20" : "bg-black/10")} />
+
+              <CartModal
+                variant="ghost"
+                className={cn(
+                  "transition-colors duration-400 h-8 px-2.5 rounded-full border-0 bg-transparent hover:bg-transparent shadow-none font-bold text-sm",
+                  isScrolled ? "text-white hover:text-neutral-300" : "text-neutral-900 hover:text-black"
+                )}
+              />
+            </div>
           </nav>
 
           {/* Mobile: Language Selector, Cart Icon & MENU on far right */}

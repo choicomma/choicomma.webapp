@@ -26,28 +26,7 @@ export interface SetSaleBundle {
   status: "active" | "ended";
 }
 
-const DEFAULT_SET_SALES: SetSaleBundle[] = [
-  {
-    id: "SET-1",
-    title: "[초이콤마 룩북 세트 1]",
-    items: [
-      { productId: "outer-product-1", quantity: 1 },
-      { productId: "outer-product-27", quantity: 1 },
-    ],
-    discountRate: 25,
-    status: "active",
-  },
-  {
-    id: "SET-2",
-    title: "[초이콤마 럭셔리 무드 세트 2]",
-    items: [
-      { productId: "outer-product-38", quantity: 1 },
-      { productId: "outer-product-14", quantity: 2 },
-    ],
-    discountRate: 30,
-    status: "active",
-  },
-];
+const DEFAULT_SET_SALES: SetSaleBundle[] = [];
 
 interface SetBundleSectionProps {
   products: Product[];
@@ -221,13 +200,13 @@ export function SetBundleSection({ products }: SetBundleSectionProps) {
                 {resolvedItems.map((item, idx) => (
                   <div key={item.product.id} className="flex items-center gap-2 shrink-0">
                     {idx > 0 && <span className="font-black text-neutral-950 text-base">+</span>}
-                    <div className="flex items-center gap-2.5 p-2 bg-neutral-50 rounded-2xl border border-neutral-200">
-                      <div className="relative aspect-[4/5] w-12 rounded-xl overflow-hidden bg-neutral-200 shrink-0">
+                    <div className="flex items-center gap-2.5 p-2 bg-white rounded-2xl border border-neutral-200">
+                      <div className="relative aspect-square w-12 rounded-xl overflow-hidden bg-white border border-neutral-100 shrink-0">
                         <Image
                           src={item.product.featuredImage.url}
                           alt={item.product.title}
                           fill
-                          className="object-cover"
+                          className="object-contain p-0.5"
                         />
                         {item.config.quantity > 1 && (
                           <span className="absolute top-1 right-1 bg-black text-white text-[10px] font-black px-1.5 py-0.2 rounded-md">

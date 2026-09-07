@@ -1,14 +1,24 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { XCircle, RefreshCw, ShoppingBag } from "lucide-react";
+import { XCircle, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
-function OrderFailContent() {
+function OrderFailParamsHandler({ onParamsLoaded }: { onParamsLoaded: (p: { code: string | null; message: string | null }) => void }) {
   const searchParams = useSearchParams();
-  const code = searchParams.get("code");
-  const message = searchParams.get("message");
+  useEffect(() => {
+    onParamsLoaded({
+      code: searchParams.get("code"),
+      message: searchParams.get("message"),
+    });
+  }, [searchParams, onParamsLoaded]);
+  return null;
+}
+
+function OrderFailContentInner({ params }: { params: { code: string | null; message: string | null } | null }) {
+  const code = params?.code || null;
+  const message = params?.message || null;
 
   return (
     <div className="min-h-[75vh] flex flex-col items-center justify-center p-6">
@@ -45,13 +55,14 @@ function OrderFailContent() {
 }
 
 export default function OrderFailPage() {
+  const [params, setParams] = useState<{ code: string | null; message: string | null } | null>(null);
+
   return (
-    <Suspense fallback={
-      <div className="min-h-[70vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    }>
-      <OrderFailContent />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <OrderFailParamsHandler onParamsLoaded={setParams} />
+      </Suspense>
+      <OrderFailContentInner params={params} />
+    </>
   );
 }

@@ -297,6 +297,45 @@ export function ProductDetailHeader({
       }
       setTimeSaleDiscount(itemRate);
 
+      const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+      const userRole = localStorage.getItem("user_role") || "";
+      const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+      // 1. Check Secret Time Sales
+      let isSecretTargeted = false;
+      const secretSalesRaw = localStorage.getItem("admin_secret_timesales");
+      if (secretSalesRaw) {
+        try {
+          const secretSalesList: any[] = JSON.parse(secretSalesRaw);
+          for (const sale of secretSalesList) {
+            if (sale.status !== "active") continue;
+            const matchesProduct = (sale.productIds || []).some(
+              (id: string) => String(id) === String(activeProd.id) || String(id) === String(activeProd.handle)
+            );
+            if (!matchesProduct) continue;
+
+            const isEmailTargeted = Boolean(
+              userEmail &&
+                (sale.targetCustomerEmails || []).some(
+                  (em: string) => em.toLowerCase().trim() === userEmail
+                )
+            );
+            const isGradeTargeted = Boolean(
+              (sale.targetGrades || []).length > 0 &&
+                (sale.targetGrades.includes("ALL") ||
+                  sale.targetGrades.includes(userRole?.toUpperCase()) ||
+                  (userRole?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")))
+            );
+
+            if (isEmailTargeted || isGradeTargeted || isAdmin) {
+              isSecretTargeted = true;
+              itemRate = Number(sale.discountRate) || 30;
+              break;
+            }
+          }
+        } catch (e) {}
+      }
+
       const globalStatus = localStorage.getItem("secret_timesale_status");
       const isGlobalOff = globalStatus === "ended";
       const isProductOff = (activeProd as any).isTimeSale === false;
@@ -305,7 +344,7 @@ export function ProductDetailHeader({
       const isSet = activeProd.tags?.includes("SET_SALE") || activeProd.id.startsWith("set-product-");
       const isCategorySale = activeProd.categoryId === "timesale" || activeProd.tags?.includes("TIMESALE");
 
-      const isSaleActive = !isGlobalOff && !isProductOff && (isDirectSelected || isSet || isCategorySale || (activeProd as any).isTimeSale === true);
+      const isSaleActive = isSecretTargeted || (!isGlobalOff && !isProductOff && (isDirectSelected || isSet || isCategorySale || (activeProd as any).isTimeSale === true));
       setIsTimeSaleItem(isSaleActive);
 
       if (isSet) {
@@ -344,9 +383,13 @@ export function ProductDetailHeader({
     updateTimeSaleProduct();
 
     window.addEventListener("storage", updateTimeSaleProduct);
+    window.addEventListener("auth_changed", updateTimeSaleProduct);
+    window.addEventListener("secret_timesales_updated", updateTimeSaleProduct);
     window.addEventListener("admin_products_updated", updateTimeSaleProduct);
     return () => {
       window.removeEventListener("storage", updateTimeSaleProduct);
+      window.removeEventListener("auth_changed", updateTimeSaleProduct);
+      window.removeEventListener("secret_timesales_updated", updateTimeSaleProduct);
       window.removeEventListener("admin_products_updated", updateTimeSaleProduct);
     };
   }, [initialProduct]);
@@ -437,28 +480,75 @@ export function ProductDetailHeader({
     <div className="flex flex-col gap-4 md:gap-6 w-full font-sans text-neutral-900">
       
       <div className="flex flex-col items-start gap-1">
-        {isTimeSaleItem && (
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <Badge className="bg-neutral-950 text-white font-black rounded-full px-3.5 py-1 text-xs shadow-sm border border-neutral-800 uppercase flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-white fill-white" />
-              {t.timeSale} {timeSaleDiscount}% OFF
-            </Badge>
+        {/* Badges Row above Product Title (matching Product List badges) */}
+        <div className="flex items-center gap-1.5 flex-wrap mb-1">
+          {/* Product Label Badge (BLACK LABEL / PREMIUM / ESSENTIAL) */}
+          {(product as any).productLabel && (
+            <span
+              className={`text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm shrink-0 whitespace-nowrap ${
+                (product as any).productLabel === "BLACK_LABEL"
+                  ? "bg-black text-white"
+                  : (product as any).productLabel === "PREMIUM"
+                  ? "bg-neutral-600 text-white"
+                  : "bg-neutral-200 text-neutral-800"
+              }`}
+            >
+              {(product as any).productLabel.replace("_", " ")}
+            </span>
+          )}
 
-            {!isSetProduct && (
-              <Badge className="bg-neutral-950 text-white font-black rounded-full px-3.5 py-1 text-xs shadow-sm border border-neutral-800 uppercase flex items-center gap-1.5 tracking-tight">
-                <Clock className="w-3.5 h-3.5 text-neutral-300" />
-                <span>{t.timeRemaining}</span>
-                <span className="text-neutral-500">|</span>
-                <span className="font-bold">
-                  {remainingTime.days}{t.days} {remainingTime.hours}{t.hours} {remainingTime.minutes}{t.minutes} {remainingTime.seconds}{t.seconds}
+          {/* Fabric Badge (if enabled) */}
+          {(product as any).showFabricBadge && Boolean((product as any).fabricComposition || (product as any).fabric || (product as any).fabricMaterial) && (
+            <span className="text-[11px] sm:text-xs font-bold px-2.5 py-1 uppercase tracking-wider rounded-sm bg-white text-black border border-black shadow-2xs shrink-0 whitespace-nowrap">
+              {String((product as any).fabricComposition || (product as any).fabric || (product as any).fabricMaterial).replace(/^ORIGIN:\s*/i, "").trim()}
+            </span>
+          )}
+
+          {/* TimeSale Badge & Countdown */}
+          {isTimeSaleItem && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-950 text-white flex items-center gap-1 shadow-2xs shrink-0 whitespace-nowrap">
+                <Sparkles className="w-3.5 h-3.5 text-white fill-white" />
+                {t.timeSale} {timeSaleDiscount}% OFF
+              </span>
+
+              {!isSetProduct && (
+                <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-950 text-white flex items-center gap-1 shadow-2xs shrink-0 whitespace-nowrap">
+                  <Clock className="w-3.5 h-3.5 text-neutral-300" />
+                  <span>{t.timeRemaining}</span>
+                  <span className="text-neutral-500">|</span>
+                  <span className="font-bold">
+                    {remainingTime.days}{t.days} {remainingTime.hours}{t.hours} {remainingTime.minutes}{t.minutes} {remainingTime.seconds}{t.seconds}
+                  </span>
                 </span>
-              </Badge>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+
+          {/* 품절 Badge: 가장 마지막에 배치 */}
+          {product.availableForSale === false && (
+            <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
+              품절
+            </span>
+          )}
+        </div>
+
         <h1 className="text-2xl md:text-3xl font-normal tracking-tight uppercase">
           {product.title}
         </h1>
+
+        {/* Price Section directly below Title */}
+        <div className="flex items-baseline gap-2.5 mt-1.5 mb-1">
+          {originalPriceNum > discountedPriceNum && (
+            <span className="text-sm text-neutral-400 line-through font-normal">
+              {formatPrice(originalPriceNum.toString(), product.currencyCode || "KRW")}
+            </span>
+          )}
+          <span className="text-xl md:text-2xl font-black text-neutral-950 tracking-tight">
+            {formatPrice(discountedPriceNum.toString(), product.currencyCode || "KRW")}
+          </span>
+        </div>
+
         {product.description && (
           typeof product.description === "string" && (product.description.includes("<img") || product.description.includes("<p>")) ? (
             <div
@@ -473,66 +563,59 @@ export function ProductDetailHeader({
         )}
       </div>
 
-      <div className="flex items-center gap-3">
-        {originalPriceNum > discountedPriceNum && (
-          <span className="text-sm text-neutral-400 line-through">
-            {formatPrice(originalPriceNum.toString(), product.currencyCode || "KRW")}
-          </span>
-        )}
-        <span className="text-lg font-bold">
-          {formatPrice(discountedPriceNum.toString(), product.currencyCode || "KRW")}
-        </span>
-      </div>
-
-      {/* 1. Color Options */}
+      {/* 1. Color / Product Cut Option Thumbnails */}
       {colors.length > 0 && (
-        <div className="flex flex-col gap-2.5 mt-4">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-neutral-900 flex items-center gap-1.5">
-            <span>{t.color}</span>
-            <span className="font-extrabold text-neutral-950">{selectedColor}</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col items-start gap-2 mt-2">
+          {/* Standalone Product Cut Thumbnails with Color Text Persistent on Top */}
+          <div className="flex flex-wrap items-center justify-start gap-3">
             {colors.map((color, idx) => {
               const isSelected = selectedColor === color;
-              const bgLower = color.toLowerCase();
-              let bgColor = "#000000";
               const colorStr = String(color);
-              if ((DEFAULT_COLOR_HEX_MAP as any)?.[colorStr.toUpperCase()]) {
-                bgColor = (DEFAULT_COLOR_HEX_MAP as any)[colorStr.toUpperCase()];
-              } else {
-                const bgLower = colorStr.toLowerCase();
-                if (bgLower.includes("black")) bgColor = "#000000";
-                else if (bgLower.includes("white")) bgColor = "#ffffff";
-                else if (bgLower.includes("cream")) bgColor = "#fdfbf7";
-                else if (bgLower.includes("charcoal")) bgColor = "#36454F";
-                else if (bgLower.includes("navy")) bgColor = "#000080";
-                else if (bgLower.includes("beige")) bgColor = "#f5f5dc";
-                else if (bgLower.includes("brown")) bgColor = "#8B4513";
-                else if (bgLower.includes("red")) bgColor = "#DC2626";
-                else if (bgLower.includes("blue")) bgColor = "#2563EB";
-                else if (bgLower.includes("green")) bgColor = "#16A34A";
-                else if (bgLower.includes("khaki")) bgColor = "#708090";
-                else if (bgLower.includes("pink")) bgColor = "#EC4899";
-              }
+              const customImg = (product as any).colorImages?.[colorStr];
+              const fallbackImg = product.images?.[idx]?.url || product.featuredImage?.url || "/product_1.webp";
+              const cutImgUrl = customImg || fallbackImg;
 
               return (
                 <button
                   key={`color-${colorStr}-${idx}`}
                   type="button"
-                  onClick={() => setSelectedColor(colorStr)}
-                  className={cn(
-                    "h-9 px-3 flex items-center gap-2 border text-xs font-semibold transition-all uppercase tracking-wider cursor-pointer rounded-sm select-none",
-                    isSelected
-                      ? "border-neutral-900 text-neutral-900 border-[1.5px] font-extrabold bg-neutral-50 shadow-2xs"
-                      : "border-neutral-200 text-neutral-600 hover:border-neutral-500 bg-white"
-                  )}
+                  onClick={() => {
+                    setSelectedColor(colorStr);
+                    window.dispatchEvent(new CustomEvent("product_color_selected", { detail: { color: colorStr, image: cutImgUrl } }));
+                  }}
+                  className="flex flex-col items-center gap-1.5 cursor-pointer group focus:outline-none select-none"
+                  title={colorStr}
                 >
-                  <span
-                    className="w-3.5 h-3.5 rounded-full border border-neutral-300 shadow-2xs inline-block shrink-0"
-                    style={{ backgroundColor: bgColor }}
-                  />
-                  <span>{colorStr}</span>
-                  {isSelected && <Check className="w-3 h-3 text-neutral-900 stroke-[3] ml-0.5" />}
+                  {/* Color Name text persistently shown above its own thumbnail */}
+                  <span className={cn(
+                    "text-[11px] uppercase tracking-wider text-center max-w-[60px] truncate transition-colors",
+                    isSelected ? "font-black text-neutral-950" : "font-bold text-neutral-600 group-hover:text-neutral-900"
+                  )}>
+                    {colorStr}
+                  </span>
+
+                  {/* Thumbnail */}
+                  <div
+                    className={cn(
+                      "relative w-14 h-14 rounded-xl overflow-hidden transition-all p-0.5 bg-white shrink-0",
+                      isSelected
+                        ? "ring-2 ring-neutral-950 shadow-sm"
+                        : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
+                    )}
+                  >
+                    <div className="w-full h-full rounded-[10px] overflow-hidden bg-neutral-100 relative">
+                      <img
+                        src={cutImgUrl}
+                        alt={colorStr}
+                        className="w-full h-full object-cover"
+                      />
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white stroke-[3] drop-shadow-sm" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </button>
               );
             })}
@@ -540,26 +623,43 @@ export function ProductDetailHeader({
         </div>
       )}
 
-      <div className="w-full h-px bg-neutral-200 my-1" />
-
       {/* 2. Size Options */}
       {sizes.length > 0 && (
         <div className="flex flex-col gap-2 mt-2">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-neutral-900">
-            {t.size}
+          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-neutral-900">
+            <span>{t.size}</span>
+            {(() => {
+              const comboKey = selectedColor ? `${selectedColor}-${selectedSize}` : selectedSize;
+              const stockMap = (product as any).sizeStock || {};
+              const curStock = stockMap[comboKey] !== undefined ? stockMap[comboKey] : (stockMap[selectedSize] !== undefined ? stockMap[selectedSize] : null);
+              if (curStock === 0) {
+                return <span className="text-rose-600 font-extrabold text-[10px]">품절</span>;
+              }
+              return null;
+            })()}
           </div>
           <div className="flex flex-wrap gap-2">
             {sizes.map((size, idx) => {
               const sizeStr = String(size);
               const isSelected = selectedSize === size;
+              const comboKey = selectedColor ? `${selectedColor}-${sizeStr}` : sizeStr;
+              const stockMap = (product as any).sizeStock || {};
+              const itemStock = stockMap[comboKey] !== undefined ? stockMap[comboKey] : (stockMap[sizeStr] !== undefined ? stockMap[sizeStr] : null);
+              const isSoldOut = itemStock === 0;
+
               return (
                 <button
                   key={`size-${sizeStr}-${idx}`}
                   type="button"
+                  disabled={isSoldOut}
                   onClick={() => setSelectedSize(sizeStr)}
                   className={cn(
-                    "min-w-[2.25rem] h-9 px-2.5 flex items-center justify-center border text-xs font-medium transition-all uppercase tracking-wider cursor-pointer select-none",
-                    isSelected ? "border-neutral-900 text-neutral-900 border-[1.5px] font-bold" : "border-neutral-300 text-neutral-500 hover:border-neutral-600"
+                    "min-w-[2.5rem] h-9 px-3 flex items-center justify-center border text-xs font-semibold transition-all uppercase tracking-wider cursor-pointer select-none rounded-sm",
+                    isSoldOut
+                      ? "opacity-40 line-through bg-neutral-100 border-neutral-200 text-neutral-400 cursor-not-allowed"
+                      : isSelected
+                      ? "border-neutral-900 text-neutral-900 border-[1.5px] font-extrabold bg-neutral-50 shadow-2xs"
+                      : "border-neutral-300 text-neutral-600 hover:border-neutral-900 bg-white"
                   )}
                 >
                   {sizeStr}
@@ -570,18 +670,44 @@ export function ProductDetailHeader({
         </div>
       )}
 
+      {/* Out of stock warning banner if selected option is 0 stock */}
+      {(() => {
+        const comboKey = selectedColor ? `${selectedColor}-${selectedSize}` : selectedSize;
+        const stockMap = (product as any).sizeStock || {};
+        const curStock = stockMap[comboKey] !== undefined ? stockMap[comboKey] : (stockMap[selectedSize] !== undefined ? stockMap[selectedSize] : null);
+        if (curStock === 0) {
+          return (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold px-3 py-2 rounded-xl text-center mt-2">
+              ⚠️ 선택하신 [{selectedColor ? `${selectedColor} / ` : ""}{selectedSize}] 옵션은 현재 재고가 모두 소진되었습니다.
+            </div>
+          );
+        }
+        return null;
+      })()}
 
-
-      <div className="flex flex-row gap-4 mt-8">
+      {/* Bottom Action Row: Quantity + Add To Cart button */}
+      <div className="flex items-center gap-4 mt-8">
         <div className="flex items-center border border-neutral-300 px-4 py-3 h-[52px] min-w-[120px] justify-between text-neutral-900 bg-white">
-          <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-lg leading-none hover:opacity-50 transition-opacity">-</button>
-          <span className="text-sm font-medium">{quantity}</span>
-          <button onClick={() => setQuantity(quantity + 1)} className="text-lg leading-none hover:opacity-50 transition-opacity">+</button>
+          <button
+            type="button"
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            className="text-lg leading-none hover:opacity-50 transition-opacity cursor-pointer select-none"
+          >
+            -
+          </button>
+          <span className="text-sm font-medium select-none">{quantity}</span>
+          <button
+            type="button"
+            onClick={() => setQuantity(quantity + 1)}
+            className="text-lg leading-none hover:opacity-50 transition-opacity cursor-pointer select-none"
+          >
+            +
+          </button>
         </div>
         <button
           onClick={handleAddToCart}
           disabled={isOutOfStock || isAdding}
-          className="flex-1 bg-[#808080] hover:bg-[#666666] text-white font-normal text-[13px] tracking-widest h-[52px] transition-colors uppercase disabled:opacity-50"
+          className="flex-1 bg-[#808080] hover:bg-[#666666] text-white font-normal text-[13px] tracking-widest h-[52px] transition-colors uppercase disabled:opacity-50 cursor-pointer"
         >
           {isOutOfStock ? t.outOfStock : isAdding ? t.adding : t.addToCart}
         </button>

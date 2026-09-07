@@ -74,39 +74,16 @@ export default function ResultsControls({
   return (
     <div
       className={cn(
-        "grid grid-cols-3 items-center w-full mb-1 px-4 md:px-0",
+        "flex items-center justify-start w-full mb-1 px-4 md:px-0",
         className
       )}
     >
-      {/* Breadcrumb - Hidden on mobile, visible on PC */}
-      <Breadcrumb className="ml-1 hidden md:block">
-        <BreadcrumbList>
-          <BreadcrumbItem className="text-foreground/50 cursor-pointer hover:text-foreground/70">
-            <BreadcrumbLink href="/shop" className="font-semibold">
-              쇼핑몰
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbPage className="font-semibold">
-            {renderCategoryBreadcrumb()}
-          </BreadcrumbPage>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      {/* Results count - Hidden on mobile, visible on PC */}
-      <span
-        className="text-foreground/50 text-sm place-self-center font-medium hidden md:inline-block"
-        suppressHydrationWarning
-      >
-        총 {products.length}개 상품
-      </span>
-
-      {/* Sort dropdown */}
+      {/* Sort dropdown - aligned to left */}
       <Select value={sort ?? undefined} onValueChange={setSort}>
-        <SelectTrigger className="-mr-3 md:w-[130px] bg-transparent border-none shadow-none hover:bg-muted/50 font-medium justify-self-end text-xs">
+        <SelectTrigger className="-ml-2 md:w-[130px] bg-transparent border-none shadow-none hover:bg-muted/50 font-medium justify-self-start text-xs">
           <SelectValue placeholder="정렬 기준" />
         </SelectTrigger>
-        <SelectContent align="end">
+        <SelectContent align="start">
           <SelectGroup>
             <div className="flex items-center justify-between pr-1">
               <SelectLabel className="text-xs">정렬</SelectLabel>

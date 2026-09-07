@@ -165,7 +165,7 @@ export function InquiriesManagement({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-neutral-950 flex items-center gap-2">
-            <MessageSquare className="w-6 h-6 text-emerald-600" />
+            <MessageSquare className="w-6 h-6 text-neutral-900" />
             1:1 VIP 실시간 라이브 채팅 케어 (Live Chat)
           </h1>
           <p className="text-sm text-neutral-500 mt-0.5">
@@ -179,13 +179,13 @@ export function InquiriesManagement({
             onClick={() => setIsEditModalOpen(true)}
             className="flex items-center gap-1.5 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md cursor-pointer border border-neutral-800"
           >
-            <Edit3 className="w-4 h-4 text-amber-400" />
-            <span>✏️ 실시간 템플릿 수정/편집</span>
+            <Edit3 className="w-4 h-4 text-white" />
+            <span>실시간 템플릿 수정/편집</span>
           </button>
 
-          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-2xl">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-black text-emerald-900">
+          <div className="flex items-center gap-2 bg-neutral-100 border border-neutral-200 px-3.5 py-2 rounded-2xl">
+            <span className="w-2.5 h-2.5 rounded-full bg-neutral-900" />
+            <span className="text-xs font-black text-neutral-900">
               실시간 연동 중 ({adminLiveChatMessages.length}개 메시지)
             </span>
           </div>

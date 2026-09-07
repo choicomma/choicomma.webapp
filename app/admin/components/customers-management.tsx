@@ -94,7 +94,7 @@ export function CustomersManagement({
             onClick={() => setIsAddCustomerModalOpen(true)}
             className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs cursor-pointer"
           >
-            <UserPlus className="w-3.5 h-3.5 text-emerald-400" />
+            <UserPlus className="w-3.5 h-3.5 text-neutral-400" />
             <span>+ 신규 회원 직접 등록</span>
           </button>
         </div>
@@ -105,7 +105,7 @@ export function CustomersManagement({
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>전체 회원</span>
-            <Users className="w-4 h-4 text-neutral-400" />
+            <Users className="w-4 h-4 text-neutral-900" />
           </div>
           <p className="text-2xl font-extrabold text-neutral-950 mt-2">{customersList.length.toLocaleString()} 명</p>
           <p className="text-xs text-neutral-500 mt-1">스토어 회원 데이터 관리 중</p>
@@ -114,18 +114,18 @@ export function CustomersManagement({
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>VIP 회원 수</span>
-            <Crown className="w-4 h-4 text-amber-500" />
+            <Crown className="w-4 h-4 text-neutral-900" />
           </div>
           <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-            {customersList.filter((c) => c.grade && c.grade.includes("VIP")).length.toLocaleString()} 명
+            {customersList.filter((c) => ["SILVER", "GOLD", "PLATINUM", "VVIP"].includes(c.grade) || c.grade?.includes("VIP")).length.toLocaleString()} 명
           </p>
-          <p className="text-xs text-amber-600 font-bold mt-1">BLACK / GOLD / SILVER VIP</p>
+          <p className="text-xs text-neutral-600 font-bold mt-1">SILVER / GOLD / PLATINUM / VVIP</p>
         </div>
 
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>총 보관 적립금</span>
-            <Gift className="w-4 h-4 text-emerald-500" />
+            <Gift className="w-4 h-4 text-neutral-900" />
           </div>
           <p className="text-2xl font-extrabold text-neutral-950 mt-2">
             ₩ {customersList.reduce((sum, c) => sum + (c.points || 0), 0).toLocaleString()}
@@ -138,14 +138,12 @@ export function CustomersManagement({
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>이달의 신규 가입</span>
-            <TrendingUp className="w-4 h-4 text-blue-500" />
+            <TrendingUp className="w-4 h-4 text-neutral-900" />
           </div>
           <p className="text-2xl font-extrabold text-neutral-950 mt-2">
             {newCustomersThisMonth > 0 ? `+ ${newCustomersThisMonth.toLocaleString()} 명` : "0 명"}
           </p>
-          <p className={`text-xs font-bold mt-1 ${newCustomersThisMonth > 0 ? "text-emerald-600" : "text-neutral-400"}`}>
-            {newCustomersThisMonth > 0 ? `이번 달(${new Date().getMonth() + 1}월) 신규 회원` : "이번 달 신규 가입자 없음"}
-          </p>
+          <p className="text-xs text-neutral-500 mt-1">이번 달 신규 등록 회원</p>
         </div>
       </div>
 
@@ -181,10 +179,11 @@ export function CustomersManagement({
           <span className="text-xs font-bold text-neutral-500 mr-1">회원 등급:</span>
           {[
             { id: "all", label: "전체 등급" },
-            { id: "BLACK VIP", label: "BLACK VIP" },
-            { id: "GOLD VIP", label: "GOLD VIP" },
-            { id: "SILVER VIP", label: "SILVER VIP" },
-            { id: "REGULAR", label: "일반 회원" },
+            { id: "GENERAL", label: "일반 (GENERAL)" },
+            { id: "SILVER", label: "실버 (SILVER)" },
+            { id: "GOLD", label: "골드 (GOLD)" },
+            { id: "PLATINUM", label: "플래티넘 (PLATINUM)" },
+            { id: "VVIP", label: "VVIP" },
           ].map((g) => (
             <button
               key={g.id}
@@ -231,6 +230,11 @@ export function CustomersManagement({
                       <div>
                         <p className="font-extrabold text-neutral-950 text-sm flex items-center gap-1.5">
                           {cust.name}
+                          {cust.isAdmin && (
+                            <span className="bg-neutral-950 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">
+                              ADMIN
+                            </span>
+                          )}
                           <span className="text-[10px] font-mono text-neutral-400 font-normal truncate max-w-[120px]">({cust.id})</span>
                         </p>
                         <p className="text-xs text-neutral-500">{cust.email}</p>
@@ -249,17 +253,19 @@ export function CustomersManagement({
                     <td className="py-4 px-5">
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-black uppercase ${
-                          cust.grade?.includes("BLACK")
-                            ? "bg-neutral-950 text-amber-300 border border-neutral-800"
-                            : cust.grade?.includes("GOLD")
-                            ? "bg-amber-100 text-amber-900 border border-amber-300"
-                            : cust.grade?.includes("SILVER")
-                            ? "bg-slate-100 text-slate-800 border border-slate-300"
-                            : "bg-neutral-100 text-neutral-700 border border-neutral-200"
+                          cust.grade === "VVIP" || cust.grade?.includes("BLACK")
+                            ? "bg-neutral-950 text-white border border-neutral-800 shadow-2xs"
+                            : cust.grade === "PLATINUM"
+                            ? "bg-neutral-800 text-white border border-neutral-700 shadow-2xs"
+                            : cust.grade === "GOLD" || cust.grade?.includes("GOLD")
+                            ? "bg-neutral-200 text-neutral-900 border border-neutral-300"
+                            : cust.grade === "SILVER" || cust.grade?.includes("SILVER")
+                            ? "bg-neutral-100 text-neutral-800 border border-neutral-200"
+                            : "bg-white text-neutral-600 border border-neutral-300"
                         }`}
                       >
-                        {cust.grade?.includes("VIP") && <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />}
-                        {cust.grade}
+                        {["PLATINUM", "VVIP"].includes(cust.grade) && <Crown className="w-3.5 h-3.5 text-white" />}
+                        {cust.grade || "GENERAL"}
                       </span>
                     </td>
                     <td className="py-4 px-5 font-bold font-mono text-neutral-950">

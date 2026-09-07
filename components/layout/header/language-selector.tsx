@@ -182,20 +182,14 @@ export function LanguageSelector({ isScrolled = false, className, align = "right
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={cn(
-          "flex items-center gap-2 py-2.5 px-4 rounded-full text-sm font-bold backdrop-blur-md transition-all cursor-pointer border border-transparent hover:scale-[1.02] shadow-sm notranslate",
-          isScrolled
-            ? "bg-white/10 text-white hover:bg-white/20 border-white/10"
-            : "bg-black/5 text-neutral-900 hover:bg-black/10 border-black/5"
-        )}
+        className="flex items-center gap-1.5 py-1 px-1.5 sm:px-2 rounded-full text-sm font-bold transition-all cursor-pointer hover:opacity-80 notranslate"
         translate="no"
       >
-        <Globe className="w-4 h-4 opacity-80" />
-        <span className="font-sans font-bold flex items-center gap-1.5 notranslate" translate="no">
-          <span className="text-base">{currentLang.flag}</span>
-          <span className="hidden sm:inline notranslate" translate="no">{currentLang.nativeName}</span>
+        <Globe className="w-3.5 h-3.5 opacity-80" />
+        <span className="font-sans font-bold flex items-center gap-1 notranslate" translate="no">
+          <span className="text-sm notranslate" translate="no">{currentLang.nativeName}</span>
         </span>
-        <ChevronDown className={cn("w-3.5 h-3.5 opacity-60 transition-transform duration-200", isOpen && "rotate-180")} />
+        <ChevronDown className={cn("w-3 h-3 opacity-60 transition-transform duration-200", isOpen && "rotate-180")} />
       </button>
 
       {/* Dropdown Menu */}
@@ -235,8 +229,8 @@ export function LanguageSelector({ isScrolled = false, className, align = "right
                         ? "bg-white/15 text-white font-bold"
                         : "bg-neutral-900 text-white font-bold"
                       : isScrolled
-                      ? "text-neutral-300 hover:bg-white/10 hover:text-white"
-                      : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"
+                        ? "text-neutral-300 hover:bg-white/10 hover:text-white"
+                        : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"
                   )}
                   translate="no"
                 >

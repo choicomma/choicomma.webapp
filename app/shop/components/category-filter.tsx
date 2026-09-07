@@ -48,27 +48,29 @@ export function CategoryFilter({
     setSearchTerm(queryVal);
   }, [queryVal]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchTerm.trim()) {
-      router.push(`/shop?q=${encodeURIComponent(searchTerm.trim())}`);
+    const trimmed = searchTerm.trim();
+    if (trimmed) {
+      router.push(`/shop?q=${encodeURIComponent(trimmed)}`);
     } else {
-      router.push("/shop");
+      router.push(params.collection ? `/shop/${params.collection}` : "/shop");
     }
   };
 
   const handleClearSearch = () => {
     setSearchTerm("");
-    router.push("/shop");
+    router.push(params.collection ? `/shop/${params.collection}` : "/shop");
   };
 
   return (
     <div className={cn("space-y-6", className)}>
       {/* Category List */}
       <div>
-        {!hideCategoryTitle && (
-          <h3 className="font-extrabold mb-3.5 text-xs md:text-sm uppercase tracking-wider text-neutral-950">카테고리</h3>
-        )}
         <ul className="flex flex-col gap-2">
           <li>
             <Link
@@ -117,7 +119,7 @@ export function CategoryFilter({
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleInputChange}
               placeholder="상품 검색어 입력..."
               className="w-full h-10 pl-9 pr-8 bg-white border border-neutral-300 rounded-xl text-xs md:text-sm font-semibold text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-950 transition-all shadow-2xs"
             />

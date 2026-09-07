@@ -6,13 +6,24 @@ import { CheckCircle2, ShoppingBag, ArrowRight, ShieldCheck, RefreshCw } from "l
 import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
 
-function OrderSuccessContent() {
+function OrderSuccessParamsHandler({ onParamsLoaded }: { onParamsLoaded: (p: { paymentKey: string | null; orderId: string | null; amount: string | null }) => void }) {
   const searchParams = useSearchParams();
+  useEffect(() => {
+    onParamsLoaded({
+      paymentKey: searchParams.get("paymentKey"),
+      orderId: searchParams.get("orderId"),
+      amount: searchParams.get("amount"),
+    });
+  }, [searchParams, onParamsLoaded]);
+  return null;
+}
+
+function OrderSuccessContentInner({ params }: { params: { paymentKey: string | null; orderId: string | null; amount: string | null } | null }) {
   const router = useRouter();
 
-  const paymentKey = searchParams.get("paymentKey");
-  const orderId = searchParams.get("orderId");
-  const amount = searchParams.get("amount");
+  const paymentKey = params?.paymentKey || null;
+  const orderId = params?.orderId || null;
+  const amount = params?.amount || null;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -158,13 +169,14 @@ function OrderSuccessContent() {
 }
 
 export default function OrderSuccessPage() {
+  const [params, setParams] = useState<{ paymentKey: string | null; orderId: string | null; amount: string | null } | null>(null);
+
   return (
-    <Suspense fallback={
-      <div className="min-h-[70vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    }>
-      <OrderSuccessContent />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <OrderSuccessParamsHandler onParamsLoaded={setParams} />
+      </Suspense>
+      <OrderSuccessContentInner params={params} />
+    </>
   );
 }

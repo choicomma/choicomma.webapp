@@ -180,10 +180,10 @@ export function ProductDetailAccordions({ product }: ProductDetailAccordionsProp
       <Accordion type="single" collapsible className="w-full" defaultValue="details">
         {/* 1. Details */}
         <AccordionItem value="details" className="border-b border-neutral-200">
-          <AccordionTrigger className="py-4 text-xs font-bold text-neutral-900 hover:no-underline flex justify-between items-center group cursor-pointer uppercase tracking-widest">
-            {t.designerDesc}
+          <AccordionTrigger className="py-4 text-xs font-bold text-neutral-900 hover:no-underline flex justify-between items-center group cursor-pointer uppercase tracking-widest text-left">
+            <span>{t.designerDesc}</span>
           </AccordionTrigger>
-          <AccordionContent className="text-xs text-neutral-600 leading-relaxed pb-6">
+          <AccordionContent className="text-xs text-neutral-600 leading-relaxed pb-6 text-left">
             {isHtmlContent ? (
               <div
                 className="w-full max-w-full overflow-hidden text-neutral-800 leading-relaxed space-y-4 [&_img]:max-w-full [&_img]:h-auto [&_img]:mx-auto [&_img]:rounded-2xl [&_img]:my-3 [&_p]:my-2"
@@ -199,8 +199,8 @@ export function ProductDetailAccordions({ product }: ProductDetailAccordionsProp
 
         {/* 2. Fabric Info */}
         <AccordionItem value="fabric" className="border-b border-neutral-200">
-          <AccordionTrigger className="py-4 text-xs font-bold text-neutral-900 hover:no-underline flex justify-between items-center group cursor-pointer uppercase tracking-widest">
-            {t.fabricInfo}
+          <AccordionTrigger className="py-4 text-xs font-bold text-neutral-900 hover:no-underline flex justify-between items-center group cursor-pointer uppercase tracking-widest text-left">
+            <span>{t.fabricInfo}</span>
           </AccordionTrigger>
           <AccordionContent className="text-xs text-neutral-600 leading-relaxed pb-6">
             <div className="flex flex-col gap-4 py-4 px-4 border border-neutral-200/80 bg-neutral-50/50 rounded-2xl">
@@ -249,78 +249,80 @@ export function ProductDetailAccordions({ product }: ProductDetailAccordionsProp
           </AccordionContent>
         </AccordionItem>
 
-        {/* 3. Size Guide */}
-        <AccordionItem value="guide" className="border-b border-neutral-200">
-          <AccordionTrigger className="py-4 text-xs font-bold text-neutral-900 hover:no-underline flex justify-between items-center group cursor-pointer uppercase tracking-widest">
-            {t.sizeGuide}
-          </AccordionTrigger>
-          <AccordionContent className="text-xs text-neutral-600 leading-relaxed pb-6">
-            <div className="flex flex-col items-center py-4 my-1 border border-neutral-200/80 bg-white rounded-2xl p-5 md:p-6 shadow-2xs">
-              {((product as any).sizeGuideImage || (product as any).sizeChartImage) && (
-                <div className="w-full mb-4 rounded-xl overflow-hidden border border-neutral-200 bg-white p-2">
-                  <img
-                    src={(product as any).sizeGuideImage || (product as any).sizeChartImage}
-                    alt="상품 수치 / 사이즈 가이드 표"
-                    className="w-full h-auto object-contain max-h-[450px]"
-                  />
+        {/* 3. Size Guide (Rendered only when showSizeGuide === true) */}
+        {(product as any).showSizeGuide === true && (
+          <AccordionItem value="guide" className="border-b border-neutral-200">
+            <AccordionTrigger className="py-4 text-xs font-bold text-neutral-900 hover:no-underline flex justify-between items-center group cursor-pointer uppercase tracking-widest text-left">
+              <span>{t.sizeGuide}</span>
+            </AccordionTrigger>
+            <AccordionContent className="text-xs text-neutral-600 leading-relaxed pb-6">
+              <div className="flex flex-col items-center py-4 my-1 border border-neutral-200/80 bg-white rounded-2xl p-5 md:p-6 shadow-2xs">
+                {((product as any).sizeGuideImage || (product as any).sizeChartImage) && (
+                  <div className="w-full mb-4 rounded-xl overflow-hidden border border-neutral-200 bg-white p-2">
+                    <img
+                      src={(product as any).sizeGuideImage || (product as any).sizeChartImage}
+                      alt="상품 수치 / 사이즈 가이드 표"
+                      className="w-full h-auto object-contain max-h-[450px]"
+                    />
+                  </div>
+                )}
+
+                {/* Notice Bullet Points */}
+                <div className="text-[10.5px] text-neutral-500 text-center space-y-0.5 my-3 font-sans leading-relaxed">
+                  <p>{t.sizeNotice1}</p>
+                  <p>{t.sizeNotice2}</p>
+                  <p>{t.sizeNotice3}</p>
                 </div>
-              )}
 
-              {/* Notice Bullet Points */}
-              <div className="text-[10.5px] text-neutral-500 text-center space-y-0.5 my-3 font-sans leading-relaxed">
-                <p>{t.sizeNotice1}</p>
-                <p>{t.sizeNotice2}</p>
-                <p>{t.sizeNotice3}</p>
-              </div>
+                {/* Garment Measurements Table */}
+                <div className="w-full overflow-x-auto mt-2">
+                  {(() => {
+                    const sizes = (product as any).sizes?.length ? (product as any).sizes : ["1", "2", "3", "FREE"];
+                    const customRows = (product as any).sizeMeasurements;
+                    const rows = customRows && customRows.length > 0 ? customRows : [
+                      { name: "어깨단면", values: { "1": "50", "2": "52", "3": "54", "FREE": "56" } },
+                      { name: "가슴단면", values: { "1": "56.5", "2": "58.5", "3": "60.5", "FREE": "62.5" } },
+                      { name: "팔길이", values: { "1": "59", "2": "60", "3": "61", "FREE": "61.5" } },
+                      { name: "총장", values: { "1": "58/62.5", "2": "60/64.5", "3": "62/66.5", "FREE": "63/67.5" } },
+                    ];
 
-              {/* Garment Measurements Table */}
-              <div className="w-full overflow-x-auto mt-2">
-                {(() => {
-                  const sizes = (product as any).sizes?.length ? (product as any).sizes : ["1", "2", "3", "FREE"];
-                  const customRows = (product as any).sizeMeasurements;
-                  const rows = customRows && customRows.length > 0 ? customRows : [
-                    { name: "SHOULDER", values: { "1": "50", "2": "52", "3": "54", "FREE": "56" } },
-                    { name: "CHEST", values: { "1": "56.5", "2": "58.5", "3": "60.5", "FREE": "62.5" } },
-                    { name: "SLEEVE", values: { "1": "59", "2": "60", "3": "61", "FREE": "61.5" } },
-                    { name: "LENGTH", values: { "1": "58/62.5", "2": "60/64.5", "3": "62/66.5", "FREE": "63/67.5" } },
-                  ];
-
-                  return (
-                    <table className="w-full text-center border-t border-b border-neutral-400 text-xs font-sans">
-                      <thead>
-                        <tr className="border-b border-neutral-200 font-bold text-neutral-800">
-                          <th className="py-2.5 px-2 text-left font-bold text-[11px] uppercase">SIZE</th>
-                          {sizes.map((size: string) => (
-                            <th key={size} className="py-2.5 px-2 text-[11px]">{size}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-neutral-200 text-neutral-700 font-medium">
-                        {rows.map((row: any) => (
-                          <tr key={row.name}>
-                            <td className="py-2.5 px-2 text-left font-bold text-neutral-900 text-[10.5px] uppercase tracking-wider">
-                              {row.name}
-                            </td>
+                    return (
+                      <table className="w-full text-center border-t border-b border-neutral-400 text-xs font-sans">
+                        <thead>
+                          <tr className="border-b border-neutral-200 font-bold text-neutral-800">
+                            <th className="py-2.5 px-2 text-left font-bold text-[11px] uppercase">SIZE</th>
                             {sizes.map((size: string) => (
-                              <td key={size} className="py-2.5 px-2 text-[11px] font-mono">
-                                {row.values[size] || "-"}
-                              </td>
+                              <th key={size} className="py-2.5 px-2 text-[11px]">{size}</th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  );
-                })()}
+                        </thead>
+                        <tbody className="divide-y divide-neutral-200 text-neutral-700 font-medium">
+                          {rows.map((row: any) => (
+                            <tr key={row.name}>
+                              <td className="py-2.5 px-2 text-left font-bold text-neutral-900 text-[10.5px] uppercase tracking-wider">
+                                {row.name}
+                              </td>
+                              {sizes.map((size: string) => (
+                                <td key={size} className="py-2.5 px-2 text-[11px] font-mono">
+                                  {row.values[size] || "-"}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    );
+                  })()}
+                </div>
               </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
         {/* 3. Care & Delivery */}
         <AccordionItem value="care" className="border-b border-neutral-200">
-          <AccordionTrigger className="py-4 text-xs font-bold text-neutral-900 hover:no-underline flex justify-between items-center group cursor-pointer uppercase tracking-widest">
-            {t.shippingReturns}
+          <AccordionTrigger className="py-4 text-xs font-bold text-neutral-900 hover:no-underline flex justify-between items-center group cursor-pointer uppercase tracking-widest text-left">
+            <span>{t.shippingReturns}</span>
           </AccordionTrigger>
           <AccordionContent className="text-xs text-neutral-700 leading-relaxed pb-6 space-y-4">
             {/* 2. 불량 사유 제외 안내 */}

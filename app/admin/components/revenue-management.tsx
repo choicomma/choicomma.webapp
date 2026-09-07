@@ -142,7 +142,7 @@ export function RevenueManagement({
       {/* Top Banner & Past Month Dropdown Control */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-neutral-200/80 shadow-xs">
         <div className="flex items-center gap-4">
-          <div className="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 shrink-0">
+          <div className="p-3.5 bg-neutral-100 text-neutral-900 rounded-2xl border border-neutral-200 shrink-0">
             <TrendingUp className="w-6 h-6" />
           </div>
           <div>
@@ -151,12 +151,12 @@ export function RevenueManagement({
                 매출 관리 & 정산 분석
               </h1>
               {isCurrentMonth ? (
-                <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs bg-neutral-900 text-white font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-white" />
                   <span>2026년 8월 당월 실적</span>
                 </span>
               ) : (
-                <span className="text-xs bg-amber-100 text-amber-900 font-bold px-2.5 py-0.5 rounded-full">
+                <span className="text-xs bg-neutral-100 text-neutral-900 font-bold px-2.5 py-0.5 rounded-full border border-neutral-200">
                   {selectedViewMonth} 지난 매출 조회 중
                 </span>
               )}
@@ -170,8 +170,8 @@ export function RevenueManagement({
         {/* Dropdown for selecting past months */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 font-bold text-xs pointer-events-none flex items-center gap-1">
-              <History className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 font-bold text-xs pointer-events-none flex items-center gap-1">
+              <History className="w-3.5 h-3.5 text-neutral-400" />
               <span>지난 매출 조회:</span>
             </span>
             <select

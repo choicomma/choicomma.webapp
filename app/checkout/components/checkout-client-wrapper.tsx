@@ -78,15 +78,40 @@ export default function CheckoutClientWrapper() {
   };
 
   const handleApplyCoupon = () => {
-    if (!couponCode.trim()) return;
-    if (couponCode.toUpperCase() === "CHOI10" || couponCode.toUpperCase() === "VIP") {
+    const cleanedCode = couponCode.trim().toUpperCase().replace(/\s+/g, "");
+    if (!cleanedCode) return;
+
+    // Check if this coupon has already been used by the user
+    const usedCouponsRaw = localStorage.getItem("used_coupon_codes") || "[]";
+    let usedCoupons: string[] = [];
+    try {
+      usedCoupons = JSON.parse(usedCouponsRaw);
+    } catch (e) {}
+
+    if (usedCoupons.includes(cleanedCode)) {
+      setCouponMessage("⚠️ 이미 사용 완료된 1회용 쿠폰 코드입니다. 다른 쿠폰을 입력해 주세요.");
+      setAppliedDiscount(0);
+      return;
+    }
+
+    // 10,000 KRW Discount
+    if (cleanedCode === "CC26-X8K9-10KRW" || cleanedCode === "CHOI10" || cleanedCode === "VIP") {
       setAppliedDiscount(10000);
-      setCouponMessage("🎉 10,000원 정액 할인 쿠폰이 적용되었습니다!");
-    } else if (couponCode.toUpperCase() === "WELCOME") {
+      setCouponMessage("🎉 10,000원 스페셜 할인 쿠폰이 정상 적용되었습니다! (-10,000원)");
+    } 
+    // 5,000 KRW Welcome Discount
+    else if (cleanedCode === "CC26-W9L4-5KRW" || cleanedCode === "WELCOME") {
       setAppliedDiscount(5000);
-      setCouponMessage("🎉 5,000원 웰컴 쿠폰이 적용되었습니다!");
-    } else {
-      setCouponMessage("❌ 유효하지 않은 쿠폰 코드입니다. (테스트용 추천 코드: CHOI10, WELCOME)");
+      setCouponMessage("🎉 5,000원 웰컴 첫 구매 할인 쿠폰이 정상 적용되었습니다! (-5,000원)");
+    } 
+    // Free Shipping Voucher
+    else if (cleanedCode === "CC26-FREE-S8P2" || cleanedCode === "FREESHIP") {
+      setAppliedDiscount(3000);
+      setCouponMessage("🎉 무료 배송 지원 쿠폰이 정상 적용되었습니다! (-3,000원)");
+    } 
+    else {
+      setCouponMessage("❌ 유효하지 않은 쿠폰 코드입니다. 마이페이지 [쿠폰함]의 코드를 복사하여 입력해 주세요.");
+      setAppliedDiscount(0);
     }
   };
 
@@ -200,6 +225,27 @@ export default function CheckoutClientWrapper() {
           ? `${cart.lines[0].merchandise.product.title} 외 ${cart.lines.length - 1}건`
           : cart.lines[0].merchandise.product.title
         : "초이콤마 오리지널 패션 주문건";
+
+      // If coupon was applied, mark this coupon code as used to prevent reuse
+      if (couponCode.trim() && appliedDiscount > 0) {
+        const cleanedCode = couponCode.trim().toUpperCase().replace(/\s+/g, "");
+        const usedCouponsRaw = localStorage.getItem("used_coupon_codes") || "[]";
+        let usedCoupons: string[] = [];
+        try {
+          usedCoupons = JSON.parse(usedCouponsRaw);
+        } catch (e) {}
+        if (!usedCoupons.includes(cleanedCode)) {
+          usedCoupons.push(cleanedCode);
+          localStorage.setItem("used_coupon_codes", JSON.stringify(usedCoupons));
+        }
+      }
+
+      // Deduct used rewards points if any
+      if (appliedPoints > 0) {
+        const remaining = Math.max(0, availablePoints - appliedPoints);
+        localStorage.setItem("membership_user_points", String(remaining));
+        setAvailablePoints(remaining);
+      }
 
       // Use direct Payment window request (Card & EasyPay supported)
       const payment = tossPayments.payment({ customerKey });
@@ -367,12 +413,33 @@ export default function CheckoutClientWrapper() {
                     required
                     readOnly
                     value={formData.postcode}
-                    className="w-32 px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 font-bold text-center"
+                    className="w-32 px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 font-bold text-center text-xs font-mono"
                   />
                   <button
                     type="button"
-                    onClick={() => alert("우편번호 검색 기능이 준비되어 있습니다. 기본값이 설정되었습니다.")}
-                    className="px-5 py-3 bg-neutral-900 text-white rounded-xl text-xs font-extrabold hover:bg-neutral-800 transition-colors"
+                    onClick={() => {
+                      if (typeof window !== "undefined" && (window as any).daum?.Postcode) {
+                        new (window as any).daum.Postcode({
+                          oncomplete: function (data: any) {
+                            let fullAddress = data.address;
+                            let extraAddress = "";
+                            if (data.addressType === "R") {
+                              if (data.bname !== "") extraAddress += data.bname;
+                              if (data.buildingName !== "") extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
+                              fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
+                            }
+                            setFormData((prev) => ({
+                              ...prev,
+                              postcode: data.zonecode || "06306",
+                              address: fullAddress,
+                            }));
+                          },
+                        }).open();
+                      } else {
+                        alert("우편번호 검색 서비스를 로딩 중입니다.");
+                      }
+                    }}
+                    className="px-5 py-3 bg-neutral-900 text-white rounded-xl text-xs font-extrabold hover:bg-neutral-800 transition-colors cursor-pointer"
                   >
                     우편번호 검색
                   </button>
@@ -380,10 +447,30 @@ export default function CheckoutClientWrapper() {
                 <input
                   type="text"
                   required
+                  readOnly
                   value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 mb-2"
-                  placeholder="기본주소"
+                  onClick={() => {
+                    if (typeof window !== "undefined" && (window as any).daum?.Postcode) {
+                      new (window as any).daum.Postcode({
+                        oncomplete: function (data: any) {
+                          let fullAddress = data.address;
+                          let extraAddress = "";
+                          if (data.addressType === "R") {
+                            if (data.bname !== "") extraAddress += data.bname;
+                            if (data.buildingName !== "") extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
+                            fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
+                          }
+                          setFormData((prev) => ({
+                            ...prev,
+                            postcode: data.zonecode || "06306",
+                            address: fullAddress,
+                          }));
+                        },
+                      }).open();
+                    }
+                  }}
+                  className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 mb-2 cursor-pointer text-xs"
+                  placeholder="우편번호 검색 버튼을 눌러 기본주소를 입력하세요"
                 />
                 <input
                   type="text"

@@ -91,10 +91,51 @@ export function ProductListContent({
       let savedDiscountNum = 35;
 
       if (typeof window !== "undefined") {
+        const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const userRole = localStorage.getItem("user_role") || "";
+        const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+        // Check Secret Time Sales
+        const secretSalesRaw = localStorage.getItem("admin_secret_timesales");
+        if (secretSalesRaw) {
+          try {
+            const secretSalesList: any[] = JSON.parse(secretSalesRaw);
+            for (const sale of secretSalesList) {
+              if (sale.status !== "active") continue;
+              const isEmailTargeted = Boolean(
+                userEmail &&
+                  (sale.targetCustomerEmails || []).some(
+                    (em: string) => em.toLowerCase().trim() === userEmail
+                  )
+              );
+              const isGradeTargeted = Boolean(
+                (sale.targetGrades || []).length > 0 &&
+                  (sale.targetGrades.includes("ALL") ||
+                    sale.targetGrades.includes(userRole?.toUpperCase()) ||
+                    (userRole?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")))
+              );
+
+              if (isEmailTargeted || isGradeTargeted || isAdmin) {
+                (sale.productIds || []).forEach((pId: string) => {
+                  if (!savedSelectedIds.includes(pId)) savedSelectedIds.push(pId);
+                  itemSettings[pId] = {
+                    discountRate: Number(sale.discountRate) || 30,
+                  };
+                });
+              }
+            }
+          } catch (e) {}
+        }
+
         const saved = localStorage.getItem("secret_timesale_product_ids");
         if (saved) {
           try {
-            savedSelectedIds = JSON.parse(saved);
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((id: string) => {
+                if (!savedSelectedIds.includes(id)) savedSelectedIds.push(id);
+              });
+            }
           } catch (e) {}
         }
         const savedDisc = localStorage.getItem("secret_timesale_discount");
@@ -104,7 +145,8 @@ export function ProductListContent({
         const savedSettings = localStorage.getItem("secret_timesale_item_settings");
         if (savedSettings) {
           try {
-            itemSettings = JSON.parse(savedSettings);
+            const parsedS = JSON.parse(savedSettings);
+            itemSettings = { ...parsedS, ...itemSettings };
           } catch (e) {}
         }
       }
@@ -137,12 +179,41 @@ export function ProductListContent({
         });
 
       if (collectionHandle === "choice" || collectionHandle === "timesale" || collectionHandle === "new" || collectionHandle === "special") {
-        // TIMESALE displays directly specified items along with registered set products
-        const choiceOnlyProducts = [...directTimeSaleProducts, ...registeredSetProducts];
+        // Find products that are categorized as timesale or specified in time sale settings
+        const timeSaleCategoryItems = categoryFilteredProducts.filter(
+          (p: any) =>
+            p.categoryId === "timesale" ||
+            (Array.isArray(p.categoryIds) && p.categoryIds.includes("timesale")) ||
+            p.isTimeSale === true ||
+            savedSelectedIds.includes(String(p.id))
+        ).map((p: any) => {
+          const itemRate = p.timeSaleDiscountRate || itemSettings[p.id]?.discountRate || savedDiscountNum || 35;
+          const minP = parseFloat(p.priceRange?.minVariantPrice?.amount || "0");
+          const maxP = parseFloat(p.priceRange?.maxVariantPrice?.amount || "0");
+          const origPrice = maxP > minP ? maxP : (minP > 0 ? minP : 100000);
+          const discountedPrice = Math.round(origPrice * (1 - itemRate / 100));
+          const currencyCode = p.currencyCode || "KRW";
+
+          return {
+            ...p,
+            timeSaleDiscountRate: itemRate,
+            priceRange: {
+              minVariantPrice: { amount: discountedPrice.toString(), currencyCode },
+              maxVariantPrice: { amount: origPrice.toString(), currencyCode },
+            },
+            variants: (p.variants || []).map((v: any) => ({
+              ...v,
+              price: { amount: discountedPrice.toString(), currencyCode },
+            })),
+            tags: Array.from(new Set([...(p.tags || []), "TIMESALE"])),
+          };
+        });
+
+        const choiceOnlyProducts = [...directTimeSaleProducts, ...timeSaleCategoryItems, ...registeredSetProducts];
         const unique = choiceOnlyProducts.filter(
-          (p, idx, self) => idx === self.findIndex((t) => t.id === p.id)
+          (p, idx, self) => idx === self.findIndex((t) => String(t.id) === String(p.id))
         );
-        const finalProducts = unique.length > 0 ? unique : registeredSetProducts;
+        const finalProducts = unique;
         setDisplayProducts(finalProducts);
         setProducts(finalProducts);
       } else {
@@ -178,9 +249,13 @@ export function ProductListContent({
 
     loadAdminChoiceProducts();
     window.addEventListener("storage", loadAdminChoiceProducts);
+    window.addEventListener("auth_changed", loadAdminChoiceProducts);
+    window.addEventListener("secret_timesales_updated", loadAdminChoiceProducts);
     window.addEventListener("admin_products_updated", loadAdminChoiceProducts);
     return () => {
       window.removeEventListener("storage", loadAdminChoiceProducts);
+      window.removeEventListener("auth_changed", loadAdminChoiceProducts);
+      window.removeEventListener("secret_timesales_updated", loadAdminChoiceProducts);
       window.removeEventListener("admin_products_updated", loadAdminChoiceProducts);
     };
   }, [collectionHandle, products, setProducts]);
@@ -213,13 +288,6 @@ export function ProductListContent({
 
   return (
     <>
-      <Suspense>
-        <ResultsControls
-          className="max-md:hidden"
-          collections={collections}
-          products={uniqueProducts}
-        />
-      </Suspense>
       {uniqueProducts.length > 0 ? (
         <div className="flex flex-col w-full">
           <div className="grid grid-cols-1 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">

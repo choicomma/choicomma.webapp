@@ -22,6 +22,7 @@ import {
   ChevronDown,
   RotateCcw,
   GripVertical,
+  Box,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import * as XLSX from "xlsx";
@@ -42,10 +43,10 @@ const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
 };
 
 const DEFAULT_SIZE_MEASUREMENTS = [
-  { name: "SHOULDER", values: { "1": "50", "2": "52", "3": "54", "FREE": "56" } },
-  { name: "CHEST", values: { "1": "56.5", "2": "58.5", "3": "60.5", "FREE": "62.5" } },
-  { name: "SLEEVE", values: { "1": "59", "2": "60", "3": "61", "FREE": "61.5" } },
-  { name: "LENGTH", values: { "1": "58/62.5", "2": "60/64.5", "3": "62/66.5", "FREE": "63/67.5" } },
+  { name: "어깨단면", values: { "1": "50", "2": "52", "3": "54", "FREE": "56" } },
+  { name: "가슴단면", values: { "1": "56.5", "2": "58.5", "3": "60.5", "FREE": "62.5" } },
+  { name: "팔길이", values: { "1": "59", "2": "60", "3": "61", "FREE": "61.5" } },
+  { name: "총장", values: { "1": "58/62.5", "2": "60/64.5", "3": "62/66.5", "FREE": "63/67.5" } },
 ];
 
 interface ProductsManagementProps {
@@ -82,7 +83,279 @@ interface ProductsManagementProps {
   handleMoveProduct?: (id: string, direction: "up" | "down") => void;
   handleBulkDeleteProducts?: (targetIds: string[]) => void;
   handleReorderProducts?: (fromId: string, toId: string, showToast?: boolean) => void;
+  handleQuickUpdateCategory?: (id: string, newCategory: string) => void;
+  handleQuickUpdatePrice?: (id: string, newPrice: number | string) => boolean | void;
+  handleQuickUpdateStock?: (id: string, newTotalStock: number, newSizeStock?: Record<string, number>) => boolean | void;
   onSaveToDisk?: () => void;
+}
+
+function StockPopover({
+  product,
+  currentStock,
+  onSaveStock,
+  onClose,
+}: {
+  product: any;
+  currentStock: number;
+  onSaveStock: (newTotal: number, newSizeStock?: Record<string, number>) => void;
+  onClose: () => void;
+}) {
+  const colors: string[] = Array.isArray(product.colors) ? product.colors : [];
+  const sizes: string[] = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : ["FREE"];
+  const colorHexMap = product.colorHexMap || DEFAULT_COLOR_HEX_MAP;
+
+  // Track raw string values for inputs so user can easily backspace/type
+  const [sizeStock, setSizeStock] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    if (colors.length > 0) {
+      colors.forEach((c) => {
+        sizes.forEach((s) => {
+          const key = `${c}-${s}`;
+          initial[key] = product.sizeStock?.[key] !== undefined ? String(product.sizeStock[key]) : "0";
+        });
+      });
+    } else if (sizes.length > 0) {
+      sizes.forEach((s) => {
+        initial[s] = product.sizeStock?.[s] !== undefined ? String(product.sizeStock[s]) : String(currentStock || 0);
+      });
+    }
+    return initial;
+  });
+
+  const [singleStock, setSingleStock] = useState<string>(String(currentStock || 0));
+
+  const hasOptions = colors.length > 0 || (sizes.length > 0 && !(sizes.length === 1 && sizes[0] === "FREE" && colors.length === 0));
+
+  // Compute total numeric sum
+  const calculatedTotal = hasOptions
+    ? Object.values(sizeStock).reduce((sum, val) => sum + (parseInt(String(val).replace(/[^0-9]/g, ""), 10) || 0), 0)
+    : (parseInt(String(singleStock).replace(/[^0-9]/g, ""), 10) || 0);
+
+  const handleCommit = () => {
+    if (calculatedTotal === 0) {
+      const isConfirmed = window.confirm(
+        `[${product.title}]\n재고 수량이 0개입니다. 해당 상품을 [품절] 처리하시겠습니까?`
+      );
+      if (!isConfirmed) return;
+    }
+
+    const numericSizeStock: Record<string, number> = {};
+    if (hasOptions) {
+      Object.entries(sizeStock).forEach(([k, v]) => {
+        numericSizeStock[k] = parseInt(String(v).replace(/[^0-9]/g, ""), 10) || 0;
+      });
+    }
+
+    onSaveStock(calculatedTotal, hasOptions ? numericSizeStock : undefined);
+    onClose();
+  };
+
+  return (
+    <div
+      draggable={false}
+      onDragStart={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      className="absolute top-full right-0 mt-2 z-50 bg-white border border-neutral-300 rounded-2xl shadow-2xl p-4 w-80 text-left animate-in fade-in zoom-in-95 duration-150 select-text cursor-default"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2 border-b border-neutral-100 mb-3">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Box className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <span className="text-xs font-black text-neutral-900 truncate">
+            {product.productCode || "CC-000"} 재고 설정
+          </span>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-neutral-400 hover:text-neutral-700 p-0.5 rounded hover:bg-neutral-100 transition-colors cursor-pointer"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Body: Case 1: Colors & Sizes */}
+      {colors.length > 0 ? (
+        <div className="max-h-56 overflow-y-auto space-y-2.5 pr-1 text-xs">
+          {colors.map((color) => {
+            const hex = colorHexMap[color] || DEFAULT_COLOR_HEX_MAP[color] || "#000000";
+            return (
+              <div key={color} className="bg-neutral-50 border border-neutral-200/80 rounded-xl p-2.5 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-neutral-900 text-[11px]">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full border border-neutral-300 inline-block shrink-0"
+                    style={{ backgroundColor: hex }}
+                  />
+                  <span>{color}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {sizes.map((size) => {
+                    const key = `${color}-${size}`;
+                    const qtyStr = sizeStock[key] ?? "0";
+                    return (
+                      <div key={key} className="flex items-center justify-between bg-white border border-neutral-200 rounded-lg px-2 py-1">
+                        <span className="text-[10px] font-bold text-neutral-600">{size}</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          draggable={false}
+                          onDragStart={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onFocus={(e) => e.target.select()}
+                          value={qtyStr}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, "");
+                            setSizeStock((prev) => ({ ...prev, [key]: raw }));
+                          }}
+                          className="w-14 text-right font-mono font-bold text-xs bg-neutral-50 border border-neutral-300 rounded px-1.5 py-0.5 focus:outline-none focus:bg-white focus:border-neutral-950 text-neutral-950 select-text cursor-text"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : sizes.length > 0 ? (
+        /* Body: Case 2: Sizes Only (Including FREE size) */
+        <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 text-xs">
+          <div className="grid grid-cols-2 gap-1.5">
+            {sizes.map((size) => {
+              const qtyStr = sizeStock[size] ?? singleStock ?? "0";
+              return (
+                <div key={size} className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-lg px-2.5 py-1.5">
+                  <span className="text-[11px] font-extrabold text-neutral-800 bg-white px-1.5 py-0.5 rounded border border-neutral-200">{size}</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    draggable={false}
+                    onDragStart={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onFocus={(e) => e.target.select()}
+                    value={qtyStr}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9]/g, "");
+                      setSizeStock((prev) => ({ ...prev, [size]: raw }));
+                      if (sizes.length === 1) setSingleStock(raw);
+                    }}
+                    className="w-14 text-right font-mono font-bold text-xs bg-white border border-neutral-300 rounded px-1.5 py-0.5 focus:outline-none focus:border-neutral-950 text-neutral-950 select-text cursor-text"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        /* Body: Case 3: Single Item (Default to FREE size display) */
+        <div className="space-y-1.5 py-1 text-xs">
+          <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2">
+            <span className="text-[11px] font-extrabold text-neutral-800 bg-white px-2 py-0.5 rounded border border-neutral-200">FREE</span>
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                inputMode="numeric"
+                draggable={false}
+                onDragStart={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onFocus={(e) => e.target.select()}
+                value={singleStock}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, "");
+                  setSingleStock(raw);
+                  setSizeStock({ FREE: raw });
+                }}
+                className="w-16 text-right font-mono font-bold text-xs bg-white border border-neutral-300 rounded-lg px-2 py-1 focus:outline-none focus:border-neutral-950 text-neutral-950 select-text cursor-text"
+              />
+              <span className="text-xs font-bold text-neutral-500">개</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Footer Total & Actions */}
+      <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between">
+        <div className="text-xs">
+          <span className="text-neutral-500 text-[10px] block font-bold">합계 재고</span>
+          <span className={`font-mono font-black text-sm ${calculatedTotal > 0 ? "text-emerald-700" : "text-rose-600"}`}>
+            {calculatedTotal}개 {calculatedTotal === 0 && "(품절)"}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleCommit}
+          className="px-4 py-1.5 rounded-lg bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-black shadow-xs transition-colors cursor-pointer"
+        >
+          저장
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TablePriceInput({
+  initialPrice,
+  onSavePrice,
+}: {
+  initialPrice: number | string;
+  onSavePrice: (val: string) => boolean | void;
+}) {
+  const formatComma = (v: number | string) => {
+    const num = String(v).replace(/[^0-9]/g, "");
+    return num ? Number(num).toLocaleString() : "";
+  };
+
+  const [val, setVal] = useState(formatComma(initialPrice || 0));
+
+  React.useEffect(() => {
+    setVal(formatComma(initialPrice || 0));
+  }, [initialPrice]);
+
+  const handleCommit = () => {
+    const rawVal = val.replace(/[^0-9]/g, "");
+    const rawOrig = String(initialPrice || 0).replace(/[^0-9]/g, "");
+    if (rawVal !== rawOrig) {
+      const isSuccess = onSavePrice(rawVal);
+      if (isSuccess === false) {
+        // User cancelled in confirmation popup -> cleanly revert back to original price!
+        setVal(formatComma(initialPrice || 0));
+      }
+    }
+  };
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={val}
+      onChange={(e) => {
+        const raw = e.target.value.replace(/[^0-9]/g, "");
+        setVal(raw ? Number(raw).toLocaleString() : "");
+      }}
+      onBlur={handleCommit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.currentTarget.blur();
+        } else if (e.key === "Escape") {
+          setVal(formatComma(initialPrice || 0));
+          e.currentTarget.blur();
+        }
+      }}
+      className="w-28 bg-white border border-neutral-300 hover:border-neutral-600 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-lg px-2 py-1 font-bold text-neutral-950 font-mono text-xs text-right transition-all shadow-2xs cursor-text"
+      title="판매가를 입력 후 Enter 또는 바깥 클릭 시 수정 (ESC: 취소)"
+    />
+  );
 }
 
 export function ProductsManagement({
@@ -119,10 +392,16 @@ export function ProductsManagement({
   handleMoveProduct,
   handleBulkDeleteProducts,
   handleReorderProducts,
+  handleQuickUpdateCategory,
+  handleQuickUpdatePrice,
+  handleQuickUpdateStock,
   onSaveToDisk,
 }: ProductsManagementProps) {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [excelPreviewItems, setExcelPreviewItems] = useState<any[]>([]);
+
+  // Active Stock Popover Product ID
+  const [activeStockPopoverId, setActiveStockPopoverId] = useState<string | null>(null);
 
   // Drag & Drop Reordering State
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -476,39 +755,6 @@ export function ProductsManagement({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
-          {onSaveToDisk && (
-            <button
-              type="button"
-              onClick={onSaveToDisk}
-              className="flex items-center gap-2 bg-neutral-900 hover:bg-black text-white font-bold px-3.5 py-2.5 rounded-xl transition-all shadow-md text-xs cursor-pointer border border-neutral-700 hover:border-white"
-              title="현재 브라우저에 저장된 모든 상품 수정/추가/삭제 상태를 서버 JSON 파일로 즉시 영구 저장합니다."
-            >
-              <Download className="w-3.5 h-3.5 text-amber-400 rotate-180" />
-              <span>💾 서버/깃 데이터 영구저장</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={handleDownloadExcelTemplate}
-            className="flex items-center gap-2 bg-white hover:bg-neutral-50 text-neutral-800 font-bold px-3.5 py-2.5 rounded-xl border border-neutral-300 transition-all shadow-2xs text-xs cursor-pointer"
-            title="엑셀 대량 업로드 샘플 양식 다운로드"
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-600" />
-            <span>양식 다운로드</span>
-          </button>
-
-          <label className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md text-xs cursor-pointer">
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>엑셀 상품 등록</span>
-            <input
-              type="file"
-              accept=".xlsx, .xls, .csv"
-              onChange={handleExcelFileChange}
-              className="hidden"
-            />
-          </label>
-
           <button
             onClick={() => {
               setNewTitle("");
@@ -528,7 +774,7 @@ export function ProductsManagement({
             className="flex items-center gap-2 bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md text-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            개별 상품 등록
+            상품 등록
           </button>
         </div>
       </div>
@@ -538,43 +784,45 @@ export function ProductsManagement({
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>전체 등록 상품</span>
-            <Package className="w-4 h-4 text-neutral-400" />
+            <Package className="w-4 h-4 text-neutral-900" />
           </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">{productsList.length.toLocaleString()} 개</p>
+          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")).length.toLocaleString()} 개
+          </p>
           <p className="text-xs text-neutral-500 mt-1">스토어 전체 등록 아이템</p>
         </div>
 
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>정상 판매 중 (재고 여유)</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <CheckCircle2 className="w-4 h-4 text-neutral-900" />
           </div>
-          <p className="text-2xl font-extrabold text-emerald-600 mt-2">
-            {productsList.filter((p) => getProductStock(p) > 10).length.toLocaleString()} 개
+          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && getProductStock(p) > 10).length.toLocaleString()} 개
           </p>
-          <p className="text-xs text-emerald-700 font-bold mt-1">재고 10개 초과 보유 중</p>
+          <p className="text-xs text-neutral-600 font-bold mt-1">재고 10개 초과 보유 중</p>
         </div>
 
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>재고 소진 임박</span>
-            <TrendingUp className="w-4 h-4 text-amber-500" />
+            <TrendingUp className="w-4 h-4 text-neutral-900" />
           </div>
-          <p className="text-2xl font-extrabold text-amber-600 mt-2">
-            {productsList.filter((p) => getProductStock(p) > 0 && getProductStock(p) <= 10).length.toLocaleString()} 개
+          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && getProductStock(p) > 0 && getProductStock(p) <= 10).length.toLocaleString()} 개
           </p>
-          <p className="text-xs text-amber-700 font-bold mt-1">재고 1~10개 남음 (보충 필요)</p>
+          <p className="text-xs text-neutral-600 font-bold mt-1">재고 1~10개 남음 (보충 필요)</p>
         </div>
 
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>품절 (Out of Stock)</span>
-            <X className="w-4 h-4 text-rose-500" />
+            <X className="w-4 h-4 text-neutral-900" />
           </div>
-          <p className="text-2xl font-extrabold text-rose-600 mt-2">
-            {productsList.filter((p) => getProductStock(p) === 0).length.toLocaleString()} 개
+          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && getProductStock(p) === 0).length.toLocaleString()} 개
           </p>
-          <p className="text-xs text-rose-700 font-bold mt-1">재고 0개 (입고 수량 추가 필요)</p>
+          <p className="text-xs text-neutral-600 font-bold mt-1">재고 0개 (입고 수량 추가 필요)</p>
         </div>
       </div>
 
@@ -639,8 +887,8 @@ export function ProductsManagement({
       </div>
 
       {/* Products Table */}
-      <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+      <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-sm">
+        <div className="overflow-x-auto pb-16 -mb-16">
           <table className="w-full text-left text-xs text-neutral-700">
             <thead className="bg-neutral-50 text-neutral-500 text-[11px] uppercase font-semibold border-b border-neutral-200">
               <tr>
@@ -656,7 +904,7 @@ export function ProductsManagement({
                 </th>
                 <th className="py-3 px-3 font-sans font-black text-neutral-950 whitespace-nowrap">상품번호</th>
                 <th className="py-3 px-3 whitespace-nowrap">이미지</th>
-                <th className="py-3 px-4 w-full">상품명</th>
+                <th className="py-3 px-4 max-w-xs whitespace-nowrap">상품명</th>
                 <th className="py-3 px-3 whitespace-nowrap">카테고리</th>
                 <th className="py-3 px-3 whitespace-nowrap">판매가</th>
                 <th className="py-3 px-3 whitespace-nowrap">남은 재고 수량 / 상태</th>
@@ -679,21 +927,21 @@ export function ProductsManagement({
                   return (
                     <tr
                       key={`${p.id}-${index}`}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, String(p.id))}
-                      onDragOver={(e) => handleDragOver(e, String(p.id))}
-                      onDragEnd={handleDragEnd}
                       onClick={() => handleOpenEditModal(p)}
+                      onDragOver={(e) => handleDragOver(e, String(p.id))}
                       className={`hover:bg-amber-50/60 transition-all duration-200 cursor-pointer group ${
                         isSelected ? "bg-amber-50/80" : ""
                       }`}
                     >
                       <td
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, String(p.id))}
+                        onDragEnd={handleDragEnd}
                         className="py-2 px-2 w-8 text-center cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-950 transition-colors"
                         onClick={(e) => e.stopPropagation()}
                         title="드래그하여 실시간 순서 변경"
                       >
-                        <GripVertical className="w-4 h-4 mx-auto" />
+                        <GripVertical className="w-4 h-4 mx-auto pointer-events-none" />
                       </td>
                       <td className="py-2 px-2 w-8 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <input
@@ -715,7 +963,7 @@ export function ProductsManagement({
                           />
                         </div>
                       </td>
-                      <td className="py-2 px-4">
+                      <td className="py-2 px-4 max-w-sm">
                         <p className="font-bold text-neutral-950 text-xs group-hover:text-amber-800 transition-colors flex items-center gap-1.5 whitespace-normal">
                           <span>{p.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim()}</span>
                           <span className="text-[10px] text-amber-700 font-normal shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -723,34 +971,78 @@ export function ProductsManagement({
                           </span>
                         </p>
                         {p.description && (
-                          <p className="text-[11px] text-neutral-500 truncate max-w-sm mt-0.5">{p.description}</p>
+                          <p className="text-[11px] text-neutral-500 truncate max-w-xs mt-0.5">{p.description}</p>
                         )}
                       </td>
-                      <td className="py-2 px-3 whitespace-nowrap">
-                        <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-neutral-100 text-neutral-900 border border-neutral-200 uppercase">
-                          {p.categoryId}
-                        </span>
-                      </td>
-                      <td className="py-2 px-3 font-bold text-neutral-950 font-mono text-xs whitespace-nowrap">
-                        {formatPrice(p.priceRange?.minVariantPrice?.amount || 0)}
-                      </td>
+                      {/* Category Quick Change Dropdown */}
                       <td className="py-2 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-1.5">
+                        <select
+                          value={p.categoryId || "outer"}
+                          onChange={(e) => {
+                            if (handleQuickUpdateCategory) {
+                              handleQuickUpdateCategory(String(p.id), e.target.value);
+                            }
+                          }}
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-black bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-950 uppercase cursor-pointer transition-all shadow-2xs"
+                          title="클릭하여 상품 카테고리를 즉시 변경"
+                        >
+                          <option value="outer">OUTER (아우터)</option>
+                          <option value="top">TOP (상의)</option>
+                          <option value="bottom">BOTTOM (하의)</option>
+                          <option value="bag">BAG (가방)</option>
+                          <option value="shoes">SHOES (신발)</option>
+                          <option value="accessory">ACC (악세사리)</option>
+                          <option value="timesale">TIMESALE (타임세일)</option>
+                        </select>
+                      </td>
+
+                      {/* Price Quick Edit Input */}
+                      <td className="py-2 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
+                          <TablePriceInput
+                            initialPrice={p.priceRange?.minVariantPrice?.amount || p.price?.amount || 0}
+                            onSavePrice={(newPrice) => {
+                              if (handleQuickUpdatePrice) {
+                                handleQuickUpdatePrice(String(p.id), newPrice);
+                              }
+                            }}
+                          />
+                          <span className="text-[10px] font-bold text-neutral-400">원</span>
+                        </div>
+                      </td>
+                      <td className="py-2 px-3 whitespace-nowrap relative" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1.5 relative">
                           <button
-                            onClick={() => toggleStock(p.id)}
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 whitespace-nowrap ${
-                              p.availableForSale !== false
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                                : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
+                            onClick={() => {
+                              setActiveStockPopoverId(activeStockPopoverId === String(p.id) ? null : String(p.id));
+                            }}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 whitespace-nowrap border ${
+                              p.availableForSale !== false && (p.stock === undefined || Number(p.stock) > 0)
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-500"
+                                : "bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 hover:border-rose-500"
                             }`}
-                            title="클릭 시 재고 있음 ↔ 품절 상태 원클릭 전환"
+                            title="클릭하여 옵션/컬러/사이즈별 재고 수량 수정"
                           >
-                            {p.availableForSale !== false ? (
-                              <span>● 재고 ({getProductStock(p)}개)</span>
+                            {p.availableForSale !== false && (p.stock === undefined || Number(p.stock) > 0) ? (
+                              <span>● 재고 ({p.stock !== undefined ? Number(p.stock) : getProductStock(p)}개) ▾</span>
                             ) : (
-                              <span>○ 품절</span>
+                              <span>○ 품절 (0개) ▾</span>
                             )}
                           </button>
+
+                          {/* Popover attached to this button */}
+                          {activeStockPopoverId === String(p.id) && (
+                            <StockPopover
+                              product={p}
+                              currentStock={p.stock !== undefined ? Number(p.stock) : getProductStock(p)}
+                              onSaveStock={(newTotal, newSizeStock) => {
+                                if (handleQuickUpdateStock) {
+                                  handleQuickUpdateStock(String(p.id), newTotal, newSizeStock);
+                                }
+                              }}
+                              onClose={() => setActiveStockPopoverId(null)}
+                            />
+                          )}
 
                           <button
                             onClick={() => toggleMainFeatured(p.id)}
