@@ -149,7 +149,7 @@ export function Header({ collections }: HeaderProps) {
     }),
   ];
 
-  const isShopRoute = pathname?.startsWith("/shop");
+  const isLightHeaderRoute = pathname?.startsWith("/shop") || pathname === "/checkout" || pathname?.startsWith("/product");
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
@@ -161,11 +161,11 @@ export function Header({ collections }: HeaderProps) {
       {/* Main Header Bar Container */}
       <div className={cn(
         "relative w-full pointer-events-auto overflow-visible transition-colors duration-300",
-        isShopRoute ? "bg-white/95 backdrop-blur-md border-b border-neutral-200/60 shadow-xs" : ""
+        isLightHeaderRoute ? "bg-white/95 backdrop-blur-md border-b border-neutral-200/60 shadow-xs" : ""
       )}>
         {/* Animated Black Background Slide-Down Panel (Only on non-shop pages or when dark mode desired) */}
         <AnimatePresence>
-          {isScrolled && !isShopRoute && (
+          {isScrolled && !isLightHeaderRoute && (
             <motion.div
               initial={{ y: "-100%" }}
               animate={{ y: 0 }}
@@ -180,13 +180,13 @@ export function Header({ collections }: HeaderProps) {
         <div
           className={cn(
             "relative z-10 w-full pl-2 sm:pl-4 md:pl-6 pr-sides flex items-center justify-between md:grid md:grid-cols-12 md:gap-sides transition-colors duration-400 pt-0.5 pb-1 md:py-1",
-            isShopRoute ? "text-neutral-900" : isScrolled ? "text-white" : "text-neutral-900"
+            isLightHeaderRoute ? "text-neutral-900" : isScrolled ? "text-white" : "text-neutral-900"
           )}
         >
           {/* Mobile: Logo on far left / Desktop: col-span-5 */}
           <Link href="/" className="md:col-span-5 flex items-center justify-start py-0 -ml-1 sm:ml-0" prefetch>
             <LogoSvg
-              isScrolled={isShopRoute ? false : isScrolled}
+              isScrolled={isLightHeaderRoute ? false : isScrolled}
               className="cursor-pointer justify-start"
             />
           </Link>

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function CheckoutPage() {
   return (
-    <main className="min-h-screen bg-neutral-50/50 pb-24 pt-8 dark:bg-neutral-950">
+    <main className="min-h-screen bg-neutral-50/50 pb-24 pt-28 sm:pt-32 md:pt-36 dark:bg-neutral-950">
       <div className="container mx-auto px-4 max-w-7xl">
         <CheckoutClientWrapper />
       </div>
