@@ -1,4 +1,12 @@
+packages:
+  - '.'
+
+onlyBuiltDependencies:
+  - sharp
+
 allowBuilds:
-  sharp: set this to true or false
+  sharp: true
+
 minimumReleaseAgeExclude:
   - '@tosspayments/tosspayments-sdk@2.8.0'
+

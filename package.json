@@ -8,6 +8,11 @@
     "lint": "eslint .",
     "start": "next start"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp"
+    ]
+  },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
     "@eslint/eslintrc": "latest",
