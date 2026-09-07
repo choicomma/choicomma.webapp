@@ -40,6 +40,10 @@ export default function LoginPage() {
   const [isPhoneChecked, setIsPhoneChecked] = useState(false);
   const [phoneCheckMessage, setPhoneCheckMessage] = useState<{ status: "success" | "error"; text: string } | null>(null);
 
+  // Terms and SNS Marketing Consent States
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeMarketing, setAgreeMarketing] = useState(false);
+
   // Load Daum Postcode script dynamically
   useEffect(() => {
     if (typeof window !== "undefined" && !(window as any).daum) {
@@ -100,7 +104,7 @@ export default function LoginPage() {
           isDuplicate = customerList.some(
             (c) => c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhone
           );
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Also check local storage saved user password keys
@@ -181,6 +185,10 @@ export default function LoginPage() {
       }
       if (password !== confirmPassword) {
         alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        return;
+      }
+      if (!agreeTerms) {
+        alert("회원가입 및 서비스 이용약관에 동의해 주세요.");
         return;
       }
 
@@ -526,14 +534,13 @@ export default function LoginPage() {
                           setIsPhoneChecked(false);
                           setPhoneCheckMessage(null);
                         }}
-                        placeholder="010-0000-0000"
-                        className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold font-mono ${
-                          phoneCheckMessage?.status === "success"
-                            ? "border-neutral-950 bg-neutral-100/60"
-                            : phoneCheckMessage?.status === "error"
+                        placeholder="로그인에 사용 할 휴대폰번호"
+                        className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold font-mono ${phoneCheckMessage?.status === "success"
+                          ? "border-neutral-950 bg-neutral-100/60"
+                          : phoneCheckMessage?.status === "error"
                             ? "border-neutral-400 bg-neutral-50"
                             : "border-neutral-200 focus:border-neutral-950"
-                        }`}
+                          }`}
                       />
                     </div>
                     <button
@@ -576,7 +583,6 @@ export default function LoginPage() {
                     <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
                       집 주소 (기본 배송지) <span className="text-neutral-950 font-bold">*</span>
                     </label>
-                    <span className="text-[10px] text-neutral-800 font-bold">오픈 API 주소검색</span>
                   </div>
 
                   {/* Postcode & Address Search Button Row */}
@@ -597,7 +603,7 @@ export default function LoginPage() {
                       className="px-3.5 py-2.5 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
                     >
                       <MapPin className="w-3.5 h-3.5" />
-                      <span>주소 검색 (Open API)</span>
+                      <span>주소 검색</span>
                     </button>
                   </div>
 
@@ -683,13 +689,12 @@ export default function LoginPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder=""
-                    className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-mono ${
-                      confirmPassword && confirmPassword !== password
-                        ? "border-neutral-400 focus:border-neutral-950"
-                        : confirmPassword && confirmPassword === password
+                    className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-mono ${confirmPassword && confirmPassword !== password
+                      ? "border-neutral-400 focus:border-neutral-950"
+                      : confirmPassword && confirmPassword === password
                         ? "border-neutral-950 bg-neutral-100/50"
                         : "border-neutral-200 focus:border-neutral-950"
-                    }`}
+                      }`}
                   />
                   <button
                     type="button"
@@ -709,6 +714,38 @@ export default function LoginPage() {
                     ✓ 비밀번호가 일치합니다.
                   </p>
                 )}
+              </div>
+            )}
+
+            {isSignUp && (
+              <div className="pt-2 pb-1 space-y-2 border-t border-neutral-100">
+                {/* 1. Terms of Service & Privacy Policy Agreement */}
+                <label className="flex items-start gap-2.5 cursor-pointer select-none group">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
+                  />
+                  <div className="text-xs text-neutral-700 leading-tight">
+                    <span className="font-bold text-neutral-950">[필수]</span>{" "}
+                    <span>회원가입 및 서비스 이용약관, 개인정보 처리방침에 동의합니다.</span>
+                  </div>
+                </label>
+
+                {/* 2. SNS & Marketing Consent */}
+                <label className="flex items-start gap-2.5 cursor-pointer select-none group">
+                  <input
+                    type="checkbox"
+                    checked={agreeMarketing}
+                    onChange={(e) => setAgreeMarketing(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
+                  />
+                  <div className="text-xs text-neutral-600 leading-tight">
+                    <span className="font-medium text-neutral-500">[선택]</span>{" "}
+                    <span>이벤트, 신상품 런칭 및 VIP 전용 혜택 SNS/SMS 수신에 동의합니다.</span>
+                  </div>
+                </label>
               </div>
             )}
 
@@ -736,7 +773,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-neutral-950 hover:bg-neutral-800 active:scale-[0.99] text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-50 cursor-pointer"
+              className="w-full bg-neutral-950 hover:bg-black active:scale-[0.99] text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-50 cursor-pointer"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
