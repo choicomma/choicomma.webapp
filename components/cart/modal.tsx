@@ -4,6 +4,7 @@ import { ArrowRight, TriangleAlert, PlusCircleIcon, ShoppingBag } from "lucide-r
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { createPortal } from "react-dom";
 import { createCartAndSetCookie, redirectToCheckout } from "./actions";
 import { useCart } from "./cart-context";
 import { motion, AnimatePresence } from "motion/react";
@@ -125,8 +126,10 @@ export default function CartModal({
   const [isOpen, setIsOpen] = useState(false);
   const [isTossModalOpen, setIsTossModalOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState("ko");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     setCurrentLang(getCurrentLanguage());
     const handleLangChange = () => setCurrentLang(getCurrentLanguage());
     window.addEventListener("language_changed", handleLangChange);
@@ -229,50 +232,53 @@ export default function CartModal({
           </span>
         )}
       </Button>
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="fixed inset-0 bg-foreground/30 z-50"
-              onClick={closeCart}
-              aria-hidden="true"
-            />
+      {mounted && typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <div className="fixed inset-0 z-[9999] pointer-events-auto">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="fixed inset-0 bg-black/60 z-[9999] backdrop-blur-xs"
+                onClick={closeCart}
+                aria-hidden="true"
+              />
 
-            {/* Panel */}
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="fixed top-0 bottom-0 right-0 flex w-full md:w-[480px] p-2 md:p-4 z-50"
-            >
-              <div className="flex flex-col bg-neutral-100 dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 p-4 md:p-6 rounded-3xl shadow-2xl w-full">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-200 dark:border-neutral-800">
-                  <p className="text-2xl font-black text-neutral-900 dark:text-white">
-                    {translateUiText("장바구니", currentLang)}
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-label="Close cart"
-                    onClick={closeCart}
-                    className="font-extrabold text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
-                  >
-                    Close
-                  </Button>
+              {/* Panel */}
+              <motion.div
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="fixed top-0 bottom-0 right-0 flex w-full md:w-[480px] p-2 md:p-4 z-[10000] pointer-events-auto"
+              >
+                <div className="flex flex-col bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 p-4 md:p-6 rounded-3xl shadow-2xl w-full">
+                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-200 dark:border-neutral-800">
+                    <p className="text-2xl font-black text-neutral-900 dark:text-white">
+                      {translateUiText("장바구니", currentLang)}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label="Close cart"
+                      onClick={closeCart}
+                      className="font-extrabold text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer"
+                    >
+                      Close
+                    </Button>
+                  </div>
+
+                  {renderCartContent()}
                 </div>
-
-                {renderCartContent()}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Toss Payments Test Checkout Modal */}
       <TossPaymentModal
