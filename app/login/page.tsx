@@ -492,7 +492,7 @@ export default function LoginPage() {
               <>
                 <div>
                   <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                    이름 (성함) <span className="text-rose-500">*</span>
+                    이름 (성함) <span className="text-neutral-950 font-bold">*</span>
                   </label>
                   <div className="relative">
                     <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
@@ -509,14 +509,14 @@ export default function LoginPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                      휴대폰 번호 <span className="text-sky-600 font-extrabold">(로그인 ID) *</span>
+                    <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
+                      휴대폰 번호 (로그인 ID) <span className="text-neutral-950 font-bold">*</span>
                     </label>
-                    <span className="text-[10px] text-neutral-400 font-medium">로그인 아이디로 사용됩니다</span>
+                    <span className="text-[10px] text-neutral-500 font-medium">로그인 아이디로 사용됩니다</span>
                   </div>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-sky-500" />
+                      <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-600" />
                       <input
                         type="tel"
                         required
@@ -529,9 +529,9 @@ export default function LoginPage() {
                         placeholder="010-0000-0000"
                         className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold font-mono ${
                           phoneCheckMessage?.status === "success"
-                            ? "border-emerald-500 bg-emerald-50/20"
+                            ? "border-neutral-950 bg-neutral-100/60"
                             : phoneCheckMessage?.status === "error"
-                            ? "border-rose-500 bg-rose-50/20"
+                            ? "border-neutral-400 bg-neutral-50"
                             : "border-neutral-200 focus:border-neutral-950"
                         }`}
                       />
@@ -539,18 +539,14 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={handleCheckIdDuplicate}
-                      className="px-3.5 py-3 bg-neutral-900 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer"
+                      className="px-3.5 py-3 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer"
                     >
                       중복 확인
                     </button>
                   </div>
                   {phoneCheckMessage && (
                     <p
-                      className={`text-[11px] font-bold mt-1.5 flex items-center gap-1 ${
-                        phoneCheckMessage.status === "success"
-                          ? "text-emerald-600"
-                          : "text-rose-600"
-                      }`}
+                      className={`text-[11px] font-bold mt-1.5 flex items-center gap-1 text-neutral-900`}
                     >
                       {phoneCheckMessage.status === "success" ? "✓" : "✕"}{" "}
                       {phoneCheckMessage.text}
@@ -560,7 +556,7 @@ export default function LoginPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                    이메일 주소 <span className="text-rose-500">*</span>
+                    이메일 주소 <span className="text-neutral-950 font-bold">*</span>
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
@@ -577,10 +573,10 @@ export default function LoginPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                      집 주소 (기본 배송지) <span className="text-rose-500">*</span>
+                    <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
+                      집 주소 (기본 배송지) <span className="text-neutral-950 font-bold">*</span>
                     </label>
-                    <span className="text-[10px] text-emerald-600 font-bold">오픈 API 주소검색</span>
+                    <span className="text-[10px] text-neutral-800 font-bold">오픈 API 주소검색</span>
                   </div>
 
                   {/* Postcode & Address Search Button Row */}
@@ -592,13 +588,13 @@ export default function LoginPage() {
                         value={postcode}
                         placeholder="우편번호"
                         onClick={handleOpenPostcode}
-                        className="w-full bg-neutral-100 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-800 font-bold font-mono cursor-pointer"
+                        className="w-full bg-neutral-100 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-900 font-bold font-mono cursor-pointer"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={handleOpenPostcode}
-                      className="px-3.5 py-2.5 bg-neutral-900 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      className="px-3.5 py-2.5 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
                     >
                       <MapPin className="w-3.5 h-3.5" />
                       <span>주소 검색 (Open API)</span>
@@ -637,7 +633,7 @@ export default function LoginPage() {
                   휴대폰 번호 또는 이메일
                 </label>
                 <div className="relative">
-                  <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-sky-600" />
+                  <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-700" />
                   <input
                     type="text"
                     required
@@ -687,12 +683,13 @@ export default function LoginPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder=""
-                    className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-mono ${confirmPassword && confirmPassword !== password
-                        ? "border-rose-500 focus:border-rose-500 bg-rose-50/20"
+                    className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-mono ${
+                      confirmPassword && confirmPassword !== password
+                        ? "border-neutral-400 focus:border-neutral-950"
                         : confirmPassword && confirmPassword === password
-                          ? "border-emerald-500 focus:border-emerald-500 bg-emerald-50/20"
-                          : "border-neutral-200 focus:border-neutral-950"
-                      }`}
+                        ? "border-neutral-950 bg-neutral-100/50"
+                        : "border-neutral-200 focus:border-neutral-950"
+                    }`}
                   />
                   <button
                     type="button"
@@ -703,12 +700,12 @@ export default function LoginPage() {
                   </button>
                 </div>
                 {confirmPassword && confirmPassword !== password && (
-                  <p className="text-[11px] font-extrabold text-rose-600 mt-1 flex items-center gap-1">
+                  <p className="text-[11px] font-bold text-neutral-800 mt-1 flex items-center gap-1">
                     ✕ 비밀번호가 일치하지 않습니다.
                   </p>
                 )}
                 {confirmPassword && confirmPassword === password && (
-                  <p className="text-[11px] font-extrabold text-emerald-600 mt-1 flex items-center gap-1">
+                  <p className="text-[11px] font-bold text-neutral-950 mt-1 flex items-center gap-1">
                     ✓ 비밀번호가 일치합니다.
                   </p>
                 )}
