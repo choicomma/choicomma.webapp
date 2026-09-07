@@ -36,6 +36,10 @@ export default function CheckoutClientWrapper() {
     addressDetail: "",
     deliveryMemo: "문 앞에 놓아주세요 (배송 전 연락 부탁드립니다)",
     customDeliveryMemo: "",
+    // Refund Account (환불 계좌)
+    refundBank: "국민은행",
+    refundAccountNumber: "",
+    refundAccountHolder: "",
     // Payment
     paymentMethod: "easypay", // easypay | card | vbank
   });
@@ -47,6 +51,9 @@ export default function CheckoutClientWrapper() {
       const savedEmail = localStorage.getItem("membership_user_email") || "customer@choicomma.com";
       const savedPhone = localStorage.getItem("membership_user_phone") || "010-1234-5678";
       const savedAddress = localStorage.getItem("membership_user_address") || "서울특별시 강남구 테헤란로 123";
+      const savedRefundBank = localStorage.getItem("membership_user_refund_bank") || "국민은행";
+      const savedRefundAccount = localStorage.getItem("membership_user_refund_account") || "";
+      const savedRefundHolder = localStorage.getItem("membership_user_refund_holder") || savedName;
 
       setFormData((prev) => ({
         ...prev,
@@ -56,6 +63,9 @@ export default function CheckoutClientWrapper() {
         recipientName: prev.recipientName || savedName,
         recipientPhone: prev.recipientPhone || savedPhone,
         address: prev.address || savedAddress,
+        refundBank: prev.refundBank || savedRefundBank,
+        refundAccountNumber: prev.refundAccountNumber || savedRefundAccount,
+        refundAccountHolder: prev.refundAccountHolder || savedRefundHolder,
       }));
     }
   }, []);
@@ -86,7 +96,7 @@ export default function CheckoutClientWrapper() {
     let usedCoupons: string[] = [];
     try {
       usedCoupons = JSON.parse(usedCouponsRaw);
-    } catch (e) {}
+    } catch (e) { }
 
     if (usedCoupons.includes(cleanedCode)) {
       setCouponMessage("⚠️ 이미 사용 완료된 1회용 쿠폰 코드입니다. 다른 쿠폰을 입력해 주세요.");
@@ -98,17 +108,17 @@ export default function CheckoutClientWrapper() {
     if (cleanedCode === "CC26-X8K9-10KRW" || cleanedCode === "CHOI10" || cleanedCode === "VIP") {
       setAppliedDiscount(10000);
       setCouponMessage("🎉 10,000원 스페셜 할인 쿠폰이 정상 적용되었습니다! (-10,000원)");
-    } 
+    }
     // 5,000 KRW Welcome Discount
     else if (cleanedCode === "CC26-W9L4-5KRW" || cleanedCode === "WELCOME") {
       setAppliedDiscount(5000);
       setCouponMessage("🎉 5,000원 웰컴 첫 구매 할인 쿠폰이 정상 적용되었습니다! (-5,000원)");
-    } 
+    }
     // Free Shipping Voucher
     else if (cleanedCode === "CC26-FREE-S8P2" || cleanedCode === "FREESHIP") {
       setAppliedDiscount(3000);
       setCouponMessage("🎉 무료 배송 지원 쿠폰이 정상 적용되었습니다! (-3,000원)");
-    } 
+    }
     else {
       setCouponMessage("❌ 유효하지 않은 쿠폰 코드입니다. 마이페이지 [쿠폰함]의 코드를 복사하여 입력해 주세요.");
       setAppliedDiscount(0);
@@ -150,7 +160,7 @@ export default function CheckoutClientWrapper() {
         if (savedPolicy) {
           try {
             setShippingPolicy(JSON.parse(savedPolicy));
-          } catch (e) {}
+          } catch (e) { }
         }
       }
     };
@@ -233,7 +243,7 @@ export default function CheckoutClientWrapper() {
         let usedCoupons: string[] = [];
         try {
           usedCoupons = JSON.parse(usedCouponsRaw);
-        } catch (e) {}
+        } catch (e) { }
         if (!usedCoupons.includes(cleanedCode)) {
           usedCoupons.push(cleanedCode);
           localStorage.setItem("used_coupon_codes", JSON.stringify(usedCoupons));
@@ -245,6 +255,25 @@ export default function CheckoutClientWrapper() {
         const remaining = Math.max(0, availablePoints - appliedPoints);
         localStorage.setItem("membership_user_points", String(remaining));
         setAvailablePoints(remaining);
+      }
+
+      // Save refund account & pending order info
+      if (typeof window !== "undefined") {
+        if (formData.refundAccountNumber) {
+          localStorage.setItem("membership_user_refund_bank", formData.refundBank);
+          localStorage.setItem("membership_user_refund_account", formData.refundAccountNumber);
+          localStorage.setItem("membership_user_refund_holder", formData.refundAccountHolder);
+        }
+        sessionStorage.setItem(
+          `pending_order_${orderId}`,
+          JSON.stringify({
+            orderId,
+            formData,
+            cart,
+            finalTotalAmount,
+            paidAt: new Date().toISOString(),
+          })
+        );
       }
 
       // Use direct Payment window request (Card & EasyPay supported)
@@ -325,7 +354,7 @@ export default function CheckoutClientWrapper() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Forms (8 cols) */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-8">
-          
+
           {/* Section 1: Orderer Info */}
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3">
@@ -496,6 +525,73 @@ export default function CheckoutClientWrapper() {
               </div>
             </div>
           </div>
+
+          {/* Section 3: Refund Account Info (환불 계좌 정보) */}
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3">
+              <h2 className="text-lg font-black text-neutral-900 dark:text-white flex items-center gap-2">
+                <span>🏦</span> 환불 계좌 정보
+              </h2>
+              <span className="text-xs text-neutral-400 font-semibold">
+                무통장입금 주문건은 환불 취소 시 환불계좌 입력.
+                주문건 취소시 환불계좌로 자동 입금됩니다.
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <label className="block text-xs font-extrabold text-neutral-500 uppercase mb-1.5">
+                  은행명
+                </label>
+                <select
+                  value={formData.refundBank}
+                  onChange={(e) => handleInputChange("refundBank", e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 cursor-pointer"
+                >
+                  <option value="국민은행">국민은행</option>
+                  <option value="신한은행">신한은행</option>
+                  <option value="우리은행">우리은행</option>
+                  <option value="하나은행">하나은행</option>
+                  <option value="카카오뱅크">카카오뱅크</option>
+                  <option value="토스뱅크">토스뱅크</option>
+                  <option value="농협은행">농협은행</option>
+                  <option value="기업은행">기업은행</option>
+                  <option value="SC제일은행">SC제일은행</option>
+                  <option value="케이뱅크">케이뱅크</option>
+                  <option value="우체국">우체국</option>
+                  <option value="새마을금고">새마을금고</option>
+                  <option value="신협">신협</option>
+                  <option value="수협은행">수협은행</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-extrabold text-neutral-500 uppercase mb-1.5">
+                  계좌번호 (- 없이 숫자만 입력)
+                </label>
+                <input
+                  type="text"
+                  value={formData.refundAccountNumber}
+                  onChange={(e) => handleInputChange("refundAccountNumber", e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="예: 123456789012"
+                  className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-extrabold text-neutral-500 uppercase mb-1.5">
+                  예금주명 - 반드시 본인 계좌로 입력바랍니다.
+                </label>
+                <input
+                  type="text"
+                  value={formData.refundAccountHolder}
+                  onChange={(e) => handleInputChange("refundAccountHolder", e.target.value)}
+                  placeholder="예: 홍길동"
+                  className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                />
+              </div>
+            </div>
+            <p className="text-[11px] text-neutral-400 font-medium">
+              * 가상계좌/무통장입금 주문의 취소 및 부분 환불 또는 반품 처리 시 위 등록된 환불 계좌로 안전하게 입금됩니다.
+            </p>
+          </div>
         </div>
 
         {/* Right Column: Order Summary & Checkout CTA (4-5 cols) */}
@@ -531,30 +627,9 @@ export default function CheckoutClientWrapper() {
               ))}
             </div>
 
-            {/* Shipping Policy Banner inside Checkout */}
-            <div className="p-3 bg-sky-50/80 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800 rounded-2xl text-xs space-y-1.5">
-              <div className="flex items-center justify-between font-extrabold text-sky-950 dark:text-sky-200">
-                <span className="flex items-center gap-1.5">
-                  <Truck className="w-3.5 h-3.5 text-sky-600" />
-                  {shippingPolicy.courierName}
-                </span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white dark:bg-neutral-800 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700 font-bold">
-                  {baseShippingFee === 0 || (freeThreshold > 0 && totalItemAmount >= freeThreshold) ? "🎉 전 상품 무료 배송" : `기본 배송비 ${baseShippingFee.toLocaleString()}원`}
-                </span>
-              </div>
-              <p className="text-[11px] text-sky-800 dark:text-sky-300 font-medium">
-                {shippingPolicy.shippingNotice || "평일 14:00 이전 결제 완료 시 당일 출고됩니다."}
-              </p>
-              {baseShippingFee > 0 && totalItemAmount < freeThreshold && (
-                <p className="text-[10px] text-amber-700 dark:text-amber-300 font-bold">
-                  💡 {(freeThreshold - totalItemAmount).toLocaleString()}원 추가 주문 시 무료 배송!
-                </p>
-              )}
-            </div>
-
             {/* Coupon Code Section inside Order Summary */}
             <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
-              <label className="block text-xs font-extrabold text-neutral-700 dark:text-neutral-300">
+              <label className="block text-xs font-extrabold text-neutral-900 dark:text-white">
                 🎟️ 쿠폰 할인 적용
               </label>
               <div className="flex gap-2">
@@ -574,7 +649,7 @@ export default function CheckoutClientWrapper() {
                 </button>
               </div>
               {couponMessage && (
-                <p className={`text-[11px] font-bold ${couponMessage.startsWith("🎉") ? "text-neutral-900 dark:text-white" : "text-rose-500"}`}>
+                <p className="text-[11px] font-bold text-neutral-900 dark:text-white">
                   {couponMessage}
                 </p>
               )}
@@ -582,7 +657,7 @@ export default function CheckoutClientWrapper() {
 
             {/* Rewards Points (적립금) Section */}
             <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
-              <div className="flex items-center justify-between text-xs font-extrabold text-neutral-700 dark:text-neutral-300">
+              <div className="flex items-center justify-between text-xs font-extrabold text-neutral-900 dark:text-white">
                 <span>💰 보유 적립금 사용</span>
                 <span className="text-neutral-500 font-bold">보유: <strong className="text-neutral-900 dark:text-white">{availablePoints.toLocaleString()}P</strong></span>
               </div>
@@ -601,13 +676,13 @@ export default function CheckoutClientWrapper() {
                 <button
                   type="button"
                   onClick={handleUseAllPoints}
-                  className="px-3.5 py-2.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-900 dark:text-white rounded-xl text-xs font-black transition-colors border border-neutral-200 dark:border-neutral-700 shrink-0"
+                  className="px-3.5 py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-black transition-colors shrink-0"
                 >
                   전액사용
                 </button>
               </div>
               {pointsMessage && (
-                <p className={`text-[11px] font-bold ${pointsMessage.startsWith("🎉") ? "text-neutral-900 dark:text-white" : "text-rose-500"}`}>
+                <p className="text-[11px] font-bold text-neutral-900 dark:text-white">
                   {pointsMessage}
                 </p>
               )}
@@ -628,18 +703,18 @@ export default function CheckoutClientWrapper() {
               {appliedDiscount > 0 && (
                 <div className="flex justify-between text-neutral-900 dark:text-white font-bold">
                   <span>쿠폰 할인</span>
-                  <span className="font-bold text-rose-600">-{formatPrice(appliedDiscount)}</span>
+                  <span className="font-black text-neutral-950 dark:text-white">-{formatPrice(appliedDiscount)}</span>
                 </div>
               )}
               {appliedPoints > 0 && (
                 <div className="flex justify-between text-neutral-900 dark:text-white font-bold">
                   <span>적립금 사용</span>
-                  <span className="font-bold text-amber-600">-{appliedPoints.toLocaleString()}P</span>
+                  <span className="font-black text-neutral-950 dark:text-white">-{appliedPoints.toLocaleString()}P</span>
                 </div>
               )}
-              <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/80 dark:border-emerald-800 flex justify-between items-center text-xs text-emerald-900 dark:text-emerald-300 font-extrabold">
+              <div className="p-2.5 bg-neutral-100 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 flex justify-between items-center text-xs text-neutral-900 dark:text-white font-extrabold">
                 <span>🎁 구매 시 적립 예정 혜택 (1%)</span>
-                <span>+{earnedPoints.toLocaleString()}P</span>
+                <span className="font-mono font-black">+{earnedPoints.toLocaleString()}P</span>
               </div>
               <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 flex justify-between items-baseline">
                 <span className="text-base font-black text-neutral-900 dark:text-white">최종 결제 금액</span>
@@ -659,7 +734,7 @@ export default function CheckoutClientWrapper() {
                     const checked = e.target.checked;
                     setAgreedTerms({ all: checked, privacy: checked, thirdParty: checked, paymentService: checked });
                   }}
-                  className="w-4 h-4 rounded text-neutral-900 focus:ring-neutral-900"
+                  className="w-4 h-4 rounded text-neutral-900 focus:ring-neutral-900 accent-black"
                 />
                 <span>구매 조건 확인 및 전체 약관 동의</span>
               </label>
@@ -683,7 +758,7 @@ export default function CheckoutClientWrapper() {
                 </span>
               ) : (
                 <>
-                  <Lock className="w-5 h-5 text-amber-400" />
+                  <Lock className="w-5 h-5 text-white" />
                   <span>{formatPrice(finalTotalAmount)} 결제하기</span>
                 </>
               )}

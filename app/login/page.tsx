@@ -37,6 +37,8 @@ export default function LoginPage() {
 
   const [postcode, setPostcode] = useState("");
   const [addressDetail, setAddressDetail] = useState("");
+  const [isEmailChecked, setIsEmailChecked] = useState(false);
+  const [emailCheckMessage, setEmailCheckMessage] = useState<{ status: "success" | "error"; text: string } | null>(null);
   const [isPhoneChecked, setIsPhoneChecked] = useState(false);
   const [phoneCheckMessage, setPhoneCheckMessage] = useState<{ status: "success" | "error"; text: string } | null>(null);
 
@@ -83,8 +85,58 @@ export default function LoginPage() {
     }
   };
 
-  // Check ID (Phone Number) Duplicate
-  const handleCheckIdDuplicate = () => {
+  // Check Email (Login ID) Duplicate
+  const handleCheckEmailDuplicate = () => {
+    const trimmedEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
+      setEmailCheckMessage({
+        status: "error",
+        text: "올바른 이메일 주소 형식(예: user@example.com)을 입력해 주세요.",
+      });
+      setIsEmailChecked(false);
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      const savedCustomers = localStorage.getItem("admin_customers");
+      let isDuplicate = false;
+      if (savedCustomers) {
+        try {
+          const customerList: any[] = JSON.parse(savedCustomers);
+          isDuplicate = customerList.some(
+            (c) => c.email && c.email.trim().toLowerCase() === trimmedEmail
+          );
+        } catch (e) { }
+      }
+
+      // Check admin and special IDs
+      if (trimmedEmail === "admin" || trimmedEmail === "admin@choicomma.com" || trimmedEmail === "mypage" || trimmedEmail === "mypage@choicomma.com") {
+        isDuplicate = true;
+      }
+
+      if (localStorage.getItem(`user_pwd_${trimmedEmail}`)) {
+        isDuplicate = true;
+      }
+
+      if (isDuplicate) {
+        setEmailCheckMessage({
+          status: "error",
+          text: "이미 가입된 이메일 주소(ID)입니다. 다른 이메일을 입력해 주세요.",
+        });
+        setIsEmailChecked(false);
+      } else {
+        setEmailCheckMessage({
+          status: "success",
+          text: "사용 가능한 로그인 ID (이메일 주소)입니다.",
+        });
+        setIsEmailChecked(true);
+      }
+    }
+  };
+
+  // Check Phone Number Duplicate
+  const handleCheckPhoneDuplicate = () => {
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     if (!cleanPhone || cleanPhone.length < 10) {
       setPhoneCheckMessage({
@@ -107,7 +159,6 @@ export default function LoginPage() {
         } catch (e) { }
       }
 
-      // Also check local storage saved user password keys
       if (localStorage.getItem(`user_pwd_${cleanPhone}`)) {
         isDuplicate = true;
       }
@@ -115,13 +166,13 @@ export default function LoginPage() {
       if (isDuplicate) {
         setPhoneCheckMessage({
           status: "error",
-          text: "이미 가입된 휴대폰 번호(ID)입니다. 다른 번호를 입력해 주세요.",
+          text: "이미 등록된 휴대폰 번호입니다. 다른 번호를 입력해 주세요.",
         });
         setIsPhoneChecked(false);
       } else {
         setPhoneCheckMessage({
           status: "success",
-          text: "사용 가능한 로그인 ID(휴대폰 번호)입니다.",
+          text: "사용 가능한 휴대폰 번호입니다.",
         });
         setIsPhoneChecked(true);
       }
@@ -518,9 +569,54 @@ export default function LoginPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
-                      휴대폰 번호 (로그인 ID) <span className="text-neutral-950 font-bold">*</span>
+                      이메일 주소 (로그인 ID) <span className="text-neutral-950 font-bold">*</span>
                     </label>
                     <span className="text-[10px] text-neutral-500 font-medium">로그인 아이디로 사용됩니다</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-600" />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          setIsEmailChecked(false);
+                          setEmailCheckMessage(null);
+                        }}
+                        placeholder="이메일 주소를 입력해주세요"
+                        className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold ${emailCheckMessage?.status === "success"
+                          ? "border-neutral-950 bg-neutral-100/60"
+                          : emailCheckMessage?.status === "error"
+                            ? "border-neutral-400 bg-neutral-50"
+                            : "border-neutral-200 focus:border-neutral-950"
+                          }`}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCheckEmailDuplicate}
+                      className="px-3.5 py-3 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer"
+                    >
+                      중복 확인
+                    </button>
+                  </div>
+                  {emailCheckMessage && (
+                    <p
+                      className="text-[11px] font-bold mt-1.5 flex items-center gap-1 text-neutral-900"
+                    >
+                      {emailCheckMessage.status === "success" ? "✓" : "✕"}{" "}
+                      {emailCheckMessage.text}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
+                      휴대폰 번호 <span className="text-neutral-950 font-bold">*</span>
+                    </label>
                   </div>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -534,7 +630,7 @@ export default function LoginPage() {
                           setIsPhoneChecked(false);
                           setPhoneCheckMessage(null);
                         }}
-                        placeholder="로그인에 사용 할 휴대폰번호"
+                        placeholder="휴대폰 번호를 입력해주세요"
                         className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold font-mono ${phoneCheckMessage?.status === "success"
                           ? "border-neutral-950 bg-neutral-100/60"
                           : phoneCheckMessage?.status === "error"
@@ -545,7 +641,7 @@ export default function LoginPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={handleCheckIdDuplicate}
+                      onClick={handleCheckPhoneDuplicate}
                       className="px-3.5 py-3 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer"
                     >
                       중복 확인
@@ -553,29 +649,12 @@ export default function LoginPage() {
                   </div>
                   {phoneCheckMessage && (
                     <p
-                      className={`text-[11px] font-bold mt-1.5 flex items-center gap-1 text-neutral-900`}
+                      className="text-[11px] font-bold mt-1.5 flex items-center gap-1 text-neutral-900"
                     >
                       {phoneCheckMessage.status === "success" ? "✓" : "✕"}{" "}
                       {phoneCheckMessage.text}
                     </p>
                   )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                    이메일 주소 <span className="text-neutral-950 font-bold">*</span>
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@choicomma.com"
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium"
-                    />
-                  </div>
                 </div>
 
                 <div>
@@ -636,16 +715,16 @@ export default function LoginPage() {
             {!isSignUp && (
               <div>
                 <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  휴대폰 번호 또는 이메일
+                  이메일 (로그인 ID) 또는 휴대폰 번호
                 </label>
                 <div className="relative">
-                  <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-700" />
+                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-700" />
                   <input
                     type="text"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="휴대폰 번호 또는 이메일 입력"
+                    placeholder="이메일 주소 또는 휴대폰 번호 입력"
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium font-mono"
                   />
                 </div>
