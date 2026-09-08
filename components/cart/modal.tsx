@@ -87,24 +87,12 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
   );
 };
 
-export default function CartModal({
-  className,
-  variant = "ghost",
-  size = "sm",
-  showText = false,
-  onOpenCallback,
-}: {
-  className?: string;
-  variant?: "default" | "secondary" | "outline" | "ghost" | "link";
-  size?: "default" | "sm" | "lg" | "icon" | "icon-lg";
-  showText?: boolean;
-  onOpenCallback?: () => void;
-} = {}) {
-  const { cart, mode } = useCart();
-  const [isOpen, setIsOpen] = useState(false);
+export function CartDrawer() {
+  const { cart, isCartOpen, closeCart } = useCart();
   const [isTossModalOpen, setIsTossModalOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState("ko");
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setMounted(true);
@@ -114,15 +102,6 @@ export default function CartModal({
     return () => window.removeEventListener("language_changed", handleLangChange);
   }, []);
 
-  const quantityRef = useRef(cart?.totalQuantity);
-  const isInitialLoad = useRef(true);
-  const openCart = () => {
-    if (onOpenCallback) onOpenCallback();
-    setIsOpen(true);
-  };
-  const closeCart = () => setIsOpen(false);
-  const pathname = usePathname();
-
   useEffect(() => {
     if (!cart) {
       createCartAndSetCookie();
@@ -130,89 +109,16 @@ export default function CartModal({
   }, [cart]);
 
   useEffect(() => {
-    const handleCartUpdate = () => {
-      setIsOpen(true);
-    };
-    const handleOpenCartEvent = () => {
-      setIsOpen(true);
-    };
-    window.addEventListener("choicomma_cart_updated", handleCartUpdate);
-    window.addEventListener("choicomma_open_cart", handleOpenCartEvent);
-    return () => {
-      window.removeEventListener("choicomma_cart_updated", handleCartUpdate);
-      window.removeEventListener("choicomma_open_cart", handleOpenCartEvent);
-    };
-  }, []);
-
-  useEffect(() => {
     if (pathname === "/checkout") closeCart();
-  }, [pathname]);
+  }, [pathname, closeCart]);
 
-  const renderCartContent = () => {
-    if (!cart || cart.lines.length === 0) {
-      return (
-        <AnimatePresence mode="wait">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="w-full flex"
-          >
-            <Link
-              href="/shop"
-              className="bg-background rounded-lg p-2 border border-dashed border-border w-full"
-              onClick={closeCart}
-            >
-              <div className="flex flex-row gap-6">
-                <div className="relative size-20 overflow-hidden rounded-sm shrink-0 border border-dashed border-border flex items-center justify-center">
-                  <PlusCircleIcon className="size-6 text-muted-foreground" />
-                </div>
-                <div className="flex flex-col gap-2 2xl:gap-3 flex-1 justify-center">
-                  <span className="text-lg 2xl:text-xl font-semibold">
-                    {translateUiText("장바구니가 비어 있습니다.", currentLang)}
-                  </span>
-                  <p className="text-sm text-muted-foreground hover:underline">
-                    {translateUiText("쇼핑 계속하기", currentLang)}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </motion.div>
-        </AnimatePresence>
-      );
-    }
-
-    return <CartItems closeCart={closeCart} openTossModal={() => setIsTossModalOpen(true)} />;
-  };
+  if (!mounted || typeof document === "undefined") return null;
 
   return (
     <>
-      <Button
-        aria-label="장바구니 열기"
-        onClick={openCart}
-        variant={variant}
-        size={size}
-        className={cn("uppercase font-bold relative flex items-center justify-center gap-2", className)}
-      >
-        {/* Shopping Bag Icon */}
-        <ShoppingBag className="w-4 h-4 shrink-0" />
-
-        {/* Text rendering: always show if showText is true, otherwise hide on mobile / show on desktop */}
-        <span className={showText ? "inline-flex items-center gap-1" : "hidden md:inline-flex items-center gap-1"}>
-          <span>{translateUiText("장바구니", currentLang)}</span> ({cart?.totalQuantity || 0})
-        </span>
-
-        {/* Mobile Badge (only when showText is false) */}
-        {!showText && (cart?.totalQuantity || 0) > 0 && (
-          <span className="md:hidden absolute -top-1.5 -right-1.5 bg-neutral-950 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
-            {cart?.totalQuantity}
-          </span>
-        )}
-      </Button>
-      {mounted && typeof document !== "undefined" && createPortal(
+      {createPortal(
         <AnimatePresence>
-          {isOpen && (
+          {isCartOpen && (
             <div className="fixed inset-0 z-[9999] pointer-events-auto">
               {/* Backdrop */}
               <motion.div
@@ -249,7 +155,39 @@ export default function CartModal({
                     </Button>
                   </div>
 
-                  {renderCartContent()}
+                  {!cart || cart.lines.length === 0 ? (
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="w-full flex"
+                      >
+                        <Link
+                          href="/shop"
+                          className="bg-background rounded-lg p-2 border border-dashed border-border w-full"
+                          onClick={closeCart}
+                        >
+                          <div className="flex flex-row gap-6">
+                            <div className="relative size-20 overflow-hidden rounded-sm shrink-0 border border-dashed border-border flex items-center justify-center">
+                              <PlusCircleIcon className="size-6 text-muted-foreground" />
+                            </div>
+                            <div className="flex flex-col gap-2 2xl:gap-3 flex-1 justify-center">
+                              <span className="text-lg 2xl:text-xl font-semibold">
+                                {translateUiText("장바구니가 비어 있습니다.", currentLang)}
+                              </span>
+                              <p className="text-sm text-muted-foreground hover:underline">
+                                {translateUiText("쇼핑 계속하기", currentLang)}
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    </AnimatePresence>
+                  ) : (
+                    <CartItems closeCart={closeCart} openTossModal={() => setIsTossModalOpen(true)} />
+                  )}
                 </div>
               </motion.div>
             </div>
@@ -272,6 +210,60 @@ export default function CartModal({
         }
       />
     </>
+  );
+}
+
+export default function CartModal({
+  className,
+  variant = "ghost",
+  size = "sm",
+  showText = false,
+  onOpenCallback,
+}: {
+  className?: string;
+  variant?: "default" | "secondary" | "outline" | "ghost" | "link";
+  size?: "default" | "sm" | "lg" | "icon" | "icon-lg";
+  showText?: boolean;
+  onOpenCallback?: () => void;
+} = {}) {
+  const { cart, openCart } = useCart();
+  const [currentLang, setCurrentLang] = useState("ko");
+
+  useEffect(() => {
+    setCurrentLang(getCurrentLanguage());
+    const handleLangChange = () => setCurrentLang(getCurrentLanguage());
+    window.addEventListener("language_changed", handleLangChange);
+    return () => window.removeEventListener("language_changed", handleLangChange);
+  }, []);
+
+  const handleClick = () => {
+    if (onOpenCallback) onOpenCallback();
+    openCart();
+  };
+
+  return (
+    <Button
+      aria-label="장바구니 열기"
+      onClick={handleClick}
+      variant={variant}
+      size={size}
+      className={cn("uppercase font-bold relative flex items-center justify-center gap-2", className)}
+    >
+      {/* Shopping Bag Icon */}
+      <ShoppingBag className="w-4 h-4 shrink-0" />
+
+      {/* Text rendering */}
+      <span className={showText ? "inline-flex items-center gap-1" : "hidden md:inline-flex items-center gap-1"}>
+        <span>{translateUiText("장바구니", currentLang)}</span> ({cart?.totalQuantity || 0})
+      </span>
+
+      {/* Mobile Badge */}
+      {!showText && (cart?.totalQuantity || 0) > 0 && (
+        <span className="md:hidden absolute -top-1.5 -right-1.5 bg-neutral-950 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
+          {cart?.totalQuantity}
+        </span>
+      )}
+    </Button>
   );
 }
 

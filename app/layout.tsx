@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { getCart, getSFCCMode } from "@/lib/sfcc";
 import { CartProvider } from "@/components/cart/cart-context";
+import { CartDrawer } from "@/components/cart/modal";
 import { DebugGrid } from "@/components/debug-grid";
 import { isDevelopment } from "@/lib/constants";
 import { HeaderWithData } from "@/components/layout/header/server-wrapper";
@@ -87,6 +88,7 @@ export default async function RootLayout({
             <HeaderWithData />
             {children}
             <LiveChatWidget />
+            <CartDrawer />
             <Toaster closeButton position="top-center" />
             {isDevelopment && <DebugGrid />}
           </NuqsAdapter>

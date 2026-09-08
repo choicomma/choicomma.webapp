@@ -28,6 +28,10 @@ type CartContextValue = {
   updateCartItem: (merchandiseId: string, updateType: UpdateType) => void;
   addCartItem: (variant: ProductVariant, product: Product, quantity?: number) => void;
   mode: SFCCMode;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
+  setIsCartOpen: (open: boolean) => void;
 };
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -323,14 +327,37 @@ export function CartProvider({
     };
   }, []);
 
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
+
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      setIsCartOpen(true);
+    };
+    const handleOpenCartEvent = () => {
+      setIsCartOpen(true);
+    };
+    window.addEventListener("choicomma_cart_updated", handleCartUpdate);
+    window.addEventListener("choicomma_open_cart", handleOpenCartEvent);
+    return () => {
+      window.removeEventListener("choicomma_cart_updated", handleCartUpdate);
+      window.removeEventListener("choicomma_open_cart", handleOpenCartEvent);
+    };
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       cart: cartState,
       updateCartItem: updateCartItemCB,
       addCartItem: addCartItemCB,
       mode,
+      isCartOpen,
+      openCart,
+      closeCart,
+      setIsCartOpen,
     }),
-    [cartState, updateCartItemCB, addCartItemCB, mode]
+    [cartState, updateCartItemCB, addCartItemCB, mode, isCartOpen, openCart, closeCart]
   );
 
   return (

@@ -226,12 +226,20 @@ export default function LoginPage() {
     e.preventDefault();
 
     if (isSignUp) {
+      if (!email.trim()) {
+        alert("이메일 주소를 입력해 주세요.");
+        return;
+      }
+      if (!isEmailChecked) {
+        alert("이메일 주소(로그인 ID) 중복 확인을 진행해 주세요.");
+        return;
+      }
       if (!phone.trim()) {
         alert("휴대폰 번호를 입력해 주세요.");
         return;
       }
-      if (!email.trim()) {
-        alert("이메일 주소를 입력해 주세요.");
+      if (!isPhoneChecked) {
+        alert("휴대폰 번호 중복 확인을 진행해 주세요.");
         return;
       }
       if (password !== confirmPassword) {
@@ -557,6 +565,8 @@ export default function LoginPage() {
                     <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                     <input
                       type="text"
+                      name="name"
+                      autoComplete="name"
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
@@ -578,6 +588,8 @@ export default function LoginPage() {
                       <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-600" />
                       <input
                         type="email"
+                        name="email"
+                        autoComplete="username email"
                         required
                         value={email}
                         onChange={(e) => {
@@ -623,6 +635,8 @@ export default function LoginPage() {
                       <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-600" />
                       <input
                         type="tel"
+                        name="tel"
+                        autoComplete="tel"
                         required
                         value={phone}
                         onChange={(e) => {
@@ -691,6 +705,8 @@ export default function LoginPage() {
                     <MapPin className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                     <input
                       type="text"
+                      name="street-address"
+                      autoComplete="street-address"
                       required
                       value={address}
                       onClick={handleOpenPostcode}
@@ -703,6 +719,8 @@ export default function LoginPage() {
                   {/* Detail Address Input */}
                   <input
                     type="text"
+                    name="address-line2"
+                    autoComplete="address-line2"
                     value={addressDetail}
                     onChange={(e) => setAddressDetail(e.target.value)}
                     placeholder="상세 주소를 입력하세요 (동·호수, 층수 등)"
@@ -721,6 +739,8 @@ export default function LoginPage() {
                   <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-700" />
                   <input
                     type="text"
+                    name="username"
+                    autoComplete="username"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -739,6 +759,8 @@ export default function LoginPage() {
                 <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                 <input
                   type={showPassword ? "text" : "password"}
+                  name={isSignUp ? "new-password" : "current-password"}
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -764,6 +786,8 @@ export default function LoginPage() {
                   <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                   <input
                     type={showConfirmPassword ? "text" : "password"}
+                    name="confirm-password"
+                    autoComplete="new-password"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

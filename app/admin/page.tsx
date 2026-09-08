@@ -1654,8 +1654,7 @@ export default function AdminPage() {
       if (saved) {
         try {
           const parsed: any[] = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            // Check if admin account exists, if not, prepend it
+          if (Array.isArray(parsed) && parsed.length > 0) {
             const hasAdmin = parsed.some(
               (c) =>
                 (c.email && c.email.toLowerCase() === "admin@choicomma.com") ||
@@ -1679,14 +1678,6 @@ export default function AdminPage() {
     }
   }, []);
 
-
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("admin_customers", JSON.stringify(customersList));
-    }
-  }, [customersList]);
-
   React.useEffect(() => {
     const syncAdminCustomers = () => {
       if (typeof window === "undefined") return;
@@ -1694,7 +1685,7 @@ export default function AdminPage() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0) {
             setCustomersList(parsed);
           }
         } catch (e) { }
@@ -1703,9 +1694,11 @@ export default function AdminPage() {
 
     window.addEventListener("storage", syncAdminCustomers);
     window.addEventListener("admin_customers_updated", syncAdminCustomers);
+    const interval = setInterval(syncAdminCustomers, 2000);
     return () => {
       window.removeEventListener("storage", syncAdminCustomers);
       window.removeEventListener("admin_customers_updated", syncAdminCustomers);
+      clearInterval(interval);
     };
   }, []);
 
