@@ -148,11 +148,47 @@ export function LanguageSelector({ isScrolled = false, className, align = "right
     const hostname = typeof window !== "undefined" ? window.location.hostname : "";
     const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || !hostname.includes(".");
 
+    const rootDomain = hostname.split(".").slice(-2).join(".");
+
+    const domains = [
+      "",
+      hostname,
+      `.${hostname}`,
+      rootDomain ? `.${rootDomain}` : "",
+      rootDomain ? rootDomain : "",
+    ].filter(Boolean);
+
+    const paths = ["/", "/ko", window.location.pathname];
+
     if (lang.code === "ko") {
-      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      if (!isLocal) {
-        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname};`;
+      // 1. Delete all possible googtrans cookie variants across domains and paths
+      domains.forEach((dom) => {
+        paths.forEach((p) => {
+          if (dom) {
+            document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${p}; domain=${dom};`;
+            document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${p}; domain=.${dom};`;
+          }
+          document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${p};`;
+        });
+      });
+
+      // 2. Also set explicitly to '/ko/ko' as fallback so Google translate script restores original Korean
+      document.cookie = `googtrans=/ko/ko; path=/;`;
+      if (!isLocal && rootDomain) {
+        document.cookie = `googtrans=/ko/ko; path=/; domain=.${rootDomain};`;
+        document.cookie = `googtrans=/ko/ko; path=/; domain=${hostname};`;
       }
+
+      // 3. Clear any session / local storage trace
+      try {
+        sessionStorage.removeItem("googtrans");
+        localStorage.removeItem("googtrans");
+      } catch (e) {}
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("language_changed"));
+      }
+
       window.location.reload();
       return;
     }
@@ -161,6 +197,9 @@ export function LanguageSelector({ isScrolled = false, className, align = "right
     const cookieVal = `/ko/${lang.code}`;
     document.cookie = `googtrans=${cookieVal}; path=/;`;
     if (!isLocal) {
+      if (rootDomain) {
+        document.cookie = `googtrans=${cookieVal}; path=/; domain=.${rootDomain};`;
+      }
       document.cookie = `googtrans=${cookieVal}; path=/; domain=${hostname};`;
     }
 

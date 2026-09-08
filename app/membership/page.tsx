@@ -930,15 +930,6 @@ function MembershipContent() {
         {/* Tab 5: TIERS (회원 등급 혜택) */}
         {activeTab === "tiers" && (
           <div className="space-y-8 animate-in fade-in duration-300">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-2xl font-black text-neutral-950">choicomma 멤버십 등급 & 혜택 안내</h2>
-              </div>
-              <p className="text-xs text-neutral-500 mt-1">
-                초이콤마의 5단계 회원 등급(일반, 실버, 골드, 플래티넘, VVIP)별 차별화된 할인, 적립 및 프리미엄 VIP 혜택을 확인하세요.
-              </p>
-            </div>
-
             {/* Current Tier Status Hero Banner */}
             <div className="bg-neutral-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-neutral-800 relative overflow-hidden">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">

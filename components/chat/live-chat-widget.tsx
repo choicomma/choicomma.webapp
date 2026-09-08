@@ -33,8 +33,8 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     securityNotice: "🔒 고객 전용 비밀 보안 채팅방입니다",
     placeholder: "메시지를 입력하세요...",
     close: "닫기",
-    welcomeText: "안녕하세요! 초이콤마 오리지널 1:1 라이브 전담 케어 팀입니다. 💫\n상품 문의, 주문/배송, 커스텀 사이즈 등 어떤 내용이든 편하게 말씀해 주세요.",
-    autoReplyText: "문의해주신 내용을 확인하였습니다. 전담 케어 스타일리스트가 실시간 확인 후 곧 답변드리겠습니다. 잠시만 기다려 주세요! ☕",
+    welcomeText: "안녕하세요! 초이콤마 오리지널 1:1 라이브 전담 케어 팀입니다. 💫\n상품 문의, 주문/배송 등 어떤 내용이든 편하게 말씀해 주세요.",
+    autoReplyText: "문의해주신 내용을 전달되었습니다. 담당자 확인 후 곧 답변드리겠습니다. 잠시만 기다려 주세요! ☕",
     closeNoticeText: "🔒 [안내] 최상위 VIP 회원님과의 1:1 상담이 종료되었습니다. 추가 문의 사항이 있으시면 언제든지 편하게 새 메시지를 남겨주세요. 이용해 주셔서 감사합니다! 💫",
     teamName: "choicomma VIP 케어팀",
     liveTag: "라이브",
@@ -304,29 +304,73 @@ export function LiveChatWidget() {
     setInputText("");
     setAttachedImages([]);
 
-    // Auto simulated response if admin has not replied yet
-    setTimeout(() => {
-      const savedLatest = localStorage.getItem(chatKey);
-      let latestList: ChatMessage[] = updated;
-      try {
-        if (savedLatest) latestList = JSON.parse(savedLatest);
-      } catch (e) { }
+    // Auto simulated response based on Admin Smart Auto-reply settings
+    let isAutoEnabled = true;
+    let autoDelayMs = 1500;
+    let autoReplyMessage = t.autoReplyText;
 
-      // If last message is still user's message, add automated acknowledgement
-      if (latestList[latestList.length - 1]?.id === newMsg.id) {
-        const autoReply: ChatMessage = {
-          id: `admin-msg-auto-${Date.now()}`,
-          sender: "admin",
-          senderName: t.teamName,
-          text: t.autoReplyText,
-          timestamp: `${hours}:${mins}`,
-        };
-        const updatedWithAuto = [...latestList, autoReply];
-        setMessages(updatedWithAuto);
-        localStorage.setItem(chatKey, JSON.stringify(updatedWithAuto));
-        window.dispatchEvent(new CustomEvent("live_chat_updated"));
+    if (typeof window !== "undefined") {
+      const savedEnabled = localStorage.getItem("admin_auto_reply_enabled");
+      if (savedEnabled !== null) {
+        isAutoEnabled = savedEnabled === "true";
       }
-    }, 1500);
+
+      const savedDelay = localStorage.getItem("admin_auto_reply_delay");
+      if (savedDelay !== null) {
+        const parsedDelay = parseFloat(savedDelay);
+        if (!isNaN(parsedDelay) && parsedDelay >= 0) {
+          autoDelayMs = parsedDelay * 1000;
+        }
+      }
+
+      const savedFallback = localStorage.getItem("admin_auto_reply_fallback");
+      if (savedFallback) {
+        autoReplyMessage = savedFallback;
+      }
+
+      const savedRules = localStorage.getItem("admin_auto_reply_rules");
+      if (savedRules) {
+        try {
+          const rules = JSON.parse(savedRules);
+          if (Array.isArray(rules)) {
+            const userTextLower = (newMsg.text || "").toLowerCase();
+            const matchedRule = rules.find((rule: any) => {
+              if (!rule.enabled) return false;
+              const kws = (rule.keywords || "").split(",").map((k: string) => k.trim().toLowerCase()).filter(Boolean);
+              return kws.some((kw: string) => userTextLower.includes(kw));
+            });
+            if (matchedRule && matchedRule.replyText) {
+              autoReplyMessage = matchedRule.replyText;
+            }
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (isAutoEnabled) {
+      setTimeout(() => {
+        const savedLatest = localStorage.getItem(chatKey);
+        let latestList: ChatMessage[] = updated;
+        try {
+          if (savedLatest) latestList = JSON.parse(savedLatest);
+        } catch (e) { }
+
+        // If last message is still user's message, send the keyword-matched auto reply
+        if (latestList[latestList.length - 1]?.id === newMsg.id) {
+          const autoReply: ChatMessage = {
+            id: `admin-msg-auto-${Date.now()}`,
+            sender: "admin",
+            senderName: t.teamName,
+            text: autoReplyMessage,
+            timestamp: `${hours}:${mins}`,
+          };
+          const updatedWithAuto = [...latestList, autoReply];
+          setMessages(updatedWithAuto);
+          localStorage.setItem(chatKey, JSON.stringify(updatedWithAuto));
+          window.dispatchEvent(new CustomEvent("live_chat_updated"));
+        }
+      }, autoDelayMs);
+    }
   };
 
   const handleResetChat = () => {
@@ -479,8 +523,8 @@ export function LiveChatWidget() {
 
                   <div
                     className={`max-w-[82%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs whitespace-pre-wrap ${isUser
-                        ? "bg-neutral-950 text-white rounded-tr-xs font-medium"
-                        : "bg-white text-neutral-900 border border-neutral-200/80 rounded-tl-xs font-medium"
+                      ? "bg-neutral-950 text-white rounded-tr-xs font-medium"
+                      : "bg-white text-neutral-900 border border-neutral-200/80 rounded-tl-xs font-medium"
                       }`}
                   >
                     {displayText}

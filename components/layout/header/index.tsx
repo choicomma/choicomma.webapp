@@ -137,11 +137,7 @@ export function Header({ collections }: HeaderProps) {
     ...navItems.map((item) => {
       if (item.href === "/login" && isLoggedIn) {
         return {
-          label: isAdmin
-            ? `마이페이지 (관리자)`
-            : userName
-            ? `마이페이지 (${userName})`
-            : "마이페이지",
+          label: "마이페이지",
           href: isAdmin ? "/admin" : "/membership",
         };
       }

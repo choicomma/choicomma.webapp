@@ -163,7 +163,7 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
                     asChild
                   >
                     <Link href={isLoggedIn ? (isAdmin ? "/admin" : "/membership") : "/login"} prefetch>
-                      {isLoggedIn ? (isAdmin ? "마이페이지 (관리자)" : (userName ? `마이페이지 (${userName})` : "마이페이지")) : "로그인"}
+                      {isLoggedIn ? "마이페이지" : "로그인"}
                     </Link>
                   </Button>
 
