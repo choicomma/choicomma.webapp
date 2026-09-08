@@ -115,22 +115,20 @@ export default function LoginPage() {
         isDuplicate = true;
       }
 
-      if (localStorage.getItem(`user_pwd_${trimmedEmail}`)) {
-        isDuplicate = true;
-      }
-
       if (isDuplicate) {
         setEmailCheckMessage({
           status: "error",
           text: "이미 가입된 이메일 주소(ID)입니다. 다른 이메일을 입력해 주세요.",
         });
         setIsEmailChecked(false);
+        setToastMsg("이미 등록된 이메일 주소입니다.");
       } else {
         setEmailCheckMessage({
           status: "success",
           text: "사용 가능한 로그인 ID (이메일 주소)입니다.",
         });
         setIsEmailChecked(true);
+        setToastMsg("사용 가능한 이메일 주소입니다.");
       }
     }
   };
@@ -159,22 +157,20 @@ export default function LoginPage() {
         } catch (e) { }
       }
 
-      if (localStorage.getItem(`user_pwd_${cleanPhone}`)) {
-        isDuplicate = true;
-      }
-
       if (isDuplicate) {
         setPhoneCheckMessage({
           status: "error",
           text: "이미 등록된 휴대폰 번호입니다. 다른 번호를 입력해 주세요.",
         });
         setIsPhoneChecked(false);
+        setToastMsg("이미 등록된 휴대폰 번호입니다.");
       } else {
         setPhoneCheckMessage({
           status: "success",
           text: "사용 가능한 휴대폰 번호입니다.",
         });
         setIsPhoneChecked(true);
+        setToastMsg("사용 가능한 휴대폰 번호입니다.");
       }
     }
   };
@@ -351,7 +347,8 @@ export default function LoginPage() {
         localStorage.setItem("membership_user_phone", phone.trim());
         localStorage.setItem("membership_user_email", finalEmail);
         localStorage.setItem("membership_user_postcode", postcode.trim() || "06306");
-        localStorage.setItem("membership_user_address", fullCombinedAddress);
+        localStorage.setItem("membership_user_address", address.trim());
+        localStorage.setItem("membership_user_address_detail", addressDetail.trim());
 
         // Save password under both phone and email
         if (cleanPhoneId) {
@@ -375,12 +372,14 @@ export default function LoginPage() {
           name: displayName,
           email: finalEmail,
           phone: phone.trim() || "010-1234-5678",
-          address: fullCombinedAddress || "서울특별시 강남구 압구정로 100",
+          postcode: postcode.trim() || "",
+          address: address.trim() || "서울특별시 강남구 압구정로 100",
+          addressDetail: addressDetail.trim() || "",
           joinedDate: new Date().toISOString().split("T")[0],
           totalOrders: 0,
           totalSpent: 0,
           grade: "GENERAL",
-          points: 5000,
+          points: 0,
           status: "Active",
         };
         localStorage.setItem("admin_customers", JSON.stringify([newCustomer, ...customerList]));
@@ -420,7 +419,7 @@ export default function LoginPage() {
       setIsLoading(false);
       setToastMsg(
         isSignUp
-          ? "회원가입이 완료되었습니다! 웰컴 5,000P와 함께 마이 멤버십으로 이동합니다."
+          ? "회원가입이 완료되었습니다! 마이 멤버십으로 이동합니다."
           : "choicomma에 성공적으로 로그인되었습니다!"
       );
 
@@ -616,10 +615,14 @@ export default function LoginPage() {
                   </div>
                   {emailCheckMessage && (
                     <p
-                      className="text-[11px] font-bold mt-1.5 flex items-center gap-1 text-neutral-900"
+                      className={`text-xs font-extrabold mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${
+                        emailCheckMessage.status === "success"
+                          ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
+                          : "text-rose-700 bg-rose-50 border border-rose-200"
+                      }`}
                     >
-                      {emailCheckMessage.status === "success" ? "✓" : "✕"}{" "}
-                      {emailCheckMessage.text}
+                      <span>{emailCheckMessage.status === "success" ? "✓" : "✕"}</span>
+                      <span>{emailCheckMessage.text}</span>
                     </p>
                   )}
                 </div>
@@ -656,17 +659,21 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={handleCheckPhoneDuplicate}
-                      className="px-3.5 py-3 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer"
+                      className="px-3.5 py-3 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer active:scale-95"
                     >
                       중복 확인
                     </button>
                   </div>
                   {phoneCheckMessage && (
                     <p
-                      className="text-[11px] font-bold mt-1.5 flex items-center gap-1 text-neutral-900"
+                      className={`text-xs font-extrabold mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${
+                        phoneCheckMessage.status === "success"
+                          ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
+                          : "text-rose-700 bg-rose-50 border border-rose-200"
+                      }`}
                     >
-                      {phoneCheckMessage.status === "success" ? "✓" : "✕"}{" "}
-                      {phoneCheckMessage.text}
+                      <span>{phoneCheckMessage.status === "success" ? "✓" : "✕"}</span>
+                      <span>{phoneCheckMessage.text}</span>
                     </p>
                   )}
                 </div>

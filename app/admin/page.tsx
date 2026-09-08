@@ -1829,10 +1829,19 @@ export default function AdminPage() {
 
   const handleDeleteCustomer = (id: string, name: string) => {
     if (window.confirm(`정말로 회원 '${name}'님의 계정 정보를 삭제하시겠습니까?`)) {
+      const targetCustomer = customersList.find((c) => c.id === id);
       const updated = customersList.filter((c) => c.id !== id);
       setCustomersList(updated);
       if (typeof window !== "undefined") {
         localStorage.setItem("admin_customers", JSON.stringify(updated));
+        if (targetCustomer?.email) {
+          localStorage.removeItem(`user_pwd_${targetCustomer.email.trim().toLowerCase()}`);
+        }
+        if (targetCustomer?.phone) {
+          const cleanPhone = targetCustomer.phone.replace(/[^0-9]/g, "");
+          localStorage.removeItem(`user_pwd_${cleanPhone}`);
+          localStorage.removeItem(`user_pwd_${targetCustomer.phone.trim()}`);
+        }
         window.dispatchEvent(new CustomEvent("storage"));
         window.dispatchEvent(new CustomEvent("admin_customers_updated"));
       }

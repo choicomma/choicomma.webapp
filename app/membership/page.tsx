@@ -72,9 +72,9 @@ function MembershipContent() {
   const [userName, setUserName] = useState("홍길동");
   const [userEmail, setUserEmail] = useState("customer@choicomma.com");
   const [userPhone, setUserPhone] = useState("010-1234-5678");
-  const [userPostcode, setUserPostcode] = useState("06306");
-  const [userAddress, setUserAddress] = useState("서울특별시 강남구 개포로22길 12");
-  const [userAddressDetail, setUserAddressDetail] = useState("6층 (주)초이콤마");
+  const [userPostcode, setUserPostcode] = useState("");
+  const [userAddress, setUserAddress] = useState("");
+  const [userAddressDetail, setUserAddressDetail] = useState("");
   const [userGrade, setUserGrade] = useState<"GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP">("GENERAL");
 
   // Load Daum Postcode Script
@@ -145,11 +145,11 @@ function MembershipContent() {
       const savedPhone = localStorage.getItem("membership_user_phone");
       if (savedPhone) setUserPhone(savedPhone);
       const savedPostcode = localStorage.getItem("membership_user_postcode");
-      if (savedPostcode) setUserPostcode(savedPostcode);
+      setUserPostcode(savedPostcode || "");
       const savedAddress = localStorage.getItem("membership_user_address");
-      if (savedAddress) setUserAddress(savedAddress);
+      setUserAddress(savedAddress || "");
       const savedDetail = localStorage.getItem("membership_user_address_detail");
-      if (savedDetail) setUserAddressDetail(savedDetail);
+      setUserAddressDetail(savedDetail || "");
 
       const savedPoints = localStorage.getItem("membership_user_points");
       if (savedPoints && !isNaN(parseInt(savedPoints))) {
@@ -192,6 +192,12 @@ function MembershipContent() {
             if (found.phone && found.phone !== "-") setUserPhone(found.phone);
             if (found.address && found.address !== "-") {
               setUserAddress(found.address);
+            }
+            if (found.addressDetail !== undefined) {
+              setUserAddressDetail(found.addressDetail);
+            }
+            if (found.postcode) {
+              setUserPostcode(found.postcode);
             }
             if (found.points !== undefined) {
               setUserPoints(found.points);
@@ -303,31 +309,53 @@ function MembershipContent() {
     if (!isConfirmed) return;
 
     if (typeof window !== "undefined") {
+      const cleanPhone = (userPhone || "").replace(/[^0-9]/g, "");
+      const cleanEmail = (userEmail || "").trim().toLowerCase();
+
+      // 1. Remove Membership session keys
       localStorage.removeItem("membership_user_name");
       localStorage.removeItem("membership_user_email");
       localStorage.removeItem("membership_user_phone");
+      localStorage.removeItem("membership_user_postcode");
       localStorage.removeItem("membership_user_address");
+      localStorage.removeItem("membership_user_address_detail");
       localStorage.removeItem("membership_user_points");
+      localStorage.removeItem("user_grade");
+      localStorage.removeItem("user_role");
       localStorage.removeItem("is_logged_in");
       sessionStorage.removeItem("choicomma_admin_authenticated");
 
+      // 2. Remove saved password keys
+      if (cleanEmail) {
+        localStorage.removeItem(`user_pwd_${cleanEmail}`);
+      }
+      if (cleanPhone) {
+        localStorage.removeItem(`user_pwd_${cleanPhone}`);
+        localStorage.removeItem(`user_pwd_${userPhone.trim()}`);
+      }
+
+      // 3. Remove customer from admin_customers
       const savedCustomers = localStorage.getItem("admin_customers");
       if (savedCustomers) {
         try {
           const list: any[] = JSON.parse(savedCustomers);
-          const filtered = list.filter(
-            (c) =>
-              (c.email && userEmail && c.email.toLowerCase() === userEmail.toLowerCase()) ||
-              (c.name && userName && c.name === userName)
-                ? false
-                : true
-          );
+          const filtered = list.filter((c) => {
+            const cEmail = (c.email || "").trim().toLowerCase();
+            const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+            const cName = (c.name || "").trim();
+
+            if (cleanEmail && cEmail === cleanEmail) return false;
+            if (cleanPhone && cPhone === cleanPhone) return false;
+            if (userName && cName === userName.trim()) return false;
+            return true;
+          });
           localStorage.setItem("admin_customers", JSON.stringify(filtered));
         } catch (e) {}
       }
 
       window.dispatchEvent(new CustomEvent("storage"));
       window.dispatchEvent(new CustomEvent("auth_changed"));
+      window.dispatchEvent(new CustomEvent("admin_customers_updated"));
     }
 
     toast.success("회원 탈퇴가 성공적으로 완료되었습니다. 그동안 choicomma를 이용해 주셔서 감사합니다.");
@@ -341,8 +369,12 @@ function MembershipContent() {
       localStorage.removeItem("membership_user_name");
       localStorage.removeItem("membership_user_email");
       localStorage.removeItem("membership_user_phone");
+      localStorage.removeItem("membership_user_postcode");
       localStorage.removeItem("membership_user_address");
+      localStorage.removeItem("membership_user_address_detail");
       localStorage.removeItem("membership_user_points");
+      localStorage.removeItem("user_grade");
+      localStorage.removeItem("user_role");
       localStorage.removeItem("is_logged_in");
       sessionStorage.removeItem("choicomma_admin_authenticated");
       window.dispatchEvent(new CustomEvent("storage"));
