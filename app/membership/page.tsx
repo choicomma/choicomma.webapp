@@ -91,22 +91,32 @@ function MembershipContent() {
     if (typeof window !== "undefined" && (window as any).daum?.Postcode) {
       new (window as any).daum.Postcode({
         oncomplete: function (data: any) {
-          let fullAddress = data.address;
-          let extraAddress = "";
+          let mainAddr = data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
+          if (!mainAddr) mainAddr = data.address;
 
-          if (data.addressType === "R") {
+          let extraAddress = "";
+          if (data.userSelectedType === "R") {
             if (data.bname !== "") {
               extraAddress += data.bname;
             }
             if (data.buildingName !== "") {
               extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
             }
-            fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
+            if (extraAddress !== "") {
+              mainAddr += ` (${extraAddress})`;
+            }
           }
 
           setUserPostcode(data.zonecode || "06306");
-          setUserAddress(fullAddress);
-          toast.success(`주소가 선택되었습니다: ${fullAddress}`);
+          setUserAddress(mainAddr);
+          toast.success(`주소가 선택되었습니다: ${mainAddr}`);
+
+          setTimeout(() => {
+            const detailInput = document.querySelector('input[placeholder*="상세 주소"]') as HTMLInputElement;
+            if (detailInput) {
+              detailInput.focus();
+            }
+          }, 100);
         },
       }).open();
     } else {
