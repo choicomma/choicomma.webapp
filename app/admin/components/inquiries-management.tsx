@@ -121,8 +121,37 @@ export function InquiriesManagement({
   // Auto Reply (Chatbot) State
   const [isAutoReplyModalOpen, setIsAutoReplyModalOpen] = useState(false);
   const [autoReplyEnabled, setAutoReplyEnabled] = useState(true);
-  const [autoReplyDelay, setAutoReplyDelay] = useState(1.5); // seconds (0.5, 1.5, 3.0, 5.0)
-  const [autoReplyRules, setAutoReplyRules] = useState<AutoReplyRule[]>(DEFAULT_AUTO_RULES);
+  const [autoReplyDelay, setAutoReplyDelay] = useState(5.0); // seconds
+  const [autoReplyRules, setAutoReplyRules] = useState<AutoReplyRule[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("admin_auto_reply_rules");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const hasReturnRule = parsed.some((r: any) =>
+              r.keywords?.includes("반품") || r.name?.includes("반품")
+            );
+            if (!hasReturnRule) {
+              const returnRule: AutoReplyRule = {
+                id: "auto-4",
+                name: "교환 및 반품 안내",
+                keywords: "교환, 반품, 환불, 취소, 수선",
+                replyText:
+                  "상품 수령 후 7일 이내 마이페이지 또는 상담을 통해 교환/반품 접수가 가능합니다. 담당자가 신속히 확인하여 도와드리겠습니다. 🔄",
+                enabled: true,
+              };
+              const merged = [...parsed, returnRule];
+              localStorage.setItem("admin_auto_reply_rules", JSON.stringify(merged));
+              return merged;
+            }
+            return parsed;
+          }
+        } catch (e) {}
+      }
+    }
+    return DEFAULT_AUTO_RULES;
+  });
   const [autoReplyFallback, setAutoReplyFallback] = useState(
     "문의해주신 내용을 전달되었습니다. 담당자 확인 후 곧 답변드리겠습니다. 잠시만 기다려 주세요! ☕"
   );
@@ -138,6 +167,17 @@ export function InquiriesManagement({
 
   // Confirmation Alert Dialog State
   const [confirmDialog, setConfirmDialog] = useState<string | null>(null);
+
+  // Auto-scroll to bottom of conversation
+  const adminMessagesEndRef = React.useRef<HTMLDivElement>(null);
+  const chatContainerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useLayoutEffect(() => {
+    // Instant scroll directly to bottom without jumpy animation
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [activeSessionMessages, activeSessionId]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -175,7 +215,25 @@ export function InquiriesManagement({
         try {
           const parsed = JSON.parse(savedAutoRules);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setAutoReplyRules(parsed);
+            // Check if return/exchange rule exists, if not, restore it
+            const hasReturnRule = parsed.some((r: any) =>
+              r.keywords?.includes("반품") || r.name?.includes("반품")
+            );
+            if (!hasReturnRule) {
+              const returnRule: AutoReplyRule = {
+                id: "auto-4",
+                name: "교환 및 반품 안내",
+                keywords: "교환, 반품, 환불, 취소, 수선",
+                replyText:
+                  "상품 수령 후 7일 이내 마이페이지 또는 상담을 통해 교환/반품 접수가 가능합니다. 담당자가 신속히 확인하여 도와드리겠습니다. 🔄",
+                enabled: true,
+              };
+              const merged = [...parsed, returnRule];
+              setAutoReplyRules(merged);
+              localStorage.setItem("admin_auto_reply_rules", JSON.stringify(merged));
+            } else {
+              setAutoReplyRules(parsed);
+            }
           } else {
             setAutoReplyRules(DEFAULT_AUTO_RULES);
           }
@@ -233,10 +291,20 @@ export function InquiriesManagement({
     setConfirmDialog("새로운 키워드 자동 응답 규칙이 등록되었습니다!");
   };
 
+  // Pending Delete State for '삭제하시겠습니까?' Confirm Dialog
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
+
   const handleDeleteAutoRule = (id: string) => {
-    const updated = autoReplyRules.filter((r) => r.id !== id);
+    const target = autoReplyRules.find((r) => r.id === id);
+    setPendingDelete({ id, name: target?.name || "선택한 키워드 규칙" });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!pendingDelete) return;
+    const updated = autoReplyRules.filter((r) => r.id !== pendingDelete.id);
     saveAutoReplyConfig(autoReplyEnabled, autoReplyDelay, updated, autoReplyFallback);
-    setConfirmDialog("키워드 규칙이 삭제되었습니다.");
+    setPendingDelete(null);
+    setConfirmDialog("키워드 자동 답변 규칙이 삭제되었습니다.");
   };
 
   const handleToggleAutoRule = (id: string) => {
@@ -336,6 +404,63 @@ export function InquiriesManagement({
     setConfirmDialog("기본 템플릿 복원이 완료되었습니다.");
   };
 
+  // Helper to dynamically get the customer's real grade/tier badge
+  const getSessionBadgeInfo = (session: any) => {
+    const isAdm =
+      session.email === "admin" ||
+      session.email === "admin@choicomma.com" ||
+      session.id === "admin" ||
+      session.name?.includes("관리자");
+    if (isAdm) {
+      return { tier: "관리자", color: "bg-rose-600 text-white font-black" };
+    }
+    if (session.id === "guest" || session.email === "guest@choicomma.com" || session.name === "실시간 방문 고객") {
+      return { tier: "비회원", color: "bg-neutral-200 text-neutral-700 font-bold" };
+    }
+
+    if (typeof window !== "undefined") {
+      const adminCustomers = localStorage.getItem("admin_customers");
+      if (adminCustomers) {
+        try {
+          const list = JSON.parse(adminCustomers);
+          const found = list.find((c: any) =>
+            (c.email && session.email && c.email.toLowerCase() === session.email.toLowerCase()) ||
+            (c.name && session.name && session.name.includes(c.name))
+          );
+          if (found && (found.grade || found.tier)) {
+            const g = String(found.grade || found.tier).toUpperCase();
+            if (g.includes("VVIP") || g.includes("BLACK")) {
+              return { tier: "VVIP", color: "bg-neutral-950 text-amber-400 font-black border border-amber-400/50" };
+            }
+            if (g.includes("PLATINUM") || g.includes("플래티넘")) {
+              return { tier: "PLATINUM", color: "bg-purple-100 text-purple-800 font-black border border-purple-300" };
+            }
+            if (g.includes("GOLD") || g.includes("골드")) {
+              return { tier: "GOLD", color: "bg-amber-100 text-amber-900 font-black border border-amber-300" };
+            }
+            if (g.includes("SILVER") || g.includes("실버")) {
+              return { tier: "SILVER", color: "bg-slate-200 text-slate-800 font-black border border-slate-300" };
+            }
+            if (g.includes("VIP")) {
+              return { tier: "VIP", color: "bg-amber-400 text-neutral-950 font-black" };
+            }
+            return { tier: found.grade || found.tier || "일반회원", color: "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300" };
+          }
+        } catch (e) {}
+      }
+    }
+
+    // If session.tier is hardcoded VIP without matched database VIP grade, normalize to 일반회원
+    if (session.tier === "VIP" && !session.name?.includes("VIP")) {
+      return { tier: "일반회원", color: "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300" };
+    }
+
+    return {
+      tier: session.tier || "일반회원",
+      color: session.badgeColor || "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300",
+    };
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Header & Status */}
@@ -343,10 +468,10 @@ export function InquiriesManagement({
         <div>
           <h1 className="text-2xl font-bold text-neutral-950 flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-neutral-900" />
-            1:1 VIP 실시간 라이브 채팅 케어 (Live Chat)
+            1:1 실시간 라이브 채팅 상담
           </h1>
           <p className="text-sm text-neutral-500 mt-0.5">
-            쇼핑몰 라이브 채팅 문의를 실시간 처리합니다. 하단 원클릭 답장 템플릿은 입력 즉시 변경됩니다.
+            쇼핑몰 라이브 채팅 문의를 실시간으로 확인하고 응대합니다. 하단 원클릭 답장 템플릿은 입력 즉시 변경됩니다.
           </p>
         </div>
 
@@ -356,10 +481,10 @@ export function InquiriesManagement({
             onClick={() => setIsAutoReplyModalOpen(true)}
             className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md cursor-pointer border border-amber-400"
           >
-            <Bot className="w-4 h-4 text-neutral-950" />
-            <span>🤖 자동 답변(챗봇) 설정</span>
+            <Sliders className="w-4 h-4 text-neutral-950" />
+            <span>자동 답변 설정</span>
             <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${autoReplyEnabled ? "bg-neutral-950 text-white" : "bg-neutral-200 text-neutral-700"}`}>
-              {autoReplyEnabled ? `${autoReplyDelay}초` : "OFF"}
+              {autoReplyEnabled ? `${autoReplyDelay}초` : "꺼짐"}
             </span>
           </button>
 
@@ -371,13 +496,6 @@ export function InquiriesManagement({
             <Edit3 className="w-4 h-4 text-white" />
             <span>실시간 템플릿 수정/편집</span>
           </button>
-
-          <div className="flex items-center gap-2 bg-neutral-100 border border-neutral-200 px-3.5 py-2 rounded-2xl">
-            <span className="w-2.5 h-2.5 rounded-full bg-neutral-900" />
-            <span className="text-xs font-black text-neutral-900">
-              실시간 연동 중 ({adminLiveChatMessages.length}개 메시지)
-            </span>
-          </div>
         </div>
       </div>
 
@@ -404,6 +522,7 @@ export function InquiriesManagement({
               chatSessionsList.map((session) => {
                 const isSelected = activeSessionId === session.id;
                 const isEnded = session.status === "ended" || (session.id === "vip@choicomma.com" && isLiveChatSessionEnded);
+                const badgeInfo = getSessionBadgeInfo(session);
                 return (
                   <div
                     key={session.id}
@@ -416,10 +535,9 @@ export function InquiriesManagement({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Crown className={`w-3.5 h-3.5 ${isSelected ? "text-amber-400 fill-amber-400" : "text-amber-600"}`} />
                         <span className="text-xs font-black">{session.name}</span>
-                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-black ${session.badgeColor}`}>
-                          {session.tier}
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${badgeInfo.color}`}>
+                          {badgeInfo.tier}
                         </span>
                       </div>
                       <span className={`text-[9px] font-mono font-black px-1.5 py-0.5 rounded ${
@@ -427,7 +545,7 @@ export function InquiriesManagement({
                           ? "bg-neutral-200 text-neutral-600"
                           : "bg-emerald-500 text-neutral-950"
                       }`}>
-                        {isEnded ? "종료됨" : "ONLINE"}
+                        {isEnded ? "상담종료" : "접속중"}
                       </span>
                     </div>
 
@@ -533,7 +651,7 @@ export function InquiriesManagement({
           </div>
 
           {/* Conversation Bubbles Container */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF9F5]/70 rounded-2xl border border-neutral-200/60">
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF9F5]/70 rounded-2xl border border-neutral-200/60">
             {activeSessionMessages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-neutral-400">
                 <MessageSquare className="w-10 h-10 text-neutral-300 mb-2 stroke-[1.5]" />
@@ -577,6 +695,7 @@ export function InquiriesManagement({
                 );
               })
             )}
+            <div ref={adminMessagesEndRef} />
           </div>
 
           {/* Admin Reply Input Bar */}
@@ -765,7 +884,7 @@ export function InquiriesManagement({
       )}
 
       {/* ========================================================================= */}
-      {/* AUTO-REPLY CHATBOT SETTINGS MODAL: "🤖 자동 답변(챗봇) 설정" */}
+      {/* AUTO-REPLY SETTINGS MODAL: "자동 답변 설정" */}
       {/* ========================================================================= */}
       {isAutoReplyModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 notranslate" translate="no">
@@ -773,12 +892,12 @@ export function InquiriesManagement({
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-neutral-100 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl">
-                  🤖
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                  <Sliders className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-neutral-950">
-                    실시간 채팅 스마트 자동 답변(챗봇) 설정
+                    실시간 채팅 자동 답변 설정
                   </h3>
                   <p className="text-xs text-neutral-500 mt-0.5">
                     고객이 입력한 키워드에 맞춰 지정된 답변을 실시간 채팅창에 자동으로 전송합니다.
@@ -838,10 +957,10 @@ export function InquiriesManagement({
                   </div>
                   <div className="grid grid-cols-4 gap-1.5">
                     {[
-                      { val: 0.5, label: "0.5초 (즉시)" },
-                      { val: 1.5, label: "1.5초 (권장)" },
-                      { val: 3.0, label: "3.0초 (자연스러움)" },
-                      { val: 5.0, label: "5.0초 (여유)" },
+                      { val: 3.0, label: "3초 (빠름)" },
+                      { val: 5.0, label: "5초 (권장)" },
+                      { val: 7.0, label: "7초 (자연스러움)" },
+                      { val: 10.0, label: "10초 (여유)" },
                     ].map((item) => (
                       <button
                         key={item.val}
@@ -1120,6 +1239,44 @@ export function InquiriesManagement({
                 className="flex-1 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs py-3 rounded-xl cursor-pointer transition-all shadow-md"
               >
                 네, 수정합니다
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CONFIRMATION PROMPT DIALOG: "삭제하시겠습니까?" 확인 창 팝업 */}
+      {/* ========================================================================= */}
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 notranslate" translate="no">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-neutral-200 text-center space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-base font-extrabold text-neutral-950">답변 규칙을 삭제하시겠습니까?</h4>
+              <p className="text-xs text-neutral-600 mt-1">
+                삭제된 키워드 자동 응답 규칙은 복구할 수 없습니다.
+              </p>
+              <div className="mt-2.5 p-2 bg-neutral-50 rounded-xl border border-neutral-200 text-xs font-bold text-neutral-950 text-center truncate">
+                "{pendingDelete.name}"
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs py-3 rounded-xl cursor-pointer transition-all border border-neutral-200"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs py-3 rounded-xl cursor-pointer transition-all shadow-md"
+              >
+                확인 (삭제)
               </button>
             </div>
           </div>

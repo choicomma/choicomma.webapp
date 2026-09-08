@@ -244,8 +244,154 @@ function MeasurementInputItem({
   );
 }
 
-// Initial Shipments Data
-const initialShipments: any[] = [];
+// Initial Shipments Data (분리배송/다박스 테스트용 다품목 주문 5건)
+const initialShipments: any[] = [
+  {
+    id: "TRK-2026-001",
+    orderId: "ORD-20260908-001",
+    recipient: "홍길동",
+    phone: "010-1234-5678",
+    altPhone: "02-555-1234",
+    zipCode: "04524",
+    address: "서울특별시 중구 세종대로 110",
+    detailAddress: "101동 1205호",
+    items: "클래식 울 싱글 재킷 (BLACK / 1) 2개, 실크 스카프 (NAVY / FREE) 1개",
+    quantity: 3,
+    carrier: "CJ대한통운",
+    trackingNumber: "-",
+    status: "Pending",
+    shippingMemo: "부재시 문앞에 놓아주세요 (안전배송)",
+    shippedDate: "-",
+    estimatedDelivery: "-",
+    packages: [
+      {
+        id: "PKG-001-1",
+        pkgIndex: 1,
+        items: "클래식 울 싱글 재킷 (BLACK / 1) 2개, 실크 스카프 (NAVY / FREE) 1개",
+        quantity: 3,
+        carrier: "CJ대한통운",
+        trackingNumber: "-",
+        status: "Pending",
+      },
+    ],
+  },
+  {
+    id: "TRK-2026-002",
+    orderId: "ORD-20260908-002",
+    recipient: "김민지",
+    phone: "010-9876-5432",
+    altPhone: "",
+    zipCode: "06035",
+    address: "서울특별시 강남구 가로수길 42",
+    detailAddress: "3층 302호",
+    items: "프리미엄 콤마 크롭 블라우스 (CREAM / 2) 1개, 플리츠 롱 스커트 (BLACK / 2) 2개",
+    quantity: 3,
+    carrier: "CJ대한통운",
+    trackingNumber: "-",
+    status: "Pending",
+    shippingMemo: "배송 전 연락 부탁드립니다.",
+    shippedDate: "-",
+    estimatedDelivery: "-",
+    packages: [
+      {
+        id: "PKG-002-1",
+        pkgIndex: 1,
+        items: "프리미엄 콤마 크롭 블라우스 (CREAM / 2) 1개, 플리츠 롱 스커트 (BLACK / 2) 2개",
+        quantity: 3,
+        carrier: "CJ대한통운",
+        trackingNumber: "-",
+        status: "Pending",
+      },
+    ],
+  },
+  {
+    id: "TRK-2026-003",
+    orderId: "ORD-20260908-003",
+    recipient: "이서준",
+    phone: "010-3344-5566",
+    altPhone: "031-700-8899",
+    zipCode: "13524",
+    address: "경기도 성남시 분당구 판교역로 166",
+    detailAddress: "카카오 판교아지트 B동 7층",
+    items: "시그니처 테일러드 슬랙스 (CHARCOAL / 3) 2개, 캐시미어 라운드 니트 (OATMEAL / 2) 1개",
+    quantity: 3,
+    carrier: "CJ대한통운",
+    trackingNumber: "-",
+    status: "Pending",
+    shippingMemo: "경비실에 맡겨주세요.",
+    shippedDate: "-",
+    estimatedDelivery: "-",
+    packages: [
+      {
+        id: "PKG-003-1",
+        pkgIndex: 1,
+        items: "시그니처 테일러드 슬랙스 (CHARCOAL / 3) 2개, 캐시미어 라운드 니트 (OATMEAL / 2) 1개",
+        quantity: 3,
+        carrier: "CJ대한통운",
+        trackingNumber: "-",
+        status: "Pending",
+      },
+    ],
+  },
+  {
+    id: "TRK-2026-004",
+    orderId: "ORD-20260908-004",
+    recipient: "박지영",
+    phone: "010-7788-9900",
+    altPhone: "",
+    zipCode: "48058",
+    address: "부산광역시 해운대구 센텀중앙로 78",
+    detailAddress: "센텀타워 1502호",
+    items: "하이엔드 실크 롱 슬립 원피스 (BEIGE / 1) 1개, 린넨 오버핏 셔츠 (WHITE / 1) 2개, 클래식 가죽 벨트 (BLACK / FREE) 1개",
+    quantity: 4,
+    carrier: "CJ대한통운",
+    trackingNumber: "-",
+    status: "Pending",
+    shippingMemo: "부재시 문앞에 놓아주세요.",
+    shippedDate: "-",
+    estimatedDelivery: "-",
+    packages: [
+      {
+        id: "PKG-004-1",
+        pkgIndex: 1,
+        items: "하이엔드 실크 롱 슬립 원피스 (BEIGE / 1) 1개, 린넨 오버핏 셔츠 (WHITE / 1) 2개, 클래식 가죽 벨트 (BLACK / FREE) 1개",
+        quantity: 4,
+        carrier: "CJ대한통운",
+        trackingNumber: "-",
+        status: "Pending",
+      },
+    ],
+  },
+  {
+    id: "TRK-2026-005",
+    orderId: "ORD-20260908-005",
+    recipient: "최수현",
+    phone: "010-5566-7788",
+    altPhone: "",
+    zipCode: "21984",
+    address: "인천광역시 연수구 송도과학로 32",
+    detailAddress: "송도IT센터 18층",
+    items: "벨티드 캐시미어 블렌드 코트 (CAMEL / 1) 1개, 모헤어 니트 머플러 (CHARCOAL / FREE) 2개",
+    quantity: 3,
+    carrier: "CJ대한통운",
+    trackingNumber: "-",
+    status: "Pending",
+    shippingMemo: "도착 전 연락 바랍니다.",
+    shippedDate: "-",
+    estimatedDelivery: "-",
+    packages: [
+      {
+        id: "PKG-005-1",
+        pkgIndex: 1,
+        items: "벨티드 캐시미어 블렌드 코트 (CAMEL / 1) 1개, 모헤어 니트 머플러 (CHARCOAL / FREE) 2개",
+        quantity: 3,
+        carrier: "CJ대한통운",
+        trackingNumber: "-",
+        status: "Pending",
+      },
+    ],
+  },
+];
 
 // Initial Inbound Stock Schedules (입고 일정)
 const initialInboundSchedules: any[] = [];
@@ -1971,10 +2117,20 @@ export default function AdminPage() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          // 과거 1개짜리 단일 상품 데이터이거나 비어있으면 다품목 테스트 데이터(initialShipments)로 자동 갱신
+          const isOutdatedSingleItem = Array.isArray(parsed) && parsed.length > 0 && !parsed[0].items?.includes(",");
+          if (Array.isArray(parsed) && parsed.length > 0 && !isOutdatedSingleItem) {
             setShipmentsList(parsed);
+          } else {
+            setShipmentsList(initialShipments);
+            localStorage.setItem("admin_shipments", JSON.stringify(initialShipments));
           }
-        } catch (e) { }
+        } catch (e) {
+          setShipmentsList(initialShipments);
+        }
+      } else {
+        setShipmentsList(initialShipments);
+        localStorage.setItem("admin_shipments", JSON.stringify(initialShipments));
       }
     }
   }, []);
@@ -1993,10 +2149,16 @@ export default function AdminPage() {
   const SHIPMENTS_PER_PAGE = 15;
 
   const [isAddShipmentModalOpen, setIsAddShipmentModalOpen] = useState(false);
+  const [newShipmentOrderId, setNewShipmentOrderId] = useState("");
   const [newShipmentRecipient, setNewShipmentRecipient] = useState("");
   const [newShipmentPhone, setNewShipmentPhone] = useState("");
+  const [newShipmentAltPhone, setNewShipmentAltPhone] = useState("");
+  const [newShipmentZipCode, setNewShipmentZipCode] = useState("");
   const [newShipmentAddress, setNewShipmentAddress] = useState("");
+  const [newShipmentDetailAddress, setNewShipmentDetailAddress] = useState("");
   const [newShipmentItems, setNewShipmentItems] = useState("");
+  const [newShipmentQuantity, setNewShipmentQuantity] = useState(1);
+  const [newShipmentShippingMemo, setNewShipmentShippingMemo] = useState("부재시 문앞에 놓아주세요 (안전배송)");
   const [newShipmentCarrier, setNewShipmentCarrier] = useState("CJ대한통운");
   const [newShipmentTracking, setNewShipmentTracking] = useState("");
   const [newShipmentStatus, setNewShipmentStatus] = useState("Pending");
@@ -2096,31 +2258,83 @@ export default function AdminPage() {
 
   const handleExportCjExcel = () => {
     try {
-      const pendingShipments = shipmentsList.filter((s) => s.status === "Pending");
+      // Pending + Partially Shipped 주문 포함 (일부 박스만 등록된 경우도 나머지 박스 추출)
+      const pendingShipments = shipmentsList.filter((s) => s.status === "Pending" || s.status === "Partially Shipped");
       if (pendingShipments.length === 0) {
-        triggerToast("다운로드할 배송 준비 중인 주문 건이 없습니다.");
+        triggerToast("다운로드할 배송 준비/부분배송 중인 주문 건이 없습니다.");
         return;
       }
-      const exportData = pendingShipments.map((s) => ({
-        "주문번호": s.orderId || s.id,
-        "받는분성명": s.recipient,
-        "받는분전화번호": s.phone,
-        "받는분주소": s.address,
-        "상품명": s.items,
-        "수량": 1,
-        "배송메세지": "부재시 문앞에 놓아주세요 (안전배송)",
-        "택배사": "CJ대한통운",
-        "보내는분": "주식회사 초이콤마",
-        "보내는분전화번호": "02-1588-0000",
-        "보내는분주소": cjSenderAddress || "",
-      }));
-      const ws = XLSX.utils.json_to_sheet(exportData);
+
+      // CJ대한통운 LoIS 규격 (패키지/박스 단위로 1행씩, 분리배송 지원)
+      const exportData: any[] = [];
+
+      pendingShipments.forEach((s) => {
+        let zipCode = s.zipCode || "";
+        let fullAddress = s.address || "";
+        const zipMatch = fullAddress.match(/\((\d{5})\)/);
+        if (zipMatch && !zipCode) zipCode = zipMatch[1];
+
+        const pkgs = (s.packages && s.packages.length > 0)
+          ? s.packages
+          : [{ id: `${s.id}-1`, pkgIndex: 1, items: s.items || "초이콤마 의류 상품", quantity: Number(s.quantity) || 1, carrier: s.carrier || "CJ대한통운", trackingNumber: s.trackingNumber || "-", status: s.status || "Pending" }];
+
+        // 이미 운송장이 등록된(In Transit/Delivered) 박스는 제외 — 미등록 박스만 출력
+        const pendingPkgs = pkgs.filter((pkg: any) => !pkg.trackingNumber || pkg.trackingNumber === "-" || pkg.trackingNumber.trim() === "");
+        const targetPkgs = pendingPkgs.length > 0 ? pendingPkgs : pkgs;
+
+        targetPkgs.forEach((pkg: any) => {
+          const isSingle = pkgs.length === 1;
+          const pkgOrderNo = isSingle ? (s.orderId || s.id) : `${s.orderId || s.id}-${pkg.pkgIndex}`;
+
+          exportData.push({
+            "고객주문번호": pkgOrderNo,
+            "받는분성명": s.recipient || "",
+            "받는분주소(전체, 분할)": fullAddress,
+            "받는분전화번호": s.phone || "",
+            "받는분기타연락처": s.altPhone || "",
+            "받는분우편번호": zipCode,
+            "받는분상세주소(분할)": s.detailAddress || "",
+            "품목명": pkg.items || s.items || "초이콤마 의류 상품",
+            "박스수량": Number(pkg.quantity) || 1,
+            "배송메세지1": s.shippingMemo || "부재시 문앞에 놓아주세요 (안전배송)",
+          });
+        });
+      });
+
+      const ws = XLSX.utils.json_to_sheet(exportData, {
+        header: ["고객주문번호", "받는분성명", "받는분주소(전체, 분할)", "받는분전화번호", "받는분기타연락처", "받는분우편번호", "받는분상세주소(분할)", "품목명", "박스수량", "배송메세지1"],
+      });
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "CJ대한통운_로이스파셀");
-      XLSX.writeFile(wb, `CJ대한통운_로이스파셀_발송접수_${new Date().toISOString().split("T")[0]}.xlsx`);
-      triggerToast(`CJ대한통운 로이스 파셀(LoIS Parcel) 접수용 엑셀 파일(${pendingShipments.length}건)이 다운로드되었습니다.`);
+      XLSX.utils.book_append_sheet(wb, ws, "초이콤마_자사몰");
+
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+      XLSX.writeFile(wb, `택배사 접수용_${dateStr}.xlsx`);
+      triggerToast(`택배사 접수용 엑셀 파일(${exportData.length}개 패키지/박스 행)이 다운로드되었습니다.`);
     } catch (e) {
       triggerToast("엑셀 파일 생성 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleOpenNewShipmentPostcode = () => {
+    if (typeof window !== "undefined" && (window as any).daum?.Postcode) {
+      new (window as any).daum.Postcode({
+        oncomplete: function (data: any) {
+          let fullAddress = data.roadAddress || data.jibunAddress;
+          let extraAddress = "";
+          if (data.addressType === "R") {
+            if (data.bname !== "") extraAddress += data.bname;
+            if (data.buildingName !== "") {
+              extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
+            }
+            fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
+          }
+          setNewShipmentZipCode(data.zonecode || "");
+          setNewShipmentAddress(fullAddress);
+        },
+      }).open();
+    } else {
+      triggerToast("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
     }
   };
 
@@ -2130,27 +2344,62 @@ export default function AdminPage() {
       triggerToast("수령인 이름을 입력해 주세요.");
       return;
     }
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const generatedOrderId = newShipmentOrderId.trim() || `ORD-${dateStr}-${String(Date.now()).slice(-3)}`;
+    const generatedTrkId = `TRK-${dateStr}-${String(Date.now()).slice(-4)}`;
+    const itemsName = newShipmentItems.trim() || "초이콤마 대표 의류 상품";
+    const qty = Number(newShipmentQuantity) || 1;
+
     const newShipment = {
-      id: `TRK-2026-${String(Date.now()).slice(-4)}`,
-      orderId: `ORD-2026-${String(Date.now()).slice(-4)}`,
+      id: generatedTrkId,
+      orderId: generatedOrderId,
       recipient: newShipmentRecipient.trim(),
       phone: newShipmentPhone.trim() || "010-0000-0000",
+      altPhone: newShipmentAltPhone.trim() || "",
+      zipCode: newShipmentZipCode.trim() || "",
       address: newShipmentAddress.trim() || "-",
-      items: newShipmentItems.trim() || "주문 상품 1건",
+      detailAddress: newShipmentDetailAddress.trim() || "",
+      items: `${itemsName} ${qty}개`,
+      quantity: qty,
       carrier: newShipmentCarrier,
-      trackingNumber: newShipmentTracking.trim() || String(Math.floor(100000000000 + Math.random() * 900000000000)),
+      trackingNumber: newShipmentTracking.trim() || "-",
       status: newShipmentStatus,
+      shippingMemo: newShipmentShippingMemo.trim() || "부재시 문앞에 놓아주세요 (안전배송)",
       shippedDate: newShipmentStatus === "Pending" ? "-" : new Date().toISOString().split("T")[0],
       estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0],
+      packages: [
+        {
+          id: `PKG-${String(Date.now()).slice(-4)}-1`,
+          pkgIndex: 1,
+          items: `${itemsName} ${qty}개`,
+          quantity: qty,
+          carrier: newShipmentCarrier,
+          trackingNumber: newShipmentTracking.trim() || "-",
+          status: newShipmentStatus,
+        },
+      ],
     };
+
     setShipmentsList([newShipment, ...shipmentsList]);
     setIsAddShipmentModalOpen(false);
+
+    // Reset Form
+    setNewShipmentOrderId("");
     setNewShipmentRecipient("");
     setNewShipmentPhone("");
+    setNewShipmentAltPhone("");
+    setNewShipmentZipCode("");
     setNewShipmentAddress("");
+    setNewShipmentDetailAddress("");
     setNewShipmentItems("");
+    setNewShipmentQuantity(1);
+    setNewShipmentShippingMemo("부재시 문앞에 놓아주세요 (안전배송)");
     setNewShipmentTracking("");
-    triggerToast(`운송장 및 배송 건(${newShipment.id})이 새로 등록되었습니다!`);
+    setNewShipmentStatus("Pending");
+
+    triggerToast(`택배사 접수용 주문/배송 건(${newShipment.orderId})이 새로 등록되었습니다!`);
   };
 
   const handleOpenEditShipment = (shipment: any) => {
@@ -7073,18 +7322,18 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ADD SHIPMENT MODAL */}
+      {/* ADD SHIPMENT MODAL (택배사 접수 표준 양식 맞춤) */}
       {isAddShipmentModalOpen && (
-        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 my-8 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
                   <Truck className="w-5 h-5 text-sky-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-extrabold text-neutral-950">신규 배송건 / 운송장 등록</h3>
-                  <p className="text-xs text-neutral-500">배송 정보 및 택배사 운송장 등록</p>
+                  <h3 className="text-lg font-extrabold text-neutral-950">수동 주문/배송 접수 등록</h3>
+                  <p className="text-xs text-neutral-500">CJ대한통운 LoIS 파일접수 규격 10개 필드 완벽 호환</p>
                 </div>
               </div>
               <button
@@ -7096,59 +7345,140 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <form onSubmit={handleAddShipmentSubmit} className="space-y-4">
+            <form onSubmit={handleAddShipmentSubmit} className="space-y-4 overflow-y-auto pr-1 flex-1">
+              {/* 고객주문번호 */}
               <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-1">수령인 성명 *</label>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">고객주문번호</label>
+                <input
+                  type="text"
+                  value={newShipmentOrderId}
+                  onChange={(e) => setNewShipmentOrderId(e.target.value)}
+                  placeholder="미입력 시 ORD-YYYYMMDD-XXX 자동 생성"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              {/* 수령인 성명 */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">받는분 성명 *</label>
                 <input
                   type="text"
                   required
                   value={newShipmentRecipient}
                   onChange={(e) => setNewShipmentRecipient(e.target.value)}
                   placeholder="예: 홍길동"
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-1">연락처</label>
-                <input
-                  type="text"
-                  value={newShipmentPhone}
-                  onChange={(e) => setNewShipmentPhone(e.target.value)}
-                  placeholder="010-0000-0000"
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-1">배송지 주소</label>
-                <input
-                  type="text"
-                  value={newShipmentAddress}
-                  onChange={(e) => setNewShipmentAddress(e.target.value)}
-                  placeholder="(우편번호) 주소 상세주소"
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-1">주문 상품 명칭</label>
-                <input
-                  type="text"
-                  value={newShipmentItems}
-                  onChange={(e) => setNewShipmentItems(e.target.value)}
-                  placeholder="예: 클래식 울 재킷 x 1"
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                />
-              </div>
-
+              {/* 전화번호 & 기타연락처 */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">택배사 선택</label>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">받는분 전화번호 *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newShipmentPhone}
+                    onChange={(e) => setNewShipmentPhone(e.target.value)}
+                    placeholder="010-1234-5678"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">기타 연락처 (선택)</label>
+                  <input
+                    type="text"
+                    value={newShipmentAltPhone}
+                    onChange={(e) => setNewShipmentAltPhone(e.target.value)}
+                    placeholder="02-555-1234"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+              </div>
+
+              {/* 주소 및 우편번호 */}
+              <div className="space-y-2 bg-neutral-50/70 p-3.5 rounded-2xl border border-neutral-200/80">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-extrabold text-neutral-900">배송지 주소 / 우편번호 *</label>
+                  <button
+                    type="button"
+                    onClick={handleOpenNewShipmentPostcode}
+                    className="bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-[11px] px-2.5 py-1 rounded-lg transition-all cursor-pointer shadow-2xs"
+                  >
+                    우편번호 검색
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    value={newShipmentZipCode}
+                    onChange={(e) => setNewShipmentZipCode(e.target.value)}
+                    placeholder="우편번호"
+                    className="col-span-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-mono text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                  />
+                  <input
+                    type="text"
+                    required
+                    value={newShipmentAddress}
+                    onChange={(e) => setNewShipmentAddress(e.target.value)}
+                    placeholder="기본 주소 (도로명 / 지번)"
+                    className="col-span-2 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-950 font-medium focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={newShipmentDetailAddress}
+                  onChange={(e) => setNewShipmentDetailAddress(e.target.value)}
+                  placeholder="상세 주소 (동/호수, 층 등)"
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              {/* 품목명 & 박스수량 */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">품목명 *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newShipmentItems}
+                    onChange={(e) => setNewShipmentItems(e.target.value)}
+                    placeholder="예: 클래식 울 싱글 재킷 (BLACK / 1)"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+                <div className="col-span-1">
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">박스 수량</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newShipmentQuantity}
+                    onChange={(e) => setNewShipmentQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-mono font-bold text-center text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+              </div>
+
+              {/* 배송메세지1 */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">배송메세지1</label>
+                <input
+                  type="text"
+                  value={newShipmentShippingMemo}
+                  onChange={(e) => setNewShipmentShippingMemo(e.target.value)}
+                  placeholder="예: 부재시 문앞에 놓아주세요 (안전배송)"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              {/* 택배사 & 운송장 번호 */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">택배사</label>
                   <select
                     value={newShipmentCarrier}
                     onChange={(e) => setNewShipmentCarrier(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
                   >
                     <option value="CJ대한통운">CJ대한통운</option>
                     <option value="우체국택배">우체국택배</option>
@@ -7157,33 +7487,33 @@ export default function AdminPage() {
                     <option value="롯데택배">롯데택배</option>
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">운송장 번호</label>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">운송장 번호 (선택)</label>
                   <input
                     type="text"
                     value={newShipmentTracking}
                     onChange={(e) => setNewShipmentTracking(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                    placeholder="숫자 입력 (미입력시 자동생성)"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    placeholder="미부여 시 '-' 유지"
                   />
                 </div>
               </div>
 
+              {/* 초기 배송 상태 */}
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">초기 배송 상태</label>
                 <select
                   value={newShipmentStatus}
                   onChange={(e) => setNewShipmentStatus(e.target.value)}
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
                 >
-                  <option value="Pending">배송 준비 중</option>
+                  <option value="Pending">배송 준비 중 (로이스 엑셀 접수 대상)</option>
                   <option value="In Transit">배송 중 (In Transit)</option>
                   <option value="Delivered">배송 완료 (Delivered)</option>
                 </select>
               </div>
 
-              <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
+              <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsAddShipmentModalOpen(false)}
@@ -7196,7 +7526,7 @@ export default function AdminPage() {
                   className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <Truck className="w-4 h-4 text-sky-400" />
-                  <span>배송 등록 완료</span>
+                  <span>주문/배송 접수 등록</span>
                 </button>
               </div>
             </form>

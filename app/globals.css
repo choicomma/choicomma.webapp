@@ -17,11 +17,14 @@
   }
 }
 
-/* Hide Next.js Development Error Overlay Portal on mobile */
+/* Enable full text selection on Next.js Error Overlay & Code boxes */
 nextjs-portal,
-#nextjs__container_errors_label,
-[data-nextjs-dialog-overlay] {
-  display: none !important;
+[data-nextjs-dialog-overlay],
+[data-nextjs-toast],
+pre,
+code {
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 /* Hide number input spinner arrows */

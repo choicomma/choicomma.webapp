@@ -40,6 +40,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     liveTag: "라이브",
     userName: "고객님",
     nowText: "방금 전",
+    typingText: "상담원이 답변을 작성 중입니다...",
     imageAlt: "첨부 이미지",
     previewAlt: "첨부 미리보기",
   },
@@ -57,6 +58,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     liveTag: "LIVE",
     userName: "Customer",
     nowText: "Just now",
+    typingText: "Care specialist is typing a reply...",
     imageAlt: "Attached image",
     previewAlt: "Attached preview",
   },
@@ -74,6 +76,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     liveTag: "ライブ",
     userName: "お客様",
     nowText: "たった今",
+    typingText: "担当者が返信を入力中です...",
     imageAlt: "添付画像",
     previewAlt: "添付プレビュー",
   },
@@ -91,6 +94,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     liveTag: "在线",
     userName: "顾客",
     nowText: "刚刚",
+    typingText: "专属客服正在输入回复...",
     imageAlt: "附件图片",
     previewAlt: "附件预览",
   },
@@ -108,6 +112,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     liveTag: "EN DIRECT",
     userName: "Client",
     nowText: "À l'instant",
+    typingText: "Le conseiller rédige une réponse...",
     imageAlt: "Image jointe",
     previewAlt: "Aperçu joint",
   },
@@ -125,6 +130,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     liveTag: "LIVE",
     userName: "Kunde",
     nowText: "Gerade eben",
+    typingText: "Berater tippt eine Antwort...",
     imageAlt: "Angehängtes Bild",
     previewAlt: "Angehängte Vorschau",
   },
@@ -137,11 +143,12 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     close: "Cerrar",
     welcomeText: "¡Hola! Bienvenido al equipo de Atención en Vivo 1:1 de choicomma. 💫\nConsulta lo que desees sobre productos, envíos o medidas personalizadas.",
     autoReplyText: "Hemos recibido tu mensaje. Nuestro estilista VIP te responderá en breve. ¡Por favor espera un momento! ☕",
-    closeNoticeText: "🔒 [Aviso] La sesión de consulta 1:1 con nuestro miembro VIP ha finalizado. Si tiene más preguntas, no dude en dejar un nuevo mensaje en cualquier momento. ¡Gracias! 💫",
+    closeNoticeText: "🔒 [Aviso] La session de consulta 1:1 con nuestro miembro VIP ha finalizado. Si tiene más preguntas, no dude en dejar un nuevo mensaje en cualquier momento. ¡Gracias! 💫",
     teamName: "Equipo VIP choicomma",
     liveTag: "EN VIVO",
     userName: "Cliente",
     nowText: "Hace un momento",
+    typingText: "El asesor está escribiendo...",
     imageAlt: "Imagen adjunta",
     previewAlt: "Vista previa adjunta",
   },
@@ -156,6 +163,7 @@ export function LiveChatWidget() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentLang, setCurrentLang] = useState("ko");
+  const [isTyping, setIsTyping] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -244,13 +252,13 @@ export function LiveChatWidget() {
     };
   }, [currentLang]);
 
-  // Scroll to bottom on new message
+  // Scroll to bottom on new message or typing indicator
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       setUnreadCount(0);
     }
-  }, [messages, isOpen]);
+  }, [messages, isTyping, isOpen]);
 
   // LiveChatWidget is always visible for all users and members
 
@@ -277,26 +285,87 @@ export function LiveChatWidget() {
     const chatKey = getUserChatKey();
     localStorage.setItem(chatKey, JSON.stringify(updated));
 
-    // Register active user to admin chat sessions list
+    // Register active user to admin chat sessions list with accurate grade/tier
     if (typeof window !== "undefined") {
-      const uEmail = localStorage.getItem("membership_user_email") || "guest@choicomma.com";
-      const uName = localStorage.getItem("membership_user_name") || "고객님";
+      const email = localStorage.getItem("membership_user_email");
+      const phone = localStorage.getItem("membership_user_phone");
+      const rawId = email || phone || "guest";
+      const uEmail = email || "guest@choicomma.com";
+      const uName = localStorage.getItem("membership_user_name") || (email ? "회원" : "실시간 방문 고객");
+
+      // Determine real tier/grade from admin_customers or user_grade
+      let userTier = "GENERAL";
+      let badgeColor = "bg-neutral-200 text-neutral-800 font-bold";
+
+      if (uEmail === "admin" || uEmail === "admin@choicomma.com" || localStorage.getItem("user_role") === "admin") {
+        userTier = "관리자";
+        badgeColor = "bg-rose-600 text-white font-black";
+      } else if (!email) {
+        userTier = "비회원";
+        badgeColor = "bg-neutral-200 text-neutral-700 font-bold";
+      } else {
+        const savedCustomers = localStorage.getItem("admin_customers");
+        let foundGrade = "";
+        if (savedCustomers) {
+          try {
+            const list: any[] = JSON.parse(savedCustomers);
+            const found = list.find((c: any) =>
+              (c.email && c.email.toLowerCase() === uEmail.toLowerCase()) ||
+              (c.phone && phone && c.phone.replace(/[^0-9]/g, "") === phone.replace(/[^0-9]/g, "")) ||
+              (c.name && c.name === uName)
+            );
+            if (found && (found.grade || found.tier)) {
+              foundGrade = (found.grade || found.tier).toUpperCase();
+            }
+          } catch (e) {}
+        }
+        if (!foundGrade) {
+          foundGrade = (localStorage.getItem("user_grade") || "GENERAL").toUpperCase();
+        }
+
+        if (foundGrade.includes("VVIP") || foundGrade.includes("BLACK")) {
+          userTier = "VVIP";
+          badgeColor = "bg-neutral-950 text-amber-400 font-black border border-amber-400/50";
+        } else if (foundGrade.includes("PLATINUM") || foundGrade.includes("플래티넘")) {
+          userTier = "PLATINUM";
+          badgeColor = "bg-purple-100 text-purple-800 font-black border border-purple-300";
+        } else if (foundGrade.includes("GOLD") || foundGrade.includes("골드")) {
+          userTier = "GOLD";
+          badgeColor = "bg-amber-100 text-amber-900 font-black border border-amber-300";
+        } else if (foundGrade.includes("SILVER") || foundGrade.includes("실버")) {
+          userTier = "SILVER";
+          badgeColor = "bg-slate-200 text-slate-800 font-black border border-slate-300";
+        } else if (foundGrade.includes("VIP")) {
+          userTier = "VIP";
+          badgeColor = "bg-amber-400 text-neutral-950 font-black";
+        } else {
+          userTier = "일반회원";
+          badgeColor = "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300";
+        }
+      }
+
       const savedSessions = localStorage.getItem("admin_chat_sessions");
       let sessionList: any[] = [];
       if (savedSessions) {
         try { sessionList = JSON.parse(savedSessions); } catch (err) { }
       }
-      if (!sessionList.some((s) => s.email?.toLowerCase() === uEmail.toLowerCase() || s.id?.toLowerCase() === uEmail.toLowerCase())) {
-        const newSession = {
-          id: uEmail,
-          name: `${uName} 회원님`,
-          email: uEmail,
-          tier: "VIP",
-          badgeColor: "bg-amber-400 text-neutral-950 font-black",
-          status: "online",
-        };
-        localStorage.setItem("admin_chat_sessions", JSON.stringify([newSession, ...sessionList]));
+
+      const updatedSession = {
+        id: rawId,
+        name: uName.endsWith("님") ? uName : `${uName}님`,
+        email: uEmail,
+        tier: userTier,
+        badgeColor: badgeColor,
+        status: "online",
+      };
+
+      const existingIndex = sessionList.findIndex((s) => s.id?.toLowerCase() === rawId.toLowerCase() || s.email?.toLowerCase() === uEmail.toLowerCase());
+      if (existingIndex >= 0) {
+        sessionList[existingIndex] = { ...sessionList[existingIndex], ...updatedSession };
+      } else {
+        sessionList = [updatedSession, ...sessionList];
       }
+      localStorage.setItem("admin_chat_sessions", JSON.stringify(sessionList));
     }
 
     window.dispatchEvent(new CustomEvent("live_chat_updated"));
@@ -348,7 +417,21 @@ export function LiveChatWidget() {
     }
 
     if (isAutoEnabled) {
+      // 1. 대기시간(말풍선 등장 전 대기)은 5초(5000ms)로 항상 고정
+      const fixedWaitDelay = 5000; 
+
+      // 2. '상담원이 답변을 작성 중입니다...' 말풍선이 켜진 후 답변이 전송되기까지의 지연 속도는 관리자 설정(autoDelayMs)으로 동작
+      const typingDuration = Math.max(autoDelayMs, 1000); 
+      const totalDeliveryTime = fixedWaitDelay + typingDuration; // 5초 대기 + 관리자 설정 지연시간 후 답변 전송
+
+      // [5초 고정 대기 후] '상담원이 답변을 작성 중입니다...' 말풍선 등장
       setTimeout(() => {
+        setIsTyping(true);
+      }, fixedWaitDelay);
+
+      // [말풍선 등장 후 설정된 지연시간 동안 타이핑 후] 최종 자동 답변 전송
+      setTimeout(() => {
+        setIsTyping(false);
         const savedLatest = localStorage.getItem(chatKey);
         let latestList: ChatMessage[] = updated;
         try {
@@ -369,7 +452,7 @@ export function LiveChatWidget() {
           localStorage.setItem(chatKey, JSON.stringify(updatedWithAuto));
           window.dispatchEvent(new CustomEvent("live_chat_updated"));
         }
-      }, autoDelayMs);
+      }, totalDeliveryTime);
     }
   };
 
@@ -500,13 +583,11 @@ export function LiveChatWidget() {
               const isUser = msg.sender === "user";
               const displayName = isUser ? (t.userName || "Customer") : t.teamName;
               const displayText =
-                msg.id === "msg-welcome-1" || (msg.sender === "admin" && (msg.text?.includes("안녕하세요") || msg.text?.includes("Hello") || msg.text?.includes("こんにちは") || msg.text?.includes("您好") || msg.text?.includes("Bonjour") || msg.text?.includes("Hallo") || msg.text?.includes("¡Hola")))
+                msg.id === "msg-welcome-1" && currentLang !== "ko"
                   ? t.welcomeText
-                  : msg.id?.startsWith("admin-msg-auto-") || (msg.sender === "admin" && (msg.text?.includes("확인하였습니다") || msg.text?.includes("received") || msg.text?.includes("確認") || msg.text?.includes("reçu") || msg.text?.includes("Vielen Dank") || msg.text?.includes("recibido")))
-                    ? t.autoReplyText
-                    : msg.id?.startsWith("admin-close") || (msg.sender === "admin" && (msg.text?.includes("상담이 종료되었습니다") || msg.text?.includes("consultation session") || msg.text?.includes("相談セッション") || msg.text?.includes("咨询已结束") || msg.text?.includes("est terminée") || msg.text?.includes("wurde beendet") || msg.text?.includes("ha finalizado")))
-                      ? t.closeNoticeText
-                      : msg.text;
+                  : msg.id?.startsWith("admin-close") && currentLang !== "ko"
+                    ? t.closeNoticeText
+                    : msg.text;
               const displayTime =
                 msg.timestamp === "방금 전" || msg.timestamp === "NOW" || msg.timestamp === "Just now" || msg.timestamp === "たった今" || msg.timestamp === "刚刚"
                   ? t.nowText
@@ -546,6 +627,27 @@ export function LiveChatWidget() {
                 </div>
               );
             })}
+
+            {/* Real-time Typing Indicator Bubble */}
+            {isTyping && (
+              <div className="flex flex-col items-start space-y-1 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                <span className="text-[10px] font-bold text-neutral-400 px-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                  {t.teamName}
+                </span>
+                <div className="bg-white border border-neutral-200/90 rounded-2xl rounded-tl-xs px-4 py-3 shadow-2xs flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 animate-bounce" />
+                  </div>
+                  <span className="text-[11px] font-bold text-neutral-500 ml-1">
+                    {t.typingText}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
