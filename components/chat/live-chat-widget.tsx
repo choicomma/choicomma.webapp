@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
+import { DEFAULT_AUTO_RULES, type AutoReplyRule } from "@/app/admin/components/inquiries-management";
 
 export interface ChatMessage {
   id: string;
@@ -377,6 +378,8 @@ export function LiveChatWidget() {
     let isAutoEnabled = true;
     let autoDelayMs = 1500;
     let autoReplyMessage = t.autoReplyText;
+    // Evaluate keyword matching from DEFAULT_AUTO_RULES or saved rules
+    let activeRules: AutoReplyRule[] = DEFAULT_AUTO_RULES;
 
     if (typeof window !== "undefined") {
       const savedEnabled = localStorage.getItem("admin_auto_reply_enabled");
@@ -401,19 +404,23 @@ export function LiveChatWidget() {
       if (savedRules) {
         try {
           const rules = JSON.parse(savedRules);
-          if (Array.isArray(rules)) {
-            const userTextLower = (newMsg.text || "").toLowerCase();
-            const matchedRule = rules.find((rule: any) => {
-              if (!rule.enabled) return false;
-              const kws = (rule.keywords || "").split(",").map((k: string) => k.trim().toLowerCase()).filter(Boolean);
-              return kws.some((kw: string) => userTextLower.includes(kw));
-            });
-            if (matchedRule && matchedRule.replyText) {
-              autoReplyMessage = matchedRule.replyText;
-            }
+          if (Array.isArray(rules) && rules.length > 0) {
+            activeRules = rules;
           }
         } catch (e) {}
       }
+    }
+
+    // Keyword match against active rules
+    const userTextLower = (newMsg.text || "").toLowerCase();
+    const matchedRule = activeRules.find((rule: AutoReplyRule) => {
+      if (!rule.enabled) return false;
+      const kws = (rule.keywords || "").split(",").map((k: string) => k.trim().toLowerCase()).filter(Boolean);
+      return kws.some((kw: string) => userTextLower.includes(kw));
+    });
+
+    if (matchedRule && matchedRule.replyText) {
+      autoReplyMessage = matchedRule.replyText;
     }
 
     if (isAutoEnabled) {
