@@ -530,7 +530,7 @@ export function LiveChatWidget() {
 
       {/* Floating Chat Box Window */}
       {isOpen && (
-        <div className="bg-white border border-neutral-200/90 rounded-3xl shadow-2xl w-[calc(100vw-32px)] max-w-[360px] sm:w-[400px] h-[78vh] max-h-[540px] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 backdrop-blur-xl">
+        <div className="bg-white border border-neutral-200/90 rounded-3xl shadow-2xl w-[calc(100vw-32px)] max-w-[360px] sm:w-[400px] h-[78vh] max-h-[540px] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 backdrop-blur-xl">
           {/* Header Bar */}
           <div className="bg-neutral-950 text-white px-5 py-4 flex items-center justify-between shrink-0 shadow-md">
             <div className="flex items-center gap-3">
@@ -686,7 +686,7 @@ export function LiveChatWidget() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder={t.placeholder}
-              className="flex-1 bg-neutral-50 border border-neutral-200/80 rounded-xl px-3 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+              className="flex-1 bg-neutral-50 border border-neutral-200/80 rounded-xl px-3 py-2 text-base sm:text-xs font-medium text-neutral-950 focus:outline-none focus:border-neutral-950"
             />
 
             <button

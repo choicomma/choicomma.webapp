@@ -668,7 +668,7 @@ export function OrdersManagement({
                                     {pkg.trackingNumber}<ExternalLink className="w-2.5 h-2.5 text-sky-500" />
                                   </a>
                                 ) : (
-                                  <span className="text-[10px] font-mono text-amber-600 font-bold">미등록</span>
+                                  <span className="text-[10px] font-mono text-neutral-800 font-bold">미등록</span>
                                 )}
                               </div>
                             ))}
@@ -679,8 +679,8 @@ export function OrdersManagement({
                               {ship.trackingNumber}<ExternalLink className="w-3 h-3 text-sky-500" />
                             </a>
                           ) : (
-                            <span className="text-xs font-mono text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                              미등록 (로이스 파셀 접수 대기)
+                            <span className="text-xs font-mono text-neutral-800 font-bold bg-neutral-100 px-2 py-0.5 rounded-md border border-neutral-300">
+                              미등록
                             </span>
                           )
                         )}
