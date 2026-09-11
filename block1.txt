@@ -1,0 +1,39 @@
+  // VIP Customer Inquiry State
+  const [inquiriesList, setInquiriesList] = useState<any[]>([]);
+  const [zoomedInquiryImage, setZoomedInquiryImage] = useState<string | null>(null);
+  const [inquiriesFilter, setInquiriesFilter] = useState<"all" | "pending" | "completed">("all");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("admin_customer_inquiries");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setInquiriesList(parsed);
+          }
+        } catch (e) { }
+      }
+    }
+  }, []);
+
+  // Sync inquiries state to localStorage & live refresh
+  React.useEffect(() => {
+    const syncInquiries = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("admin_customer_inquiries");
+        if (saved) {
+          try {
+            setInquiriesList(JSON.parse(saved));
+          } catch (e) { }
+        }
+      }
+    };
+    window.addEventListener("storage", syncInquiries);
+    const interval = setInterval(syncInquiries, 2000);
+    return () => {
+      window.removeEventListener("storage", syncInquiries);
+      clearInterval(interval);
+    };
+  }, []);
+

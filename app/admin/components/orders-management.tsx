@@ -20,6 +20,7 @@ import {
   Printer,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { CjLabelPrint } from "./cj-label-print";
 
 interface OrdersManagementProps {
   shipmentsList: any[];
@@ -34,10 +35,12 @@ interface OrdersManagementProps {
   cjContractNo: string;
   setIsAddShipmentModalOpen: (val: boolean) => void;
   setIsCjConfigModalOpen: (val: boolean) => void;
-  handleIssueCjLogisticsTracking?: () => void;
+  handleIssueCjLogisticsTracking?: (ids?: string | string[]) => void;
   handleExportCjExcel: () => void;
   handleOpenEditShipment: (shipment: any) => void;
   handleDeleteShipment: (id: string) => void;
+  cjPrintData?: any;
+  setCjPrintData?: (val: any) => void;
 }
 
 export function OrdersManagement({
@@ -53,9 +56,12 @@ export function OrdersManagement({
   cjContractNo,
   setIsAddShipmentModalOpen,
   setIsCjConfigModalOpen,
+  handleIssueCjLogisticsTracking,
   handleExportCjExcel,
   handleOpenEditShipment,
   handleDeleteShipment,
+  cjPrintData,
+  setCjPrintData,
 }: OrdersManagementProps) {
   const [isMounted, setIsMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -66,6 +72,9 @@ export function OrdersManagement({
 
   const [shipmentPage, setShipmentPage] = useState(1);
   const SHIPMENTS_PER_PAGE = 15;
+
+  // 배송 건 다중 선택 상태 (체크박스)
+  const [selectedShipmentIds, setSelectedShipmentIds] = useState<Set<string>>(new Set());
 
   // 주문서(거래명세서) 인쇄 모달 상태
   const [isOrderSheetModalOpen, setIsOrderSheetModalOpen] = useState(false);
@@ -196,7 +205,40 @@ export function OrdersManagement({
     alert(`📦 [${splitTargetShipment.orderId}] 배송 건이 ${newPackagesList.length}개의 박스(패키지)로 분리되었습니다.`);
   };
 
-
+  // CJ 송장 인쇄 핸들러
+  const handlePrintSelected = () => {
+    const ids = Array.from(selectedShipmentIds);
+    const targetOrders = shipmentsList.filter(s => ids.includes(s.id) && s.trackingNumber && s.trackingNumber !== "-");
+    
+    if (targetOrders.length === 0) {
+      alert("선택된 주문 중 송장(트래킹) 번호가 발급된 건이 없습니다.\n\n먼저 '송장 일괄 발급' 버튼을 눌러 채번을 완료해 주세요.");
+      return;
+    }
+    
+    if (!window.confirm(`송장이 발급된 ${targetOrders.length}건의 주문에 대해 송장 라벨을 인쇄하시겠습니까?`)) {
+      return;
+    }
+    
+    const newPrintData = targetOrders.map(targetOrder => ({
+      orderId: targetOrder.orderId,
+      recipient: targetOrder.recipient,
+      phone: targetOrder.phone,
+      zipCode: targetOrder.zipCode,
+      address: targetOrder.address,
+      detailAddress: targetOrder.detailAddress,
+      items: targetOrder.items,
+      shippingMemo: targetOrder.shippingMemo,
+      trackingNumber: targetOrder.trackingNumber,
+      clsfCd: (targetOrder as any).cjClsfCd || "4W44",
+      subClsfCd: (targetOrder as any).cjSubClsfCd || "-4g",
+      clldlvempNickNm: (targetOrder as any).cjClldlvempNickNm || "A01-1구역",
+      clsfAddr: (targetOrder as any).cjClsfAddr || targetOrder.detailAddress || "",
+      clldlvBranNm: (targetOrder as any).cjClldlvBranNm || "대한통운",
+      p2pCd: (targetOrder as any).cjP2pCd || "P1",
+    }));
+    
+    setCjPrintData?.(newPrintData);
+  };
 
   // CJ LoIS Invoice Excel Upload Handler (CJ대한통운 건별 출력데이터 상세 및 표준 엑셀 완벽 지원)
   const handleUploadInvoiceExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -474,6 +516,43 @@ export function OrdersManagement({
             <span>택배사 접수용 다운로드</span>
           </button>
 
+          {/* 선택 건 송장 일괄 발급 */}
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedShipmentIds.size === 0) return;
+              if (window.confirm(`선택한 ${selectedShipmentIds.size}건의 주문에 대해 송장(트래킹) 번호를 일괄 발급하시겠습니까?`)) {
+                handleIssueCjLogisticsTracking?.(Array.from(selectedShipmentIds));
+              }
+            }}
+            disabled={selectedShipmentIds.size === 0}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all border ${
+              selectedShipmentIds.size > 0
+                ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                : "bg-neutral-800 text-neutral-500 border-neutral-700 cursor-not-allowed opacity-60"
+            }`}
+            title="선택한 주문 건들의 CJ대한통운 송장 번호를 일괄 채번 및 등록합니다"
+          >
+            <FileText className="w-4 h-4" />
+            <span>선택 건 송장 일괄 발급 ({selectedShipmentIds.size})</span>
+          </button>
+
+          {/* 선택 건 송장 일괄 출력 */}
+          <button
+            type="button"
+            onClick={handlePrintSelected}
+            disabled={selectedShipmentIds.size === 0}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all border ${
+              selectedShipmentIds.size > 0
+                ? "bg-blue-600 hover:bg-blue-500 text-white border-blue-500 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                : "bg-neutral-800 text-neutral-500 border-neutral-700 cursor-not-allowed opacity-60"
+            }`}
+            title="선택한 주문 건들의 CJ대한통운 표준 운송장 라벨을 일괄 출력합니다"
+          >
+            <Printer className="w-4 h-4" />
+            <span>선택 건 송장 일괄 출력</span>
+          </button>
+
           {/* 송장 엑셀 일괄 업로드 */}
           <button
             type="button"
@@ -608,6 +687,24 @@ export function OrdersManagement({
           <table className="w-full text-left text-sm text-neutral-700">
             <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
               <tr>
+                <th className="py-3.5 px-4 w-12 text-center">
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-neutral-950 cursor-pointer"
+                    checked={paginatedShipments.length > 0 && paginatedShipments.every(s => selectedShipmentIds.has(s.id))}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        const newSet = new Set(selectedShipmentIds);
+                        paginatedShipments.forEach(s => newSet.add(s.id));
+                        setSelectedShipmentIds(newSet);
+                      } else {
+                        const newSet = new Set(selectedShipmentIds);
+                        paginatedShipments.forEach(s => newSet.delete(s.id));
+                        setSelectedShipmentIds(newSet);
+                      }
+                    }}
+                  />
+                </th>
                 <th className="py-3.5 px-4 min-w-[110px] whitespace-nowrap">주문/배송번호</th>
                 <th className="py-3.5 px-4 min-w-[180px]">수령인 / 배송지 주소</th>
                 <th className="py-3.5 px-4 min-w-[120px]">주문 상품</th>
@@ -619,13 +716,26 @@ export function OrdersManagement({
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
               {filteredShipments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-neutral-500">
+                  <td colSpan={7} className="py-12 text-center text-neutral-500">
                     검색 조건에 해당되는 주문/배송 정보가 존재하지 않습니다.
                   </td>
                 </tr>
               ) : (
                 paginatedShipments.map((ship) => (
                   <tr key={ship.id} className="hover:bg-neutral-50/70 transition-colors">
+                    <td className="py-4 px-4 text-center">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-neutral-950 cursor-pointer"
+                        checked={selectedShipmentIds.has(ship.id)}
+                        onChange={(e) => {
+                          const newSet = new Set(selectedShipmentIds);
+                          if (e.target.checked) newSet.add(ship.id);
+                          else newSet.delete(ship.id);
+                          setSelectedShipmentIds(newSet);
+                        }}
+                      />
+                    </td>
                     <td className="py-4 px-4 whitespace-nowrap">
                       <div>
                         <p className="font-extrabold text-neutral-950 text-xs font-mono">
@@ -734,6 +844,37 @@ export function OrdersManagement({
                         >
                           <FileText className="w-3.5 h-3.5" />
                         </button>
+                        {/* CJ 송장 라벨 단건 인쇄 버튼 (송장 등록된 건) */}
+                        {ship.trackingNumber && ship.trackingNumber !== "-" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`[${ship.orderId}] 주문의 CJ대한통운 송장 라벨을 인쇄하시겠습니까?`)) {
+                                setCjPrintData?.([{
+                                  orderId: ship.orderId,
+                                  recipient: ship.recipient,
+                                  phone: ship.phone,
+                                  zipCode: ship.zipCode,
+                                  address: ship.address,
+                                  detailAddress: ship.detailAddress,
+                                  items: ship.items,
+                                  shippingMemo: ship.shippingMemo,
+                                  trackingNumber: ship.trackingNumber,
+                                  clsfCd: (ship as any).cjClsfCd || "4W44",
+                                  subClsfCd: (ship as any).cjSubClsfCd || "-4g",
+                                  clldlvempNickNm: (ship as any).cjClldlvempNickNm || "A01-1구역",
+                                  clsfAddr: (ship as any).cjClsfAddr || ship.detailAddress || "",
+                                  clldlvBranNm: (ship as any).cjClldlvBranNm || "대한통운",
+                                  p2pCd: (ship as any).cjP2pCd || "P1",
+                                }]);
+                              }
+                            }}
+                            className="p-1.5 rounded-xl text-blue-700 hover:bg-blue-50 border border-blue-200 transition-colors cursor-pointer shrink-0"
+                            title="CJ대한통운 송장 라벨 1건 인쇄"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         {/* 배송 분할 (다박스) 버튼 */}
                         <button
                           type="button"
@@ -1228,40 +1369,47 @@ export function OrdersManagement({
       )}
 
       {/* Print CSS Isolation for Order Sheet */}
-      <style jsx global>{`
-        @page {
-          size: A4 portrait;
-          margin: 12mm 15mm;
-        }
-        @media print {
-          html, body {
-            background: white !important;
-            height: 100% !important;
-            overflow: visible !important;
+      {isOrderSheetModalOpen && (
+        <style jsx global>{`
+          @page {
+            size: A4 portrait;
+            margin: 12mm 15mm;
           }
-          body * {
-            visibility: hidden !important;
+          @media print {
+            html, body {
+              background: white !important;
+              height: 100% !important;
+              overflow: visible !important;
+            }
+            body * {
+              visibility: hidden !important;
+            }
+            #printable-order-sheet,
+            #printable-order-sheet * {
+              visibility: visible !important;
+            }
+            #printable-order-sheet {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              padding: 0 !important;
+              margin: 0 !important;
+              background: white !important;
+              color: black !important;
+              page-break-after: avoid !important;
+              break-after: avoid !important;
+              overflow: visible !important;
+            }
           }
-          #printable-order-sheet,
-          #printable-order-sheet * {
-            visibility: visible !important;
-          }
-          #printable-order-sheet {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            background: white !important;
-            color: black !important;
-            page-break-after: avoid !important;
-            break-after: avoid !important;
-            overflow: visible !important;
-          }
-        }
-      `}</style>
+        `}</style>
+      )}
+
+      {/* CJ대한통운 송장 라벨 인쇄 모달 */}
+      {cjPrintData && (
+        <CjLabelPrint data={cjPrintData} onClose={() => setCjPrintData?.(null)} />
+      )}
     </div>
   );
 }

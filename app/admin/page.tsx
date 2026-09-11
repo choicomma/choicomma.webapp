@@ -2,6 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useInquiries } from "@/hooks/admin/useInquiries";
+import { useRevenue } from "@/hooks/admin/useRevenue";
+import { useInboundSchedules } from "@/hooks/admin/useInboundSchedules";
+import { useLiveChat } from "@/hooks/admin/useLiveChat";
+import { useCustomers } from "@/hooks/admin/useCustomers";
+import { useTimesale } from "@/hooks/admin/useTimesale";
+import { useShipments } from "@/hooks/admin/useShipments";
 import excelParsedProducts from "@/lib/sfcc/mock/parsed-products.json";
 import {
   LayoutDashboard,
@@ -403,120 +410,49 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "revenue" | "main" | "customers" | "inquiries" | "settings" | "global_sales">("orders");
 
   // VIP Customer Inquiry State
-  const [inquiriesList, setInquiriesList] = useState<any[]>([]);
-  const [zoomedInquiryImage, setZoomedInquiryImage] = useState<string | null>(null);
-  const [inquiriesFilter, setInquiriesFilter] = useState<"all" | "pending" | "completed">("all");
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_customer_inquiries");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            setInquiriesList(parsed);
-          }
-        } catch (e) { }
-      }
-    }
-  }, []);
-
-  // Sync inquiries state to localStorage & live refresh
-  React.useEffect(() => {
-    const syncInquiries = () => {
-      if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("admin_customer_inquiries");
-        if (saved) {
-          try {
-            setInquiriesList(JSON.parse(saved));
-          } catch (e) { }
-        }
-      }
-    };
-    window.addEventListener("storage", syncInquiries);
-    const interval = setInterval(syncInquiries, 2000);
-    return () => {
-      window.removeEventListener("storage", syncInquiries);
-      clearInterval(interval);
-    };
-  }, []);
-
+  const {
+    inquiriesList, setInquiriesList,
+    zoomedInquiryImage, setZoomedInquiryImage,
+    inquiriesFilter, setInquiriesFilter,
+    handleReplyToInquiry
+  } = useInquiries(triggerToast);
   // Revenue Management State
-  const [revenueSelectedYear, setRevenueSelectedYear] = useState<string>("all");
-  const [revenueSelectedMonth, setRevenueSelectedMonth] = useState<string>("all");
-  const [revenueFilterPeriod, setRevenueFilterPeriod] = useState<"today" | "7days" | "thisMonth" | "lastMonth" | "year">("thisMonth");
-  const [revenueStatusFilter, setRevenueStatusFilter] = useState<"all" | "completed" | "pending">("all");
-  const [revenueSearchQuery, setRevenueSearchQuery] = useState("");
-
+  const {
+    revenueSelectedYear, setRevenueSelectedYear,
+    revenueSelectedMonth, setRevenueSelectedMonth,
+    revenueFilterPeriod, setRevenueFilterPeriod,
+    revenueStatusFilter, setRevenueStatusFilter,
+    revenueSearchQuery, setRevenueSearchQuery
+  } = useRevenue();
   // Inbound Management State
-  const [inboundSchedulesList, setInboundSchedulesList] = useState<any[]>(initialInboundSchedules);
-  const [isMounted, setIsMounted] = useState(false);
-
-  React.useEffect(() => {
-    setIsMounted(true);
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_inbound_schedules");
-      if (saved) {
-        try {
-          setInboundSchedulesList(JSON.parse(saved));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-  }, []);
-
-  // Real-time sync for Inbound Schedules across tabs & windows
-  React.useEffect(() => {
-    const syncInbound = () => {
-      if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("admin_inbound_schedules");
-        if (saved) {
-          try {
-            setInboundSchedulesList((prev) => {
-              if (JSON.stringify(prev) !== saved) {
-                return JSON.parse(saved);
-              }
-              return prev;
-            });
-          } catch (e) { }
-        }
-      }
-    };
-    window.addEventListener("storage", syncInbound);
-    window.addEventListener("admin_inbound_updated", syncInbound);
-    const interval = setInterval(syncInbound, 3000);
-    return () => {
-      window.removeEventListener("storage", syncInbound);
-      window.removeEventListener("admin_inbound_updated", syncInbound);
-      clearInterval(interval);
-    };
-  }, []);
-
-  React.useEffect(() => {
-    if (isMounted && typeof window !== "undefined") {
-      const currentSaved = localStorage.getItem("admin_inbound_schedules");
-      const nextJson = JSON.stringify(inboundSchedulesList);
-      if (currentSaved !== nextJson) {
-        localStorage.setItem("admin_inbound_schedules", nextJson);
-        window.dispatchEvent(new CustomEvent("admin_inbound_updated"));
-      }
-    }
-  }, [inboundSchedulesList, isMounted]);
-
-  const [calendarDate, setCalendarDate] = useState(() => new Date());
-  const [inboundSearchQuery, setInboundSearchQuery] = useState("");
-  const [inboundStatusFilter, setInboundStatusFilter] = useState("all");
-  const [isAddInboundModalOpen, setIsAddInboundModalOpen] = useState(false);
-  const [selectedInboundItem, setSelectedInboundItem] = useState<any | null>(null);
-
-  const [newInboundDate, setNewInboundDate] = useState(() => new Date().toISOString().split("T")[0]);
-  const [newInboundTitle, setNewInboundTitle] = useState("");
-  const [newInboundQuantity, setNewInboundQuantity] = useState(100);
-  const [newInboundSupplier, setNewInboundSupplier] = useState("");
-  const [newInboundWarehouse, setNewInboundWarehouse] = useState("제1물류센터 A구역");
-  const [newInboundNotes, setNewInboundNotes] = useState("");
-  const [newInboundStatus, setNewInboundStatus] = useState("Scheduled");
+  const {
+    inboundSchedulesList, setInboundSchedulesList,
+    selectedInboundItem, setSelectedInboundItem,
+    isInboundModalOpen, setIsInboundModalOpen,
+    isAddInboundModalOpen, setIsAddInboundModalOpen,
+    calendarDate, setCalendarDate,
+    inboundSearchQuery, setInboundSearchQuery,
+    newInboundTitle, setNewInboundTitle,
+    newInboundWarehouse, setNewInboundWarehouse,
+    newInboundDate, setNewInboundDate,
+    handleUpdateInboundStatus,
+    handleAddInboundSchedule,
+    inboundItemSearchQuery, setInboundItemSearchQuery,
+    inboundStatusFilter, setInboundStatusFilter,
+    
+    newInboundSupplier, setNewInboundSupplier,
+    
+    
+    
+    
+    
+    
+    newInboundQuantity, setNewInboundQuantity,
+    
+    newInboundNotes, setNewInboundNotes,
+    newInboundStatus, setNewInboundStatus,
+    handleDeleteInboundSchedule
+  } = useInboundSchedules(triggerToast);
 
   // Initial default product catalog from public/상품전체정보.xlsx
   const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
@@ -646,84 +582,6 @@ export default function AdminPage() {
     }
   }, [productsList]);
 
-  const handleAddInboundSchedule = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newInboundTitle.trim()) {
-      alert("상품명을 입력해주세요.");
-      return;
-    }
-    const newId = `INB-${newInboundDate.replace(/-/g, "")}-${Math.floor(10 + Math.random() * 90)}`;
-    const newItem = {
-      id: newId,
-      date: newInboundDate,
-      productTitle: newInboundTitle.trim(),
-      quantity: Number(newInboundQuantity) || 1,
-      supplier: newInboundSupplier.trim() || "자체 물류 공장",
-      warehouse: newInboundWarehouse,
-      status: newInboundStatus,
-      notes: newInboundNotes.trim() || "신규 입고 등록건",
-    };
-    setInboundSchedulesList([newItem, ...inboundSchedulesList]);
-    setIsAddInboundModalOpen(false);
-    setNewInboundTitle("");
-    setNewInboundQuantity(100);
-    setNewInboundNotes("");
-    triggerToast(`'${newItem.productTitle}' 입고 일정이 등록되었습니다.`);
-  };
-
-  const handleUpdateInboundStatus = (id: string, currentStatus: string) => {
-    const nextStatus =
-      currentStatus === "Scheduled"
-        ? "In Progress"
-        : currentStatus === "In Progress"
-          ? "Completed"
-          : "Scheduled";
-    const nextText =
-      nextStatus === "Completed"
-        ? "입고 완료"
-        : nextStatus === "In Progress"
-          ? "검수 진행 중"
-          : "입고 대기";
-
-    const targetItem = inboundSchedulesList.find((item) => item.id === id);
-
-    setInboundSchedulesList(
-      inboundSchedulesList.map((item) =>
-        item.id === id ? { ...item, status: nextStatus } : item
-      )
-    );
-
-    if (nextStatus === "Completed" && targetItem) {
-      setProductsList((prev) =>
-        prev.map((prod) => {
-          if (
-            prod.title?.toLowerCase().includes(targetItem.productTitle?.toLowerCase()) ||
-            targetItem.productTitle?.toLowerCase().includes(prod.title?.toLowerCase())
-          ) {
-            const updatedStockMap = { ...prod.stockMap };
-            const primarySize = prod.sizes?.[0] || "FREE";
-            updatedStockMap[primarySize] = (updatedStockMap[primarySize] || 0) + (targetItem.quantity || 0);
-            return {
-              ...prod,
-              stockMap: updatedStockMap,
-              stock: calculateTotalStock(prod.colors || ["BLACK"], prod.sizes || ["FREE"], updatedStockMap),
-            };
-          }
-          return prod;
-        })
-      );
-      triggerToast(`입고 완료! '${targetItem.productTitle}' 수량(+${targetItem.quantity}개)이 실시간 재고에 자동 연동되었습니다.`);
-    } else {
-      triggerToast(`입고 상태가 [${nextText}] (으)로 변경되었습니다.`);
-    }
-  };
-
-  const handleDeleteInboundSchedule = (id: string) => {
-    if (!window.confirm("정말로 해당 입고 일정을 삭제하시겠습니까?")) return;
-    setInboundSchedulesList(inboundSchedulesList.filter((item) => item.id !== id));
-    if (selectedInboundItem?.id === id) setSelectedInboundItem(null);
-    triggerToast("입고 일정이 삭제되었습니다.");
-  };
 
   const [ordersList, setOrdersList] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
@@ -747,47 +605,31 @@ export default function AdminPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Time sale states
-  const [adminTimeSaleHours, setAdminTimeSaleHours] = useState("14");
-  const [adminTimeSaleMinutes, setAdminTimeSaleMinutes] = useState("55");
-  const [adminTimeSaleDiscount, setAdminTimeSaleDiscount] = useState("35");
-  const [adminTimeSaleTitle, setAdminTimeSaleTitle] = useState("VIP 회원만을 위해 준비된 파격 할인 한정 단독 시크릿 타임세일");
-  const [adminTimeSaleStatus, setAdminTimeSaleStatus] = useState("active");
-  const [adminTimeSaleCategory, setAdminTimeSaleCategory] = useState("all");
-  const [adminTimeSaleProductIds, setAdminTimeSaleProductIds] = useState<string[]>([]);
-
-  // Secret Time Sale states (Member Target Specific)
-  const [secretSalesList, setSecretSalesList] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_secret_timesales");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) return parsed;
-        } catch (e) { }
-      }
-    }
-    return [
-      {
-        id: "SECRET-TS-001",
-        title: "[VIP 단독] 2026 S/S 시즌 프라이빗 40% 한정 특가",
-        discountRate: 40,
-        productIds: ["product-1", "product-2", "product-3"],
-        targetCustomerEmails: ["vip@example.com", "gold@example.com"],
-        targetGrades: ["VIP", "VVIP"],
-        durationHours: 24,
-        durationMinutes: 0,
-        status: "active",
-        createdAt: new Date().toISOString(),
-      },
-    ];
-  });
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("admin_secret_timesales", JSON.stringify(secretSalesList));
-      window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
-    }
-  }, [secretSalesList]);
+  const {
+    adminTimeSaleHours, setAdminTimeSaleHours,
+    adminTimeSaleMinutes, setAdminTimeSaleMinutes,
+    adminTimeSaleDiscount, setAdminTimeSaleDiscount,
+    adminTimeSaleTitle, setAdminTimeSaleTitle,
+    adminTimeSaleStatus, setAdminTimeSaleStatus,
+    adminTimeSaleCategory, setAdminTimeSaleCategory,
+    adminTimeSaleProductIds, setAdminTimeSaleProductIds,
+    secretSalesList, setSecretSalesList,
+    newIsTimeSale, setNewIsTimeSale,
+    newTimeSaleHours, setNewTimeSaleHours,
+    newTimeSaleMinutes, setNewTimeSaleMinutes,
+    newTimeSaleDiscountRate, setNewTimeSaleDiscountRate,
+    newTimeSaleDiscountPrice, setNewTimeSaleDiscountPrice,
+    timeSaleRemainingSec, setTimeSaleRemainingSec,
+    isTimeSaleItemModalOpen, setIsTimeSaleItemModalOpen,
+    timeSaleItemSearchQuery, setTimeSaleItemSearchQuery,
+    timeSaleItemCategoryFilter, setTimeSaleItemCategoryFilter,
+    productTimeSaleSettings, setProductTimeSaleSettings,
+    productTimeSaleExpiries, setProductTimeSaleExpiries,
+    formatRemainingTimeDisplay,
+    
+    
+    handleDeleteTimeSale
+  } = useTimesale(triggerToast);
 
   function triggerToast(msg: string) {
     setToastMessage(msg);
@@ -985,6 +827,20 @@ export default function AdminPage() {
         return p;
       })
     );
+  };
+
+  const handleToggleTimeSaleProduct = (id: string) => {
+    setAdminTimeSaleProductIds((prev: string[]) =>
+      prev.includes(id) ? prev.filter((pid: string) => pid !== id) : [...prev, id]
+    );
+  };
+
+  const handleSaveTimeSaleDetailSettings = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_timesale_product_ids", JSON.stringify(adminTimeSaleProductIds));
+      window.dispatchEvent(new CustomEvent("timesale_products_updated"));
+    }
+    triggerToast(`타임세일 대상 상품 ${adminTimeSaleProductIds.length}개가 저장되었습니다.`);
   };
 
   const handleToggleBottomProduct = (id: string) => {
@@ -1473,12 +1329,6 @@ export default function AdminPage() {
   const [newThickness, setNewThickness] = useState("적당함");
   const [newLining, setNewLining] = useState("없음");
   const [newFabricImage, setNewFabricImage] = useState("");
-  // Time sale states for new product modal
-  const [newIsTimeSale, setNewIsTimeSale] = useState(false);
-  const [newTimeSaleHours, setNewTimeSaleHours] = useState("24");
-  const [newTimeSaleMinutes, setNewTimeSaleMinutes] = useState("0");
-  const [newTimeSaleDiscountPrice, setNewTimeSaleDiscountPrice] = useState("");
-  const [newTimeSaleDiscountRate, setNewTimeSaleDiscountRate] = useState("35");
   const [newTimeSaleStartMonth, setNewTimeSaleStartMonth] = useState("8");
   const [newTimeSaleStartDay, setNewTimeSaleStartDay] = useState("20");
   const [newTimeSaleStartAmpm, setNewTimeSaleStartAmpm] = useState("오전");
@@ -1505,168 +1355,20 @@ export default function AdminPage() {
 
   // Live Time Sale Countdown Remaining Ticker State
   const [nowTick, setNowTick] = useState(Date.now());
-  const [productTimeSaleSettings, setProductTimeSaleSettings] = useState<Record<string, { hours: number; minutes: number; discountPrice?: string; discountRate?: number }>>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("secret_timesale_item_settings");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-    return {};
-  });
-
   // Live Chat Admin State & Storage Sync
-  const [adminLiveChatMessages, setAdminLiveChatMessages] = useState<any[]>([]);
-  const [adminLiveInput, setAdminLiveInput] = useState("");
-  const lastLiveChatMsg = adminLiveChatMessages[adminLiveChatMessages.length - 1];
-  const isLiveChatSessionEnded = !lastLiveChatMsg || lastLiveChatMsg.id?.startsWith("admin-close") || lastLiveChatMsg.text?.includes("상담이 종료되었습니다");
-
-  // Multi-Customer Live Chat Sessions State
-  const [activeSessionId, setActiveSessionId] = useState<string>("vip@choicomma.com");
-  const [chatSessionsList, setChatSessionsList] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_chat_sessions");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) { }
-      }
-    }
-    return [
-      {
-        id: "vip@choicomma.com",
-        name: "최상위 VIP 회원님",
-        email: "vip@choicomma.com",
-        tier: "VIP",
-        badgeColor: "bg-amber-400 text-neutral-950 font-black",
-        status: "online",
-      },
-    ];
-  });
-
-  const [demoSessionMessages, setDemoSessionMessages] = useState<Record<string, any[]>>({});
-
-  const syncAdminLiveChat = () => {
-    if (typeof window === "undefined" || !activeSessionId) return;
-    const sessionKey = `site_live_chat_messages_${activeSessionId.trim().toLowerCase()}`;
-    const saved = localStorage.getItem(sessionKey) || localStorage.getItem("site_live_chat_messages");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setAdminLiveChatMessages(parsed);
-          return;
-        }
-      } catch (e) { }
-    }
-    setAdminLiveChatMessages([]);
-  };
-
-  useEffect(() => {
-    syncAdminLiveChat();
-    window.addEventListener("storage", syncAdminLiveChat);
-    window.addEventListener("live_chat_updated", syncAdminLiveChat);
-    return () => {
-      window.removeEventListener("storage", syncAdminLiveChat);
-      window.removeEventListener("live_chat_updated", syncAdminLiveChat);
-    };
-  }, [activeSessionId]);
-
-  const activeSessionMessages = adminLiveChatMessages;
-
-  const handleAdminSendLiveChat = (presetText?: string) => {
-    const textToSend = presetText || adminLiveInput;
-    if (!textToSend.trim() || !activeSessionId) return;
-
-    const dateNow = new Date();
-    const hours = String(dateNow.getHours()).padStart(2, "0");
-    const mins = String(dateNow.getMinutes()).padStart(2, "0");
-
-    const newReply = {
-      id: `admin-reply-${Date.now()}`,
-      sender: "admin",
-      senderName: "choicomma VIP 케어팀",
-      text: textToSend.trim(),
-      timestamp: `${hours}:${mins}`,
-    };
-
-    const sessionKey = `site_live_chat_messages_${activeSessionId.trim().toLowerCase()}`;
-    const updated = [...adminLiveChatMessages, newReply];
-    setAdminLiveChatMessages(updated);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(sessionKey, JSON.stringify(updated));
-      window.dispatchEvent(new CustomEvent("live_chat_updated"));
-    }
-    setAdminLiveInput("");
-    triggerToast("💬 고객 라이브 채팅방으로 답변이 성공적으로 전송되었습니다!");
-  };
-
-  const handleAdminEndLiveChat = (sessionIdTarget?: string) => {
-    const targetId = sessionIdTarget || activeSessionId;
-    const targetSession = chatSessionsList.find((s) => s.id === targetId);
-    const sessionName = targetSession?.name || "고객";
-
-    const isConfirmed = window.confirm(
-      `정말로 '${sessionName}'님과의 1:1 라이브 상담을 종료하고 대화 내역 및 세션을 삭제하시겠습니까?`
-    );
-    if (!isConfirmed) return;
-
-    const sessionKey = `site_live_chat_messages_${targetId.trim().toLowerCase()}`;
-    setAdminLiveChatMessages([]);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(sessionKey, JSON.stringify([]));
-      localStorage.setItem("site_live_chat_messages", JSON.stringify([]));
-      localStorage.setItem("site_live_chat_ended", "true");
-      window.dispatchEvent(new CustomEvent("live_chat_updated"));
-      window.dispatchEvent(new CustomEvent("live_chat_ended"));
-    }
-
-    setChatSessionsList((prev) => {
-      const filtered = prev.filter((s) => s.id !== targetId);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("admin_chat_sessions", JSON.stringify(filtered));
-      }
-      if (activeSessionId === targetId) {
-        setActiveSessionId(filtered.length > 0 ? filtered[0].id : "");
-      }
-      return filtered;
-    });
-    triggerToast(`🔒 '${sessionName}'님과의 1:1 라이브 상담 및 대화 내역이 성공적으로 삭제되었습니다.`);
-  };
-
-  const handleAdminClearLiveChat = () => {
-    const isConfirmed = window.confirm(
-      "정말로 라이브 채팅 대화 기록을 전체 초기화하시겠습니까?\n이 작업은 복구할 수 없습니다."
-    );
-    if (!isConfirmed) return;
-
-    if (activeSessionId && typeof window !== "undefined") {
-      const sessionKey = `site_live_chat_messages_${activeSessionId.trim().toLowerCase()}`;
-      localStorage.setItem(sessionKey, JSON.stringify([]));
-      localStorage.setItem("site_live_chat_messages", JSON.stringify([]));
-    }
-    setAdminLiveChatMessages([]);
-    window.dispatchEvent(new CustomEvent("live_chat_updated"));
-    triggerToast("🧹 라이브 채팅 기록이 전체 초기화되었습니다.");
-  };
-
-  const [productTimeSaleExpiries, setProductTimeSaleExpiries] = useState<Record<string, number>>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("secret_timesale_item_expiries");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-    return {};
-  });
+  const {
+    adminLiveChatMessages, setAdminLiveChatMessages,
+    adminLiveInput, setAdminLiveInput,
+    activeSessionId, setActiveSessionId,
+    chatSessionsList, setChatSessionsList,
+    handleAdminSendLiveChat,
+    
+    demoSessionMessages, setDemoSessionMessages,
+    handleAdminClearLiveChat,
+    isLiveChatSessionEnded,
+    activeSessionMessages,
+    handleAdminEndLiveChat
+  } = useLiveChat(triggerToast);
 
   // Ticker interval every 1 second
   React.useEffect(() => {
@@ -1713,60 +1415,6 @@ export default function AdminPage() {
     }
   };
 
-  const [timeSaleRemainingSec, setTimeSaleRemainingSec] = useState<number>(() => {
-    const h = parseInt(adminTimeSaleHours) || 0;
-    const m = parseInt(adminTimeSaleMinutes) || 0;
-    return h * 3600 + m * 60;
-  });
-
-  React.useEffect(() => {
-    const h = parseInt(adminTimeSaleHours) || 0;
-    const m = parseInt(adminTimeSaleMinutes) || 0;
-    setTimeSaleRemainingSec(h * 3600 + m * 60);
-  }, [adminTimeSaleHours, adminTimeSaleMinutes]);
-
-  React.useEffect(() => {
-    if (adminTimeSaleStatus !== "active") return;
-    const interval = setInterval(() => {
-      setTimeSaleRemainingSec((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [adminTimeSaleStatus]);
-
-  const formatRemainingTimeDisplay = (totalSec: number) => {
-    const hours = Math.floor(totalSec / 3600);
-    const mins = Math.floor((totalSec % 3600) / 60);
-    const secs = totalSec % 60;
-
-    const formattedHH = String(hours).padStart(2, "0");
-    const formattedMM = String(mins).padStart(2, "0");
-    const formattedSS = String(secs).padStart(2, "0");
-
-    const expiryDate = new Date(Date.now() + totalSec * 1000);
-    const year = expiryDate.getFullYear();
-    const month = String(expiryDate.getMonth() + 1).padStart(2, "0");
-    const day = String(expiryDate.getDate()).padStart(2, "0");
-    const hoursStr = String(expiryDate.getHours()).padStart(2, "0");
-    const minsStr = String(expiryDate.getMinutes()).padStart(2, "0");
-    const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
-    const dayOfWeek = weekDays[expiryDate.getDay()];
-
-    const expiryFormatted = `${year}-${month}-${day} ${hoursStr}:${minsStr} (${dayOfWeek}요일)`;
-
-    return {
-      hours,
-      mins,
-      secs,
-      formattedHH,
-      formattedMM,
-      formattedSS,
-      timeString: `${hours}시간 ${formattedMM}분 ${formattedSS}초`,
-      expiryFormatted,
-    };
-  };
-  const [isTimeSaleItemModalOpen, setIsTimeSaleItemModalOpen] = useState(false);
-  const [timeSaleItemSearchQuery, setTimeSaleItemSearchQuery] = useState("");
-  const [timeSaleItemCategoryFilter, setTimeSaleItemCategoryFilter] = useState("all");
 
 
   // Main Home Page Admin Control State
@@ -1792,670 +1440,81 @@ export default function AdminPage() {
   };
 
   // Customer Management Admin State
-  const [customersList, setCustomersList] = useState<any[]>([DEFAULT_ADMIN_CUSTOMER]);
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_customers");
-      if (saved) {
-        try {
-          const parsed: any[] = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const hasAdmin = parsed.some(
-              (c) =>
-                (c.email && c.email.toLowerCase() === "admin@choicomma.com") ||
-                c.id === "ADMIN-001" ||
-                c.isAdmin === true
-            );
-            if (!hasAdmin) {
-              const updated = [DEFAULT_ADMIN_CUSTOMER, ...parsed];
-              setCustomersList(updated);
-              localStorage.setItem("admin_customers", JSON.stringify(updated));
-            } else {
-              setCustomersList(parsed);
-            }
-            return;
-          }
-        } catch (e) { }
-      }
-      // If no saved customers, initialize with default admin account
-      setCustomersList([DEFAULT_ADMIN_CUSTOMER]);
-      localStorage.setItem("admin_customers", JSON.stringify([DEFAULT_ADMIN_CUSTOMER]));
-    }
-  }, []);
-
-  React.useEffect(() => {
-    const syncAdminCustomers = () => {
-      if (typeof window === "undefined") return;
-      const saved = localStorage.getItem("admin_customers");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setCustomersList(parsed);
-          }
-        } catch (e) { }
-      }
-    };
-
-    window.addEventListener("storage", syncAdminCustomers);
-    window.addEventListener("admin_customers_updated", syncAdminCustomers);
-    const interval = setInterval(syncAdminCustomers, 2000);
-    return () => {
-      window.removeEventListener("storage", syncAdminCustomers);
-      window.removeEventListener("admin_customers_updated", syncAdminCustomers);
-      clearInterval(interval);
-    };
-  }, []);
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("admin_orders", JSON.stringify(ordersList));
-    }
-  }, [ordersList]);
-
-  React.useEffect(() => {
-    const syncAdminOrders = () => {
-      if (typeof window === "undefined") return;
-      const saved = localStorage.getItem("admin_orders");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            setOrdersList(parsed);
-          }
-        } catch (e) { }
-      }
-    };
-
-    window.addEventListener("storage", syncAdminOrders);
-    window.addEventListener("admin_orders_updated", syncAdminOrders);
-    const interval = setInterval(syncAdminOrders, 2000);
-    return () => {
-      window.removeEventListener("storage", syncAdminOrders);
-      window.removeEventListener("admin_orders_updated", syncAdminOrders);
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Customer Search & Filters
-  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
-  const [customerGradeFilter, setCustomerGradeFilter] = useState("all");
-  const [customerStatusFilter, setCustomerStatusFilter] = useState("all");
-
-  // Add Customer Modal State
-  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
-  const [newCustName, setNewCustName] = useState("");
-  const [newCustEmail, setNewCustEmail] = useState("");
-  const [newCustPhone, setNewCustPhone] = useState("010-");
-  const [newCustAddress, setNewCustAddress] = useState("");
-  const [newCustGrade, setNewCustGrade] = useState("SILVER");
-  const [newCustPoints, setNewCustPoints] = useState("0");
-  const [newCustStatus, setNewCustStatus] = useState("Active");
-
-  // Edit Customer Modal State
-  const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
-  const [editCustGrade, setEditCustGrade] = useState("");
-  const [editCustAddress, setEditCustAddress] = useState("");
-  const [editCustPointsDelta, setEditCustPointsDelta] = useState("0");
-  const [editCustStatus, setEditCustStatus] = useState("Active");
-
-  // Customer Handlers
-  const handleAddCustomerSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCustName.trim() || !newCustEmail.trim()) {
-      triggerToast("회원 이름과 이메일 주소를 정확히 입력해 주세요.");
-      return;
-    }
-
-    const newCust = {
-      id: `CUST-${1000 + customersList.length + 1}`,
-      name: newCustName.trim(),
-      email: newCustEmail.trim(),
-      phone: newCustPhone.trim() || "010-0000-0000",
-      address: newCustAddress.trim() || "-",
-      grade: newCustGrade,
-      totalSpent: 0,
-      points: parseInt(newCustPoints) || 0,
-      couponsCount: 0,
-      joinedDate: new Date().toISOString().split("T")[0],
-      status: newCustStatus,
-    };
-
-    const updated = [newCust, ...customersList];
-    setCustomersList(updated);
-    setIsAddCustomerModalOpen(false);
-    setNewCustName("");
-    setNewCustEmail("");
-    setNewCustPhone("010-");
-    setNewCustAddress("");
-    setNewCustGrade("SILVER");
-    setNewCustPoints("0");
-    triggerToast(`[${newCust.name}] 회원이 정상적으로 등록되었습니다.`);
-  };
-
-  const handleOpenEditCustomer = (customer: any) => {
-    setEditingCustomer(customer);
-    setEditCustGrade(customer.grade);
-    setEditCustAddress(customer.address || "");
-    setEditCustPointsDelta("0");
-    setEditCustStatus(customer.status || "Active");
-  };
-
-  const handleSaveEditCustomer = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingCustomer) return;
-
-    const delta = parseInt(editCustPointsDelta) || 0;
-    const currentPoints = editingCustomer.points || 0;
-    const calculatedPoints = Math.max(0, currentPoints + delta);
-
-    const updatedList = customersList.map((c) => {
-      if (c.id === editingCustomer.id) {
-        return {
-          ...c,
-          grade: editCustGrade,
-          address: editCustAddress,
-          points: calculatedPoints,
-          status: editCustStatus,
-        };
-      }
-      return c;
-    });
-
-    setCustomersList(updatedList);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("admin_customers", JSON.stringify(updatedList));
-      window.dispatchEvent(new CustomEvent("storage"));
-      window.dispatchEvent(new CustomEvent("admin_customers_updated"));
-    }
-    setEditingCustomer(null);
-    triggerToast(`회원 '${editingCustomer.name}'님의 정보가 반영되었습니다.`);
-  };
-
-  const handleDeleteCustomer = (id: string, name: string) => {
-    if (window.confirm(`정말로 회원 '${name}'님의 계정 정보를 삭제하시겠습니까?`)) {
-      const targetCustomer = customersList.find((c) => c.id === id);
-      const updated = customersList.filter((c) => c.id !== id);
-      setCustomersList(updated);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("admin_customers", JSON.stringify(updated));
-        if (targetCustomer?.email) {
-          localStorage.removeItem(`user_pwd_${targetCustomer.email.trim().toLowerCase()}`);
-        }
-        if (targetCustomer?.phone) {
-          const cleanPhone = targetCustomer.phone.replace(/[^0-9]/g, "");
-          localStorage.removeItem(`user_pwd_${cleanPhone}`);
-          localStorage.removeItem(`user_pwd_${targetCustomer.phone.trim()}`);
-        }
-        window.dispatchEvent(new CustomEvent("storage"));
-        window.dispatchEvent(new CustomEvent("admin_customers_updated"));
-      }
-      triggerToast(`회원 '${name}'님의 정보가 삭제되었습니다.`);
-    }
-  };
-
-  const handleExcelFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: "binary" });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const rows: any[] = XLSX.utils.sheet_to_json(ws);
-
-        const parsedCustomers = rows.map((row, idx) => {
-          const rawGrade = String(row["회원 등급"] || row["회원 그룹"] || "").toUpperCase().trim();
-          let grade = "GENERAL";
-          if (rawGrade.includes("VVIP") || rawGrade.includes("BLACK") || rawGrade.includes("블랙")) grade = "VVIP";
-          else if (rawGrade.includes("PLATINUM") || rawGrade.includes("플래티넘")) grade = "PLATINUM";
-          else if (rawGrade.includes("GOLD") || rawGrade.includes("골드")) grade = "GOLD";
-          else if (rawGrade.includes("SILVER") || rawGrade.includes("실버")) grade = "SILVER";
-          else if (rawGrade.includes("GENERAL") || rawGrade.includes("일반") || rawGrade.includes("REGULAR")) grade = "GENERAL";
-          else if (parseFloat(row["구매금액(KRW)"]) >= 20000000) grade = "VVIP";
-          else if (parseFloat(row["구매금액(KRW)"]) >= 10000000) grade = "PLATINUM";
-          else if (parseFloat(row["구매금액(KRW)"]) >= 5000000) grade = "GOLD";
-          else if (parseFloat(row["구매금액(KRW)"]) >= 1000000) grade = "SILVER";
-          else grade = "GENERAL";
-
-          const rawPhone = String(row["연락처"] || "").trim();
-          const rawDate = String(row["가입일"] || "").trim();
-
-          return {
-            id: String(row["고유키"] || `CUST-${Date.now()}-${idx}`),
-            name: String(row["이름"] || "무명 회원").trim(),
-            email: String(row["이메일"] || row["아이디"] || "-").trim(),
-            phone: rawPhone || "-",
-            grade: grade,
-            rawGrade: rawGrade,
-            totalSpent: parseFloat(row["구매금액(KRW)"]) || 0,
-            points: parseInt(row["보유 적립금 포인트"]) || 0,
-            couponsCount: parseInt(row["작성 게시물 개수"]) || 1,
-            joinedDate: rawDate ? rawDate.split(" ")[0] : new Date().toISOString().split("T")[0],
-            status: "Active",
-          };
-        });
-
-        const combined = [...parsedCustomers, ...customersList];
-        setCustomersList(combined);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("admin_customers", JSON.stringify(combined));
-          window.dispatchEvent(new CustomEvent("storage"));
-        }
-        triggerToast(`엑셀 파일에서 총 ${parsedCustomers.length.toLocaleString()}명의 회원 정보가 연동되었습니다!`);
-      } catch (err) {
-        console.error(err);
-        triggerToast("엑셀 파싱 중 오류가 발생했습니다.");
-      }
-    };
-    reader.readAsBinaryString(file);
-  };
-
-  const handleResetCustomerData = () => {
-    if (window.confirm("엑셀 회원 데이터(5,666명)로 복원하시겠습니까?")) {
-      setCustomersList(initialCustomers);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("admin_customers", JSON.stringify(initialCustomers));
-        window.dispatchEvent(new CustomEvent("storage"));
-      }
-      triggerToast("엑셀 회원 데이터(5,666명)로 복원되었습니다.");
-    }
-  };
-
-  const handleClearAllCustomers = () => {
-    if (window.confirm("정말로 모든 회원 정보를 초기화(0명) 하시겠습니까?")) {
-      setCustomersList([]);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("admin_customers", JSON.stringify([]));
-        window.dispatchEvent(new CustomEvent("storage"));
-      }
-      triggerToast("전체 회원 목록이 0명으로 초기화되었습니다.");
-    }
-  };
-
-  const newCustomersThisMonth = React.useMemo(() => {
-    const currentYM = new Date().toISOString().slice(0, 7);
-    return customersList.filter((c) => c.joinedDate && c.joinedDate.startsWith(currentYM)).length;
-  }, [customersList]);
-
-  const filteredCustomers = React.useMemo(() => {
-    return customersList.filter((c) => {
-      const matchesSearch =
-        c.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-        c.email.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-        c.phone.includes(customerSearchQuery) ||
-        (c.address && c.address.toLowerCase().includes(customerSearchQuery.toLowerCase()));
-      const matchesGrade = customerGradeFilter === "all" || c.grade === customerGradeFilter;
-      const matchesStatus = customerStatusFilter === "all" || c.status === customerStatusFilter;
-      return matchesSearch && matchesGrade && matchesStatus;
-    });
-  }, [customersList, customerSearchQuery, customerGradeFilter, customerStatusFilter]);
-
-  // Customer Table Pagination
-  const [customerPage, setCustomerPage] = useState(1);
-  const CUSTOMERS_PER_PAGE = 25;
-
-  React.useEffect(() => {
-    setCustomerPage(1);
-  }, [customerSearchQuery, customerGradeFilter, customerStatusFilter]);
-
-  const totalCustomerPages = Math.ceil(filteredCustomers.length / CUSTOMERS_PER_PAGE);
-  const paginatedCustomers = React.useMemo(() => {
-    return filteredCustomers.slice((customerPage - 1) * CUSTOMERS_PER_PAGE, customerPage * CUSTOMERS_PER_PAGE);
-  }, [filteredCustomers, customerPage]);
-
+  const {
+    customersList, setCustomersList,
+    customerSearchQuery, setCustomerSearchQuery,
+    customerGradeFilter, setCustomerGradeFilter,
+    customerStatusFilter, setCustomerStatusFilter,
+    isAddCustomerModalOpen, setIsAddCustomerModalOpen,
+    newCustName, setNewCustName,
+    newCustEmail, setNewCustEmail,
+    newCustPhone, setNewCustPhone,
+    newCustAddress, setNewCustAddress,
+    newCustGrade, setNewCustGrade,
+    newCustPoints, setNewCustPoints,
+    newCustStatus, setNewCustStatus,
+    editingCustomer, setEditingCustomer,
+    editCustGrade, setEditCustGrade,
+    editCustAddress, setEditCustAddress,
+    editCustPointsDelta, setEditCustPointsDelta,
+    editCustStatus, setEditCustStatus,
+    handleAddCustomerSubmit,
+    handleOpenEditCustomer,
+    handleSaveEditCustomer,
+    handleDeleteCustomer,
+    handleExcelFileUpload,
+    handleResetCustomerData,
+    handleClearAllCustomers,
+    newCustomersThisMonth
+  } = useCustomers(triggerToast);
   // Shipment Management State & Handlers
-  const [shipmentsList, setShipmentsList] = useState<any[]>(initialShipments);
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_shipments");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          // 과거 1개짜리 단일 상품 데이터이거나 비어있으면 다품목 테스트 데이터(initialShipments)로 자동 갱신
-          const isOutdatedSingleItem = Array.isArray(parsed) && parsed.length > 0 && !parsed[0].items?.includes(",");
-          if (Array.isArray(parsed) && parsed.length > 0 && !isOutdatedSingleItem) {
-            setShipmentsList(parsed);
-          } else {
-            setShipmentsList(initialShipments);
-            localStorage.setItem("admin_shipments", JSON.stringify(initialShipments));
-          }
-        } catch (e) {
-          setShipmentsList(initialShipments);
-        }
-      } else {
-        setShipmentsList(initialShipments);
-        localStorage.setItem("admin_shipments", JSON.stringify(initialShipments));
-      }
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("admin_shipments", JSON.stringify(shipmentsList));
-      window.dispatchEvent(new CustomEvent("storage"));
-    }
-  }, [shipmentsList]);
-
-  const [shipmentSearchQuery, setShipmentSearchQuery] = useState("");
-  const [shipmentStatusFilter, setShipmentStatusFilter] = useState("all");
-  const [shipmentCarrierFilter, setShipmentCarrierFilter] = useState("all");
-  const [shipmentPage, setShipmentPage] = useState(1);
-  const SHIPMENTS_PER_PAGE = 15;
-
-  const [isAddShipmentModalOpen, setIsAddShipmentModalOpen] = useState(false);
-  const [newShipmentOrderId, setNewShipmentOrderId] = useState("");
-  const [newShipmentRecipient, setNewShipmentRecipient] = useState("");
-  const [newShipmentPhone, setNewShipmentPhone] = useState("");
-  const [newShipmentAltPhone, setNewShipmentAltPhone] = useState("");
-  const [newShipmentZipCode, setNewShipmentZipCode] = useState("");
-  const [newShipmentAddress, setNewShipmentAddress] = useState("");
-  const [newShipmentDetailAddress, setNewShipmentDetailAddress] = useState("");
-  const [newShipmentItems, setNewShipmentItems] = useState("");
-  const [newShipmentQuantity, setNewShipmentQuantity] = useState(1);
-  const [newShipmentShippingMemo, setNewShipmentShippingMemo] = useState("부재시 문앞에 놓아주세요 (안전배송)");
-  const [newShipmentCarrier, setNewShipmentCarrier] = useState("CJ대한통운");
-  const [newShipmentTracking, setNewShipmentTracking] = useState("");
-  const [newShipmentStatus, setNewShipmentStatus] = useState("Pending");
-
-  const [editingShipment, setEditingShipment] = useState<any | null>(null);
-  const [editShipmentCarrier, setEditShipmentCarrier] = useState("CJ대한통운");
-  const [editShipmentTracking, setEditShipmentTracking] = useState("");
-  const [editShipmentStatus, setEditShipmentStatus] = useState("Pending");
-
-  // Shipping Policy & CJ Logistics (배송 정책 및 CJ대한통운) Integration State
-  const [isCjConfigModalOpen, setIsCjConfigModalOpen] = useState(false);
-  const [configModalTab, setConfigModalTab] = useState<"policy" | "cj">("policy");
-  const [shippingPolicy, setShippingPolicy] = useState({
-    baseFee: 3000,
-    freeShippingThreshold: 100000,
-    islandExtraFee: 3000,
-    returnExchangeFee: 6000,
-    courierName: "CJ대한통운 (주계약)",
-    shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
-  });
-  const [cjClientCode, setCjClientCode] = useState("CJ-882910");
-  const [cjContractNo, setCjContractNo] = useState("30291049");
-  const [cjApiKey, setCjApiKey] = useState("cj_live_sk_89201948201948");
-  const [cjSenderAddress, setCjSenderAddress] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedPolicy = localStorage.getItem("shipping_policy");
-      if (savedPolicy) {
-        try { setShippingPolicy(JSON.parse(savedPolicy)); } catch (e) { }
-      }
-      const savedClientCode = localStorage.getItem("cj_client_code");
-      if (savedClientCode) setCjClientCode(savedClientCode);
-      const savedContractNo = localStorage.getItem("cj_contract_no");
-      if (savedContractNo) setCjContractNo(savedContractNo);
-      const savedSenderAddress = localStorage.getItem("cj_sender_address");
-      if (savedSenderAddress) setCjSenderAddress(savedSenderAddress);
-
-      // Load Daum Postcode API script for address search
-      if (!document.getElementById("daum-postcode-script")) {
-        const script = document.createElement("script");
-        script.id = "daum-postcode-script";
-        script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
-        script.async = true;
-        document.body.appendChild(script);
-      }
-    }
-  }, []);
-
-  // Handler for Daum Postcode Address Search for Sender/Warehouse Address
-  const handleOpenSenderPostcode = () => {
-    if (typeof window !== "undefined" && (window as any).daum?.Postcode) {
-      new (window as any).daum.Postcode({
-        oncomplete: function (data: any) {
-          let fullAddress = data.roadAddress || data.jibunAddress;
-          let extraAddress = "";
-          if (data.addressType === "R") {
-            if (data.bname !== "") extraAddress += data.bname;
-            if (data.buildingName !== "") {
-              extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
-            }
-            fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
-          }
-          const formatted = `(${data.zonecode || "04512"}) ${fullAddress}`;
-          setCjSenderAddress(formatted);
-        },
-      }).open();
-    } else {
-      triggerToast("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
-    }
-  };
-
-  const handleIssueCjLogisticsTracking = async () => {
-    try {
-      const pendingShipments = shipmentsList.filter((s) => s.status === "Pending");
-      if (pendingShipments.length === 0) {
-        triggerToast("배송 준비 중인 주문 건이 없습니다.");
-        return;
-      }
-      triggerToast("CJ대한통운 (DeliveryAPI) 실시간 통신 중... 운송장 번호 채번 중입니다.");
-      const res = await fetch("/api/admin/shipping/cj-logistics", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "issue_tracking", shipments: shipmentsList }),
-      });
-      const data = await res.json();
-      if (data.success && data.shipments) {
-        setShipmentsList(data.shipments);
-        triggerToast(data.message || `CJ대한통운 운송장 번호(${pendingShipments.length}건)가 실시간 자동 연동되었습니다!`);
-      } else {
-        triggerToast(data.message || "CJ대한통운 연동 중 오류가 발생했습니다.");
-      }
-    } catch (e: any) {
-      triggerToast("CJ대한통운 API 통신 오류가 발생했습니다.");
-    }
-  };
-
-  const handleExportCjExcel = () => {
-    try {
-      // Pending + Partially Shipped 주문 포함 (일부 박스만 등록된 경우도 나머지 박스 추출)
-      const pendingShipments = shipmentsList.filter((s) => s.status === "Pending" || s.status === "Partially Shipped");
-      if (pendingShipments.length === 0) {
-        triggerToast("다운로드할 배송 준비/부분배송 중인 주문 건이 없습니다.");
-        return;
-      }
-
-      // CJ대한통운 LoIS 규격 (패키지/박스 단위로 1행씩, 분리배송 지원)
-      const exportData: any[] = [];
-
-      pendingShipments.forEach((s) => {
-        let zipCode = s.zipCode || "";
-        let fullAddress = s.address || "";
-        const zipMatch = fullAddress.match(/\((\d{5})\)/);
-        if (zipMatch && !zipCode) zipCode = zipMatch[1];
-
-        const pkgs = (s.packages && s.packages.length > 0)
-          ? s.packages
-          : [{ id: `${s.id}-1`, pkgIndex: 1, items: s.items || "초이콤마 의류 상품", quantity: Number(s.quantity) || 1, carrier: s.carrier || "CJ대한통운", trackingNumber: s.trackingNumber || "-", status: s.status || "Pending" }];
-
-        // 이미 운송장이 등록된(In Transit/Delivered) 박스는 제외 — 미등록 박스만 출력
-        const pendingPkgs = pkgs.filter((pkg: any) => !pkg.trackingNumber || pkg.trackingNumber === "-" || pkg.trackingNumber.trim() === "");
-        const targetPkgs = pendingPkgs.length > 0 ? pendingPkgs : pkgs;
-
-        targetPkgs.forEach((pkg: any) => {
-          const isSingle = pkgs.length === 1;
-          const pkgOrderNo = isSingle ? (s.orderId || s.id) : `${s.orderId || s.id}-${pkg.pkgIndex}`;
-
-          exportData.push({
-            "고객주문번호": pkgOrderNo,
-            "받는분성명": s.recipient || "",
-            "받는분주소(전체, 분할)": fullAddress,
-            "받는분전화번호": s.phone || "",
-            "받는분기타연락처": s.altPhone || "",
-            "받는분우편번호": zipCode,
-            "받는분상세주소(분할)": s.detailAddress || "",
-            "품목명": pkg.items || s.items || "초이콤마 의류 상품",
-            "박스수량": Number(pkg.quantity) || 1,
-            "배송메세지1": s.shippingMemo || "부재시 문앞에 놓아주세요 (안전배송)",
-          });
-        });
-      });
-
-      const ws = XLSX.utils.json_to_sheet(exportData, {
-        header: ["고객주문번호", "받는분성명", "받는분주소(전체, 분할)", "받는분전화번호", "받는분기타연락처", "받는분우편번호", "받는분상세주소(분할)", "품목명", "박스수량", "배송메세지1"],
-      });
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "초이콤마_자사몰");
-
-      const now = new Date();
-      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-      XLSX.writeFile(wb, `택배사 접수용_${dateStr}.xlsx`);
-      triggerToast(`택배사 접수용 엑셀 파일(${exportData.length}개 패키지/박스 행)이 다운로드되었습니다.`);
-    } catch (e) {
-      triggerToast("엑셀 파일 생성 중 오류가 발생했습니다.");
-    }
-  };
-
-  const handleOpenNewShipmentPostcode = () => {
-    if (typeof window !== "undefined" && (window as any).daum?.Postcode) {
-      new (window as any).daum.Postcode({
-        oncomplete: function (data: any) {
-          let fullAddress = data.roadAddress || data.jibunAddress;
-          let extraAddress = "";
-          if (data.addressType === "R") {
-            if (data.bname !== "") extraAddress += data.bname;
-            if (data.buildingName !== "") {
-              extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
-            }
-            fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
-          }
-          setNewShipmentZipCode(data.zonecode || "");
-          setNewShipmentAddress(fullAddress);
-        },
-      }).open();
-    } else {
-      triggerToast("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
-    }
-  };
-
-  const handleAddShipmentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newShipmentRecipient.trim()) {
-      triggerToast("수령인 이름을 입력해 주세요.");
-      return;
-    }
-
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-    const generatedOrderId = newShipmentOrderId.trim() || `ORD-${dateStr}-${String(Date.now()).slice(-3)}`;
-    const generatedTrkId = `TRK-${dateStr}-${String(Date.now()).slice(-4)}`;
-    const itemsName = newShipmentItems.trim() || "초이콤마 대표 의류 상품";
-    const qty = Number(newShipmentQuantity) || 1;
-
-    const newShipment = {
-      id: generatedTrkId,
-      orderId: generatedOrderId,
-      recipient: newShipmentRecipient.trim(),
-      phone: newShipmentPhone.trim() || "010-0000-0000",
-      altPhone: newShipmentAltPhone.trim() || "",
-      zipCode: newShipmentZipCode.trim() || "",
-      address: newShipmentAddress.trim() || "-",
-      detailAddress: newShipmentDetailAddress.trim() || "",
-      items: `${itemsName} ${qty}개`,
-      quantity: qty,
-      carrier: newShipmentCarrier,
-      trackingNumber: newShipmentTracking.trim() || "-",
-      status: newShipmentStatus,
-      shippingMemo: newShipmentShippingMemo.trim() || "부재시 문앞에 놓아주세요 (안전배송)",
-      shippedDate: newShipmentStatus === "Pending" ? "-" : new Date().toISOString().split("T")[0],
-      estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0],
-      packages: [
-        {
-          id: `PKG-${String(Date.now()).slice(-4)}-1`,
-          pkgIndex: 1,
-          items: `${itemsName} ${qty}개`,
-          quantity: qty,
-          carrier: newShipmentCarrier,
-          trackingNumber: newShipmentTracking.trim() || "-",
-          status: newShipmentStatus,
-        },
-      ],
-    };
-
-    setShipmentsList([newShipment, ...shipmentsList]);
-    setIsAddShipmentModalOpen(false);
-
-    // Reset Form
-    setNewShipmentOrderId("");
-    setNewShipmentRecipient("");
-    setNewShipmentPhone("");
-    setNewShipmentAltPhone("");
-    setNewShipmentZipCode("");
-    setNewShipmentAddress("");
-    setNewShipmentDetailAddress("");
-    setNewShipmentItems("");
-    setNewShipmentQuantity(1);
-    setNewShipmentShippingMemo("부재시 문앞에 놓아주세요 (안전배송)");
-    setNewShipmentTracking("");
-    setNewShipmentStatus("Pending");
-
-    triggerToast(`택배사 접수용 주문/배송 건(${newShipment.orderId})이 새로 등록되었습니다!`);
-  };
-
-  const handleOpenEditShipment = (shipment: any) => {
-    setEditingShipment(shipment);
-    setEditShipmentCarrier(shipment.carrier || "CJ대한통운");
-    setEditShipmentTracking(shipment.trackingNumber || "");
-    setEditShipmentStatus(shipment.status || "Pending");
-  };
-
-  const handleSaveEditShipment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingShipment) return;
-    const updated = shipmentsList.map((s) => {
-      if (s.id === editingShipment.id) {
-        return {
-          ...s,
-          carrier: editShipmentCarrier,
-          trackingNumber: editShipmentTracking.trim() || s.trackingNumber,
-          status: editShipmentStatus,
-          shippedDate: editShipmentStatus !== "Pending" && s.shippedDate === "-" ? new Date().toISOString().split("T")[0] : s.shippedDate,
-        };
-      }
-      return s;
-    });
-    setShipmentsList(updated);
-    setEditingShipment(null);
-    triggerToast(`배송건 (${editingShipment.id}) 정보가 업데이트되었습니다.`);
-  };
-
-  const handleDeleteShipment = (id: string) => {
-    if (window.confirm("이 배송건 항목을 삭제하시겠습니까?")) {
-      setShipmentsList(shipmentsList.filter((s) => s.id !== id));
-      triggerToast("배송건이 삭제되었습니다.");
-    }
-  };
-
-  const filteredShipments = React.useMemo(() => {
-    return shipmentsList.filter((s) => {
-      const q = shipmentSearchQuery.toLowerCase();
-      const matchesSearch =
-        s.recipient.toLowerCase().includes(q) ||
-        s.orderId.toLowerCase().includes(q) ||
-        s.id.toLowerCase().includes(q) ||
-        s.trackingNumber.includes(q) ||
-        s.address.toLowerCase().includes(q);
-      const matchesStatus = shipmentStatusFilter === "all" || s.status === shipmentStatusFilter;
-      const matchesCarrier = shipmentCarrierFilter === "all" || s.carrier === shipmentCarrierFilter;
-      return matchesSearch && matchesStatus && matchesCarrier;
-    });
-  }, [shipmentsList, shipmentSearchQuery, shipmentStatusFilter, shipmentCarrierFilter]);
-
-  const totalShipmentPages = Math.ceil(filteredShipments.length / SHIPMENTS_PER_PAGE) || 1;
-  const paginatedShipments = React.useMemo(() => {
-    const start = (shipmentPage - 1) * SHIPMENTS_PER_PAGE;
-    return filteredShipments.slice(start, start + SHIPMENTS_PER_PAGE);
-  }, [filteredShipments, shipmentPage]);
+  const {
+    shipmentsList, setShipmentsList,
+    shipmentSearchQuery, setShipmentSearchQuery,
+    shipmentStatusFilter, setShipmentStatusFilter,
+    shipmentCarrierFilter, setShipmentCarrierFilter,
+    shipmentPage, setShipmentPage,
+    SHIPMENTS_PER_PAGE,
+    isAddShipmentModalOpen, setIsAddShipmentModalOpen,
+    newShipmentOrderId, setNewShipmentOrderId,
+    newShipmentRecipient, setNewShipmentRecipient,
+    newShipmentPhone, setNewShipmentPhone,
+    newShipmentAltPhone, setNewShipmentAltPhone,
+    newShipmentZipCode, setNewShipmentZipCode,
+    newShipmentAddress, setNewShipmentAddress,
+    newShipmentDetailAddress, setNewShipmentDetailAddress,
+    newShipmentItems, setNewShipmentItems,
+    newShipmentQuantity, setNewShipmentQuantity,
+    newShipmentShippingMemo, setNewShipmentShippingMemo,
+    newShipmentCarrier, setNewShipmentCarrier,
+    newShipmentTracking, setNewShipmentTracking,
+    newShipmentStatus, setNewShipmentStatus,
+    editingShipment, setEditingShipment,
+    editShipmentCarrier, setEditShipmentCarrier,
+    editShipmentTracking, setEditShipmentTracking,
+    editShipmentStatus, setEditShipmentStatus,
+    isCjConfigModalOpen, setIsCjConfigModalOpen,
+    configModalTab, setConfigModalTab,
+    shippingPolicy, setShippingPolicy,
+    cjClientCode, setCjClientCode,
+    cjContractNo, setCjContractNo,
+    cjApiKey, setCjApiKey,
+    cjSenderAddress, setCjSenderAddress,
+    handleOpenSenderPostcode,
+    handleIssueCjLogisticsTracking,
+    handleExportCjExcel,
+    handleAddShipmentSubmit,
+    handleSaveShipmentDetails,
+    handleDeleteShipment,
+    filteredShipments,
+    totalShipmentPages,
+    paginatedShipments,
+    handleOpenNewShipmentPostcode,
+    handleOpenEditShipment,
+    handleSaveEditShipment,
+    cjPrintData,
+    setCjPrintData
+  } = useShipments(triggerToast);
 
   React.useEffect(() => {
     const savedSeconds = localStorage.getItem("secret_timesale_seconds");
@@ -2513,50 +1572,7 @@ export default function AdminPage() {
 
 
 
-  const handleSaveTimeSaleDetailSettings = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const statusText = adminTimeSaleStatus === "active" ? "🔴 진행 중 (Active)" : "⏸️ 일시 정지 (Paused)";
 
-    const isConfirmed = window.confirm(
-      `타임세일 설정을 저장하고 쇼핑몰 전체에 즉시 반영하시겠습니까?\n\n• 진행 상태: ${statusText}\n• 할인율: ${adminTimeSaleDiscount}%\n• 지정 상품 수: 총 ${adminTimeSaleProductIds.length}개`
-    );
-    if (!isConfirmed) return;
-
-    const h = parseInt(adminTimeSaleHours) || 0;
-    const m = parseInt(adminTimeSaleMinutes) || 0;
-    const totalSeconds = h * 3600 + m * 60;
-    const expiryTimestamp = Date.now() + totalSeconds * 1000;
-    localStorage.setItem("secret_timesale_seconds", totalSeconds.toString());
-    localStorage.setItem("secret_timesale_expiry_timestamp", expiryTimestamp.toString());
-    localStorage.setItem("secret_timesale_discount", adminTimeSaleDiscount);
-    localStorage.setItem("secret_timesale_title", adminTimeSaleTitle);
-    localStorage.setItem("secret_timesale_status", adminTimeSaleStatus);
-    localStorage.setItem("secret_timesale_category", adminTimeSaleCategory);
-    localStorage.setItem("secret_timesale_product_ids", JSON.stringify(adminTimeSaleProductIds));
-    window.dispatchEvent(new CustomEvent("storage"));
-
-    const toastMsg = `타임세일 설정(할인율: ${adminTimeSaleDiscount}%, 지정 상품: ${adminTimeSaleProductIds.length}개)이 성공적으로 저장되었습니다!`;
-    triggerToast(toastMsg);
-  };
-
-  const handleToggleTimeSaleProduct = (id: string) => {
-    const prod = productsList.find((p) => p.id === id);
-    const prodTitle = prod?.title || "선택한 상품";
-    const isSelected = adminTimeSaleProductIds.includes(id);
-
-    const updated = isSelected
-      ? adminTimeSaleProductIds.filter((pId) => pId !== id)
-      : [...adminTimeSaleProductIds, id];
-    setAdminTimeSaleProductIds(updated);
-    localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updated));
-    window.dispatchEvent(new CustomEvent("storage"));
-
-    if (isSelected) {
-      triggerToast(`'${prodTitle}' 상품이 타임세일 지정 목록에서 해제되었습니다.`);
-    } else {
-      triggerToast(`'${prodTitle}' 상품이 타임세일 지정 목록에 추가되었습니다.`);
-    }
-  };
 
   // Export Revenue Settlements CSV
   const handleExportRevenueCSV = () => {
@@ -3653,6 +2669,8 @@ export default function AdminPage() {
               handleExportCjExcel={handleExportCjExcel}
               handleOpenEditShipment={handleOpenEditShipment}
               handleDeleteShipment={handleDeleteShipment}
+              cjPrintData={cjPrintData}
+              setCjPrintData={setCjPrintData}
             />
           )}
 

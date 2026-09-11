@@ -1,0 +1,100 @@
+﻿      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+      XLSX.writeFile(wb, `?앸같???묒닔??${dateStr}.xlsx`);
+      triggerToast(`?앸같???묒닔???묒? ?뚯씪(${exportData.length}媛??⑦궎吏/諛뺤뒪 ?????ㅼ슫濡쒕뱶?섏뿀?듬땲??`);
+    } catch (e) {
+      triggerToast("?묒? ?뚯씪 ?앹꽦 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.");
+    }
+  };
+
+  const handleOpenNewShipmentPostcode = () => {
+    if (typeof window !== "undefined" && (window as any).daum?.Postcode) {
+      new (window as any).daum.Postcode({
+        oncomplete: function (data: any) {
+          let fullAddress = data.roadAddress || data.jibunAddress;
+          let extraAddress = "";
+          if (data.addressType === "R") {
+            if (data.bname !== "") extraAddress += data.bname;
+            if (data.buildingName !== "") {
+              extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
+            }
+            fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
+          }
+          setNewShipmentZipCode(data.zonecode || "");
+          setNewShipmentAddress(fullAddress);
+        },
+      }).open();
+    } else {
+      triggerToast("二쇱냼 寃???쒕퉬?ㅻ? 遺덈윭?ㅻ뒗 以묒엯?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??");
+    }
+  };
+
+  const handleAddShipmentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newShipmentRecipient.trim()) {
+      triggerToast("?섎졊???대쫫???낅젰??二쇱꽭??");
+      return;
+    }
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const generatedOrderId = newShipmentOrderId.trim() || `ORD-${dateStr}-${String(Date.now()).slice(-3)}`;
+    const generatedTrkId = `TRK-${dateStr}-${String(Date.now()).slice(-4)}`;
+    const itemsName = newShipmentItems.trim() || "珥덉씠肄ㅻ쭏 ????섎쪟 ?곹뭹";
+    const qty = Number(newShipmentQuantity) || 1;
+
+    const newShipment = {
+      id: generatedTrkId,
+      orderId: generatedOrderId,
+      recipient: newShipmentRecipient.trim(),
+      phone: newShipmentPhone.trim() || "010-0000-0000",
+      altPhone: newShipmentAltPhone.trim() || "",
+      zipCode: newShipmentZipCode.trim() || "",
+      address: newShipmentAddress.trim() || "-",
+      detailAddress: newShipmentDetailAddress.trim() || "",
+      items: `${itemsName} ${qty}媛?,
+      quantity: qty,
+      carrier: newShipmentCarrier,
+      trackingNumber: newShipmentTracking.trim() || "-",
+      status: newShipmentStatus,
+      shippingMemo: newShipmentShippingMemo.trim() || "遺?ъ떆 臾몄븵???볦븘二쇱꽭??(?덉쟾諛곗넚)",
+      shippedDate: newShipmentStatus === "Pending" ? "-" : new Date().toISOString().split("T")[0],
+      estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0],
+      packages: [
+        {
+          id: `PKG-${String(Date.now()).slice(-4)}-1`,
+          pkgIndex: 1,
+          items: `${itemsName} ${qty}媛?,
+          quantity: qty,
+          carrier: newShipmentCarrier,
+          trackingNumber: newShipmentTracking.trim() || "-",
+          status: newShipmentStatus,
+        },
+      ],
+    };
+
+    setShipmentsList([newShipment, ...shipmentsList]);
+    setIsAddShipmentModalOpen(false);
+
+    // Reset Form
+    setNewShipmentOrderId("");
+    setNewShipmentRecipient("");
+    setNewShipmentPhone("");
+    setNewShipmentAltPhone("");
+    setNewShipmentZipCode("");
+    setNewShipmentAddress("");
+    setNewShipmentDetailAddress("");
+    setNewShipmentItems("");
+    setNewShipmentQuantity(1);
+    setNewShipmentShippingMemo("遺?ъ떆 臾몄븵???볦븘二쇱꽭??(?덉쟾諛곗넚)");
+    setNewShipmentTracking("");
+    setNewShipmentStatus("Pending");
+
+    triggerToast(`?앸같???묒닔??二쇰Ц/諛곗넚 嫄?${newShipment.orderId})???덈줈 ?깅줉?섏뿀?듬땲??`);
+  };
+
+  const handleOpenEditShipment = (shipment: any) => {
+    setEditingShipment(shipment);
+    setEditShipmentCarrier(shipment.carrier || "CJ??쒗넻??);
+    setEditShipmentTracking(shipment.trackingNumber || "");
+    setEditShipmentStatus(shipment.status || "Pending");
+  };
