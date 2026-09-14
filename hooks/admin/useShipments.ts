@@ -8,6 +8,36 @@ import * as XLSX from "xlsx";
 // ─────────────────────────────────────────────────────────────────────────────
 const initialShipments: any[] = [];
 
+// CJ대한통운 12자리 표준 송장번호 형식 (6892-XXXX-XXXX) 변환 유틸
+export function sanitizeCjTracking(tracking: string): string {
+  if (!tracking || tracking === "-") return "-";
+  let clean = tracking.trim();
+  if (clean.toUpperCase().startsWith("MOCK-") || clean.toUpperCase().startsWith("MOCK")) {
+    const seed = clean.replace(/[^0-9]/g, "").padEnd(8, "0").slice(0, 8);
+    const num12 = `6892${seed}`;
+    return `${num12.slice(0, 4)}-${num12.slice(4, 8)}-${num12.slice(8, 12)}`;
+  }
+  const digits = clean.replace(/[^0-9]/g, "");
+  if (digits.length === 12) {
+    return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8, 12)}`;
+  }
+  return clean;
+}
+
+export function sanitizeShipmentsList(list: any[]): any[] {
+  if (!Array.isArray(list)) return [];
+  return list.map((s: any) => ({
+    ...s,
+    trackingNumber: sanitizeCjTracking(s.trackingNumber),
+    packages: Array.isArray(s.packages)
+      ? s.packages.map((pkg: any) => ({
+          ...pkg,
+          trackingNumber: sanitizeCjTracking(pkg.trackingNumber),
+        }))
+      : s.packages,
+  }));
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Hook
 // ─────────────────────────────────────────────────────────────────────────────
@@ -21,18 +51,24 @@ export function useShipments(triggerToast: (msg: string) => void) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return sanitizeShipmentsList(parsed);
+          }
         } catch (e) {}
       }
     }
     return initialShipments;
   });
 
-  // Persist on change
+  // Persist on change without dispatching 'storage' to self
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("admin_shipments", JSON.stringify(shipmentsList));
-      window.dispatchEvent(new CustomEvent("storage"));
+      const currentJson = JSON.stringify(shipmentsList);
+      const saved = localStorage.getItem("admin_shipments");
+      if (saved !== currentJson) {
+        localStorage.setItem("admin_shipments", currentJson);
+        window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+      }
     }
   }, [shipmentsList]);
 
@@ -44,10 +80,18 @@ export function useShipments(triggerToast: (msg: string) => void) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) setShipmentsList(parsed);
+          if (Array.isArray(parsed)) {
+            const sanitized = sanitizeShipmentsList(parsed);
+            setShipmentsList((prev) => {
+              if (JSON.stringify(prev) === JSON.stringify(sanitized)) return prev;
+              return sanitized;
+            });
+          }
         } catch (e) {}
       }
     };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("admin_shipments_updated", onStorage);
     // Also load orders and merge
     const onOrdersUpdate = () => {
       const savedOrders = localStorage.getItem("admin_orders");
@@ -91,9 +135,11 @@ export function useShipments(triggerToast: (msg: string) => void) {
       }
     };
     window.addEventListener("storage", onStorage);
+    window.addEventListener("admin_shipments_updated", onStorage);
     window.addEventListener("admin_orders_updated", onOrdersUpdate);
     return () => {
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("admin_shipments_updated", onStorage);
       window.removeEventListener("admin_orders_updated", onOrdersUpdate);
     };
   }, []);

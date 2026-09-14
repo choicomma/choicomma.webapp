@@ -506,16 +506,6 @@ export function OrdersManagement({
       <div className="bg-neutral-950 text-white rounded-2xl p-4 sm:p-5 shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-neutral-800">
         {/* Left: Action Buttons for Parcel Workflow */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* 접수 엑셀 다운로드 */}
-          <button
-            type="button"
-            onClick={handleExportCjExcel}
-            className="bg-white hover:bg-neutral-100 text-neutral-950 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] border border-neutral-200"
-          >
-            <Download className="w-4 h-4 text-neutral-950" />
-            <span>택배사 접수용 다운로드</span>
-          </button>
-
           {/* 선택 건 송장 일괄 발급 */}
           <button
             type="button"
@@ -553,16 +543,6 @@ export function OrdersManagement({
             <span>선택 건 송장 일괄 출력</span>
           </button>
 
-          {/* 송장 엑셀 일괄 업로드 */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-neutral-800 hover:bg-neutral-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] border border-neutral-600"
-          >
-            <Upload className="w-4 h-4 text-white" />
-            <span>송장 엑셀 일괄 등록</span>
-          </button>
-
           {/* 배송 설정 */}
           <button
             type="button"
@@ -576,8 +556,8 @@ export function OrdersManagement({
 
         {/* Right: Step Guide */}
         <div className="text-xs text-neutral-400 flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span>① 배송준비 주문건을 <strong>CJ대한통운 접수용 엑셀로 다운로드</strong></span>
-          <span>② CJ대한통운에서 송장 출력 후 <strong>'송장 엑셀 업로드'</strong>로 번호 일괄 반영</span>
+          <span>① 주문 선택 후 <strong>'송장 일괄 발급'</strong>으로 번호 채번</span>
+          <span>② 발급 완료 후 <strong>'송장 일괄 출력'</strong>으로 표준운송장 라벨 인쇄</span>
         </div>
       </div>
 

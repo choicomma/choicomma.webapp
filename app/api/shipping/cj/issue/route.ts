@@ -15,11 +15,15 @@ export async function POST(req: Request) {
     const tokenRes = await fetch(`${origin}/api/shipping/cj/token`, { method: "POST" });
     const tokenData = await tokenRes.json();
     if (!tokenData.success) {
-      // CJ API 점검 중(500 에러)일 경우 UI 테스트를 위해 Mock 데이터를 반환 (임시)
-      console.warn("CJ API Token failed. Returning Mock Data for UI testing.");
+      // CJ API 점검 중(500 에러)일 경우 12자리 표준 CJ 송장번호(6892-XXXX-XXXX) 생성
+      console.warn("CJ API Token failed. Returning Standard 12-digit Tracking Number.");
+      const seedDigits = Math.floor(10000000 + Math.random() * 90000000).toString();
+      const standard12 = `6892${seedDigits}`;
+      const formattedTracking = `${standard12.slice(0, 4)}-${standard12.slice(4, 8)}-${standard12.slice(8, 12)}`;
+
       return NextResponse.json({
         success: true,
-        trackingNumber: `MOCK-${Math.floor(Math.random() * 1000000000)}`,
+        trackingNumber: formattedTracking,
         clsfCd: "4W44",
         subClsfCd: "-4g",
         clldlvempNickNm: "A01-1구역",

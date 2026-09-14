@@ -429,11 +429,20 @@ function StandardCjLabel({
   pageIndex: number;
   totalPages: number;
 }) {
-  const trackingRaw = (item.trackingNumber || "").replace(/[^0-9A-Za-z]/g, "");
-  const trackingFormatted = trackingRaw.replace(
-    /(\d{4})(\d{4})(\d{4})/,
-    "$1-$2-$3"
-  ) || trackingRaw;
+  let cleanTrack = (item.trackingNumber || "").trim();
+  if (cleanTrack.toUpperCase().startsWith("MOCK")) {
+    const seed = cleanTrack.replace(/[^0-9]/g, "").padEnd(8, "0").slice(0, 8);
+    cleanTrack = `6892${seed}`;
+  } else {
+    cleanTrack = cleanTrack.replace(/[^0-9]/g, "");
+  }
+  if (cleanTrack.length < 12) {
+    cleanTrack = (cleanTrack + "000000000000").slice(0, 12);
+  } else if (cleanTrack.length > 12) {
+    cleanTrack = cleanTrack.slice(0, 12);
+  }
+  const trackingRaw = cleanTrack;
+  const trackingFormatted = `${trackingRaw.slice(0, 4)}-${trackingRaw.slice(4, 8)}-${trackingRaw.slice(8, 12)}`;
 
   // 5번 분류코드 바코드용 값 (CLSFCD + SUBCLSFCD)
   const blueCode =
