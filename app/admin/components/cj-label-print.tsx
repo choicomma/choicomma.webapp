@@ -128,8 +128,39 @@ export function CjLabelPrint({
       size: 123mm 100mm landscape;
       margin: 0 !important;
     }
+    @font-face {
+      font-family: 'Pretendard';
+      src: url('/font/Pretendard-Regular.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Pretendard';
+      src: url('/font/Pretendard-Medium.otf') format('opentype');
+      font-weight: 500;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Pretendard';
+      src: url('/font/Pretendard-Bold.otf') format('opentype');
+      font-weight: 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Pretendard';
+      src: url('/font/Pretendard-ExtraBold.otf') format('opentype');
+      font-weight: 800;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Pretendard';
+      src: url('/font/Pretendard-Black.otf') format('opentype');
+      font-weight: 900;
+      font-style: normal;
+    }
     * {
       box-sizing: border-box !important;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
@@ -138,7 +169,7 @@ export function CjLabelPrint({
       padding: 0 !important;
       width: 123mm !important;
       background: #ffffff !important;
-      font-family: 'Noto Sans KR', 'Malgun Gothic', -apple-system, sans-serif !important;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
@@ -492,7 +523,7 @@ function StandardCjLabel({
         backgroundColor: "#ffffff",
         overflow: "hidden",
         fontFamily:
-          "'Noto Sans KR', 'Malgun Gothic', -apple-system, sans-serif",
+          "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
         color: "#000000",
         margin: 0,
         padding: 0,
@@ -1191,7 +1222,7 @@ function BvDiamondLogo() {
         y="25"
         fontSize="14"
         fontWeight="900"
-        fontFamily="sans-serif"
+        fontFamily="'Pretendard', -apple-system, sans-serif"
         fill="#0070c0"
         textAnchor="middle"
       >

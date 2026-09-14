@@ -87,10 +87,6 @@ import { InquiriesManagement } from "./components/inquiries-management";
 import { GlobalSalesManagement } from "./components/global-sales-management";
 import { LanguageSelector } from "@/components/layout/header/language-selector";
 
-import initialCustomersData from "@/lib/sfcc/mock/customers-data.json";
-
-const initialCustomers: any[] = initialCustomersData;
-
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
   CREAM: "#FDFBF7",
@@ -599,7 +595,7 @@ export default function AdminPage() {
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
-  const [productSortOrder, setProductSortOrder] = useState<"productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom">("productNoDesc");
+  const [productSortOrder, setProductSortOrder] = useState<"productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom">("custom");
   const [topSellerFilter, setTopSellerFilter] = useState<"all" | "topSeller" | "normal">("all");
   const [selectedCategoryForProducts, setSelectedCategoryForProducts] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -1427,8 +1423,10 @@ export default function AdminPage() {
     id: "ADMIN-001",
     name: "최고관리자 (Admin)",
     email: "admin@choicomma.com",
-    phone: "010-1234-5678",
-    address: "서울특별시 강남구 개포로22길 12 6층 (주)초이콤마 본사",
+    phone: "02-579-1171",
+    postcode: "06306",
+    address: "서울특별시 강남구 개포로22길 12",
+    detailAddress: "6층 (주)초이콤마 본사",
     grade: "VVIP",
     totalSpent: 25000000,
     points: 100000,
@@ -2647,12 +2645,15 @@ export default function AdminPage() {
               handleDeleteCustomer={handleDeleteCustomer}
               handleClearAllCustomers={handleClearAllCustomers}
               handleExcelFileUpload={handleExcelFileUpload}
+              handleResetCustomerData={handleResetCustomerData}
             />
           )}
 
           {/* TAB: ORDERS & SHIPMENTS INTEGRATED MANAGEMENT */}
           {activeTab === "orders" && (
             <OrdersManagement
+              productsList={productsList}
+              customersList={customersList}
               shipmentsList={shipmentsList}
               setShipmentsList={setShipmentsList}
               shipmentSearchQuery={shipmentSearchQuery}
@@ -6376,6 +6377,49 @@ export default function AdminPage() {
                 />
               </div>
 
+              {/* 회원 정보 관리에서 빠른 불러오기 */}
+              {customersList && customersList.length > 0 && (
+                <div className="bg-sky-50/70 border border-sky-200/80 rounded-2xl p-3 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold text-sky-950">
+                    <span className="flex items-center gap-1.5">
+                      <span>👤</span> 회원 정보 관리에서 불러오기
+                    </span>
+                    <span className="text-[10px] text-sky-600 font-normal">선택 시 이름, 연락처, 주소가 자동 입력됩니다</span>
+                  </div>
+                  <select
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      if (!selectedId) return;
+                      const cust = customersList.find((c: any) => c.id === selectedId);
+                      if (cust) {
+                        setNewShipmentRecipient(cust.name || "");
+                        setNewShipmentPhone(cust.phone || "");
+                        let zip = cust.postcode || "";
+                        let addr = cust.address || "";
+                        let detail = cust.detailAddress || "";
+                        const zipMatch = addr.match(/^\[(\d{5})\]\s*(.*)$/);
+                        if (zipMatch) {
+                          zip = zipMatch[1];
+                          addr = zipMatch[2];
+                        }
+                        setNewShipmentZipCode(zip);
+                        setNewShipmentAddress(addr !== "-" ? addr : "");
+                        setNewShipmentDetailAddress(detail);
+                      }
+                    }}
+                    defaultValue=""
+                    className="w-full bg-white border border-sky-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-sky-600 cursor-pointer"
+                  >
+                    <option value="">-- 등록된 회원 선택 ({customersList.length.toLocaleString()}명) --</option>
+                    {customersList.map((c: any) => (
+                      <option key={c.id} value={c.id}>
+                        [{c.grade || "일반"}] {c.name} ({c.phone || c.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* 수령인 성명 */}
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">받는분 성명 *</label>
@@ -6591,16 +6635,47 @@ export default function AdminPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-1">운송장 번호</label>
-                <input
-                  type="text"
-                  value={editShipmentTracking}
-                  onChange={(e) => setEditShipmentTracking(e.target.value)}
-                  placeholder="운송장 번호 입력"
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                />
-              </div>
+              {editingShipment.packages && editingShipment.packages.length > 1 ? (
+                <div className="space-y-3 p-3.5 bg-purple-50/60 rounded-2xl border border-purple-200">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-purple-900">📦 분리배송 박스별 운송장 번호 직접 입력</label>
+                    <span className="text-[10px] text-purple-600 font-bold">{editingShipment.packages.length}개 박스</span>
+                  </div>
+                  {editingShipment.packages.map((pkg: any, pIdx: number) => (
+                    <div key={pIdx} className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-extrabold text-neutral-800">박스 {pkg.pkgIndex || pIdx + 1} ({pkg.quantity || 1}개)</span>
+                        <span className="text-neutral-500 truncate max-w-[150px]">{pkg.items}</span>
+                      </div>
+                      <input
+                        type="text"
+                        value={pkg.trackingNumber === "-" ? "" : pkg.trackingNumber || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const updatedPkgs = editingShipment.packages.map((p: any, i: number) =>
+                            i === pIdx ? { ...p, trackingNumber: val } : p
+                          );
+                          setEditingShipment({ ...editingShipment, packages: updatedPkgs });
+                          if (pIdx === 0) setEditShipmentTracking(val);
+                        }}
+                        placeholder={`박스 ${pkg.pkgIndex || pIdx + 1} 운송장 번호 직접 입력`}
+                        className="w-full bg-white border border-neutral-200 rounded-xl px-3.5 py-2 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-purple-600"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">운송장 번호</label>
+                  <input
+                    type="text"
+                    value={editShipmentTracking}
+                    onChange={(e) => setEditShipmentTracking(e.target.value)}
+                    placeholder="운송장 번호 입력"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">배송 상태 변경</label>

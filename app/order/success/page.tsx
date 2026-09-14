@@ -53,15 +53,35 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
           // Save live order into localStorage for Admin live order tracking
           if (typeof window !== "undefined") {
             const savedOrders = localStorage.getItem("admin_orders");
-            let ordersList = [];
+            let ordersList: any[] = [];
             if (savedOrders) {
               try { ordersList = JSON.parse(savedOrders); } catch (e) {}
             }
 
+            // Read pending checkout order form data (배송지, 우편번호, 수령인)
+            let pendingOrder: any = null;
+            try {
+              const rawPending = sessionStorage.getItem(`pending_order_${orderId}`);
+              if (rawPending) pendingOrder = JSON.parse(rawPending);
+            } catch (e) {}
+
             const newOrder = {
               id: orderId,
-              customer: json.data?.customerName || "VIP 고객님",
-              email: json.data?.customerEmail || "customer@choicomma.com",
+              customer: json.data?.customerName || pendingOrder?.formData?.ordererName || pendingOrder?.formData?.recipientName || "VIP 고객님",
+              ordererName: pendingOrder?.formData?.ordererName || json.data?.customerName || pendingOrder?.formData?.recipientName || "VIP 고객님",
+              email: json.data?.customerEmail || pendingOrder?.formData?.ordererEmail || "customer@choicomma.com",
+              recipient: pendingOrder?.formData?.recipientName || json.data?.customerName || "고객님",
+              phone: pendingOrder?.formData?.recipientPhone || "010-0000-0000",
+              altPhone: pendingOrder?.formData?.recipientAltPhone || "",
+              zipCode: pendingOrder?.formData?.postcode || "",
+              address: pendingOrder?.formData?.address || "",
+              detailAddress: pendingOrder?.formData?.addressDetail || "",
+              shippingMemo:
+                pendingOrder?.formData?.deliveryMemo === "직접 입력"
+                  ? (pendingOrder?.formData?.customDeliveryMemo?.trim() || "직접 입력")
+                  : (pendingOrder?.formData?.deliveryMemo || ""),
+              items: pendingOrder?.cart?.lines?.map((l: any) => `${l.merchandise?.product?.title || l.title || "상품"} (${l.quantity}개)`).join(", ") || "초이콤마 오리지널 패션 컬렉션",
+              quantity: pendingOrder?.cart?.totalQuantity || 1,
               date: new Date().toISOString().slice(0, 10),
               totalAmount: Number(amount),
               status: "결제완료 (토스)",

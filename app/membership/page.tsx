@@ -156,10 +156,14 @@ function MembershipContent() {
       if (savedPhone) setUserPhone(savedPhone);
       const savedPostcode = localStorage.getItem("membership_user_postcode");
       setUserPostcode(savedPostcode || "");
-      const savedAddress = localStorage.getItem("membership_user_address");
-      setUserAddress(savedAddress || "");
-      const savedDetail = localStorage.getItem("membership_user_address_detail");
-      setUserAddressDetail(savedDetail || "");
+      let savedAddress = localStorage.getItem("membership_user_address") || "";
+      const savedDetail = localStorage.getItem("membership_user_address_detail") || "";
+      if (savedDetail && savedAddress.endsWith(savedDetail)) {
+        savedAddress = savedAddress.slice(0, -savedDetail.length).trim();
+        localStorage.setItem("membership_user_address", savedAddress);
+      }
+      setUserAddress(savedAddress);
+      setUserAddressDetail(savedDetail);
 
       const savedPoints = localStorage.getItem("membership_user_points");
       if (savedPoints && !isNaN(parseInt(savedPoints))) {
@@ -309,6 +313,33 @@ function MembershipContent() {
     localStorage.setItem("membership_user_postcode", userPostcode);
     localStorage.setItem("membership_user_address", userAddress);
     localStorage.setItem("membership_user_address_detail", userAddressDetail);
+
+    // 회원 정보 관리(admin_customers)에도 분리된 주소 최신화 동기화
+    try {
+      const rawCustomers = localStorage.getItem("admin_customers");
+      if (rawCustomers) {
+        const list: any[] = JSON.parse(rawCustomers);
+        const currentEmail = (userEmail || "").trim().toLowerCase();
+        const currentPhone = (userPhone || "").replace(/[^0-9]/g, "");
+        const updated = list.map((c) => {
+          const cEmail = (c.email || "").trim().toLowerCase();
+          const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+          if ((currentEmail && cEmail === currentEmail) || (currentPhone && cPhone === currentPhone) || (c.name === userName)) {
+            return {
+              ...c,
+              postcode: userPostcode,
+              address: userAddress,
+              detailAddress: userAddressDetail,
+            };
+          }
+          return c;
+        });
+        localStorage.setItem("admin_customers", JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent("storage"));
+        window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+      }
+    } catch (e) {}
+
     toast.success(`${userName} 회원님의 기본 배송지 주소가 안전하게 저장되었습니다.`);
   };
 

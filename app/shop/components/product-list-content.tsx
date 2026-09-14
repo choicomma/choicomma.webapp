@@ -8,6 +8,7 @@ import { ProductCard } from "./product-card";
 import ResultsControls from "./results-controls";
 import { SetBundleSection } from "@/components/products/set-bundle-section";
 import { getRegisteredSetProducts } from "@/lib/sfcc/set-products-helper";
+import { getProductNoNum } from "@/lib/sfcc/product-sort";
 
 interface ProductListContentProps {
   products: Product[];
@@ -21,9 +22,13 @@ export function ProductListContent({
   collectionHandle,
 }: ProductListContentProps) {
   const { setProducts } = useProducts();
-  const [displayProducts, setDisplayProducts] = useState<Product[]>(products);
+  const initialValidProducts = (products || []).filter(
+    (p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+  );
+  const [displayProducts, setDisplayProducts] = useState<Product[]>(initialValidProducts);
   const searchParams = useSearchParams();
   const query = searchParams?.get("q") || "";
+  const sort = searchParams?.get("sort") || "";
 
   useEffect(() => {
     const loadAdminChoiceProducts = async () => {
@@ -268,27 +273,49 @@ export function ProductListContent({
     setCurrentPage(1);
   }, [query, collectionHandle]);
 
-  // Deduplicate products & filter by search query
-  const uniqueProducts = displayProducts
-    .filter((p, index, self) => index === self.findIndex((t) => t.id === p.id))
-    .filter((p) => {
-      if (!query.trim()) return true;
-      const qLower = query.trim().toLowerCase();
-      const titleMatch = p.title?.toLowerCase().includes(qLower);
-      const descMatch = p.description?.toLowerCase().includes(qLower);
-      const tagMatch = p.tags?.some((t) => t.toLowerCase().includes(qLower));
-      return titleMatch || descMatch || tagMatch;
+    // Deduplicate products & filter by search query
+    const uniqueProducts = displayProducts
+      .filter((p, index, self) => index === self.findIndex((t) => t.id === p.id))
+      .filter((p) => {
+        if (!query.trim()) return true;
+        const qLower = query.trim().toLowerCase();
+        const titleMatch = p.title?.toLowerCase().includes(qLower);
+        const descMatch = p.description?.toLowerCase().includes(qLower);
+        const tagMatch = p.tags?.some((t) => t.toLowerCase().includes(qLower));
+        return titleMatch || descMatch || tagMatch;
+      });
+
+    // Apply explicit sorting if chosen, otherwise preserve the fixed latest-first order
+    const sortedProducts = [...uniqueProducts].sort((a: any, b: any) => {
+      if (sort === "price-asc") {
+        const pA = Number(a.priceRange?.minVariantPrice?.amount || a.price?.amount || 0);
+        const pB = Number(b.priceRange?.minVariantPrice?.amount || b.price?.amount || 0);
+        return pA - pB;
+      }
+      if (sort === "price-desc") {
+        const pA = Number(a.priceRange?.minVariantPrice?.amount || a.price?.amount || 0);
+        const pB = Number(b.priceRange?.minVariantPrice?.amount || b.price?.amount || 0);
+        return pB - pA;
+      }
+      if (sort === "oldest") {
+        return getProductNoNum(a) - getProductNoNum(b);
+      }
+      if (sort === "newest") {
+        return getProductNoNum(b) - getProductNoNum(a);
+      }
+      // Default: preserve fixed array order (latest products first / admin-saved order)
+      return 0;
     });
 
-  const totalPages = Math.ceil(uniqueProducts.length / PAGE_SIZE);
-  const paginatedProducts = uniqueProducts.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+    const totalPages = Math.ceil(sortedProducts.length / PAGE_SIZE);
+    const paginatedProducts = sortedProducts.slice(
+      (currentPage - 1) * PAGE_SIZE,
+      currentPage * PAGE_SIZE
+    );
 
-  return (
-    <>
-      {uniqueProducts.length > 0 ? (
+    return (
+      <>
+        {sortedProducts.length > 0 ? (
         <div className="flex flex-col w-full">
           <div className="grid grid-cols-1 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
             {paginatedProducts.map((product, idx) => (

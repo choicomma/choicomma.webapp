@@ -12,8 +12,8 @@ const config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "monospace"],
+        sans: ["var(--font-pretendard)", "Pretendard", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
+        mono: ["var(--font-pretendard)", "Pretendard", "monospace"],
       },
       colors: {
         background: "hsl(var(--background))",

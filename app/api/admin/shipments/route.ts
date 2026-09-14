@@ -11,6 +11,52 @@ function getShipmentsFilePath() {
   return path.join(process.cwd(), "lib", "sfcc", "mock", "shipments-data.json");
 }
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function extractShipmentOrderNumber(str: string): number {
+  if (!str) return 0;
+  const match = str.match(/(\d+)$/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+function sortShipmentsByNumber(list: any[]): any[] {
+  if (!Array.isArray(list)) return [];
+  return [...list].sort((a: any, b: any) => {
+    const keyA = (a.orderId || a.id || "").trim();
+    const keyB = (b.orderId || b.id || "").trim();
+    const numA = extractShipmentOrderNumber(keyA);
+    const numB = extractShipmentOrderNumber(keyB);
+    if (numA !== numB) return numB - numA; // 최신 번호가 상단, 1번이 가장 밑으로 정렬
+    return keyB.localeCompare(keyA, undefined, { numeric: true, sensitivity: "base" });
+  });
+}
+
+function serializeShipmentsForDiff(list: any[]): string {
+  if (!Array.isArray(list)) return "";
+  return JSON.stringify(
+    list.map((s) => ({
+      id: s.id,
+      orderId: s.orderId || s.order_id || "",
+      recipient: s.recipient || "",
+      phone: s.phone || "",
+      altPhone: s.altPhone || s.alt_phone || "",
+      zipCode: s.zipCode || s.zip_code || "",
+      address: s.address || "",
+      detailAddress: s.detailAddress || s.detail_address || "",
+      items: s.items || "",
+      quantity: s.quantity || 1,
+      carrier: s.carrier || "CJ대한통운",
+      trackingNumber: s.trackingNumber || s.tracking_number || "-",
+      status: s.status || "Pending",
+      shippingMemo: s.shippingMemo || s.shipping_memo || "",
+      packages: s.packages || [],
+      shippedDate: s.shippedDate || null,
+      estimatedDelivery: s.estimatedDelivery || null,
+    }))
+  );
+}
+
 // GET: Return authoritative server-stored shipments to any client (PC, Mobile, Deployed App)
 export async function GET() {
   try {
@@ -19,11 +65,12 @@ export async function GET() {
       const { data: dbShipments, error: dbError } = await supabaseServer
         .from("shipments")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("orderId", { ascending: false });
 
       if (!dbError && Array.isArray(dbShipments) && dbShipments.length > 0) {
-        globalForShipments.serverShipmentsCache = dbShipments;
-        return NextResponse.json(dbShipments, {
+        const sorted = sortShipmentsByNumber(dbShipments);
+        globalForShipments.serverShipmentsCache = sorted;
+        return NextResponse.json(sorted, {
           headers: {
             "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
             Pragma: "no-cache",
@@ -39,7 +86,8 @@ export async function GET() {
 
     // 2. Fallback: In-memory cache
     if (globalForShipments.serverShipmentsCache && Array.isArray(globalForShipments.serverShipmentsCache)) {
-      return NextResponse.json(globalForShipments.serverShipmentsCache, {
+      const sorted = sortShipmentsByNumber(globalForShipments.serverShipmentsCache);
+      return NextResponse.json(sorted, {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
           Pragma: "no-cache",
@@ -54,8 +102,9 @@ export async function GET() {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
       if (Array.isArray(data) && data.length > 0) {
-        globalForShipments.serverShipmentsCache = data;
-        return NextResponse.json(data, {
+        const sorted = sortShipmentsByNumber(data);
+        globalForShipments.serverShipmentsCache = sorted;
+        return NextResponse.json(sorted, {
           headers: {
             "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
             Pragma: "no-cache",
@@ -66,8 +115,9 @@ export async function GET() {
     }
 
     // 4. Default Fallback
-    globalForShipments.serverShipmentsCache = initialShipments;
-    return NextResponse.json(initialShipments, {
+    const sorted = sortShipmentsByNumber(initialShipments);
+    globalForShipments.serverShipmentsCache = sorted;
+    return NextResponse.json(sorted, {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
         Pragma: "no-cache",
@@ -97,6 +147,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const sorted = sortShipmentsByNumber(shipments);
+
+    // If server cache has identical business data, return early to prevent recursive Supabase Realtime broadcast loops
+    if (globalForShipments.serverShipmentsCache && Array.isArray(globalForShipments.serverShipmentsCache)) {
+      const cacheSerialized = serializeShipmentsForDiff(globalForShipments.serverShipmentsCache);
+      const incomingSerialized = serializeShipmentsForDiff(sorted);
+      if (cacheSerialized === incomingSerialized) {
+        return NextResponse.json(
+          { success: true, count: sorted.length, data: sorted, message: "No business data changed, skipped DB write" },
+          { headers: { "Cache-Control": "no-store" } }
+        );
+      }
+    }
+
     // 1. Primary: Save to Supabase (Upsert)
     if (isSupabaseConfigured) {
       try {
@@ -107,7 +171,7 @@ export async function POST(req: NextRequest) {
           "shippedDate", "estimatedDelivery", "packages", "created_at", "updated_at"
         ];
 
-        const dbRows = shipments.map((s: any) => {
+        const dbRows = sorted.map((s: any) => {
           const row: any = {};
           ALLOWED_COLUMNS.forEach((col) => {
             if (s[col] !== undefined) row[col] = s[col];
@@ -154,18 +218,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. In-memory cache update
-    globalForShipments.serverShipmentsCache = shipments;
+    globalForShipments.serverShipmentsCache = sorted;
 
-    // 3. Persist to disk (if writable environment e.g. local dev)
-    try {
-      const filePath = getShipmentsFilePath();
-      fs.writeFileSync(filePath, JSON.stringify(shipments, null, 2), "utf-8");
-    } catch (fsErr: any) {
-      // Ignored in read-only serverless environment
-    }
+    // Supabase DB 및 인메모리 캐시를 통해 실시간 영속화 관리 (Next.js dev 모드 HMR 자동 새로고침 방지를 위해 소스 폴더 내부 쓰기 제거)
 
     return NextResponse.json(
-      { success: true, count: shipments.length, data: shipments },
+      { success: true, count: sorted.length, data: sorted },
       {
         headers: {
           "Cache-Control": "no-store",

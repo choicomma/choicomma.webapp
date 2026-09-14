@@ -957,14 +957,26 @@ export function ProductsManagement({
               onChange={(e) => setProductSortOrder(e.target.value as any)}
               className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 cursor-pointer"
             >
-              <option value="productNoDesc">최신 등록순 (기본)</option>
-              <option value="custom">✋ 사용자 직접 지정 순서</option>
-              <option value="productNoAsc">등록순 (오래된 순)</option>
+              <option value="custom">최신 등록순 / 지정 순서 (기본)</option>
+              <option value="productNoDesc">등록번호 역순 (높은 번호순)</option>
+              <option value="productNoAsc">등록번호 순 (낮은 번호순)</option>
               <option value="nameAsc">상품명순 (가나다)</option>
               <option value="priceDesc">높은 가격순</option>
               <option value="priceAsc">낮은 가격순</option>
             </select>
           </div>
+
+          {onSaveToDisk && (
+            <button
+              type="button"
+              onClick={onSaveToDisk}
+              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all shadow-sm cursor-pointer"
+              title="현재 순서 및 변경사항을 쇼핑몰 전체 및 데이터베이스에 영구 저장"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>쇼핑몰 순서 반영 (저장)</span>
+            </button>
+          )}
 
           {selectedProductIds.length > 0 && (
             <div className="relative inline-block text-left animate-in fade-in">
@@ -1052,7 +1064,7 @@ export function ProductsManagement({
           <table className="w-full text-left text-xs text-neutral-700">
             <thead className="bg-neutral-50 text-neutral-500 text-[11px] uppercase font-semibold border-b border-neutral-200">
               <tr>
-                <th className="py-3 px-2 w-8 text-center whitespace-nowrap">순서</th>
+                <th className="py-3 px-2 w-14 text-center whitespace-nowrap">순서</th>
                 <th className="py-3 px-2 w-8 text-center whitespace-nowrap">
                   <input
                     type="checkbox"
@@ -1094,14 +1106,36 @@ export function ProductsManagement({
                       }`}
                     >
                       <td
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, String(p.id))}
-                        onDragEnd={handleDragEnd}
-                        className="py-2 px-2 w-8 text-center cursor-grab active:cursor-grabbing text-neutral-400 hover:text-neutral-950 transition-colors"
+                        className="py-2 px-1 w-14 text-center text-neutral-400 transition-colors"
                         onClick={(e) => e.stopPropagation()}
-                        title="드래그하여 실시간 순서 변경"
                       >
-                        <GripVertical className="w-4 h-4 mx-auto pointer-events-none" />
+                        <div className="flex items-center justify-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveProduct && handleMoveProduct(String(p.id), "up")}
+                            title="위로 이동"
+                            className="p-1 text-neutral-400 hover:text-neutral-950 hover:bg-neutral-200/60 rounded transition-colors cursor-pointer"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          </button>
+                          <div
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, String(p.id))}
+                            onDragEnd={handleDragEnd}
+                            className="cursor-grab active:cursor-grabbing p-0.5 text-neutral-400 hover:text-neutral-950 transition-colors"
+                            title="드래그하여 실시간 순서 변경"
+                          >
+                            <GripVertical className="w-3.5 h-3.5 pointer-events-none" />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveProduct && handleMoveProduct(String(p.id), "down")}
+                            title="아래로 이동"
+                            className="p-1 text-neutral-400 hover:text-neutral-950 hover:bg-neutral-200/60 rounded transition-colors cursor-pointer"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                       <td className="py-2 px-2 w-8 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <input

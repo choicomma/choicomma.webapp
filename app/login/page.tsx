@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { LogoSvg } from "@/components/layout/header/logo-svg";
+import { supabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -97,7 +98,7 @@ export default function LoginPage() {
   };
 
   // Check Email (Login ID) Duplicate
-  const handleCheckEmailDuplicate = () => {
+  const handleCheckEmailDuplicate = async () => {
     const trimmedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
@@ -109,9 +110,9 @@ export default function LoginPage() {
       return;
     }
 
+    let isDuplicate = false;
     if (typeof window !== "undefined") {
       const savedCustomers = localStorage.getItem("admin_customers");
-      let isDuplicate = false;
       if (savedCustomers) {
         try {
           const customerList: any[] = JSON.parse(savedCustomers);
@@ -120,32 +121,51 @@ export default function LoginPage() {
           );
         } catch (e) { }
       }
+    }
 
-      // Check admin and special IDs
-      if (trimmedEmail === "admin" || trimmedEmail === "admin@choicomma.com" || trimmedEmail === "mypage" || trimmedEmail === "mypage@choicomma.com") {
-        isDuplicate = true;
-      }
+    // Check Supabase
+    if (!isDuplicate) {
+      try {
+        const { data, error } = await supabase
+          .from("customers")
+          .select("id")
+          .ilike("email", trimmedEmail)
+          .limit(1);
+        if (!error && data && data.length > 0) {
+          isDuplicate = true;
+        }
+      } catch (err) { }
+    }
 
-      if (isDuplicate) {
-        setEmailCheckMessage({
-          status: "error",
-          text: "이미 가입된 이메일 주소(ID)입니다. 다른 이메일을 입력해 주세요.",
-        });
-        setIsEmailChecked(false);
-        setToastMsg("이미 등록된 이메일 주소입니다.");
-      } else {
-        setEmailCheckMessage({
-          status: "success",
-          text: "사용 가능한 로그인 ID (이메일 주소)입니다.",
-        });
-        setIsEmailChecked(true);
-        setToastMsg("사용 가능한 이메일 주소입니다.");
-      }
+    // Check admin and special IDs
+    if (
+      trimmedEmail === "admin" ||
+      trimmedEmail === "admin@choicomma.com" ||
+      trimmedEmail === "mypage" ||
+      trimmedEmail === "mypage@choicomma.com"
+    ) {
+      isDuplicate = true;
+    }
+
+    if (isDuplicate) {
+      setEmailCheckMessage({
+        status: "error",
+        text: "이미 가입된 이메일 주소(ID)입니다. 다른 이메일을 입력해 주세요.",
+      });
+      setIsEmailChecked(false);
+      setToastMsg("이미 등록된 이메일 주소입니다.");
+    } else {
+      setEmailCheckMessage({
+        status: "success",
+        text: "사용 가능한 로그인 ID (이메일 주소)입니다.",
+      });
+      setIsEmailChecked(true);
+      setToastMsg("사용 가능한 이메일 주소입니다.");
     }
   };
 
   // Check Phone Number Duplicate
-  const handleCheckPhoneDuplicate = () => {
+  const handleCheckPhoneDuplicate = async () => {
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     if (!cleanPhone || cleanPhone.length < 10) {
       setPhoneCheckMessage({
@@ -156,9 +176,9 @@ export default function LoginPage() {
       return;
     }
 
+    let isDuplicate = false;
     if (typeof window !== "undefined") {
       const savedCustomers = localStorage.getItem("admin_customers");
-      let isDuplicate = false;
       if (savedCustomers) {
         try {
           const customerList: any[] = JSON.parse(savedCustomers);
@@ -167,22 +187,36 @@ export default function LoginPage() {
           );
         } catch (e) { }
       }
+    }
 
-      if (isDuplicate) {
-        setPhoneCheckMessage({
-          status: "error",
-          text: "이미 등록된 휴대폰 번호입니다. 다른 번호를 입력해 주세요.",
-        });
-        setIsPhoneChecked(false);
-        setToastMsg("이미 등록된 휴대폰 번호입니다.");
-      } else {
-        setPhoneCheckMessage({
-          status: "success",
-          text: "사용 가능한 휴대폰 번호입니다.",
-        });
-        setIsPhoneChecked(true);
-        setToastMsg("사용 가능한 휴대폰 번호입니다.");
-      }
+    // Check Supabase
+    if (!isDuplicate) {
+      try {
+        const { data, error } = await supabase
+          .from("customers")
+          .select("id")
+          .or(`phone.eq.${cleanPhone},phone.eq.${phone.trim()}`)
+          .limit(1);
+        if (!error && data && data.length > 0) {
+          isDuplicate = true;
+        }
+      } catch (err) { }
+    }
+
+    if (isDuplicate) {
+      setPhoneCheckMessage({
+        status: "error",
+        text: "이미 등록된 휴대폰 번호입니다. 다른 번호를 입력해 주세요.",
+      });
+      setIsPhoneChecked(false);
+      setToastMsg("이미 등록된 휴대폰 번호입니다.");
+    } else {
+      setPhoneCheckMessage({
+        status: "success",
+        text: "사용 가능한 휴대폰 번호입니다.",
+      });
+      setIsPhoneChecked(true);
+      setToastMsg("사용 가능한 휴대폰 번호입니다.");
     }
   };
 
@@ -201,9 +235,10 @@ export default function LoginPage() {
     setIsResetModalOpen(true);
   };
 
-  const handlePasswordResetSubmit = (e: React.FormEvent) => {
+  const handlePasswordResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const targetEmail = resetInputEmail.trim();
+    const targetEmail = resetInputEmail.trim().toLowerCase();
+    const cleanPhoneTarget = targetEmail.replace(/[^0-9]/g, "");
 
     if (!targetEmail) {
       setResetErrorMsg("아이디 또는 이메일 주소를 입력해 주세요.");
@@ -218,8 +253,49 @@ export default function LoginPage() {
       return;
     }
 
+    // 등록된 회원 여부 검증
+    let customerExists = false;
+    if (typeof window !== "undefined") {
+      const savedCustomers = localStorage.getItem("admin_customers");
+      if (savedCustomers) {
+        try {
+          const list: any[] = JSON.parse(savedCustomers);
+          customerExists = list.some(
+            (c) =>
+              (c.email && c.email.trim().toLowerCase() === targetEmail) ||
+              (cleanPhoneTarget.length >= 8 && c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhoneTarget)
+          );
+        } catch (err) {}
+      }
+    }
+
+    if (!customerExists && (targetEmail === "admin" || targetEmail === "admin@choicomma.com")) {
+      customerExists = true;
+    }
+
+    if (!customerExists) {
+      try {
+        const { data } = await supabase
+          .from("customers")
+          .select("id")
+          .ilike("email", targetEmail)
+          .limit(1);
+        if (data && data.length > 0) {
+          customerExists = true;
+        }
+      } catch (err) {}
+    }
+
+    if (!customerExists) {
+      setResetErrorMsg("등록되지 않은 회원 정보입니다. 아이디(이메일)를 확인해 주세요.");
+      return;
+    }
+
     if (typeof window !== "undefined") {
       localStorage.setItem(`user_pwd_${targetEmail}`, resetNewPassword);
+      if (cleanPhoneTarget.length >= 8) {
+        localStorage.setItem(`user_pwd_${cleanPhoneTarget}`, resetNewPassword);
+      }
       window.dispatchEvent(new CustomEvent("storage"));
     }
 
@@ -229,10 +305,14 @@ export default function LoginPage() {
     setToastMsg("비밀번호가 성공적으로 변경되었습니다. 즉시 로그인하실 수 있습니다!");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (isSignUp) {
+      if (!name.trim()) {
+        alert("이름(성함)을 입력해 주세요.");
+        return;
+      }
       if (!email.trim()) {
         alert("이메일 주소를 입력해 주세요.");
         return;
@@ -259,9 +339,10 @@ export default function LoginPage() {
       }
 
       // Check for duplicate phone or email in registered customers
+      const cleanPhone = phone.replace(/[^0-9]/g, "");
+      const targetEmail = email.trim().toLowerCase();
+
       if (typeof window !== "undefined") {
-        const cleanPhone = phone.replace(/[^0-9]/g, "");
-        const targetEmail = email.trim().toLowerCase();
         const savedCustomers = localStorage.getItem("admin_customers");
         if (savedCustomers) {
           try {
@@ -284,16 +365,39 @@ export default function LoginPage() {
           } catch (e) { }
         }
       }
+
+      // Supabase duplicate check
+      try {
+        const { data: existingEmail } = await supabase
+          .from("customers")
+          .select("id")
+          .ilike("email", targetEmail)
+          .limit(1);
+        if (existingEmail && existingEmail.length > 0) {
+          setToastMsg("이미 가입된 이메일 주소입니다. 다른 이메일을 입력해 주세요.");
+          return;
+        }
+
+        const { data: existingPhone } = await supabase
+          .from("customers")
+          .select("id")
+          .or(`phone.eq.${cleanPhone},phone.eq.${phone.trim()}`)
+          .limit(1);
+        if (existingPhone && existingPhone.length > 0) {
+          setToastMsg("이미 가입된 휴대폰 번호입니다. 기존 번호로 로그인해 주세요.");
+          return;
+        }
+      } catch (err) {}
     }
 
     setIsLoading(true);
 
     const inputLoginId = email.trim().toLowerCase();
-    const cleanPhoneId = phone.replace(/[^0-9]/g, "");
+    const cleanPhoneId = inputLoginId.replace(/[^0-9]/g, "");
     const inputPassword = password.trim();
 
+    // 1. 관리자(Admin) 전용 계정 로그인 분기
     const isAdmin = !isSignUp && (inputLoginId === "admin" || inputLoginId === "admin@choicomma.com");
-    const isMyPageUser = !isSignUp && (inputLoginId === "mypage" || inputLoginId === "mypage@choicomma.com");
 
     if (isAdmin) {
       const savedAdminPwd = (typeof window !== "undefined" && localStorage.getItem("user_pwd_admin")) || "Mrschoi83!!";
@@ -305,8 +409,8 @@ export default function LoginPage() {
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem("choicomma_admin_authenticated", "true");
-        localStorage.setItem("membership_user_name", "관리자");
-        localStorage.setItem("membership_user_email", "admin");
+        localStorage.setItem("membership_user_name", "최고관리자 (Admin)");
+        localStorage.setItem("membership_user_email", "admin@choicomma.com");
         localStorage.setItem("user_role", "admin");
         localStorage.setItem("is_logged_in", "true");
         window.dispatchEvent(new CustomEvent("storage"));
@@ -322,187 +426,231 @@ export default function LoginPage() {
       return;
     }
 
-    if (isMyPageUser) {
-      const savedMyPagePwd = (typeof window !== "undefined" && localStorage.getItem("user_pwd_mypage")) || "Mrschoi83!!";
-      if (inputPassword !== savedMyPagePwd && inputPassword !== "Mrschoi83!!") {
-        setIsLoading(false);
-        setToastMsg("비밀번호가 일치하지 않습니다. 비밀번호를 확인해 주세요.");
-        return;
+    // 2. 신규 회원가입 (Sign Up) 처리
+    if (isSignUp) {
+      const displayName = name.trim() || "신규회원";
+      const finalEmail = email.trim().toLowerCase();
+      const cleanPostcode = postcode.trim();
+      const cleanAddress = address.trim();
+      const cleanDetail = addressDetail.trim();
+
+      let customerList: any[] = [];
+      if (typeof window !== "undefined") {
+        const savedCustomers = localStorage.getItem("admin_customers");
+        if (savedCustomers) {
+          try {
+            customerList = JSON.parse(savedCustomers);
+          } catch (err) {}
+        }
       }
 
+      const newCustId = `CUST-${Date.now().toString().slice(-6)}`;
+      const newCustomer = {
+        id: newCustId,
+        name: displayName,
+        email: finalEmail,
+        phone: phone.trim() || "010-0000-0000",
+        postcode: cleanPostcode || "",
+        address: cleanAddress || "-",
+        detailAddress: cleanDetail || "",
+        grade: "GENERAL",
+        totalSpent: 0,
+        points: 0,
+        couponsCount: 0,
+        joinedDate: new Date().toISOString().split("T")[0],
+        status: "Active",
+        role: "CUSTOMER",
+        isAdmin: false,
+      };
+
+      // 1) Save to local admin_customers
       if (typeof window !== "undefined") {
-        sessionStorage.removeItem("choicomma_admin_authenticated");
-        localStorage.setItem("membership_user_email", "mypage@choicomma.com");
-        localStorage.setItem("membership_user_name", "마이페이지 예시 (VIP)");
-        localStorage.setItem("membership_user_phone", "010-9999-8888");
-        localStorage.setItem("membership_user_address", "서울특별시 강남구 청담동 123 럭셔리 펜트하우스");
-        window.dispatchEvent(new CustomEvent("storage"));
+        localStorage.setItem("admin_customers", JSON.stringify([newCustomer, ...customerList]));
       }
+
+      // 2) Sync to Supabase DB customers table
+      try {
+        const { error } = await supabase.from("customers").upsert([newCustomer], { onConflict: "id" });
+        if (error) {
+          console.warn("Supabase customer sync notice:", error.message);
+        }
+      } catch (err) {
+        console.warn("Failed to sync customer to Supabase:", err);
+      }
+
+      // 3) Save password in localStorage
+      if (typeof window !== "undefined") {
+        const cleanPhone = phone.replace(/[^0-9]/g, "");
+        if (cleanPhone) {
+          localStorage.setItem(`user_pwd_${cleanPhone}`, inputPassword);
+          localStorage.setItem(`user_pwd_${phone.trim()}`, inputPassword);
+        }
+        localStorage.setItem(`user_pwd_${finalEmail}`, inputPassword);
+
+        // 4) Set login session
+        sessionStorage.removeItem("choicomma_admin_authenticated");
+        localStorage.setItem("membership_user_id", newCustomer.id);
+        localStorage.setItem("membership_user_name", displayName);
+        localStorage.setItem("membership_user_email", finalEmail);
+        localStorage.setItem("membership_user_phone", phone.trim());
+        localStorage.setItem("membership_user_postcode", postcode.trim() || "");
+        localStorage.setItem("membership_user_address", address.trim());
+        localStorage.setItem("membership_user_address_detail", addressDetail.trim());
+        localStorage.setItem("membership_user_points", "0");
+        localStorage.setItem("user_grade", "GENERAL");
+        localStorage.setItem("user_role", "CUSTOMER");
+        localStorage.setItem("is_logged_in", "true");
+
+        window.dispatchEvent(new CustomEvent("storage"));
+        window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+        window.dispatchEvent(new CustomEvent("auth_changed"));
+      }
+
       setTimeout(() => {
         setIsLoading(false);
-        setToastMsg("mypage 예시 계정으로 로그인되었습니다! 마이 멤버십으로 이동합니다.");
+        setToastMsg("회원가입이 완료되었습니다! 마이 멤버십으로 이동합니다.");
         setTimeout(() => {
           router.push("/membership");
-        }, 800);
+        }, 900);
       }, 500);
       return;
     }
 
+    // 3. 일반 회원 로그인 (Sign In) - 등록된 회원만 로그인 가능하도록 엄격 검증
+    let matchedCustomer: any = null;
+
+    // 1) Search in local admin_customers
     if (typeof window !== "undefined") {
-      if (isSignUp) {
-        const displayName = name.trim() || "신규회원";
-        const finalEmail = email.trim() ? email.trim() : `${cleanPhoneId || Date.now()}@choicomma.com`;
-        const fullCombinedAddress = addressDetail.trim() ? `${address.trim()} ${addressDetail.trim()}` : address.trim();
+      const savedCustomers = localStorage.getItem("admin_customers");
+      if (savedCustomers) {
+        try {
+          const list: any[] = JSON.parse(savedCustomers);
+          matchedCustomer = list.find((c) => {
+            const cEmail = (c.email || "").trim().toLowerCase();
+            const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+            return (
+              (cEmail && cEmail === inputLoginId) ||
+              (cleanPhoneId.length >= 8 && cPhone === cleanPhoneId) ||
+              (c.phone && c.phone.trim() === inputLoginId)
+            );
+          });
+        } catch (e) {}
+      }
+    }
 
-        localStorage.setItem("membership_user_name", displayName);
-        localStorage.setItem("membership_user_phone", phone.trim());
-        localStorage.setItem("membership_user_email", finalEmail);
-        localStorage.setItem("membership_user_postcode", postcode.trim() || "06306");
-        localStorage.setItem("membership_user_address", address.trim());
-        localStorage.setItem("membership_user_address_detail", addressDetail.trim());
-
-        // Save password under both phone and email
-        if (cleanPhoneId) {
-          localStorage.setItem(`user_pwd_${cleanPhoneId}`, inputPassword);
-          localStorage.setItem(`user_pwd_${phone.trim()}`, inputPassword);
-        }
-        if (finalEmail) {
-          localStorage.setItem(`user_pwd_${finalEmail.toLowerCase()}`, inputPassword);
-        }
-
-        // Register to admin_customers list
-        const savedCustomers = localStorage.getItem("admin_customers");
-        let customerList: any[] = [];
-        if (savedCustomers) {
-          try {
-            customerList = JSON.parse(savedCustomers);
-          } catch (err) { }
-        }
-        const newCustomer = {
-          id: `CUST-${1000 + customerList.length + 1}`,
-          name: displayName,
-          email: finalEmail,
-          phone: phone.trim() || "010-1234-5678",
-          postcode: postcode.trim() || "",
-          address: address.trim() || "서울특별시 강남구 압구정로 100",
-          addressDetail: addressDetail.trim() || "",
-          joinedDate: new Date().toISOString().split("T")[0],
-          totalOrders: 0,
-          totalSpent: 0,
-          grade: "GENERAL",
-          points: 0,
-          status: "Active",
-        };
-        localStorage.setItem("admin_customers", JSON.stringify([newCustomer, ...customerList]));
-        window.dispatchEvent(new CustomEvent("storage"));
-        window.dispatchEvent(new CustomEvent("admin_customers_updated"));
-      } else {
-        // Login flow: match by phone or email
-        const phoneKey = `user_pwd_${inputLoginId.replace(/[^0-9]/g, "")}`;
-        const emailKey = `user_pwd_${inputLoginId}`;
-        const savedPwd = localStorage.getItem(phoneKey) || localStorage.getItem(emailKey);
-
-        if (savedPwd && inputPassword !== savedPwd && inputPassword !== "Mrschoi83!!") {
-          setIsLoading(false);
-          setToastMsg("비밀번호가 일치하지 않습니다. 비밀번호를 다시 확인해 주세요.");
-          return;
-        }
-
-        if (!savedPwd) {
-          localStorage.setItem(emailKey, inputPassword);
-        }
-
+    // 2) If not found in localStorage, fetch from Supabase customers table
+    if (!matchedCustomer) {
+      try {
+        let query = supabase.from("customers").select("*");
         if (inputLoginId.includes("@")) {
-          localStorage.setItem("membership_user_email", inputLoginId);
+          query = query.ilike("email", inputLoginId);
+        } else if (cleanPhoneId.length >= 8) {
+          query = query.or(`phone.eq.${inputLoginId},phone.eq.${cleanPhoneId}`);
         } else {
-          localStorage.setItem("membership_user_phone", inputLoginId);
-          localStorage.setItem("membership_user_email", `${inputLoginId.replace(/[^0-9]/g, "")}@choicomma.com`);
+          query = query.or(`email.ilike.${inputLoginId},phone.eq.${inputLoginId}`);
         }
-
-        if (!localStorage.getItem("membership_user_name")) {
-          localStorage.setItem("membership_user_name", "회원");
+        const { data, error } = await query.limit(1).maybeSingle();
+        if (!error && data) {
+          matchedCustomer = data;
+          // Sync into local admin_customers cache
+          if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("admin_customers");
+            let list: any[] = [];
+            if (saved) {
+              try { list = JSON.parse(saved); } catch (e) {}
+            }
+            localStorage.setItem("admin_customers", JSON.stringify([matchedCustomer, ...list.filter((c) => c.id !== matchedCustomer.id)]));
+          }
         }
-        window.dispatchEvent(new CustomEvent("storage"));
+      } catch (err) {
+        console.warn("Notice: Supabase customer query error:", err);
       }
+    }
+
+    // ⚠️ 미등록 회원 차단: 회원 관리 목록에 등록되지 않은 사용자는 로그인 불가
+    if (!matchedCustomer) {
+      setIsLoading(false);
+      setToastMsg("등록되지 않은 회원 정보입니다. 회원가입을 먼저 진행해 주세요.");
+      return;
+    }
+
+    // 3) 비밀번호 일치 여부 검증
+    const custCleanPhone = (matchedCustomer.phone || "").replace(/[^0-9]/g, "");
+    const custEmail = (matchedCustomer.email || "").trim().toLowerCase();
+
+    const savedPwd = (typeof window !== "undefined" && (
+      (custCleanPhone ? localStorage.getItem(`user_pwd_${custCleanPhone}`) : null) ||
+      (matchedCustomer.phone ? localStorage.getItem(`user_pwd_${matchedCustomer.phone.trim()}`) : null) ||
+      (custEmail ? localStorage.getItem(`user_pwd_${custEmail}`) : null) ||
+      localStorage.getItem(`user_pwd_${inputLoginId}`) ||
+      matchedCustomer.password ||
+      (matchedCustomer.isAdmin ? "Mrschoi83!!" : null)
+    )) || null;
+
+    const isPasswordCorrect =
+      (savedPwd && inputPassword === savedPwd) ||
+      inputPassword === "Mrschoi83!!";
+
+    if (!isPasswordCorrect) {
+      setIsLoading(false);
+      setToastMsg("비밀번호가 일치하지 않습니다. 비밀번호를 다시 확인해 주세요.");
+      return;
+    }
+
+    // 4) 로그인 성공 및 세션 저장
+    if (typeof window !== "undefined") {
+      const isCustAdmin = matchedCustomer.isAdmin || matchedCustomer.role === "ADMIN" || matchedCustomer.email === "admin@choicomma.com";
+      if (isCustAdmin) {
+        sessionStorage.setItem("choicomma_admin_authenticated", "true");
+        localStorage.setItem("user_role", "admin");
+      } else {
+        sessionStorage.removeItem("choicomma_admin_authenticated");
+        localStorage.setItem("user_role", matchedCustomer.role || "CUSTOMER");
+      }
+
+      let cleanCustAddr = matchedCustomer.address || "";
+      let cleanCustDetail = matchedCustomer.detailAddress || matchedCustomer.addressDetail || "";
+      let cleanCustZip = matchedCustomer.postcode || matchedCustomer.zipCode || "";
+
+      // Smart separation of (우편번호) from address
+      const zipMatch = cleanCustAddr.match(/^[\(\[](\d{5})[\)\]]\s*(.*)$/);
+      if (zipMatch) {
+        cleanCustZip = cleanCustZip || zipMatch[1];
+        cleanCustAddr = zipMatch[2];
+      }
+
+      // Smart separation of detailAddress from base address
+      if (cleanCustDetail && cleanCustAddr.endsWith(cleanCustDetail)) {
+        cleanCustAddr = cleanCustAddr.slice(0, -cleanCustDetail.length).trim();
+      }
+
+      localStorage.setItem("membership_user_id", matchedCustomer.id);
+      localStorage.setItem("membership_user_name", matchedCustomer.name || "회원");
+      localStorage.setItem("membership_user_email", matchedCustomer.email || inputLoginId);
+      localStorage.setItem("membership_user_phone", matchedCustomer.phone || "");
+      localStorage.setItem("membership_user_postcode", cleanCustZip);
+      localStorage.setItem("membership_user_address", cleanCustAddr);
+      localStorage.setItem("membership_user_address_detail", cleanCustDetail);
+      localStorage.setItem("membership_user_points", String(matchedCustomer.points ?? 0));
+      localStorage.setItem("user_grade", matchedCustomer.grade || "GENERAL");
+      localStorage.setItem("is_logged_in", "true");
+
+      window.dispatchEvent(new CustomEvent("storage"));
+      window.dispatchEvent(new CustomEvent("auth_changed"));
     }
 
     setTimeout(() => {
       setIsLoading(false);
+      const isCustAdmin = matchedCustomer.isAdmin || matchedCustomer.role === "ADMIN";
       setToastMsg(
-        isSignUp
-          ? "회원가입이 완료되었습니다! 마이 멤버십으로 이동합니다."
-          : "choicomma에 성공적으로 로그인되었습니다!"
+        isCustAdmin
+          ? "관리자 계정으로 로그인되었습니다. 대시보드로 이동합니다."
+          : `${matchedCustomer.name || "회원"}님, 성공적으로 로그인되었습니다!`
       );
-
       setTimeout(() => {
-        router.push("/membership");
-      }, 1000);
-    }, 900);
-  };
-
-  const handleQuickCustomerLogin = () => {
-    setEmail("vip@choicomma.com");
-    setPassword("Mrschoi83!!");
-    if (typeof window !== "undefined") {
-      localStorage.setItem("membership_user_email", "vip@choicomma.com");
-      if (!localStorage.getItem("membership_user_name")) {
-        localStorage.setItem("membership_user_name", "최상위 VIP");
-      }
-      window.dispatchEvent(new CustomEvent("storage"));
-    }
-    setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-      setToastMsg("고객(VIP) 계정으로 로그인되었습니다. 마이 멤버십으로 이동합니다.");
-
-      setTimeout(() => {
-        router.push("/membership");
-      }, 1000);
-    }, 800);
-  };
-
-  const handleQuickMyPageLogin = () => {
-    setEmail("mypage");
-    setPassword("Mrschoi83!!");
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("choicomma_admin_authenticated");
-      localStorage.setItem("membership_user_email", "mypage@choicomma.com");
-      localStorage.setItem("membership_user_name", "마이페이지 예시 (VIP)");
-      localStorage.setItem("membership_user_phone", "010-9999-8888");
-      localStorage.setItem("membership_user_address", "서울특별시 강남구 청담동 123 럭셔리 펜트하우스");
-      window.dispatchEvent(new CustomEvent("storage"));
-    }
-    setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-      setToastMsg("mypage 예시 계정으로 로그인되었습니다. 마이 멤버십으로 이동합니다.");
-
-      setTimeout(() => {
-        router.push("/membership");
-      }, 1000);
-    }, 800);
-  };
-
-  const handleQuickAdminLogin = () => {
-    setEmail("admin");
-    setPassword("Mrschoi83!!");
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("choicomma_admin_authenticated", "true");
-      localStorage.setItem("membership_user_email", "admin");
-      window.dispatchEvent(new CustomEvent("storage"));
-    }
-    setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-      setToastMsg("관리자 계정으로 로그인되었습니다. 대시보드로 이동합니다.");
-
-      setTimeout(() => {
-        router.push("/admin");
-      }, 1000);
-    }, 800);
+        router.push(isCustAdmin ? "/admin" : "/membership");
+      }, 800);
+    }, 400);
   };
 
   return (

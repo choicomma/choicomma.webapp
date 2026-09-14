@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import * as XLSX from "xlsx";
 
 import { initialShipments as defaultShipments } from "@/lib/sfcc/mock/shipments-data";
@@ -27,11 +27,31 @@ export function sanitizeCjTracking(tracking: string): string {
   return clean;
 }
 
+// 주문/배송 번호 기준 고정 오름차순(001 -> 002 -> 003...) 정렬 유틸
+export function extractShipmentOrderNumber(str: string): number {
+  if (!str) return 0;
+  const match = str.match(/(\d+)$/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+export function sortShipmentsByNumber(list: any[]): any[] {
+  if (!Array.isArray(list)) return [];
+  return [...list].sort((a: any, b: any) => {
+    const keyA = (a.orderId || a.id || "").trim();
+    const keyB = (b.orderId || b.id || "").trim();
+    const numA = extractShipmentOrderNumber(keyA);
+    const numB = extractShipmentOrderNumber(keyB);
+    if (numA !== numB) return numB - numA; // 최신 번호가 상단, 1번이 가장 밑으로 정렬
+    return keyB.localeCompare(keyA, undefined, { numeric: true, sensitivity: "base" });
+  });
+}
+
 export function sanitizeShipmentsList(list: any[]): any[] {
   if (!Array.isArray(list)) return [];
-  return list.map((s: any) => ({
+  const sanitized = list.map((s: any) => ({
     ...s,
     orderId: s.orderId || s.order_id || "",
+    ordererName: s.ordererName || s.orderer_name || s.orderer || s.customer || s.recipient || "",
     altPhone: s.altPhone || s.alt_phone || "",
     zipCode: s.zipCode || s.zip_code || "",
     detailAddress: s.detailAddress || s.detail_address || "",
@@ -47,6 +67,33 @@ export function sanitizeShipmentsList(list: any[]): any[] {
         }))
       : s.packages,
   }));
+  return sortShipmentsByNumber(sanitized);
+}
+
+export function serializeShipmentsForSync(list: any[]): string {
+  if (!Array.isArray(list)) return "";
+  return JSON.stringify(
+    list.map((s) => ({
+      id: s.id,
+      orderId: s.orderId || s.order_id || "",
+      ordererName: s.ordererName || s.orderer || s.customer || s.recipient || "",
+      recipient: s.recipient || "",
+      phone: s.phone || "",
+      altPhone: s.altPhone || s.alt_phone || "",
+      zipCode: s.zipCode || s.zip_code || "",
+      address: s.address || "",
+      detailAddress: s.detailAddress || s.detail_address || "",
+      items: s.items || "",
+      quantity: s.quantity || 1,
+      carrier: s.carrier || "CJ대한통운",
+      trackingNumber: s.trackingNumber || s.tracking_number || "-",
+      status: s.status || "Pending",
+      shippingMemo: s.shippingMemo || s.shipping_memo || "",
+      packages: s.packages || [],
+      shippedDate: s.shippedDate || null,
+      estimatedDelivery: s.estimatedDelivery || null,
+    }))
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,6 +101,11 @@ export function sanitizeShipmentsList(list: any[]): any[] {
 // ─────────────────────────────────────────────────────────────────────────────
 export function useShipments(triggerToast: (msg: string) => void) {
   const SHIPMENTS_PER_PAGE = 15;
+
+  // Sync control refs to prevent recursive infinite loops between server & Supabase Realtime
+  const isRemoteUpdateRef = useRef(true); // true on mount to avoid initial post-back
+  const lastSyncedJsonRef = useRef<string>("");
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Shipments List ──────────────────────────────────────────────────────────
   const [shipmentsList, setShipmentsList] = useState<any[]>(() => {
@@ -63,7 +115,9 @@ export function useShipments(triggerToast: (msg: string) => void) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return sanitizeShipmentsList(parsed);
+            const sanitized = sanitizeShipmentsList(parsed);
+            lastSyncedJsonRef.current = serializeShipmentsForSync(sanitized);
+            return sanitized;
           }
         } catch (e) {}
       }
@@ -84,32 +138,63 @@ export function useShipments(triggerToast: (msg: string) => void) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0 && isMounted) {
             const sanitized = sanitizeShipmentsList(data);
+            isRemoteUpdateRef.current = true;
             setShipmentsList((prev) => {
-              // 로컬에 이미 발급된 송장번호가 있는데 서버 응답이 아직 '-'인 경우, 로컬 송장번호를 안전하게 보존
+              // 로컬에 이미 발급된 송장번호(메인 및 packages 개별 박스)가 있는데 서버 응답이 아직 '-'인 경우, 로컬 송장번호를 안전하게 보존
               const merged = sanitized.map((serverItem) => {
                 const localItem = prev.find((p) => p.id === serverItem.id);
-                if (
-                  localItem &&
-                  localItem.trackingNumber &&
-                  localItem.trackingNumber !== "-" &&
-                  (!serverItem.trackingNumber || serverItem.trackingNumber === "-")
-                ) {
-                  return {
-                    ...serverItem,
-                    trackingNumber: localItem.trackingNumber,
-                    status: localItem.status !== "Pending" ? localItem.status : serverItem.status,
-                    shippedDate: localItem.shippedDate || serverItem.shippedDate,
-                  };
+                if (!localItem) return serverItem;
+
+                // 1) packages 배열 개별 박스 송장번호 보존 병합
+                let mergedPackages = serverItem.packages;
+                if (Array.isArray(localItem.packages) && localItem.packages.length > 0) {
+                  if (!Array.isArray(serverItem.packages) || serverItem.packages.length === 0) {
+                    mergedPackages = localItem.packages;
+                  } else {
+                    mergedPackages = serverItem.packages.map((sp: any, idx: number) => {
+                      const lp = localItem.packages.find((p: any) => (p.pkgIndex || idx + 1) === (sp.pkgIndex || idx + 1)) || localItem.packages[idx];
+                      if (lp && lp.trackingNumber && lp.trackingNumber !== "-" && (!sp.trackingNumber || sp.trackingNumber === "-")) {
+                        return {
+                          ...sp,
+                          trackingNumber: lp.trackingNumber,
+                          status: lp.status !== "Pending" ? lp.status : sp.status,
+                        };
+                      }
+                      return sp;
+                    });
+                  }
                 }
-                return serverItem;
+
+                // 2) 메인 송장번호 보존 병합
+                const localHasTracking = localItem.trackingNumber && localItem.trackingNumber !== "-";
+                const serverHasTracking = serverItem.trackingNumber && serverItem.trackingNumber !== "-";
+                const pkgHasTracking = Array.isArray(mergedPackages) && mergedPackages.find((p: any) => p.trackingNumber && p.trackingNumber !== "-")?.trackingNumber;
+
+                const finalTracking = serverHasTracking
+                  ? serverItem.trackingNumber
+                  : localHasTracking
+                  ? localItem.trackingNumber
+                  : (pkgHasTracking || serverItem.trackingNumber || "-");
+
+                const finalStatus = localItem.status !== "Pending" ? localItem.status : serverItem.status;
+
+                return {
+                  ...serverItem,
+                  packages: mergedPackages,
+                  trackingNumber: finalTracking,
+                  status: finalStatus,
+                  shippedDate: localItem.shippedDate || serverItem.shippedDate,
+                };
               });
+
+              lastSyncedJsonRef.current = serializeShipmentsForSync(merged);
+              if (typeof window !== "undefined") {
+                localStorage.setItem("admin_shipments", JSON.stringify(merged));
+              }
 
               if (JSON.stringify(prev) === JSON.stringify(merged)) return prev;
               return merged;
             });
-            if (typeof window !== "undefined") {
-              localStorage.setItem("admin_shipments", JSON.stringify(sanitized));
-            }
           }
         }
       } catch (err) {
@@ -130,17 +215,57 @@ export function useShipments(triggerToast: (msg: string) => void) {
           (payload) => {
             if (payload.eventType === "INSERT") {
               const newRow = payload.new;
+              isRemoteUpdateRef.current = true;
               setShipmentsList((prev) => {
                 if (prev.some((s) => s.id === newRow.id)) return prev;
-                return sanitizeShipmentsList([newRow, ...prev]);
+                const next = sanitizeShipmentsList([newRow, ...prev]);
+                lastSyncedJsonRef.current = serializeShipmentsForSync(next);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("admin_shipments", JSON.stringify(next));
+                }
+                return next;
               });
             } else if (payload.eventType === "UPDATE") {
               const updatedRow = payload.new;
-              setShipmentsList((prev) =>
-                sanitizeShipmentsList(prev.map((s) => (s.id === updatedRow.id ? { ...s, ...updatedRow } : s)))
-              );
+              isRemoteUpdateRef.current = true;
+              setShipmentsList((prev) => {
+                const next = sanitizeShipmentsList(
+                  prev.map((s) => {
+                    if (s.id !== updatedRow.id) return s;
+                    let pkgs = updatedRow.packages || s.packages;
+                    if (Array.isArray(s.packages) && Array.isArray(pkgs)) {
+                      pkgs = pkgs.map((upPkg: any, idx: number) => {
+                        const localPkg = s.packages.find((p: any) => (p.pkgIndex || idx + 1) === (upPkg.pkgIndex || idx + 1)) || s.packages[idx];
+                        if (localPkg && localPkg.trackingNumber && localPkg.trackingNumber !== "-" && (!upPkg.trackingNumber || upPkg.trackingNumber === "-")) {
+                          return { ...upPkg, trackingNumber: localPkg.trackingNumber, status: localPkg.status !== "Pending" ? localPkg.status : upPkg.status };
+                        }
+                        return upPkg;
+                      });
+                    }
+                    const finalTracking = (updatedRow.trackingNumber && updatedRow.trackingNumber !== "-")
+                      ? updatedRow.trackingNumber
+                      : (s.trackingNumber && s.trackingNumber !== "-")
+                      ? s.trackingNumber
+                      : (Array.isArray(pkgs) && pkgs.find((p: any) => p.trackingNumber && p.trackingNumber !== "-")?.trackingNumber) || "-";
+                    return { ...s, ...updatedRow, packages: pkgs, trackingNumber: finalTracking };
+                  })
+                );
+                lastSyncedJsonRef.current = serializeShipmentsForSync(next);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("admin_shipments", JSON.stringify(next));
+                }
+                return next;
+              });
             } else if (payload.eventType === "DELETE") {
-              setShipmentsList((prev) => prev.filter((s) => s.id !== payload.old.id));
+              isRemoteUpdateRef.current = true;
+              setShipmentsList((prev) => {
+                const next = prev.filter((s) => s.id !== payload.old.id);
+                lastSyncedJsonRef.current = serializeShipmentsForSync(next);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("admin_shipments", JSON.stringify(next));
+                }
+                return next;
+              });
             }
           }
         )
@@ -170,37 +295,61 @@ export function useShipments(triggerToast: (msg: string) => void) {
     };
   }, []);
 
-  // 2. Persist on change to both localStorage and Server API
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const currentJson = JSON.stringify(shipmentsList);
-      const saved = localStorage.getItem("admin_shipments");
-      if (saved !== currentJson) {
-        localStorage.setItem("admin_shipments", currentJson);
-        window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
-
-        // Persist to Server API
-        fetch("/api/admin/shipments", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: currentJson,
-        }).catch((err) => {
-          console.warn("Failed to sync shipments to server:", err);
-        });
-      }
-    }
-  }, [shipmentsList]);
-
-  // Listen for storage events from other tabs/components
+  // 2. Persist user local edits to both localStorage and Server API (with loop guard & debounce)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const onStorage = () => {
+
+    // If update originated from server (initial fetch, window focus refresh, or Supabase realtime event)
+    if (isRemoteUpdateRef.current) {
+      isRemoteUpdateRef.current = false;
+      return;
+    }
+
+    const currentSerialized = serializeShipmentsForSync(shipmentsList);
+    // If the business payload hasn't changed compared to last server sync, do not sync back to server
+    if (lastSyncedJsonRef.current && lastSyncedJsonRef.current === currentSerialized) {
+      return;
+    }
+
+    const currentJson = JSON.stringify(shipmentsList);
+    localStorage.setItem("admin_shipments", currentJson);
+
+    // Debounce server POST to batch quick consecutive edits and prevent request hammering
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+
+    syncTimeoutRef.current = setTimeout(() => {
+      lastSyncedJsonRef.current = currentSerialized;
+      fetch("/api/admin/shipments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: currentJson,
+      }).catch((err) => {
+        console.warn("Failed to sync shipments to server:", err);
+      });
+    }, 800);
+
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, [shipmentsList]);
+
+  // Listen for storage events from other browser tabs/windows
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key && e.key !== "admin_shipments") return;
       const saved = localStorage.getItem("admin_shipments");
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
             const sanitized = sanitizeShipmentsList(parsed);
+            isRemoteUpdateRef.current = true;
             setShipmentsList((prev) => {
               if (JSON.stringify(prev) === JSON.stringify(sanitized)) return prev;
               return sanitized;
@@ -209,8 +358,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
         } catch (e) {}
       }
     };
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("admin_shipments_updated", onStorage);
+
     // Also load orders and merge
     const onOrdersUpdate = () => {
       const savedOrders = localStorage.getItem("admin_orders");
@@ -225,6 +373,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
                 .map((o: any) => ({
                   id: o.id || o.orderId,
                   orderId: o.orderId || o.id,
+                  ordererName: o.ordererName || o.customer || o.recipient || "",
                   recipient: o.recipient || o.customerName || "",
                   phone: o.phone || o.customerPhone || "",
                   altPhone: o.altPhone || "",
@@ -253,12 +402,11 @@ export function useShipments(triggerToast: (msg: string) => void) {
         } catch (e) {}
       }
     };
+
     window.addEventListener("storage", onStorage);
-    window.addEventListener("admin_shipments_updated", onStorage);
     window.addEventListener("admin_orders_updated", onOrdersUpdate);
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("admin_shipments_updated", onStorage);
       window.removeEventListener("admin_orders_updated", onOrdersUpdate);
     };
   }, []);
@@ -423,20 +571,36 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
   const handleSaveEditShipment = () => {
     if (!editingShipment) return;
-    const updated = shipmentsList.map((s) =>
-      s.id === editingShipment.id
-        ? {
-            ...s,
+    const updated = shipmentsList.map((s) => {
+      if (s.id !== editingShipment.id) return s;
+
+      let updatedPackages = editingShipment.packages ? [...editingShipment.packages] : s.packages;
+      if (updatedPackages && updatedPackages.length > 0) {
+        updatedPackages = updatedPackages.map((p: any, idx: number) => {
+          const pkgTracking = p.trackingNumber && p.trackingNumber !== "-"
+            ? p.trackingNumber
+            : (idx === 0 ? (editShipmentTracking || "-") : "-");
+          return {
+            ...p,
             carrier: editShipmentCarrier,
-            trackingNumber: editShipmentTracking || "-",
+            trackingNumber: pkgTracking,
             status: editShipmentStatus,
-            shippedDate:
-              editShipmentStatus === "In Transit" && !s.shippedDate
-                ? new Date().toISOString().split("T")[0]
-                : s.shippedDate,
-          }
-        : s
-    );
+          };
+        });
+      }
+
+      return {
+        ...s,
+        carrier: editShipmentCarrier,
+        trackingNumber: (updatedPackages && updatedPackages[0]?.trackingNumber) || editShipmentTracking || "-",
+        status: editShipmentStatus,
+        packages: updatedPackages,
+        shippedDate:
+          editShipmentStatus === "In Transit" && !s.shippedDate
+            ? new Date().toISOString().split("T")[0]
+            : s.shippedDate,
+      };
+    });
     setShipmentsList(updated);
     setEditingShipment(null);
     triggerToast("배송 정보가 수정되었습니다.");
@@ -488,16 +652,19 @@ export function useShipments(triggerToast: (msg: string) => void) {
     if (isIssuing) return;
     
     // 타겟 결정: 이미 송장번호가 발급된 건은 안전하게 보존하고, 아직 송장번호가 없는 미발급 건만 발급 대상으로 지정
+    const isUnissued = (s: any) => {
+      if (s.packages && s.packages.length > 1) {
+        return s.packages.some((p: any) => !p.trackingNumber || p.trackingNumber === "-" || p.trackingNumber.trim() === "");
+      }
+      return !s.trackingNumber || s.trackingNumber === "-" || s.trackingNumber.trim() === "";
+    };
+
     let targetOrders = [];
     if (orderIds) {
       const ids = Array.isArray(orderIds) ? orderIds : [orderIds];
-      targetOrders = shipmentsList.filter(
-        (s) => ids.includes(s.id) && (!s.trackingNumber || s.trackingNumber === "-" || s.trackingNumber.trim() === "")
-      );
+      targetOrders = shipmentsList.filter((s) => ids.includes(s.id) && isUnissued(s));
     } else {
-      targetOrders = shipmentsList.filter(
-        (s) => !s.trackingNumber || s.trackingNumber === "-" || s.trackingNumber.trim() === ""
-      );
+      targetOrders = shipmentsList.filter((s) => isUnissued(s));
     }
 
     if (targetOrders.length === 0) {
@@ -505,7 +672,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
       return;
     }
 
-    if (!window.confirm(`선택한 주문 중 미발급 ${targetOrders.length}건에 대해 송장(트래킹) 번호를 신규 발급하시겠습니까?\n(이미 발급된 주문의 번호는 안전하게 유지됩니다)`)) {
+    if (!window.confirm(`선택한 주문 중 미발급 ${targetOrders.length}건에 대해 송장(트래킹) 번호를 신규 발급하시겠습니까?\n(다박스 분할 주문은 각 박스별로 개별 송장이 채번됩니다)`)) {
       return;
     }
 
@@ -523,40 +690,100 @@ export function useShipments(triggerToast: (msg: string) => void) {
       for (let i = 0; i < targetOrders.length; i++) {
         const targetOrder = targetOrders[i];
         try {
-          const res = await fetch(`${origin}/api/shipping/cj/issue`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ order: targetOrder }),
-          });
-          const data = await res.json();
-          const printItem = Array.isArray(data) ? data[0] : (data?.trackingNumber ? data : null);
-          
-          if (printItem && printItem.trackingNumber) {
-            successCount++;
-            
-            // 로컬 상태 즉시 업데이트 준비
-            currentList = currentList.map((s) =>
-              s.id === targetOrder.id
-                ? { 
-                    ...s, 
-                    trackingNumber: printItem.trackingNumber, 
-                    status: "In Transit", 
-                    shippedDate: new Date().toISOString().split("T")[0],
-                    cjClsfCd: printItem.clsfCd,
-                    cjSubClsfCd: printItem.subClsfCd,
-                    cjClldlvempNickNm: printItem.clldlvempNickNm,
-                    cjClsfAddr: printItem.clsfAddr,
-                    cjClldlvBranNm: printItem.clldlvBranNm,
-                    cjP2pCd: printItem.p2pCd,
-                  }
-                : s
-            );
-            
-            newPrintData.push(printItem);
-            
-            triggerToast(`발급 진행 중... (${successCount}/${targetOrders.length})`);
+          if (targetOrder.packages && targetOrder.packages.length > 1) {
+            // 다박스(분할 배송) 주문 처리
+            const updatedPackages = [...targetOrder.packages];
+            let anyPkgSuccess = false;
+
+            for (let pIdx = 0; pIdx < updatedPackages.length; pIdx++) {
+              const pkg = updatedPackages[pIdx];
+              if (!pkg.trackingNumber || pkg.trackingNumber === "-" || pkg.trackingNumber.trim() === "") {
+                const pIndex = pkg.pkgIndex || (pIdx + 1);
+                const pkgPayload = {
+                  ...targetOrder,
+                  id: `${targetOrder.id}-${pIndex}`,
+                  orderId: `${targetOrder.orderId}-${pIndex}`,
+                  items: pkg.items,
+                  quantity: pkg.quantity || 1,
+                };
+
+                const res = await fetch(`${origin}/api/shipping/cj/issue`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ order: pkgPayload }),
+                });
+                const data = await res.json();
+                const printItem = Array.isArray(data) ? data[0] : (data?.trackingNumber ? data : null);
+
+                if (printItem && printItem.trackingNumber) {
+                  anyPkgSuccess = true;
+                  updatedPackages[pIdx] = {
+                    ...pkg,
+                    trackingNumber: printItem.trackingNumber,
+                    status: "In Transit",
+                  };
+                  newPrintData.push(printItem);
+                } else {
+                  console.error(`송장 발급 실패 [${targetOrder.id} 박스 ${pIndex}]:`, data?.error || data);
+                }
+              }
+            }
+
+            if (anyPkgSuccess) {
+              successCount++;
+              const allTransit = updatedPackages.every((p: any) => p.trackingNumber && p.trackingNumber !== "-");
+              const newStatus = allTransit ? "In Transit" : "Partially Shipped";
+
+              currentList = currentList.map((s) =>
+                s.id === targetOrder.id
+                  ? {
+                      ...s,
+                      packages: updatedPackages,
+                      status: newStatus,
+                      trackingNumber: updatedPackages[0]?.trackingNumber || s.trackingNumber,
+                      shippedDate: new Date().toISOString().split("T")[0],
+                    }
+                  : s
+              );
+              triggerToast(`발급 진행 중... (${successCount}/${targetOrders.length})`);
+            }
           } else {
-            console.error(`송장 발급 실패 [${targetOrder.id}]:`, data?.error || data);
+            // 일반(단일 박스) 주문 처리
+            const res = await fetch(`${origin}/api/shipping/cj/issue`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ order: targetOrder }),
+            });
+            const data = await res.json();
+            const printItem = Array.isArray(data) ? data[0] : (data?.trackingNumber ? data : null);
+            
+            if (printItem && printItem.trackingNumber) {
+              successCount++;
+              
+              // 로컬 상태 즉시 업데이트 준비
+              currentList = currentList.map((s) =>
+                s.id === targetOrder.id
+                  ? { 
+                      ...s, 
+                      trackingNumber: printItem.trackingNumber, 
+                      status: "In Transit", 
+                      shippedDate: new Date().toISOString().split("T")[0],
+                      cjClsfCd: printItem.clsfCd,
+                      cjSubClsfCd: printItem.subClsfCd,
+                      cjClldlvempNickNm: printItem.clldlvempNickNm,
+                      cjClsfAddr: printItem.clsfAddr,
+                      cjClldlvBranNm: printItem.clldlvBranNm,
+                      cjP2pCd: printItem.p2pCd,
+                    }
+                  : s
+              );
+              
+              newPrintData.push(printItem);
+              
+              triggerToast(`발급 진행 중... (${successCount}/${targetOrders.length})`);
+            } else {
+              console.error(`송장 발급 실패 [${targetOrder.id}]:`, data?.error || data);
+            }
           }
         } catch (err) {
           console.error(`네트워크 오류 [${targetOrder.id}]:`, err);

@@ -83,10 +83,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Primary: Upsert to Supabase
+    // 1. Primary: Upsert to Supabase in batches with ordered timestamps to guarantee frozen sort order
     if (isSupabaseConfigured) {
       try {
-        const formatted = products.map((p: any) => ({
+        const baseTime = Date.now();
+        const formatted = products.map((p: any, idx: number) => ({
           id: p.id,
           title: p.title || "",
           handle: p.handle || p.id,
@@ -111,15 +112,22 @@ export async function POST(req: NextRequest) {
           availableForSale: p.availableForSale !== false,
           isTimeSale: Boolean(p.isTimeSale),
           bulkDiscount: p.bulkDiscount || { enabled: false, rules: [] },
+          // 배열 순서대로 역순 타임스탬프 부여 (Supabase order('created_at', desc) 시 동일한 순서 보장)
+          created_at: new Date(baseTime - idx * 1000).toISOString(),
           updated_at: new Date().toISOString(),
         }));
 
-        const { error: dbError } = await supabaseServer
-          .from("products")
-          .upsert(formatted, { onConflict: "id" });
+        // 배치 분할 Upsert (50개 단위 안정적 처리)
+        const batchSize = 50;
+        for (let i = 0; i < formatted.length; i += batchSize) {
+          const chunk = formatted.slice(i, i + batchSize);
+          const { error: dbError } = await supabaseServer
+            .from("products")
+            .upsert(chunk, { onConflict: "id" });
 
-        if (dbError) {
-          console.warn("Notice: Failed to upsert products to Supabase:", dbError.message);
+          if (dbError) {
+            console.warn(`Notice: Failed to upsert products chunk (${i}~${i + chunk.length}):`, dbError.message);
+          }
         }
       } catch (dbErr: any) {
         console.warn("Supabase products upsert error:", dbErr.message);

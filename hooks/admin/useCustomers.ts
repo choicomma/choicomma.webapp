@@ -2,17 +2,18 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import * as XLSX from "xlsx";
-import initialCustomersData from "@/lib/sfcc/mock/customers-data.json";
 import { supabase } from "@/lib/supabase/client";
 
-const initialCustomers: any[] = initialCustomersData;
+const initialCustomers: any[] = [];
 
 const DEFAULT_ADMIN_CUSTOMER = {
   id: "ADMIN-001",
   name: "최고관리자 (Admin)",
   email: "admin@choicomma.com",
-  phone: "010-1234-5678",
-  address: "서울특별시 강남구 개포로22길 12 6층 (주)초이콤마 본사",
+  phone: "02-579-1171",
+  postcode: "06306",
+  address: "서울특별시 강남구 개포로22길 12",
+  detailAddress: "6층 (주)초이콤마 본사",
   grade: "VVIP",
   totalSpent: 25000000,
   points: 100000,
@@ -22,6 +23,51 @@ const DEFAULT_ADMIN_CUSTOMER = {
   role: "ADMIN",
   isAdmin: true,
 };
+
+function parseCustomerRow(row: any, idx: number) {
+  const rawGrade = String(row["회원 등급"] || row["회원 그룹"] || "").toUpperCase().trim();
+  let grade = "GENERAL";
+  if (rawGrade.includes("VVIP") || rawGrade.includes("BLACK") || rawGrade.includes("블랙")) grade = "VVIP";
+  else if (rawGrade.includes("PLATINUM") || rawGrade.includes("플래티넘")) grade = "PLATINUM";
+  else if (rawGrade.includes("GOLD") || rawGrade.includes("골드")) grade = "GOLD";
+  else if (rawGrade.includes("SILVER") || rawGrade.includes("실버")) grade = "SILVER";
+  else if (rawGrade.includes("GENERAL") || rawGrade.includes("일반") || rawGrade.includes("REGULAR")) grade = "GENERAL";
+  else if (parseFloat(row["구매금액(KRW)"]) >= 20000000) grade = "VVIP";
+  else if (parseFloat(row["구매금액(KRW)"]) >= 10000000) grade = "PLATINUM";
+  else if (parseFloat(row["구매금액(KRW)"]) >= 5000000) grade = "GOLD";
+  else if (parseFloat(row["구매금액(KRW)"]) >= 1000000) grade = "SILVER";
+  else grade = "GENERAL";
+
+  const rawPhone = String(row["연락처"] || "").trim();
+  const rawDate = String(row["가입일"] || "").trim();
+
+  const rawZip = String(row["우편번호"] || row["받는분우편번호"] || "").trim();
+  const rawAddr = String(row["주소"] || row["받는분주소(전체, 분할)"] || row["받는분주소"] || row["배송지주소"] || row["기본주소"] || "").trim();
+  const rawDetailAddr = String(row["상세주소"] || row["받는분상세주소(분할)"] || row["받는분상세주소"] || "").trim();
+
+  // 기본 주소와 상세 주소를 엄격히 분리 (중복 포함 방지)
+  let cleanAddr = rawAddr || "-";
+  if (rawDetailAddr && cleanAddr.endsWith(rawDetailAddr)) {
+    cleanAddr = cleanAddr.slice(0, -rawDetailAddr.length).trim() || cleanAddr;
+  }
+
+  return {
+    id: String(row["고유키"] || `CUST-${Date.now()}-${idx}`),
+    name: String(row["이름"] || row["받는분성명"] || row["고객명"] || "무명 회원").trim(),
+    email: String(row["이메일"] || row["아이디"] || "-").trim(),
+    phone: rawPhone || "-",
+    postcode: rawZip || "",
+    address: cleanAddr,
+    detailAddress: rawDetailAddr || "",
+    grade: grade,
+    rawGrade: rawGrade,
+    totalSpent: parseFloat(row["구매금액(KRW)"]) || 0,
+    points: parseInt(row["보유 적립금 포인트"]) || 0,
+    couponsCount: 0,
+    joinedDate: rawDate ? rawDate.split(" ")[0] : new Date().toISOString().split("T")[0],
+    status: "Active",
+  };
+}
 
 export function useCustomers(triggerToast: (msg: string) => void) {
   // Customer Management Admin State
@@ -39,9 +85,27 @@ export function useCustomers(triggerToast: (msg: string) => void) {
           .order("created_at", { ascending: false });
 
         if (!error && Array.isArray(data) && data.length > 0 && isMounted) {
-          setCustomersList(data);
+          const sanitized = data.map((c) => {
+            if (c.id === "ADMIN-001") {
+              return {
+                ...c,
+                phone: "02-579-1171",
+                postcode: "06306",
+                address: "서울특별시 강남구 개포로22길 12",
+                detailAddress: "6층 (주)초이콤마 본사",
+              };
+            }
+            if (c.detailAddress && c.address && c.address.endsWith(c.detailAddress)) {
+              return {
+                ...c,
+                address: c.address.slice(0, -c.detailAddress.length).trim() || c.address,
+              };
+            }
+            return c;
+          });
+          setCustomersList(sanitized);
           if (typeof window !== "undefined") {
-            localStorage.setItem("admin_customers", JSON.stringify(data));
+            localStorage.setItem("admin_customers", JSON.stringify(sanitized));
           }
           return;
         }
@@ -56,7 +120,26 @@ export function useCustomers(triggerToast: (msg: string) => void) {
           try {
             const parsed: any[] = JSON.parse(saved);
             if (Array.isArray(parsed) && parsed.length > 0) {
-              setCustomersList(parsed);
+              const sanitized = parsed.map((c) => {
+                if (c.id === "ADMIN-001") {
+                  return {
+                    ...c,
+                    phone: "02-579-1171",
+                    postcode: "06306",
+                    address: "서울특별시 강남구 개포로22길 12",
+                    detailAddress: "6층 (주)초이콤마 본사",
+                  };
+                }
+                if (c.detailAddress && c.address && c.address.endsWith(c.detailAddress)) {
+                  return {
+                    ...c,
+                    address: c.address.slice(0, -c.detailAddress.length).trim() || c.address,
+                  };
+                }
+                return c;
+              });
+              setCustomersList(sanitized);
+              localStorage.setItem("admin_customers", JSON.stringify(sanitized));
               return;
             }
           } catch (e) {}
@@ -260,37 +343,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         const ws = wb.Sheets[wsname];
         const rows: any[] = XLSX.utils.sheet_to_json(ws);
 
-        const parsedCustomers = rows.map((row, idx) => {
-          const rawGrade = String(row["회원 등급"] || row["회원 그룹"] || "").toUpperCase().trim();
-          let grade = "GENERAL";
-          if (rawGrade.includes("VVIP") || rawGrade.includes("BLACK") || rawGrade.includes("블랙")) grade = "VVIP";
-          else if (rawGrade.includes("PLATINUM") || rawGrade.includes("플래티넘")) grade = "PLATINUM";
-          else if (rawGrade.includes("GOLD") || rawGrade.includes("골드")) grade = "GOLD";
-          else if (rawGrade.includes("SILVER") || rawGrade.includes("실버")) grade = "SILVER";
-          else if (rawGrade.includes("GENERAL") || rawGrade.includes("일반") || rawGrade.includes("REGULAR")) grade = "GENERAL";
-          else if (parseFloat(row["구매금액(KRW)"]) >= 20000000) grade = "VVIP";
-          else if (parseFloat(row["구매금액(KRW)"]) >= 10000000) grade = "PLATINUM";
-          else if (parseFloat(row["구매금액(KRW)"]) >= 5000000) grade = "GOLD";
-          else if (parseFloat(row["구매금액(KRW)"]) >= 1000000) grade = "SILVER";
-          else grade = "GENERAL";
-
-          const rawPhone = String(row["연락처"] || "").trim();
-          const rawDate = String(row["가입일"] || "").trim();
-
-          return {
-            id: String(row["고유키"] || `CUST-${Date.now()}-${idx}`),
-            name: String(row["이름"] || "무명 회원").trim(),
-            email: String(row["이메일"] || row["아이디"] || "-").trim(),
-            phone: rawPhone || "-",
-            grade: grade,
-            rawGrade: rawGrade,
-            totalSpent: parseFloat(row["구매금액(KRW)"]) || 0,
-            points: parseInt(row["보유 적립금 포인트"]) || 0,
-            couponsCount: parseInt(row["작성 게시물 개수"]) || 1,
-            joinedDate: rawDate ? rawDate.split(" ")[0] : new Date().toISOString().split("T")[0],
-            status: "Active",
-          };
-        });
+        const parsedCustomers = rows.map((row, idx) => parseCustomerRow(row, idx));
 
         const combined = [...parsedCustomers, ...customersList];
         setCustomersList(combined);
@@ -298,7 +351,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
           localStorage.setItem("admin_customers", JSON.stringify(combined));
           window.dispatchEvent(new CustomEvent("storage"));
         }
-        triggerToast(`엑셀 파일에서 총 ${parsedCustomers.length.toLocaleString()}명의 회원 정보가 연동되었습니다!`);
+        triggerToast(`엑셀 파일에서 총 ${parsedCustomers.length.toLocaleString()}명의 회원 정보(배송지 주소 포함)가 연동되었습니다!`);
       } catch (err) {
         console.error(err);
         triggerToast("엑셀 파싱 중 오류가 발생했습니다.");
@@ -307,14 +360,26 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     reader.readAsBinaryString(file);
   };
 
-  const handleResetCustomerData = () => {
-    if (window.confirm("엑셀 회원 데이터(5,666명)로 복원하시겠습니까?")) {
-      setCustomersList(initialCustomers);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("admin_customers", JSON.stringify(initialCustomers));
-        window.dispatchEvent(new CustomEvent("storage"));
+  const handleResetCustomerData = async () => {
+    if (window.confirm("엑셀 원본 파일(5,666명)의 최신 회원 정보 및 배송지 주소를 전체 동기화하시겠습니까?")) {
+      try {
+        const res = await fetch("/회원2026_08_03_1.xls");
+        const buffer = await res.arrayBuffer();
+        const wb = XLSX.read(buffer, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows: any[] = XLSX.utils.sheet_to_json(ws);
+        const parsed = rows.map((r, i) => parseCustomerRow(r, i));
+        const combined = [DEFAULT_ADMIN_CUSTOMER, ...parsed];
+        setCustomersList(combined);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("admin_customers", JSON.stringify(combined));
+          window.dispatchEvent(new CustomEvent("storage"));
+        }
+        triggerToast(`엑셀 원본에서 5,666명의 회원 정보(배송지 주소 포함)가 성공적으로 복원되었습니다.`);
+      } catch (err: any) {
+        console.error(err);
+        triggerToast("회원 엑셀 복원 중 오류가 발생했습니다.");
       }
-      triggerToast("엑셀 회원 데이터(5,666명)로 복원되었습니다.");
     }
   };
 

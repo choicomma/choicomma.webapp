@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Sans_KR } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
@@ -10,20 +10,56 @@ import { DebugGrid } from "@/components/debug-grid";
 import { isDevelopment } from "@/lib/constants";
 import { HeaderWithData } from "@/components/layout/header/server-wrapper";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const notoSansKR = Noto_Sans_KR({
-  variable: "--font-noto-sans-kr",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700", "900"],
+const pretendard = localFont({
+  src: [
+    {
+      path: "../public/font/Pretendard-Thin.otf",
+      weight: "100",
+      style: "normal",
+    },
+    {
+      path: "../public/font/Pretendard-ExtraLight.otf",
+      weight: "200",
+      style: "normal",
+    },
+    {
+      path: "../public/font/Pretendard-Light.otf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../public/font/Pretendard-Regular.otf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/font/Pretendard-Medium.otf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../public/font/Pretendard-SemiBold.otf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../public/font/Pretendard-Bold.otf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../public/font/Pretendard-ExtraBold.otf",
+      weight: "800",
+      style: "normal",
+    },
+    {
+      path: "../public/font/Pretendard-Black.otf",
+      weight: "900",
+      style: "normal",
+    },
+  ],
+  variable: "--font-pretendard",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -50,7 +86,7 @@ export default async function RootLayout({
   const cart = getCart();
 
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ko" className={`${pretendard.variable} ${pretendard.className}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -87,7 +123,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${notoSansKR.variable} antialiased min-h-screen`}
+        className={`${pretendard.variable} ${pretendard.className} font-sans antialiased min-h-screen`}
         suppressHydrationWarning
       >
         <CartProvider cartPromise={cart} mode={mode}>

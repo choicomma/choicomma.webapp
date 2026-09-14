@@ -44,25 +44,76 @@ export default function CheckoutClientWrapper() {
     paymentMethod: "easypay", // easypay | card | vbank
   });
 
-  // Sync Member Profile from My Page (membership_user_*)
+  // Sync Member Profile from 회원 정보 관리 & 세션 (admin_customers / membership_user_*)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedName = localStorage.getItem("membership_user_name") || "홍길동";
-      const savedEmail = localStorage.getItem("membership_user_email") || "customer@choicomma.com";
-      const savedPhone = localStorage.getItem("membership_user_phone") || "010-1234-5678";
-      const savedAddress = localStorage.getItem("membership_user_address") || "서울특별시 강남구 테헤란로 123";
+      const savedName = localStorage.getItem("membership_user_name") || "";
+      const savedEmail = localStorage.getItem("membership_user_email") || "";
+      const savedPhone = localStorage.getItem("membership_user_phone") || "";
+      const savedPostcode = localStorage.getItem("membership_user_postcode") || "";
+      const savedAddress = localStorage.getItem("membership_user_address") || "";
+      const savedDetail = localStorage.getItem("membership_user_address_detail") || "";
       const savedRefundBank = localStorage.getItem("membership_user_refund_bank") || "국민은행";
       const savedRefundAccount = localStorage.getItem("membership_user_refund_account") || "";
       const savedRefundHolder = localStorage.getItem("membership_user_refund_holder") || savedName;
 
+      // 회원 정보 관리(admin_customers)에서 최신 등록된 회원 정보 조회
+      const adminCustomersRaw = localStorage.getItem("admin_customers");
+      let matchedCust: any = null;
+      if (adminCustomersRaw) {
+        try {
+          const list: any[] = JSON.parse(adminCustomersRaw);
+          const currentEmail = (savedEmail || "").toLowerCase().trim();
+          const currentPhone = (savedPhone || "").replace(/[^0-9]/g, "");
+          matchedCust = list.find((c) => {
+            const cEmail = (c.email || "").toLowerCase().trim();
+            const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+            return (
+              (currentEmail && cEmail === currentEmail) ||
+              (currentPhone && currentPhone.length >= 8 && cPhone === currentPhone) ||
+              (savedName && c.name === savedName)
+            );
+          });
+        } catch (e) {}
+      }
+
+      let finalName = matchedCust?.name || savedName || "고객님";
+      let finalEmail = matchedCust?.email || savedEmail || "customer@choicomma.com";
+      let finalPhone = matchedCust?.phone || savedPhone || "010-1234-5678";
+      let finalPostcode = matchedCust?.postcode || savedPostcode || "06306";
+      let finalAddress = matchedCust?.address || savedAddress || "서울특별시 강남구 테헤란로 123";
+      let finalDetail = matchedCust?.detailAddress || matchedCust?.addressDetail || savedDetail || "";
+
+      // 1) Extract postal code if formatted as (12345) or [12345] in address
+      const zipMatch = finalAddress.match(/^[\(\[](\d{5})[\)\]]\s*(.*)$/);
+      if (zipMatch) {
+        if (!finalPostcode || finalPostcode === "06123") {
+          finalPostcode = zipMatch[1];
+        }
+        finalAddress = zipMatch[2];
+      }
+
+      // 2) Strip detailAddress from base address if it was combined into a single line
+      if (finalDetail && finalAddress.endsWith(finalDetail)) {
+        finalAddress = finalAddress.slice(0, -finalDetail.length).trim();
+      }
+
+      // 3) Fallback if finalDetail was empty but savedDetail exists in address
+      if (!finalDetail && savedDetail && finalAddress.endsWith(savedDetail)) {
+        finalDetail = savedDetail;
+        finalAddress = finalAddress.slice(0, -savedDetail.length).trim();
+      }
+
       setFormData((prev) => ({
         ...prev,
-        ordererName: prev.ordererName || savedName,
-        ordererEmail: prev.ordererEmail || savedEmail,
-        ordererPhone: prev.ordererPhone || savedPhone,
-        recipientName: prev.recipientName || savedName,
-        recipientPhone: prev.recipientPhone || savedPhone,
-        address: prev.address || savedAddress,
+        ordererName: prev.ordererName || finalName,
+        ordererEmail: prev.ordererEmail || finalEmail,
+        ordererPhone: prev.ordererPhone || finalPhone,
+        recipientName: prev.recipientName || finalName,
+        recipientPhone: prev.recipientPhone || finalPhone,
+        postcode: prev.postcode && prev.postcode !== "06123" && prev.postcode !== "06306" ? prev.postcode : finalPostcode,
+        address: finalAddress,
+        addressDetail: finalDetail,
         refundBank: prev.refundBank || savedRefundBank,
         refundAccountNumber: prev.refundAccountNumber || savedRefundAccount,
         refundAccountHolder: prev.refundAccountHolder || savedRefundHolder,
@@ -143,13 +194,36 @@ export default function CheckoutClientWrapper() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      let currentPoints = 0;
       const savedPoints = localStorage.getItem("membership_user_points");
-      if (savedPoints && !isNaN(parseInt(savedPoints))) {
-        setAvailablePoints(parseInt(savedPoints));
-      } else {
-        localStorage.setItem("membership_user_points", "5000");
-        setAvailablePoints(5000);
+      if (savedPoints !== null && !isNaN(parseInt(savedPoints))) {
+        currentPoints = parseInt(savedPoints);
       }
+
+      // 회원 정보 관리의 최신 적립금 포인트 조회
+      const adminCustomersRaw = localStorage.getItem("admin_customers");
+      if (adminCustomersRaw) {
+        try {
+          const list: any[] = JSON.parse(adminCustomersRaw);
+          const currentEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+          const currentPhone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
+          const currentName = localStorage.getItem("membership_user_name") || "";
+          const matched = list.find((c) => {
+            const cEmail = (c.email || "").toLowerCase().trim();
+            const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+            return (
+              (currentEmail && cEmail === currentEmail) ||
+              (currentPhone && currentPhone.length >= 8 && cPhone === currentPhone) ||
+              (currentName && c.name === currentName)
+            );
+          });
+          if (matched && matched.points !== undefined) {
+            currentPoints = Number(matched.points);
+          }
+        } catch (e) {}
+      }
+
+      setAvailablePoints(currentPoints);
     }
   }, []);
 
@@ -264,11 +338,19 @@ export default function CheckoutClientWrapper() {
           localStorage.setItem("membership_user_refund_account", formData.refundAccountNumber);
           localStorage.setItem("membership_user_refund_holder", formData.refundAccountHolder);
         }
+        const effectiveDeliveryMemo =
+          formData.deliveryMemo === "직접 입력"
+            ? (formData.customDeliveryMemo.trim() || "직접 입력")
+            : formData.deliveryMemo;
+
         sessionStorage.setItem(
           `pending_order_${orderId}`,
           JSON.stringify({
             orderId,
-            formData,
+            formData: {
+              ...formData,
+              deliveryMemo: effectiveDeliveryMemo,
+            },
             cart,
             finalTotalAmount,
             paidAt: new Date().toISOString(),
@@ -290,6 +372,12 @@ export default function CheckoutClientWrapper() {
         failUrl: `${origin}/order/fail`,
         customerEmail: formData.ordererEmail || "customer@choicomma.com",
         customerName: formData.recipientName || "홍길동",
+        card: {
+          useEscrow: false,
+          flowMode: "DEFAULT",
+          useCardPoint: false,
+          useAppCardOnly: false,
+        },
       });
     } catch (err: any) {
       // Ignore user cancellation (closing the payment popup/window)
@@ -301,8 +389,9 @@ export default function CheckoutClientWrapper() {
         console.log("사용자가 결제창을 취소하거나 닫았습니다.");
         return;
       }
-      console.error("Direct Payment Request Failed:", err);
-      alert(err?.message || "결제 창 호출 중 오류가 발생했습니다. 클라이언트 키 또는 네트워크 상태를 확인해 주세요.");
+      console.error("Direct Payment Request Failed Full Error:", err);
+      const detailMsg = err?.message || (typeof err === "object" ? JSON.stringify(err) : String(err));
+      alert(`결제창 호출 중 오류가 발생했습니다.\n\n[오류 내용]\n${detailMsg}\n\n(오류 코드: ${err?.code || "알 수 없음"})`);
     } finally {
       setIsDirectPayLoading(false);
     }
@@ -522,6 +611,15 @@ export default function CheckoutClientWrapper() {
                   <option value="택배함에 보관해 주세요">택배함에 보관해 주세요</option>
                   <option value="직접 입력">직접 입력</option>
                 </select>
+                {formData.deliveryMemo === "직접 입력" && (
+                  <input
+                    type="text"
+                    value={formData.customDeliveryMemo}
+                    onChange={(e) => handleInputChange("customDeliveryMemo", e.target.value)}
+                    placeholder="배송 기사님께 전달할 요청사항을 직접 입력해주세요"
+                    className="mt-2 w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-medium focus:outline-none focus:ring-2 focus:ring-neutral-900 text-sm"
+                  />
+                )}
               </div>
             </div>
           </div>

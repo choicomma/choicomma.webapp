@@ -169,8 +169,12 @@ export async function getCollectionProducts({
 }) {
   try {
     if (USE_MOCK_DATA) {
+      const catalogProducts = mockProducts.filter(
+        (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+      );
+
       if (collectionHandle === "all" || collectionHandle === "choice" || collectionHandle === "timesale" || collectionHandle === "new" || collectionHandle === "special") {
-        return mockProducts;
+        return catalogProducts;
       }
 
       const collection = mockCollections.find(

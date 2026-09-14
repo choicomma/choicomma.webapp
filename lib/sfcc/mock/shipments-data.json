@@ -1,35 +1,50 @@
 [
   {
-    "id": "TRK-2026-003",
-    "orderId": "ORD-20260908-003",
-    "recipient": "이서준",
-    "phone": "010-3344-5566",
-    "altPhone": "031-700-8899",
-    "zipCode": "13524",
-    "address": "경기도 성남시 분당구 판교역로 166",
-    "detailAddress": "카카오 판교아지트 B동 7층",
-    "items": "시그니처 테일러드 슬랙스 (CHARCOAL / 3) 2개, 캐시미어 라운드 니트 (OATMEAL / 2) 1개",
+    "id": "TRK-2026-002",
+    "orderId": "ORD-20260908-002",
+    "recipient": "김민지",
+    "phone": "010-9876-5432",
+    "altPhone": "",
+    "zipCode": "06035",
+    "address": "서울특별시 강남구 가로수길 42",
+    "detailAddress": "3층 302호",
+    "items": "프리미엄 콤마 크롭 블라우스 (CREAM / 2) 1개, 플리츠 롱 스커트 (BLACK / 2) 2개",
     "quantity": 3,
     "carrier": "CJ대한통운",
-    "trackingNumber": "-",
-    "status": "Pending",
-    "shippingMemo": "경비실에 맡겨주세요.",
+    "trackingNumber": "6892-1328-2867",
+    "status": "In Transit",
+    "shippingMemo": "배송 전 연락 부탁드립니다.",
     "orderDate": "2026-09-14",
-    "shippedDate": "-",
+    "shippedDate": "2026-09-14",
     "estimatedDelivery": "-",
     "packages": [
       {
-        "id": "PKG-003-1",
-        "items": "시그니처 테일러드 슬랙스 (CHARCOAL / 3) 2개, 캐시미어 라운드 니트 (OATMEAL / 2) 1개",
+        "id": "PKG-002-1",
+        "items": "플리츠 롱 스커트 (BLACK / 2) 2개",
         "status": "Pending",
         "carrier": "CJ대한통운",
+        "cjP2pCd": "P1",
+        "cjClsfCd": "4W44",
         "pkgIndex": 1,
-        "quantity": 3,
+        "quantity": 2,
+        "cjClsfAddr": "3층 302호",
+        "cjSubClsfCd": "-4g",
+        "cjClldlvBranNm": "대한통운",
+        "trackingNumber": "-",
+        "cjClldlvempNickNm": "A01-1구역"
+      },
+      {
+        "id": "PKG-4876-2",
+        "items": "프리미엄 콤마 크롭 블라우스 (CREAM / 2) 1개",
+        "status": "Pending",
+        "carrier": "CJ대한통운",
+        "pkgIndex": 2,
+        "quantity": 1,
         "trackingNumber": "-"
       }
     ],
     "created_at": "2026-09-14T07:13:21.439352+00:00",
-    "updated_at": "2026-09-14T09:12:06.382+00:00"
+    "updated_at": "2026-09-14T10:21:12.257+00:00"
   },
   {
     "id": "TRK-2026-005",
@@ -43,11 +58,11 @@
     "items": "벨티드 캐시미어 블렌드 코트 (CAMEL / 1) 1개, 모헤어 니트 머플러 (CHARCOAL / FREE) 2개",
     "quantity": 3,
     "carrier": "CJ대한통운",
-    "trackingNumber": "-",
-    "status": "Pending",
+    "trackingNumber": "6892-2841-6575",
+    "status": "In Transit",
     "shippingMemo": "도착 전 연락 바랍니다.",
     "orderDate": "",
-    "shippedDate": "-",
+    "shippedDate": "2026-09-14",
     "estimatedDelivery": "-",
     "packages": [
       {
@@ -55,77 +70,19 @@
         "items": "벨티드 캐시미어 블렌드 코트 (CAMEL / 1) 1개, 모헤어 니트 머플러 (CHARCOAL / FREE) 2개",
         "status": "Pending",
         "carrier": "CJ대한통운",
+        "cjP2pCd": "P1",
+        "cjClsfCd": "4W44",
         "pkgIndex": 1,
         "quantity": 3,
-        "trackingNumber": "-"
+        "cjClsfAddr": "송도IT센터 18층",
+        "cjSubClsfCd": "-4g",
+        "cjClldlvBranNm": "대한통운",
+        "trackingNumber": "-",
+        "cjClldlvempNickNm": "A01-1구역"
       }
     ],
     "created_at": "2026-09-14T07:13:21.439352+00:00",
-    "updated_at": "2026-09-14T09:12:06.382+00:00"
-  },
-  {
-    "id": "TRK-2026-001",
-    "orderId": "ORD-20260908-001",
-    "recipient": "홍길동",
-    "phone": "010-1234-5678",
-    "altPhone": "02-555-1234",
-    "zipCode": "04524",
-    "address": "서울특별시 중구 세종대로 110",
-    "detailAddress": "101동 1205호",
-    "items": "클래식 울 싱글 재킷 (BLACK / 1) 2개, 실크 스카프 (NAVY / FREE) 1개",
-    "quantity": 3,
-    "carrier": "CJ대한통운",
-    "trackingNumber": "-",
-    "status": "Pending",
-    "shippingMemo": "부재시 문앞에 놓아주세요 (안전배송)",
-    "orderDate": "",
-    "shippedDate": "-",
-    "estimatedDelivery": "-",
-    "packages": [
-      {
-        "id": "PKG-001-1",
-        "items": "클래식 울 싱글 재킷 (BLACK / 1) 2개, 실크 스카프 (NAVY / FREE) 1개",
-        "status": "Pending",
-        "carrier": "CJ대한통운",
-        "pkgIndex": 1,
-        "quantity": 3,
-        "trackingNumber": "-"
-      }
-    ],
-    "created_at": "2026-09-14T07:13:21.439352+00:00",
-    "updated_at": "2026-09-14T09:12:06.382+00:00"
-  },
-  {
-    "id": "TRK-2026-002",
-    "orderId": "ORD-20260908-002",
-    "recipient": "김민지",
-    "phone": "010-9876-5432",
-    "altPhone": "",
-    "zipCode": "06035",
-    "address": "서울특별시 강남구 가로수길 42",
-    "detailAddress": "3층 302호",
-    "items": "프리미엄 콤마 크롭 블라우스 (CREAM / 2) 1개, 플리츠 롱 스커트 (BLACK / 2) 2개",
-    "quantity": 3,
-    "carrier": "CJ대한통운",
-    "trackingNumber": "-",
-    "status": "Pending",
-    "shippingMemo": "배송 전 연락 부탁드립니다.",
-    "orderDate": "2026-09-14",
-    "shippedDate": "-",
-    "estimatedDelivery": "-",
-    "packages": [
-      {
-        "id": "PKG-002-1",
-        "items": "프리미엄 콤마 크롭 블라우스 (CREAM / 2) 1개, 플리츠 롱 스커트 (BLACK / 2) 2개",
-        "status": "Pending",
-        "carrier": "CJ대한통운",
-        "pkgIndex": 1,
-        "quantity": 3,
-        "trackingNumber": "-"
-      }
-    ],
-    "created_at": "2026-09-14T07:13:21.439352+00:00",
-    "updated_at": "2026-09-14T09:12:07.451+00:00"
+    "updated_at": "2026-09-14T10:21:12.257+00:00"
   },
   {
     "id": "TRK-2026-004",
@@ -163,6 +120,76 @@
       }
     ],
     "created_at": "2026-09-14T07:13:21.439352+00:00",
-    "updated_at": "2026-09-14T09:12:05.79+00:00"
+    "updated_at": "2026-09-14T10:21:12.257+00:00"
+  },
+  {
+    "id": "TRK-2026-001",
+    "orderId": "ORD-20260908-001",
+    "recipient": "홍길동",
+    "phone": "010-1234-5678",
+    "altPhone": "02-555-1234",
+    "zipCode": "04524",
+    "address": "서울특별시 중구 세종대로 110",
+    "detailAddress": "101동 1205호",
+    "items": "클래식 울 싱글 재킷 (BLACK / 1) 2개, 실크 스카프 (NAVY / FREE) 1개",
+    "quantity": 3,
+    "carrier": "CJ대한통운",
+    "trackingNumber": "6892-3551-9989",
+    "status": "In Transit",
+    "shippingMemo": "부재시 문앞에 놓아주세요 (안전배송)",
+    "orderDate": "",
+    "shippedDate": "2026-09-14",
+    "estimatedDelivery": "-",
+    "packages": [
+      {
+        "id": "PKG-001-1",
+        "items": "클래식 울 싱글 재킷 (BLACK / 1) 2개, 실크 스카프 (NAVY / FREE) 1개",
+        "status": "Pending",
+        "carrier": "CJ대한통운",
+        "cjP2pCd": "P1",
+        "cjClsfCd": "4W44",
+        "pkgIndex": 1,
+        "quantity": 3,
+        "cjClsfAddr": "101동 1205호",
+        "cjSubClsfCd": "-4g",
+        "cjClldlvBranNm": "대한통운",
+        "trackingNumber": "-",
+        "cjClldlvempNickNm": "A01-1구역"
+      }
+    ],
+    "created_at": "2026-09-14T07:13:21.439352+00:00",
+    "updated_at": "2026-09-14T10:21:12.257+00:00"
+  },
+  {
+    "id": "TRK-2026-003",
+    "orderId": "ORD-20260908-003",
+    "recipient": "이서준",
+    "phone": "010-3344-5566",
+    "altPhone": "031-700-8899",
+    "zipCode": "13524",
+    "address": "경기도 성남시 분당구 판교역로 166",
+    "detailAddress": "카카오 판교아지트 B동 7층",
+    "items": "시그니처 테일러드 슬랙스 (CHARCOAL / 3) 2개, 캐시미어 라운드 니트 (OATMEAL / 2) 1개",
+    "quantity": 3,
+    "carrier": "CJ대한통운",
+    "trackingNumber": "6892-5469-2622",
+    "status": "In Transit",
+    "shippingMemo": "경비실에 맡겨주세요.",
+    "orderDate": "2026-09-14",
+    "shippedDate": "2026-09-14",
+    "estimatedDelivery": "-",
+    "packages": [
+      {
+        "id": "PKG-003-1",
+        "items": "시그니처 테일러드 슬랙스 (CHARCOAL / 3) 2개, 캐시미어 라운드 니트 (OATMEAL / 2) 1개",
+        "status": "Pending",
+        "carrier": "CJ대한통운",
+        "pkgIndex": 1,
+        "quantity": 3,
+        "trackingNumber": "-"
+      }
+    ],
+    "created_at": "2026-09-14T07:13:21.439352+00:00",
+    "updated_at": "2026-09-14T10:21:12.257+00:00"
   }
 ]
