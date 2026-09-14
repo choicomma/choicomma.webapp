@@ -32,7 +32,7 @@ export function CjLabelPrint({
 }) {
   const [mounted, setMounted] = useState(false);
   const [zoom, setZoom] = useState<number>(0.85);
-  const [paperMode, setPaperMode] = useState<"blank" | "preprinted">("blank");
+  const [paperMode, setPaperMode] = useState<"blank" | "preprinted">("preprinted");
   const printTriggered = useRef(false);
 
   useEffect(() => {
@@ -206,18 +206,6 @@ export function CjLabelPrint({
               <div className="flex items-center bg-neutral-100 rounded-lg p-1 border border-neutral-200 text-xs">
                 <button
                   type="button"
-                  onClick={() => setPaperMode("blank")}
-                  className={`px-2.5 py-1 rounded font-medium transition-colors ${
-                    paperMode === "blank"
-                      ? "bg-white shadow text-neutral-900 font-bold"
-                      : "text-neutral-500 hover:text-neutral-700"
-                  }`}
-                  title="서식 테두리와 로고를 모두 출력 (무지 라벨지/A4/PDF용)"
-                >
-                  무지용지 모드
-                </button>
-                <button
-                  type="button"
                   onClick={() => setPaperMode("preprinted")}
                   className={`px-2.5 py-1 rounded font-medium transition-colors ${
                     paperMode === "preprinted"
@@ -227,6 +215,18 @@ export function CjLabelPrint({
                   title="배경 서식을 제외하고 데이터만 출력 (CJ 전용 사전인쇄 롤용지용)"
                 >
                   전용용지 모드
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaperMode("blank")}
+                  className={`px-2.5 py-1 rounded font-medium transition-colors ${
+                    paperMode === "blank"
+                      ? "bg-white shadow text-neutral-900 font-bold"
+                      : "text-neutral-500 hover:text-neutral-700"
+                  }`}
+                  title="서식 테두리와 로고를 모두 출력 (무지 라벨지/A4/PDF용)"
+                >
+                  무지용지 모드
                 </button>
               </div>
 
@@ -514,21 +514,19 @@ function StandardCjLabel({
           backgroundColor: "#ffffff",
         }}
       >
-        {/* 항목 1: 운송장번호 라벨 및 번호 */}
+        {/* 항목 1: 운송장번호 라벨 및 번호 (1번 위치 기준 통일: 전용용지는 라벨을 투명 처리하여 공간 유지) */}
         <div style={{ display: "flex", alignItems: "center", overflow: "hidden", marginRight: "3mm" }}>
-          {!isPreprinted && (
-            <span
-              style={{
-                fontSize: "7.5pt",
-                fontWeight: "900",
-                color: "#0070c0",
-                marginRight: "2mm",
-                whiteSpace: "nowrap",
-              }}
-            >
-              운송장번호
-            </span>
-          )}
+          <span
+            style={{
+              fontSize: "7.5pt",
+              fontWeight: "900",
+              color: isPreprinted ? "transparent" : "#0070c0",
+              marginRight: "2mm",
+              whiteSpace: "nowrap",
+            }}
+          >
+            운송장번호
+          </span>
           <span
             style={{
               fontSize: "12pt",
@@ -573,11 +571,16 @@ function StandardCjLabel({
           <span style={{ fontSize: "8pt", fontWeight: "700", color: "#000000" }}>
             {item.reprintYn ? `재출력:${item.reprintYn}` : ""}
           </span>
-          {!isPreprinted && (
-            <span style={{ fontSize: "7.5pt", fontWeight: "900", color: "#0070c0" }}>
-              CJ대한통운 1588-1255
-            </span>
-          )}
+          <span
+            style={{
+              fontSize: "7.5pt",
+              fontWeight: "900",
+              color: isPreprinted ? "transparent" : "#0070c0",
+              whiteSpace: "nowrap",
+            }}
+          >
+            CJ대한통운 1588-1255
+          </span>
         </div>
       </div>
 
@@ -1034,22 +1037,9 @@ function StandardCjLabel({
             boxSizing: "border-box",
           }}
         >
-          {/* 친환경 GRP 마크 + 안내문구 */}
+          {/* 친환경 GRP 마크 */}
           <div style={{ display: "flex", alignItems: "center", gap: "2mm", flex: 1, overflow: "hidden" }}>
             {!isPreprinted && <GrpEcoLogo />}
-            <div
-              style={{
-                fontSize: "6pt",
-                color: "#333333",
-                lineHeight: 1.15,
-                fontWeight: "600",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-              }}
-            >
-              <div>고객님(받는 분)의 소중한 상품을 안전하게 배송하겠습니다.</div>
-              <div>개인정보 유출우려가 있으니 운송장은 폐기바랍니다.</div>
-            </div>
           </div>
 
           {/* 눈꽃 심볼 + CJ ONE 브랜드 배너 */}

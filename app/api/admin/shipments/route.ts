@@ -100,9 +100,50 @@ export async function POST(req: NextRequest) {
     // 1. Primary: Save to Supabase (Upsert)
     if (isSupabaseConfigured) {
       try {
+        const ALLOWED_COLUMNS = [
+          "id", "orderId", "recipient", "phone", "altPhone", "zipCode",
+          "address", "detailAddress", "items", "quantity", "carrier",
+          "trackingNumber", "status", "shippingMemo", "orderDate",
+          "shippedDate", "estimatedDelivery", "packages", "created_at", "updated_at"
+        ];
+
+        const dbRows = shipments.map((s: any) => {
+          const row: any = {};
+          ALLOWED_COLUMNS.forEach((col) => {
+            if (s[col] !== undefined) row[col] = s[col];
+          });
+          row.orderId = s.orderId || s.order_id || "";
+          row.recipient = s.recipient || "";
+          row.phone = s.phone || "";
+          row.zipCode = s.zipCode || s.zip_code || "";
+          row.address = s.address || "";
+          row.items = s.items || "";
+          row.quantity = typeof s.quantity === "number" ? s.quantity : 1;
+          row.carrier = s.carrier || "CJ대한통운";
+          row.trackingNumber = s.trackingNumber || s.tracking_number || "-";
+          row.status = s.status || "Pending";
+          row.updated_at = new Date().toISOString();
+
+          // Extra CJ classification metadata preserved in packages[0]
+          if (s.cjClsfCd || s.cjSubClsfCd || s.cjClldlvempNickNm || s.cjClsfAddr || s.cjClldlvBranNm || s.cjP2pCd) {
+            const pkgs = Array.isArray(s.packages) && s.packages.length > 0 ? [...s.packages] : [{ id: `PKG-${s.id}-1` }];
+            pkgs[0] = {
+              ...pkgs[0],
+              cjClsfCd: s.cjClsfCd,
+              cjSubClsfCd: s.subClsfCd || s.cjSubClsfCd,
+              cjClldlvempNickNm: s.cjClldlvempNickNm,
+              cjClsfAddr: s.cjClsfAddr,
+              cjClldlvBranNm: s.cjClldlvBranNm,
+              cjP2pCd: s.cjP2pCd,
+            };
+            row.packages = pkgs;
+          }
+          return row;
+        });
+
         const { error: dbError } = await supabaseServer
           .from("shipments")
-          .upsert(shipments, { onConflict: "id" });
+          .upsert(dbRows, { onConflict: "id" });
 
         if (dbError) {
           console.warn("Notice: Failed to upsert shipments to Supabase:", dbError.message);

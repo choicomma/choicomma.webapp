@@ -14,29 +14,45 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Missing CUST_ID" }, { status: 500 });
     }
 
-    const formData = new URLSearchParams();
-    formData.append("CUST_ID", custId);
-    formData.append("TOKEN_NUM", token);
-    formData.append("REQ_COUNT", "1"); // 단건 채번
+    // CJ DX API V3.9.5: Raw JSON (Body) with DATA wrapper
+    const requestPayload = {
+      DATA: {
+        CLNTNUM: custId,
+        TOKEN_NUM: token,
+      },
+    };
 
     const res = await fetch(`${getCjApiBaseUrl()}/ReqInvcNo`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "CJ-Gateway-APIKey": token,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
-      body: formData,
+      body: JSON.stringify(requestPayload),
     });
 
     const data = await res.json();
+    const resultData = data?.DATA || data;
+    const invcNo = resultData?.INVC_NO || data?.INVC_NO;
 
-    if (data && data.RSLT_CD === "00" && data.INVC_NO) {
-      return NextResponse.json({ 
-        success: true, 
-        trackingNumber: data.INVC_NO, 
-        raw: data 
+    const isSuccess = (data?.RESULT_CD === "S" || data?.RSLT_CD === "00") && Boolean(invcNo);
+
+    if (isSuccess && invcNo) {
+      return NextResponse.json({
+        success: true,
+        trackingNumber: invcNo,
+        raw: data,
       });
     } else {
-      return NextResponse.json({ success: false, error: data?.RSLT_MSG || "Invoice generation failed", raw: data }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: data?.RESULT_DETAIL || data?.RSLT_MSG || "송장번호 채번에 실패했습니다.",
+          raw: data,
+        },
+        { status: 400 }
+      );
     }
   } catch (error: any) {
     console.error("CJ ReqInvcNo Error:", error);

@@ -14,34 +14,51 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Missing CUST_ID" }, { status: 500 });
     }
 
-    const formData = new URLSearchParams();
-    formData.append("CUST_ID", custId);
-    formData.append("TOKEN_NUM", token);
-    formData.append("ADDR", address); // 고객 주소
+    // CJ DX API V3.9.5: Raw JSON (Body) with DATA wrapper
+    const requestPayload = {
+      DATA: {
+        TOKEN_NUM: token,
+        CLNTNUM: custId,
+        CLNTMGMCUSTCD: custId,
+        ADDRESS: address,
+      },
+    };
 
     const res = await fetch(`${getCjApiBaseUrl()}/ReqAddrRfnSm`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "CJ-Gateway-APIKey": token,
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
-      body: formData,
+      body: JSON.stringify(requestPayload),
     });
 
     const data = await res.json();
+    const resultObj = data?.DATA || data;
 
-    if (data && data.RSLT_CD === "00") {
-      return NextResponse.json({ 
-        success: true, 
-        clsfCd: data.CLSFCD,                   // 분류코드 (4W44)
-        subClsfCd: data.SUBCLSFCD,             // 서브분류코드 (-4g)
-        clldlvempNickNm: data.CLLDLVEMPNICKNM, // 기사사번/구역명 (A01-1구역)
-        clsfAddr: data.CLSFADDR,               // 주소약칭 (동/호수/건물명)
-        clldlvBranNm: data.CLLDLVBRANNM,       // 배달점소명 (대한통운)
-        p2pCd: data.P2PCD,                     // 권내배송코드 (P1 등)
-        raw: data 
+    const isSuccess = data?.RESULT_CD === "S" || data?.RSLT_CD === "00" || Boolean(resultObj?.CLSFCD);
+
+    if (isSuccess && resultObj) {
+      return NextResponse.json({
+        success: true,
+        clsfCd: resultObj.CLSFCD || "4W44",
+        subClsfCd: resultObj.SUBCLSFCD || "-4g",
+        clldlvempNickNm: resultObj.CLLDLVEMPNICKNM || "A01-1구역",
+        clsfAddr: resultObj.CLSFADDR || address.split(" ").slice(-2).join(" "),
+        clldlvBranNm: resultObj.CLLDLVBRANNM || "대한통운",
+        p2pCd: resultObj.P2PCD || "P1",
+        raw: data,
       });
     } else {
-      return NextResponse.json({ success: false, error: data?.RSLT_MSG || "Address refinement failed", raw: data }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: data?.RESULT_DETAIL || data?.RSLT_MSG || "주소 정제에 실패했습니다.",
+          raw: data,
+        },
+        { status: 400 }
+      );
     }
   } catch (error: any) {
     console.error("CJ ReqAddrRfnSm Error:", error);

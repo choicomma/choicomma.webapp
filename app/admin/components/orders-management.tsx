@@ -511,8 +511,21 @@ export function OrdersManagement({
             type="button"
             onClick={() => {
               if (selectedShipmentIds.size === 0) return;
-              if (window.confirm(`선택한 ${selectedShipmentIds.size}건의 주문에 대해 송장(트래킹) 번호를 일괄 발급하시겠습니까?`)) {
-                handleIssueCjLogisticsTracking?.(Array.from(selectedShipmentIds));
+              const ids = Array.from(selectedShipmentIds);
+              const unissued = shipmentsList.filter(s => ids.includes(s.id) && (!s.trackingNumber || s.trackingNumber === "-" || s.trackingNumber.trim() === ""));
+              const alreadyIssued = shipmentsList.filter(s => ids.includes(s.id) && s.trackingNumber && s.trackingNumber !== "-" && s.trackingNumber.trim() !== "");
+
+              if (unissued.length === 0) {
+                alert(`선택하신 ${ids.length}건의 주문은 이미 송장번호가 모두 정상 발급되어 있습니다.\n\n기존 송장번호가 안전하게 유지되며 재발급되지 않습니다.\n출력이 필요하시면 [선택 건 송장 일괄 출력] 버튼을 눌러주세요.`);
+                return;
+              }
+
+              const confirmMsg = alreadyIssued.length > 0
+                ? `선택한 ${ids.length}건 중 아직 송장번호가 없는 ${unissued.length}건만 새로 발급하시겠습니까?\n\n(이미 발급된 ${alreadyIssued.length}건은 기존 번호가 그대로 유지됩니다)`
+                : `선택한 ${unissued.length}건의 주문에 대해 새 송장번호를 발급하시겠습니까?`;
+
+              if (window.confirm(confirmMsg)) {
+                handleIssueCjLogisticsTracking?.(unissued.map(s => s.id));
               }
             }}
             disabled={selectedShipmentIds.size === 0}
@@ -521,7 +534,7 @@ export function OrdersManagement({
                 ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
                 : "bg-neutral-800 text-neutral-500 border-neutral-700 cursor-not-allowed opacity-60"
             }`}
-            title="선택한 주문 건들의 CJ대한통운 송장 번호를 일괄 채번 및 등록합니다"
+            title="미발급 주문 건들의 CJ대한통운 송장 번호를 신규 채번합니다 (기발급 건은 기존 번호 안전 유지)"
           >
             <FileText className="w-4 h-4" />
             <span>선택 건 송장 일괄 발급 ({selectedShipmentIds.size})</span>

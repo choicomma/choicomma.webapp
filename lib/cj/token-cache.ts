@@ -1,5 +1,8 @@
 export const getCjApiBaseUrl = () => {
-  // 운영 승인 테스트를 위해 무조건 개발망 고정
+  const env = process.env.CJ_API_ENV?.trim()?.toLowerCase();
+  if (env === "prod" || env === "production") {
+    return "https://dxapi.cjlogistics.com:5052";
+  }
   return "https://dxapi-dev.cjlogistics.com:5054";
 };
 

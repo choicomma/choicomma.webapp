@@ -85,8 +85,27 @@ export function useShipments(triggerToast: (msg: string) => void) {
           if (Array.isArray(data) && data.length > 0 && isMounted) {
             const sanitized = sanitizeShipmentsList(data);
             setShipmentsList((prev) => {
-              if (JSON.stringify(prev) === JSON.stringify(sanitized)) return prev;
-              return sanitized;
+              // 로컬에 이미 발급된 송장번호가 있는데 서버 응답이 아직 '-'인 경우, 로컬 송장번호를 안전하게 보존
+              const merged = sanitized.map((serverItem) => {
+                const localItem = prev.find((p) => p.id === serverItem.id);
+                if (
+                  localItem &&
+                  localItem.trackingNumber &&
+                  localItem.trackingNumber !== "-" &&
+                  (!serverItem.trackingNumber || serverItem.trackingNumber === "-")
+                ) {
+                  return {
+                    ...serverItem,
+                    trackingNumber: localItem.trackingNumber,
+                    status: localItem.status !== "Pending" ? localItem.status : serverItem.status,
+                    shippedDate: localItem.shippedDate || serverItem.shippedDate,
+                  };
+                }
+                return serverItem;
+              });
+
+              if (JSON.stringify(prev) === JSON.stringify(merged)) return prev;
+              return merged;
             });
             if (typeof window !== "undefined") {
               localStorage.setItem("admin_shipments", JSON.stringify(sanitized));
@@ -468,26 +487,30 @@ export function useShipments(triggerToast: (msg: string) => void) {
   const handleIssueCjLogisticsTracking = async (orderIds?: string | string[]) => {
     if (isIssuing) return;
     
-    // 타겟 결정
+    // 타겟 결정: 이미 송장번호가 발급된 건은 안전하게 보존하고, 아직 송장번호가 없는 미발급 건만 발급 대상으로 지정
     let targetOrders = [];
     if (orderIds) {
       const ids = Array.isArray(orderIds) ? orderIds : [orderIds];
-      targetOrders = shipmentsList.filter(s => ids.includes(s.id) && s.status === "Pending");
+      targetOrders = shipmentsList.filter(
+        (s) => ids.includes(s.id) && (!s.trackingNumber || s.trackingNumber === "-" || s.trackingNumber.trim() === "")
+      );
     } else {
-      targetOrders = shipmentsList.filter((s) => s.status === "Pending");
+      targetOrders = shipmentsList.filter(
+        (s) => !s.trackingNumber || s.trackingNumber === "-" || s.trackingNumber.trim() === ""
+      );
     }
 
     if (targetOrders.length === 0) {
-      alert("송장을 발급할 '배송 준비 중'인 주문이 없습니다.");
+      alert("선택하신 주문은 이미 모두 송장번호가 정상 발급되어 있습니다.\n\n기존 송장번호가 그대로 유지되며 새로 갱신되지 않습니다.\n출력이 필요하시면 [선택 건 송장 일괄 출력]을 눌러주세요.");
       return;
     }
 
-    if (!window.confirm(`선택한 ${targetOrders.length}건의 주문에 대해 송장(트래킹) 번호를 발급하시겠습니까?`)) {
+    if (!window.confirm(`선택한 주문 중 미발급 ${targetOrders.length}건에 대해 송장(트래킹) 번호를 신규 발급하시겠습니까?\n(이미 발급된 주문의 번호는 안전하게 유지됩니다)`)) {
       return;
     }
 
     setIsIssuing(true);
-    triggerToast(`총 ${targetOrders.length}건의 송장 발급을 시작합니다. (순차 처리)`);
+    triggerToast(`총 ${targetOrders.length}건의 송장 신규 발급을 시작합니다. (순차 처리)`);
     
     let successCount = 0;
     let newPrintData = [];
@@ -506,8 +529,9 @@ export function useShipments(triggerToast: (msg: string) => void) {
             body: JSON.stringify({ order: targetOrder }),
           });
           const data = await res.json();
+          const printItem = Array.isArray(data) ? data[0] : (data?.trackingNumber ? data : null);
           
-          if (data.success) {
+          if (printItem && printItem.trackingNumber) {
             successCount++;
             
             // 로컬 상태 즉시 업데이트 준비
@@ -515,40 +539,24 @@ export function useShipments(triggerToast: (msg: string) => void) {
               s.id === targetOrder.id
                 ? { 
                     ...s, 
-                    trackingNumber: data.trackingNumber, 
+                    trackingNumber: printItem.trackingNumber, 
                     status: "In Transit", 
                     shippedDate: new Date().toISOString().split("T")[0],
-                    cjClsfCd: data.clsfCd,
-                    cjSubClsfCd: data.subClsfCd,
-                    cjClldlvempNickNm: data.clldlvempNickNm,
-                    cjClsfAddr: data.clsfAddr,
-                    cjClldlvBranNm: data.clldlvBranNm,
-                    cjP2pCd: data.p2pCd,
+                    cjClsfCd: printItem.clsfCd,
+                    cjSubClsfCd: printItem.subClsfCd,
+                    cjClldlvempNickNm: printItem.clldlvempNickNm,
+                    cjClsfAddr: printItem.clsfAddr,
+                    cjClldlvBranNm: printItem.clldlvBranNm,
+                    cjP2pCd: printItem.p2pCd,
                   }
                 : s
             );
             
-            newPrintData.push({
-              orderId: targetOrder.orderId,
-              recipient: targetOrder.recipient,
-              phone: targetOrder.phone,
-              zipCode: targetOrder.zipCode,
-              address: targetOrder.address,
-              detailAddress: targetOrder.detailAddress,
-              items: targetOrder.items,
-              shippingMemo: targetOrder.shippingMemo,
-              trackingNumber: data.trackingNumber,
-              clsfCd: data.clsfCd,
-              subClsfCd: data.subClsfCd,
-              clldlvempNickNm: data.clldlvempNickNm,
-              clsfAddr: data.clsfAddr,
-              clldlvBranNm: data.clldlvBranNm,
-              p2pCd: data.p2pCd,
-            });
+            newPrintData.push(printItem);
             
             triggerToast(`발급 진행 중... (${successCount}/${targetOrders.length})`);
           } else {
-            console.error(`송장 발급 실패 [${targetOrder.id}]:`, data.error);
+            console.error(`송장 발급 실패 [${targetOrder.id}]:`, data?.error || data);
           }
         } catch (err) {
           console.error(`네트워크 오류 [${targetOrder.id}]:`, err);
@@ -556,10 +564,26 @@ export function useShipments(triggerToast: (msg: string) => void) {
       }
       
       setShipmentsList(currentList);
+
+      // 브라우저 캐시 및 서버 API(Supabase)에 영구 저장
+      if (typeof window !== "undefined") {
+        localStorage.setItem("admin_shipments", JSON.stringify(currentList));
+      }
+      try {
+        await fetch("/api/admin/shipments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(currentList),
+        });
+      } catch (saveErr) {
+        console.warn("Failed to persist newly issued shipments to server:", saveErr);
+      }
       
       if (newPrintData.length > 0) {
-        // 인쇄 모달을 자동으로 띄우지 않고 상태만 업데이트
-        triggerToast(`총 ${newPrintData.length}건 발급 완료. [선택 건 송장 일괄 출력] 버튼을 눌러 인쇄하세요.`);
+        triggerToast(`총 ${newPrintData.length}건 신규 발급 완료.`);
+        if (window.confirm(`총 ${newPrintData.length}건의 송장이 성공적으로 발급되었습니다.\n지금 바로 라벨 출력을 진행하시겠습니까?`)) {
+          setCjPrintData(newPrintData);
+        }
       } else {
         alert("성공적으로 발급된 송장이 없습니다.");
       }
