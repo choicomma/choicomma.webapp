@@ -91,7 +91,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   );
   let heroUrlsFiltered = initialHeroCandidates.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
   if (heroUrlsFiltered.length === 0) {
-    heroUrlsFiltered = ["/hero_banner_1.jpg", "/hero_banner_2.jpg"];
+    heroUrlsFiltered = Array.from({ length: 9 }, (_, i) => `/main_slider/${i + 1}.jpg`);
   }
   const [heroImages, setHeroImages] = React.useState<string[]>(heroUrlsFiltered);
   const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
@@ -291,7 +291,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
         .filter(Boolean);
 
       if (urls.length === 0) {
-        urls = ["/hero_banner_1.jpg", "/hero_banner_2.jpg"];
+        urls = Array.from({ length: 9 }, (_, i) => `/main_slider/${i + 1}.jpg`);
       }
 
       setHeroImages(urls);
