@@ -11,7 +11,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const secretKey = process.env.TOSS_SECRET_KEY || "test_gsk_docs_Oabc1234567890";
+    const secretKey =
+      process.env.TOSS_SECRET_KEY && !process.env.TOSS_SECRET_KEY.includes("docs_")
+        ? process.env.TOSS_SECRET_KEY
+        : "live_sk_EP59LybZ8BzymnjAKw2k86GYo7pR";
     const basicAuthToken = Buffer.from(`${secretKey}:`).toString("base64");
 
     const response = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
