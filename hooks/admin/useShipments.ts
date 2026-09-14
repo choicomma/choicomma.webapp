@@ -3,10 +3,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import * as XLSX from "xlsx";
 
+import { initialShipments as defaultShipments } from "@/lib/sfcc/mock/shipments-data";
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Initial Shipment Data (from page.tsx INITIAL_SHIPMENTS)
+// Initial Shipment Data (from mock data file)
 // ─────────────────────────────────────────────────────────────────────────────
-const initialShipments: any[] = [];
+const initialShipments: any[] = defaultShipments || [];
 
 // CJ대한통운 12자리 표준 송장번호 형식 (6892-XXXX-XXXX) 변환 유틸
 export function sanitizeCjTracking(tracking: string): string {
