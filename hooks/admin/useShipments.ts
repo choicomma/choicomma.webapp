@@ -62,7 +62,54 @@ export function useShipments(triggerToast: (msg: string) => void) {
     return initialShipments;
   });
 
-  // Persist on change without dispatching 'storage' to self
+  // 1. Fetch authoritative shipments from server API on mount and tab focus
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchServerShipments = async () => {
+      try {
+        const res = await fetch("/api/admin/shipments", {
+          headers: { "Cache-Control": "no-cache" },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0 && isMounted) {
+            const sanitized = sanitizeShipmentsList(data);
+            setShipmentsList((prev) => {
+              if (JSON.stringify(prev) === JSON.stringify(sanitized)) return prev;
+              return sanitized;
+            });
+            if (typeof window !== "undefined") {
+              localStorage.setItem("admin_shipments", JSON.stringify(sanitized));
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Notice: Using local shipments storage fallback:", err);
+      }
+    };
+
+    fetchServerShipments();
+
+    // Re-sync when user returns to the tab (e.g. on mobile or switching back from other apps)
+    const onWindowFocus = () => {
+      fetchServerShipments();
+    };
+
+    window.addEventListener("focus", onWindowFocus);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") fetchServerShipments();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("focus", onWindowFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
+  // 2. Persist on change to both localStorage and Server API
   useEffect(() => {
     if (typeof window !== "undefined") {
       const currentJson = JSON.stringify(shipmentsList);
@@ -70,6 +117,15 @@ export function useShipments(triggerToast: (msg: string) => void) {
       if (saved !== currentJson) {
         localStorage.setItem("admin_shipments", currentJson);
         window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+
+        // Persist to Server API
+        fetch("/api/admin/shipments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: currentJson,
+        }).catch((err) => {
+          console.warn("Failed to sync shipments to server:", err);
+        });
       }
     }
   }, [shipmentsList]);
