@@ -465,9 +465,26 @@ export default function AdminPage() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setProductsList(data);
+            let merged = [...data];
+            const hasHero = merged.some((p: any) => p.isHeroFeatured === true);
+            if (!hasHero) {
+              const defaultHeroes = INITIAL_CHOICOMMA_PRODUCTS.filter((p: any) => p.isHeroFeatured === true);
+              defaultHeroes.forEach((dh: any) => {
+                const existingIdx = merged.findIndex((p: any) => String(p.id) === String(dh.id));
+                if (existingIdx !== -1) {
+                  merged[existingIdx] = {
+                    ...merged[existingIdx],
+                    isHeroFeatured: true,
+                    heroCustomImage: dh.heroCustomImage || dh.featuredImage?.url,
+                  };
+                } else {
+                  merged.unshift(dh);
+                }
+              });
+            }
+            setProductsList(merged);
             if (typeof window !== "undefined") {
-              localStorage.setItem("admin_products", JSON.stringify(data));
+              localStorage.setItem("admin_products", JSON.stringify(merged));
             }
             isProductsLoadedRef.current = true;
             return;

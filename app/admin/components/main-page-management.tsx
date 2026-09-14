@@ -14,7 +14,25 @@ export function MainPageManagement({
   openImageUploadModal,
   handleRemoveHeroSlide,
 }: MainPageManagementProps) {
-  const heroProducts = productsList.filter((p) => p.isHeroFeatured === true);
+  const DEFAULT_HERO_FALLBACKS = [
+    {
+      id: "excel-product-452",
+      title: "메인 배너 슬라이드 1",
+      heroCustomImage: "/hero_banner_1.jpg",
+      featuredImage: { url: "/hero_banner_1.jpg" },
+      isHeroFeatured: true,
+    },
+    {
+      id: "hero-slide-1788159372912",
+      title: "메인 배너 슬라이드 2",
+      heroCustomImage: "/hero_banner_2.jpg",
+      featuredImage: { url: "/hero_banner_2.jpg" },
+      isHeroFeatured: true,
+    },
+  ];
+
+  const filteredHero = productsList.filter((p) => p.isHeroFeatured === true);
+  const heroProducts = filteredHero.length > 0 ? filteredHero : DEFAULT_HERO_FALLBACKS;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">

@@ -1,5 +1,28 @@
 [
   {
+    "id": "hero-slide-1788159372912",
+    "productNo": 9002,
+    "productCode": "HERO-1788159372912",
+    "handle": "hero-slide-1788159372912",
+    "title": "메인 배너 슬라이드 2",
+    "categoryId": "main_banner",
+    "categoryIds": [
+      "main_banner"
+    ],
+    "description": "초이콤마 오리지널 메인 슬라이드 배너입니다.",
+    "heroCustomImage": "/hero_banner_2.jpg",
+    "featuredImage": {
+      "url": "/hero_banner_2.jpg"
+    },
+    "images": [
+      {
+        "url": "/hero_banner_2.jpg"
+      }
+    ],
+    "isHeroFeatured": true,
+    "availableForSale": false
+  },
+  {
     "id": "hero-slide-1788841549464",
     "title": "메인 배너 슬라이드 7",
     "handle": "hero-slide-1788841549464",
@@ -407,7 +430,9 @@
       "enabled": false
     },
     "created_at": "2026-09-14T11:45:06.004+00:00",
-    "updated_at": "2026-09-14T11:45:15.005+00:00"
+    "updated_at": "2026-09-14T11:45:15.005+00:00",
+    "isHeroFeatured": true,
+    "heroCustomImage": "/hero_banner_1.jpg"
   },
   {
     "id": "excel-product-451",

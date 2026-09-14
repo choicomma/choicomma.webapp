@@ -21,8 +21,31 @@ export async function GET() {
         .order("created_at", { ascending: false });
 
       if (!dbError && Array.isArray(dbProducts) && dbProducts.length > 0) {
-        globalForProducts.serverProductsCache = dbProducts;
-        return NextResponse.json(dbProducts, {
+        let finalProducts = [...dbProducts];
+        try {
+          const filePath = getProductsFilePath();
+          if (fs.existsSync(filePath)) {
+            const raw = fs.readFileSync(filePath, "utf-8");
+            const parsed = JSON.parse(raw);
+            const heroes = parsed.filter((p: any) => p.isHeroFeatured === true || String(p.id).startsWith("hero-slide-"));
+            const standaloneHeroSlides: any[] = [];
+            heroes.forEach((h: any) => {
+              const matched = finalProducts.find((dbp: any) => String(dbp.id) === String(h.id));
+              if (matched) {
+                matched.isHeroFeatured = true;
+                matched.heroCustomImage = h.heroCustomImage;
+              } else {
+                standaloneHeroSlides.push(h);
+              }
+            });
+            if (standaloneHeroSlides.length > 0) {
+              finalProducts = [...standaloneHeroSlides, ...finalProducts];
+            }
+          }
+        } catch (e) {}
+
+        globalForProducts.serverProductsCache = finalProducts;
+        return NextResponse.json(finalProducts, {
           headers: {
             "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
             Pragma: "no-cache",
