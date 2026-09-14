@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { initialShipments } from "@/lib/sfcc/mock/shipments-data";
-import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
 // Fallback in-memory cache for serverless environments
 const globalForShipments = global as unknown as { serverShipmentsCache?: any[] };
@@ -15,24 +15,26 @@ function getShipmentsFilePath() {
 export async function GET() {
   try {
     // 1. Primary Source of Truth: Supabase PostgreSQL DB
-    const { data: dbShipments, error: dbError } = await supabaseServer
-      .from("shipments")
-      .select("*")
-      .order("created_at", { ascending: false });
+    if (isSupabaseConfigured) {
+      const { data: dbShipments, error: dbError } = await supabaseServer
+        .from("shipments")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (!dbError && Array.isArray(dbShipments) && dbShipments.length > 0) {
-      globalForShipments.serverShipmentsCache = dbShipments;
-      return NextResponse.json(dbShipments, {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      });
-    }
+      if (!dbError && Array.isArray(dbShipments) && dbShipments.length > 0) {
+        globalForShipments.serverShipmentsCache = dbShipments;
+        return NextResponse.json(dbShipments, {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+      }
 
-    if (dbError) {
-      console.warn("Notice: Supabase fetch error or table not yet initialized, falling back to cache/disk:", dbError.message);
+      if (dbError) {
+        console.warn("Notice: Supabase fetch error or table not yet initialized, falling back to cache/disk:", dbError.message);
+      }
     }
 
     // 2. Fallback: In-memory cache
@@ -96,16 +98,18 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Primary: Save to Supabase (Upsert)
-    try {
-      const { error: dbError } = await supabaseServer
-        .from("shipments")
-        .upsert(shipments, { onConflict: "id" });
+    if (isSupabaseConfigured) {
+      try {
+        const { error: dbError } = await supabaseServer
+          .from("shipments")
+          .upsert(shipments, { onConflict: "id" });
 
-      if (dbError) {
-        console.warn("Notice: Failed to upsert shipments to Supabase:", dbError.message);
+        if (dbError) {
+          console.warn("Notice: Failed to upsert shipments to Supabase:", dbError.message);
+        }
+      } catch (dbErr: any) {
+        console.warn("Supabase upsert exception:", dbErr.message);
       }
-    } catch (dbErr: any) {
-      console.warn("Supabase upsert exception:", dbErr.message);
     }
 
     // 2. In-memory cache update

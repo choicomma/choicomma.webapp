@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
 function getProductsFilePath() {
   return path.join(process.cwd(), "lib", "sfcc", "mock", "parsed-products.json");
@@ -14,24 +14,26 @@ const globalForProducts = global as unknown as { serverProductsCache?: any[] };
 export async function GET() {
   try {
     // 1. Primary: Supabase DB 조회
-    const { data: dbProducts, error: dbError } = await supabaseServer
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
+    if (isSupabaseConfigured) {
+      const { data: dbProducts, error: dbError } = await supabaseServer
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (!dbError && Array.isArray(dbProducts) && dbProducts.length > 0) {
-      globalForProducts.serverProductsCache = dbProducts;
-      return NextResponse.json(dbProducts, {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      });
-    }
+      if (!dbError && Array.isArray(dbProducts) && dbProducts.length > 0) {
+        globalForProducts.serverProductsCache = dbProducts;
+        return NextResponse.json(dbProducts, {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+      }
 
-    if (dbError) {
-      console.warn("Notice: Supabase products fetch error, using cache/disk fallback:", dbError.message);
+      if (dbError) {
+        console.warn("Notice: Supabase products fetch error, using cache/disk fallback:", dbError.message);
+      }
     }
 
     // 2. In-memory cache fallback
@@ -82,44 +84,46 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Primary: Upsert to Supabase
-    try {
-      const formatted = products.map((p: any) => ({
-        id: p.id,
-        title: p.title || "",
-        handle: p.handle || p.id,
-        categoryId: p.categoryId || "",
-        categoryIds: p.categoryIds || [],
-        description: p.description || "",
-        detailDescription: p.detailDescription || "",
-        currencyCode: p.currencyCode || "KRW",
-        priceRange: p.priceRange || {},
-        featuredImage: p.featuredImage || {},
-        images: p.images || [],
-        variants: p.variants || [],
-        options: p.options || [],
-        tags: p.tags || [],
-        sizes: p.sizes || [],
-        colors: p.colors || [],
-        stock: p.stock || 100,
-        sizeStock: p.sizeStock || {},
-        colorHexMap: p.colorHexMap || {},
-        productLabel: p.productLabel || "",
-        isMainFeatured: Boolean(p.isMainFeatured),
-        availableForSale: p.availableForSale !== false,
-        isTimeSale: Boolean(p.isTimeSale),
-        bulkDiscount: p.bulkDiscount || { enabled: false, rules: [] },
-        updated_at: new Date().toISOString(),
-      }));
+    if (isSupabaseConfigured) {
+      try {
+        const formatted = products.map((p: any) => ({
+          id: p.id,
+          title: p.title || "",
+          handle: p.handle || p.id,
+          categoryId: p.categoryId || "",
+          categoryIds: p.categoryIds || [],
+          description: p.description || "",
+          detailDescription: p.detailDescription || "",
+          currencyCode: p.currencyCode || "KRW",
+          priceRange: p.priceRange || {},
+          featuredImage: p.featuredImage || {},
+          images: p.images || [],
+          variants: p.variants || [],
+          options: p.options || [],
+          tags: p.tags || [],
+          sizes: p.sizes || [],
+          colors: p.colors || [],
+          stock: p.stock || 100,
+          sizeStock: p.sizeStock || {},
+          colorHexMap: p.colorHexMap || {},
+          productLabel: p.productLabel || "",
+          isMainFeatured: Boolean(p.isMainFeatured),
+          availableForSale: p.availableForSale !== false,
+          isTimeSale: Boolean(p.isTimeSale),
+          bulkDiscount: p.bulkDiscount || { enabled: false, rules: [] },
+          updated_at: new Date().toISOString(),
+        }));
 
-      const { error: dbError } = await supabaseServer
-        .from("products")
-        .upsert(formatted, { onConflict: "id" });
+        const { error: dbError } = await supabaseServer
+          .from("products")
+          .upsert(formatted, { onConflict: "id" });
 
-      if (dbError) {
-        console.warn("Notice: Failed to upsert products to Supabase:", dbError.message);
+        if (dbError) {
+          console.warn("Notice: Failed to upsert products to Supabase:", dbError.message);
+        }
+      } catch (dbErr: any) {
+        console.warn("Supabase products upsert error:", dbErr.message);
       }
-    } catch (dbErr: any) {
-      console.warn("Supabase products upsert error:", dbErr.message);
     }
 
     // 2. In-memory cache update
