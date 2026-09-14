@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
 
 const initialInboundSchedules: any[] = [];
 
@@ -22,45 +23,75 @@ export function useInboundSchedules(triggerToast?: (msg: string) => void) {
   const [newInboundNotes, setNewInboundNotes] = useState("");
   const [newInboundStatus, setNewInboundStatus] = useState("Scheduled");
 
-  // Load from localStorage on mount
+  // Load from Supabase on mount (fallback: localStorage)
   useEffect(() => {
     setIsMounted(true);
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_inbound_schedules");
-      if (saved) {
-        try {
-          setInboundSchedulesList(JSON.parse(saved));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-  }, []);
+    let mounted = true;
 
-  // Real-time sync across tabs & windows
-  useEffect(() => {
-    const syncInbound = () => {
-      if (typeof window !== "undefined") {
+    const fetchInbound = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("inbound_schedules")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (!error && Array.isArray(data) && data.length > 0 && mounted) {
+          setInboundSchedulesList(data);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("admin_inbound_schedules", JSON.stringify(data));
+          }
+          return;
+        }
+      } catch (err) {
+        console.warn("Notice: Using local inbound fallback:", err);
+      }
+
+      if (typeof window !== "undefined" && mounted) {
         const saved = localStorage.getItem("admin_inbound_schedules");
         if (saved) {
           try {
-            setInboundSchedulesList((prev) => {
-              if (JSON.stringify(prev) !== saved) {
-                return JSON.parse(saved);
-              }
-              return prev;
-            });
-          } catch (e) { }
+            setInboundSchedulesList(JSON.parse(saved));
+          } catch (e) {
+            console.error(e);
+          }
         }
       }
     };
-    window.addEventListener("storage", syncInbound);
-    window.addEventListener("admin_inbound_updated", syncInbound);
-    const interval = setInterval(syncInbound, 3000);
+
+    fetchInbound();
+
+    // Supabase Realtime 채널
+    let channel: any = null;
+    try {
+      channel = supabase
+        .channel("inbound-realtime-sub")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "inbound_schedules" },
+          (payload) => {
+            if (payload.eventType === "INSERT") {
+              const newRow = payload.new;
+              setInboundSchedulesList((prev) => [newRow, ...prev.filter((i) => i.id !== newRow.id)]);
+            } else if (payload.eventType === "UPDATE") {
+              const updatedRow = payload.new;
+              setInboundSchedulesList((prev) =>
+                prev.map((i) => (i.id === updatedRow.id ? { ...i, ...updatedRow } : i))
+              );
+            } else if (payload.eventType === "DELETE") {
+              setInboundSchedulesList((prev) => prev.filter((i) => i.id !== payload.old.id));
+            }
+          }
+        )
+        .subscribe();
+    } catch (e) {
+      console.warn("Inbound realtime notice:", e);
+    }
+
     return () => {
-      window.removeEventListener("storage", syncInbound);
-      window.removeEventListener("admin_inbound_updated", syncInbound);
-      clearInterval(interval);
+      mounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 
@@ -80,6 +111,12 @@ export function useInboundSchedules(triggerToast?: (msg: string) => void) {
     if (!window.confirm("정말로 해당 입고 일정을 삭제하시겠습니까?")) return;
     setInboundSchedulesList((prev) => prev.filter((item) => item.id !== id));
     if (selectedInboundItem?.id === id) setSelectedInboundItem(null);
+
+    // Supabase DB 삭제
+    supabase.from("inbound_schedules").delete().eq("id", id).then(({ error }) => {
+      if (error) console.warn("Supabase inbound delete notice:", error.message);
+    });
+
     triggerToast?.("입고 일정이 삭제되었습니다.");
   };
 
@@ -88,6 +125,12 @@ export function useInboundSchedules(triggerToast?: (msg: string) => void) {
       item.id === id ? { ...item, status } : item
     );
     setInboundSchedulesList(updated);
+
+    // Supabase DB 상태 수정
+    supabase.from("inbound_schedules").update({ status, updated_at: new Date().toISOString() }).eq("id", id).then(({ error }) => {
+      if (error) console.warn("Supabase inbound update notice:", error.message);
+    });
+
     triggerToast?.("입고 상태가 변경되었습니다.");
   };
 
@@ -105,9 +148,14 @@ export function useInboundSchedules(triggerToast?: (msg: string) => void) {
       warehouse: newInboundWarehouse,
       notes: newInboundNotes.trim(),
       status: newInboundStatus,
-      createdAt: new Date().toISOString(),
     };
     setInboundSchedulesList((prev) => [newItem, ...prev]);
+
+    // Supabase DB 추가
+    supabase.from("inbound_schedules").insert([newItem]).then(({ error }) => {
+      if (error) console.warn("Supabase inbound insert notice:", error.message);
+    });
+
     setIsAddInboundModalOpen(false);
     setNewInboundTitle("");
     setNewInboundQuantity(100);

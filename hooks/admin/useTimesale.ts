@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import React from "react";
+import { supabase } from "@/lib/supabase/client";
 
 export function useTimesale(triggerToast: (msg: string) => void) {
   // Time sale states
@@ -40,10 +41,77 @@ export function useTimesale(triggerToast: (msg: string) => void) {
     ];
   });
 
+  // Load from Supabase on mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchTimesales = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("timesales")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && Array.isArray(data) && data.length > 0 && isMounted) {
+          setSecretSalesList(data);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("admin_secret_timesales", JSON.stringify(data));
+          }
+        }
+      } catch (err) {
+        console.warn("Timesale Supabase notice:", err);
+      }
+    };
+    fetchTimesales();
+
+    let channel: any = null;
+    try {
+      channel = supabase
+        .channel("timesales-realtime-sub")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "timesales" },
+          (payload) => {
+            if (payload.eventType === "INSERT") {
+              setSecretSalesList((prev) => [payload.new, ...prev.filter((t) => t.id !== payload.new.id)]);
+            } else if (payload.eventType === "UPDATE") {
+              setSecretSalesList((prev) =>
+                prev.map((t) => (t.id === payload.new.id ? { ...t, ...payload.new } : t))
+              );
+            } else if (payload.eventType === "DELETE") {
+              setSecretSalesList((prev) => prev.filter((t) => t.id !== payload.old.id));
+            }
+          }
+        )
+        .subscribe();
+    } catch (e) {}
+
+    return () => {
+      isMounted = false;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, []);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("admin_secret_timesales", JSON.stringify(secretSalesList));
       window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
+    }
+    // Sync to Supabase
+    if (Array.isArray(secretSalesList) && secretSalesList.length > 0) {
+      const formatted = secretSalesList.map((ts) => ({
+        id: ts.id,
+        title: ts.title || "",
+        discountRate: ts.discountRate || ts.discount_rate || 0,
+        productIds: ts.productIds || ts.product_ids || [],
+        targetCustomerEmails: ts.targetCustomerEmails || ts.target_customer_emails || [],
+        targetGrades: ts.targetGrades || ts.target_grades || [],
+        durationHours: ts.durationHours || 24,
+        durationMinutes: ts.durationMinutes || 0,
+        status: ts.status || "active",
+        updated_at: new Date().toISOString(),
+      }));
+      supabase.from("timesales").upsert(formatted, { onConflict: "id" }).then(({ error }) => {
+        if (error) console.warn("Supabase timesale upsert notice:", error.message);
+      });
     }
   }, [secretSalesList]);
 

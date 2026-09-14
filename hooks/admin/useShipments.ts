@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import * as XLSX from "xlsx";
 
 import { initialShipments as defaultShipments } from "@/lib/sfcc/mock/shipments-data";
+import { supabase } from "@/lib/supabase/client";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Initial Shipment Data (from mock data file)
@@ -30,11 +31,19 @@ export function sanitizeShipmentsList(list: any[]): any[] {
   if (!Array.isArray(list)) return [];
   return list.map((s: any) => ({
     ...s,
-    trackingNumber: sanitizeCjTracking(s.trackingNumber),
+    orderId: s.orderId || s.order_id || "",
+    altPhone: s.altPhone || s.alt_phone || "",
+    zipCode: s.zipCode || s.zip_code || "",
+    detailAddress: s.detailAddress || s.detail_address || "",
+    trackingNumber: sanitizeCjTracking(s.trackingNumber || s.tracking_number || "-"),
+    shippingMemo: s.shippingMemo || s.shipping_memo || "",
+    orderDate: s.orderDate || s.order_date || "",
+    shippedDate: s.shippedDate || s.shipped_date || null,
+    estimatedDelivery: s.estimatedDelivery || s.estimated_delivery || null,
     packages: Array.isArray(s.packages)
       ? s.packages.map((pkg: any) => ({
           ...pkg,
-          trackingNumber: sanitizeCjTracking(pkg.trackingNumber),
+          trackingNumber: sanitizeCjTracking(pkg.trackingNumber || pkg.tracking_number || "-"),
         }))
       : s.packages,
   }));
@@ -62,7 +71,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
     return initialShipments;
   });
 
-  // 1. Fetch authoritative shipments from server API on mount and tab focus
+  // 1. Fetch authoritative shipments from server API / Supabase on mount and tab focus + Realtime
   useEffect(() => {
     let isMounted = true;
 
@@ -91,6 +100,36 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
     fetchServerShipments();
 
+    // Supabase Realtime 채널: 타 기기/창에서 변경 시 즉시 동기화
+    let realtimeChannel: any = null;
+    try {
+      realtimeChannel = supabase
+        .channel("shipments-realtime-sub")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "shipments" },
+          (payload) => {
+            if (payload.eventType === "INSERT") {
+              const newRow = payload.new;
+              setShipmentsList((prev) => {
+                if (prev.some((s) => s.id === newRow.id)) return prev;
+                return sanitizeShipmentsList([newRow, ...prev]);
+              });
+            } else if (payload.eventType === "UPDATE") {
+              const updatedRow = payload.new;
+              setShipmentsList((prev) =>
+                sanitizeShipmentsList(prev.map((s) => (s.id === updatedRow.id ? { ...s, ...updatedRow } : s)))
+              );
+            } else if (payload.eventType === "DELETE") {
+              setShipmentsList((prev) => prev.filter((s) => s.id !== payload.old.id));
+            }
+          }
+        )
+        .subscribe();
+    } catch (realtimeErr) {
+      console.warn("Supabase Realtime subscription notice:", realtimeErr);
+    }
+
     // Re-sync when user returns to the tab (e.g. on mobile or switching back from other apps)
     const onWindowFocus = () => {
       fetchServerShipments();
@@ -106,6 +145,9 @@ export function useShipments(triggerToast: (msg: string) => void) {
       isMounted = false;
       window.removeEventListener("focus", onWindowFocus);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+      }
     };
   }, []);
 

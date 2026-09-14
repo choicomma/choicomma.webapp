@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useMemo } from "react";
 import * as XLSX from "xlsx";
 import initialCustomersData from "@/lib/sfcc/mock/customers-data.json";
+import { supabase } from "@/lib/supabase/client";
 
 const initialCustomers: any[] = initialCustomersData;
 
@@ -26,59 +27,79 @@ export function useCustomers(triggerToast: (msg: string) => void) {
   // Customer Management Admin State
   const [customersList, setCustomersList] = useState<any[]>([DEFAULT_ADMIN_CUSTOMER]);
 
-  // Load from localStorage on mount
+  // Load from Supabase on mount (fallback: localStorage)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_customers");
-      if (saved) {
-        try {
-          const parsed: any[] = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const hasAdmin = parsed.some(
-              (c) =>
-                (c.email && c.email.toLowerCase() === "admin@choicomma.com") ||
-                c.id === "ADMIN-001" ||
-                c.isAdmin === true
-            );
-            if (!hasAdmin) {
-              const updated = [DEFAULT_ADMIN_CUSTOMER, ...parsed];
-              setCustomersList(updated);
-              localStorage.setItem("admin_customers", JSON.stringify(updated));
-            } else {
-              setCustomersList(parsed);
-            }
-            return;
-          }
-        } catch (e) { }
-      }
-      // If no saved customers, initialize with default admin account
-      setCustomersList([DEFAULT_ADMIN_CUSTOMER]);
-      localStorage.setItem("admin_customers", JSON.stringify([DEFAULT_ADMIN_CUSTOMER]));
-    }
-  }, []);
+    let isMounted = true;
 
-  // Real-time sync across tabs & windows
-  useEffect(() => {
-    const syncAdminCustomers = () => {
-      if (typeof window === "undefined") return;
-      const saved = localStorage.getItem("admin_customers");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setCustomersList(parsed);
+    const fetchCustomers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("customers")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (!error && Array.isArray(data) && data.length > 0 && isMounted) {
+          setCustomersList(data);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("admin_customers", JSON.stringify(data));
           }
-        } catch (e) { }
+          return;
+        }
+      } catch (err) {
+        console.warn("Notice: Using local customers fallback:", err);
+      }
+
+      // Local storage fallback
+      if (typeof window !== "undefined" && isMounted) {
+        const saved = localStorage.getItem("admin_customers");
+        if (saved) {
+          try {
+            const parsed: any[] = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setCustomersList(parsed);
+              return;
+            }
+          } catch (e) {}
+        }
+        setCustomersList([DEFAULT_ADMIN_CUSTOMER]);
+        localStorage.setItem("admin_customers", JSON.stringify([DEFAULT_ADMIN_CUSTOMER]));
       }
     };
 
-    window.addEventListener("storage", syncAdminCustomers);
-    window.addEventListener("admin_customers_updated", syncAdminCustomers);
-    const interval = setInterval(syncAdminCustomers, 2000);
+    fetchCustomers();
+
+    // Supabase Realtime 채널
+    let realtimeChannel: any = null;
+    try {
+      realtimeChannel = supabase
+        .channel("customers-realtime-sub")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "customers" },
+          (payload) => {
+            if (payload.eventType === "INSERT") {
+              const newRow = payload.new;
+              setCustomersList((prev) => [newRow, ...prev.filter((c) => c.id !== newRow.id)]);
+            } else if (payload.eventType === "UPDATE") {
+              const updatedRow = payload.new;
+              setCustomersList((prev) =>
+                prev.map((c) => (c.id === updatedRow.id ? { ...c, ...updatedRow } : c))
+              );
+            } else if (payload.eventType === "DELETE") {
+              setCustomersList((prev) => prev.filter((c) => c.id !== payload.old.id));
+            }
+          }
+        )
+        .subscribe();
+    } catch (realtimeErr) {
+      console.warn("Customers Realtime error:", realtimeErr);
+    }
+
     return () => {
-      window.removeEventListener("storage", syncAdminCustomers);
-      window.removeEventListener("admin_customers_updated", syncAdminCustomers);
-      clearInterval(interval);
+      isMounted = false;
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+      }
     };
   }, []);
 
@@ -128,6 +149,15 @@ export function useCustomers(triggerToast: (msg: string) => void) {
 
     const updated = [newCust, ...customersList];
     setCustomersList(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_customers", JSON.stringify(updated));
+    }
+
+    // Supabase DB 비동기 저장
+    supabase.from("customers").upsert([newCust], { onConflict: "id" }).then(({ error }) => {
+      if (error) console.warn("Supabase customer insert notice:", error.message);
+    });
+
     setIsAddCustomerModalOpen(false);
     setNewCustName("");
     setNewCustEmail("");
@@ -173,6 +203,18 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       window.dispatchEvent(new CustomEvent("storage"));
       window.dispatchEvent(new CustomEvent("admin_customers_updated"));
     }
+
+    // Supabase DB 비동기 수정
+    supabase.from("customers").update({
+      grade: editCustGrade,
+      address: editCustAddress,
+      points: calculatedPoints,
+      status: editCustStatus,
+      updated_at: new Date().toISOString(),
+    }).eq("id", editingCustomer.id).then(({ error }) => {
+      if (error) console.warn("Supabase customer update notice:", error.message);
+    });
+
     setEditingCustomer(null);
     triggerToast(`회원 '${editingCustomer.name}'님의 정보가 반영되었습니다.`);
   };
@@ -195,6 +237,12 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         window.dispatchEvent(new CustomEvent("storage"));
         window.dispatchEvent(new CustomEvent("admin_customers_updated"));
       }
+
+      // Supabase DB 비동기 삭제
+      supabase.from("customers").delete().eq("id", id).then(({ error }) => {
+        if (error) console.warn("Supabase customer delete notice:", error.message);
+      });
+
       triggerToast(`회원 '${name}'님의 정보가 삭제되었습니다.`);
     }
   };

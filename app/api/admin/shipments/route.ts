@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { initialShipments } from "@/lib/sfcc/mock/shipments-data";
+import { supabaseServer } from "@/lib/supabase/server";
 
-// Fallback in-memory cache for serverless environments with read-only filesystems
+// Fallback in-memory cache for serverless environments
 const globalForShipments = global as unknown as { serverShipmentsCache?: any[] };
 
 function getShipmentsFilePath() {
@@ -13,18 +14,39 @@ function getShipmentsFilePath() {
 // GET: Return authoritative server-stored shipments to any client (PC, Mobile, Deployed App)
 export async function GET() {
   try {
-    // 1. Check in-memory cache if available
-    if (globalForShipments.serverShipmentsCache && Array.isArray(globalForShipments.serverShipmentsCache)) {
-      return NextResponse.json(globalForShipments.serverShipmentsCache, {
+    // 1. Primary Source of Truth: Supabase PostgreSQL DB
+    const { data: dbShipments, error: dbError } = await supabaseServer
+      .from("shipments")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!dbError && Array.isArray(dbShipments) && dbShipments.length > 0) {
+      globalForShipments.serverShipmentsCache = dbShipments;
+      return NextResponse.json(dbShipments, {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          "Pragma": "no-cache",
-          "Expires": "0",
+          Pragma: "no-cache",
+          Expires: "0",
         },
       });
     }
 
-    // 2. Read from disk
+    if (dbError) {
+      console.warn("Notice: Supabase fetch error or table not yet initialized, falling back to cache/disk:", dbError.message);
+    }
+
+    // 2. Fallback: In-memory cache
+    if (globalForShipments.serverShipmentsCache && Array.isArray(globalForShipments.serverShipmentsCache)) {
+      return NextResponse.json(globalForShipments.serverShipmentsCache, {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
+    }
+
+    // 3. Fallback: Local JSON file
     const filePath = getShipmentsFilePath();
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8");
@@ -34,20 +56,20 @@ export async function GET() {
         return NextResponse.json(data, {
           headers: {
             "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
+            Pragma: "no-cache",
+            Expires: "0",
           },
         });
       }
     }
 
-    // 3. Fallback to default mock data
+    // 4. Default Fallback
     globalForShipments.serverShipmentsCache = initialShipments;
     return NextResponse.json(initialShipments, {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0",
+        Pragma: "no-cache",
+        Expires: "0",
       },
     });
   } catch (error: any) {
@@ -60,7 +82,7 @@ export async function GET() {
   }
 }
 
-// POST: Save and persist updated shipments directly into the server file & memory cache
+// POST: Save and persist updated shipments directly into Supabase and local cache
 export async function POST(req: NextRequest) {
   try {
     const payload = await req.json();
@@ -73,15 +95,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Update in-memory cache immediately
+    // 1. Primary: Save to Supabase (Upsert)
+    try {
+      const { error: dbError } = await supabaseServer
+        .from("shipments")
+        .upsert(shipments, { onConflict: "id" });
+
+      if (dbError) {
+        console.warn("Notice: Failed to upsert shipments to Supabase:", dbError.message);
+      }
+    } catch (dbErr: any) {
+      console.warn("Supabase upsert exception:", dbErr.message);
+    }
+
+    // 2. In-memory cache update
     globalForShipments.serverShipmentsCache = shipments;
 
-    // 2. Persist to disk
+    // 3. Persist to disk (if writable environment e.g. local dev)
     try {
       const filePath = getShipmentsFilePath();
       fs.writeFileSync(filePath, JSON.stringify(shipments, null, 2), "utf-8");
     } catch (fsErr: any) {
-      console.warn("Notice: Server filesystem is read-only or not writable (e.g. Serverless). In-memory cache updated:", fsErr.message);
+      // Ignored in read-only serverless environment
     }
 
     return NextResponse.json(
