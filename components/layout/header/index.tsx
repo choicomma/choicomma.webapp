@@ -12,6 +12,7 @@ import { Collection } from "@/lib/sfcc/types";
 import { MainNoticeBanner } from "@/components/home/main-client-features";
 import { motion, AnimatePresence } from "motion/react";
 import { LanguageSelector } from "./language-selector";
+import { validateCustomerSession } from "@/lib/auth/customer-session";
 
 export const navItems: NavItem[] = [
   {
@@ -69,6 +70,7 @@ export function Header({ collections }: HeaderProps) {
   useEffect(() => {
     const checkAuth = () => {
       if (typeof window !== "undefined") {
+        validateCustomerSession();
         const name = localStorage.getItem("membership_user_name");
         const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
         const role = localStorage.getItem("user_role") || "";

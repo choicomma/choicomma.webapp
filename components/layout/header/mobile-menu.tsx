@@ -13,6 +13,7 @@ import { useCart } from "@/components/cart/cart-context";
 import CartModal from "@/components/cart/modal";
 import { LanguageSelector } from "./language-selector";
 import { ShoppingBag, Menu, Search, X } from "lucide-react";
+import { validateCustomerSession } from "@/lib/auth/customer-session";
 
 interface MobileMenuProps {
   collections: Collection[];
@@ -59,6 +60,7 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
   useEffect(() => {
     const checkAuth = () => {
       if (typeof window !== "undefined") {
+        validateCustomerSession();
         const name = localStorage.getItem("membership_user_name");
         const email = localStorage.getItem("membership_user_email");
         const role = localStorage.getItem("user_role");

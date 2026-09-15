@@ -38,6 +38,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { validateCustomerSession, clearCustomerSession } from "@/lib/auth/customer-session";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -148,6 +149,14 @@ function MembershipContent() {
 
   const loadData = () => {
     if (typeof window !== "undefined") {
+      const isValid = validateCustomerSession();
+      const isLoggedIn = localStorage.getItem("is_logged_in") === "true";
+      const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+      if (!isAdminSession && (!isValid || !isLoggedIn)) {
+        window.location.href = "/login?expired=true";
+        return;
+      }
+
       const savedName = localStorage.getItem("membership_user_name");
       if (savedName) setUserName(savedName);
       const savedEmail = localStorage.getItem("membership_user_email");
@@ -407,6 +416,7 @@ function MembershipContent() {
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
+      clearCustomerSession();
       localStorage.removeItem("membership_user_name");
       localStorage.removeItem("membership_user_email");
       localStorage.removeItem("membership_user_phone");

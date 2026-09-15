@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { LogoSvg } from "@/components/layout/header/logo-svg";
 import { supabase } from "@/lib/supabase/client";
+import { initCustomerSession } from "@/lib/auth/customer-session";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -47,14 +48,21 @@ export default function LoginPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreeMarketing, setAgreeMarketing] = useState(false);
 
-  // Load Daum Postcode script dynamically
+  // Load Daum Postcode script dynamically & check session expiration notice
   useEffect(() => {
-    if (typeof window !== "undefined" && !(window as any).daum) {
-      const script = document.createElement("script");
-      script.id = "daum-postcode-script";
-      script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
-      script.async = true;
-      document.head.appendChild(script);
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get("expired") === "true") {
+        setToastMsg("안전한 쇼핑을 위해 로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
+      }
+
+      if (!(window as any).daum) {
+        const script = document.createElement("script");
+        script.id = "daum-postcode-script";
+        script.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+        script.async = true;
+        document.head.appendChild(script);
+      }
     }
   }, []);
 
@@ -500,6 +508,7 @@ export default function LoginPage() {
         localStorage.setItem("user_grade", "GENERAL");
         localStorage.setItem("user_role", "CUSTOMER");
         localStorage.setItem("is_logged_in", "true");
+        initCustomerSession();
 
         window.dispatchEvent(new CustomEvent("storage"));
         window.dispatchEvent(new CustomEvent("admin_customers_updated"));
@@ -634,6 +643,9 @@ export default function LoginPage() {
       localStorage.setItem("membership_user_points", String(matchedCustomer.points ?? 0));
       localStorage.setItem("user_grade", matchedCustomer.grade || "GENERAL");
       localStorage.setItem("is_logged_in", "true");
+      if (!isCustAdmin) {
+        initCustomerSession();
+      }
 
       window.dispatchEvent(new CustomEvent("storage"));
       window.dispatchEvent(new CustomEvent("auth_changed"));
