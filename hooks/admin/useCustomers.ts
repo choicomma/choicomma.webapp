@@ -269,6 +269,69 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     setEditCustStatus(customer.status || "Active");
   };
 
+  const handleApplyCustomerPoints = (action: "add" | "sub", customAmount?: number) => {
+    if (!editingCustomer) return;
+
+    let amount = customAmount;
+    if (amount === undefined) {
+      amount = parseInt((editCustPointAmount || "").replace(/[^0-9]/g, ""), 10);
+    }
+
+    if (isNaN(amount) || amount <= 0) {
+      triggerToast("지급 또는 차감할 적립금 금액을 입력해 주세요.");
+      return;
+    }
+
+    const currentPoints = Number(editingCustomer.points || 0);
+    if (action === "sub" && currentPoints <= 0) {
+      triggerToast("현재 보유 적립금이 0원이므로 차감할 수 없습니다.");
+      return;
+    }
+
+    const delta = action === "add" ? amount : -amount;
+    const newPoints = Math.max(0, currentPoints + delta);
+
+    // 모달 내부 상태 즉각 갱신
+    setEditingCustomer((prev: any) => (prev ? { ...prev, points: newPoints } : null));
+
+    // 전체 회원 목록 갱신
+    const updatedList = customersList.map((c) => {
+      if (c.id === editingCustomer.id) {
+        return {
+          ...c,
+          points: newPoints,
+        };
+      }
+      return c;
+    });
+
+    setCustomersList(updatedList);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_customers", JSON.stringify(updatedList));
+      window.dispatchEvent(new CustomEvent("storage"));
+      window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+    }
+
+    // Supabase DB 비동기 수정
+    supabase
+      .from("customers")
+      .update({
+        points: newPoints,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", editingCustomer.id)
+      .then(({ error }) => {
+        if (error) console.warn("Supabase points update notice:", error.message);
+      });
+
+    setEditCustPointAmount("");
+    triggerToast(
+      `${editingCustomer.name}님에게 적립금 ₩${amount.toLocaleString()}원이 ${
+        action === "add" ? "지급" : "차감"
+      }되었습니다. (현재: ₩${newPoints.toLocaleString()})`
+    );
+  };
+
   const handleSaveEditCustomer = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCustomer) return;
@@ -277,11 +340,9 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     const cleanAmount = parseInt((editCustPointAmount || "").replace(/[^0-9]/g, ""), 10);
     if (!isNaN(cleanAmount) && cleanAmount > 0) {
       delta = editCustPointAction === "add" ? cleanAmount : -cleanAmount;
-    } else {
-      delta = parseInt(editCustPointsDelta, 10) || 0;
     }
 
-    const currentPoints = editingCustomer.points || 0;
+    const currentPoints = Number(editingCustomer.points || 0);
     const calculatedPoints = Math.max(0, currentPoints + delta);
 
     const updatedList = customersList.map((c) => {
@@ -457,6 +518,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     editCustStatus, setEditCustStatus,
     handleAddCustomerSubmit,
     handleOpenEditCustomer,
+    handleApplyCustomerPoints,
     handleSaveEditCustomer,
     handleDeleteCustomer,
     handleExcelFileUpload,

@@ -1478,6 +1478,7 @@ export default function AdminPage() {
     editCustStatus, setEditCustStatus,
     handleAddCustomerSubmit,
     handleOpenEditCustomer,
+    handleApplyCustomerPoints,
     handleSaveEditCustomer,
     handleDeleteCustomer,
     handleExcelFileUpload,
@@ -6324,48 +6325,20 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* 적립금 지급 / 차감 섹션 */}
-              <div className="bg-neutral-50/80 border border-neutral-200/80 rounded-2xl p-4 space-y-3">
+              {/* 적립금 지급 / 차감 섹션 (금액 입력 후 지급/차감 버튼 클릭 시 즉시 반영) */}
+              <div className="bg-neutral-50/90 border border-neutral-200/90 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-neutral-800">
-                    적립금 관리
+                    적립금 지급 / 차감 관리
                   </label>
                   <span className="text-xs font-medium text-neutral-500">
-                    현재: <strong className="font-bold text-neutral-900 font-mono">₩{Number(editingCustomer.points || 0).toLocaleString()}</strong>
+                    현재 보유: <strong className="font-extrabold text-neutral-950 font-mono text-sm">₩{Number(editingCustomer.points || 0).toLocaleString()}</strong>
                   </span>
                 </div>
 
-                {/* 지급 / 차감 선택 버튼 탭 */}
-                <div className="grid grid-cols-2 gap-2 p-1 bg-neutral-200/60 rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => setEditCustPointAction("add")}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      editCustPointAction === "add"
-                        ? "bg-white text-emerald-600 shadow-xs ring-1 ring-emerald-500/20"
-                        : "text-neutral-600 hover:text-neutral-900"
-                    }`}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>적립금 지급 (+)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditCustPointAction("sub")}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      editCustPointAction === "sub"
-                        ? "bg-white text-rose-600 shadow-xs ring-1 ring-rose-500/20"
-                        : "text-neutral-600 hover:text-neutral-900"
-                    }`}
-                  >
-                    <Minus className="w-3.5 h-3.5" />
-                    <span>적립금 차감 (-)</span>
-                  </button>
-                </div>
-
-                {/* 금액 입력란 */}
-                <div>
-                  <div className="relative flex items-center">
+                {/* 금액 입력란 + [지급] [차감] 버튼 그룹 */}
+                <div className="flex flex-col sm:flex-row items-stretch gap-2">
+                  <div className="relative flex-1">
                     <input
                       type="text"
                       inputMode="numeric"
@@ -6374,75 +6347,77 @@ export default function AdminPage() {
                         const raw = e.target.value.replace(/[^0-9]/g, "");
                         setEditCustPointAmount(raw);
                       }}
-                      placeholder="0"
-                      className="w-full bg-white border border-neutral-200 rounded-xl pl-3.5 pr-10 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyCustomerPoints("add");
+                        }
+                      }}
+                      placeholder="금액 입력 (예: 5000)"
+                      className="w-full bg-white border border-neutral-200 rounded-xl pl-3.5 pr-8 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs"
                     />
-                    <span className="absolute right-3.5 text-xs font-bold text-neutral-500 pointer-events-none">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-neutral-500 pointer-events-none">
                       원
                     </span>
                   </div>
 
-                  {/* 빠른 금액 증액 칩 */}
-                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                    {[1000, 5000, 10000, 50000].map((quick) => (
-                      <button
-                        key={quick}
-                        type="button"
-                        onClick={() => {
-                          const curr = parseInt(editCustPointAmount || "0", 10);
-                          setEditCustPointAmount(String(curr + quick));
-                        }}
-                        className="text-[11px] font-bold px-2 py-1 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-700 rounded-lg transition-colors cursor-pointer"
-                      >
-                        +{quick.toLocaleString()}원
-                      </button>
-                    ))}
-                    {editCustPointAction === "sub" && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditCustPointAmount(String(editingCustomer.points || 0));
-                        }}
-                        className="text-[11px] font-bold px-2 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-lg transition-colors cursor-pointer"
-                      >
-                        전액 차감
-                      </button>
-                    )}
-                    {editCustPointAmount && (
-                      <button
-                        type="button"
-                        onClick={() => setEditCustPointAmount("")}
-                        className="text-[11px] font-bold px-2 py-1 text-neutral-400 hover:text-neutral-700 rounded-lg transition-colors cursor-pointer ml-auto"
-                      >
-                        초기화
-                      </button>
-                    )}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleApplyCustomerPoints("add")}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all cursor-pointer"
+                      title="입력한 금액만큼 적립금을 즉시 지급합니다"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>적립금 지급</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyCustomerPoints("sub")}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all cursor-pointer"
+                      title="입력한 금액만큼 적립금을 즉시 차감합니다"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                      <span>적립금 차감</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* 변경 후 예상 적립금 실시간 미리보기 */}
-                {Boolean(parseInt(editCustPointAmount || "0", 10) > 0) && (
-                  <div className="pt-2 border-t border-neutral-200/60 flex items-center justify-between text-xs">
-                    <span className="text-neutral-500 font-medium">변경 후 예상 적립금</span>
-                    <span className="font-bold font-mono text-neutral-950">
-                      ₩{Math.max(
-                        0,
-                        (editingCustomer.points || 0) +
-                          (editCustPointAction === "add"
-                            ? parseInt(editCustPointAmount || "0", 10)
-                            : -parseInt(editCustPointAmount || "0", 10))
-                      ).toLocaleString()}
-                      <span
-                        className={`ml-1 text-[11px] font-bold ${
-                          editCustPointAction === "add" ? "text-emerald-600" : "text-rose-600"
-                        }`}
-                      >
-                        ({editCustPointAction === "add" ? "+" : "-"}
-                        {parseInt(editCustPointAmount || "0", 10).toLocaleString()}원)
-                      </span>
-                    </span>
-                  </div>
-                )}
+                {/* 빠른 금액 증액 칩 */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[11px] text-neutral-400 font-medium mr-0.5">빠른 금액:</span>
+                  {[1000, 5000, 10000, 50000].map((quick) => (
+                    <button
+                      key={quick}
+                      type="button"
+                      onClick={() => {
+                        const curr = parseInt(editCustPointAmount || "0", 10);
+                        setEditCustPointAmount(String(curr + quick));
+                      }}
+                      className="text-[11px] font-bold px-2.5 py-1 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-700 rounded-lg transition-colors cursor-pointer"
+                    >
+                      +{quick.toLocaleString()}원
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditCustPointAmount(String(editingCustomer.points || 0));
+                    }}
+                    className="text-[11px] font-bold px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-lg transition-colors cursor-pointer"
+                  >
+                    보유전액({Number(editingCustomer.points || 0).toLocaleString()}원)
+                  </button>
+                  {editCustPointAmount && (
+                    <button
+                      type="button"
+                      onClick={() => setEditCustPointAmount("")}
+                      className="text-[11px] font-bold px-2 py-1 text-neutral-400 hover:text-neutral-700 rounded-lg transition-colors cursor-pointer ml-auto"
+                    >
+                      초기화
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
