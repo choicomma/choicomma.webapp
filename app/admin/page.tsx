@@ -6365,7 +6365,7 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => handleApplyCustomerPoints("add")}
-                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all cursor-pointer"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all cursor-pointer"
                       title="입력한 금액만큼 적립금을 즉시 지급합니다"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -6374,7 +6374,7 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => handleApplyCustomerPoints("sub")}
-                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all cursor-pointer"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all cursor-pointer"
                       title="입력한 금액만큼 적립금을 즉시 차감합니다"
                     >
                       <Minus className="w-3.5 h-3.5" />
