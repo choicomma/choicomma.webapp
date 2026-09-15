@@ -212,6 +212,8 @@ export function useCustomers(triggerToast: (msg: string) => void) {
   const [editCustGrade, setEditCustGrade] = useState("");
   const [editCustAddress, setEditCustAddress] = useState("");
   const [editCustPointsDelta, setEditCustPointsDelta] = useState("0");
+  const [editCustPointAction, setEditCustPointAction] = useState<"add" | "sub">("add");
+  const [editCustPointAmount, setEditCustPointAmount] = useState("");
   const [editCustStatus, setEditCustStatus] = useState("Active");
 
   // Customer Handlers
@@ -262,6 +264,8 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     setEditCustGrade(customer.grade);
     setEditCustAddress(customer.address || "");
     setEditCustPointsDelta("0");
+    setEditCustPointAction("add");
+    setEditCustPointAmount("");
     setEditCustStatus(customer.status || "Active");
   };
 
@@ -269,7 +273,14 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     e.preventDefault();
     if (!editingCustomer) return;
 
-    const delta = parseInt(editCustPointsDelta) || 0;
+    let delta = 0;
+    const cleanAmount = parseInt((editCustPointAmount || "").replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(cleanAmount) && cleanAmount > 0) {
+      delta = editCustPointAction === "add" ? cleanAmount : -cleanAmount;
+    } else {
+      delta = parseInt(editCustPointsDelta, 10) || 0;
+    }
+
     const currentPoints = editingCustomer.points || 0;
     const calculatedPoints = Math.max(0, currentPoints + delta);
 
@@ -441,6 +452,8 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     editCustGrade, setEditCustGrade,
     editCustAddress, setEditCustAddress,
     editCustPointsDelta, setEditCustPointsDelta,
+    editCustPointAction, setEditCustPointAction,
+    editCustPointAmount, setEditCustPointAmount,
     editCustStatus, setEditCustStatus,
     handleAddCustomerSubmit,
     handleOpenEditCustomer,
