@@ -117,10 +117,10 @@ export function CustomersManagement({
             <button
               type="button"
               onClick={handleResetCustomerData}
-              className="bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-300 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center justify-center cursor-pointer shadow-xs transition-colors gap-1.5"
-              title="회원 엑셀 원본(5,666명)의 배송지 주소/우편번호를 즉시 전체 동기화합니다"
+              className="bg-neutral-50 hover:bg-neutral-100 text-neutral-700 border border-neutral-300 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center justify-center cursor-pointer shadow-xs transition-colors gap-1.5"
+              title="회원 목록을 기본 최고관리자 상태로 초기화합니다"
             >
-              <span>🔄 엑셀 배송지 주소 동기화</span>
+              <span>🔄 회원목록 기본값 초기화</span>
             </button>
           )}
           <label className="bg-neutral-900 hover:bg-black text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center justify-center cursor-pointer shadow-xs transition-colors">

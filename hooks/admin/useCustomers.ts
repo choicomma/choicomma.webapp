@@ -85,27 +85,30 @@ export function useCustomers(triggerToast: (msg: string) => void) {
           .order("created_at", { ascending: false });
 
         if (!error && Array.isArray(data) && data.length > 0 && isMounted) {
-          const sanitized = data.map((c) => {
-            if (c.id === "ADMIN-001") {
-              return {
-                ...c,
-                phone: "02-579-1171",
-                postcode: "06306",
-                address: "서울특별시 강남구 개포로22길 12",
-                detailAddress: "6층 (주)초이콤마 본사",
-              };
-            }
-            if (c.detailAddress && c.address && c.address.endsWith(c.detailAddress)) {
-              return {
-                ...c,
-                address: c.address.slice(0, -c.detailAddress.length).trim() || c.address,
-              };
-            }
-            return c;
-          });
-          setCustomersList(sanitized);
+          const sanitized = data
+            .filter((c) => c.id === "ADMIN-001" || (!c.rawGrade && !String(c.id).startsWith("CUST-")))
+            .map((c) => {
+              if (c.id === "ADMIN-001") {
+                return {
+                  ...c,
+                  phone: "02-579-1171",
+                  postcode: "06306",
+                  address: "서울특별시 강남구 개포로22길 12",
+                  detailAddress: "6층 (주)초이콤마 본사",
+                };
+              }
+              if (c.detailAddress && c.address && c.address.endsWith(c.detailAddress)) {
+                return {
+                  ...c,
+                  address: c.address.slice(0, -c.detailAddress.length).trim() || c.address,
+                };
+              }
+              return c;
+            });
+          const finalList = sanitized.length > 0 ? sanitized : [DEFAULT_ADMIN_CUSTOMER];
+          setCustomersList(finalList);
           if (typeof window !== "undefined") {
-            localStorage.setItem("admin_customers", JSON.stringify(sanitized));
+            localStorage.setItem("admin_customers", JSON.stringify(finalList));
           }
           return;
         }
@@ -113,33 +116,36 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         console.warn("Notice: Using local customers fallback:", err);
       }
 
-      // Local storage fallback
+      // Local storage fallback (엑셀 원본 회원2026_08_03_1.xls에서 가져온 데이터 완전 배제)
       if (typeof window !== "undefined" && isMounted) {
         const saved = localStorage.getItem("admin_customers");
         if (saved) {
           try {
             const parsed: any[] = JSON.parse(saved);
             if (Array.isArray(parsed) && parsed.length > 0) {
-              const sanitized = parsed.map((c) => {
-                if (c.id === "ADMIN-001") {
-                  return {
-                    ...c,
-                    phone: "02-579-1171",
-                    postcode: "06306",
-                    address: "서울특별시 강남구 개포로22길 12",
-                    detailAddress: "6층 (주)초이콤마 본사",
-                  };
-                }
-                if (c.detailAddress && c.address && c.address.endsWith(c.detailAddress)) {
-                  return {
-                    ...c,
-                    address: c.address.slice(0, -c.detailAddress.length).trim() || c.address,
-                  };
-                }
-                return c;
-              });
-              setCustomersList(sanitized);
-              localStorage.setItem("admin_customers", JSON.stringify(sanitized));
+              const cleaned = parsed
+                .filter((c) => c.id === "ADMIN-001" || (!c.rawGrade && !String(c.id).startsWith("CUST-")))
+                .map((c) => {
+                  if (c.id === "ADMIN-001") {
+                    return {
+                      ...c,
+                      phone: "02-579-1171",
+                      postcode: "06306",
+                      address: "서울특별시 강남구 개포로22길 12",
+                      detailAddress: "6층 (주)초이콤마 본사",
+                    };
+                  }
+                  if (c.detailAddress && c.address && c.address.endsWith(c.detailAddress)) {
+                    return {
+                      ...c,
+                      address: c.address.slice(0, -c.detailAddress.length).trim() || c.address,
+                    };
+                  }
+                  return c;
+                });
+              const finalList = cleaned.length > 0 ? cleaned : [DEFAULT_ADMIN_CUSTOMER];
+              setCustomersList(finalList);
+              localStorage.setItem("admin_customers", JSON.stringify(finalList));
               return;
             }
           } catch (e) {}
@@ -361,25 +367,13 @@ export function useCustomers(triggerToast: (msg: string) => void) {
   };
 
   const handleResetCustomerData = async () => {
-    if (window.confirm("엑셀 원본 파일(5,666명)의 최신 회원 정보 및 배송지 주소를 전체 동기화하시겠습니까?")) {
-      try {
-        const res = await fetch("/회원2026_08_03_1.xls");
-        const buffer = await res.arrayBuffer();
-        const wb = XLSX.read(buffer, { type: "array" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows: any[] = XLSX.utils.sheet_to_json(ws);
-        const parsed = rows.map((r, i) => parseCustomerRow(r, i));
-        const combined = [DEFAULT_ADMIN_CUSTOMER, ...parsed];
-        setCustomersList(combined);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("admin_customers", JSON.stringify(combined));
-          window.dispatchEvent(new CustomEvent("storage"));
-        }
-        triggerToast(`엑셀 원본에서 5,666명의 회원 정보(배송지 주소 포함)가 성공적으로 복원되었습니다.`);
-      } catch (err: any) {
-        console.error(err);
-        triggerToast("회원 엑셀 복원 중 오류가 발생했습니다.");
+    if (window.confirm("회원 목록을 초기화하고 최고관리자 기본 상태로 설정하시겠습니까?")) {
+      setCustomersList([DEFAULT_ADMIN_CUSTOMER]);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("admin_customers", JSON.stringify([DEFAULT_ADMIN_CUSTOMER]));
+        window.dispatchEvent(new CustomEvent("storage"));
       }
+      triggerToast("회원 목록이 최고관리자 기본 상태로 초기화되었습니다.");
     }
   };
 
