@@ -13,20 +13,24 @@ import {
   Download,
   ArrowUpDown,
   Search,
-  Layers,
   Calendar,
   CreditCard,
   Database,
-  CheckCircle2,
   FileSpreadsheet,
-  AlertCircle,
-  RefreshCw,
+  Layers,
+  Sparkles,
+  ArrowUpRight,
+  ArrowDownRight,
+  History,
+  CheckCircle2,
+  Receipt,
+  PieChart,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import fallbackRevenueData from "@/lib/sfcc/monthly-revenue-data.json";
 
-export type PeriodType = "daily" | "monthly" | "yearly";
-export type SortColumn = "net_sales" | "uv" | "order_count" | "return_rate" | "cvr" | "atv" | "gross_sales";
+export type PeriodType = "monthly" | "yearly";
+export type SortColumn = "일자" | "매출" | "결제금액" | "주문건수" | "품목건수" | "환불금액" | "할인금액" | "배송비" | "atv" | "return_rate";
 
 interface MonthlyRevenueRecord {
   일자: string;
@@ -38,25 +42,6 @@ interface MonthlyRevenueRecord {
   결제금액: string | number;
   환불금액: string | number;
   매출: string | number;
-}
-
-interface ProductAnalyticsItem {
-  product_id: string;
-  product_name: string;
-  thumbnail_url: string;
-  category: string;
-  price: number;
-  uv: number;
-  pv: number;
-  order_count: number;
-  sold_qty: number;
-  gross_sales: number;
-  refund_amount: number;
-  net_sales: number;
-  return_count: number;
-  return_rate: number;
-  cvr: number;
-  atv: number;
 }
 
 interface RevenueManagementProps {
@@ -73,18 +58,15 @@ interface RevenueManagementProps {
 
 export function RevenueManagement({
   triggerToast,
-  productsList = [],
-  shipmentsList = [],
 }: RevenueManagementProps) {
-  // 1. 기간 선택 상태 (Daily / Monthly / Yearly)
+  // 1. 기간 모드: 월별 (Monthly) 또는 연도별 (Yearly)
   const [periodType, setPeriodType] = useState<PeriodType>("monthly");
-  // 엑셀 실제 데이터 기준 최신 월인 2026-07을 기본값으로 설정
+  // 엑셀 실제 데이터 기준 최신 실적 월: 2026-07
   const [selectedDate, setSelectedDate] = useState<string>("2026-07");
 
-  // 2. 검색 및 정렬 상태
+  // 2. 검색 및 테이블 정렬
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [sortColumn, setSortColumn] = useState<SortColumn>("net_sales");
+  const [sortColumn, setSortColumn] = useState<SortColumn>("일자");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   // 3. 슈파베이스(Supabase) 연동 상태
@@ -94,7 +76,7 @@ export function RevenueManagement({
   const [isSupabaseSynced, setIsSupabaseSynced] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Supabase site_settings 테이블에서 실제 월별매출 데이터 로드 & 실시간 동기화
+  // Supabase site_settings에서 실제 월별매출 데이터 로드 & 실시간 동기화
   const loadRevenueFromSupabase = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -108,12 +90,11 @@ export function RevenueManagement({
         setRevenueHistory(data.value);
         setIsSupabaseSynced(true);
       } else {
-        // Supabase에 데이터가 아직 없으면 fallback 엑셀 가공 데이터를 기본으로 사용
         setRevenueHistory(fallbackRevenueData as MonthlyRevenueRecord[]);
         setIsSupabaseSynced(false);
       }
     } catch (err) {
-      console.warn("Supabase fetch failed, fallback to local JSON:", err);
+      console.warn("Supabase fetch failed, fallback to local data:", err);
       setRevenueHistory(fallbackRevenueData as MonthlyRevenueRecord[]);
     } finally {
       setIsLoading(false);
@@ -123,9 +104,9 @@ export function RevenueManagement({
   useEffect(() => {
     loadRevenueFromSupabase();
 
-    // Supabase Realtime 구독 (다른 관리자가 엑셀을 업로드하거나 매출 데이터가 업데이트되면 자동 반영)
+    // Supabase Realtime 구독
     const channel = supabase
-      .channel("site_settings_revenue")
+      .channel("site_settings_revenue_sub")
       .on(
         "postgres_changes",
         {
@@ -139,7 +120,7 @@ export function RevenueManagement({
             setRevenueHistory((payload.new as any).value);
             setIsSupabaseSynced(true);
             if (triggerToast) {
-              triggerToast("슈파베이스(Supabase)로부터 최신 매출 데이터가 실시간 동기화되었습니다.");
+              triggerToast("슈파베이스(Supabase)로부터 최신 매출 정산 데이터가 실시간 동기화되었습니다.");
             }
           }
         }
@@ -151,7 +132,7 @@ export function RevenueManagement({
     };
   }, [loadRevenueFromSupabase, triggerToast]);
 
-  // 실제 데이터에 존재하는 월/연도 목록 동적 추출
+  // 실제 데이터에 존재하는 월/연도 목록
   const availableMonths = useMemo(() => {
     return Array.from(new Set(revenueHistory.map((r) => r.일자))).sort((a, b) => b.localeCompare(a));
   }, [revenueHistory]);
@@ -161,7 +142,7 @@ export function RevenueManagement({
     return Array.from(years).sort((a, b) => b.localeCompare(a));
   }, [revenueHistory]);
 
-  // 월별 맵
+  // 월별 인덱스 맵
   const monthlyDataMap = useMemo(() => {
     const map = new Map<string, MonthlyRevenueRecord>();
     revenueHistory.forEach((item) => {
@@ -170,28 +151,9 @@ export function RevenueManagement({
     return map;
   }, [revenueHistory]);
 
-  // 유효한 등록 상품 목록
-  const validProducts = useMemo(() => {
-    if (!productsList || productsList.length === 0) return [];
-    return productsList.filter((p) => {
-      const isBanner =
-        p.id?.startsWith("hero-slide") ||
-        p.categoryId === "main_banner" ||
-        (Array.isArray(p.categoryIds) && p.categoryIds.includes("main_banner"));
-      return !isBanner;
-    });
-  }, [productsList]);
-
-  // 기간별 기준 레이블 & 전년/전월/전일 동기 계산
+  // 기간별 기준일 & 직전 동기 계산
   const comparisonInfo = useMemo(() => {
-    if (periodType === "daily") {
-      const cur = selectedDate || "2026-07-15";
-      const d = new Date(cur);
-      const prevD = new Date(d);
-      prevD.setDate(prevD.getDate() - 1);
-      const prev = prevD.toISOString().slice(0, 10);
-      return { currentLabel: cur, previousLabel: prev, compareText: "전일 동기" };
-    } else if (periodType === "yearly") {
+    if (periodType === "yearly") {
       const curYear = parseInt(selectedDate || "2026", 10);
       return {
         currentLabel: `${curYear}년`,
@@ -199,7 +161,6 @@ export function RevenueManagement({
         compareText: "전년 동기",
       };
     } else {
-      // Monthly: 2026-07 -> 전월 동기: 2026-06
       const cur = selectedDate || "2026-07";
       const [y, m] = cur.split("-").map(Number);
       const prevDate = new Date(Date.UTC(y, m - 2, 1));
@@ -210,19 +171,22 @@ export function RevenueManagement({
     }
   }, [periodType, selectedDate]);
 
-  // 100% 실제 엑셀/Supabase 데이터 기반 기간별 매출 & 핵심 6대 지표 산출
+  // 100% 실제 엑셀/Supabase 원본 데이터 기준 KPI 지표 계산 (임의 추정 분배 완전 배제)
   const analyticsSummary = useMemo(() => {
     let curGross = 0;
     let curRefund = 0;
     let curNet = 0;
     let curOrders = 0;
     let curItemCount = 0;
+    let curDiscount = 0;
+    let curShipping = 0;
 
     let prevGross = 0;
     let prevRefund = 0;
     let prevNet = 0;
     let prevOrders = 0;
     let prevItemCount = 0;
+    let prevDiscount = 0;
 
     if (periodType === "monthly") {
       const curData = monthlyDataMap.get(selectedDate) || monthlyDataMap.get("2026-07");
@@ -236,13 +200,17 @@ export function RevenueManagement({
       curNet = Number(curData?.매출 || curGross - curRefund);
       curOrders = Number(curData?.주문건수 || 0);
       curItemCount = Number(curData?.품목건수 || 0);
+      curDiscount = Number(curData?.할인금액 || 0);
+      curShipping = Number(curData?.배송비 || 0);
 
       prevGross = Number(prevData?.결제금액 || 0);
       prevRefund = Number(prevData?.환불금액 || 0);
       prevNet = Number(prevData?.매출 || prevGross - prevRefund);
       prevOrders = Number(prevData?.주문건수 || 0);
       prevItemCount = Number(prevData?.품목건수 || 0);
-    } else if (periodType === "yearly") {
+      prevDiscount = Number(prevData?.할인금액 || 0);
+    } else {
+      // Yearly
       const targetYear = selectedDate || "2026";
       const prevYear = String(parseInt(targetYear, 10) - 1);
 
@@ -253,63 +221,35 @@ export function RevenueManagement({
           curNet += Number(item.매출 || 0);
           curOrders += Number(item.주문건수 || 0);
           curItemCount += Number(item.품목건수 || 0);
+          curDiscount += Number(item.할인금액 || 0);
+          curShipping += Number(item.배송비 || 0);
         } else if (item.일자.startsWith(prevYear)) {
           prevGross += Number(item.결제금액 || 0);
           prevRefund += Number(item.환불금액 || 0);
           prevNet += Number(item.매출 || 0);
           prevOrders += Number(item.주문건수 || 0);
           prevItemCount += Number(item.품목건수 || 0);
+          prevDiscount += Number(item.할인금액 || 0);
         }
       });
-    } else {
-      // Daily: 선택한 날짜가 속한 월의 일평균 실측 데이터 기반 산정
-      const [y, m, d] = (selectedDate || "2026-07-15").split("-");
-      const monthKey = `${y}-${m}`;
-      const monthData = monthlyDataMap.get(monthKey) || monthlyDataMap.get("2026-07");
-
-      const daysInMonth = 30;
-      const avgDayGross = Math.round(Number(monthData?.결제금액 || 0) / daysInMonth);
-      const avgDayRefund = Math.round(Number(monthData?.환불금액 || 0) / daysInMonth);
-      const avgDayNet = Math.round(Number(monthData?.매출 || 0) / daysInMonth);
-      const avgDayOrders = Math.max(1, Math.round(Number(monthData?.주문건수 || 0) / daysInMonth));
-      const avgDayItems = Math.max(1, Math.round(Number(monthData?.품목건수 || 0) / daysInMonth));
-
-      curGross = avgDayGross;
-      curRefund = avgDayRefund;
-      curNet = avgDayNet;
-      curOrders = avgDayOrders;
-      curItemCount = avgDayItems;
-
-      // 전일 동기는 일평균을 기준으로 약 5% 오차 반영
-      prevGross = Math.round(avgDayGross * 0.95);
-      prevRefund = Math.round(avgDayRefund * 0.95);
-      prevNet = Math.round(avgDayNet * 0.95);
-      prevOrders = Math.max(1, Math.round(avgDayOrders * 0.95));
-      prevItemCount = Math.max(1, Math.round(avgDayItems * 0.95));
     }
 
-    // 증감률 계산 (%)
     const calcRate = (current: number, previous: number) => {
       if (!previous || previous === 0) return current > 0 ? 100 : 0;
       return Number((((current - previous) / previous) * 100).toFixed(1));
     };
 
-    // 실제 결제 건수 기반 UV (패션 이커머스 표준 전환율 약 3.8% 기준 역산출)
-    const curUv = curOrders > 0 ? Math.round(curOrders * 26.3) : 0;
-    const prevUv = prevOrders > 0 ? Math.round(prevOrders * 26.3) : 0;
-
-    // 실제 환불금액 대비 환불/반품 추정 건수 (환불금액 / 객단가)
+    // 실측 기반 객단가 (ATV: 순매출 / 주문건수)
     const curAtv = curOrders > 0 ? Math.round(curNet / curOrders) : 0;
     const prevAtv = prevOrders > 0 ? Math.round(prevNet / prevOrders) : 0;
 
-    const curReturnCount = curAtv > 0 && curRefund > 0 ? Math.max(1, Math.round(curRefund / curAtv)) : 0;
-    const prevReturnCount = prevAtv > 0 && prevRefund > 0 ? Math.max(1, Math.round(prevRefund / prevAtv)) : 0;
+    // 실측 기반 환불율 (%) = (환불금액 / 결제금액) * 100
+    const curRefundRate = curGross > 0 ? Number(((curRefund / curGross) * 100).toFixed(2)) : 0;
+    const prevRefundRate = prevGross > 0 ? Number(((prevRefund / prevGross) * 100).toFixed(2)) : 0;
 
-    const curReturnRate = curOrders > 0 ? Number(((curReturnCount / curOrders) * 100).toFixed(2)) : 0;
-    const prevReturnRate = prevOrders > 0 ? Number(((prevReturnCount / prevOrders) * 100).toFixed(2)) : 0;
-
-    const curCvr = curUv > 0 ? Number(((curOrders / curUv) * 100).toFixed(2)) : 0;
-    const prevCvr = prevUv > 0 ? Number(((prevOrders / prevUv) * 100).toFixed(2)) : 0;
+    // 실측 기반 품목단가 (순매출 / 품목수)
+    const curPerItemPrice = curItemCount > 0 ? Math.round(curNet / curItemCount) : 0;
+    const prevPerItemPrice = prevItemCount > 0 ? Math.round(prevNet / prevItemCount) : 0;
 
     return {
       netSales: { current: curNet, previous: prevNet, rate: calcRate(curNet, prevNet) },
@@ -317,101 +257,88 @@ export function RevenueManagement({
       refundAmount: { current: curRefund, previous: prevRefund, rate: calcRate(curRefund, prevRefund) },
       orders: { current: curOrders, previous: prevOrders, rate: calcRate(curOrders, prevOrders) },
       itemCount: { current: curItemCount, previous: prevItemCount, rate: calcRate(curItemCount, prevItemCount) },
-      uv: { current: curUv, previous: prevUv, rate: calcRate(curUv, prevUv) },
-      cvr: { current: curCvr, previous: prevCvr, rate: Number((curCvr - prevCvr).toFixed(2)) },
+      discountAmount: { current: curDiscount, previous: prevDiscount, rate: calcRate(curDiscount, prevDiscount) },
+      shippingFee: { current: curShipping },
       atv: { current: curAtv, previous: prevAtv, rate: calcRate(curAtv, prevAtv) },
-      returnRate: { current: curReturnRate, previous: prevReturnRate, rate: Number((curReturnRate - prevReturnRate).toFixed(2)) },
-      returnCount: { current: curReturnCount, previous: prevReturnCount },
+      refundRate: { current: curRefundRate, previous: prevRefundRate, rate: Number((curRefundRate - prevRefundRate).toFixed(2)) },
+      perItemPrice: { current: curPerItemPrice, previous: prevPerItemPrice, rate: calcRate(curPerItemPrice, prevPerItemPrice) },
     };
   }, [periodType, selectedDate, monthlyDataMap, revenueHistory]);
 
-  // 실제 매출 및 품목 수 기반 제품별 상세 분배 산출
-  const productAnalyticsList: ProductAnalyticsItem[] = useMemo(() => {
-    if (!validProducts || validProducts.length === 0) return [];
+  // 테이블용 실제 월별 정산 데이터 (검색 및 컬럼별 정렬 지원)
+  const processedMonthlyTable = useMemo(() => {
+    return revenueHistory
+      .filter((row) => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.trim().toLowerCase();
+        return row.일자.toLowerCase().includes(q);
+      })
+      .map((row) => {
+        const net = Number(row.매출 || 0);
+        const gross = Number(row.결제금액 || 0);
+        const orders = Number(row.주문건수 || 0);
+        const items = Number(row.품목건수 || 0);
+        const refund = Number(row.환불금액 || 0);
+        const discount = Number(row.할인금액 || 0);
+        const shipping = Number(row.배송비 || 0);
+        const atv = orders > 0 ? Math.round(net / orders) : 0;
+        const refundRate = gross > 0 ? Number(((refund / gross) * 100).toFixed(2)) : 0;
 
-    const totalNet = analyticsSummary.netSales.current;
-    const totalOrders = analyticsSummary.orders.current;
-    const totalRefund = analyticsSummary.refundAmount.current;
-
-    // 등록된 실제 상품별 판매 비율 계산
-    return validProducts.map((p, idx) => {
-      const price = Number(p.priceRange?.minVariantPrice?.amount || p.price || 120000);
-      const isTopRank = idx < 6;
-      const weight = isTopRank ? (10 - idx) * 2.2 : Math.max(0.3, (15 - (idx % 12)) * 0.3);
-      const normalizedWeight = weight / (isTopRank ? 35 : 100);
-
-      const estimatedOrderCount = Math.max(1, Math.round(totalOrders * normalizedWeight));
-      const estimatedSoldQty = Math.round(estimatedOrderCount * (1 + (idx % 2) * 0.2));
-      const grossSales = estimatedSoldQty * price;
-
-      // 실제 환불액 분배
-      const refundAmount = Math.round(totalRefund * normalizedWeight);
-      const returnCount = price > 0 && refundAmount > 0 ? Math.max(1, Math.round(refundAmount / price)) : 0;
-      const netSales = Math.max(0, grossSales - refundAmount);
-
-      // UV 및 전환율
-      const cvrBase = 3.2 + ((idx * 3) % 20) / 10;
-      const uv = Math.max(estimatedOrderCount * 15, Math.round(estimatedOrderCount / (cvrBase / 100)));
-      const pv = Math.round(uv * 1.8);
-
-      const actualCvr = uv > 0 ? Number(((estimatedOrderCount / uv) * 100).toFixed(2)) : 0;
-      const actualAtv = estimatedOrderCount > 0 ? Math.round(netSales / estimatedOrderCount) : price;
-      const actualReturnRate =
-        estimatedOrderCount > 0 ? Number(((returnCount / estimatedOrderCount) * 100).toFixed(2)) : 0;
-
-      const thumb =
-        p.featuredImage?.url ||
-        (Array.isArray(p.images) && p.images[0]?.url) ||
-        p.thumbnail ||
-        "";
-
-      return {
-        product_id: String(p.id),
-        product_name: String(p.title || p.name || "초이콤마 오리지널 아이템"),
-        thumbnail_url: thumb,
-        category: String(p.categoryId || (Array.isArray(p.categoryIds) ? p.categoryIds[0] : "ALL")).toUpperCase(),
-        price,
-        uv,
-        pv,
-        order_count: estimatedOrderCount,
-        sold_qty: estimatedSoldQty,
-        gross_sales: grossSales,
-        refund_amount: refundAmount,
-        net_sales: netSales,
-        return_count: returnCount,
-        return_rate: actualReturnRate,
-        cvr: actualCvr,
-        atv: actualAtv,
-      };
-    });
-  }, [validProducts, analyticsSummary]);
-
-  // 검색 & 필터 & 정렬
-  const filteredAndSortedProducts = useMemo(() => {
-    return productAnalyticsList
-      .filter((item) => {
-        const matchesQuery =
-          !searchQuery.trim() ||
-          item.product_name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-          item.product_id.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-          item.category.toLowerCase().includes(searchQuery.trim().toLowerCase());
-
-        const matchesCat =
-          categoryFilter === "all" || item.category.toLowerCase() === categoryFilter.toLowerCase();
-
-        return matchesQuery && matchesCat;
+        return {
+          ...row,
+          netNum: net,
+          grossNum: gross,
+          ordersNum: orders,
+          itemsNum: items,
+          refundNum: refund,
+          discountNum: discount,
+          shippingNum: shipping,
+          atv,
+          refundRate,
+        };
       })
       .sort((a, b) => {
-        const aVal = a[sortColumn];
-        const bVal = b[sortColumn];
+        let valA: any = a[sortColumn as keyof typeof a];
+        let valB: any = b[sortColumn as keyof typeof b];
+
+        if (sortColumn === "매출") {
+          valA = a.netNum;
+          valB = b.netNum;
+        } else if (sortColumn === "결제금액") {
+          valA = a.grossNum;
+          valB = b.grossNum;
+        } else if (sortColumn === "주문건수") {
+          valA = a.ordersNum;
+          valB = b.ordersNum;
+        } else if (sortColumn === "품목건수") {
+          valA = a.itemsNum;
+          valB = b.itemsNum;
+        } else if (sortColumn === "환불금액") {
+          valA = a.refundNum;
+          valB = b.refundNum;
+        } else if (sortColumn === "할인금액") {
+          valA = a.discountNum;
+          valB = b.discountNum;
+        } else if (sortColumn === "배송비") {
+          valA = a.shippingNum;
+          valB = b.shippingNum;
+        } else if (sortColumn === "atv") {
+          valA = a.atv;
+          valB = b.atv;
+        } else if (sortColumn === "return_rate") {
+          valA = a.refundRate;
+          valB = b.refundRate;
+        }
+
         if (sortDirection === "asc") {
-          return aVal > bVal ? 1 : -1;
+          return valA > valB ? 1 : -1;
         } else {
-          return aVal < bVal ? 1 : -1;
+          return valA < valB ? 1 : -1;
         }
       });
-  }, [productAnalyticsList, searchQuery, categoryFilter, sortColumn, sortDirection]);
+  }, [revenueHistory, searchQuery, sortColumn, sortDirection]);
 
+  // 테이블 정렬 헤더 핸들러
   const handleSortToggle = (col: SortColumn) => {
     if (sortColumn === col) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -421,41 +348,37 @@ export function RevenueManagement({
     }
   };
 
-  // 엑셀 다운로드 (실제 데이터 기반)
+  // 100% 실제 데이터 엑셀 다운로드 (XLSX)
   const handleDownloadExcel = () => {
-    if (filteredAndSortedProducts.length === 0) {
+    if (processedMonthlyTable.length === 0) {
       alert("다운로드할 데이터가 없습니다.");
       return;
     }
 
     try {
-      const exportRows = filteredAndSortedProducts.map((p, idx) => ({
-        "순위": idx + 1,
-        "상품코드": p.product_id,
-        "상품명": p.product_name,
-        "카테고리": p.category,
-        "단가(원)": p.price,
-        "순방문자수(UV)": p.uv,
-        "조회수(PV)": p.pv,
-        "주문건수": p.order_count,
-        "판매수량": p.sold_qty,
-        "총매출(원)": p.gross_sales,
-        "환불공제액(원)": p.refund_amount,
-        "순매출(원)": p.net_sales,
-        "반품완료건수": p.return_count,
-        "반품율(%)": `${p.return_rate}%`,
-        "구매전환율(CVR%)": `${p.cvr}%`,
-        "객단가(ATV원)": p.atv,
+      const exportRows = processedMonthlyTable.map((r, idx) => ({
+        "순번": idx + 1,
+        "정산월(일자)": r.일자,
+        "주문건수": r.ordersNum,
+        "품목건수": r.itemsNum,
+        "상품금액(원)": Number(r.상품금액 || 0),
+        "배송비(원)": r.shippingNum,
+        "할인금액(원)": r.discountNum,
+        "결제금액(원)": r.grossNum,
+        "환불금액(원)": r.refundNum,
+        "최종순매출(원)": r.netNum,
+        "환불율(%)": `${r.refundRate}%`,
+        "객단가(원)": r.atv,
       }));
 
       const ws = XLSX.utils.json_to_sheet(exportRows);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "제품별_성과분석");
-      const filename = `초이콤마_실제매출분석_${periodType}_${selectedDate}.xlsx`;
+      XLSX.utils.book_append_sheet(wb, ws, "월별_매출_실제정산");
+      const filename = `초이콤마_실제월별매출_${selectedDate}.xlsx`;
       XLSX.writeFile(wb, filename);
 
       if (triggerToast) {
-        triggerToast("실제 매출 기반 제품별 성과 분석 엑셀 파일이 다운로드되었습니다.");
+        triggerToast("실제 월별 정산 매출 엑셀 파일이 성공적으로 다운로드되었습니다.");
       }
     } catch (err) {
       console.error(err);
@@ -466,7 +389,7 @@ export function RevenueManagement({
   return (
     <div className="space-y-6 animate-in fade-in duration-300 max-w-7xl mx-auto">
       {/* ─────────────────────────────────────────────────────────────────────────────
-          1. 상단 타이틀 & 슈파베이스 연동 상태 & 기간 선택 컨트롤러
+          1. 상단 타이틀 & 슈파베이스 연동 상태 & 기간 컨트롤러
          ───────────────────────────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-neutral-200/80 shadow-xs">
         <div className="flex items-center gap-4">
@@ -476,44 +399,30 @@ export function RevenueManagement({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl md:text-2xl font-extrabold text-neutral-950">
-                방문자 & 매출 분석 대시보드
+                실제 월별 매출 및 정산 분석 대시보드
               </h1>
               {isSupabaseSynced ? (
                 <span className="text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-2xs">
                   <Database className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>슈파베이스(Supabase) 실시간 연동됨</span>
+                  <span>슈파베이스(Supabase) 실시간 연동 완료</span>
                 </span>
               ) : (
                 <span className="text-xs bg-neutral-100 text-neutral-800 border border-neutral-200 font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                   <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-600" />
-                  <span>24~26년 실제 엑셀 데이터 동기화됨 (총 {revenueHistory.length}개월)</span>
+                  <span>24~26년 실제 엑셀 31개월 전수 데이터 적용</span>
                 </span>
               )}
             </div>
             <p className="text-xs text-neutral-500 mt-1">
-              24년·25년·26년 실제 월별매출 정산표를 기반으로 순매출, 방문자(UV), 주문수, CVR, 객단가, 반품율을 분석합니다.
+              제공해주신 24년·25년·26년 월별매출 정산표를 100% 원본 그대로 집계하여 전년/전월 동기 대비 성장률을 분석합니다.
             </p>
           </div>
         </div>
 
         {/* 기간 컨트롤러 & 엑셀 다운로드 */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* 기간 모드 탭 (Daily / Monthly / Yearly) */}
+          {/* 기간 모드 탭 (월별 Monthly / 연도별 Yearly) */}
           <div className="inline-flex bg-neutral-100 p-1 rounded-2xl border border-neutral-200/80">
-            <button
-              type="button"
-              onClick={() => {
-                setPeriodType("daily");
-                setSelectedDate("2026-07-15");
-              }}
-              className={`px-3.5 py-1.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${
-                periodType === "daily"
-                  ? "bg-white text-neutral-950 shadow-xs"
-                  : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              일자별 (Daily)
-            </button>
             <button
               type="button"
               onClick={() => {
@@ -544,17 +453,9 @@ export function RevenueManagement({
             </button>
           </div>
 
-          {/* 기간 피커 (실제 데이터에 존재하는 월/연도만 자동 제공) */}
+          {/* 기간 셀렉터 */}
           <div className="relative">
-            {periodType === "daily" && (
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-neutral-50 border border-neutral-300 text-neutral-900 text-xs font-bold rounded-xl px-3 py-2 focus:ring-2 focus:ring-neutral-950 focus:outline-none cursor-pointer"
-              />
-            )}
-            {periodType === "monthly" && (
+            {periodType === "monthly" ? (
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
@@ -566,8 +467,7 @@ export function RevenueManagement({
                   </option>
                 ))}
               </select>
-            )}
-            {periodType === "yearly" && (
+            ) : (
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
@@ -589,19 +489,19 @@ export function RevenueManagement({
             className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>엑셀 다운로드 (.xlsx)</span>
+            <span>실제 매출 엑셀 다운로드 (.xlsx)</span>
           </button>
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────────────────
-          2. 핵심 지표 6대 요약 카드 (전년/전월/전일 동기 대비 증감률 % 포함)
+          2. 100% 실제 데이터 기준 핵심 지표 6대 요약 카드
          ───────────────────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
         {/* 1. 순매출 (Net Sales) */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs space-y-2 hover:border-neutral-950 transition-colors">
           <div className="flex items-center justify-between text-neutral-500 text-xs font-bold">
-            <span>순매출 (Net)</span>
+            <span>최종 순매출 (Net)</span>
             <DollarSign className="w-4 h-4 text-neutral-400" />
           </div>
           <p className="text-xl font-extrabold text-neutral-950 font-mono tracking-tight">
@@ -621,23 +521,23 @@ export function RevenueManagement({
           </div>
         </div>
 
-        {/* 2. 순 방문자수 (UV) */}
+        {/* 2. 결제 완료 금액 (Gross Sales) */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs space-y-2 hover:border-neutral-950 transition-colors">
           <div className="flex items-center justify-between text-neutral-500 text-xs font-bold">
-            <span>방문 고객수 (UV)</span>
-            <Users className="w-4 h-4 text-neutral-400" />
+            <span>총 결제금액 (Gross)</span>
+            <CreditCard className="w-4 h-4 text-neutral-400" />
           </div>
           <p className="text-xl font-extrabold text-neutral-950 font-mono tracking-tight">
-            {analyticsSummary.uv.current.toLocaleString()}명
+            ₩{analyticsSummary.grossSales.current.toLocaleString()}
           </p>
           <div className="flex items-center gap-1 text-xs">
-            {analyticsSummary.uv.rate >= 0 ? (
+            {analyticsSummary.grossSales.rate >= 0 ? (
               <span className="text-emerald-600 font-extrabold flex items-center">
-                <TrendingUp className="w-3 h-3 mr-0.5" /> +{analyticsSummary.uv.rate}%
+                <TrendingUp className="w-3 h-3 mr-0.5" /> +{analyticsSummary.grossSales.rate}%
               </span>
             ) : (
               <span className="text-rose-600 font-extrabold flex items-center">
-                <TrendingDown className="w-3 h-3 mr-0.5" /> {analyticsSummary.uv.rate}%
+                <TrendingDown className="w-3 h-3 mr-0.5" /> {analyticsSummary.grossSales.rate}%
               </span>
             )}
             <span className="text-neutral-400 text-[10px] truncate">vs {comparisonInfo.compareText}</span>
@@ -647,7 +547,7 @@ export function RevenueManagement({
         {/* 3. 주문 건수 */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs space-y-2 hover:border-neutral-950 transition-colors">
           <div className="flex items-center justify-between text-neutral-500 text-xs font-bold">
-            <span>주문 건수</span>
+            <span>총 주문 건수</span>
             <ShoppingBag className="w-4 h-4 text-neutral-400" />
           </div>
           <p className="text-xl font-extrabold text-neutral-950 font-mono tracking-tight">
@@ -667,34 +567,34 @@ export function RevenueManagement({
           </div>
         </div>
 
-        {/* 4. 구매 전환율 (CVR) */}
+        {/* 4. 판매 품목 건수 */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs space-y-2 hover:border-neutral-950 transition-colors">
           <div className="flex items-center justify-between text-neutral-500 text-xs font-bold">
-            <span>전환율 (CVR)</span>
-            <Percent className="w-4 h-4 text-neutral-400" />
+            <span>판매 품목 건수</span>
+            <Layers className="w-4 h-4 text-neutral-400" />
           </div>
           <p className="text-xl font-extrabold text-neutral-950 font-mono tracking-tight">
-            {analyticsSummary.cvr.current}%
+            {analyticsSummary.itemCount.current.toLocaleString()}개
           </p>
           <div className="flex items-center gap-1 text-xs">
-            {analyticsSummary.cvr.rate >= 0 ? (
+            {analyticsSummary.itemCount.rate >= 0 ? (
               <span className="text-emerald-600 font-extrabold flex items-center">
-                <TrendingUp className="w-3 h-3 mr-0.5" /> +{analyticsSummary.cvr.rate}%p
+                <TrendingUp className="w-3 h-3 mr-0.5" /> +{analyticsSummary.itemCount.rate}%
               </span>
             ) : (
               <span className="text-rose-600 font-extrabold flex items-center">
-                <TrendingDown className="w-3 h-3 mr-0.5" /> {analyticsSummary.cvr.rate}%p
+                <TrendingDown className="w-3 h-3 mr-0.5" /> {analyticsSummary.itemCount.rate}%
               </span>
             )}
             <span className="text-neutral-400 text-[10px] truncate">vs {comparisonInfo.compareText}</span>
           </div>
         </div>
 
-        {/* 5. 객단가 (ATV) */}
+        {/* 5. 실제 객단가 (ATV) */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs space-y-2 hover:border-neutral-950 transition-colors">
           <div className="flex items-center justify-between text-neutral-500 text-xs font-bold">
-            <span>객단가 (ATV)</span>
-            <CreditCard className="w-4 h-4 text-neutral-400" />
+            <span>실제 객단가 (ATV)</span>
+            <DollarSign className="w-4 h-4 text-neutral-400" />
           </div>
           <p className="text-xl font-extrabold text-neutral-950 font-mono tracking-tight">
             ₩{analyticsSummary.atv.current.toLocaleString()}
@@ -713,71 +613,47 @@ export function RevenueManagement({
           </div>
         </div>
 
-        {/* 6. 반품율 (Return Rate) */}
+        {/* 6. 환불 및 취소액 & 환불율 */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs space-y-2 hover:border-neutral-950 transition-colors">
           <div className="flex items-center justify-between text-neutral-500 text-xs font-bold">
-            <span>반품율 (%)</span>
+            <span>환불액 / 환불율</span>
             <RotateCcw className="w-4 h-4 text-neutral-400" />
           </div>
-          <p className="text-xl font-extrabold text-neutral-950 font-mono tracking-tight">
-            {analyticsSummary.returnRate.current}%
+          <p className="text-xl font-extrabold text-rose-600 font-mono tracking-tight">
+            ₩{analyticsSummary.refundAmount.current.toLocaleString()}
           </p>
-          <div className="flex items-center gap-1 text-xs">
-            {analyticsSummary.returnRate.rate <= 0 ? (
-              <span className="text-emerald-600 font-extrabold flex items-center">
-                <TrendingDown className="w-3 h-3 mr-0.5" /> {analyticsSummary.returnRate.rate}%p
-              </span>
-            ) : (
-              <span className="text-rose-600 font-extrabold flex items-center">
-                <TrendingUp className="w-3 h-3 mr-0.5" /> +{analyticsSummary.returnRate.rate}%p
-              </span>
-            )}
-            <span className="text-neutral-400 text-[10px] truncate">vs {comparisonInfo.compareText}</span>
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-neutral-700 font-extrabold">
+              환불율: {analyticsSummary.refundRate.current}%
+            </span>
+            <span className="text-[10px] text-neutral-400">
+              할인: ₩{(analyticsSummary.discountAmount.current / 10000).toFixed(0)}만
+            </span>
           </div>
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────────────────
-          3. 제품별 상세 성과 분석 테이블 (다양한 정렬 및 검색, 순매출 기준)
+          3. 100% 실제 엑셀 데이터 기반 월별 정산 전수 내역표 (31개월)
          ───────────────────────────────────────────────────────────────────────────── */}
       <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 md:p-8 shadow-xs space-y-5">
-        {/* 테이블 툴바: 카테고리 필터 + 검색창 + 결과 건수 */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
-          <div className="flex flex-wrap items-center gap-3">
-            <div>
-              <h2 className="text-lg font-extrabold text-neutral-950 flex items-center gap-2">
-                <span>제품별 성과 분석 (Product Performance)</span>
-                <span className="text-xs bg-neutral-100 text-neutral-700 font-extrabold px-2.5 py-0.5 rounded-full">
-                  총 {filteredAndSortedProducts.length}개 상품
-                </span>
-              </h2>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                선택 기간 ({comparisonInfo.currentLabel}) 내 실제 정산 기준 각 상품의 방문자(UV), 주문수, 순매출, 반품율, CVR, 객단가 분석표입니다.
-              </p>
-            </div>
+          <div>
+            <h2 className="text-lg font-extrabold text-neutral-950 flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+              <span>실제 월별 정산 상세 내역표 ({processedMonthlyTable.length}개 월 데이터)</span>
+            </h2>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              24년, 25년, 26년 엑셀 원본 파일의 결제금액, 환불액, 할인금액, 최종 순매출, 주문건수를 100% 원본 그대로 표시합니다.
+            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* 카테고리 셀렉터 */}
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-800 focus:outline-none focus:border-neutral-950 cursor-pointer"
-            >
-              <option value="all">전체 카테고리</option>
-              <option value="outer">OUTER (아우터)</option>
-              <option value="top">TOP (상의)</option>
-              <option value="bottom">BOTTOM (하의)</option>
-              <option value="dress">DRESS (원피스)</option>
-              <option value="acc">ACC (액세서리)</option>
-            </select>
-
-            {/* 상품 검색 입력 */}
+          <div className="flex items-center gap-2">
             <div className="relative w-full sm:w-64">
               <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="상품명, 코드 또는 카테고리 검색..."
+                placeholder="정산월 검색 (예: 2026-07, 2025)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950"
@@ -786,26 +662,22 @@ export function RevenueManagement({
           </div>
         </div>
 
-        {/* 테이블 목록 */}
         <div className="overflow-x-auto border border-neutral-200/80 rounded-2xl">
           <table className="w-full text-left border-collapse text-xs">
             <thead className="bg-neutral-50 text-neutral-600 font-extrabold border-b border-neutral-200 uppercase text-[11px]">
               <tr>
-                <th className="py-3.5 px-4">상품 정보</th>
                 <th
-                  onClick={() => handleSortToggle("uv")}
-                  className="py-3.5 px-4 text-right cursor-pointer hover:text-neutral-950 transition-colors select-none"
-                  title="순 방문자수 기준 정렬"
+                  onClick={() => handleSortToggle("일자")}
+                  className="py-3.5 px-4 cursor-pointer hover:text-neutral-950 transition-colors select-none"
                 >
                   <div className="inline-flex items-center gap-1">
-                    <span>방문 고객수(UV)</span>
+                    <span>정산월 (일자)</span>
                     <ArrowUpDown className="w-3 h-3" />
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSortToggle("order_count")}
+                  onClick={() => handleSortToggle("주문건수")}
                   className="py-3.5 px-4 text-right cursor-pointer hover:text-neutral-950 transition-colors select-none"
-                  title="주문 건수 기준 정렬"
                 >
                   <div className="inline-flex items-center gap-1">
                     <span>주문 건수</span>
@@ -813,39 +685,62 @@ export function RevenueManagement({
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSortToggle("net_sales")}
+                  onClick={() => handleSortToggle("품목건수")}
                   className="py-3.5 px-4 text-right cursor-pointer hover:text-neutral-950 transition-colors select-none"
-                  title="순매출 기준 정렬"
                 >
                   <div className="inline-flex items-center gap-1">
-                    <span>순매출 (Net Sales)</span>
+                    <span>품목 건수</span>
+                    <ArrowUpDown className="w-3 h-3" />
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSortToggle("결제금액")}
+                  className="py-3.5 px-4 text-right cursor-pointer hover:text-neutral-950 transition-colors select-none"
+                >
+                  <div className="inline-flex items-center gap-1">
+                    <span>결제금액 (원)</span>
+                    <ArrowUpDown className="w-3 h-3" />
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSortToggle("할인금액")}
+                  className="py-3.5 px-4 text-right cursor-pointer hover:text-neutral-950 transition-colors select-none"
+                >
+                  <div className="inline-flex items-center gap-1">
+                    <span>할인금액</span>
+                    <ArrowUpDown className="w-3 h-3" />
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSortToggle("환불금액")}
+                  className="py-3.5 px-4 text-right cursor-pointer hover:text-neutral-950 transition-colors select-none text-rose-600"
+                >
+                  <div className="inline-flex items-center gap-1">
+                    <span>환불금액</span>
+                    <ArrowUpDown className="w-3 h-3" />
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSortToggle("매출")}
+                  className="py-3.5 px-4 text-right cursor-pointer hover:text-neutral-950 transition-colors select-none text-emerald-700"
+                >
+                  <div className="inline-flex items-center gap-1">
+                    <span>최종 순매출액</span>
                     <ArrowUpDown className="w-3 h-3" />
                   </div>
                 </th>
                 <th
                   onClick={() => handleSortToggle("return_rate")}
                   className="py-3.5 px-4 text-right cursor-pointer hover:text-neutral-950 transition-colors select-none"
-                  title="반품율 기준 정렬"
                 >
                   <div className="inline-flex items-center gap-1">
-                    <span>반품율 (%)</span>
-                    <ArrowUpDown className="w-3 h-3" />
-                  </div>
-                </th>
-                <th
-                  onClick={() => handleSortToggle("cvr")}
-                  className="py-3.5 px-4 text-right cursor-pointer hover:text-neutral-950 transition-colors select-none"
-                  title="구매 전환율 기준 정렬"
-                >
-                  <div className="inline-flex items-center gap-1">
-                    <span>구매전환율 (CVR)</span>
+                    <span>환불율 (%)</span>
                     <ArrowUpDown className="w-3 h-3" />
                   </div>
                 </th>
                 <th
                   onClick={() => handleSortToggle("atv")}
                   className="py-3.5 px-4 text-right cursor-pointer hover:text-neutral-950 transition-colors select-none"
-                  title="객단가 기준 정렬"
                 >
                   <div className="inline-flex items-center gap-1">
                     <span>객단가 (ATV)</span>
@@ -855,103 +750,90 @@ export function RevenueManagement({
               </tr>
             </thead>
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60 font-mono">
-              {filteredAndSortedProducts.length === 0 ? (
+              {processedMonthlyTable.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-14 text-center text-neutral-400 font-sans text-xs">
-                    검색 조건과 일치하는 제품 데이터가 없습니다.
+                  <td colSpan={9} className="py-14 text-center text-neutral-400 font-sans text-xs">
+                    검색 조건과 일치하는 월별 매출 데이터가 없습니다.
                   </td>
                 </tr>
               ) : (
-                filteredAndSortedProducts.map((p) => (
-                  <tr key={p.product_id} className="hover:bg-neutral-50/70 transition-colors">
-                    {/* 상품 정보 */}
-                    <td className="py-3.5 px-4 font-sans">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-xl bg-neutral-100 border border-neutral-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                          {p.thumbnail_url ? (
-                            <img
-                              src={p.thumbnail_url}
-                              alt=""
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Layers className="w-5 h-5 text-neutral-400" />
+                processedMonthlyTable.map((r) => {
+                  const isSelected = r.일자 === selectedDate;
+                  const isLatest = r.일자 === "2026-07";
+
+                  return (
+                    <tr
+                      key={r.일자}
+                      onClick={() => {
+                        setPeriodType("monthly");
+                        setSelectedDate(r.일자);
+                      }}
+                      className={`hover:bg-emerald-50/60 transition-colors cursor-pointer ${
+                        isSelected ? "bg-emerald-50/80 font-bold" : ""
+                      }`}
+                    >
+                      {/* 정산월 */}
+                      <td className="py-3.5 px-4 font-mono font-bold text-neutral-950">
+                        <div className="flex items-center gap-2">
+                          {isLatest && (
+                            <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded">
+                              최신
+                            </span>
                           )}
+                          <span>{r.일자}</span>
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-extrabold text-neutral-950 text-xs truncate max-w-[220px]">
-                            {p.product_name}
-                          </p>
-                          <div className="flex items-center gap-1.5 text-[10px] text-neutral-400 font-mono mt-0.5">
-                            <span className="font-bold text-neutral-600">{p.category}</span>
-                            <span>·</span>
-                            <span>₩{p.price.toLocaleString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* 방문 고객수 (UV) */}
-                    <td className="py-3.5 px-4 text-right text-neutral-800 font-bold">
-                      {p.uv.toLocaleString()}명
-                      <span className="block text-[10px] text-neutral-400 font-normal">
-                        ({p.pv.toLocaleString()} PV)
-                      </span>
-                    </td>
+                      {/* 주문 건수 */}
+                      <td className="py-3.5 px-4 text-right text-neutral-800 font-bold">
+                        {r.ordersNum.toLocaleString()}건
+                      </td>
 
-                    {/* 주문 건수 */}
-                    <td className="py-3.5 px-4 text-right text-neutral-900 font-bold">
-                      {p.order_count.toLocaleString()}건
-                      <span className="block text-[10px] text-neutral-400 font-normal">
-                        ({p.sold_qty.toLocaleString()}개 판매)
-                      </span>
-                    </td>
+                      {/* 품목 건수 */}
+                      <td className="py-3.5 px-4 text-right text-neutral-600">
+                        {r.itemsNum.toLocaleString()}개
+                      </td>
 
-                    {/* 순매출 (Net Sales) */}
-                    <td className="py-3.5 px-4 text-right">
-                      <span className="text-neutral-950 font-black text-sm block">
-                        ₩{p.net_sales.toLocaleString()}
-                      </span>
-                      {p.refund_amount > 0 ? (
-                        <span className="text-[10px] text-rose-500 font-normal">
-                          -₩{p.refund_amount.toLocaleString()} 환불
+                      {/* 결제금액 */}
+                      <td className="py-3.5 px-4 text-right text-neutral-900 font-bold">
+                        ₩{r.grossNum.toLocaleString()}
+                      </td>
+
+                      {/* 할인금액 */}
+                      <td className="py-3.5 px-4 text-right text-amber-800">
+                        -₩{r.discountNum.toLocaleString()}
+                      </td>
+
+                      {/* 환불금액 */}
+                      <td className="py-3.5 px-4 text-right text-rose-600 font-bold">
+                        -₩{r.refundNum.toLocaleString()}
+                      </td>
+
+                      {/* 최종 순매출액 */}
+                      <td className="py-3.5 px-4 text-right font-black text-emerald-700 bg-emerald-50/40 text-sm">
+                        ₩{r.netNum.toLocaleString()}
+                      </td>
+
+                      {/* 환불율 */}
+                      <td className="py-3.5 px-4 text-right">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[11px] font-extrabold ${
+                            r.refundRate > 10
+                              ? "bg-rose-50 text-rose-600 border border-rose-200"
+                              : "bg-neutral-100 text-neutral-700"
+                          }`}
+                        >
+                          {r.refundRate}%
                         </span>
-                      ) : (
-                        <span className="text-[10px] text-neutral-400 font-normal">
-                          환불 없음
-                        </span>
-                      )}
-                    </td>
+                      </td>
 
-                    {/* 반품율 (%) */}
-                    <td className="py-3.5 px-4 text-right">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[11px] font-extrabold ${
-                          p.return_rate > 4
-                            ? "bg-rose-50 text-rose-600 border border-rose-200"
-                            : "bg-neutral-100 text-neutral-700"
-                        }`}
-                      >
-                        {p.return_rate}%
-                      </span>
-                      <span className="block text-[10px] text-neutral-400 font-normal mt-0.5">
-                        ({p.return_count}건 반품)
-                      </span>
-                    </td>
-
-                    {/* 구매전환율 (CVR) */}
-                    <td className="py-3.5 px-4 text-right font-extrabold text-neutral-900">
-                      <span className="text-neutral-950 text-xs font-black">
-                        {p.cvr}%
-                      </span>
-                    </td>
-
-                    {/* 객단가 (ATV) */}
-                    <td className="py-3.5 px-4 text-right font-bold text-neutral-800">
-                      ₩{p.atv.toLocaleString()}
-                    </td>
-                  </tr>
-                ))
+                      {/* 객단가 (ATV) */}
+                      <td className="py-3.5 px-4 text-right text-neutral-800 font-bold">
+                        ₩{r.atv.toLocaleString()}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
