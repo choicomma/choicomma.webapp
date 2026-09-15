@@ -326,7 +326,7 @@ export function CustomersManagement({
                     <td className="py-4 px-5 font-bold font-mono text-neutral-950">
                       ₩ {cust.totalSpent.toLocaleString()}
                     </td>
-                    <td className="py-4 px-5 font-bold font-mono text-emerald-700">
+                    <td className="py-4 px-5 font-bold font-mono text-blue-600">
                       ₩ {cust.points.toLocaleString()}
                     </td>
                     <td className="py-4 px-5 text-xs text-neutral-500 font-mono">
