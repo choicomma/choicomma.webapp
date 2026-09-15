@@ -6369,7 +6369,7 @@ export default function AdminPage() {
                       title="입력한 금액만큼 적립금을 즉시 지급합니다"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>적립금 지급</span>
+                      <span>지급</span>
                     </button>
                     <button
                       type="button"
@@ -6378,7 +6378,7 @@ export default function AdminPage() {
                       title="입력한 금액만큼 적립금을 즉시 차감합니다"
                     >
                       <Minus className="w-3.5 h-3.5" />
-                      <span>적립금 차감</span>
+                      <span>차감</span>
                     </button>
                   </div>
                 </div>
