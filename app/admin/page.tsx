@@ -6316,9 +6316,9 @@ export default function AdminPage() {
 
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">
-                  배송지 주소 (수정 불가)
+                  배송지 주소
                 </label>
-                <div className="w-full bg-neutral-100/90 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-600 font-medium select-all cursor-not-allowed">
+                <div className="w-full bg-neutral-100/90 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-700 font-medium select-all cursor-default">
                   {editingCustomer.address || editCustAddress || "등록된 배송지 주소가 없습니다."}
                 </div>
               </div>
