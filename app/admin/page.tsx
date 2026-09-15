@@ -2630,7 +2630,7 @@ export default function AdminPage() {
             />
           )}
 
-          {/* TAB: REVENUE MANAGEMENT */}
+          {/* TAB: REVENUE MANAGEMENT (VISITORS & NET SALES ANALYTICS) */}
           {activeTab === "revenue" && (
             <RevenueManagement
               revenueSelectedMonth={revenueSelectedMonth}
@@ -2640,6 +2640,8 @@ export default function AdminPage() {
               revenueSearchQuery={revenueSearchQuery}
               setRevenueSearchQuery={setRevenueSearchQuery}
               triggerToast={triggerToast}
+              productsList={productsList}
+              shipmentsList={shipmentsList}
             />
           )}
 
