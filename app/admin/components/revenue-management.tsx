@@ -84,7 +84,7 @@ interface RevenueManagementProps {
   shipmentsList?: any[];
 }
 
-export function RevenueManagement({ triggerToast }: RevenueManagementProps) {
+export function RevenueManagement({ triggerToast, shipmentsList = [] }: RevenueManagementProps) {
   // 1. 대시보드 뷰 탭: 'period'(기간별 매출통계) vs 'items'(아이템별 매출통계)
   const [activeTab, setActiveTab] = useState<ViewTab>("period");
 

@@ -135,40 +135,60 @@ export async function POST(req: Request) {
           const rawPkgIndex = order.pkgIndex ?? (orderId.match(/-(\d+)$/) ? parseInt(orderId.match(/-(\d+)$/)![1], 10) : null);
           const targetPkgIndex = typeof rawPkgIndex === "number" && !isNaN(rawPkgIndex) ? rawPkgIndex : null;
 
-          // 1. orders 테이블 업데이트 (id 또는 order_id / orderNumber 일치 레코드)
+          // 1. orders 테이블 업데이트 (id 또는 orderNumber 일치 레코드: 운송장번호 저장 및 상태 '배송 중' 반영)
           try {
-            const ordUpdates: Record<string, any> = {
-              tracking_number: trackingNumber,
-              status: "배송 중",
-              updated_at: new Date().toISOString(),
-            };
-
             for (const targetOrdKey of [baseOrderId, orderId]) {
+              // 1) trackingNumber, status 컬럼 업데이트 시도
+              let updateSuccess = false;
+
               const { error: err1, data: r1 } = await supabaseServer
                 .from("orders")
-                .update(ordUpdates)
-                .eq("id", targetOrdKey)
+                .update({
+                  trackingNumber: trackingNumber,
+                  status: "배송 중",
+                  updated_at: new Date().toISOString(),
+                })
+                .or(`id.eq.${targetOrdKey},orderNumber.eq.${targetOrdKey}`)
                 .select();
 
-              if (err1 && err1.code === "42703") {
-                await supabaseServer
+              if (!err1 && r1 && r1.length > 0) {
+                updateSuccess = true;
+              } else if (err1 && (err1.code === "42703" || err1.code === "PGRST204" || err1.message?.includes("column"))) {
+                // 2) tracking_number (snake_case) 컬럼 시도
+                const { error: err2, data: r2 } = await supabaseServer
                   .from("orders")
                   .update({
-                    trackingNumber: trackingNumber,
+                    tracking_number: trackingNumber,
                     status: "배송 중",
                     updated_at: new Date().toISOString(),
                   })
-                  .eq("id", targetOrdKey);
-                break;
-              } else if (r1 && r1.length > 0) {
-                break;
-              } else {
-                const { data: r2 } = await supabaseServer
-                  .from("orders")
-                  .update(ordUpdates)
-                  .eq("order_id", targetOrdKey)
+                  .or(`id.eq.${targetOrdKey},orderNumber.eq.${targetOrdKey}`)
                   .select();
-                if (r2 && r2.length > 0) break;
+
+                if (!err2 && r2 && r2.length > 0) {
+                  updateSuccess = true;
+                }
+              }
+
+              // 3) orders 테이블에 별도 tracking 컬럼이 없는 경우 orderMemo 컬럼에 운송장번호 및 배송상태 기록
+              if (!updateSuccess) {
+                const memoStamp = `[CJ대한통운: ${trackingNumber}] [상태: 배송 중]`;
+                const { error: memoErr, data: memoData } = await supabaseServer
+                  .from("orders")
+                  .update({
+                    orderMemo: memoStamp,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .or(`id.eq.${targetOrdKey},orderNumber.eq.${targetOrdKey}`)
+                  .select();
+
+                if (!memoErr && memoData && memoData.length > 0) {
+                  updateSuccess = true;
+                }
+              }
+
+              if (updateSuccess) {
+                break;
               }
             }
           } catch (ordErr) {
