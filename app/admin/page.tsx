@@ -6385,7 +6385,6 @@ export default function AdminPage() {
 
                 {/* 빠른 금액 증액 칩 */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[11px] text-neutral-400 font-medium mr-0.5">빠른 금액:</span>
                   {[1000, 5000, 10000, 50000].map((quick) => (
                     <button
                       key={quick}
@@ -6399,15 +6398,6 @@ export default function AdminPage() {
                       +{quick.toLocaleString()}원
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditCustPointAmount(String(editingCustomer.points || 0));
-                    }}
-                    className="text-[11px] font-bold px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-lg transition-colors cursor-pointer"
-                  >
-                    보유전액({Number(editingCustomer.points || 0).toLocaleString()}원)
-                  </button>
                   {editCustPointAmount && (
                     <button
                       type="button"
