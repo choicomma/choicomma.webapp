@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Barcode from "react-barcode";
-import { Printer, CheckCircle2, HelpCircle, X } from "lucide-react";
+import { Printer, CheckCircle2, HelpCircle, X, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 export interface PrintData {
   orderId: string;
@@ -46,10 +47,37 @@ export function CjLabelPrint({
   const [isPrinting, setIsPrinting] = useState(false);
   const [showKioskGuide, setShowKioskGuide] = useState(false);
 
+  // 로컬 다이렉트 프린트 브릿지 (ChoicommaPrintBridge) 연결 상태
+  const [bridgeStatus, setBridgeStatus] = useState<"checking" | "connected" | "disconnected">("checking");
+  const [bridgePrinterName, setBridgePrinterName] = useState<string>("Xprinter XP-DT108B LABEL");
+
+  const checkBridgeStatus = useCallback(async () => {
+    setBridgeStatus("checking");
+    try {
+      const res = await fetch("http://localhost:18080/health", {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) throw new Error("HTTP error");
+      const json = await res.json();
+      if (json?.status === "ok" && json?.xprinterDetected) {
+        setBridgeStatus("connected");
+        if (json.xprinterName) setBridgePrinterName(json.xprinterName);
+        return true;
+      }
+      setBridgeStatus("disconnected");
+      return false;
+    } catch {
+      setBridgeStatus("disconnected");
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     setMounted(true);
-    // 미리보기 모달이 열리면 자동으로 인쇄창이 뜨지 않고,
-    // 사용자가 미리보기를 확인한 뒤 [인쇄하기]를 누르면 출력되도록 처리합니다.
+    checkBridgeStatus();
+
+    // 서버 기본 프린터 설정 상태 조회
     fetch("/api/admin/print/printer-config")
       .then((r) => r.json())
       .then((res) => {
@@ -62,7 +90,7 @@ export function CjLabelPrint({
         }
       })
       .catch(() => {});
-  }, []);
+  }, [checkBridgeStatus]);
 
   const senderName = "주식회사 초이콤마";
   const senderPhone = "02-579-1171";
@@ -229,8 +257,52 @@ export function CjLabelPrint({
 
   const handlePrintToXprinter = async () => {
     setIsPrinting(true);
+
+    // 1. 초이콤마 다이렉트 프린트 브릿지 (ChoicommaPrintBridge) 연결 시: 라벨 캡처 후 18080 포트로 직접 전송
+    if (bridgeStatus === "connected") {
+      try {
+        const html2canvas = (await import("html2canvas")).default;
+        const images: string[] = [];
+
+        for (let i = 0; i < printList.length; i++) {
+          const el = document.getElementById(`capture-label-sheet-${i}`);
+          if (el) {
+            const canvas = await html2canvas(el, {
+              scale: 2.11, // 203 DPI 열전사 라벨 규격 (123mm x 100mm = 983px x 800px)
+              backgroundColor: "#ffffff",
+              logging: false,
+              useCORS: true,
+            });
+            images.push(canvas.toDataURL("image/png"));
+          }
+        }
+
+        if (images.length > 0) {
+          const res = await fetch("http://localhost:18080/print", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              printerName: bridgePrinterName || "Xprinter XP-DT108B LABEL",
+              images,
+            }),
+          });
+
+          const json = await res.json();
+          if (json?.success) {
+            toast.success(`Xprinter로 송장 ${json.count}건 출력이 정상 전송되었습니다.`);
+            setIsPrinting(false);
+            onClose();
+            return;
+          }
+        }
+      } catch (bridgeErr) {
+        console.warn("Direct bridge print failed, falling back to browser print:", bridgeErr);
+        toast.info("다이렉트 출력 연결 실패로 일반 브라우저 인쇄 모드로 전환합니다.");
+      }
+    }
+
+    // 2. 브릿지 미연결 또는 실패 시: 일반 브라우저 iframe 인쇄 모드로 폴백
     try {
-      // Xprinter를 Windows 기본 라벨 프린터로 활성화
       await fetch("/api/admin/print/printer-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -252,7 +324,7 @@ export function CjLabelPrint({
           <div className="flex flex-wrap justify-between w-full items-center px-6 py-3 bg-white border-b border-neutral-200 gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl">🖨️</span>
+                <Printer className="w-5 h-5 text-blue-600 shrink-0" />
                 <h2 className="text-base font-bold text-neutral-900">
                   CJ대한통운 1.5인치 표준운송장 출력 ({printList.length}건)
                 </h2>
@@ -267,13 +339,46 @@ export function CjLabelPrint({
 
             {/* Controls */}
             <div className="flex items-center gap-2">
-              {/* Xprinter Status Badge */}
-              <div
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg shadow-2xs"
-                title="회사 전용 라벨 프린터: Xprinter XP-DT108WKR (XP-DT108B LABEL)"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="font-bold">Xprinter (XP-DT108WKR)</span>
+              {/* Bridge Connection Status Badge (No emojis) */}
+              <div className="flex items-center gap-1.5">
+                {bridgeStatus === "connected" ? (
+                  <div
+                    className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg shadow-2xs"
+                    title="초이콤마 다이렉트 프린트 브릿지 연결됨 (18080 포트) - 브라우저 인쇄창 없이 Xprinter로 즉시 고속 출력됩니다."
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span>다이렉트 출력 준비완료</span>
+                    <span className="text-[10px] text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded font-mono font-normal">
+                      {bridgePrinterName}
+                    </span>
+                  </div>
+                ) : bridgeStatus === "checking" ? (
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 border border-neutral-200 text-neutral-600 text-xs font-medium rounded-lg"
+                    title="다이렉트 프린트 브릿지 연결 상태 확인 중"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-neutral-400 animate-pulse shrink-0" />
+                    <span>연결 확인 중...</span>
+                  </div>
+                ) : (
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 border border-neutral-200 text-neutral-700 text-xs font-medium rounded-lg"
+                    title="로컬 다이렉트 브릿지 미실행 - 일반 브라우저 인쇄창을 통해 출력됩니다."
+                  >
+                    <span className="w-2 h-2 rounded-full bg-neutral-400 shrink-0" />
+                    <span>일반 인쇄 모드</span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => checkBridgeStatus()}
+                  title="브릿지 연결 상태 다시 확인"
+                  className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg border border-neutral-200 transition-colors cursor-pointer"
+                  aria-label="브릿지 재연결 확인"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${bridgeStatus === "checking" ? "animate-spin" : ""}`} />
+                </button>
               </div>
 
               {/* Paper Mode Toggle */}
@@ -334,7 +439,7 @@ export function CjLabelPrint({
                 type="button"
                 onClick={() => setShowKioskGuide(true)}
                 className="p-2 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-neutral-200 text-xs transition-colors cursor-pointer"
-                title="창 없이 바로 출력(무인쇄창 모드) 설정 방법 안내"
+                title="출력 가이드 안내"
               >
                 <HelpCircle className="w-4 h-4" />
               </button>
@@ -343,10 +448,16 @@ export function CjLabelPrint({
                 type="button"
                 onClick={handlePrintToXprinter}
                 disabled={isPrinting}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm cursor-pointer active:scale-95 disabled:opacity-60"
               >
                 <Printer className="w-4 h-4" />
-                <span>인쇄하기</span>
+                <span>
+                  {isPrinting
+                    ? "출력 중..."
+                    : bridgeStatus === "connected"
+                    ? "즉시 인쇄"
+                    : "인쇄하기"}
+                </span>
               </button>
               <button
                 type="button"
@@ -485,14 +596,52 @@ export function CjLabelPrint({
           document.body
         )}
 
-      {/* 무인쇄창(Silent Printing) 설정 가이드 팝업 */}
+      {/* 3. 다이렉트 고속 인쇄 캡처 전용 오프스크린 컨테이너 (실제 라벨 123mm x 100mm 100% 규격) */}
+      <div
+        id="cj-direct-print-capture-container"
+        aria-hidden="true"
+        className="fixed pointer-events-none opacity-0 -z-50 overflow-hidden"
+        style={{
+          left: "-99999px",
+          top: 0,
+          width: "123mm",
+        }}
+      >
+        {printList.map((item, idx) => (
+          <div
+            key={`capture-${idx}`}
+            id={`capture-label-sheet-${idx}`}
+            style={{
+              width: "123mm",
+              height: "100mm",
+              overflow: "hidden",
+              backgroundColor: "#ffffff",
+            }}
+          >
+            <StandardCjLabel
+              item={item}
+              today={today}
+              maskName={maskName}
+              maskPhone={maskPhone}
+              senderName={senderName}
+              senderPhone={senderPhone}
+              senderAddr={senderAddr}
+              isPreprinted={paperMode === "preprinted"}
+              pageIndex={idx + 1}
+              totalPages={printList.length}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* 송장 인쇄 안내 가이드 팝업 */}
       {showKioskGuide && (
         <div className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-neutral-200">
             <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
               <h3 className="font-bold text-base text-neutral-900 flex items-center gap-2">
-                <span>⚡</span>
-                <span>클릭 즉시 라벨프린터로 직행 (무인쇄창 모드)</span>
+                <Printer className="w-5 h-5 text-blue-600" />
+                <span>CJ 송장 라벨 인쇄 안내</span>
               </h3>
               <button
                 type="button"
@@ -503,20 +652,21 @@ export function CjLabelPrint({
               </button>
             </div>
             <div className="py-4 text-xs text-neutral-600 space-y-3 leading-relaxed">
-              <p className="font-medium text-neutral-800">
-                인쇄 대화상자(미리보기 창)를 거치지 않고, <strong>[인쇄하기]</strong> 클릭 1초 만에 <strong>Xprinter(XP-DT108WKR)</strong>에서 즉시 송장이 배출되길 원하시면 아래 설정을 적용해 보세요:
-              </p>
-              <div className="bg-neutral-50 p-3.5 rounded-xl border border-neutral-200 font-mono text-[11px] text-neutral-700 space-y-2">
-                <div>1. 바탕화면의 <strong>Chrome 바로가기</strong> 우클릭 ➔ <strong>[속성]</strong> 클릭</div>
-                <div>2. <strong>[대상(T)]</strong> 입력창 맨 끝에 한 칸 띄우고 다음 문구 추가:</div>
-                <div className="bg-neutral-900 text-emerald-400 p-2.5 rounded-lg font-bold">
-                  --kiosk-printing
+              <div className="bg-blue-50 border border-blue-200 p-3.5 rounded-xl text-blue-900 space-y-1.5">
+                <div className="font-bold text-sm">초이콤마 다이렉트 프린트 브릿지 (무인쇄창 고속 출력)</div>
+                <p className="text-xs text-blue-800 leading-normal">
+                  메인 PC에 초이콤마 다이렉트 프린트 브릿지(포트 18080)가 실행 중이면, 브라우저 인쇄 대화상자 없이 <strong>[즉시 인쇄]</strong> 클릭 즉시 <strong>Xprinter(XP-DT108B LABEL)</strong>로 0.5초 만에 직접 출력됩니다.
+                </p>
+                <div className="text-[11px] text-blue-700 font-medium">
+                  • 상태: {bridgeStatus === "connected" ? "다이렉트 출력 연결됨 (정상 작동 중)" : "일반 브라우저 인쇄 모드로 대기 중"}
                 </div>
-                <div>3. <strong>[확인]</strong>을 누른 후 해당 바로가기로 접속하시면 완료!</div>
               </div>
-              <p className="text-neutral-500 text-[11px]">
-                ※ 이미 시스템에서 기본 프린터를 Xprinter(XP-DT108B LABEL)로 자동 지정해 두었으므로, 위 옵션을 넣으시면 아무런 창도 뜨지 않고 라벨프린터에서 바로 송장이 나옵니다.
-              </p>
+
+              <div className="bg-neutral-50 p-3.5 rounded-xl border border-neutral-200 font-mono text-[11px] text-neutral-700 space-y-2">
+                <div className="font-bold text-neutral-900 font-sans">일반 브라우저 인쇄 모드 안내:</div>
+                <div>1. 다이렉트 브릿지가 꺼져 있거나 외부 기기(노트북 등)에서는 기본 브라우저 인쇄창이 호출됩니다.</div>
+                <div>2. 인쇄창에서 대상을 <strong>Xprinter XP-DT108B LABEL</strong>, 여백을 <strong>없음</strong>으로 선택해 주세요.</div>
+              </div>
             </div>
             <div className="flex justify-end pt-2">
               <button
