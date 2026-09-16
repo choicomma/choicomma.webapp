@@ -804,10 +804,6 @@ export function OrdersManagement({
       return;
     }
 
-    if (!window.confirm(`총 ${newPrintData.length}건의 송장 라벨을 인쇄하시겠습니까?\n(분할 배송 건은 박스별로 개별 라벨이 출력됩니다)`)) {
-      return;
-    }
-
     setCjPrintData?.(newPrintData);
   };
 
@@ -1639,25 +1635,23 @@ export function OrdersManagement({
                             <button
                               type="button"
                               onClick={() => {
-                                if (window.confirm(`[${ship.orderId}] 주문의 CJ대한통운 송장 라벨을 인쇄하시겠습니까?`)) {
-                                  setCjPrintData?.([{
-                                    orderId: ship.orderId,
-                                    recipient: ship.recipient,
-                                    phone: ship.phone,
-                                    zipCode: ship.zipCode,
-                                    address: ship.address,
-                                    detailAddress: ship.detailAddress,
-                                    items: ship.items,
-                                    shippingMemo: ship.shippingMemo,
-                                    trackingNumber: ship.trackingNumber,
-                                    clsfCd: (ship as any).cjClsfCd || (ship as any).clsfCd || (ship.packages?.[0] as any)?.cjClsfCd || (ship.orderId?.includes("REAL") ? "5R67" : "4W44"),
-                                    subClsfCd: (ship as any).cjSubClsfCd || (ship as any).subClsfCd || (ship.packages?.[0] as any)?.cjSubClsfCd || (ship.orderId?.includes("REAL") ? "1e" : "-4g"),
-                                    clldlvempNickNm: (ship as any).cjClldlvempNickNm || (ship as any).clldlvempNickNm || (ship.packages?.[0] as any)?.cjClldlvempNickNm || (ship.orderId?.includes("REAL") ? "E04-1구역" : "A01-1구역"),
-                                    clsfAddr: (ship as any).cjClsfAddr || (ship as any).clsfAddr || (ship.packages?.[0] as any)?.cjClsfAddr || (ship.orderId?.includes("REAL") ? "태평1 31 서울시청" : (ship.detailAddress || "")),
-                                    clldlvBranNm: (ship as any).cjClldlvBranNm || (ship as any).clldlvBranNm || (ship.packages?.[0] as any)?.cjClldlvBranNm || (ship.orderId?.includes("REAL") ? "중구무교" : "대한통운"),
-                                    p2pCd: (ship as any).cjP2pCd || (ship as any).p2pCd || (ship.packages?.[0] as any)?.cjP2pCd || "P1",
-                                  }]);
-                                }
+                                setCjPrintData?.([{
+                                  orderId: ship.orderId,
+                                  recipient: ship.recipient,
+                                  phone: ship.phone,
+                                  zipCode: ship.zipCode,
+                                  address: ship.address,
+                                  detailAddress: ship.detailAddress,
+                                  items: ship.items,
+                                  shippingMemo: ship.shippingMemo,
+                                  trackingNumber: ship.trackingNumber,
+                                  clsfCd: (ship as any).cjClsfCd || (ship as any).clsfCd || (ship.packages?.[0] as any)?.cjClsfCd || (ship.orderId?.includes("REAL") ? "5R67" : "4W44"),
+                                  subClsfCd: (ship as any).cjSubClsfCd || (ship as any).subClsfCd || (ship.packages?.[0] as any)?.cjSubClsfCd || (ship.orderId?.includes("REAL") ? "1e" : "-4g"),
+                                  clldlvempNickNm: (ship as any).cjClldlvempNickNm || (ship as any).clldlvempNickNm || (ship.packages?.[0] as any)?.cjClldlvempNickNm || (ship.orderId?.includes("REAL") ? "E04-1구역" : "A01-1구역"),
+                                  clsfAddr: (ship as any).cjClsfAddr || (ship as any).clsfAddr || (ship.packages?.[0] as any)?.cjClsfAddr || (ship.orderId?.includes("REAL") ? "태평1 31 서울시청" : (ship.detailAddress || "")),
+                                  clldlvBranNm: (ship as any).cjClldlvBranNm || (ship as any).clldlvBranNm || (ship.packages?.[0] as any)?.cjClldlvBranNm || (ship.orderId?.includes("REAL") ? "중구무교" : "대한통운"),
+                                  p2pCd: (ship as any).cjP2pCd || (ship as any).p2pCd || (ship.packages?.[0] as any)?.cjP2pCd || "P1",
+                                }]);
                               }}
                               className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
                               aria-label="CJ 송장 출력"

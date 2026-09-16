@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import Barcode from "react-barcode";
+import { Printer, CheckCircle2, HelpCircle, X } from "lucide-react";
 
 export interface PrintData {
   orderId: string;
@@ -33,17 +34,34 @@ export function CjLabelPrint({
   const [mounted, setMounted] = useState(false);
   const [zoom, setZoom] = useState<number>(0.85);
   const [paperMode, setPaperMode] = useState<"blank" | "preprinted">("preprinted");
-  const printTriggered = useRef(false);
+  const [printerInfo, setPrinterInfo] = useState<{
+    detected: boolean;
+    name: string;
+    isDefault: boolean;
+  }>({
+    detected: true,
+    name: "Xprinter XP-DT108B LABEL",
+    isDefault: true,
+  });
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [showKioskGuide, setShowKioskGuide] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    if (!printTriggered.current) {
-      printTriggered.current = true;
-      const timer = setTimeout(() => {
-        printViaIframe();
-      }, 700);
-      return () => clearTimeout(timer);
-    }
+    // 미리보기 모달이 열리면 자동으로 인쇄창이 뜨지 않고,
+    // 사용자가 미리보기를 확인한 뒤 [인쇄하기]를 누르면 출력되도록 처리합니다.
+    fetch("/api/admin/print/printer-config")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res?.success) {
+          setPrinterInfo({
+            detected: res.xprinterDetected,
+            name: res.xprinterName || "Xprinter XP-DT108B LABEL",
+            isDefault: res.isXprinterDefault,
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const senderName = "주식회사 초이콤마";
@@ -209,6 +227,22 @@ export function CjLabelPrint({
     }, 500);
   };
 
+  const handlePrintToXprinter = async () => {
+    setIsPrinting(true);
+    try {
+      // Xprinter를 Windows 기본 라벨 프린터로 활성화
+      await fetch("/api/admin/print/printer-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ printerName: printerInfo.name }),
+      });
+    } catch (e) {
+      console.warn("Set default printer failed, continuing with print:", e);
+    }
+    printViaIframe();
+    setIsPrinting(false);
+  };
+
   return (
     <>
       {/* 1. 화면 전용 미리보기 모달 UI */}
@@ -223,7 +257,7 @@ export function CjLabelPrint({
                   CJ대한통운 1.5인치 표준운송장 출력 ({printList.length}건)
                 </h2>
                 <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded">
-                  가로 123mm × 세로 100mm (가로형)
+                  가로 123mm × 세로 100mm
                 </span>
               </div>
               <p className="text-xs text-neutral-500 mt-0.5">
@@ -233,6 +267,15 @@ export function CjLabelPrint({
 
             {/* Controls */}
             <div className="flex items-center gap-2">
+              {/* Xprinter Status Badge */}
+              <div
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg shadow-2xs"
+                title="회사 전용 라벨 프린터: Xprinter XP-DT108WKR (XP-DT108B LABEL)"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="font-bold">Xprinter (XP-DT108WKR)</span>
+              </div>
+
               {/* Paper Mode Toggle */}
               <div className="flex items-center bg-neutral-100 rounded-lg p-1 border border-neutral-200 text-xs">
                 <button
@@ -286,17 +329,29 @@ export function CjLabelPrint({
                 </button>
               </div>
 
+              {/* Kiosk Mode Tip Guide Trigger */}
               <button
                 type="button"
-                onClick={printViaIframe}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+                onClick={() => setShowKioskGuide(true)}
+                className="p-2 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-neutral-200 text-xs transition-colors cursor-pointer"
+                title="창 없이 바로 출력(무인쇄창 모드) 설정 방법 안내"
               >
+                <HelpCircle className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrintToXprinter}
+                disabled={isPrinting}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
+              >
+                <Printer className="w-4 h-4" />
                 <span>인쇄하기</span>
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3.5 py-2 bg-neutral-200 hover:bg-neutral-300 text-neutral-700 text-sm font-semibold rounded-lg transition-colors"
+                className="px-3.5 py-2 bg-neutral-200 hover:bg-neutral-300 text-neutral-700 text-sm font-semibold rounded-lg transition-colors cursor-pointer"
               >
                 닫기
               </button>
@@ -429,6 +484,52 @@ export function CjLabelPrint({
           </div>,
           document.body
         )}
+
+      {/* 무인쇄창(Silent Printing) 설정 가이드 팝업 */}
+      {showKioskGuide && (
+        <div className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-neutral-200">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+              <h3 className="font-bold text-base text-neutral-900 flex items-center gap-2">
+                <span>⚡</span>
+                <span>클릭 즉시 라벨프린터로 직행 (무인쇄창 모드)</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowKioskGuide(false)}
+                className="text-neutral-400 hover:text-neutral-600 p-1 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="py-4 text-xs text-neutral-600 space-y-3 leading-relaxed">
+              <p className="font-medium text-neutral-800">
+                인쇄 대화상자(미리보기 창)를 거치지 않고, <strong>[인쇄하기]</strong> 클릭 1초 만에 <strong>Xprinter(XP-DT108WKR)</strong>에서 즉시 송장이 배출되길 원하시면 아래 설정을 적용해 보세요:
+              </p>
+              <div className="bg-neutral-50 p-3.5 rounded-xl border border-neutral-200 font-mono text-[11px] text-neutral-700 space-y-2">
+                <div>1. 바탕화면의 <strong>Chrome 바로가기</strong> 우클릭 ➔ <strong>[속성]</strong> 클릭</div>
+                <div>2. <strong>[대상(T)]</strong> 입력창 맨 끝에 한 칸 띄우고 다음 문구 추가:</div>
+                <div className="bg-neutral-900 text-emerald-400 p-2.5 rounded-lg font-bold">
+                  --kiosk-printing
+                </div>
+                <div>3. <strong>[확인]</strong>을 누른 후 해당 바로가기로 접속하시면 완료!</div>
+              </div>
+              <p className="text-neutral-500 text-[11px]">
+                ※ 이미 시스템에서 기본 프린터를 Xprinter(XP-DT108B LABEL)로 자동 지정해 두었으므로, 위 옵션을 넣으시면 아무런 창도 뜨지 않고 라벨프린터에서 바로 송장이 나옵니다.
+              </p>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setShowKioskGuide(false)}
+                className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-bold cursor-pointer"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
