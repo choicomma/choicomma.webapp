@@ -667,10 +667,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F5] text-neutral-900 flex flex-col justify-between p-6 relative font-sans">
-      {/* Toast Notification (Top Center Floating) */}
+      {/* Toast Notification (Top Center Floating - Compact Blue Pill) */}
       {toastMsg && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-neutral-900 text-white font-bold px-6 py-3.5 rounded-xl shadow-2xl flex items-center justify-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 max-w-lg w-auto text-center border border-neutral-800">
-          <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-lg shadow-blue-900/25 flex items-center justify-center gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200 max-w-md w-auto text-center border border-blue-400/40">
+          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-blue-100" />
           <span>{toastMsg}</span>
         </div>
       )}

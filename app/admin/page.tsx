@@ -2149,10 +2149,10 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F5] text-neutral-900 flex flex-col font-sans" suppressHydrationWarning>
-      {/* Toast Notification */}
+      {/* Toast Notification (Compact Blue Pill) */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 bg-neutral-950 text-white font-bold px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+        <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-lg shadow-blue-900/25 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200 border border-blue-400/40">
+          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-blue-100" />
           <span>{toastMessage}</span>
         </div>
       )}
