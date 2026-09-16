@@ -1193,11 +1193,20 @@ export function OrdersManagement({
 
       {/* Integrated Orders & Shipments Table */}
       <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-neutral-700">
-            <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
+        <div className="overflow-x-auto relative">
+          <table className="w-full text-left text-sm text-neutral-700 min-w-[1300px]">
+            <colgroup>
+              <col className="w-[48px]" />
+              <col className="w-[220px]" />
+              <col className="w-[280px]" />
+              <col className="w-[300px]" />
+              <col className="w-[180px]" />
+              <col className="w-[120px]" />
+              <col className="w-[170px]" />
+            </colgroup>
+            <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200 sticky top-0 z-10">
               <tr>
-                <th className="py-3.5 px-4 w-12 text-center">
+                <th className="py-3.5 px-4 w-[48px] text-center">
                   <input 
                     type="checkbox" 
                     className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-neutral-950 cursor-pointer"
@@ -1215,12 +1224,12 @@ export function OrdersManagement({
                     }}
                   />
                 </th>
-                <th className="py-3.5 px-4 min-w-[110px] whitespace-nowrap">주문/배송번호</th>
-                <th className="py-3.5 px-4 min-w-[180px]">수령인 / 배송지 주소</th>
-                <th className="py-3.5 px-4 min-w-[260px]">주문 상품</th>
-                <th className="py-3.5 px-4 min-w-[140px]">택배사 / 운송장 번호</th>
-                <th className="py-3.5 px-4 min-w-[100px] whitespace-nowrap">진행 상태</th>
-                <th className="py-3.5 px-4 text-right min-w-[80px] whitespace-nowrap">관리</th>
+                <th className="py-3.5 px-4 w-[220px] whitespace-nowrap">주문/배송번호</th>
+                <th className="py-3.5 px-4 w-[280px]">수령인 / 배송지 주소</th>
+                <th className="py-3.5 px-4 w-[300px]">주문 상품</th>
+                <th className="py-3.5 px-4 w-[180px]">택배사 / 운송장 번호</th>
+                <th className="py-3.5 px-4 w-[120px] whitespace-nowrap">진행 상태</th>
+                <th className="py-3.5 px-4 text-right w-[170px] whitespace-nowrap sticky right-0 bg-neutral-50 shadow-[-6px_0_10px_-2px_rgba(0,0,0,0.06)] z-20">관리</th>
               </tr>
             </thead>
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
@@ -1232,8 +1241,8 @@ export function OrdersManagement({
                 </tr>
               ) : (
                 paginatedShipments.map((ship) => (
-                  <tr key={ship.id} className="hover:bg-neutral-50/70 transition-colors">
-                    <td className="py-4 px-4 text-center">
+                  <tr key={ship.id} className="hover:bg-neutral-50/70 transition-colors group">
+                    <td className="py-4 px-4 text-center w-[48px]">
                       <input 
                         type="checkbox" 
                         className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-neutral-950 cursor-pointer"
@@ -1246,7 +1255,7 @@ export function OrdersManagement({
                         }}
                       />
                     </td>
-                    <td className="py-4 px-4 align-middle whitespace-nowrap">
+                    <td className="py-4 px-4 align-top w-[220px]">
                       <div>
                         {/* 📦 합배송 대상 감지 배지 or 합배송 완료 표시 */}
                         {(() => {
@@ -1302,52 +1311,52 @@ export function OrdersManagement({
                           return null;
                         })()}
 
-                        <p className="font-extrabold text-neutral-950 text-xs font-mono">
+                        <p className="font-extrabold text-neutral-950 text-xs font-mono break-all" title={ship.orderId}>
                           {ship.orderId}
                         </p>
-                        <span className="text-[10px] text-neutral-600 font-mono block">
+                        <span className="text-[10px] text-neutral-400 font-mono truncate block max-w-[200px]" title={ship.id}>
                           {ship.id}
                         </span>
-                        <div className="mt-1.5 flex items-center gap-1.5">
+                        <div className="mt-1.5 flex items-center gap-1.5 min-w-0">
                           <span className="inline-flex items-center text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700 border border-neutral-200 shrink-0">
                             주문자
                           </span>
-                          <span className="text-xs font-bold text-neutral-950">
+                          <span className="text-xs font-bold text-neutral-950 truncate max-w-[130px]" title={ship.ordererName || (ship as any).customerName || (ship as any).customer || ship.recipient || "고객님"}>
                             {ship.ordererName || (ship as any).customerName || (ship as any).customer || ship.recipient || "고객님"}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4 align-middle">
+                    <td className="py-4 px-4 align-top w-[280px]">
                       <div>
-                        <p className="font-bold text-neutral-950 text-xs">
-                          {ship.recipient}
-                          <span className="ml-1.5 font-normal text-neutral-600 text-[11px] font-mono">
+                        <p className="font-bold text-neutral-950 text-xs flex items-center flex-wrap gap-1">
+                          <span>{ship.recipient}</span>
+                          <span className="font-normal text-neutral-600 text-[11px] font-mono">
                             ({ship.phone})
                           </span>
                         </p>
-                        <div className="text-xs text-neutral-700 mt-1 max-w-[260px] leading-relaxed">
+                        <div className="text-xs text-neutral-700 mt-1 max-w-[260px] leading-relaxed break-keep">
                           {ship.zipCode && (
-                            <span className="font-mono text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded mr-1 font-bold border border-neutral-200">
+                            <span className="font-mono text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded mr-1 font-bold border border-neutral-200 shrink-0">
                               [{ship.zipCode}]
                             </span>
                           )}
-                          <span className="font-medium text-neutral-900" title={`${ship.address || ""} ${ship.detailAddress || ""}`.trim()}>
+                          <span className="font-medium text-neutral-900 break-words" title={`${ship.address || ""} ${ship.detailAddress || ""}`.trim()}>
                             {ship.address || <span className="text-neutral-400 italic">배송지 미입력</span>}
                           </span>
                           {ship.detailAddress && (
-                            <span className="text-neutral-500 ml-1 font-normal">
+                            <span className="text-neutral-500 ml-1 font-normal break-words">
                               {ship.detailAddress}
                             </span>
                           )}
                         </div>
                         {(ship.shippingMemo || (ship as any).deliveryMemo) && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 max-w-[280px] bg-blue-50/70 border border-blue-200/80 rounded-xl px-2.5 py-1.5 shadow-2xs">
+                          <div className="mt-2 inline-flex items-center gap-1.5 max-w-[260px] bg-blue-50/70 border border-blue-200/80 rounded-xl px-2.5 py-1.5 shadow-2xs">
                             <span className="inline-flex items-center justify-center text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-600 text-white border border-blue-600 whitespace-nowrap shrink-0 leading-tight">
                               배송요청
                             </span>
                             <span 
-                              className="text-xs text-blue-950 font-bold leading-normal break-words flex items-center"
+                              className="text-xs text-blue-950 font-bold leading-normal truncate max-w-[190px]"
                               title={ship.shippingMemo || (ship as any).deliveryMemo}
                             >
                               {ship.shippingMemo || (ship as any).deliveryMemo}
@@ -1356,9 +1365,9 @@ export function OrdersManagement({
                         )}
                       </div>
                     </td>
-                    <td className="py-4 px-4">
+                    <td className="py-4 px-4 align-top w-[300px]">
                       {ship.packages && ship.packages.length > 1 ? (
-                        <div className="space-y-2 min-w-[240px]">
+                        <div className="space-y-2 w-full max-w-[280px]">
                           {ship.packages.map((pkg: any, pi: number) => {
                             const pkgItems = parseItemLines(pkg.items);
                             return (
@@ -1381,7 +1390,7 @@ export function OrdersManagement({
                                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/product_1.webp"; }}
                                       />
                                       <div className="min-w-0 flex-1">
-                                        <p className="text-xs font-bold text-neutral-900 leading-snug">
+                                        <p className="text-xs font-bold text-neutral-900 leading-snug line-clamp-2 break-words" title={item.name}>
                                           {item.name}
                                         </p>
                                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -1403,7 +1412,7 @@ export function OrdersManagement({
                           })}
                         </div>
                       ) : (
-                        <div className="space-y-2 min-w-[240px]">
+                        <div className="space-y-2 w-full max-w-[280px]">
                           {parseItemLines(ship.items).map((item, idx) => (
                             <div key={idx} className="flex items-center gap-2.5 py-0.5">
                               <img
@@ -1413,7 +1422,7 @@ export function OrdersManagement({
                                 onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/product_1.webp"; }}
                               />
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-neutral-950 leading-snug">
+                                <p className="text-xs font-bold text-neutral-950 leading-snug line-clamp-2 break-words" title={item.name}>
                                   {item.name}
                                 </p>
                                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -1432,7 +1441,7 @@ export function OrdersManagement({
                         </div>
                       )}
                     </td>
-                    <td className="py-4 px-4 whitespace-nowrap">
+                    <td className="py-4 px-4 align-top w-[180px]">
                       <div>
                         <span className="text-xs font-bold text-neutral-900 block mb-1">{ship.carrier}</span>
                         {/* 분리배송 패키지별 운송장 및 발급 액션 */}
@@ -1544,7 +1553,7 @@ export function OrdersManagement({
                         )}
                       </div>
                     </td>
-                    <td className="py-4 px-4 whitespace-nowrap">
+                    <td className="py-4 px-4 align-top w-[120px] whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleOpenEditShipment(ship)}
@@ -1587,7 +1596,7 @@ export function OrdersManagement({
                         </span>
                       )}
                     </td>
-                    <td className="py-4 px-4 text-right whitespace-nowrap">
+                    <td className="py-4 px-4 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f9fafb] transition-colors shadow-[-6px_0_10px_-2px_rgba(0,0,0,0.06)] z-20 w-[170px]">
                       <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                         {/* 1. 주문서 출력 버튼 (툴팁 말풍선 포함) */}
                         <div className="relative group/btn flex items-center justify-center">
