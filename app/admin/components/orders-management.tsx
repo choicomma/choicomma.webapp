@@ -25,6 +25,7 @@ import {
   Boxes,
   Layers,
   Sparkles,
+  Barcode,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { CjLabelPrint } from "./cj-label-print";
@@ -1021,13 +1022,6 @@ export function OrdersManagement({
 
   const filteredShipments = React.useMemo(() => {
     const filtered = shipmentsList.filter((s) => {
-      // 1. 합배송 대상 모아보기 필터가 켜진 경우
-      if (isBundleFilterActive) {
-        if (!shipmentBundleGroupMap.has(s.id)) {
-          return false;
-        }
-      }
-
       const q = shipmentSearchQuery.toLowerCase();
       const matchesSearch =
         s.recipient?.toLowerCase().includes(q) ||
@@ -1040,7 +1034,7 @@ export function OrdersManagement({
       return matchesSearch && matchesStatus && matchesCarrier;
     });
     return sortShipmentsByNumber(filtered);
-  }, [shipmentsList, shipmentSearchQuery, shipmentStatusFilter, shipmentCarrierFilter, isBundleFilterActive, shipmentBundleGroupMap]);
+  }, [shipmentsList, shipmentSearchQuery, shipmentStatusFilter, shipmentCarrierFilter]);
 
   const totalShipmentPages = Math.ceil(filteredShipments.length / SHIPMENTS_PER_PAGE) || 1;
   const paginatedShipments = React.useMemo(() => {
@@ -1117,28 +1111,31 @@ export function OrdersManagement({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-              <button
-                type="button"
-                onClick={() => setIsBundleFilterActive((prev) => !prev)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5 ${
-                  isBundleFilterActive
-                    ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
-                    : "bg-white text-blue-700 border border-blue-300 hover:bg-blue-50"
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>{isBundleFilterActive ? "전체 주문 보기" : "해당 주문 모아보기"}</span>
-              </button>
-              {bundleGroups.length === 1 && (
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center flex-wrap">
+              {bundleGroups.length === 1 ? (
                 <button
                   type="button"
                   onClick={() => handleOpenBundleModal(bundleGroups[0])}
-                  className="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-neutral-950 hover:bg-neutral-800 text-white transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                  className="px-4 py-2.5 rounded-xl text-xs font-extrabold bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-sm hover:shadow cursor-pointer flex items-center gap-2 active:scale-95"
                 >
-                  <span>즉시 합배송 묶기</span>
+                  <Boxes className="w-4 h-4" />
+                  <span>주문 1개로 합치기</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
+              ) : (
+                bundleGroups.map((group, idx) => (
+                  <button
+                    key={group.id || idx}
+                    type="button"
+                    onClick={() => handleOpenBundleModal(group)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-xs hover:shadow cursor-pointer flex items-center gap-1.5 active:scale-95"
+                    title={`${group.recipient}님의 ${group.shipmentIds.length}건 주문을 1개로 합칩니다`}
+                  >
+                    <Boxes className="w-3.5 h-3.5" />
+                    <span>[{group.recipient}] 주문 1개로 합치기 ({group.shipmentIds.length}건)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                ))
               )}
             </div>
           </div>
@@ -1271,7 +1268,7 @@ export function OrdersManagement({
                                   title="클릭하여 48시간 이내 동일 주소지 주문들을 1박스로 합배송"
                                 >
                                   <Boxes className="w-3 h-3 text-blue-600" />
-                                  <span>📦 합배송 가능 ({bundleGroup.shipmentIds.length}건)</span>
+                                  <span>📦 주문 1개로 합치기 ({bundleGroup.shipmentIds.length}건)</span>
                                 </button>
                               </div>
                             );
@@ -1528,15 +1525,26 @@ export function OrdersManagement({
                             <ExternalLink className="w-3 h-3 text-blue-500" />
                           </a>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditShipment(ship)}
-                            className="text-xs font-mono text-neutral-700 hover:text-neutral-950 font-bold bg-neutral-100 hover:bg-neutral-200 px-2 py-0.5 rounded-md border border-neutral-300 transition-colors cursor-pointer inline-flex items-center gap-1"
-                            title="클릭하여 운송장 번호 직접 입력"
-                          >
-                            <span>미등록</span>
-                            <Pencil className="w-2.5 h-2.5 text-neutral-400" />
-                          </button>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleIssueCjLogisticsTracking?.(ship.id)}
+                              className="px-2 py-0.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-2xs cursor-pointer transition-colors inline-flex items-center gap-1 active:scale-95"
+                              title="CJ대한통운 송장 신규 발급"
+                            >
+                              <Barcode className="w-3 h-3" />
+                              <span>발급</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditShipment(ship)}
+                              className="text-xs font-mono text-neutral-600 hover:text-neutral-950 font-bold bg-neutral-100 hover:bg-neutral-200 px-1.5 py-0.5 rounded-md border border-neutral-300 transition-colors cursor-pointer inline-flex items-center gap-1"
+                              title="클릭하여 운송장 번호 직접 입력"
+                            >
+                              <span>미등록</span>
+                              <Pencil className="w-2.5 h-2.5 text-neutral-400" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </td>
@@ -1604,7 +1612,28 @@ export function OrdersManagement({
                           </div>
                         </div>
 
-                        {/* 2. CJ 송장 라벨 단건 인쇄 버튼 (송장 등록된 건) */}
+                        {/* 2. CJ 송장 신규 발급 버튼 (송장 미등록 건 또는 분할배송 중 미발급 박스 포함 건) */}
+                        {(!ship.trackingNumber || ship.trackingNumber === "-" || (ship.packages && ship.packages.some((p: any) => !p.trackingNumber || p.trackingNumber === "-"))) && (
+                          <div className="relative group/btn flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={() => handleIssueCjLogisticsTracking?.(ship.id)}
+                              className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 border border-emerald-200 hover:border-emerald-300 transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
+                              aria-label="송장 발급"
+                            >
+                              <Barcode className="w-3.5 h-3.5" />
+                            </button>
+                            {/* 호버 말풍선 */}
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover/btn:flex flex-col items-center pointer-events-none z-30 animate-in fade-in zoom-in-95 duration-150">
+                              <div className="bg-neutral-900 text-white text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap shadow-md">
+                                송장 발급
+                              </div>
+                              <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-neutral-900 -mt-px" />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 3. CJ 송장 라벨 단건 인쇄 버튼 (송장 등록된 건) */}
                         {ship.trackingNumber && ship.trackingNumber !== "-" && (
                           <div className="relative group/btn flex items-center justify-center">
                             <button
