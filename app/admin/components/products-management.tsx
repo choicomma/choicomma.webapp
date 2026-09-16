@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import {
   Package,
@@ -318,48 +318,74 @@ function TablePriceInput({
 }) {
   const formatComma = (v: number | string) => {
     const num = String(v).replace(/[^0-9]/g, "");
-    return num ? Number(num).toLocaleString() : "";
+    return num ? Number(num).toLocaleString() : "0";
   };
 
+  const [isEditing, setIsEditing] = useState(false);
   const [val, setVal] = useState(formatComma(initialPrice || 0));
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   React.useEffect(() => {
     setVal(formatComma(initialPrice || 0));
   }, [initialPrice]);
 
+  React.useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [isEditing]);
+
   const handleCommit = () => {
+    setIsEditing(false);
     const rawVal = val.replace(/[^0-9]/g, "");
     const rawOrig = String(initialPrice || 0).replace(/[^0-9]/g, "");
     if (rawVal !== rawOrig) {
       const isSuccess = onSavePrice(rawVal);
       if (isSuccess === false) {
-        // User cancelled in confirmation popup -> cleanly revert back to original price!
         setVal(formatComma(initialPrice || 0));
       }
     }
   };
 
+  if (!isEditing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsEditing(true)}
+        className="group/price inline-flex items-center justify-start font-sans font-bold text-neutral-900 hover:text-neutral-950 text-xs py-1 px-1.5 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer text-left"
+        title="클릭하여 판매가 수정"
+      >
+        <span>{formatComma(initialPrice || 0)}</span>
+      </button>
+    );
+  }
+
   return (
-    <input
-      type="text"
-      inputMode="numeric"
-      value={val}
-      onChange={(e) => {
-        const raw = e.target.value.replace(/[^0-9]/g, "");
-        setVal(raw ? Number(raw).toLocaleString() : "");
-      }}
-      onBlur={handleCommit}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          e.currentTarget.blur();
-        } else if (e.key === "Escape") {
-          setVal(formatComma(initialPrice || 0));
-          e.currentTarget.blur();
-        }
-      }}
-      className="w-28 bg-white border border-neutral-300 hover:border-neutral-600 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-lg px-2 py-1 font-bold text-neutral-950 font-mono text-xs text-right transition-all shadow-2xs cursor-text"
-      title="판매가를 입력 후 Enter 또는 바깥 클릭 시 수정 (ESC: 취소)"
-    />
+    <div className="flex items-center gap-1.5">
+      <input
+        ref={inputRef}
+        type="text"
+        inputMode="numeric"
+        value={val}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^0-9]/g, "");
+          setVal(raw ? Number(raw).toLocaleString() : "");
+        }}
+        onBlur={handleCommit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.currentTarget.blur();
+          } else if (e.key === "Escape") {
+            setVal(formatComma(initialPrice || 0));
+            setIsEditing(false);
+          }
+        }}
+        className="w-32 bg-white border border-neutral-300 hover:border-neutral-400 focus:border-neutral-950 focus:ring-1 focus:ring-neutral-950 rounded-xl px-3 py-1 font-bold text-neutral-950 font-sans text-xs text-right transition-all shadow-xs cursor-text outline-none"
+        title="판매가를 입력 후 Enter 또는 바깥 클릭 시 수정 (ESC: 취소)"
+      />
+      <span className="text-xs font-bold text-neutral-400 select-none">원</span>
+    </div>
   );
 }
 
@@ -1192,17 +1218,14 @@ export function ProductsManagement({
 
                       {/* Price Quick Edit Input */}
                       <td className="py-2 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-1">
-                          <TablePriceInput
-                            initialPrice={p.priceRange?.minVariantPrice?.amount || p.price?.amount || 0}
-                            onSavePrice={(newPrice) => {
-                              if (handleQuickUpdatePrice) {
-                                handleQuickUpdatePrice(String(p.id), newPrice);
-                              }
-                            }}
-                          />
-                          <span className="text-[10px] font-bold text-neutral-400">원</span>
-                        </div>
+                        <TablePriceInput
+                          initialPrice={p.priceRange?.minVariantPrice?.amount || p.price?.amount || 0}
+                          onSavePrice={(newPrice) => {
+                            if (handleQuickUpdatePrice) {
+                              handleQuickUpdatePrice(String(p.id), newPrice);
+                            }
+                          }}
+                        />
                       </td>
                       <td className="py-2 px-3 whitespace-nowrap relative" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1.5 relative">

@@ -23,10 +23,18 @@ import {
   GripVertical,
   RotateCcw,
   Boxes,
+  Layers,
+  Sparkles,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { CjLabelPrint } from "./cj-label-print";
 import { sortShipmentsByNumber } from "@/hooks/admin/useShipments";
+import {
+  detectBundleCandidates,
+  executeOrderMerge,
+  undoOrderMerge,
+  type BundleGroup,
+} from "@/lib/shipping/bundle-detector";
 
 interface OrdersManagementProps {
   productsList?: any[];
@@ -124,6 +132,143 @@ export function OrdersManagement({
       }) || null
     );
   }, [selectedOrderSheetShipment, customersList]);
+
+  // ── 📦 동일 고객/주소지 48시간 이내 합배송 자동 감지 ─────────────────────────
+  const bundleGroups = useMemo(() => {
+    return detectBundleCandidates(shipmentsList, customersList);
+  }, [shipmentsList, customersList]);
+
+  // 합배송 대상 총 주문 건수
+  const totalBundleCandidatesCount = useMemo(() => {
+    return bundleGroups.reduce((acc, g) => acc + g.shipmentIds.length, 0);
+  }, [bundleGroups]);
+
+  // 특정 주문이 어떤 합배송 그룹에 속하는지 빠른 조회를 위한 Map
+  const shipmentBundleGroupMap = useMemo(() => {
+    const map = new Map<string, BundleGroup>();
+    bundleGroups.forEach((group) => {
+      group.shipmentIds.forEach((sId) => {
+        map.set(sId, group);
+      });
+    });
+    return map;
+  }, [bundleGroups]);
+
+  // 합배송 대상 주문 모아보기 전용 필터 상태
+  const [isBundleFilterActive, setIsBundleFilterActive] = useState(false);
+
+  // 합배송 확인/실행 모달 상태
+  const [isBundleModalOpen, setIsBundleModalOpen] = useState(false);
+  const [activeBundleGroup, setActiveBundleGroup] = useState<BundleGroup | null>(null);
+
+  // 합배송 모달 열기 핸들러
+  const handleOpenBundleModal = (group: BundleGroup) => {
+    setActiveBundleGroup(group);
+    setIsBundleModalOpen(true);
+  };
+
+  // 합배송 확정 실행 핸들러 (원클릭 1박스 묶음 + 초과 배송비 적립금 자동 환급)
+  const handleConfirmBundle = async () => {
+    if (!activeBundleGroup || activeBundleGroup.shipmentIds.length < 2) return;
+
+    const primaryId = activeBundleGroup.shipmentIds[0];
+    const childIds = activeBundleGroup.shipmentIds.slice(1);
+    const refundPoints = activeBundleGroup.refundableShippingFee || 0;
+
+    // 1. 배송 주문 목록 병합
+    const updatedShipments = executeOrderMerge(
+      shipmentsList,
+      primaryId,
+      childIds,
+      refundPoints
+    );
+
+    setShipmentsList(updatedShipments);
+
+    // 로컬 스토리지 및 Supabase 실시간 동기화
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_shipments", JSON.stringify(updatedShipments));
+      window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+    }
+    try {
+      await fetch("/api/admin/shipments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedShipments),
+      });
+    } catch (e) {
+      console.warn("Bundle shipments sync warning:", e);
+    }
+
+    // 2. 고객 적립금 초과 배송비 환급 (고객 계정 points 가산)
+    if (refundPoints > 0 && activeBundleGroup.matchedCustomer) {
+      try {
+        const cust = activeBundleGroup.matchedCustomer;
+        const currentPoints = Number(cust.points || 0);
+        const newPoints = currentPoints + refundPoints;
+
+        let allCusts: any[] = [];
+        if (customersList && customersList.length > 0) {
+          allCusts = customersList;
+        } else if (typeof window !== "undefined") {
+          const saved = localStorage.getItem("admin_customers");
+          if (saved) {
+            try { allCusts = JSON.parse(saved); } catch (err) {}
+          }
+        }
+
+        const updatedCusts = allCusts.map((c: any) =>
+          c.id === cust.id ? { ...c, points: newPoints } : c
+        );
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("admin_customers", JSON.stringify(updatedCusts));
+          window.dispatchEvent(new CustomEvent("storage"));
+          window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+        }
+      } catch (custErr) {
+        console.warn("Failed to credit refund points to customer:", custErr);
+      }
+    }
+
+    setIsBundleModalOpen(false);
+    const targetGroup = activeBundleGroup;
+    setActiveBundleGroup(null);
+
+    alert(
+      `📦 [합배송 완료]\n\n` +
+      `총 ${targetGroup.shipmentIds.length}건의 주문이 1개 박스로 성공적으로 묶였습니다.\n` +
+      (refundPoints > 0
+        ? `\n💰 초과 부과된 배송비 ₩${refundPoints.toLocaleString()}원이 ${targetGroup.recipient}님의 회원 적립금으로 즉시 환급 지급되었습니다!`
+        : "")
+    );
+  };
+
+  // 합배송 분리/원상복원 핸들러
+  const handleUnbundle = async (ship: any) => {
+    if (!window.confirm(`[${ship.orderId}] 묶음 합배송을 해제하고 각각의 개별 주문으로 분리하시겠습니까?`)) {
+      return;
+    }
+
+    const updated = undoOrderMerge(shipmentsList, ship.id);
+    setShipmentsList(updated);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_shipments", JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+    }
+    try {
+      await fetch("/api/admin/shipments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+    } catch (e) {
+      console.warn("Unbundle shipments sync warning:", e);
+    }
+
+    alert(`📦 [${ship.orderId}] 합배송이 해제되어 개별 주문으로 원상 복원되었습니다.`);
+  };
 
   // 분할배송(다박스) 모달 상태 및 드래그 앤 드롭 데이터
   interface SplitItem {
@@ -876,6 +1021,13 @@ export function OrdersManagement({
 
   const filteredShipments = React.useMemo(() => {
     const filtered = shipmentsList.filter((s) => {
+      // 1. 합배송 대상 모아보기 필터가 켜진 경우
+      if (isBundleFilterActive) {
+        if (!shipmentBundleGroupMap.has(s.id)) {
+          return false;
+        }
+      }
+
       const q = shipmentSearchQuery.toLowerCase();
       const matchesSearch =
         s.recipient?.toLowerCase().includes(q) ||
@@ -888,7 +1040,7 @@ export function OrdersManagement({
       return matchesSearch && matchesStatus && matchesCarrier;
     });
     return sortShipmentsByNumber(filtered);
-  }, [shipmentsList, shipmentSearchQuery, shipmentStatusFilter, shipmentCarrierFilter]);
+  }, [shipmentsList, shipmentSearchQuery, shipmentStatusFilter, shipmentCarrierFilter, isBundleFilterActive, shipmentBundleGroupMap]);
 
   const totalShipmentPages = Math.ceil(filteredShipments.length / SHIPMENTS_PER_PAGE) || 1;
   const paginatedShipments = React.useMemo(() => {
@@ -938,6 +1090,60 @@ export function OrdersManagement({
           </button>
         </div>
       </div>
+
+      {/* 📦 48시간 이내 동일 고객/주소지 합배송 자동 감지 안내 배너 */}
+      {bundleGroups.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-50 via-indigo-50/70 to-blue-50 border border-blue-200/90 rounded-2xl p-4 shadow-sm transition-all animate-in fade-in duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-200">
+                <Boxes className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-extrabold text-blue-950 text-sm flex items-center gap-1.5">
+                    <span>합배송 대상 주문이 있습니다</span>
+                    <span className="bg-blue-600 text-white text-[11px] font-mono px-2 py-0.5 rounded-full">
+                      총 {totalBundleCandidatesCount}건 ({bundleGroups.length}개 수령지)
+                    </span>
+                  </h2>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100/90 border border-amber-300 px-2 py-0.5 rounded-md">
+                    <Sparkles className="w-3 h-3 text-amber-600" />
+                    48시간 이내 복수 결제 감지
+                  </span>
+                </div>
+                <p className="text-xs text-blue-800/80 mt-1">
+                  동일한 수령인 이름, 연락처, 배송지 주소로 결제된 주문들입니다. 1개 박스로 묶으면 초과 결제된 배송비가 고객 적립금으로 자동 환급됩니다.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+              <button
+                type="button"
+                onClick={() => setIsBundleFilterActive((prev) => !prev)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5 ${
+                  isBundleFilterActive
+                    ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
+                    : "bg-white text-blue-700 border border-blue-300 hover:bg-blue-50"
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>{isBundleFilterActive ? "전체 주문 보기" : "해당 주문 모아보기"}</span>
+              </button>
+              {bundleGroups.length === 1 && (
+                <button
+                  type="button"
+                  onClick={() => handleOpenBundleModal(bundleGroups[0])}
+                  className="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-neutral-950 hover:bg-neutral-800 text-white transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>즉시 합배송 묶기</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters & Search */}
       <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm space-y-4">
@@ -1049,6 +1255,60 @@ export function OrdersManagement({
                     </td>
                     <td className="py-4 px-4 align-middle whitespace-nowrap">
                       <div>
+                        {/* 📦 합배송 대상 감지 배지 or 합배송 완료 표시 */}
+                        {(() => {
+                          const bundleGroup = shipmentBundleGroupMap.get(ship.id);
+                          if (bundleGroup) {
+                            return (
+                              <div className="mb-1.5">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenBundleModal(bundleGroup);
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 hover:border-blue-400 cursor-pointer shadow-2xs transition-all animate-pulse"
+                                  title="클릭하여 48시간 이내 동일 주소지 주문들을 1박스로 합배송"
+                                >
+                                  <Boxes className="w-3 h-3 text-blue-600" />
+                                  <span>📦 합배송 가능 ({bundleGroup.shipmentIds.length}건)</span>
+                                </button>
+                              </div>
+                            );
+                          }
+                          if (ship.isMergedParent) {
+                            return (
+                              <div className="mb-1.5 flex items-center gap-1">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-800 border border-indigo-300 shadow-2xs">
+                                  <Layers className="w-3 h-3 text-indigo-600" />
+                                  <span>📦 통합 1박스 합배송 (대표)</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUnbundle(ship);
+                                  }}
+                                  className="text-[10px] font-bold text-neutral-500 hover:text-rose-600 hover:underline px-1 cursor-pointer"
+                                  title="합배송 해제 및 원래 개별 주문으로 분리"
+                                >
+                                  해제
+                                </button>
+                              </div>
+                            );
+                          }
+                          if (ship.isMergedChild) {
+                            return (
+                              <div className="mb-1.5">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-neutral-100 text-neutral-600 border border-neutral-300">
+                                  <span>↳ {ship.mergedIntoOrderId || "대표주문"}에 통합됨</span>
+                                </span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+
                         <p className="font-extrabold text-neutral-950 text-xs font-mono">
                           {ship.orderId}
                         </p>
@@ -2534,6 +2794,158 @@ export function OrdersManagement({
       {/* CJ대한통운 송장 라벨 인쇄 모달 */}
       {cjPrintData && (
         <CjLabelPrint data={cjPrintData} onClose={() => setCjPrintData?.(null)} />
+      )}
+
+      {/* 📦 동일 고객/주소지 합배송 확정 모달 */}
+      {isBundleModalOpen && activeBundleGroup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl border border-neutral-200 w-full max-w-xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-200">
+                  <Boxes className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-neutral-950 flex items-center gap-2">
+                    <span>주문 합배송 (1박스 포장 묶음)</span>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full font-mono font-bold">
+                      {activeBundleGroup.orders.length}건 묶음
+                    </span>
+                  </h3>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    동일 수령지 {activeBundleGroup.timeDiffText} 감지 • 1박스로 묶어 발송합니다.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBundleModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-neutral-200/60 text-neutral-400 hover:text-neutral-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1 text-xs">
+              {/* 수령지 & 고객 정보 */}
+              <div className="bg-neutral-50 rounded-2xl p-4 border border-neutral-200/80 space-y-2">
+                <div className="flex items-center justify-between text-neutral-500 font-bold text-[11px]">
+                  <span>배송지 정보</span>
+                  {activeBundleGroup.matchedCustomer && (
+                    <span className="text-blue-600 font-bold">
+                      회원 연동 완료 ({activeBundleGroup.matchedCustomer.grade || "회원"})
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <p className="font-extrabold text-sm text-neutral-950 flex items-center gap-2">
+                    <span>{activeBundleGroup.recipient}</span>
+                    <span className="text-xs text-neutral-600 font-mono font-medium">
+                      ({activeBundleGroup.phone})
+                    </span>
+                  </p>
+                  <p className="text-neutral-700 leading-relaxed font-medium">
+                    {activeBundleGroup.zipCode && `[${activeBundleGroup.zipCode}] `}
+                    {activeBundleGroup.address} {activeBundleGroup.detailAddress || ""}
+                  </p>
+                </div>
+              </div>
+
+              {/* 합배송 대상 개별 주문 내역 */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-neutral-900 text-xs flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-blue-600" />
+                    <span>합포장 대상 주문 목록 ({activeBundleGroup.orders.length}개 주문)</span>
+                  </span>
+                  <span className="text-[11px] text-neutral-500 font-medium">
+                    총 상품 {activeBundleGroup.totalItemsCount}개
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {activeBundleGroup.orders.map((ord: any, idx: number) => (
+                    <div
+                      key={ord.id}
+                      className="flex items-start justify-between bg-white border border-neutral-200 rounded-2xl p-3.5 shadow-2xs hover:border-blue-300 transition-colors"
+                    >
+                      <div className="space-y-1 min-w-0 flex-1 mr-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-extrabold font-mono text-xs text-neutral-950">
+                            {ord.orderId}
+                          </span>
+                          {idx === 0 && (
+                            <span className="bg-blue-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded font-mono">
+                              대표 송장 기준
+                            </span>
+                          )}
+                          <span className="text-[10px] text-neutral-400 font-mono">
+                            {ord.orderDate || ord.created_at?.slice(0, 10) || "최근 결제"}
+                          </span>
+                        </div>
+                        <p className="text-neutral-800 font-semibold text-xs truncate">
+                          {ord.items}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-mono font-extrabold text-xs text-blue-700 block">
+                          수량 {ord.quantity || 1}개
+                        </span>
+                        <span className="text-[10px] text-neutral-400">
+                          배송비 ₩3,000 부과됨
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 💰 초과 배송비 자동 계산 및 적립금 환급 안내 카드 */}
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-amber-950 text-xs flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <span>초과 부과된 배송비 자동 환급</span>
+                  </span>
+                  <span className="font-mono font-black text-sm text-amber-900">
+                    + ₩{activeBundleGroup.refundableShippingFee.toLocaleString()}원
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-900/80 leading-relaxed">
+                  고객이 {activeBundleGroup.orders.length}개 주문을 따로 결제하여 중복 부과된 배송비{" "}
+                  <strong>₩{activeBundleGroup.refundableShippingFee.toLocaleString()}원</strong>이{" "}
+                  합배송 확정 즉시 고객 <strong>{activeBundleGroup.recipient}</strong>님의 회원 적립금으로 자동 지급 환급됩니다.
+                </p>
+              </div>
+
+              {/* 안내 문구 */}
+              <div className="text-[11px] text-neutral-400 bg-neutral-50 p-3 rounded-xl border border-neutral-200/60 leading-relaxed">
+                ℹ️ <strong>합배송 확정 시</strong>: {activeBundleGroup.orders[0]?.orderId}번 주문으로 모든 상품 품목이 1개 박스 라벨로 통합되며, CJ대한통운 송장 출력 시 단 1장의 송장 라벨이 인쇄됩니다.
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="px-6 py-4 bg-neutral-50 border-t border-neutral-100 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsBundleModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-neutral-700 font-bold hover:bg-neutral-100 transition-colors cursor-pointer text-xs"
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmBundle}
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black shadow-md shadow-blue-200 transition-all cursor-pointer text-xs flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Boxes className="w-4 h-4" />
+                <span>합배송 확정 및 1박스로 묶기</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
