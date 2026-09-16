@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
+import { processCjShippingIssue } from "@/lib/cj/cj-api";
+
 export interface PrintData {
   orderId: string;           // 예약접수 시 사용한 고객사용번호 (CUST_USE_NO)
   recipient: string;         // 받는분 성명
@@ -36,96 +38,51 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "주문 정보가 전달되지 않았습니다." }, { status: 400 });
     }
 
-    const origin = req.headers.get("origin") || new URL(req.url).origin;
-
-    // 1단계: 1Day 토큰 발급 (ReqOneDayToken)
-    let token: string | null = null;
-    try {
-      const tokenRes = await fetch(`${origin}/api/shipping/cj/token`, { method: "POST" });
-      const tokenData = await tokenRes.json();
-      if (tokenData.success && tokenData.token) {
-        token = tokenData.token;
-      } else {
-        console.warn("CJ API Token notice:", tokenData.error);
-      }
-    } catch (tokenErr) {
-      console.warn("CJ API Token request error:", tokenErr);
-    }
-
     const results: PrintData[] = [];
 
-    // 각 주문에 대해 4단계 파이프라인(토큰 ➜ 주소정제 ➜ 채번 ➜ 예약접수) 실행
+    // 각 주문에 대해 CJ 개발서버 실제 4단계 파이프라인(토큰 ➜ 주소정제 ➜ 채번 ➜ 예약접수) 실행
     for (const order of targetOrders) {
       const orderId = order.orderId || order.id || `ORD-${Date.now()}`;
       const recipient = order.recipient || "고객";
       const phone = order.phone || "";
-      const zipCode = (order.zipCode || "").replace(/[^0-9]/g, "");
+      const zipCode = (order.zipCode || "").replace(/[^0-9]/g, "") || "04524";
       const address = order.address || "";
       const detailAddress = order.detailAddress || "";
       const items = order.items || "주문 상품";
       const shippingMemo = order.shippingMemo || "";
 
-      let clsfCd = "4W44";
-      let subClsfCd = "-4g";
-      let clldlvempNickNm = "A01-1구역";
-      let clsfAddr = detailAddress || address.split(" ").slice(-2).join(" ") || "101동 201호";
-      let clldlvBranNm = "대한통운";
-      let p2pCd = "P1";
-      let trackingNumber = "";
-
-      if (token) {
-        try {
-          // 2단계: 주소 정제 (ReqAddrRfnSm)
-          const addressRes = await fetch(`${origin}/api/shipping/cj/address`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token, address }),
-          });
-          const addressData = await addressRes.json();
-          if (addressData.success) {
-            clsfCd = addressData.clsfCd || clsfCd;
-            subClsfCd = addressData.subClsfCd || subClsfCd;
-            clldlvempNickNm = addressData.clldlvempNickNm || clldlvempNickNm;
-            clsfAddr = addressData.clsfAddr || clsfAddr;
-            clldlvBranNm = addressData.clldlvBranNm || clldlvBranNm;
-            p2pCd = addressData.p2pCd || p2pCd;
-          }
-
-          // 3단계: 운송장 번호 생성 (ReqInvcNo)
-          const invoiceRes = await fetch(`${origin}/api/shipping/cj/invoice`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token }),
-          });
-          const invoiceData = await invoiceRes.json();
-          if (invoiceData.success && invoiceData.trackingNumber) {
-            trackingNumber = invoiceData.trackingNumber;
-          }
-
-          // 4단계: (일반)예약 접수 (RegBook)
-          if (trackingNumber) {
-            await fetch(`${origin}/api/shipping/cj/register`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ token, invoiceNo: trackingNumber, order }),
-            });
-          }
-        } catch (stepErr) {
-          console.warn(`CJ API Pipeline warning for order [${orderId}]:`, stepErr);
+      let cjResult;
+      try {
+        cjResult = await processCjShippingIssue({
+          id: order.id,
+          orderId,
+          recipient,
+          phone,
+          zipCode,
+          address,
+          detailAddress,
+          items,
+          quantity: order.quantity || 1,
+          shippingMemo,
+        });
+      } catch (issueErr: any) {
+        console.error(`[CJ API Error] Order ${orderId} issue failed:`, issueErr.message);
+        if (targetOrders.length === 1) {
+          return NextResponse.json(
+            { success: false, error: `CJ대한통운 접수 실패: ${issueErr.message}` },
+            { status: 500 }
+          );
         }
+        continue;
       }
 
-      // 개발/테스트 환경 Fallback: CJ 개발서버 미인증 시 12자리 표준 가상번호 채번 유지
-      if (!trackingNumber) {
-        const seedDigits = Math.floor(10000000 + Math.random() * 90000000).toString();
-        const standard12 = `6892${seedDigits}`;
-        trackingNumber = `${standard12.slice(0, 4)}-${standard12.slice(4, 8)}-${standard12.slice(8, 12)}`;
-      } else {
-        const rawDigits = trackingNumber.replace(/[^0-9]/g, "");
-        if (rawDigits.length === 12) {
-          trackingNumber = `${rawDigits.slice(0, 4)}-${rawDigits.slice(4, 8)}-${rawDigits.slice(8, 12)}`;
-        }
-      }
+      const trackingNumber = cjResult.trackingNumber;
+      const clsfCd = cjResult.clsfCd;
+      const subClsfCd = cjResult.subClsfCd;
+      const clldlvempNickNm = cjResult.clldlvempNickNm;
+      const clsfAddr = cjResult.clsfAddr;
+      const clldlvBranNm = cjResult.clldlvBranNm;
+      const p2pCd = cjResult.p2pCd;
 
       // Supabase DB 자동 동기화 (운송장 번호 저장 및 주문 상태 '배송 중' 업데이트)
       if (isSupabaseConfigured && trackingNumber) {
