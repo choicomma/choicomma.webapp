@@ -802,7 +802,7 @@ export function CjLabelPrint({
 
               <div>
                 <label className="block text-xs font-bold text-neutral-800 mb-1.5">
-                  프린터 PC IP 주소 또는 도메인 (포트: 18080)
+                  프린터 PC IP 주소 또는 컴퓨터 이름 (포트: 18080)
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -812,7 +812,7 @@ export function CjLabelPrint({
                       setTempHost(e.target.value);
                       setTestError(null);
                     }}
-                    placeholder="예: localhost 또는 192.168.0.15"
+                    placeholder="예: localhost, 192.168.0.15 또는 DESKTOP-XXXX.local"
                     className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg text-xs font-mono text-neutral-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -829,6 +829,9 @@ export function CjLabelPrint({
                     {testingHost ? "연결 중..." : "연결/저장"}
                   </button>
                 </div>
+                <p className="mt-1.5 text-[11px] text-neutral-500 leading-normal">
+                  💡 <strong>IP 변경 걱정 없는 팁:</strong> 공유기에서 IP가 자꾸 바뀐다면, IP 대신 프린터 PC의 <strong>컴퓨터 이름</strong>(예: <span className="bg-neutral-100 text-neutral-800 px-1 py-0.5 rounded font-mono font-medium">DESKTOP-XXXX.local</span>)을 입력해두시면 IP가 바뀌어도 자동으로 추적되어 다시 설정할 필요가 없습니다.
+                </p>
               </div>
 
               {/* 빠른 선택 버튼 */}
