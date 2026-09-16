@@ -6,23 +6,42 @@ import { supabase } from "@/lib/supabase/client";
 
 const initialCustomers: any[] = [];
 
-const DEFAULT_ADMIN_CUSTOMER = {
-  id: "ADMIN-001",
-  name: "최고관리자 (Admin)",
-  email: "admin@choicomma.com",
-  phone: "02-579-1171",
-  postcode: "06306",
-  address: "서울특별시 강남구 개포로22길 12",
-  detailAddress: "6층 (주)초이콤마 본사",
-  grade: "VVIP",
-  totalSpent: 25000000,
-  points: 100000,
-  couponsCount: 5,
-  joinedDate: "2026-01-01",
-  status: "Active",
-  role: "ADMIN",
-  isAdmin: true,
-};
+const DEFAULT_CUSTOMERS = [
+  {
+    id: "ADMIN-001",
+    name: "최고관리자 (Admin)",
+    email: "admin@choicomma.com",
+    phone: "02-579-1171",
+    postcode: "06306",
+    address: "서울특별시 강남구 개포로22길 12",
+    detailAddress: "6층 (주)초이콤마 본사",
+    grade: "VVIP",
+    totalSpent: 25000000,
+    points: 100000,
+    couponsCount: 5,
+    joinedDate: "2026-01-01",
+    status: "Active",
+    role: "ADMIN",
+    isAdmin: true,
+  },
+  {
+    id: "CUST-DEMO-002",
+    name: "김민지",
+    email: "minji.kim@example.com",
+    phone: "010-9876-5432",
+    postcode: "06035",
+    address: "서울특별시 강남구 가로수길 42",
+    detailAddress: "3층 302호",
+    grade: "PLATINUM",
+    totalSpent: 12500000,
+    points: 35000,
+    couponsCount: 3,
+    joinedDate: "2026-02-15",
+    status: "Active",
+  },
+];
+
+const DEFAULT_ADMIN_CUSTOMER = DEFAULT_CUSTOMERS[0];
 
 function parseCustomerRow(row: any, idx: number) {
   const rawGrade = String(row["회원 등급"] || row["회원 그룹"] || "").toUpperCase().trim();
@@ -143,15 +162,15 @@ export function useCustomers(triggerToast: (msg: string) => void) {
                   }
                   return c;
                 });
-              const finalList = cleaned.length > 0 ? cleaned : [DEFAULT_ADMIN_CUSTOMER];
+              const finalList = cleaned.length > 0 ? cleaned : DEFAULT_CUSTOMERS;
               setCustomersList(finalList);
               localStorage.setItem("admin_customers", JSON.stringify(finalList));
               return;
             }
           } catch (e) {}
         }
-        setCustomersList([DEFAULT_ADMIN_CUSTOMER]);
-        localStorage.setItem("admin_customers", JSON.stringify([DEFAULT_ADMIN_CUSTOMER]));
+        setCustomersList(DEFAULT_CUSTOMERS);
+        localStorage.setItem("admin_customers", JSON.stringify(DEFAULT_CUSTOMERS));
       }
     };
 
