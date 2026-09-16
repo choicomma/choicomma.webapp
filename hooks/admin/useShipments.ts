@@ -187,13 +187,18 @@ export function useShipments(triggerToast: (msg: string) => void) {
                 };
               });
 
-              lastSyncedJsonRef.current = serializeShipmentsForSync(merged);
+              // 서버 응답에 아직 없는 로컬 신규 주문(합배송 테스트 주문 등)이 삭제되지 않도록 보존
+              const serverIdSet = new Set(sanitized.map((s) => s.id));
+              const localOnlyItems = prev.filter((p) => !serverIdSet.has(p.id));
+              const fullMerged = [...merged, ...localOnlyItems];
+
+              lastSyncedJsonRef.current = serializeShipmentsForSync(fullMerged);
               if (typeof window !== "undefined") {
-                localStorage.setItem("admin_shipments", JSON.stringify(merged));
+                localStorage.setItem("admin_shipments", JSON.stringify(fullMerged));
               }
 
-              if (JSON.stringify(prev) === JSON.stringify(merged)) return prev;
-              return merged;
+              if (JSON.stringify(prev) === JSON.stringify(fullMerged)) return prev;
+              return fullMerged;
             });
           }
         }
