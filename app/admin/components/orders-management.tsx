@@ -1194,14 +1194,14 @@ export function OrdersManagement({
       {/* Integrated Orders & Shipments Table */}
       <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto relative">
-          <table className="w-full text-left text-sm text-neutral-700 min-w-[1300px]">
+          <table className="w-full text-left text-sm text-neutral-700 min-w-[1350px]">
             <colgroup>
               <col className="w-[48px]" />
               <col className="w-[220px]" />
               <col className="w-[280px]" />
               <col className="w-[300px]" />
               <col className="w-[180px]" />
-              <col className="w-[120px]" />
+              <col className="w-[160px]" />
               <col className="w-[170px]" />
             </colgroup>
             <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200 sticky top-0 z-10">
@@ -1228,7 +1228,7 @@ export function OrdersManagement({
                 <th className="py-3.5 px-4 w-[280px]">수령인 / 배송지 주소</th>
                 <th className="py-3.5 px-4 w-[300px]">주문 상품</th>
                 <th className="py-3.5 px-4 w-[180px]">택배사 / 운송장 번호</th>
-                <th className="py-3.5 px-4 w-[120px] whitespace-nowrap">진행 상태</th>
+                <th className="py-3.5 px-4 w-[160px] min-w-[160px] whitespace-nowrap">진행 상태</th>
                 <th className="py-3.5 px-4 text-right w-[170px] whitespace-nowrap sticky right-0 bg-neutral-50 shadow-[-6px_0_10px_-2px_rgba(0,0,0,0.06)] z-20">관리</th>
               </tr>
             </thead>
@@ -1555,50 +1555,52 @@ export function OrdersManagement({
                         )}
                       </div>
                     </td>
-                    <td className="py-4 px-4 align-top w-[120px] whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditShipment(ship)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-2xs hover:shadow-xs group ${
-                          ship.status === "Delivered"
-                            ? "bg-neutral-100 text-neutral-700 border border-neutral-300 hover:bg-neutral-200"
-                            : ship.status === "In Transit"
-                              ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300"
-                              : ship.status === "Partially Shipped"
-                                ? "bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100"
-                                : "bg-neutral-50 text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
-                          }`}
-                        title="클릭하여 운송장 번호 직접 입력 및 배송 상태 변경"
-                      >
-                        <span
-                          className={`w-2 h-2 rounded-full transition-transform group-hover:scale-125 ${
+                    <td className="py-4 px-4 align-middle w-[160px] min-w-[160px] whitespace-nowrap">
+                      <div className="flex flex-col justify-center items-start">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditShipment(ship)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-2xs hover:shadow-xs group shrink-0 ${
                             ship.status === "Delivered"
-                              ? "bg-neutral-500"
+                              ? "bg-neutral-100 text-neutral-700 border border-neutral-300 hover:bg-neutral-200"
                               : ship.status === "In Transit"
-                                ? "bg-blue-500"
+                                ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300"
                                 : ship.status === "Partially Shipped"
-                                  ? "bg-blue-600"
-                                  : "bg-neutral-400"
-                          }`}
-                        />
-                        <span>
-                          {ship.status === "Delivered"
-                            ? "배송 완료"
-                            : ship.status === "In Transit"
-                              ? "배송 중"
-                              : ship.status === "Partially Shipped"
-                                ? "부분배송중"
-                                : "배송 준비 중"}
-                        </span>
-                        <Pencil className="w-2.5 h-2.5 opacity-40 group-hover:opacity-100 transition-opacity ml-0.5 text-current" />
-                      </button>
-                      {ship.packages && ship.packages.length > 1 && (
-                        <span className="block text-[10px] text-blue-600 font-bold mt-0.5">
-                          📦 {ship.packages.length}개 박스 분리배송
-                        </span>
-                      )}
+                                  ? "bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100"
+                                  : "bg-neutral-50 text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
+                            }`}
+                          title="클릭하여 운송장 번호 직접 입력 및 배송 상태 변경"
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full transition-transform group-hover:scale-125 ${
+                              ship.status === "Delivered"
+                                ? "bg-neutral-500"
+                                : ship.status === "In Transit"
+                                  ? "bg-blue-500"
+                                  : ship.status === "Partially Shipped"
+                                    ? "bg-blue-600"
+                                    : "bg-neutral-400"
+                            }`}
+                          />
+                          <span>
+                            {ship.status === "Delivered"
+                              ? "배송 완료"
+                              : ship.status === "In Transit"
+                                ? "배송 중"
+                                : ship.status === "Partially Shipped"
+                                  ? "부분배송중"
+                                  : "배송 준비 중"}
+                          </span>
+                          <Pencil className="w-2.5 h-2.5 opacity-40 group-hover:opacity-100 transition-opacity ml-0.5 text-current" />
+                        </button>
+                        {ship.packages && ship.packages.length > 1 && (
+                          <span className="block text-[10px] text-blue-600 font-bold mt-1">
+                            📦 {ship.packages.length}개 박스 분리배송
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="py-4 px-4 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f9fafb] transition-colors shadow-[-6px_0_10px_-2px_rgba(0,0,0,0.06)] z-20 w-[170px]">
+                    <td className="py-4 px-4 align-middle text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f9fafb] transition-colors shadow-[-6px_0_10px_-2px_rgba(0,0,0,0.06)] z-20 w-[170px]">
                       <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                         {/* 1. 주문서 출력 버튼 (툴팁 말풍선 포함) */}
                         <div className="relative group/btn flex items-center justify-center">
