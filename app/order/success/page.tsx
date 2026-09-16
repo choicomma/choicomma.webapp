@@ -67,6 +67,7 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
 
             const newOrder = {
               id: orderId,
+              orderId: orderId,
               customer: json.data?.customerName || pendingOrder?.formData?.ordererName || pendingOrder?.formData?.recipientName || "VIP 고객님",
               ordererName: pendingOrder?.formData?.ordererName || json.data?.customerName || pendingOrder?.formData?.recipientName || "VIP 고객님",
               email: json.data?.customerEmail || pendingOrder?.formData?.ordererEmail || "customer@choicomma.com",

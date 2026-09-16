@@ -1314,9 +1314,11 @@ export function OrdersManagement({
                         <p className="font-extrabold text-neutral-950 text-xs font-mono break-all" title={ship.orderId}>
                           {ship.orderId}
                         </p>
-                        <span className="text-[10px] text-neutral-400 font-mono truncate block max-w-[200px]" title={ship.id}>
-                          {ship.id}
-                        </span>
+                        {ship.id && ship.id !== ship.orderId && (
+                          <span className="text-[10px] text-neutral-400 font-mono truncate block max-w-[200px]" title={ship.id}>
+                            {ship.id}
+                          </span>
+                        )}
                         <div className="mt-1.5 flex items-center gap-1.5 min-w-0">
                           <span className="inline-flex items-center text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700 border border-neutral-200 shrink-0">
                             주문자

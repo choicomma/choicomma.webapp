@@ -39,7 +39,7 @@
   },
   {
     "id": "TRK-2026-011",
-    "orderId": "ORD-20260915-011",
+    "orderId": "CH20260915-011",
     "ordererName": "최고관리자 (Admin)",
     "recipient": "최고관리자 (Admin)",
     "phone": "02-579-1171",
@@ -72,7 +72,7 @@
   },
   {
     "id": "TRK-2026-012",
-    "orderId": "ORD-20260916-012",
+    "orderId": "CH20260916-012",
     "ordererName": "최고관리자 (Admin)",
     "recipient": "최고관리자 (Admin)",
     "phone": "02-579-1171",
@@ -105,7 +105,7 @@
   },
   {
     "id": "TRK-2026-021",
-    "orderId": "ORD-20260915-021",
+    "orderId": "CH20260915-021",
     "ordererName": "김민지",
     "recipient": "김민지",
     "phone": "010-9876-5432",
@@ -138,7 +138,7 @@
   },
   {
     "id": "TRK-2026-022",
-    "orderId": "ORD-20260916-022",
+    "orderId": "CH20260916-022",
     "ordererName": "김민지",
     "recipient": "김민지",
     "phone": "010-9876-5432",
@@ -171,7 +171,7 @@
   },
   {
     "id": "TRK-2026-001",
-    "orderId": "ORD-20260908-001",
+    "orderId": "CH20260908-001",
     "ordererName": "홍길동",
     "recipient": "홍길동",
     "phone": "010-1234-5678",
@@ -210,7 +210,7 @@
   },
   {
     "id": "TRK-2026-002",
-    "orderId": "ORD-20260908-002",
+    "orderId": "CH20260908-002",
     "ordererName": "김민지",
     "recipient": "김민지",
     "phone": "010-9876-5432",
@@ -258,7 +258,7 @@
   },
   {
     "id": "TRK-2026-003",
-    "orderId": "ORD-20260908-003",
+    "orderId": "CH20260908-003",
     "ordererName": "이서준",
     "recipient": "이서준",
     "phone": "010-3344-5566",
@@ -291,7 +291,7 @@
   },
   {
     "id": "TRK-2026-004",
-    "orderId": "ORD-20260908-004",
+    "orderId": "CH20260908-004",
     "ordererName": "박지영",
     "recipient": "박지영",
     "phone": "010-7788-9900",
@@ -330,7 +330,7 @@
   },
   {
     "id": "TRK-2026-005",
-    "orderId": "ORD-20260908-005",
+    "orderId": "CH20260908-005",
     "ordererName": "최수현",
     "recipient": "최수현",
     "phone": "010-5566-7788",

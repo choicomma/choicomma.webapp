@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 
 import { initialShipments as defaultShipments } from "@/lib/sfcc/mock/shipments-data";
 import { supabase } from "@/lib/supabase/client";
+import { generateNextOrderId } from "@/lib/shipping/order-id";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Initial Shipment Data (from mock data file)
@@ -27,10 +28,14 @@ export function sanitizeCjTracking(tracking: string): string {
   return clean;
 }
 
-// 주문/배송 번호 기준 고정 오름차순(001 -> 002 -> 003...) 정렬 유틸 (실검증 주문 ORD-REAL-은 최상단 우선 노출)
+// 주문/배송 번호 기준 고정 내림차순 정렬 유틸 (CH/ORD + 날짜 + 순번 파싱 지원, 최신 주문이 상단)
 export function extractShipmentOrderNumber(str: string): number {
   if (!str) return 0;
-  if (str.includes("REAL") || str.includes("CJ-REAL")) return 999999;
+  if (str.includes("REAL") || str.includes("CJ-REAL")) return 999999999999;
+  const chMatch = str.match(/(?:CH|ORD)[-_]?(\d{8})[-_]?(\d+)/i);
+  if (chMatch) {
+    return parseInt(chMatch[1] + chMatch[2].padStart(4, "0"), 10);
+  }
   const match = str.match(/(\d+)$/);
   return match ? parseInt(match[1], 10) : 0;
 }
@@ -544,13 +549,14 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
   // ── Add Shipment Submit ─────────────────────────────────────────────────────
   const handleAddShipmentSubmit = () => {
-    if (!newShipmentOrderId || !newShipmentRecipient || !newShipmentAddress) {
-      alert("주문번호, 수령인, 배송지는 필수 항목입니다.");
+    if (!newShipmentRecipient || !newShipmentAddress) {
+      alert("수령인, 배송지는 필수 항목입니다.");
       return;
     }
+    const finalOrderId = newShipmentOrderId.trim() || generateNextOrderId(shipmentsList);
     const newShipment = {
-      id: `SHP-${Date.now()}`,
-      orderId: newShipmentOrderId.trim(),
+      id: finalOrderId,
+      orderId: finalOrderId,
       recipient: newShipmentRecipient.trim(),
       phone: newShipmentPhone.trim(),
       altPhone: newShipmentAltPhone.trim(),

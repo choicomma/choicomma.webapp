@@ -16,7 +16,11 @@ export const revalidate = 0;
 
 function extractShipmentOrderNumber(str: string): number {
   if (!str) return 0;
-  if (str.includes("REAL") || str.includes("CJ-REAL")) return 999999;
+  if (str.includes("REAL") || str.includes("CJ-REAL")) return 999999999999;
+  const chMatch = str.match(/(?:CH|ORD)[-_]?(\d{8})[-_]?(\d+)/i);
+  if (chMatch) {
+    return parseInt(chMatch[1] + chMatch[2].padStart(4, "0"), 10);
+  }
   const match = str.match(/(\d+)$/);
   return match ? parseInt(match[1], 10) : 0;
 }

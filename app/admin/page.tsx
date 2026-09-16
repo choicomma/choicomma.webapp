@@ -6461,7 +6461,7 @@ export default function AdminPage() {
                   type="text"
                   value={newShipmentOrderId}
                   onChange={(e) => setNewShipmentOrderId(e.target.value)}
-                  placeholder="미입력 시 ORD-YYYYMMDD-XXX 자동 생성"
+                  placeholder="미입력 시 CH + 날짜 + 주문순서 (예: CH20260916-001) 자동 채번"
                   className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
                 />
               </div>

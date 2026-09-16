@@ -2,9 +2,9 @@
  * [초이콤마 choicomma_webapp] 주문 및 배송 가상 모의 데이터 원장
  *
  * 합배송 시뮬레이션 및 배송 프로세스 테스트를 위한 구조화된 모의 데이터셋입니다.
- * - 그룹 1: 최고관리자(최유진) 48시간 이내 개별 주문 2건 (ORD-20260915-011, ORD-20260916-012) -> 합배송 테스트용
- * - 그룹 2: 김민지 24시간 이내 개별 주문 2건 (ORD-20260915-021, ORD-20260916-022) -> 합배송 테스트용
- * - 그룹 3: 기존 단독 주문 데이터들 (ORD-20260908-001 ~ 005)
+ * - 그룹 1: 최고관리자(최유진) 48시간 이내 개별 주문 2건 (CH20260915-011, CH20260916-012) -> 합배송 테스트용
+ * - 그룹 2: 김민지 24시간 이내 개별 주문 2건 (CH20260915-021, CH20260916-022) -> 합배송 테스트용
+ * - 그룹 3: 기존 단독 주문 데이터들 (CH20260908-001 ~ 005)
  */
 
 export interface MockShipmentPackage {
@@ -59,7 +59,7 @@ export const bundleTestShipments: MockShipmentOrder[] = [
   // [합배송 그룹 A] 최고관리자 (최유진 / ADMIN-001) - 2건
   {
     id: "TRK-2026-011",
-    orderId: "ORD-20260915-011",
+    orderId: "CH20260915-011",
     ordererName: "최고관리자 (Admin)",
     recipient: "최고관리자 (Admin)",
     phone: "02-579-1171",
@@ -92,7 +92,7 @@ export const bundleTestShipments: MockShipmentOrder[] = [
   },
   {
     id: "TRK-2026-012",
-    orderId: "ORD-20260916-012",
+    orderId: "CH20260916-012",
     ordererName: "최고관리자 (Admin)",
     recipient: "최고관리자 (Admin)",
     phone: "02-579-1171",
@@ -127,7 +127,7 @@ export const bundleTestShipments: MockShipmentOrder[] = [
   // [합배송 그룹 B] 김민지 고객 - 2건
   {
     id: "TRK-2026-021",
-    orderId: "ORD-20260915-021",
+    orderId: "CH20260915-021",
     ordererName: "김민지",
     recipient: "김민지",
     phone: "010-9876-5432",
@@ -160,7 +160,7 @@ export const bundleTestShipments: MockShipmentOrder[] = [
   },
   {
     id: "TRK-2026-022",
-    orderId: "ORD-20260916-022",
+    orderId: "CH20260916-022",
     ordererName: "김민지",
     recipient: "김민지",
     phone: "010-9876-5432",
@@ -199,7 +199,7 @@ export const bundleTestShipments: MockShipmentOrder[] = [
 export const standardMockShipments: MockShipmentOrder[] = [
   {
     id: "TRK-2026-001",
-    orderId: "ORD-20260908-001",
+    orderId: "CH20260908-001",
     ordererName: "홍길동",
     recipient: "홍길동",
     phone: "010-1234-5678",
@@ -238,7 +238,7 @@ export const standardMockShipments: MockShipmentOrder[] = [
   },
   {
     id: "TRK-2026-002",
-    orderId: "ORD-20260908-002",
+    orderId: "CH20260908-002",
     ordererName: "김민지",
     recipient: "김민지",
     phone: "010-9876-5432",
@@ -286,7 +286,7 @@ export const standardMockShipments: MockShipmentOrder[] = [
   },
   {
     id: "TRK-2026-003",
-    orderId: "ORD-20260908-003",
+    orderId: "CH20260908-003",
     ordererName: "이서준",
     recipient: "이서준",
     phone: "010-3344-5566",
@@ -319,7 +319,7 @@ export const standardMockShipments: MockShipmentOrder[] = [
   },
   {
     id: "TRK-2026-004",
-    orderId: "ORD-20260908-004",
+    orderId: "CH20260908-004",
     ordererName: "박지영",
     recipient: "박지영",
     phone: "010-7788-9900",
@@ -358,7 +358,7 @@ export const standardMockShipments: MockShipmentOrder[] = [
   },
   {
     id: "TRK-2026-005",
-    orderId: "ORD-20260908-005",
+    orderId: "CH20260908-005",
     ordererName: "최수현",
     recipient: "최수현",
     phone: "010-5566-7788",

@@ -7,6 +7,7 @@ import { useCart } from "@/components/cart/cart-context";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+import { generateNextOrderId } from "@/lib/shipping/order-id";
 import { useEffect } from "react";
 
 export default function CheckoutClientWrapper() {
@@ -303,7 +304,20 @@ export default function CheckoutClientWrapper() {
       setIsDirectPayLoading(true);
 
       const tossPayments = await loadTossPayments(clientKey);
-      const orderId = `CHOICOMMA_ORDER_${Date.now()}`;
+
+      // 주문서번호 생성 규칙: CH + 날짜(YYYYMMDD) + '-' + 주문순서(001, 002...)
+      let orderId = "";
+      try {
+        const nextIdRes = await fetch("/api/orders/next-id", { cache: "no-store" });
+        if (nextIdRes.ok) {
+          const idData = await nextIdRes.json();
+          if (idData?.nextOrderId) orderId = idData.nextOrderId;
+        }
+      } catch {}
+      if (!orderId) {
+        orderId = generateNextOrderId();
+      }
+
       const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
       const orderName = cart?.lines?.[0]?.merchandise?.product?.title
         ? cart.lines.length > 1
