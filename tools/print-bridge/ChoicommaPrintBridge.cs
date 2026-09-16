@@ -467,6 +467,24 @@ namespace ChoicommaPrintBridge
                 return;
             }
 
+            int rotation = 90;
+            if (payload.ContainsKey("rotation") && payload["rotation"] != null)
+            {
+                int.TryParse(payload["rotation"].ToString(), out rotation);
+            }
+
+            float offsetX = 0f;
+            if (payload.ContainsKey("offsetX") && payload["offsetX"] != null)
+            {
+                float.TryParse(payload["offsetX"].ToString(), out offsetX);
+            }
+
+            float offsetY = 0f;
+            if (payload.ContainsKey("offsetY") && payload["offsetY"] != null)
+            {
+                float.TryParse(payload["offsetY"].ToString(), out offsetY);
+            }
+
             List<Bitmap> bitmaps = new List<Bitmap>();
             try
             {
@@ -489,14 +507,17 @@ namespace ChoicommaPrintBridge
                     return;
                 }
 
-                PrintBitmapsToPrinter(bitmaps, targetPrinter);
+                PrintBitmapsToPrinter(bitmaps, targetPrinter, rotation, offsetX, offsetY);
 
                 SendJsonResponse(ns, 200, "OK", new
                 {
                     success = true,
                     message = "인쇄 작업이 정상적으로 전송되었습니다.",
                     targetPrinter = targetPrinter,
-                    count = bitmaps.Count
+                    count = bitmaps.Count,
+                    rotation = rotation,
+                    offsetX = offsetX,
+                    offsetY = offsetY
                 });
             }
             catch (Exception ex)
@@ -513,7 +534,7 @@ namespace ChoicommaPrintBridge
             }
         }
 
-        private void PrintBitmapsToPrinter(List<Bitmap> bitmaps, string printerName)
+        private void PrintBitmapsToPrinter(List<Bitmap> bitmaps, string printerName, int rotation, float offsetX, float offsetY)
         {
             int pageIndex = 0;
 
@@ -523,7 +544,15 @@ namespace ChoicommaPrintBridge
                 doc.DocumentName = "CJ대한통운 송장 (" + bitmaps.Count + "건)";
 
                 // 123mm x 100mm (0.01인치 단위: 123mm=484, 100mm=394)
-                PaperSize labelSize = new PaperSize("CJ_123x100", 484, 394);
+                PaperSize labelSize;
+                if (rotation == 90 || rotation == 270)
+                {
+                    labelSize = new PaperSize("CJ_100x123", 394, 484);
+                }
+                else
+                {
+                    labelSize = new PaperSize("CJ_123x100", 484, 394);
+                }
                 doc.DefaultPageSettings.PaperSize = labelSize;
                 doc.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0);
                 doc.DefaultPageSettings.Landscape = false;
@@ -535,11 +564,29 @@ namespace ChoicommaPrintBridge
                     if (pageIndex < bitmaps.Count)
                     {
                         Bitmap bmp = bitmaps[pageIndex];
+
+                        if (rotation == 90)
+                        {
+                            bmp.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                        }
+                        else if (rotation == 180)
+                        {
+                            bmp.RotateFlip(RotateFlipType.Rotate180FlipNone);
+                        }
+                        else if (rotation == 270)
+                        {
+                            bmp.RotateFlip(RotateFlipType.Rotate270FlipNone);
+                        }
+
                         e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
                         e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
                         e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
 
-                        e.Graphics.DrawImage(bmp, 0, 0, e.PageBounds.Width, e.PageBounds.Height);
+                        // 1mm = 3.937 단위 (0.01 inch)
+                        float offX = offsetX * 3.937f;
+                        float offY = offsetY * 3.937f;
+
+                        e.Graphics.DrawImage(bmp, offX, offY, e.PageBounds.Width, e.PageBounds.Height);
 
                         pageIndex++;
                         e.HasMorePages = (pageIndex < bitmaps.Count);
@@ -551,7 +598,7 @@ namespace ChoicommaPrintBridge
                 };
 
                 doc.Print();
-                Program.Log(string.Format("Printed {0} label(s) to '{1}' successfully.", bitmaps.Count, printerName));
+                Program.Log(string.Format("Printed {0} label(s) to '{1}' (rot={2}, offX={3:F1}mm, offY={4:F1}mm) successfully.", bitmaps.Count, printerName, rotation, offsetX, offsetY));
             }
         }
 

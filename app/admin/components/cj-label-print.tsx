@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Barcode from "react-barcode";
-import { Printer, CheckCircle2, HelpCircle, X, RefreshCw, Settings, Wifi, Laptop, AlertCircle } from "lucide-react";
+import { Printer, CheckCircle2, HelpCircle, X, RefreshCw, Settings, Wifi, Laptop, AlertCircle, RotateCw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Eye, Layers, Sliders, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export interface PrintData {
@@ -46,6 +46,16 @@ export function CjLabelPrint({
   });
   const [isPrinting, setIsPrinting] = useState(false);
   const [showKioskGuide, setShowKioskGuide] = useState(false);
+
+  // 인쇄 방향 (회전 각도: 0, 90, 180, 270도) - 기본값 90도 (Xprinter 표준 정렬)
+  const [printRotation, setPrintRotation] = useState<number>(90);
+  // 위치 미세조정 오프셋 (mm 단위: -20 ~ +20)
+  const [offsetX, setOffsetX] = useState<number>(0);
+  const [offsetY, setOffsetY] = useState<number>(0);
+  // 미리보기 모드: "roll_template" (실제 롤용지 맞춤 대조 뷰) | "printer_feed" (프린터 헤드 출력 뷰)
+  const [previewMode, setPreviewMode] = useState<"roll_template" | "printer_feed">("roll_template");
+  // 인쇄 설정 툴바 펼침/접힘
+  const [showConfigPanel, setShowConfigPanel] = useState<boolean>(true);
 
   // 로컬/원격 다이렉트 프린트 브릿지 (ChoicommaPrintBridge) 연결 상태
   const [bridgeStatus, setBridgeStatus] = useState<"checking" | "connected" | "disconnected">("checking");
@@ -137,6 +147,18 @@ export function CjLabelPrint({
       } else {
         setTempHost("localhost");
       }
+
+      // 라벨 보정 및 회전 설정 로드
+      const savedRot = localStorage.getItem("choicomma_label_rotation");
+      if (savedRot !== null) setPrintRotation(parseInt(savedRot, 10));
+      const savedX = localStorage.getItem("choicomma_label_offset_x");
+      if (savedX !== null) setOffsetX(parseFloat(savedX));
+      const savedY = localStorage.getItem("choicomma_label_offset_y");
+      if (savedY !== null) setOffsetY(parseFloat(savedY));
+      const savedMode = localStorage.getItem("choicomma_label_preview_mode");
+      if (savedMode === "roll_template" || savedMode === "printer_feed") setPreviewMode(savedMode as any);
+      const savedPaper = localStorage.getItem("choicomma_label_paper_mode");
+      if (savedPaper === "preprinted" || savedPaper === "blank") setPaperMode(savedPaper as any);
     } catch {
       setTempHost("localhost");
     }
@@ -157,6 +179,53 @@ export function CjLabelPrint({
       })
       .catch(() => {});
   }, [checkBridgeStatus]);
+
+  const updateRotation = (rot: number) => {
+    setPrintRotation(rot);
+    try {
+      localStorage.setItem("choicomma_label_rotation", String(rot));
+    } catch {}
+  };
+
+  const updateOffsetX = (val: number) => {
+    const clamped = Math.round(Math.min(20, Math.max(-20, val)) * 10) / 10;
+    setOffsetX(clamped);
+    try {
+      localStorage.setItem("choicomma_label_offset_x", String(clamped));
+    } catch {}
+  };
+
+  const updateOffsetY = (val: number) => {
+    const clamped = Math.round(Math.min(20, Math.max(-20, val)) * 10) / 10;
+    setOffsetY(clamped);
+    try {
+      localStorage.setItem("choicomma_label_offset_y", String(clamped));
+    } catch {}
+  };
+
+  const updatePreviewMode = (mode: "roll_template" | "printer_feed") => {
+    setPreviewMode(mode);
+    try {
+      localStorage.setItem("choicomma_label_preview_mode", mode);
+    } catch {}
+  };
+
+  const updatePaperMode = (mode: "preprinted" | "blank") => {
+    setPaperMode(mode);
+    try {
+      localStorage.setItem("choicomma_label_paper_mode", mode);
+    } catch {}
+  };
+
+  const resetOffsets = () => {
+    setOffsetX(0);
+    setOffsetY(0);
+    try {
+      localStorage.setItem("choicomma_label_offset_x", "0");
+      localStorage.setItem("choicomma_label_offset_y", "0");
+    } catch {}
+    toast.success("인쇄 위치가 (0.0mm, 0.0mm) 기준점으로 초기화되었습니다.");
+  };
 
   const senderName = "주식회사 초이콤마";
   const senderPhone = "02-579-1171";
@@ -351,12 +420,15 @@ export function CjLabelPrint({
             body: JSON.stringify({
               printerName: bridgePrinterName || "Xprinter XP-DT108B LABEL",
               images,
+              rotation: printRotation,
+              offsetX: 0, // 이미 캡처에서 translate 오프셋이 정확히 반영됨
+              offsetY: 0,
             }),
           });
 
           const json = await res.json();
           if (json?.success) {
-            toast.success(`Xprinter로 송장 ${json.count}건 출력이 정상 전송되었습니다.`);
+            toast.success(`Xprinter로 송장 ${json.count}건 출력이 정상 전송되었습니다. (회전: ${printRotation}°, 위치: X ${offsetX}mm, Y ${offsetY}mm)`);
             setIsPrinting(false);
             onClose();
             return;
@@ -481,7 +553,7 @@ export function CjLabelPrint({
               <div className="flex items-center bg-neutral-100 rounded-lg p-1 border border-neutral-200 text-xs">
                 <button
                   type="button"
-                  onClick={() => setPaperMode("preprinted")}
+                  onClick={() => updatePaperMode("preprinted")}
                   className={`px-2.5 py-1 rounded font-medium transition-colors ${
                     paperMode === "preprinted"
                       ? "bg-white shadow text-neutral-900 font-bold"
@@ -489,11 +561,11 @@ export function CjLabelPrint({
                   }`}
                   title="배경 서식을 제외하고 데이터만 출력 (CJ 전용 사전인쇄 롤용지용)"
                 >
-                  전용용지 모드
+                  CJ 전용용지
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPaperMode("blank")}
+                  onClick={() => updatePaperMode("blank")}
                   className={`px-2.5 py-1 rounded font-medium transition-colors ${
                     paperMode === "blank"
                       ? "bg-white shadow text-neutral-900 font-bold"
@@ -501,7 +573,7 @@ export function CjLabelPrint({
                   }`}
                   title="서식 테두리와 로고를 모두 출력 (무지 라벨지/A4/PDF용)"
                 >
-                  무지용지 모드
+                  무지용지
                 </button>
               </div>
 
@@ -565,41 +637,297 @@ export function CjLabelPrint({
             </div>
           </div>
 
-          {/* Label Preview Scroll Area */}
-          <div className="w-full flex-1 overflow-y-auto p-6 flex flex-col items-center gap-6 bg-neutral-200/60">
-            {printList.map((item, idx) => (
-              <div
-                key={idx}
-                className="transition-transform duration-200 shadow-xl rounded-lg bg-white overflow-hidden border border-neutral-300"
-                style={{
-                  width: `${123 * zoom}mm`,
-                  height: `${100 * zoom}mm`,
-                  transformOrigin: "top center",
-                }}
-              >
-                <div
-                  style={{
-                    transform: `scale(${zoom})`,
-                    transformOrigin: "top left",
-                    width: "123mm",
-                    height: "100mm",
-                  }}
+          {/* ── Sub-Header: 인쇄 위치(오프셋) & 인쇄 회전 실시간 보정 툴바 ── */}
+          <div className="w-full bg-white border-b border-neutral-200 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
+            {/* 좌측: 미리보기 뷰 모드 탭 (WYSIWYG 롤용지 대조 뷰 vs 프린터 헤드 배출 뷰) */}
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-neutral-700 flex items-center gap-1 shrink-0">
+                <Eye className="w-3.5 h-3.5 text-blue-600" />
+                <span>미리보기:</span>
+              </span>
+              <div className="flex items-center bg-neutral-100 p-0.5 rounded-lg border border-neutral-200">
+                <button
+                  type="button"
+                  onClick={() => updatePreviewMode("roll_template")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition-all cursor-pointer ${
+                    previewMode === "roll_template"
+                      ? "bg-white shadow-xs text-blue-700 border border-neutral-200"
+                      : "text-neutral-600 hover:text-neutral-900"
+                  }`}
+                  title="실제 CJ 롤용지 파란 칸에 글씨가 정확히 들어가는지 1:1 대조 확인"
                 >
-                  <StandardCjLabel
-                    item={item}
-                    today={today}
-                    maskName={maskName}
-                    maskPhone={maskPhone}
-                    senderName={senderName}
-                    senderPhone={senderPhone}
-                    senderAddr={senderAddr}
-                    isPreprinted={paperMode === "preprinted"}
-                    pageIndex={idx + 1}
-                    totalPages={printList.length}
-                  />
-                </div>
+                  <Layers className="w-3.5 h-3.5 text-blue-600" />
+                  <span>실제 롤용지 맞춤 뷰</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updatePreviewMode("printer_feed")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition-all cursor-pointer ${
+                    previewMode === "printer_feed"
+                      ? "bg-white shadow-xs text-blue-700 border border-neutral-200"
+                      : "text-neutral-600 hover:text-neutral-900"
+                  }`}
+                  title="Xprinter 기계에서 롤이 흘러나오는 실제 회전 방향으로 확인"
+                >
+                  <RotateCw className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>프린터 헤드 출력 뷰 ({printRotation}°)</span>
+                </button>
               </div>
-            ))}
+            </div>
+
+            {/* 중앙: 인쇄 회전 방향 (0°, 90°, 180°, 270°) */}
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-neutral-700 flex items-center gap-1 shrink-0">
+                <RotateCw className="w-3.5 h-3.5 text-neutral-500" />
+                <span>방향:</span>
+              </span>
+              <div className="flex items-center bg-neutral-100 p-0.5 rounded-lg border border-neutral-200 font-mono">
+                <button
+                  type="button"
+                  onClick={() => updateRotation(90)}
+                  className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                    printRotation === 90
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-neutral-600 hover:text-neutral-900"
+                  }`}
+                  title="Xprinter XP-DT108B 표준 방향 (시계방향 90도 회전)"
+                >
+                  90° (기본 권장)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateRotation(0)}
+                  className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                    printRotation === 0
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-neutral-600 hover:text-neutral-900"
+                  }`}
+                  title="가로 원본 방향 (0도)"
+                >
+                  0°
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateRotation(180)}
+                  className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                    printRotation === 180
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-neutral-600 hover:text-neutral-900"
+                  }`}
+                  title="180도 반전"
+                >
+                  180°
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateRotation(270)}
+                  className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                    printRotation === 270
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-neutral-600 hover:text-neutral-900"
+                  }`}
+                  title="270도 역회전"
+                >
+                  270°
+                </button>
+              </div>
+            </div>
+
+            {/* 우측: 상하/좌우 오프셋 컨트롤러 (mm 단위) */}
+            <div className="flex items-center gap-2.5">
+              {/* 상하 Y 오프셋 */}
+              <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200">
+                <span className="text-[11px] font-bold text-neutral-600 px-1">상/하:</span>
+                <button
+                  type="button"
+                  onClick={() => updateOffsetY(offsetY - 0.5)}
+                  className="p-1 rounded bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-300 shadow-2xs cursor-pointer active:scale-95"
+                  title="0.5mm 위로 이동"
+                >
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </button>
+                <span className="w-14 text-center font-mono font-bold text-xs bg-white py-0.5 px-1 rounded border border-neutral-200 text-blue-700">
+                  {offsetY > 0 ? `+${offsetY.toFixed(1)}` : offsetY.toFixed(1)}mm
+                </span>
+                <button
+                  type="button"
+                  onClick={() => updateOffsetY(offsetY + 0.5)}
+                  className="p-1 rounded bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-300 shadow-2xs cursor-pointer active:scale-95"
+                  title="0.5mm 아래로 이동"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* 좌우 X 오프셋 */}
+              <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200">
+                <span className="text-[11px] font-bold text-neutral-600 px-1">좌/우:</span>
+                <button
+                  type="button"
+                  onClick={() => updateOffsetX(offsetX - 0.5)}
+                  className="p-1 rounded bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-300 shadow-2xs cursor-pointer active:scale-95"
+                  title="0.5mm 왼쪽으로 이동"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                </button>
+                <span className="w-14 text-center font-mono font-bold text-xs bg-white py-0.5 px-1 rounded border border-neutral-200 text-blue-700">
+                  {offsetX > 0 ? `+${offsetX.toFixed(1)}` : offsetX.toFixed(1)}mm
+                </span>
+                <button
+                  type="button"
+                  onClick={() => updateOffsetX(offsetX + 0.5)}
+                  className="p-1 rounded bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-300 shadow-2xs cursor-pointer active:scale-95"
+                  title="0.5mm 오른쪽으로 이동"
+                >
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* 초기화 버튼 */}
+              {(offsetX !== 0 || offsetY !== 0) && (
+                <button
+                  type="button"
+                  onClick={resetOffsets}
+                  className="px-2 py-1 bg-neutral-200 hover:bg-neutral-300 text-neutral-700 text-[11px] font-bold rounded-lg cursor-pointer transition-colors"
+                  title="위치 오프셋을 0.0mm로 초기화"
+                >
+                  0mm 초기화
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Label Preview Scroll Area */}
+          <div className="w-full flex-1 overflow-y-auto p-6 flex flex-col items-center gap-6 bg-neutral-200/70">
+            {printList.map((item, idx) => {
+              const isRotatedFeed = previewMode === "printer_feed" && (printRotation === 90 || printRotation === 270);
+              const containerWidth = isRotatedFeed ? 100 : 123;
+              const containerHeight = isRotatedFeed ? 123 : 100;
+
+              return (
+                <div key={idx} className="flex flex-col items-center">
+                  {/* 피드 방향 표시 배너 (프린터 헤드 출력 뷰일 때) */}
+                  {previewMode === "printer_feed" && (
+                    <div className="mb-2 flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 text-white text-[11px] font-bold rounded-full shadow-md animate-pulse">
+                      <span>▲ Xprinter 롤용지 배출 방향 (실제 기계 인쇄 모습)</span>
+                    </div>
+                  )}
+
+                  <div
+                    className="relative transition-all duration-200 shadow-2xl rounded-xl bg-white overflow-hidden border-2 border-neutral-300"
+                    style={{
+                      width: `${containerWidth * zoom}mm`,
+                      height: `${containerHeight * zoom}mm`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        transform: `scale(${zoom})`,
+                        transformOrigin: "top left",
+                        width: `${containerWidth}mm`,
+                        height: `${containerHeight}mm`,
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* printer_feed 모드인 경우: 전체를 회전시켜서 실제 인쇄 배출 모양을 렌더링 */}
+                      {previewMode === "printer_feed" ? (
+                        <div
+                          style={{
+                            width: "123mm",
+                            height: "100mm",
+                            position: "absolute",
+                            left: isRotatedFeed ? "50%" : 0,
+                            top: isRotatedFeed ? "50%" : 0,
+                            transform: isRotatedFeed
+                              ? `translate(-50%, -50%) rotate(${printRotation}deg)`
+                              : `rotate(${printRotation}deg)`,
+                            transformOrigin: "center center",
+                          }}
+                        >
+                          {/* 종이 배경 (전용용지면 실물 템플릿) */}
+                          {paperMode === "preprinted" && <CjPreprintedTemplateBackground />}
+
+                          {/* 인쇄 내용 (오프셋 이동 반영) */}
+                          <div
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              transform: `translate(${offsetX}mm, ${offsetY}mm)`,
+                              transformOrigin: "top left",
+                            }}
+                          >
+                            <StandardCjLabel
+                              item={item}
+                              today={today}
+                              maskName={maskName}
+                              maskPhone={maskPhone}
+                              senderName={senderName}
+                              senderPhone={senderPhone}
+                              senderAddr={senderAddr}
+                              isPreprinted={paperMode === "preprinted"}
+                              pageIndex={idx + 1}
+                              totalPages={printList.length}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        /* roll_template 모드 (실제 롤용지 맞춤 대조 뷰) */
+                        <div
+                          style={{
+                            width: "123mm",
+                            height: "100mm",
+                            position: "relative",
+                          }}
+                        >
+                          {/* 1. 실제 CJ 롤용지 실물 도면 배경 */}
+                          {paperMode === "preprinted" && <CjPreprintedTemplateBackground />}
+
+                          {/* 2. 실제 인쇄될 검정 데이터 (오프셋 이동 반영) */}
+                          <div
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              transform: `translate(${offsetX}mm, ${offsetY}mm)`,
+                              transformOrigin: "top left",
+                              transition: "transform 0.1s ease-out",
+                            }}
+                          >
+                            <StandardCjLabel
+                              item={item}
+                              today={today}
+                              maskName={maskName}
+                              maskPhone={maskPhone}
+                              senderName={senderName}
+                              senderPhone={senderPhone}
+                              senderAddr={senderAddr}
+                              isPreprinted={paperMode === "preprinted"}
+                              pageIndex={idx + 1}
+                              totalPages={printList.length}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 하단 치수 및 상태 배지 */}
+                  <div className="mt-2 flex items-center gap-2 text-[11px] text-neutral-600 font-mono bg-white/80 px-3 py-1 rounded-full border border-neutral-200/80 shadow-2xs">
+                    <span>
+                      {previewMode === "printer_feed" && isRotatedFeed ? "100mm × 123mm (피드 배출 규격)" : "123mm × 100mm (가로 라벨 규격)"}
+                    </span>
+                    <span>•</span>
+                    <span className={offsetX !== 0 || offsetY !== 0 ? "text-blue-600 font-bold" : "text-neutral-500"}>
+                      위치 보정: X {offsetX > 0 ? `+${offsetX.toFixed(1)}` : offsetX.toFixed(1)}mm, Y {offsetY > 0 ? `+${offsetY.toFixed(1)}` : offsetY.toFixed(1)}mm
+                    </span>
+                    <span>•</span>
+                    <span className="text-emerald-700 font-bold">
+                      회전: {printRotation}°
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -692,15 +1020,17 @@ export function CjLabelPrint({
           document.body
         )}
 
-      {/* 3. 다이렉트 고속 인쇄 캡처 전용 오프스크린 컨테이너 (실제 라벨 123mm x 100mm 100% 규격) */}
+      {/* 3. 다이렉트 고속 인쇄 캡처 전용 오프스크린 컨테이너 (실제 라벨 123mm x 100mm 100% 규격, translate 오프셋 적용) */}
       <div
         id="cj-direct-print-capture-container"
         aria-hidden="true"
-        className="fixed pointer-events-none opacity-0 -z-50 overflow-hidden"
+        className="fixed pointer-events-none -z-50 overflow-hidden"
         style={{
-          left: "-99999px",
+          left: "-9999px",
           top: 0,
           width: "123mm",
+          height: "100mm",
+          backgroundColor: "#ffffff",
         }}
       >
         {printList.map((item, idx) => (
@@ -712,20 +1042,30 @@ export function CjLabelPrint({
               height: "100mm",
               overflow: "hidden",
               backgroundColor: "#ffffff",
+              position: "relative",
             }}
           >
-            <StandardCjLabel
-              item={item}
-              today={today}
-              maskName={maskName}
-              maskPhone={maskPhone}
-              senderName={senderName}
-              senderPhone={senderPhone}
-              senderAddr={senderAddr}
-              isPreprinted={paperMode === "preprinted"}
-              pageIndex={idx + 1}
-              totalPages={printList.length}
-            />
+            <div
+              style={{
+                width: "123mm",
+                height: "100mm",
+                transform: `translate(${offsetX}mm, ${offsetY}mm)`,
+                transformOrigin: "top left",
+              }}
+            >
+              <StandardCjLabel
+                item={item}
+                today={today}
+                maskName={maskName}
+                maskPhone={maskPhone}
+                senderName={senderName}
+                senderPhone={senderPhone}
+                senderAddr={senderAddr}
+                isPreprinted={paperMode === "preprinted"}
+                pageIndex={idx + 1}
+                totalPages={printList.length}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -988,6 +1328,7 @@ function StandardCjLabel({
   const blueTabBg = isPreprinted ? "transparent" : "#1e60a7";
   const lightBlueTabBg = isPreprinted ? "transparent" : "#5b9bd5";
   const badgeBg = isPreprinted ? "transparent" : "#1e60a7";
+  const labelBg = isPreprinted ? "transparent" : "#ffffff";
 
   return (
     <div
@@ -1000,7 +1341,7 @@ function StandardCjLabel({
         border: `1.5px solid ${borderClr}`,
         display: "flex",
         flexDirection: "column",
-        backgroundColor: "#ffffff",
+        backgroundColor: labelBg,
         overflow: "hidden",
         fontFamily:
           "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -1022,7 +1363,7 @@ function StandardCjLabel({
           padding: "0 2mm",
           boxSizing: "border-box",
           overflow: "hidden",
-          backgroundColor: "#ffffff",
+          backgroundColor: labelBg,
         }}
       >
         {/* 항목 1: 운송장번호 라벨 및 번호 (1번 위치 기준 통일: 전용용지는 라벨을 투명 처리하여 공간 유지) */}
@@ -1105,7 +1446,7 @@ function StandardCjLabel({
           display: "flex",
           boxSizing: "border-box",
           overflow: "hidden",
-          backgroundColor: "#ffffff",
+          backgroundColor: labelBg,
         }}
       >
         {/* 항목 5: 분류코드 바코드 (CODE128A, 높이 15mm, 가로 25mm) */}
@@ -1140,6 +1481,7 @@ function StandardCjLabel({
               height={40}
               width={1.2}
               margin={0}
+              background={isPreprinted ? "transparent" : "#ffffff"}
             />
           </div>
         </div>
@@ -1231,7 +1573,7 @@ function StandardCjLabel({
           display: "flex",
           boxSizing: "border-box",
           overflow: "hidden",
-          backgroundColor: "#ffffff",
+          backgroundColor: labelBg,
         }}
       >
         {/* 받는분 세로 타이틀 탭 (폭 6mm) */}
@@ -1308,6 +1650,7 @@ function StandardCjLabel({
                 height={18}
                 width={1.15}
                 margin={0}
+                background={isPreprinted ? "transparent" : "#ffffff"}
               />
             </div>
           </div>
@@ -1364,7 +1707,7 @@ function StandardCjLabel({
           display: "flex",
           boxSizing: "border-box",
           overflow: "hidden",
-          backgroundColor: "#ffffff",
+          backgroundColor: labelBg,
         }}
       >
         {/* 보내는분 세로 타이틀 탭 (폭 6mm) */}
@@ -1515,7 +1858,7 @@ function StandardCjLabel({
           padding: "1.5mm 3mm 1mm 3mm",
           boxSizing: "border-box",
           overflow: "hidden",
-          backgroundColor: "#ffffff",
+          backgroundColor: labelBg,
         }}
       >
         {/* 항목 16: 상품명 및 수량 */}
@@ -1572,7 +1915,7 @@ function StandardCjLabel({
           display: "flex",
           boxSizing: "border-box",
           overflow: "hidden",
-          backgroundColor: "#ffffff",
+          backgroundColor: labelBg,
         }}
       >
         {/* 좌측 (폭 88mm): 배송메시지 + 배달점소-별칭 */}
@@ -1667,6 +2010,7 @@ function StandardCjLabel({
               height={32}
               width={1.25}
               margin={0}
+              background={isPreprinted ? "transparent" : "#ffffff"}
             />
           </div>
           <span
@@ -1787,6 +2131,248 @@ function CjOneBrandBanner() {
           모두를 위한 단 하나의 배송,
         </span>
         <span style={{ fontSize: "5.5pt", fontWeight: "900" }}>오네</span>
+      </div>
+    </div>
+  );
+}
+
+// 5. 실제 CJ대한통운 전용 롤용지 1:1 실물 도면 배경 템플릿 (WYSIWYG 인쇄 위치 대조용)
+export function CjPreprintedTemplateBackground() {
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute inset-0 pointer-events-none select-none overflow-hidden"
+      style={{
+        width: "123mm",
+        height: "100mm",
+        backgroundColor: "#fdfbf7",
+        fontFamily: "'Pretendard', sans-serif",
+        boxSizing: "border-box",
+        border: "1.5px solid #1a68b5",
+      }}
+    >
+      {/* ── ① 상단 10mm: 파란 헤더선 & CJ 로고 ──────────── */}
+      <div
+        style={{
+          height: "10mm",
+          borderBottom: "1.5px solid #1a68b5",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 2.5mm",
+          boxSizing: "border-box",
+          backgroundColor: "#ffffff",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "2mm" }}>
+          <span style={{ fontSize: "7.5pt", fontWeight: "900", color: "#1a68b5" }}>
+            운송장번호
+          </span>
+          <div style={{ width: "42mm", height: "5mm", border: "1px dashed #bfdbfe", borderRadius: "2px" }} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5mm" }}>
+          <div style={{ display: "flex", gap: "1px" }}>
+            <span style={{ width: "4px", height: "4px", backgroundColor: "#dc2626", borderRadius: "50%", display: "inline-block" }} />
+            <span style={{ width: "4px", height: "4px", backgroundColor: "#2563eb", borderRadius: "50%", display: "inline-block" }} />
+            <span style={{ width: "4px", height: "4px", backgroundColor: "#f59e0b", borderRadius: "50%", display: "inline-block" }} />
+          </div>
+          <span style={{ fontSize: "7.5pt", fontWeight: "900", color: "#1a68b5" }}>
+            CJ대한통운 1588-1255
+          </span>
+        </div>
+      </div>
+
+      {/* ── ② 분류코드 15mm: 바코드구역 / 대분류 / 권내코드 ──────────── */}
+      <div
+        style={{
+          height: "15mm",
+          borderBottom: "1px solid #e5e7eb",
+          display: "flex",
+          boxSizing: "border-box",
+          backgroundColor: "#ffffff",
+        }}
+      >
+        <div style={{ width: "25mm", borderRight: "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontSize: "5pt", color: "#cbd5e1" }}>[바코드 128A]</span>
+        </div>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "65mm", height: "12mm", border: "1px dashed #f1f5f9", borderRadius: "3px" }} />
+        </div>
+        <div
+          style={{
+            width: "18mm",
+            borderLeft: "1px solid #e5e7eb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            paddingRight: "2mm",
+          }}
+        >
+          <BvDiamondLogo />
+        </div>
+      </div>
+
+      {/* ── ③ 받는분 20mm: 파란색 세로 탭 & 3단 구역 ──────────── */}
+      <div
+        style={{
+          height: "20mm",
+          borderBottom: "1px solid #e5e7eb",
+          display: "flex",
+          boxSizing: "border-box",
+          backgroundColor: "#ffffff",
+        }}
+      >
+        <div
+          style={{
+            width: "6mm",
+            backgroundColor: "#1e60a7",
+            color: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            writingMode: "vertical-rl",
+            fontSize: "7pt",
+            fontWeight: "900",
+            letterSpacing: "1.5px",
+            boxSizing: "border-box",
+          }}
+        >
+          받는분
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "1mm 3mm" }}>
+          <div style={{ height: "5.5mm", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "6.5pt", color: "#94a3b8" }}>[성명 / 전화번호 영역]</span>
+            <div style={{ width: "38mm", height: "4.5mm", border: "1px dashed #e2e8f0", borderRadius: "1px" }} />
+          </div>
+          <div style={{ height: "4mm", display: "flex", alignItems: "center" }}>
+            <span style={{ fontSize: "6.5pt", color: "#94a3b8" }}>[배송지 주소 영역]</span>
+          </div>
+          <div style={{ height: "7.5mm", display: "flex", alignItems: "flex-end" }}>
+            <span style={{ fontSize: "7.5pt", color: "#3b82f6", fontWeight: "700" }}>[주소약칭 건물/동호수 표시 영역]</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── ④ 보내는분 7mm: 연파랑 세로 탭 ──────────── */}
+      <div
+        style={{
+          height: "7mm",
+          borderBottom: "1px solid #e5e7eb",
+          display: "flex",
+          boxSizing: "border-box",
+          backgroundColor: "#ffffff",
+        }}
+      >
+        <div
+          style={{
+            width: "6mm",
+            backgroundColor: "#5b9bd5",
+            color: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            writingMode: "vertical-rl",
+            fontSize: "4.5pt",
+            fontWeight: "900",
+            letterSpacing: "1px",
+            boxSizing: "border-box",
+          }}
+        >
+          보내는분
+        </div>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", padding: "0 3mm" }}>
+          <span style={{ fontSize: "6pt", color: "#94a3b8" }}>주식회사 초이콤마 02-579-1171 (서울특별시 강남구 개포동 개포로22길 12, 6층)</span>
+        </div>
+      </div>
+
+      {/* ── ⑤ 상품 및 오네 로고 33mm ──────────── */}
+      <div
+        style={{
+          height: "33mm",
+          borderBottom: "1px solid #e5e7eb",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          boxSizing: "border-box",
+          position: "relative",
+          backgroundColor: "#ffffff",
+        }}
+      >
+        {/* 상단 탭: 수량, 운임, 정산 */}
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "1mm 3mm 0 0", gap: "2mm" }}>
+          <span style={{ fontSize: "6pt", backgroundColor: "#1e60a7", color: "#fff", padding: "0.5mm 1.5mm", fontWeight: "bold", borderRadius: "1px" }}>
+            수량
+          </span>
+          <span style={{ fontSize: "6pt", backgroundColor: "#1e60a7", color: "#fff", padding: "0.5mm 1.5mm", fontWeight: "bold", borderRadius: "1px" }}>
+            운임
+          </span>
+          <span style={{ fontSize: "6pt", backgroundColor: "#1e60a7", color: "#fff", padding: "0.5mm 1.5mm", fontWeight: "bold", borderRadius: "1px" }}>
+            정산
+          </span>
+          <span style={{ fontSize: "6.5pt", color: "#1e60a7", fontWeight: "bold" }}>신용</span>
+        </div>
+
+        {/* 중간 상품 리스트 배경 은은한 줄무늬 (실제 롤용지와 동일) */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 4mm" }}>
+          <div style={{ height: "7mm", backgroundColor: "#fef9ee", borderBottom: "1px dashed #f6ede0", opacity: 0.85 }} />
+          <div style={{ height: "7mm", backgroundColor: "#ffffff" }} />
+          <div style={{ height: "7mm", backgroundColor: "#fef9ee", opacity: 0.85 }} />
+        </div>
+
+        {/* 하단 친환경 로고 & O-NE 로고 & 배송안내문 */}
+        <div
+          style={{
+            height: "8mm",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 3mm",
+            borderTop: "1px solid #f1f5f9",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "2mm" }}>
+            <GrpEcoLogo />
+            <SnowflakeIcon />
+            <span style={{ fontSize: "5pt", color: "#1e60a7", fontWeight: "600", letterSpacing: "-0.2px" }}>
+              고객님(받는 분)의 소중한 상품을 안전하게 배송하겠습니다. 개인정보 유출우려가 있으니 운송장은 폐기바랍니다.
+            </span>
+          </div>
+          <CjOneBrandBanner />
+        </div>
+      </div>
+
+      {/* ── ⑥ 배달점소 15mm: 중구무교 박스 & 대형 바코드 ──────────── */}
+      <div
+        style={{
+          height: "15mm",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 3mm",
+          boxSizing: "border-box",
+          backgroundColor: "#ffffff",
+        }}
+      >
+        <div
+          style={{
+            width: "88mm",
+            height: "12mm",
+            border: "1.5px solid #dc2626",
+            borderRadius: "2px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            padding: "0 2mm",
+          }}
+        >
+          <span style={{ fontSize: "5pt", color: "#dc2626", fontWeight: "bold" }}>
+            부재 시 문 앞에 놓아주세요. 파손주의
+          </span>
+          <span style={{ fontSize: "6.5pt", color: "#94a3b8" }}>[배달점소 - 집배원별칭]</span>
+        </div>
+        <div style={{ width: "35mm", height: "12mm", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "32mm", height: "9.5mm", border: "1px dashed #cbd5e1", borderRadius: "2px" }} />
+        </div>
       </div>
     </div>
   );
