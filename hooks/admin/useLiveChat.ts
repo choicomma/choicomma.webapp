@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 
@@ -9,26 +9,29 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
 
   // Multi-Customer Live Chat Sessions State
   const [activeSessionId, setActiveSessionId] = useState<string>("vip@choicomma.com");
-  const [chatSessionsList, setChatSessionsList] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_chat_sessions");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) { }
-      }
+  const [chatSessionsList, setChatSessionsList] = useState<any[]>([
+    {
+      id: "vip@choicomma.com",
+      name: "최상위 VIP 회원님",
+      email: "vip@choicomma.com",
+      tier: "VIP",
+      badgeColor: "bg-amber-400 text-neutral-950 font-black",
+      status: "online",
+    },
+  ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("admin_chat_sessions");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setChatSessionsList(parsed);
+        }
+      } catch (e) {}
     }
-    return [
-      {
-        id: "vip@choicomma.com",
-        name: "최상위 VIP 회원님",
-        email: "vip@choicomma.com",
-        tier: "VIP",
-        badgeColor: "bg-amber-400 text-neutral-950 font-black",
-        status: "online",
-      },
-    ];
-  });
+  }, []);
 
   const [demoSessionMessages, setDemoSessionMessages] = useState<Record<string, any[]>>({});
 

@@ -15,35 +15,36 @@ export function useTimesale(triggerToast: (msg: string) => void) {
   const [adminTimeSaleProductIds, setAdminTimeSaleProductIds] = useState<string[]>([]);
 
   // Secret Time Sale states (Member Target Specific)
-  const [secretSalesList, setSecretSalesList] = useState<any[]>(() => {
+  const [secretSalesList, setSecretSalesList] = useState<any[]>([
+    {
+      id: "SECRET-TS-001",
+      title: "[VIP 단독] 2026 S/S 시즌 프라이빗 40% 한정 특가",
+      discountRate: 40,
+      productIds: ["product-1", "product-2", "product-3"],
+      targetCustomerEmails: ["vip@example.com", "gold@example.com"],
+      targetGrades: ["VIP", "VVIP"],
+      durationHours: 24,
+      durationMinutes: 0,
+      status: "active",
+      createdAt: "2026-09-01T00:00:00.000Z",
+    },
+  ]);
+
+  // Load from Supabase and localStorage on mount
+  useEffect(() => {
+    let isMounted = true;
+
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("admin_secret_timesales");
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) return parsed;
-        } catch (e) { }
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSecretSalesList(parsed);
+          }
+        } catch (e) {}
       }
     }
-    return [
-      {
-        id: "SECRET-TS-001",
-        title: "[VIP 단독] 2026 S/S 시즌 프라이빗 40% 한정 특가",
-        discountRate: 40,
-        productIds: ["product-1", "product-2", "product-3"],
-        targetCustomerEmails: ["vip@example.com", "gold@example.com"],
-        targetGrades: ["VIP", "VVIP"],
-        durationHours: 24,
-        durationMinutes: 0,
-        status: "active",
-        createdAt: new Date().toISOString(),
-      },
-    ];
-  });
-
-  // Load from Supabase on mount
-  useEffect(() => {
-    let isMounted = true;
     const fetchTimesales = async () => {
       try {
         const { data, error } = await supabase

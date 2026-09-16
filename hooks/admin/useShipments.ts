@@ -108,7 +108,13 @@ export function useShipments(triggerToast: (msg: string) => void) {
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Shipments List ──────────────────────────────────────────────────────────
-  const [shipmentsList, setShipmentsList] = useState<any[]>(() => {
+  const [shipmentsList, setShipmentsList] = useState<any[]>(initialShipments);
+
+  // 1. Fetch authoritative shipments from server API / Supabase on mount and tab focus + Realtime
+  useEffect(() => {
+    let isMounted = true;
+
+    // Load any locally cached edits immediately after client hydration
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("admin_shipments");
       if (saved) {
@@ -117,17 +123,11 @@ export function useShipments(triggerToast: (msg: string) => void) {
           if (Array.isArray(parsed) && parsed.length > 0) {
             const sanitized = sanitizeShipmentsList(parsed);
             lastSyncedJsonRef.current = serializeShipmentsForSync(sanitized);
-            return sanitized;
+            setShipmentsList(sanitized);
           }
         } catch (e) {}
       }
     }
-    return initialShipments;
-  });
-
-  // 1. Fetch authoritative shipments from server API / Supabase on mount and tab focus + Realtime
-  useEffect(() => {
-    let isMounted = true;
 
     const fetchServerShipments = async () => {
       try {
@@ -472,29 +472,42 @@ export function useShipments(triggerToast: (msg: string) => void) {
   const [configModalTab, setConfigModalTab] = useState<"shipping" | "cj" | "policy">("shipping");
 
   // ── Shipping Policy ─────────────────────────────────────────────────────────
-  const [shippingPolicy, setShippingPolicy] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_shipping_policy");
-      if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
-      }
-    }
-    return { baseFee: 3000, freeThreshold: 50000 };
+  const [shippingPolicy, setShippingPolicy] = useState<{
+    baseFee: number;
+    freeThreshold: number;
+    freeShippingThreshold: number;
+    islandExtraFee: number;
+    returnExchangeFee: number;
+    courierName: string;
+    shippingNotice: string;
+  }>({
+    baseFee: 3000,
+    freeThreshold: 50000,
+    freeShippingThreshold: 100000,
+    islandExtraFee: 3000,
+    returnExchangeFee: 6000,
+    courierName: "CJ대한통운 (주계약)",
+    shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
   });
 
   // ── CJ API Config ───────────────────────────────────────────────────────────
-  const [cjClientCode, setCjClientCode] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("cj_client_code") || "" : ""
-  );
-  const [cjContractNo, setCjContractNo] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("cj_contract_no") || "" : ""
-  );
-  const [cjApiKey, setCjApiKey] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("cj_api_key") || "" : ""
-  );
-  const [cjSenderAddress, setCjSenderAddress] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("cj_sender_address") || "" : ""
-  );
+  const [cjClientCode, setCjClientCode] = useState("");
+  const [cjContractNo, setCjContractNo] = useState("");
+  const [cjApiKey, setCjApiKey] = useState("");
+  const [cjSenderAddress, setCjSenderAddress] = useState("");
+
+  // Sync config from localStorage after client mounts
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const savedPolicy = localStorage.getItem("admin_shipping_policy");
+    if (savedPolicy) {
+      try { setShippingPolicy(JSON.parse(savedPolicy)); } catch (e) {}
+    }
+    setCjClientCode(localStorage.getItem("cj_client_code") || "");
+    setCjContractNo(localStorage.getItem("cj_contract_no") || "");
+    setCjApiKey(localStorage.getItem("cj_api_key") || "");
+    setCjSenderAddress(localStorage.getItem("cj_sender_address") || "");
+  }, []);
 
   // ── Postcode (Daum / Kakao) Opener ─────────────────────────────────────────
   const handleOpenSenderPostcode = () => {
