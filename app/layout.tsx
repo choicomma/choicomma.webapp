@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "sonner";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { NuqsProvider } from "@/components/providers/nuqs-provider";
 import { getCart, getSFCCMode } from "@/lib/sfcc";
 import { CartProvider } from "@/components/cart/cart-context";
 import { CartDrawer } from "@/components/cart/modal";
@@ -128,7 +128,7 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <CartProvider cartPromise={cart} mode={mode}>
-          <NuqsAdapter>
+          <NuqsProvider>
             <CustomerSessionWatcher />
             <HeaderWithData />
             {children}
@@ -136,7 +136,7 @@ export default async function RootLayout({
             <CartDrawer />
             <Toaster closeButton position="top-center" />
             {isDevelopment && <DebugGrid />}
-          </NuqsAdapter>
+          </NuqsProvider>
         </CartProvider>
       </body>
     </html>
