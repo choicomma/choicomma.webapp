@@ -27,9 +27,10 @@ export function sanitizeCjTracking(tracking: string): string {
   return clean;
 }
 
-// 주문/배송 번호 기준 고정 오름차순(001 -> 002 -> 003...) 정렬 유틸
+// 주문/배송 번호 기준 고정 오름차순(001 -> 002 -> 003...) 정렬 유틸 (실검증 주문 ORD-REAL-은 최상단 우선 노출)
 export function extractShipmentOrderNumber(str: string): number {
   if (!str) return 0;
+  if (str.includes("REAL") || str.includes("CJ-REAL")) return 999999;
   const match = str.match(/(\d+)$/);
   return match ? parseInt(match[1], 10) : 0;
 }

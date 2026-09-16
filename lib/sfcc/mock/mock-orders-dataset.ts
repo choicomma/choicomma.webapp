@@ -398,9 +398,53 @@ export const standardMockShipments: MockShipmentOrder[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. 전체 통합 가상 주문 원장 (합배송 테스트 4건 + 기존 5건 = 총 9건)
+// 3. CJ 개발 서버 실제 연동 검증 주문 (CJ 발급 번호: 6600-3762-6853, 도착지코드 5R67 1e)
+// ─────────────────────────────────────────────────────────────────────────────
+export const realCjTestShipment: MockShipmentOrder = {
+  id: "TRK-ORD-REAL-1789534984986-001",
+  orderId: "ORD-REAL-1789534984986-001",
+  ordererName: "홍길동(실검증)",
+  recipient: "홍길동(실검증)",
+  phone: "010-1234-5678",
+  altPhone: "",
+  zipCode: "04524",
+  address: "서울특별시 중구 세종대로 110",
+  detailAddress: "서울시청 본관 1층",
+  items: "초이콤마 린넨 실크 블라우스 (WHITE / FREE) 1개",
+  quantity: 1,
+  carrier: "CJ대한통운",
+  trackingNumber: "6600-3762-6853",
+  status: "In Transit",
+  shippingMemo: "부재 시 문 앞에 놓아주세요. 파손주의",
+  orderDate: "2026-09-16 14:00:00",
+  shippedDate: "2026-09-16",
+  estimatedDelivery: "-",
+  packages: [
+    {
+      id: "PKG-REAL-001-1",
+      pkgIndex: 1,
+      items: "초이콤마 린넨 실크 블라우스 (WHITE / FREE) 1개",
+      quantity: 1,
+      carrier: "CJ대한통운",
+      trackingNumber: "6600-3762-6853",
+      status: "In Transit",
+      cjP2pCd: "P1",
+      cjClsfCd: "5R67",
+      cjSubClsfCd: "1e",
+      cjClldlvBranNm: "중구무교",
+      cjClldlvempNickNm: "E04-1구역",
+      cjClsfAddr: "태평1 31 서울시청",
+    },
+  ],
+  created_at: "2026-09-16T05:03:15.814Z",
+  updated_at: "2026-09-16T05:03:15.814Z",
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. 전체 통합 주문 원장 (실검증 주문 1건 + 합배송 테스트 4건 + 기존 5건 = 총 10건)
 // ─────────────────────────────────────────────────────────────────────────────
 export const allMergedMockShipments: MockShipmentOrder[] = [
+  realCjTestShipment,
   ...bundleTestShipments,
   ...standardMockShipments,
 ];
