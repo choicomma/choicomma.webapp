@@ -6,7 +6,7 @@ import {
 } from "@/components/products/variant-selector";
 import { Product } from "@/lib/sfcc/types";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const DesktopGallery = ({ product }: { product: Product }) => {
   const selectedVariant = useSelectedVariant(product);
@@ -17,6 +17,17 @@ export const DesktopGallery = ({ product }: { product: Product }) => {
   if (activeIndex >= images.length && images.length > 0) {
     setActiveIndex(0);
   }
+
+  // 제품 이미지가 2개 이상일 때 자동으로 슬라이드
+  useEffect(() => {
+    if (images.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % images.length);
+    }, 3500);
+
+    return () => clearInterval(timer);
+  }, [images.length, activeIndex]);
 
   if (!images.length) return null;
 
@@ -45,11 +56,18 @@ export const DesktopGallery = ({ product }: { product: Product }) => {
 
       {/* Main Image (Center Column: Exact 1:1 aspect-square without outline/border) */}
       <div className="flex-1 max-w-[500px] aspect-square relative bg-transparent overflow-hidden">
-        <img
-          src={images[activeIndex].url}
-          alt={images[activeIndex].altText || product.title}
-          className="w-full h-full object-cover object-top transition-all duration-300 block"
-        />
+        {images.map((image, index) => (
+          <img
+            key={`${image.url}-${index}`}
+            src={image.url}
+            alt={image.altText || product.title}
+            className={`w-full h-full object-cover object-top absolute inset-0 transition-opacity duration-700 block ${
+              activeIndex === index
+                ? "opacity-100 z-10"
+                : "opacity-0 z-0 pointer-events-none"
+            }`}
+          />
+        ))}
       </div>
     </div>
   );

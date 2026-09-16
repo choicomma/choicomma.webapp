@@ -18,7 +18,7 @@ export function MobileGallerySlider({ product }: MobileGallerySliderProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
     dragFree: false,
-    loop: false,
+    loop: true,
   });
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -38,6 +38,17 @@ export function MobileGallerySlider({ product }: MobileGallerySliderProps) {
     emblaApi.on("reInit", onInit);
     emblaApi.on("select", onSelect);
   }, [emblaApi, onInit, onSelect]);
+
+  // 제품 이미지가 2개 이상일 때 모바일에서도 자동으로 슬라이드
+  useEffect(() => {
+    if (!emblaApi || images.length <= 1) return;
+
+    const timer = setInterval(() => {
+      emblaApi.scrollNext();
+    }, 3500);
+
+    return () => clearInterval(timer);
+  }, [emblaApi, images.length, selectedIndex]);
 
   const totalImages = images.length;
 
