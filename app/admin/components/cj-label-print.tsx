@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Barcode from "react-barcode";
-import { Printer, CheckCircle2, HelpCircle, X, RefreshCw } from "lucide-react";
+import { Printer, CheckCircle2, HelpCircle, X, RefreshCw, Settings, Wifi, Laptop, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export interface PrintData {
@@ -47,22 +47,36 @@ export function CjLabelPrint({
   const [isPrinting, setIsPrinting] = useState(false);
   const [showKioskGuide, setShowKioskGuide] = useState(false);
 
-  // 로컬 다이렉트 프린트 브릿지 (ChoicommaPrintBridge) 연결 상태
+  // 로컬/원격 다이렉트 프린트 브릿지 (ChoicommaPrintBridge) 연결 상태
   const [bridgeStatus, setBridgeStatus] = useState<"checking" | "connected" | "disconnected">("checking");
   const [bridgePrinterName, setBridgePrinterName] = useState<string>("Xprinter XP-DT108B LABEL");
+  const [bridgeHost, setBridgeHost] = useState<string>("localhost");
+  const [machineName, setMachineName] = useState<string>("");
+  const [detectedIps, setDetectedIps] = useState<string[]>([]);
+  const [isHostModalOpen, setIsHostModalOpen] = useState<boolean>(false);
+  const [tempHost, setTempHost] = useState<string>("");
+  const [testingHost, setTestingHost] = useState<boolean>(false);
+  const [testError, setTestError] = useState<string | null>(null);
 
-  const checkBridgeStatus = useCallback(async () => {
+  const checkBridgeStatus = useCallback(async (targetHost?: string) => {
+    const host = (targetHost !== undefined ? targetHost : (bridgeHost || "localhost")).trim();
     setBridgeStatus("checking");
     try {
-      const res = await fetch("http://localhost:18080/health", {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(`http://${host || "localhost"}:18080/health`, {
         method: "GET",
         headers: { Accept: "application/json" },
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
       if (!res.ok) throw new Error("HTTP error");
       const json = await res.json();
-      if (json?.status === "ok" && json?.xprinterDetected) {
+      if (json?.status === "ok" && (json?.xprinterDetected || json?.found)) {
         setBridgeStatus("connected");
-        if (json.xprinterName) setBridgePrinterName(json.xprinterName);
+        if (json.xprinterName || json.printer) setBridgePrinterName(json.xprinterName || json.printer);
+        if (json.machineName) setMachineName(json.machineName);
+        if (Array.isArray(json.localIps)) setDetectedIps(json.localIps);
         return true;
       }
       setBridgeStatus("disconnected");
@@ -71,11 +85,63 @@ export function CjLabelPrint({
       setBridgeStatus("disconnected");
       return false;
     }
-  }, []);
+  }, [bridgeHost]);
+
+  const handleSaveHost = async (hostToTest?: string) => {
+    const target = (hostToTest || tempHost || "localhost").trim();
+    if (hostToTest) setTempHost(hostToTest);
+    setTestingHost(true);
+    setTestError(null);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch(`http://${target}:18080/health`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+      if (json?.status === "ok" && (json?.xprinterDetected || json?.found)) {
+        setBridgeHost(target);
+        if (json.xprinterName || json.printer) setBridgePrinterName(json.xprinterName || json.printer);
+        if (json.machineName) setMachineName(json.machineName);
+        if (Array.isArray(json.localIps)) setDetectedIps(json.localIps);
+        setBridgeStatus("connected");
+        try {
+          localStorage.setItem("choicomma_printer_host", target);
+        } catch {}
+        toast.success(`프린터 PC (${target}) 연결에 성공했습니다!`);
+        setIsHostModalOpen(false);
+      } else {
+        setTestError("프린터 브릿지는 응답하였으나 Xprinter 라벨 프린터가 감지되지 않았습니다.");
+      }
+    } catch {
+      setTestError(`IP '${target}' (포트 18080)에 연결할 수 없습니다. IP 주소와 프린터 PC의 브릿지 실행 여부, 방화벽을 확인해주세요.`);
+    } finally {
+      setTestingHost(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
-    checkBridgeStatus();
+
+    let initialHost = "localhost";
+    try {
+      const saved = localStorage.getItem("choicomma_printer_host");
+      if (saved && saved.trim()) {
+        initialHost = saved.trim();
+        setBridgeHost(initialHost);
+        setTempHost(initialHost);
+      } else {
+        setTempHost("localhost");
+      }
+    } catch {
+      setTempHost("localhost");
+    }
+
+    checkBridgeStatus(initialHost);
 
     // 서버 기본 프린터 설정 상태 조회
     fetch("/api/admin/print/printer-config")
@@ -278,7 +344,8 @@ export function CjLabelPrint({
         }
 
         if (images.length > 0) {
-          const res = await fetch("http://localhost:18080/print", {
+          const host = (bridgeHost || "localhost").trim();
+          const res = await fetch(`http://${host}:18080/print`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -339,19 +406,25 @@ export function CjLabelPrint({
 
             {/* Controls */}
             <div className="flex items-center gap-2">
-              {/* Bridge Connection Status Badge (No emojis) */}
+              {/* Bridge Connection Status Badge */}
               <div className="flex items-center gap-1.5">
                 {bridgeStatus === "connected" ? (
-                  <div
-                    className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg shadow-2xs"
-                    title="초이콤마 다이렉트 프린트 브릿지 연결됨 (18080 포트) - 브라우저 인쇄창 없이 Xprinter로 즉시 고속 출력됩니다."
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempHost(bridgeHost);
+                      setTestError(null);
+                      setIsHostModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-lg shadow-2xs cursor-pointer transition-colors"
+                    title="초이콤마 다이렉트 프린트 브릿지 연결됨 - 클릭하여 프린터 IP 설정 변경"
                   >
                     <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                     <span>다이렉트 출력 준비완료</span>
-                    <span className="text-[10px] text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded font-mono font-normal">
-                      {bridgePrinterName}
+                    <span className="text-[10px] text-emerald-700 bg-emerald-100/90 px-1.5 py-0.5 rounded font-mono font-normal">
+                      {bridgeHost === "localhost" || bridgeHost === "127.0.0.1" ? "이 컴퓨터" : bridgeHost}
                     </span>
-                  </div>
+                  </button>
                 ) : bridgeStatus === "checking" ? (
                   <div
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 border border-neutral-200 text-neutral-600 text-xs font-medium rounded-lg"
@@ -361,14 +434,37 @@ export function CjLabelPrint({
                     <span>연결 확인 중...</span>
                   </div>
                 ) : (
-                  <div
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 border border-neutral-200 text-neutral-700 text-xs font-medium rounded-lg"
-                    title="로컬 다이렉트 브릿지 미실행 - 일반 브라우저 인쇄창을 통해 출력됩니다."
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempHost(bridgeHost);
+                      setTestError(null);
+                      setIsHostModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 text-neutral-700 text-xs font-medium rounded-lg cursor-pointer transition-colors"
+                    title="원격 프린터 PC 연결 또는 로컬 브릿지 설정"
                   >
                     <span className="w-2 h-2 rounded-full bg-neutral-400 shrink-0" />
                     <span>일반 인쇄 모드</span>
-                  </div>
+                    <span className="text-[10px] text-blue-600 font-semibold underline underline-offset-2 ml-1">
+                      IP 연결
+                    </span>
+                  </button>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempHost(bridgeHost);
+                    setTestError(null);
+                    setIsHostModalOpen(true);
+                  }}
+                  title="프린터 컴퓨터 IP 네트워크 설정"
+                  className="p-1.5 text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 rounded-lg border border-neutral-200 transition-colors cursor-pointer"
+                  aria-label="프린터 네트워크 설정"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </button>
 
                 <button
                   type="button"
@@ -675,6 +771,136 @@ export function CjLabelPrint({
                 className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-bold cursor-pointer"
               >
                 확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 프린터 네트워크 IP 연결 설정 팝업 */}
+      {isHostModalOpen && (
+        <div className="fixed inset-0 z-[10001] bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+              <h3 className="font-bold text-base text-neutral-900 flex items-center gap-2">
+                <Settings className="w-5 h-5 text-blue-600" />
+                <span>라벨 프린터 PC 네트워크(IP) 설정</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsHostModalOpen(false)}
+                className="text-neutral-400 hover:text-neutral-600 p-1 cursor-pointer rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-4 space-y-4 text-xs text-neutral-600">
+              <p className="text-neutral-600 leading-relaxed">
+                라벨 프린터(Xprinter)와 <strong>초이콤마 브릿지 프로그램</strong>이 실행 중인 컴퓨터의 IP 주소를 입력하세요. 같은 와이파이나 공유기에 연결되어 있다면 다른 PC에서도 즉시 다이렉트 출력이 가능합니다.
+              </p>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-800 mb-1.5">
+                  프린터 PC IP 주소 또는 도메인 (포트: 18080)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={tempHost}
+                    onChange={(e) => {
+                      setTempHost(e.target.value);
+                      setTestError(null);
+                    }}
+                    placeholder="예: localhost 또는 192.168.0.15"
+                    className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg text-xs font-mono text-neutral-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSaveHost(tempHost);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSaveHost(tempHost)}
+                    disabled={testingHost || !tempHost.trim()}
+                    className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold rounded-lg cursor-pointer transition-colors shrink-0"
+                  >
+                    {testingHost ? "연결 중..." : "연결/저장"}
+                  </button>
+                </div>
+              </div>
+
+              {/* 빠른 선택 버튼 */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold text-neutral-500">빠른 선택:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempHost("localhost");
+                      handleSaveHost("localhost");
+                    }}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-mono border transition-colors cursor-pointer ${
+                      bridgeHost === "localhost" || bridgeHost === "127.0.0.1"
+                        ? "bg-blue-50 border-blue-300 text-blue-700 font-bold"
+                        : "bg-neutral-50 border-neutral-200 text-neutral-600 hover:bg-neutral-100"
+                    }`}
+                  >
+                    이 컴퓨터 (localhost)
+                  </button>
+                  {detectedIps.map((ip) => (
+                    <button
+                      key={ip}
+                      type="button"
+                      onClick={() => {
+                        setTempHost(ip);
+                        handleSaveHost(ip);
+                      }}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-mono border transition-colors cursor-pointer ${
+                        bridgeHost === ip
+                          ? "bg-blue-50 border-blue-300 text-blue-700 font-bold"
+                          : "bg-neutral-50 border-neutral-200 text-neutral-600 hover:bg-neutral-100"
+                      }`}
+                    >
+                      {ip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 현재 상태 알림창 */}
+              {bridgeStatus === "connected" && !testError && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-xs">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>연결 성공 ({bridgeHost})</span>
+                  </div>
+                  <div className="text-[11px] text-emerald-700">
+                    • 프린터: {bridgePrinterName}
+                    {machineName && ` • 컴퓨터: ${machineName}`}
+                  </div>
+                </div>
+              )}
+
+              {testError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-[11px] leading-relaxed">
+                  <div className="font-bold mb-0.5">연결 실패</div>
+                  <div>{testError}</div>
+                  <div className="mt-1 text-rose-600 text-[10px]">
+                    ※ 다른 컴퓨터에서 접속할 경우 프린터 컴퓨터의 방화벽에서 포트 18080 허용 또는 <code>node-bridge.js</code>가 실행 중인지 확인하세요.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-neutral-100">
+              <button
+                type="button"
+                onClick={() => setIsHostModalOpen(false)}
+                className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+              >
+                닫기
               </button>
             </div>
           </div>

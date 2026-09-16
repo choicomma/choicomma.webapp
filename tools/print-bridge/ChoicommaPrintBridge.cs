@@ -5,6 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Printing;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Web.Script.Serialization;
@@ -39,7 +40,7 @@ namespace ChoicommaPrintBridge
                 Log("FATAL ThreadException: " + (e.Exception != null ? e.Exception.ToString() : "null"));
             };
 
-            Log("Application Starting...");
+            Log("Application Starting (v2.0 Network Direct Edition)...");
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -59,36 +60,76 @@ namespace ChoicommaPrintBridge
                     return;
                 }
 
-                Log("Acquired mutex. Starting Application.Run...");
-                Application.Run(new BridgeApplicationContext());
+                Log("Acquired mutex. Starting Application.Run with MainForm...");
+                Application.Run(new MainForm());
                 Log("Application.Run exited.");
             }
         }
     }
 
-    public class BridgeApplicationContext : ApplicationContext
+    public class MainForm : Form
     {
         private NotifyIcon _trayIcon;
-        private HttpListener _listener;
+        private TcpListener _tcpListener;
         private Thread _listenerThread;
         private bool _isRunning = true;
         private const int Port = 18080;
 
-        public BridgeApplicationContext()
+        public MainForm()
         {
+            this.WindowState = FormWindowState.Minimized;
+            this.ShowInTaskbar = false;
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.Size = new Size(0, 0);
+
             InitializeTray();
-            StartHttpServer();
+            StartServer();
+        }
+
+        protected override void SetVisibleCore(bool value)
+        {
+            if (!IsHandleCreated)
+            {
+                CreateHandle();
+            }
+            base.SetVisibleCore(false);
+        }
+
+        public static List<string> GetLocalIPv4Addresses()
+        {
+            List<string> ips = new List<string>();
+            try
+            {
+                string hostName = Dns.GetHostName();
+                IPAddress[] addresses = Dns.GetHostAddresses(hostName);
+                foreach (IPAddress addr in addresses)
+                {
+                    if (addr.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(addr))
+                    {
+                        ips.Add(addr.ToString());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Program.Log("GetLocalIPv4Addresses error: " + ex.Message);
+            }
+            return ips;
         }
 
         private void InitializeTray()
         {
             ContextMenu contextMenu = new ContextMenu();
 
-            MenuItem titleItem = new MenuItem("초이콤마 다이렉트 프린트 브릿지 (작동 중)");
+            MenuItem titleItem = new MenuItem("초이콤마 네트워크 다이렉트 프린트 브릿지 (작동 중)");
             titleItem.Enabled = false;
             contextMenu.MenuItems.Add(titleItem);
 
             contextMenu.MenuItems.Add(new MenuItem("-"));
+
+            MenuItem ipItem = new MenuItem("내 컴퓨터 IP 주소 확인 (원격 출력용)", OnShowIp);
+            ipItem.DefaultItem = true;
+            contextMenu.MenuItems.Add(ipItem);
 
             MenuItem statusItem = new MenuItem("프린터 연결 상태 확인", OnCheckStatus);
             contextMenu.MenuItems.Add(statusItem);
@@ -100,38 +141,73 @@ namespace ChoicommaPrintBridge
 
             _trayIcon = new NotifyIcon
             {
-                Icon = CreatePrinterIcon(),
+                Icon = CreateBridgeIcon(),
                 ContextMenu = contextMenu,
-                Text = "초이콤마 프린트 브릿지 (포트 18080)",
-                Visible = true
+                Visible = true,
+                Text = "초이콤마 프린트 브릿지 (포트 18080 대기 중)"
             };
+
+            _trayIcon.DoubleClick += (s, e) => OnShowIp(s, e);
+
+            List<string> localIps = GetLocalIPv4Addresses();
+            string ipDisplay = localIps.Count > 0 ? localIps[0] : "127.0.0.1";
+            _trayIcon.ShowBalloonTip(
+                3000,
+                "초이콤마 프린트 브릿지 실행됨",
+                string.Format("프린터 대기 중 (IP: {0}:18080)\n노트북이나 다른 PC에서도 네트워크로 즉시 인쇄 가능합니다.", ipDisplay),
+                ToolTipIcon.Info
+            );
         }
 
-        private Icon CreatePrinterIcon()
+        private void OnShowIp(object sender, EventArgs e)
         {
-            // 동적으로 16x16 프린터 모양 아이콘 생성 (외부 .ico 파일 불필요)
+            List<string> localIps = GetLocalIPv4Addresses();
+            string primaryIp = localIps.Count > 0 ? localIps[0] : "127.0.0.1";
+
+            try
+            {
+                Clipboard.SetText(primaryIp);
+            }
+            catch { }
+
+            string msg = string.Format(
+                "이 컴퓨터(프린터 연결 PC)의 IP 주소:\n👉  {0}  (클립보드에 자동 복사됨)\n\n" +
+                "사용 방법:\n" +
+                "1. 다른 컴퓨터나 노트북에서 초이콤마 관리자 페이지를 엽니다.\n" +
+                "2. 송장 인쇄 화면에서 [프린터 PC 설정]을 누릅니다.\n" +
+                "3. 위 IP 주소({0})를 붙여넣고 [저장]하시면\n" +
+                "   어디서든 [즉시 인쇄] 버튼 하나로 이 컴퓨터의 라벨 프린터에서 바로 출력됩니다!",
+                primaryIp
+            );
+
+            MessageBox.Show(
+                msg,
+                "초이콤마 네트워크 프린트 브릿지 - IP 확인",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+        }
+
+        private Icon CreateBridgeIcon()
+        {
             using (Bitmap bmp = new Bitmap(16, 16))
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.Clear(Color.Transparent);
                 g.SmoothingMode = SmoothingMode.AntiAlias;
 
-                // 본체 (다크 그레이)
-                using (SolidBrush bodyBrush = new SolidBrush(Color.FromArgb(40, 44, 52)))
+                using (SolidBrush bodyBrush = new SolidBrush(Color.FromArgb(30, 41, 59)))
                 {
                     g.FillRectangle(bodyBrush, 2, 5, 12, 7);
                 }
 
-                // 용지 투입부 (화이트)
                 using (SolidBrush paperBrush = new SolidBrush(Color.FromArgb(240, 240, 240)))
                 {
                     g.FillRectangle(paperBrush, 4, 1, 8, 4);
-                    // 인쇄 배출 용지
                     g.FillRectangle(paperBrush, 4, 10, 8, 5);
                 }
 
-                // 포인트 LED (블루)
-                using (SolidBrush ledBrush = new SolidBrush(Color.FromArgb(37, 99, 235)))
+                using (SolidBrush ledBrush = new SolidBrush(Color.FromArgb(16, 185, 129)))
                 {
                     g.FillRectangle(ledBrush, 11, 7, 2, 2);
                 }
@@ -141,13 +217,13 @@ namespace ChoicommaPrintBridge
             }
         }
 
-        private void StartHttpServer()
+        private void StartServer()
         {
             try
             {
-                _listener = new HttpListener();
-                _listener.Prefixes.Add("http://localhost:" + Port + "/");
-                _listener.Start();
+                _tcpListener = new TcpListener(IPAddress.Any, Port);
+                _tcpListener.Start();
+                Program.Log(string.Format("TcpListener started on 0.0.0.0:{0}", Port));
 
                 _listenerThread = new Thread(ListenLoop)
                 {
@@ -157,8 +233,9 @@ namespace ChoicommaPrintBridge
             }
             catch (Exception ex)
             {
+                Program.Log("StartServer failed: " + ex.Message);
                 MessageBox.Show(
-                    "HTTP 리스너 시작 실패: " + ex.Message + "\n다른 프로그램이 포트 " + Port + "를 사용 중인지 확인해주세요.",
+                    "네트워크 수신 서버 시작 실패: " + ex.Message + "\n다른 프로그램이 포트 " + Port + "를 사용 중인지 확인해주세요.",
                     "초이콤마 프린트 브릿지 오류",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
@@ -166,64 +243,166 @@ namespace ChoicommaPrintBridge
             }
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            Program.Log("OnFormClosing called: " + e.CloseReason);
+            base.OnFormClosing(e);
+        }
+
         private void ListenLoop()
         {
-            while (_isRunning && _listener != null && _listener.IsListening)
+            Program.Log("ListenLoop entering while loop...");
+            while (_isRunning && _tcpListener != null)
             {
                 try
                 {
-                    HttpListenerContext ctx = _listener.GetContext();
-                    ThreadPool.QueueUserWorkItem(ProcessRequest, ctx);
+                    TcpClient client = _tcpListener.AcceptTcpClient();
+                    Program.Log("TcpClient accepted from: " + client.Client.RemoteEndPoint);
+                    ThreadPool.QueueUserWorkItem(ProcessClient, client);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Program.Log("ListenLoop Exception: " + ex.Message);
                     if (!_isRunning) break;
                 }
             }
+            Program.Log("ListenLoop exited. _isRunning=" + _isRunning);
         }
 
-        private void ProcessRequest(object state)
+        private void ProcessClient(object state)
         {
-            HttpListenerContext ctx = (HttpListenerContext)state;
-            HttpListenerRequest req = ctx.Request;
-            HttpListenerResponse res = ctx.Response;
-
-            // CORS 헤더 설정
-            res.Headers.Add("Access-Control-Allow-Origin", "*");
-            res.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-            res.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Accept");
-
-            if (req.HttpMethod == "OPTIONS")
-            {
-                res.StatusCode = 200;
-                res.Close();
-                return;
-            }
-
+            TcpClient client = (TcpClient)state;
             try
             {
-                string rawUrl = req.RawUrl != null ? req.RawUrl.ToLower() : "";
+                using (NetworkStream ns = client.GetStream())
+                {
+                    ns.ReadTimeout = 30000;
+                    ns.WriteTimeout = 30000;
 
-                if (req.HttpMethod == "GET" && (rawUrl == "/" || rawUrl.StartsWith("/health") || rawUrl.StartsWith("/status")))
-                {
-                    HandleHealthCheck(res);
-                }
-                else if (req.HttpMethod == "POST" && rawUrl.StartsWith("/print"))
-                {
-                    HandlePrint(req, res);
-                }
-                else
-                {
-                    SendJsonResponse(res, 404, new { error = "Not Found" });
+                    // 1. HTTP 헤더 읽기
+                    MemoryStream msHeader = new MemoryStream();
+                    byte[] singleByte = new byte[1];
+                    byte prevByte = 0;
+                    while (ns.Read(singleByte, 0, 1) > 0)
+                    {
+                        msHeader.WriteByte(singleByte[0]);
+                        if ((prevByte == '\r' && singleByte[0] == '\n') || singleByte[0] == '\n')
+                        {
+                            byte[] curBytes = msHeader.ToArray();
+                            int len = curBytes.Length;
+                            if (len >= 4 && curBytes[len - 4] == '\r' && curBytes[len - 3] == '\n' && curBytes[len - 2] == '\r' && curBytes[len - 1] == '\n')
+                            {
+                                break;
+                            }
+                            if (len >= 2 && curBytes[len - 2] == '\n' && curBytes[len - 1] == '\n')
+                            {
+                                break;
+                            }
+                        }
+                        prevByte = singleByte[0];
+                    }
+
+                    string headerString = Encoding.UTF8.GetString(msHeader.ToArray());
+                    if (string.IsNullOrEmpty(headerString))
+                    {
+                        client.Close();
+                        return;
+                    }
+
+                    string[] headerLines = headerString.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+                    string reqLine = headerLines.Length > 0 ? headerLines[0] : "";
+                    string[] reqParts = reqLine.Split(' ');
+                    string method = reqParts.Length > 0 ? reqParts[0].ToUpper() : "GET";
+                    string rawUrl = reqParts.Length > 1 ? reqParts[1].ToLower() : "/";
+
+                    // 2. CORS Preflight 처리
+                    if (method == "OPTIONS")
+                    {
+                        SendHttpRaw(ns, 204, "No Content", "text/plain", new byte[0]);
+                        client.Close();
+                        return;
+                    }
+
+                    // 3. Content-Length 파싱
+                    int contentLength = 0;
+                    foreach (string line in headerLines)
+                    {
+                        if (line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            int.TryParse(line.Substring("Content-Length:".Length).Trim(), out contentLength);
+                        }
+                    }
+
+                    // 4. 요청 본문 읽기
+                    byte[] bodyBytes = new byte[contentLength];
+                    if (contentLength > 0)
+                    {
+                        int totalRead = 0;
+                        while (totalRead < contentLength)
+                        {
+                            int read = ns.Read(bodyBytes, totalRead, contentLength - totalRead);
+                            if (read <= 0) break;
+                            totalRead += read;
+                        }
+                    }
+
+                    // 5. 라우팅
+                    if (method == "GET" && (rawUrl == "/" || rawUrl.StartsWith("/health") || rawUrl.StartsWith("/status")))
+                    {
+                        HandleHealthCheck(ns);
+                    }
+                    else if (method == "POST" && rawUrl.StartsWith("/print"))
+                    {
+                        string bodyString = Encoding.UTF8.GetString(bodyBytes);
+                        HandlePrint(ns, bodyString);
+                    }
+                    else
+                    {
+                        SendJsonResponse(ns, 404, "Not Found", new { error = "Not Found" });
+                    }
                 }
             }
             catch (Exception ex)
             {
-                SendJsonResponse(res, 500, new { error = ex.Message });
+                Program.Log("Client processing error: " + ex.Message);
+            }
+            finally
+            {
+                try { client.Close(); } catch { }
             }
         }
 
-        private void HandleHealthCheck(HttpListenerResponse res)
+        private void SendHttpRaw(NetworkStream ns, int statusCode, string statusText, string contentType, byte[] bodyBytes)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(string.Format("HTTP/1.1 {0} {1}\r\n", statusCode, statusText));
+            sb.Append("Access-Control-Allow-Origin: *\r\n");
+            sb.Append("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n");
+            sb.Append("Access-Control-Allow-Headers: Content-Type, Accept, X-Requested-With\r\n");
+            sb.Append("Access-Control-Allow-Private-Network: true\r\n");
+            sb.Append("Connection: close\r\n");
+            sb.Append(string.Format("Content-Type: {0}\r\n", contentType));
+            sb.Append(string.Format("Content-Length: {0}\r\n", bodyBytes.Length));
+            sb.Append("\r\n");
+
+            byte[] headBytes = Encoding.UTF8.GetBytes(sb.ToString());
+            ns.Write(headBytes, 0, headBytes.Length);
+            if (bodyBytes.Length > 0)
+            {
+                ns.Write(bodyBytes, 0, bodyBytes.Length);
+            }
+            ns.Flush();
+        }
+
+        private void SendJsonResponse(NetworkStream ns, int statusCode, string statusText, object data)
+        {
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            string json = serializer.Serialize(data);
+            byte[] bodyBytes = Encoding.UTF8.GetBytes(json);
+            SendHttpRaw(ns, statusCode, statusText, "application/json; charset=utf-8", bodyBytes);
+        }
+
+        private void HandleHealthCheck(NetworkStream ns)
         {
             string xprinter = FindXprinterName();
             List<string> printers = new List<string>();
@@ -232,41 +411,42 @@ namespace ChoicommaPrintBridge
                 printers.Add(p);
             }
 
-            SendJsonResponse(res, 200, new
+            List<string> localIps = GetLocalIPv4Addresses();
+
+            SendJsonResponse(ns, 200, "OK", new
             {
                 status = "ok",
                 bridge = "ChoicommaPrintBridge",
-                version = "1.0.0",
+                version = "2.0.0",
+                found = (xprinter != null),
                 xprinterDetected = (xprinter != null),
                 xprinterName = xprinter,
+                printer = xprinter,
+                machineName = Environment.MachineName,
+                localIps = localIps,
+                port = Port,
                 allPrinters = printers
             });
         }
 
-        private void HandlePrint(HttpListenerRequest req, HttpListenerResponse res)
+        private void HandlePrint(NetworkStream ns, string requestBody)
         {
-            string requestBody;
-            using (StreamReader reader = new StreamReader(req.InputStream, req.ContentEncoding))
-            {
-                requestBody = reader.ReadToEnd();
-            }
-
             JavaScriptSerializer serializer = new JavaScriptSerializer
             {
-                MaxJsonLength = 100 * 1024 * 1024 // 100MB 지원 (다량의 라벨 이미지)
+                MaxJsonLength = 100 * 1024 * 1024 // 100MB 지원
             };
 
             Dictionary<string, object> payload = serializer.Deserialize<Dictionary<string, object>>(requestBody);
             if (payload == null || !payload.ContainsKey("images"))
             {
-                SendJsonResponse(res, 400, new { error = "images 필드가 필요합니다." });
+                SendJsonResponse(ns, 400, "Bad Request", new { error = "images 필드가 필요합니다." });
                 return;
             }
 
             System.Collections.IEnumerable imageList = payload["images"] as System.Collections.IEnumerable;
             if (imageList == null)
             {
-                SendJsonResponse(res, 400, new { error = "images 필드가 필요합니다." });
+                SendJsonResponse(ns, 400, "Bad Request", new { error = "images 필드가 유효하지 않습니다." });
                 return;
             }
 
@@ -276,7 +456,6 @@ namespace ChoicommaPrintBridge
                 targetPrinter = payload["printerName"].ToString();
             }
 
-            // 지정된 프린터가 없거나 존재하지 않으면 자동 감지된 Xprinter 사용
             if (string.IsNullOrEmpty(targetPrinter) || !IsPrinterInstalled(targetPrinter))
             {
                 targetPrinter = FindXprinterName();
@@ -284,11 +463,10 @@ namespace ChoicommaPrintBridge
 
             if (string.IsNullOrEmpty(targetPrinter))
             {
-                SendJsonResponse(res, 400, new { error = "Xprinter 라벨 프린터를 찾을 수 없습니다. 드라이버 설치 상태를 확인해주세요." });
+                SendJsonResponse(ns, 400, "Bad Request", new { error = "Xprinter 라벨 프린터를 찾을 수 없습니다." });
                 return;
             }
 
-            // Base64 이미지 디코딩
             List<Bitmap> bitmaps = new List<Bitmap>();
             try
             {
@@ -307,20 +485,24 @@ namespace ChoicommaPrintBridge
 
                 if (bitmaps.Count == 0)
                 {
-                    SendJsonResponse(res, 400, new { error = "유효한 인쇄 이미지가 없습니다." });
+                    SendJsonResponse(ns, 400, "Bad Request", new { error = "유효한 인쇄 이미지가 없습니다." });
                     return;
                 }
 
-                // 윈도우 GDI 인쇄 스풀러로 전송
                 PrintBitmapsToPrinter(bitmaps, targetPrinter);
 
-                SendJsonResponse(res, 200, new
+                SendJsonResponse(ns, 200, "OK", new
                 {
                     success = true,
                     message = "인쇄 작업이 정상적으로 전송되었습니다.",
                     targetPrinter = targetPrinter,
                     count = bitmaps.Count
                 });
+            }
+            catch (Exception ex)
+            {
+                Program.Log("HandlePrint Exception: " + ex.Message);
+                SendJsonResponse(ns, 500, "Internal Server Error", new { error = ex.Message });
             }
             finally
             {
@@ -340,15 +522,12 @@ namespace ChoicommaPrintBridge
                 doc.PrinterSettings.PrinterName = printerName;
                 doc.DocumentName = "CJ대한통운 송장 (" + bitmaps.Count + "건)";
 
-                // 123mm x 100mm (0.01인치 단위: 1인치 = 25.4mm)
-                // 123mm ≈ 4.84인치 = 484
-                // 100mm ≈ 3.94인치 = 394
+                // 123mm x 100mm (0.01인치 단위: 123mm=484, 100mm=394)
                 PaperSize labelSize = new PaperSize("CJ_123x100", 484, 394);
                 doc.DefaultPageSettings.PaperSize = labelSize;
                 doc.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0);
                 doc.DefaultPageSettings.Landscape = false;
 
-                // 윈도우 인쇄 진행 다이얼로그 팝업 제거 (완전 무인쇄창)
                 doc.PrintController = new StandardPrintController();
 
                 doc.PrintPage += (sender, e) =>
@@ -360,7 +539,6 @@ namespace ChoicommaPrintBridge
                         e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
                         e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
 
-                        // 전체 페이지 영역에 맞추어 출력
                         e.Graphics.DrawImage(bmp, 0, 0, e.PageBounds.Width, e.PageBounds.Height);
 
                         pageIndex++;
@@ -373,28 +551,36 @@ namespace ChoicommaPrintBridge
                 };
 
                 doc.Print();
+                Program.Log(string.Format("Printed {0} label(s) to '{1}' successfully.", bitmaps.Count, printerName));
             }
         }
 
         private string FindXprinterName()
         {
-            foreach (string p in PrinterSettings.InstalledPrinters)
+            foreach (string printer in PrinterSettings.InstalledPrinters)
             {
-                if (p.IndexOf("Xprinter", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    p.IndexOf("XP-DT", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    p.IndexOf("LABEL", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (printer.IndexOf("XP-DT108B", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    return p;
+                    return printer;
                 }
             }
+
+            foreach (string printer in PrinterSettings.InstalledPrinters)
+            {
+                if (printer.IndexOf("Xprinter", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return printer;
+                }
+            }
+
             return null;
         }
 
-        private bool IsPrinterInstalled(string name)
+        private bool IsPrinterInstalled(string printerName)
         {
-            foreach (string p in PrinterSettings.InstalledPrinters)
+            foreach (string printer in PrinterSettings.InstalledPrinters)
             {
-                if (string.Equals(p, name, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(printer, printerName, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -402,34 +588,24 @@ namespace ChoicommaPrintBridge
             return false;
         }
 
-        private void SendJsonResponse(HttpListenerResponse res, int statusCode, object data)
-        {
-            try
-            {
-                JavaScriptSerializer serializer = new JavaScriptSerializer();
-                string json = serializer.Serialize(data);
-                byte[] buffer = Encoding.UTF8.GetBytes(json);
-
-                res.StatusCode = statusCode;
-                res.ContentType = "application/json; charset=utf-8";
-                res.ContentLength64 = buffer.Length;
-                res.OutputStream.Write(buffer, 0, buffer.Length);
-                res.OutputStream.Close();
-            }
-            catch
-            {
-                // 클라이언트 연결 종료 시 무시
-            }
-        }
-
         private void OnCheckStatus(object sender, EventArgs e)
         {
             string xprinter = FindXprinterName();
+            List<string> localIps = GetLocalIPv4Addresses();
+            string ipListStr = localIps.Count > 0 ? string.Join(", ", localIps.ToArray()) : "127.0.0.1";
+
             if (xprinter != null)
             {
                 MessageBox.Show(
-                    "감지된 송장 프린터:\n[" + xprinter + "]\n\n상태: 정상 작동 준비 완료 (포트 18080)",
-                    "프린터 연결 상태 확인",
+                    string.Format(
+                        "라벨 프린터가 정상 감지되었습니다!\n\n" +
+                        "• 프린터: {0}\n" +
+                        "• 네트워크 수신 대기: 포트 {1}\n" +
+                        "• 이 컴퓨터의 IP: {2}\n\n" +
+                        "다른 PC(노트북)에서 위 IP를 설정하시면 무선으로 즉시 인쇄됩니다.",
+                        xprinter, Port, ipListStr
+                    ),
+                    "초이콤마 프린트 브릿지 상태",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
                 );
@@ -437,8 +613,14 @@ namespace ChoicommaPrintBridge
             else
             {
                 MessageBox.Show(
-                    "Xprinter 라벨 프린터를 찾을 수 없습니다.\nUSB 케이블 연결 및 전원 상태를 확인해주세요.",
-                    "프린터 연결 상태 확인",
+                    string.Format(
+                        "Xprinter 라벨 프린터가 감지되지 않았습니다.\n\n" +
+                        "1. 프린터 전원이 켜져 있는지 확인해주세요.\n" +
+                        "2. USB 케이블이 이 컴퓨터에 연결되어 있는지 확인해주세요.\n" +
+                        "3. 윈도우 '프린터 및 스캐너'에 XP-DT108B 드라이버가 등록되어 있는지 확인해주세요.",
+                        Port
+                    ),
+                    "초이콤마 프린트 브릿지 상태",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning
                 );
@@ -448,10 +630,10 @@ namespace ChoicommaPrintBridge
         private void OnExit(object sender, EventArgs e)
         {
             _isRunning = false;
-            if (_listener != null)
+
+            if (_tcpListener != null)
             {
-                try { _listener.Stop(); } catch { }
-                try { _listener.Close(); } catch { }
+                try { _tcpListener.Stop(); } catch { }
             }
 
             if (_trayIcon != null)
@@ -461,15 +643,6 @@ namespace ChoicommaPrintBridge
             }
 
             Application.Exit();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                OnExit(null, null);
-            }
-            base.Dispose(disposing);
         }
     }
 }
