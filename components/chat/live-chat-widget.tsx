@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   MessageSquare,
   X,
@@ -12,6 +13,8 @@ import {
   CheckCheck,
   Minimize2,
   Trash2,
+  Lock,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
@@ -44,6 +47,11 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     typingText: "상담원이 답변을 작성 중입니다...",
     imageAlt: "첨부 이미지",
     previewAlt: "첨부 미리보기",
+    loginModalTitle: "1:1 라이브 VIP 케어",
+    loginModalBadge: "회원 전용 서비스",
+    loginModalDesc: "초이콤마 1:1 실시간 맞춤 상담은 회원 전용 서비스입니다.\n로그인 후 1:1 맞춤 케어를 이용해 보세요.",
+    loginModalAction: "로그인하러 가기",
+    loginModalClose: "닫기",
   },
   en: {
     floatingButton: "1:1 Live Chat",
@@ -53,7 +61,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     placeholder: "Type a message...",
     close: "Close",
     welcomeText: "Hello! Welcome to choicomma 1:1 Live Care Team. 💫\nPlease feel free to ask anything about products, orders, shipping, or custom sizing.",
-    autoReplyText: "We have received your message. Our dedicated stylist is reviewing it and will respond shortly. Please wait a moment! ☕",
+    autoReplyText: "We have received your message. Our team is reviewing it and will respond shortly. Please wait a moment! ☕",
     closeNoticeText: "🔒 [Notice] The 1:1 consultation session with our VIP member has been closed. If you have any further inquiries, please feel free to leave a new message anytime. Thank you! 💫",
     teamName: "choicomma VIP Care",
     liveTag: "LIVE",
@@ -62,16 +70,21 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     typingText: "Care specialist is typing a reply...",
     imageAlt: "Attached image",
     previewAlt: "Attached preview",
+    loginModalTitle: "1:1 Live VIP Care",
+    loginModalBadge: "Members Only",
+    loginModalDesc: "choicomma 1:1 Live Consultation is an exclusive service for registered members.\nPlease log in to enjoy 1:1 personalized care.",
+    loginModalAction: "Log In",
+    loginModalClose: "Close",
   },
   ja: {
     floatingButton: "1:1 ライブ相談",
     headerTitle: "choicomma 1:1 ライブケア",
-    headerSubtitle: "VIP専任カウンセラー待機中",
+    headerSubtitle: "VIP専任カウンセラー待机中",
     securityNotice: "🔒 お客様専用プライベート暗号化チャット",
     placeholder: "メッセージを入力...",
     close: "閉じる",
     welcomeText: "こんにちは！choicomma 1:1 ライブ専任ケアチームです。💫\n商品のお問い合わせ、注文・配送、カスタムサイズなどお気軽にご相談ください。",
-    autoReplyText: "お問い合わせ内容を確認いたしました。担当スタイリストが確認次第、すぐにご案内いたします。少々お待ちください！ ☕",
+    autoReplyText: "お問い合わせ内容を確認いたしました。担当者が確認次第、すぐにご案内いたします。少々お待ちください！ ☕",
     closeNoticeText: "🔒 [案内] VIP会員様との1:1相談セッションが終了いたしました。ご不明な点がございましたら、いつでも新しいメッセージをお送りください。ご利用いただきありがとうございます！ 💫",
     teamName: "choicomma VIPケアチーム",
     liveTag: "ライブ",
@@ -80,6 +93,11 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     typingText: "担当者が返信を入力中です...",
     imageAlt: "添付画像",
     previewAlt: "添付プレビュー",
+    loginModalTitle: "1:1 ライブVIPケア",
+    loginModalBadge: "会員専用サービス",
+    loginModalDesc: "choicomma 1:1 リアルタイム相談は会員専用サービスです。\nログイン後、1:1カスタムケアをご利用ください。",
+    loginModalAction: "ログインする",
+    loginModalClose: "閉じる",
   },
   zh: {
     floatingButton: "1:1 实时客服",
@@ -89,7 +107,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     placeholder: "请输入消息...",
     close: "关闭",
     welcomeText: "您好！欢迎使用 choicomma 1:1 实时专属客服团队。💫\n有关商品咨询、订单配送、定制尺寸等任何问题，欢迎随时联系我们。",
-    autoReplyText: "已收到您的咨询内容。专属造型师正在实时确认，将尽快为您回复，请稍候！ ☕",
+    autoReplyText: "已收到您的咨询内容。客服人员正在实时确认，将尽快为您回复，请稍候！ ☕",
     closeNoticeText: "🔒 [通知] 与尊贵 VIP 会员的 1:1 专属客服咨询已结束。如果您有其他疑问，欢迎随时留下新消息。感谢您的使用！ 💫",
     teamName: "choicomma VIP客服",
     liveTag: "在线",
@@ -98,6 +116,11 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     typingText: "专属客服正在输入回复...",
     imageAlt: "附件图片",
     previewAlt: "附件预览",
+    loginModalTitle: "1:1 VIP 专属客服",
+    loginModalBadge: "会员专享服务",
+    loginModalDesc: "choicomma 1:1 实时专属客服为会员专享服务。\n登录后即可享受 1:1 专属贴心服务。",
+    loginModalAction: "前往登录",
+    loginModalClose: "关闭",
   },
   fr: {
     floatingButton: "Chat en direct 1:1",
@@ -107,7 +130,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     placeholder: "Écrivez votre message...",
     close: "Fermer",
     welcomeText: "Bonjour ! Bienvenue à l'équipe de soin en direct 1:1 choicomma. 💫\nN'hésitez pas à poser vos questions sur les produits, commandes ou tailles personnalisées.",
-    autoReplyText: "Nous avons bien reçu votre message. Notre styliste dédié vous répondra très rapidement. Merci de patienter un instant ! ☕",
+    autoReplyText: "Nous avons bien reçu votre message. Notre conseiller vous répondra très rapidement. Merci de patienter un instant ! ☕",
     closeNoticeText: "🔒 [Avis] La session de consultation 1:1 avec notre membre VIP est terminée. Si vous avez d'autres questions, n'hésitez pas à laisser un nouveau message à tout moment. Merci ! 💫",
     teamName: "Équipe Soin VIP choicomma",
     liveTag: "EN DIRECT",
@@ -116,6 +139,11 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     typingText: "Le conseiller rédige une réponse...",
     imageAlt: "Image jointe",
     previewAlt: "Aperçu joint",
+    loginModalTitle: "Soin VIP 1:1 en direct",
+    loginModalBadge: "Réservé aux membres",
+    loginModalDesc: "Le soin 1:1 en direct choicomma est réservé aux membres.\nVeuillez vous connecter pour profiter de notre service personnalisé 1:1.",
+    loginModalAction: "Se connecter",
+    loginModalClose: "Fermer",
   },
   de: {
     floatingButton: "1:1 Live-Beratung",
@@ -125,7 +153,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     placeholder: "Nachricht eingeben...",
     close: "Schließen",
     welcomeText: "Hallo! Willkommen beim choicomma 1:1 Live-Team. 💫\nFragen zu Produkten, Versand oder Sondergrößen beantworten wir Ihnen gerne.",
-    autoReplyText: "Vielen Dank für Ihre Nachricht. Unser VIP-Stylist antwortet Ihnen in Kürze. Bitte haben Sie einen Moment Geduld! ☕",
+    autoReplyText: "Vielen Dank für Ihre Nachricht. Unser Team antwortet Ihnen in Kürze. Bitte haben Sie einen Moment Geduld! ☕",
     closeNoticeText: "🔒 [Hinweis] Das 1:1-Beratungsgespräch mit unserem VIP-Mitglied wurde beendet. Wenn Sie weitere Fragen haben, hinterlassen Sie jederzeit gerne eine neue Nachricht. Vielen Dank! 💫",
     teamName: "choicomma VIP-Betreuung",
     liveTag: "LIVE",
@@ -134,6 +162,11 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     typingText: "Berater tippt eine Antwort...",
     imageAlt: "Angehängtes Bild",
     previewAlt: "Angehängte Vorschau",
+    loginModalTitle: "1:1 VIP Live-Betreuung",
+    loginModalBadge: "Nur für Mitglieder",
+    loginModalDesc: "Die choicomma 1:1 Live-Beratung ist exklusiv für registrierte Mitglieder.\nBitte melden Sie sich an, um Ihren VIP-Berater zu kontaktieren.",
+    loginModalAction: "Jetzt anmelden",
+    loginModalClose: "Schließen",
   },
   es: {
     floatingButton: "Chat en Vivo 1:1",
@@ -152,10 +185,23 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     typingText: "El asesor está escribiendo...",
     imageAlt: "Imagen adjunta",
     previewAlt: "Vista previa adjunta",
+    loginModalTitle: "Atención VIP 1:1 en Vivo",
+    loginModalBadge: "Exclusivo para miembros",
+    loginModalDesc: "La atención 1:1 en vivo de choicomma es un servicio exclusivo para miembros.\nInicie sesión para contactar con su asesor VIP dedicado.",
+    loginModalAction: "Iniciar sesión",
+    loginModalClose: "Cerrar",
   },
 };
 
 export function LiveChatWidget() {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Do not render floating customer live chat on admin dashboard
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -163,6 +209,7 @@ export function LiveChatWidget() {
   const [attachedImages, setAttachedImages] = useState<string[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentLang, setCurrentLang] = useState("ko");
   const [isTyping, setIsTyping] = useState(false);
 
@@ -177,12 +224,27 @@ export function LiveChatWidget() {
 
   const t = CHAT_I18N[currentLang] || CHAT_I18N.ko;
 
-  // Check user login status
-  const checkAuth = () => {
+  // Check user login status strictly
+  const checkAuth = (): boolean => {
     if (typeof window !== "undefined") {
-      const email = localStorage.getItem("membership_user_email");
-      setIsLoggedIn(!!email);
+      const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
+      const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+      const name = (localStorage.getItem("membership_user_name") || "").trim();
+      const role = (localStorage.getItem("user_role") || "").toLowerCase().trim();
+      const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+      const isLogged = Boolean(
+        isLoggedInFlag ||
+        (email && email.length > 0) ||
+        (name && name.length > 0) ||
+        role === "admin" ||
+        isAdminSession
+      );
+
+      setIsLoggedIn(isLogged);
+      return isLogged;
     }
+    return false;
   };
 
   const getUserChatKey = () => {
@@ -193,9 +255,15 @@ export function LiveChatWidget() {
     return `site_live_chat_messages_${id.trim().toLowerCase()}`;
   };
 
-  // Load chat messages from localStorage
+  // Load chat messages from localStorage (only for authenticated members)
   const loadMessages = () => {
     if (typeof window === "undefined") return;
+    const authed = checkAuth();
+    if (!authed) {
+      setMessages([]);
+      return;
+    }
+
     const chatKey = getUserChatKey();
     const saved = localStorage.getItem(chatKey);
     if (saved !== null) {
@@ -227,13 +295,21 @@ export function LiveChatWidget() {
   };
 
   useEffect(() => {
-    checkAuth();
-    loadMessages();
+    const isAuthed = checkAuth();
+    if (isAuthed) {
+      loadMessages();
+    }
 
-    const handleStorageChange = (e: Event) => {
+    const handleStorageChange = () => {
       setTimeout(() => {
-        checkAuth();
-        loadMessages();
+        const authed = checkAuth();
+        if (!authed) {
+          setIsOpen(false);
+          setShowLoginModal(false);
+          setMessages([]);
+        } else {
+          loadMessages();
+        }
       }, 0);
     };
 
@@ -243,11 +319,13 @@ export function LiveChatWidget() {
     };
 
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("auth_changed", handleStorageChange);
     window.addEventListener("live_chat_updated", handleStorageChange);
     window.addEventListener("live_chat_ended", handleChatEnded);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth_changed", handleStorageChange);
       window.removeEventListener("live_chat_updated", handleStorageChange);
       window.removeEventListener("live_chat_ended", handleChatEnded);
     };
@@ -265,6 +343,15 @@ export function LiveChatWidget() {
 
   const handleSendMessage = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+
+    // Strict guard: unauthenticated users cannot send messages
+    const authed = checkAuth();
+    if (!authed) {
+      setIsOpen(false);
+      setShowLoginModal(true);
+      return;
+    }
+
     if (!inputText.trim() && attachedImages.length === 0) return;
 
     const dateNow = new Date();
@@ -290,83 +377,84 @@ export function LiveChatWidget() {
     if (typeof window !== "undefined") {
       const email = localStorage.getItem("membership_user_email");
       const phone = localStorage.getItem("membership_user_phone");
-      const rawId = email || phone || "guest";
-      const uEmail = email || "guest@choicomma.com";
-      const uName = localStorage.getItem("membership_user_name") || (email ? "회원" : "실시간 방문 고객");
 
-      // Determine real tier/grade from admin_customers or user_grade
-      let userTier = "GENERAL";
-      let badgeColor = "bg-neutral-200 text-neutral-800 font-bold";
+      // Strictly register only verified logged-in members (never register guests)
+      if (email || phone) {
+        const rawId = email || phone || "";
+        const uEmail = email || `${rawId}@customer.choicomma.com`;
+        const uName = localStorage.getItem("membership_user_name") || "회원";
 
-      if (uEmail === "admin" || uEmail === "admin@choicomma.com" || localStorage.getItem("user_role") === "admin") {
-        userTier = "관리자";
-        badgeColor = "bg-rose-600 text-white font-black";
-      } else if (!email) {
-        userTier = "비회원";
-        badgeColor = "bg-neutral-200 text-neutral-700 font-bold";
-      } else {
-        const savedCustomers = localStorage.getItem("admin_customers");
-        let foundGrade = "";
-        if (savedCustomers) {
-          try {
-            const list: any[] = JSON.parse(savedCustomers);
-            const found = list.find((c: any) =>
-              (c.email && c.email.toLowerCase() === uEmail.toLowerCase()) ||
-              (c.phone && phone && c.phone.replace(/[^0-9]/g, "") === phone.replace(/[^0-9]/g, "")) ||
-              (c.name && c.name === uName)
-            );
-            if (found && (found.grade || found.tier)) {
-              foundGrade = (found.grade || found.tier).toUpperCase();
-            }
-          } catch (e) {}
-        }
-        if (!foundGrade) {
-          foundGrade = (localStorage.getItem("user_grade") || "GENERAL").toUpperCase();
-        }
+        // Determine real tier/grade from admin_customers or user_grade
+        let userTier = "GENERAL";
+        let badgeColor = "bg-neutral-200 text-neutral-800 font-bold";
 
-        if (foundGrade.includes("VVIP") || foundGrade.includes("BLACK")) {
-          userTier = "VVIP";
-          badgeColor = "bg-neutral-950 text-amber-400 font-black border border-amber-400/50";
-        } else if (foundGrade.includes("PLATINUM") || foundGrade.includes("플래티넘")) {
-          userTier = "PLATINUM";
-          badgeColor = "bg-purple-100 text-purple-800 font-black border border-purple-300";
-        } else if (foundGrade.includes("GOLD") || foundGrade.includes("골드")) {
-          userTier = "GOLD";
-          badgeColor = "bg-amber-100 text-amber-900 font-black border border-amber-300";
-        } else if (foundGrade.includes("SILVER") || foundGrade.includes("실버")) {
-          userTier = "SILVER";
-          badgeColor = "bg-slate-200 text-slate-800 font-black border border-slate-300";
-        } else if (foundGrade.includes("VIP")) {
-          userTier = "VIP";
-          badgeColor = "bg-amber-400 text-neutral-950 font-black";
+        if (uEmail === "admin" || uEmail === "admin@choicomma.com" || localStorage.getItem("user_role") === "admin") {
+          userTier = "관리자";
+          badgeColor = "bg-rose-600 text-white font-black";
         } else {
-          userTier = "일반회원";
-          badgeColor = "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300";
+          const savedCustomers = localStorage.getItem("admin_customers");
+          let foundGrade = "";
+          if (savedCustomers) {
+            try {
+              const list: any[] = JSON.parse(savedCustomers);
+              const found = list.find((c: any) =>
+                (c.email && c.email.toLowerCase() === uEmail.toLowerCase()) ||
+                (c.phone && phone && c.phone.replace(/[^0-9]/g, "") === phone.replace(/[^0-9]/g, "")) ||
+                (c.name && c.name === uName)
+              );
+              if (found && (found.grade || found.tier)) {
+                foundGrade = (found.grade || found.tier).toUpperCase();
+              }
+            } catch (e) {}
+          }
+          if (!foundGrade) {
+            foundGrade = (localStorage.getItem("user_grade") || "GENERAL").toUpperCase();
+          }
+
+          if (foundGrade.includes("VVIP") || foundGrade.includes("BLACK")) {
+            userTier = "VVIP";
+            badgeColor = "bg-neutral-950 text-amber-400 font-black border border-amber-400/50";
+          } else if (foundGrade.includes("PLATINUM") || foundGrade.includes("플래티넘")) {
+            userTier = "PLATINUM";
+            badgeColor = "bg-purple-100 text-purple-800 font-black border border-purple-300";
+          } else if (foundGrade.includes("GOLD") || foundGrade.includes("골드")) {
+            userTier = "GOLD";
+            badgeColor = "bg-amber-100 text-amber-900 font-black border border-amber-300";
+          } else if (foundGrade.includes("SILVER") || foundGrade.includes("실버")) {
+            userTier = "SILVER";
+            badgeColor = "bg-slate-200 text-slate-800 font-black border border-slate-300";
+          } else if (foundGrade.includes("VIP")) {
+            userTier = "VIP";
+            badgeColor = "bg-amber-400 text-neutral-950 font-black";
+          } else {
+            userTier = "일반회원";
+            badgeColor = "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300";
+          }
         }
-      }
 
-      const savedSessions = localStorage.getItem("admin_chat_sessions");
-      let sessionList: any[] = [];
-      if (savedSessions) {
-        try { sessionList = JSON.parse(savedSessions); } catch (err) { }
-      }
+        const savedSessions = localStorage.getItem("admin_chat_sessions");
+        let sessionList: any[] = [];
+        if (savedSessions) {
+          try { sessionList = JSON.parse(savedSessions); } catch (err) { }
+        }
 
-      const updatedSession = {
-        id: rawId,
-        name: uName.endsWith("님") ? uName : `${uName}님`,
-        email: uEmail,
-        tier: userTier,
-        badgeColor: badgeColor,
-        status: "online",
-      };
+        const updatedSession = {
+          id: rawId,
+          name: uName.endsWith("님") ? uName : `${uName}님`,
+          email: uEmail,
+          tier: userTier,
+          badgeColor: badgeColor,
+          status: "online",
+        };
 
-      const existingIndex = sessionList.findIndex((s) => s.id?.toLowerCase() === rawId.toLowerCase() || s.email?.toLowerCase() === uEmail.toLowerCase());
-      if (existingIndex >= 0) {
-        sessionList[existingIndex] = { ...sessionList[existingIndex], ...updatedSession };
-      } else {
-        sessionList = [updatedSession, ...sessionList];
+        const existingIndex = sessionList.findIndex((s) => s.id?.toLowerCase() === rawId.toLowerCase() || s.email?.toLowerCase() === uEmail.toLowerCase());
+        if (existingIndex >= 0) {
+          sessionList[existingIndex] = { ...sessionList[existingIndex], ...updatedSession };
+        } else {
+          sessionList = [updatedSession, ...sessionList];
+        }
+        localStorage.setItem("admin_chat_sessions", JSON.stringify(sessionList));
       }
-      localStorage.setItem("admin_chat_sessions", JSON.stringify(sessionList));
     }
 
     window.dispatchEvent(new CustomEvent("live_chat_updated"));
@@ -514,6 +602,11 @@ export function LiveChatWidget() {
           <button
             type="button"
             onClick={() => {
+              const authed = checkAuth();
+              if (!authed) {
+                setShowLoginModal(true);
+                return;
+              }
               setIsOpen(true);
               setIsMinimized(false);
               setUnreadCount(0);
@@ -706,6 +799,75 @@ export function LiveChatWidget() {
           </form>
         </div>
       )}
+
+      {/* Luxury Member-Only Login Notice Modal */}
+      {showLoginModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setShowLoginModal(false)}
+        >
+          <div 
+            className="bg-white border border-neutral-200/90 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6 sm:p-7 relative text-center animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top Close Button */}
+            <button
+              type="button"
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-900 rounded-full hover:bg-neutral-100 transition-colors cursor-pointer"
+              title={t.loginModalClose}
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Premium Lock Icon Badge */}
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-neutral-950 text-amber-400 flex items-center justify-center shadow-lg border border-neutral-800">
+              <Lock className="w-6 h-6" />
+            </div>
+
+            {/* Badge */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 text-amber-300 text-[11px] font-black tracking-wider uppercase mb-2.5 border border-amber-400/30">
+              <Crown className="w-3 h-3 text-amber-400" />
+              <span>{t.loginModalBadge}</span>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-lg font-black text-neutral-950 tracking-tight mb-2">
+              {t.loginModalTitle}
+            </h3>
+
+            {/* Description */}
+            <p className="text-xs sm:text-sm text-neutral-600 font-medium leading-relaxed mb-6 whitespace-pre-line">
+              {t.loginModalDesc}
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLoginModal(false);
+                  const redirectPath = typeof window !== "undefined" ? window.location.pathname : "/";
+                  router.push(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+                }}
+                className="w-full py-3.5 px-5 rounded-2xl bg-neutral-950 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>{t.loginModalAction}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowLoginModal(false)}
+                className="w-full py-2.5 px-4 rounded-xl text-neutral-500 hover:text-neutral-950 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                {t.loginModalClose}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

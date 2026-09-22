@@ -1,0 +1,9 @@
+{
+  "baseFee": 4000,
+  "freeThreshold": 100000,
+  "freeShippingThreshold": 100000,
+  "islandExtraFee": 4000,
+  "returnExchangeFee": 8000,
+  "courierName": "CJ대한통운 (주계약)",
+  "shippingNotice": "평일 14:00 이전 결제 완료 시 당일 출고됩니다."
+}

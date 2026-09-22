@@ -168,8 +168,9 @@ export default function CheckoutClientWrapper() {
     }
     // Free Shipping Voucher
     else if (cleanedCode === "CC26-FREE-S8P2" || cleanedCode === "FREESHIP") {
-      setAppliedDiscount(3000);
-      setCouponMessage("🎉 무료 배송 지원 쿠폰이 정상 적용되었습니다! (-3,000원)");
+      const freeAmount = shippingPolicy.baseFee || 4000;
+      setAppliedDiscount(freeAmount);
+      setCouponMessage(`🎉 무료 배송 지원 쿠폰이 정상 적용되었습니다! (-${freeAmount.toLocaleString()}원)`);
     }
     else {
       setCouponMessage("❌ 유효하지 않은 쿠폰 코드입니다. 마이페이지 [쿠폰함]의 코드를 복사하여 입력해 주세요.");
@@ -179,10 +180,10 @@ export default function CheckoutClientWrapper() {
 
   // Dynamic Shipping Policy State
   const [shippingPolicy, setShippingPolicy] = useState({
-    baseFee: 3000,
+    baseFee: 4000,
     freeShippingThreshold: 100000,
-    islandExtraFee: 3000,
-    returnExchangeFee: 6000,
+    islandExtraFee: 4000,
+    returnExchangeFee: 8000,
     courierName: "CJ대한통운 (주계약)",
     shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
   });
@@ -231,7 +232,7 @@ export default function CheckoutClientWrapper() {
   useEffect(() => {
     const updateShippingPolicy = () => {
       if (typeof window !== "undefined") {
-        const savedPolicy = localStorage.getItem("shipping_policy");
+        const savedPolicy = localStorage.getItem("shipping_policy") || localStorage.getItem("admin_shipping_policy");
         if (savedPolicy) {
           try {
             setShippingPolicy(JSON.parse(savedPolicy));
@@ -240,6 +241,18 @@ export default function CheckoutClientWrapper() {
       }
     };
     updateShippingPolicy();
+
+    // Fetch authoritative policy from server API
+    fetch("/api/shipping/policy")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data.baseFee === "number") {
+          setShippingPolicy((prev) => ({ ...prev, ...data }));
+          localStorage.setItem("shipping_policy", JSON.stringify(data));
+        }
+      })
+      .catch(() => {});
+
     window.addEventListener("storage", updateShippingPolicy);
     window.addEventListener("shipping_policy_updated", updateShippingPolicy);
     return () => {
@@ -250,7 +263,7 @@ export default function CheckoutClientWrapper() {
 
   const totalItemAmount = Number(cart?.cost?.totalAmount?.amount || 0);
   const freeThreshold = shippingPolicy.freeShippingThreshold !== undefined ? shippingPolicy.freeShippingThreshold : 100000;
-  const baseShippingFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 3000;
+  const baseShippingFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 4000;
   const shippingFee = (freeThreshold > 0 && totalItemAmount >= freeThreshold) || totalItemAmount === 0 || baseShippingFee === 0 ? 0 : baseShippingFee;
 
   const handleApplyPoints = (amountToUse?: number) => {

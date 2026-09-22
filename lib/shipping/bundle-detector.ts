@@ -41,7 +41,11 @@ export function normalizeAddress(addr?: string): string {
  */
 export function normalizeName(name?: string): string {
   if (!name) return "";
-  return name.trim().replace(/\s+/g, "");
+  return name
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/\(admin\)/gi, "")
+    .replace(/\(실검증\)/gi, "");
 }
 
 /**
@@ -77,7 +81,12 @@ export function detectBundleCandidates(
   // 1. 배송 대기 중이며 송장이 미발급된 건만 필터링
   const candidates = shipments.filter((s) => {
     // 이미 합배송으로 흡수된 자식 주문이거나, 이미 합배송 완료된 부모 주문은 추가 묶음 대상에서 기본 제외 (추후 재통합도 가능)
-    if (s.isMergedChild || s.mergedIntoId || s.isMergedParent) return false;
+    const pkg0 = Array.isArray(s.packages) && s.packages[0] ? s.packages[0] : {};
+    const memo = String(s.shippingMemo || s.shipping_memo || "");
+    const isMergedChild = Boolean(s.isMergedChild || s.mergedIntoId || pkg0.isMergedChild || pkg0.mergedIntoId || memo.includes("[합배송 완료]"));
+    const isMergedParent = Boolean(s.isMergedParent || pkg0.isMergedParent || memo.includes("[합배송:"));
+
+    if (isMergedChild || isMergedParent) return false;
 
     // 배송 준비 중(Pending) 상태의 미발송 건
     const isPending = !s.status || s.status === "Pending";
@@ -167,8 +176,19 @@ export function detectBundleCandidates(
         totalQty += Number(c.quantity) || 1;
       });
 
-      // 중복 배송비 계산 (기본 배송비 3,000원 기준: N건 묶음 시 (N-1) * 3,000원 환급)
-      const standardShippingFee = 3000;
+      // 중복 배송비 계산 (설정된 기본 배송비 기준: N건 묶음 시 (N-1) * baseShippingFee 환급)
+      let standardShippingFee = 4000;
+      if (typeof window !== "undefined") {
+        try {
+          const saved = localStorage.getItem("shipping_policy") || localStorage.getItem("admin_shipping_policy");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (typeof parsed.baseFee === "number" && parsed.baseFee > 0) {
+              standardShippingFee = parsed.baseFee;
+            }
+          }
+        } catch {}
+      }
       const refundableShippingFee = (cluster.length - 1) * standardShippingFee;
 
       // 고객 매칭
@@ -239,6 +259,26 @@ export function executeOrderMerge(
   const childOrderNumbers = children.map((c) => c.orderId || c.id);
 
   // 통합된 대표 주문 객체 생성
+  const primaryPkg0 = Array.isArray(primary.packages) && primary.packages[0] ? primary.packages[0] : {};
+  const mergedPkg0 = {
+    ...primaryPkg0,
+    id: `PKG-${primary.id}-MERGED`,
+    pkgIndex: 1,
+    items: combinedItemsStr,
+    quantity: combinedQuantity,
+    carrier: primary.carrier || "CJ대한통운",
+    trackingNumber: primary.trackingNumber || "-",
+    status: primary.status || "Pending",
+    isMergedParent: true,
+    isMergedChild: false,
+    bundledShipmentIds: children.map((c) => c.id),
+    bundledOrderNumbers: childOrderNumbers,
+    bundledRefundPoints: refundAmount,
+    bundledDate: new Date().toISOString(),
+    originalItems: primary.originalItems || primary.items,
+    originalQuantity: primary.originalQuantity || primary.quantity,
+  };
+
   const mergedPrimary = {
     ...primary,
     items: combinedItemsStr,
@@ -254,17 +294,7 @@ export function executeOrderMerge(
     shippingMemo: primary.shippingMemo
       ? `${primary.shippingMemo} [합배송: ${childOrderNumbers.join(", ")} 통합]`
       : `[합배송: ${childOrderNumbers.join(", ")} 통합 (초과배송비 ₩${refundAmount.toLocaleString()} 적립금 환급)]`,
-    packages: [
-      {
-        id: `PKG-${primary.id}-MERGED`,
-        pkgIndex: 1,
-        items: combinedItemsStr,
-        quantity: combinedQuantity,
-        carrier: primary.carrier || "CJ대한통운",
-        trackingNumber: primary.trackingNumber || "-",
-        status: primary.status || "Pending",
-      },
-    ],
+    packages: [mergedPkg0],
   };
 
   // 자식 주문 객체들 갱신
@@ -274,6 +304,16 @@ export function executeOrderMerge(
       return mergedPrimary;
     }
     if (childSet.has(s.id)) {
+      const childPkgs = Array.isArray(s.packages) && s.packages.length > 0 ? [...s.packages] : [{ id: `PKG-${s.id}-1` }];
+      childPkgs[0] = {
+        ...childPkgs[0],
+        isMergedChild: true,
+        isMergedParent: false,
+        mergedIntoId: primary.id,
+        mergedIntoOrderId: primary.orderId,
+        mergedAt: new Date().toISOString(),
+      };
+
       return {
         ...s,
         isMergedChild: true,
@@ -282,6 +322,7 @@ export function executeOrderMerge(
         mergedIntoOrderId: primary.orderId,
         mergedAt: new Date().toISOString(),
         shippingMemo: `[합배송 완료] ${primary.orderId} 번 주문에 통합 포장되어 함께 발송됩니다.`,
+        packages: childPkgs,
       };
     }
     return s;
@@ -296,42 +337,77 @@ export function undoOrderMerge(
   primaryOrderId: string
 ): any[] {
   const primary = allShipments.find((s) => s.id === primaryOrderId || s.orderId === primaryOrderId);
-  if (!primary || !primary.isMergedParent) return allShipments;
+  const pkg0 = Array.isArray(primary?.packages) && primary.packages[0] ? primary.packages[0] : {};
+  const isPrimaryMerged = primary && (primary.isMergedParent || pkg0.isMergedParent || primary.shippingMemo?.includes("[합배송:"));
+  if (!primary || !isPrimaryMerged) return allShipments;
 
-  const childIds = new Set(primary.bundledShipmentIds || []);
+  const childIdsList = primary.bundledShipmentIds || pkg0.bundledShipmentIds || [];
+  const childNumbersList = primary.bundledOrderNumbers || pkg0.bundledOrderNumbers || [];
+  const childIds = new Set(childIdsList);
+  const childNumbers = new Set(childNumbersList);
 
   return allShipments.map((s) => {
     if (s.id === primary.id) {
+      const restoredPkg0 = {
+        ...(Array.isArray(primary.packages) && primary.packages[0] ? primary.packages[0] : {}),
+        id: `PKG-${s.id}-1`,
+        pkgIndex: 1,
+        items: s.originalItems || s.items,
+        quantity: s.originalQuantity || s.quantity,
+        carrier: s.carrier || "CJ대한통운",
+        trackingNumber: s.trackingNumber || "-",
+        status: s.status || "Pending",
+        isMergedParent: false,
+        isMergedChild: false,
+        bundledShipmentIds: [],
+        bundledOrderNumbers: [],
+        bundledRefundPoints: 0,
+        bundledDate: null,
+      };
+
       return {
         ...s,
         items: s.originalItems || s.items,
         quantity: s.originalQuantity || s.quantity,
         isMergedParent: false,
+        isMergedChild: false,
         bundledShipmentIds: [],
         bundledOrderNumbers: [],
         bundledRefundPoints: 0,
+        bundledDate: null,
         shippingMemo: (s.shippingMemo || "").replace(/\[합배송:[^\]]+\]/g, "").trim(),
-        packages: [
-          {
-            id: `PKG-${s.id}-1`,
-            pkgIndex: 1,
-            items: s.originalItems || s.items,
-            quantity: s.originalQuantity || s.quantity,
-            carrier: s.carrier || "CJ대한통운",
-            trackingNumber: s.trackingNumber || "-",
-            status: s.status || "Pending",
-          },
-        ],
+        packages: [restoredPkg0],
       };
     }
-    if (childIds.has(s.id)) {
+
+    const isChild =
+      childIds.has(s.id) ||
+      childNumbers.has(s.orderId) ||
+      s.mergedIntoId === primary.id ||
+      s.mergedIntoOrderId === primary.orderId ||
+      s.packages?.[0]?.mergedIntoId === primary.id ||
+      (typeof s.shippingMemo === "string" && s.shippingMemo.includes(`[합배송 완료] ${primary.orderId}`));
+
+    if (isChild) {
+      const restoredChildPkgs = Array.isArray(s.packages) && s.packages.length > 0 ? [...s.packages] : [{ id: `PKG-${s.id}-1` }];
+      restoredChildPkgs[0] = {
+        ...restoredChildPkgs[0],
+        isMergedChild: false,
+        isMergedParent: false,
+        mergedIntoId: null,
+        mergedIntoOrderId: null,
+        mergedAt: null,
+      };
+
       return {
         ...s,
         isMergedChild: false,
+        isMergedParent: false,
         mergedIntoId: undefined,
         mergedIntoOrderId: undefined,
         mergedAt: undefined,
         shippingMemo: (s.shippingMemo || "").replace(/\[합배송 완료\][^.]+\./g, "").trim(),
+        packages: restoredChildPkgs,
       };
     }
     return s;

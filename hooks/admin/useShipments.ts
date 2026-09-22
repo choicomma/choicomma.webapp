@@ -54,51 +54,73 @@ export function sortShipmentsByNumber(list: any[]): any[] {
 
 export function sanitizeShipmentsList(list: any[]): any[] {
   if (!Array.isArray(list)) return [];
-  const sanitized = list.map((s: any) => ({
-    ...s,
-    orderId: s.orderId || s.order_id || "",
-    ordererName: s.ordererName || s.orderer_name || s.orderer || s.customer || s.recipient || "",
-    altPhone: s.altPhone || s.alt_phone || "",
-    zipCode: s.zipCode || s.zip_code || "",
-    detailAddress: s.detailAddress || s.detail_address || "",
-    trackingNumber: sanitizeCjTracking(s.trackingNumber || s.tracking_number || "-"),
-    shippingMemo: s.shippingMemo || s.shipping_memo || "",
-    orderDate: s.orderDate || s.order_date || "",
-    shippedDate: s.shippedDate || s.shipped_date || null,
-    estimatedDelivery: s.estimatedDelivery || s.estimated_delivery || null,
-    packages: Array.isArray(s.packages)
-      ? s.packages.map((pkg: any) => ({
-          ...pkg,
-          trackingNumber: sanitizeCjTracking(pkg.trackingNumber || pkg.tracking_number || "-"),
-        }))
-      : s.packages,
-  }));
+  const sanitized = list.map((s: any) => {
+    const pkg0 = Array.isArray(s.packages) && s.packages[0] ? s.packages[0] : {};
+    const memo = s.shippingMemo || s.shipping_memo || "";
+    const isMergedChild = Boolean(s.isMergedChild ?? pkg0.isMergedChild ?? memo.includes("[합배송 완료]"));
+    const isMergedParent = Boolean(s.isMergedParent ?? pkg0.isMergedParent ?? memo.includes("[합배송:"));
+
+    return {
+      ...s,
+      orderId: s.orderId || s.order_id || "",
+      ordererName: s.ordererName || s.orderer_name || s.orderer || s.customer || s.recipient || "",
+      altPhone: s.altPhone || s.alt_phone || "",
+      zipCode: s.zipCode || s.zip_code || "",
+      detailAddress: s.detailAddress || s.detail_address || "",
+      trackingNumber: sanitizeCjTracking(s.trackingNumber || s.tracking_number || "-"),
+      shippingMemo: memo,
+      orderDate: s.orderDate || s.order_date || "",
+      shippedDate: s.shippedDate || s.shipped_date || null,
+      estimatedDelivery: s.estimatedDelivery || s.estimated_delivery || null,
+      isMergedParent,
+      isMergedChild,
+      mergedIntoId: s.mergedIntoId ?? pkg0.mergedIntoId,
+      mergedIntoOrderId: s.mergedIntoOrderId ?? pkg0.mergedIntoOrderId,
+      bundledShipmentIds: s.bundledShipmentIds ?? pkg0.bundledShipmentIds,
+      bundledOrderNumbers: s.bundledOrderNumbers ?? pkg0.bundledOrderNumbers,
+      bundledRefundPoints: s.bundledRefundPoints ?? pkg0.bundledRefundPoints,
+      originalItems: s.originalItems ?? pkg0.originalItems,
+      originalQuantity: s.originalQuantity ?? pkg0.originalQuantity,
+      packages: Array.isArray(s.packages)
+        ? s.packages.map((pkg: any) => ({
+            ...pkg,
+            trackingNumber: sanitizeCjTracking(pkg.trackingNumber || pkg.tracking_number || "-"),
+          }))
+        : s.packages,
+    };
+  });
   return sortShipmentsByNumber(sanitized);
 }
 
 export function serializeShipmentsForSync(list: any[]): string {
   if (!Array.isArray(list)) return "";
   return JSON.stringify(
-    list.map((s) => ({
-      id: s.id,
-      orderId: s.orderId || s.order_id || "",
-      ordererName: s.ordererName || s.orderer || s.customer || s.recipient || "",
-      recipient: s.recipient || "",
-      phone: s.phone || "",
-      altPhone: s.altPhone || s.alt_phone || "",
-      zipCode: s.zipCode || s.zip_code || "",
-      address: s.address || "",
-      detailAddress: s.detailAddress || s.detail_address || "",
-      items: s.items || "",
-      quantity: s.quantity || 1,
-      carrier: s.carrier || "CJ대한통운",
-      trackingNumber: s.trackingNumber || s.tracking_number || "-",
-      status: s.status || "Pending",
-      shippingMemo: s.shippingMemo || s.shipping_memo || "",
-      packages: s.packages || [],
-      shippedDate: s.shippedDate || null,
-      estimatedDelivery: s.estimatedDelivery || null,
-    }))
+    list.map((s) => {
+      const pkg0 = Array.isArray(s.packages) && s.packages[0] ? s.packages[0] : {};
+      const memo = s.shippingMemo || s.shipping_memo || "";
+      return {
+        id: s.id,
+        orderId: s.orderId || s.order_id || "",
+        ordererName: s.ordererName || s.orderer || s.customer || s.recipient || "",
+        recipient: s.recipient || "",
+        phone: s.phone || "",
+        altPhone: s.altPhone || s.alt_phone || "",
+        zipCode: s.zipCode || s.zip_code || "",
+        address: s.address || "",
+        detailAddress: s.detailAddress || s.detail_address || "",
+        items: s.items || "",
+        quantity: s.quantity || 1,
+        carrier: s.carrier || "CJ대한통운",
+        trackingNumber: s.trackingNumber || s.tracking_number || "-",
+        status: s.status || "Pending",
+        shippingMemo: memo,
+        packages: s.packages || [],
+        shippedDate: s.shippedDate || null,
+        estimatedDelivery: s.estimatedDelivery || null,
+        isMergedParent: Boolean(s.isMergedParent ?? pkg0.isMergedParent ?? memo.includes("[합배송:")),
+        isMergedChild: Boolean(s.isMergedChild ?? pkg0.isMergedChild ?? memo.includes("[합배송 완료]")),
+      };
+    })
   );
 }
 
@@ -127,7 +149,12 @@ export function useShipments(triggerToast: (msg: string) => void) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            const sanitized = sanitizeShipmentsList(parsed);
+            let deletedIdSet = new Set<string>();
+            try {
+              const deletedRaw = localStorage.getItem("admin_deleted_shipment_ids");
+              if (deletedRaw) deletedIdSet = new Set(JSON.parse(deletedRaw));
+            } catch {}
+            const sanitized = sanitizeShipmentsList(parsed).filter((s: any) => !deletedIdSet.has(s.id));
             lastSyncedJsonRef.current = serializeShipmentsForSync(sanitized);
             setShipmentsList(sanitized);
           }
@@ -143,7 +170,15 @@ export function useShipments(triggerToast: (msg: string) => void) {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0 && isMounted) {
-            const sanitized = sanitizeShipmentsList(data);
+            let deletedIdSet = new Set<string>();
+            if (typeof window !== "undefined") {
+              try {
+                const deletedRaw = localStorage.getItem("admin_deleted_shipment_ids");
+                if (deletedRaw) deletedIdSet = new Set(JSON.parse(deletedRaw));
+              } catch {}
+            }
+
+            const sanitized = sanitizeShipmentsList(data).filter((s: any) => !deletedIdSet.has(s.id));
             isRemoteUpdateRef.current = true;
             setShipmentsList((prev) => {
               // 로컬에 이미 발급된 송장번호(메인 및 packages 개별 박스)가 있는데 서버 응답이 아직 '-'인 경우, 로컬 송장번호를 안전하게 보존
@@ -184,18 +219,33 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
                 const finalStatus = localItem.status !== "Pending" ? localItem.status : serverItem.status;
 
+                // 3) 합배송 상태 보존 병합
+                const isMergedParent = Boolean(serverItem.isMergedParent || localItem.isMergedParent);
+                const isMergedChild = Boolean(serverItem.isMergedChild || localItem.isMergedChild);
+                const mergedIntoId = serverItem.mergedIntoId || localItem.mergedIntoId;
+                const mergedIntoOrderId = serverItem.mergedIntoOrderId || localItem.mergedIntoOrderId;
+                const bundledShipmentIds = serverItem.bundledShipmentIds || localItem.bundledShipmentIds;
+                const bundledOrderNumbers = serverItem.bundledOrderNumbers || localItem.bundledOrderNumbers;
+
                 return {
+                  ...localItem,
                   ...serverItem,
                   packages: mergedPackages,
                   trackingNumber: finalTracking,
                   status: finalStatus,
                   shippedDate: localItem.shippedDate || serverItem.shippedDate,
+                  isMergedParent,
+                  isMergedChild,
+                  mergedIntoId,
+                  mergedIntoOrderId,
+                  bundledShipmentIds,
+                  bundledOrderNumbers,
                 };
               });
 
-              // 서버 응답에 아직 없는 로컬 신규 주문(합배송 테스트 주문 등)이 삭제되지 않도록 보존
+              // 서버 응답에 아직 없는 로컬 신규 주문(수동등록 직후 등)이 삭제되지 않도록 보존 (단, 삭제된 항목 제외)
               const serverIdSet = new Set(sanitized.map((s) => s.id));
-              const localOnlyItems = prev.filter((p) => !serverIdSet.has(p.id));
+              const localOnlyItems = prev.filter((p) => !serverIdSet.has(p.id) && !deletedIdSet.has(p.id));
               const fullMerged = [...merged, ...localOnlyItems];
 
               lastSyncedJsonRef.current = serializeShipmentsForSync(fullMerged);
@@ -258,7 +308,25 @@ export function useShipments(triggerToast: (msg: string) => void) {
                       : (s.trackingNumber && s.trackingNumber !== "-")
                       ? s.trackingNumber
                       : (Array.isArray(pkgs) && pkgs.find((p: any) => p.trackingNumber && p.trackingNumber !== "-")?.trackingNumber) || "-";
-                    return { ...s, ...updatedRow, packages: pkgs, trackingNumber: finalTracking };
+
+                    const pkg0 = Array.isArray(pkgs) && pkgs[0] ? pkgs[0] : {};
+                    const memo = updatedRow.shippingMemo || s.shippingMemo || "";
+
+                    const isMergedParent = Boolean(s.isMergedParent || pkg0.isMergedParent || memo.includes("[합배송:"));
+                    const isMergedChild = Boolean(s.isMergedChild || pkg0.isMergedChild || memo.includes("[합배송 완료]"));
+
+                    return {
+                      ...s,
+                      ...updatedRow,
+                      packages: pkgs,
+                      trackingNumber: finalTracking,
+                      isMergedParent,
+                      isMergedChild,
+                      mergedIntoId: s.mergedIntoId || pkg0.mergedIntoId,
+                      mergedIntoOrderId: s.mergedIntoOrderId || pkg0.mergedIntoOrderId,
+                      bundledShipmentIds: s.bundledShipmentIds || pkg0.bundledShipmentIds,
+                      bundledOrderNumbers: s.bundledOrderNumbers || pkg0.bundledOrderNumbers,
+                    };
                   })
                 );
                 lastSyncedJsonRef.current = serializeShipmentsForSync(next);
@@ -487,11 +555,11 @@ export function useShipments(triggerToast: (msg: string) => void) {
     courierName: string;
     shippingNotice: string;
   }>({
-    baseFee: 3000,
+    baseFee: 4000,
     freeThreshold: 50000,
     freeShippingThreshold: 100000,
-    islandExtraFee: 3000,
-    returnExchangeFee: 6000,
+    islandExtraFee: 4000,
+    returnExchangeFee: 8000,
     courierName: "CJ대한통운 (주계약)",
     shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
   });
@@ -502,17 +570,53 @@ export function useShipments(triggerToast: (msg: string) => void) {
   const [cjApiKey, setCjApiKey] = useState("");
   const [cjSenderAddress, setCjSenderAddress] = useState("");
 
-  // Sync config from localStorage after client mounts
+  // Sync config from localStorage & server API after client mounts
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const savedPolicy = localStorage.getItem("admin_shipping_policy");
-    if (savedPolicy) {
-      try { setShippingPolicy(JSON.parse(savedPolicy)); } catch (e) {}
-    }
+
+    const loadPolicyFromLocal = () => {
+      const savedPolicy = localStorage.getItem("shipping_policy") || localStorage.getItem("admin_shipping_policy");
+      if (savedPolicy) {
+        try {
+          const parsed = JSON.parse(savedPolicy);
+          if (parsed && typeof parsed.baseFee === "number") {
+            setShippingPolicy((prev) => ({ ...prev, ...parsed }));
+          }
+        } catch (e) {}
+      }
+    };
+
+    loadPolicyFromLocal();
+
+    // Fetch authoritative policy from server API
+    fetch("/api/shipping/policy")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data.baseFee === "number") {
+          setShippingPolicy((prev) => ({ ...prev, ...data }));
+          localStorage.setItem("shipping_policy", JSON.stringify(data));
+          localStorage.setItem("admin_shipping_policy", JSON.stringify(data));
+        }
+      })
+      .catch(() => {});
+
     setCjClientCode(localStorage.getItem("cj_client_code") || "");
     setCjContractNo(localStorage.getItem("cj_contract_no") || "");
     setCjApiKey(localStorage.getItem("cj_api_key") || "");
     setCjSenderAddress(localStorage.getItem("cj_sender_address") || "");
+
+    const handlePolicyUpdate = (e?: any) => {
+      if (e && e.key && e.key !== "shipping_policy" && e.key !== "admin_shipping_policy") return;
+      loadPolicyFromLocal();
+    };
+
+    window.addEventListener("shipping_policy_updated", handlePolicyUpdate);
+    window.addEventListener("storage", handlePolicyUpdate);
+
+    return () => {
+      window.removeEventListener("shipping_policy_updated", handlePolicyUpdate);
+      window.removeEventListener("storage", handlePolicyUpdate);
+    };
   }, []);
 
   // ── Postcode (Daum / Kakao) Opener ─────────────────────────────────────────
@@ -634,16 +738,47 @@ export function useShipments(triggerToast: (msg: string) => void) {
   const handleSaveShipmentDetails = handleSaveEditShipment;
 
   // ── Delete Shipment ─────────────────────────────────────────────────────────
-  const handleDeleteShipment = (id: string) => {
-    if (!confirm("이 배송 건을 삭제하시겠습니까?")) return;
+  const handleDeleteShipment = async (id: string) => {
+    if (!confirm("이 배송 건을 삭제하시겠습니까?\n\n(삭제 후에는 복구할 수 없습니다)")) return;
     const updated = shipmentsList.filter((s) => s.id !== id);
     setShipmentsList(updated);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_shipments", JSON.stringify(updated));
+      try {
+        const deletedRaw = localStorage.getItem("admin_deleted_shipment_ids");
+        const set = new Set(deletedRaw ? JSON.parse(deletedRaw) : []);
+        set.add(id);
+        localStorage.setItem("admin_deleted_shipment_ids", JSON.stringify(Array.from(set)));
+      } catch {}
+      window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+    }
     triggerToast("배송 건이 삭제되었습니다.");
+
+    try {
+      await fetch("/api/admin/shipments", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [id] }),
+      });
+      await fetch("/api/admin/shipments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+    } catch (e) {
+      console.warn("Delete shipment error:", e);
+    }
   };
 
   // ── CJ Logistics: Export Excel (LoIS 접수용) ────────────────────────────────
   const handleExportCjExcel = () => {
-    const pendingShipments = shipmentsList.filter((s) => s.status === "Pending");
+    const pendingShipments = shipmentsList.filter((s) => {
+      const pkg0 = Array.isArray(s.packages) && s.packages[0] ? s.packages[0] : {};
+      const memo = String(s.shippingMemo || s.shipping_memo || "");
+      const isMergedChild = Boolean(s.isMergedChild || s.mergedIntoId || pkg0.isMergedChild || pkg0.mergedIntoId || memo.includes("[합배송 완료]"));
+      return s.status === "Pending" && !isMergedChild;
+    });
     if (pendingShipments.length === 0) {
       alert("배송 대기 중인 주문이 없습니다.");
       return;
@@ -676,8 +811,13 @@ export function useShipments(triggerToast: (msg: string) => void) {
   const handleIssueCjLogisticsTracking = async (orderIds?: string | string[]) => {
     if (isIssuing) return;
     
-    // 타겟 결정: 이미 송장번호가 발급된 건은 안전하게 보존하고, 아직 송장번호가 없는 미발급 건만 발급 대상으로 지정
+    // 타겟 결정: 이미 송장번호가 발급된 건은 안전하게 보존하고, 아직 송장번호가 없는 미발급 건만 발급 대상으로 지정 (합배송 흡수건 제외)
     const isUnissued = (s: any) => {
+      const pkg0 = Array.isArray(s.packages) && s.packages[0] ? s.packages[0] : {};
+      const memo = String(s.shippingMemo || s.shipping_memo || "");
+      const isMergedChild = Boolean(s.isMergedChild || s.mergedIntoId || pkg0.isMergedChild || pkg0.mergedIntoId || memo.includes("[합배송 완료]"));
+      if (isMergedChild) return false;
+
       if (s.packages && s.packages.length > 1) {
         return s.packages.some((p: any) => !p.trackingNumber || p.trackingNumber === "-" || p.trackingNumber.trim() === "");
       }

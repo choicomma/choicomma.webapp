@@ -92,6 +92,58 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
             const updated = [newOrder, ...ordersList];
             localStorage.setItem("admin_orders", JSON.stringify(updated));
             window.dispatchEvent(new CustomEvent("admin_orders_updated"));
+
+            // admin_shipments (관리자 배송 주문 관리 및 마이페이지 주문조회) 실시간 동기화
+            const newShipment = {
+              id: orderId,
+              orderId: orderId,
+              ordererName: newOrder.ordererName,
+              recipient: newOrder.recipient,
+              phone: newOrder.phone,
+              altPhone: newOrder.altPhone,
+              zipCode: newOrder.zipCode,
+              address: newOrder.address,
+              detailAddress: newOrder.detailAddress,
+              items: newOrder.items,
+              quantity: newOrder.quantity,
+              carrier: "CJ대한통운",
+              trackingNumber: "-",
+              status: "Pending",
+              shippingMemo: newOrder.shippingMemo,
+              orderDate: new Date().toISOString().replace("T", " ").slice(0, 19),
+              shippedDate: null,
+              estimatedDelivery: null,
+              packages: [
+                {
+                  id: `PKG-${orderId}-1`,
+                  pkgIndex: 1,
+                  items: newOrder.items,
+                  quantity: newOrder.quantity,
+                  carrier: "CJ대한통운",
+                  trackingNumber: "-",
+                  status: "Pending",
+                },
+              ],
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+
+            const savedShipmentsRaw = localStorage.getItem("admin_shipments");
+            let shipmentsList: any[] = [];
+            if (savedShipmentsRaw) {
+              try { shipmentsList = JSON.parse(savedShipmentsRaw); } catch (e) {}
+            }
+            const updatedShipments = [newShipment, ...shipmentsList.filter((s: any) => s.id !== orderId && s.orderId !== orderId)];
+            localStorage.setItem("admin_shipments", JSON.stringify(updatedShipments));
+            window.dispatchEvent(new CustomEvent("storage"));
+            window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+
+            // 서버 API에 백그라운드 영구 동기화
+            fetch("/api/admin/shipments", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(updatedShipments),
+            }).catch(() => {});
           }
         } else {
           setErrorMessage(json.message || "결제 승인 과정에서 오류가 발생했습니다.");

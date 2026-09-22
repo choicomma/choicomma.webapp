@@ -259,8 +259,8 @@ const initialShipments: any[] = [
     zipCode: "04524",
     address: "서울특별시 중구 세종대로 110",
     detailAddress: "101동 1205호",
-    items: "클래식 울 싱글 재킷 (BLACK / 1) 2개, 실크 스카프 (NAVY / FREE) 1개",
-    quantity: 3,
+    items: "프리미엄 이태리 램스킨 스웨이드 테일러드 카라 자켓 (1) 1개, 뤼미에르 클래식 셔츠 (2) 1개",
+    quantity: 2,
     carrier: "CJ대한통운",
     trackingNumber: "-",
     status: "Pending",
@@ -271,8 +271,8 @@ const initialShipments: any[] = [
       {
         id: "PKG-001-1",
         pkgIndex: 1,
-        items: "클래식 울 싱글 재킷 (BLACK / 1) 2개, 실크 스카프 (NAVY / FREE) 1개",
-        quantity: 3,
+        items: "프리미엄 이태리 램스킨 스웨이드 테일러드 카라 자켓 (1) 1개, 뤼미에르 클래식 셔츠 (2) 1개",
+        quantity: 2,
         carrier: "CJ대한통운",
         trackingNumber: "-",
         status: "Pending",
@@ -288,7 +288,7 @@ const initialShipments: any[] = [
     zipCode: "06035",
     address: "서울특별시 강남구 가로수길 42",
     detailAddress: "3층 302호",
-    items: "프리미엄 콤마 크롭 블라우스 (CREAM / 2) 1개, 플리츠 롱 스커트 (BLACK / 2) 2개",
+    items: "썸머 메리노울 카프리 팬츠 (1) 2개, 메리노울 100 썸머 가디건 (1) 1개",
     quantity: 3,
     carrier: "CJ대한통운",
     trackingNumber: "-",
@@ -300,8 +300,17 @@ const initialShipments: any[] = [
       {
         id: "PKG-002-1",
         pkgIndex: 1,
-        items: "프리미엄 콤마 크롭 블라우스 (CREAM / 2) 1개, 플리츠 롱 스커트 (BLACK / 2) 2개",
-        quantity: 3,
+        items: "썸머 메리노울 카프리 팬츠 (1) 2개",
+        quantity: 2,
+        carrier: "CJ대한통운",
+        trackingNumber: "-",
+        status: "Pending",
+      },
+      {
+        id: "PKG-4876-2",
+        pkgIndex: 2,
+        items: "메리노울 100 썸머 가디건 (1) 1개",
+        quantity: 1,
         carrier: "CJ대한통운",
         trackingNumber: "-",
         status: "Pending",
@@ -317,8 +326,8 @@ const initialShipments: any[] = [
     zipCode: "13524",
     address: "경기도 성남시 분당구 판교역로 166",
     detailAddress: "카카오 판교아지트 B동 7층",
-    items: "시그니처 테일러드 슬랙스 (CHARCOAL / 3) 2개, 캐시미어 라운드 니트 (OATMEAL / 2) 1개",
-    quantity: 3,
+    items: "휘메일 마호가니 드랍숄더 집업 (FREE) 1개, 썸머 메리노울 카프리 팬츠 (2) 1개",
+    quantity: 2,
     carrier: "CJ대한통운",
     trackingNumber: "-",
     status: "Pending",
@@ -329,8 +338,8 @@ const initialShipments: any[] = [
       {
         id: "PKG-003-1",
         pkgIndex: 1,
-        items: "시그니처 테일러드 슬랙스 (CHARCOAL / 3) 2개, 캐시미어 라운드 니트 (OATMEAL / 2) 1개",
-        quantity: 3,
+        items: "휘메일 마호가니 드랍숄더 집업 (FREE) 1개, 썸머 메리노울 카프리 팬츠 (2) 1개",
+        quantity: 2,
         carrier: "CJ대한통운",
         trackingNumber: "-",
         status: "Pending",
@@ -346,8 +355,8 @@ const initialShipments: any[] = [
     zipCode: "48058",
     address: "부산광역시 해운대구 센텀중앙로 78",
     detailAddress: "센텀타워 1502호",
-    items: "하이엔드 실크 롱 슬립 원피스 (BEIGE / 1) 1개, 린넨 오버핏 셔츠 (WHITE / 1) 2개, 클래식 가죽 벨트 (BLACK / FREE) 1개",
-    quantity: 4,
+    items: "휘메일 마호가니 벨티드 로브 자켓 (FREE) 1개, 뤼미에르 클래식 셔츠 (1) 2개",
+    quantity: 3,
     carrier: "CJ대한통운",
     trackingNumber: "-",
     status: "Pending",
@@ -358,8 +367,8 @@ const initialShipments: any[] = [
       {
         id: "PKG-004-1",
         pkgIndex: 1,
-        items: "하이엔드 실크 롱 슬립 원피스 (BEIGE / 1) 1개, 린넨 오버핏 셔츠 (WHITE / 1) 2개, 클래식 가죽 벨트 (BLACK / FREE) 1개",
-        quantity: 4,
+        items: "휘메일 마호가니 벨티드 로브 자켓 (FREE) 1개, 뤼미에르 클래식 셔츠 (1) 2개",
+        quantity: 3,
         carrier: "CJ대한통운",
         trackingNumber: "-",
         status: "Pending",
@@ -375,8 +384,8 @@ const initialShipments: any[] = [
     zipCode: "21984",
     address: "인천광역시 연수구 송도과학로 32",
     detailAddress: "송도IT센터 18층",
-    items: "벨티드 캐시미어 블렌드 코트 (CAMEL / 1) 1개, 모헤어 니트 머플러 (CHARCOAL / FREE) 2개",
-    quantity: 3,
+    items: "휘메일 트리밍 후드 밍크 케이프 (실버블루 / FREE) 1개",
+    quantity: 1,
     carrier: "CJ대한통운",
     trackingNumber: "-",
     status: "Pending",
@@ -387,8 +396,8 @@ const initialShipments: any[] = [
       {
         id: "PKG-005-1",
         pkgIndex: 1,
-        items: "벨티드 캐시미어 블렌드 코트 (CAMEL / 1) 1개, 모헤어 니트 머플러 (CHARCOAL / FREE) 2개",
-        quantity: 3,
+        items: "휘메일 트리밍 후드 밍크 케이프 (실버블루 / FREE) 1개",
+        quantity: 1,
         carrier: "CJ대한통운",
         trackingNumber: "-",
         status: "Pending",
@@ -965,7 +974,12 @@ export default function AdminPage() {
       (p) => p.categoryId === selectedCategoryForProducts
     );
   }, [selectedCategoryForProducts, productsList]);
+  const actualProductsCount = React.useMemo(() => {
+    return productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")).length;
+  }, [productsList]);
+
   const getProductStock = (product: any) => {
+    if (product.availableForSale === false) return 0;
     if (product.stock !== undefined) return Number(product.stock);
     const hash = String(product.id || "").split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return (hash % 75) + 15;
@@ -2068,7 +2082,7 @@ export default function AdminPage() {
   };
 
   const handleClearAllProducts = () => {
-    const totalCount = productsList.length;
+    const totalCount = actualProductsCount;
     const isConfirmed = window.confirm(
       `정말로 상품관리에 등록된 전체 상품 (${totalCount}개)을 일괄 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.`
     );
@@ -2287,7 +2301,7 @@ export default function AdminPage() {
             <Package className="w-4 h-4 text-neutral-900" />
             상품 관리
             <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              {productsList.length}
+              {actualProductsCount}
             </span>
           </button>
 
@@ -2353,7 +2367,9 @@ export default function AdminPage() {
                   localStorage.setItem("user_grade", "VVIP");
                   localStorage.setItem("user_role", "admin");
                   localStorage.setItem("is_logged_in", "true");
-                  localStorage.setItem("membership_user_points", "100000");
+                  const adminCust = customersList.find((c: any) => c.id === "ADMIN-001");
+                  const currentAdminPts = adminCust?.points !== undefined ? String(adminCust.points) : (localStorage.getItem("membership_user_points") || "100000");
+                  localStorage.setItem("membership_user_points", currentAdminPts);
                   window.dispatchEvent(new CustomEvent("storage"));
                   window.dispatchEvent(new CustomEvent("auth_changed"));
                 }
@@ -2379,7 +2395,7 @@ export default function AdminPage() {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl mx-auto">
+        <main className={`flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto mx-auto w-full ${activeTab === "orders" ? "max-w-[1600px]" : "max-w-7xl"}`}>
           {/* Mobile Horizontal Tab Navigation */}
           <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-neutral-200/80 scrollbar-thin">
             <button
@@ -2677,6 +2693,7 @@ export default function AdminPage() {
             <OrdersManagement
               productsList={productsList}
               customersList={customersList}
+              setCustomersList={setCustomersList}
               shipmentsList={shipmentsList}
               setShipmentsList={setShipmentsList}
               shipmentSearchQuery={shipmentSearchQuery}
@@ -6849,17 +6866,28 @@ export default function AdminPage() {
             </div>
 
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
                 if (typeof window !== "undefined") {
                   localStorage.setItem("shipping_policy", JSON.stringify(shippingPolicy));
+                  localStorage.setItem("admin_shipping_policy", JSON.stringify(shippingPolicy));
                   localStorage.setItem("cj_client_code", cjClientCode);
                   localStorage.setItem("cj_contract_no", cjContractNo);
                   localStorage.setItem("cj_sender_address", cjSenderAddress);
                   window.dispatchEvent(new CustomEvent("shipping_policy_updated"));
+                  window.dispatchEvent(new CustomEvent("storage"));
+                }
+                try {
+                  await fetch("/api/shipping/policy", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(shippingPolicy),
+                  });
+                } catch (apiErr) {
+                  console.warn("Failed to persist shipping policy to server:", apiErr);
                 }
                 setIsCjConfigModalOpen(false);
-                triggerToast("배송 정책 및 CJ대한통운 설정이 저장되었습니다.");
+                triggerToast("배송 정책 및 CJ대한통운 설정이 영구 저장되었습니다.");
               }}
               className="space-y-4"
             >
@@ -6873,7 +6901,7 @@ export default function AdminPage() {
                         required
                         value={shippingPolicy.baseFee}
                         onChange={(e) => setShippingPolicy({ ...shippingPolicy, baseFee: parseInt(e.target.value) || 0 })}
-                        placeholder="3000"
+                        placeholder="4000"
                         className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
                       />
                     </div>
@@ -6898,7 +6926,7 @@ export default function AdminPage() {
                         type="number"
                         value={shippingPolicy.islandExtraFee}
                         onChange={(e) => setShippingPolicy({ ...shippingPolicy, islandExtraFee: parseInt(e.target.value) || 0 })}
-                        placeholder="3000"
+                        placeholder="4000"
                         className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
                       />
                     </div>
@@ -6908,7 +6936,7 @@ export default function AdminPage() {
                         type="number"
                         value={shippingPolicy.returnExchangeFee}
                         onChange={(e) => setShippingPolicy({ ...shippingPolicy, returnExchangeFee: parseInt(e.target.value) || 0 })}
-                        placeholder="6000"
+                        placeholder="8000"
                         className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
                       />
                     </div>

@@ -30,16 +30,20 @@ import {
 import * as XLSX from "xlsx";
 import { CjLabelPrint } from "./cj-label-print";
 import { sortShipmentsByNumber } from "@/hooks/admin/useShipments";
+import { supabase } from "@/lib/supabase/client";
 import {
   detectBundleCandidates,
   executeOrderMerge,
   undoOrderMerge,
+  normalizeName,
+  normalizePhone,
   type BundleGroup,
 } from "@/lib/shipping/bundle-detector";
 
 interface OrdersManagementProps {
   productsList?: any[];
   customersList?: any[];
+  setCustomersList?: React.Dispatch<React.SetStateAction<any[]>>;
   shipmentsList: any[];
   setShipmentsList: React.Dispatch<React.SetStateAction<any[]>>;
   shipmentSearchQuery: string;
@@ -63,6 +67,7 @@ interface OrdersManagementProps {
 export function OrdersManagement({
   productsList,
   customersList,
+  setCustomersList,
   shipmentsList,
   setShipmentsList,
   shipmentSearchQuery,
@@ -201,16 +206,13 @@ export function OrdersManagement({
       console.warn("Bundle shipments sync warning:", e);
     }
 
-    // 2. 고객 적립금 초과 배송비 환급 (고객 계정 points 가산)
-    if (refundPoints > 0 && activeBundleGroup.matchedCustomer) {
+    // 2. 고객 적립금 초과 배송비 환급 (고객 계정 points 가산 + 세션/내역/DB 연동)
+    let creditSummary = "";
+    if (refundPoints > 0) {
       try {
-        const cust = activeBundleGroup.matchedCustomer;
-        const currentPoints = Number(cust.points || 0);
-        const newPoints = currentPoints + refundPoints;
-
         let allCusts: any[] = [];
         if (customersList && customersList.length > 0) {
-          allCusts = customersList;
+          allCusts = [...customersList];
         } else if (typeof window !== "undefined") {
           const saved = localStorage.getItem("admin_customers");
           if (saved) {
@@ -218,14 +220,85 @@ export function OrdersManagement({
           }
         }
 
-        const updatedCusts = allCusts.map((c: any) =>
-          c.id === cust.id ? { ...c, points: newPoints } : c
-        );
+        // 대상 회원 검색 (1순위: matchedCustomer, 2순위: 성명/전화번호 대조)
+        let cust = activeBundleGroup.matchedCustomer;
+        if (!cust && allCusts.length > 0) {
+          const sPhone = normalizePhone(activeBundleGroup.phone);
+          const sName = normalizeName(activeBundleGroup.recipient);
+          cust = allCusts.find((c: any) => {
+            const cPhone = normalizePhone(c.phone);
+            const cName = normalizeName(c.name);
+            return (
+              (sPhone && sPhone.length >= 8 && cPhone.endsWith(sPhone.slice(-8))) ||
+              (sName && (cName === sName || cName.includes(sName) || sName.includes(cName)))
+            );
+          });
+        }
 
-        if (typeof window !== "undefined") {
-          localStorage.setItem("admin_customers", JSON.stringify(updatedCusts));
-          window.dispatchEvent(new CustomEvent("storage"));
-          window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+        if (cust) {
+          const currentPoints = Number(cust.points || 0);
+          const newPoints = currentPoints + refundPoints;
+
+          const updatedCusts = allCusts.map((c: any) =>
+            c.id === cust.id ? { ...c, points: newPoints } : c
+          );
+
+          if (setCustomersList) {
+            setCustomersList(updatedCusts);
+          }
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem("admin_customers", JSON.stringify(updatedCusts));
+
+            // 현재 접속 중인 세션(또는 최고관리자)이 대상 고객일 경우 세션 적립금도 즉시 동기화
+            const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+            const currentLoggedInName = (localStorage.getItem("membership_user_name") || "").trim();
+            const isCurrentSession =
+              (cust.email && cust.email.toLowerCase().trim() === currentLoggedInEmail) ||
+              (cust.name && cust.name.trim() === currentLoggedInName) ||
+              cust.id === "ADMIN-001";
+
+            if (isCurrentSession) {
+              localStorage.setItem("membership_user_points", String(newPoints));
+            }
+
+            // 적립금 상세 내역(membership_points_history)에도 환급 이력 추가
+            const historyRaw = localStorage.getItem("membership_points_history");
+            let historyList: any[] = [];
+            if (historyRaw) {
+              try { historyList = JSON.parse(historyRaw); } catch (e) {}
+            }
+            historyList.unshift({
+              id: `point-bundle-${Date.now()}`,
+              label: `[합배송 환급] ${activeBundleGroup.orders[0]?.orderId || "주문"} 중복 배송비 환급`,
+              date: new Date().toISOString().slice(0, 10),
+              amount: refundPoints,
+            });
+            localStorage.setItem("membership_points_history", JSON.stringify(historyList));
+
+            window.dispatchEvent(new CustomEvent("storage"));
+            window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+          }
+
+          // Supabase DB 비동기 동기화
+          try {
+            supabase
+              .from("customers")
+              .update({
+                points: newPoints,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", cust.id)
+              .then(({ error }) => {
+                if (error) console.warn("Supabase bundle refund points update warning:", error.message);
+              });
+          } catch (sbErr) {
+            console.warn("Supabase bundle refund points error:", sbErr);
+          }
+
+          creditSummary = `\n💰 초과 부과된 배송비 ₩${refundPoints.toLocaleString()}원이 ${cust.name}님의 회원 적립금으로 지급되었습니다!\n(기존: ${currentPoints.toLocaleString()} P ➔ 지급 후: ${newPoints.toLocaleString()} P)`;
+        } else {
+          creditSummary = `\n⚠️ 일치하는 회원 정보를 찾지 못하여 적립금 지급이 보류되었습니다.\n(비회원 주문이거나 성명/연락처 불일치)`;
         }
       } catch (custErr) {
         console.warn("Failed to credit refund points to customer:", custErr);
@@ -239,18 +312,39 @@ export function OrdersManagement({
     alert(
       `📦 [합배송 완료]\n\n` +
       `총 ${targetGroup.shipmentIds.length}건의 주문이 1개 박스로 성공적으로 묶였습니다.\n` +
-      (refundPoints > 0
-        ? `\n💰 초과 부과된 배송비 ₩${refundPoints.toLocaleString()}원이 ${targetGroup.recipient}님의 회원 적립금으로 즉시 환급 지급되었습니다!`
-        : "")
+      creditSummary
     );
   };
 
-  // 합배송 분리/원상복원 핸들러
+  // 합배송 분리/원상복원 핸들러 (지급되었던 환급 적립금 자동 회수 포함)
   const handleUnbundle = async (ship: any) => {
-    if (!window.confirm(`[${ship.orderId}] 묶음 합배송을 해제하고 각각의 개별 주문으로 분리하시겠습니까?`)) {
+    const pkg0 = Array.isArray(ship?.packages) && ship.packages[0] ? ship.packages[0] : {};
+    let revokePoints = Number(ship.bundledRefundPoints || pkg0.bundledRefundPoints || 0);
+
+    // 보조 추출: 메모에 기록된 환급 금액 또는 묶음 주문 건수 기반 계산
+    if (!revokePoints) {
+      const memo = String(ship.shippingMemo || "");
+      const match = memo.match(/초과배송비\s*₩?([\d,]+)\s*적립금/);
+      if (match && match[1]) {
+        revokePoints = parseInt(match[1].replace(/,/g, ""), 10) || 0;
+      }
+    }
+    if (!revokePoints) {
+      const childCount = (ship.bundledShipmentIds || pkg0.bundledShipmentIds || []).length;
+      if (childCount > 0) {
+        revokePoints = childCount * 4000;
+      }
+    }
+
+    const confirmMessage = revokePoints > 0
+      ? `[${ship.orderId}] 묶음 합배송을 해제하고 각각의 개별 주문으로 분리하시겠습니까?\n\n⚠️ 주의: 합배송 확정 시 고객에게 지급되었던 초과 배송비 환급 적립금(₩${revokePoints.toLocaleString()}원)이 자동으로 회수(차감)됩니다.`
+      : `[${ship.orderId}] 묶음 합배송을 해제하고 각각의 개별 주문으로 분리하시겠습니까?`;
+
+    if (!window.confirm(confirmMessage)) {
       return;
     }
 
+    // 1. 배송 주문 목록 원상 복원
     const updated = undoOrderMerge(shipmentsList, ship.id);
     setShipmentsList(updated);
 
@@ -268,7 +362,103 @@ export function OrdersManagement({
       console.warn("Unbundle shipments sync warning:", e);
     }
 
-    alert(`📦 [${ship.orderId}] 합배송이 해제되어 개별 주문으로 원상 복원되었습니다.`);
+    // 2. 합배송 해제에 따른 적립금 환급금 자동 회수 (차감)
+    let revokeSummary = "";
+    if (revokePoints > 0) {
+      try {
+        let allCusts: any[] = [];
+        if (customersList && customersList.length > 0) {
+          allCusts = [...customersList];
+        } else if (typeof window !== "undefined") {
+          const saved = localStorage.getItem("admin_customers");
+          if (saved) {
+            try { allCusts = JSON.parse(saved); } catch (err) {}
+          }
+        }
+
+        const sPhone = normalizePhone(ship.phone);
+        const sName = normalizeName(ship.recipient || ship.ordererName);
+        const cust = allCusts.find((c: any) => {
+          const cPhone = normalizePhone(c.phone);
+          const cName = normalizeName(c.name);
+          return (
+            (sPhone && sPhone.length >= 8 && cPhone.endsWith(sPhone.slice(-8))) ||
+            (sName && (cName === sName || cName.includes(sName) || sName.includes(cName)))
+          );
+        });
+
+        if (cust) {
+          const currentPoints = Number(cust.points || 0);
+          const newPoints = Math.max(0, currentPoints - revokePoints);
+
+          const updatedCusts = allCusts.map((c: any) =>
+            c.id === cust.id ? { ...c, points: newPoints } : c
+          );
+
+          if (setCustomersList) {
+            setCustomersList(updatedCusts);
+          }
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem("admin_customers", JSON.stringify(updatedCusts));
+
+            // 현재 접속 중인 세션(또는 최고관리자)이 대상 고객일 경우 세션 적립금도 즉시 동기화
+            const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+            const currentLoggedInName = (localStorage.getItem("membership_user_name") || "").trim();
+            const isCurrentSession =
+              (cust.email && cust.email.toLowerCase().trim() === currentLoggedInEmail) ||
+              (cust.name && cust.name.trim() === currentLoggedInName) ||
+              cust.id === "ADMIN-001";
+
+            if (isCurrentSession) {
+              localStorage.setItem("membership_user_points", String(newPoints));
+            }
+
+            // 적립금 상세 내역(membership_points_history)에도 회수(차감) 이력 추가
+            const historyRaw = localStorage.getItem("membership_points_history");
+            let historyList: any[] = [];
+            if (historyRaw) {
+              try { historyList = JSON.parse(historyRaw); } catch (e) {}
+            }
+            historyList.unshift({
+              id: `point-unbundle-${Date.now()}`,
+              label: `[합배송 취소 회수] ${ship.orderId || "주문"} 합배송 해제로 인한 환급 적립금 취소`,
+              date: new Date().toISOString().slice(0, 10),
+              amount: -revokePoints,
+            });
+            localStorage.setItem("membership_points_history", JSON.stringify(historyList));
+
+            window.dispatchEvent(new CustomEvent("storage"));
+            window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+          }
+
+          // Supabase DB 비동기 동기화
+          try {
+            supabase
+              .from("customers")
+              .update({
+                points: newPoints,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", cust.id)
+              .then(({ error }) => {
+                if (error) console.warn("Supabase unbundle revoke points update warning:", error.message);
+              });
+          } catch (sbErr) {
+            console.warn("Supabase unbundle revoke points error:", sbErr);
+          }
+
+          revokeSummary = `\n💰 합배송 해제에 따라 지급되었던 초과 배송비 ₩${revokePoints.toLocaleString()}원이 ${cust.name}님의 적립금에서 정상 회수(차감)되었습니다.\n(기존: ${currentPoints.toLocaleString()} P ➔ 회수 후: ${newPoints.toLocaleString()} P)`;
+        }
+      } catch (custErr) {
+        console.warn("Failed to revoke refund points from customer:", custErr);
+      }
+    }
+
+    alert(
+      `📦 [${ship.orderId}] 합배송이 해제되어 개별 주문으로 원상 복원되었습니다.\n` +
+      revokeSummary
+    );
   };
 
   // 분할배송(다박스) 모달 상태 및 드래그 앤 드롭 데이터
@@ -1018,13 +1208,21 @@ export function OrdersManagement({
 
   const filteredShipments = React.useMemo(() => {
     const filtered = shipmentsList.filter((s) => {
+      // 📦 합배송(통합)되어 대표 주문에 흡수된 자식 주문건은 주문 목록에서 숨김 (사라지게 함)
+      const pkg0 = Array.isArray(s.packages) && s.packages[0] ? s.packages[0] : {};
+      const memo = String(s.shippingMemo || s.shipping_memo || "");
+      const isMergedChild = Boolean(s.isMergedChild || s.mergedIntoId || pkg0.isMergedChild || pkg0.mergedIntoId || memo.includes("[합배송 완료]"));
+      if (isMergedChild) return false;
+
       const q = shipmentSearchQuery.toLowerCase();
       const matchesSearch =
         s.recipient?.toLowerCase().includes(q) ||
         s.orderId?.toLowerCase().includes(q) ||
         s.id?.toLowerCase().includes(q) ||
         s.trackingNumber?.includes(q) ||
-        s.address?.toLowerCase().includes(q);
+        s.address?.toLowerCase().includes(q) ||
+        memo.toLowerCase().includes(q) ||
+        (Array.isArray(s.bundledOrderNumbers) && s.bundledOrderNumbers.some((num: string) => num?.toLowerCase().includes(q)));
       const matchesStatus = shipmentStatusFilter === "all" || s.status === shipmentStatusFilter;
       const matchesCarrier = shipmentCarrierFilter === "all" || s.carrier === shipmentCarrierFilter;
       return matchesSearch && matchesStatus && matchesCarrier;
@@ -1194,19 +1392,19 @@ export function OrdersManagement({
       {/* Integrated Orders & Shipments Table */}
       <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto relative">
-          <table className="w-full text-left text-sm text-neutral-700 min-w-[1350px]">
+          <table className="w-full text-left text-sm text-neutral-700 min-w-[1059px]">
             <colgroup>
-              <col className="w-[48px]" />
-              <col className="w-[220px]" />
-              <col className="w-[280px]" />
-              <col className="w-[300px]" />
-              <col className="w-[180px]" />
-              <col className="w-[160px]" />
+              <col className="w-[44px]" />
               <col className="w-[170px]" />
+              <col className="w-[215px]" />
+              <col className="w-[230px]" />
+              <col className="w-[155px]" />
+              <col className="w-[125px]" />
+              <col className="w-[120px]" />
             </colgroup>
             <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200 sticky top-0 z-10">
               <tr>
-                <th className="py-3.5 px-4 w-[48px] text-center">
+                <th className="py-3.5 px-3 w-[44px] text-center">
                   <input 
                     type="checkbox" 
                     className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-neutral-950 cursor-pointer"
@@ -1224,12 +1422,12 @@ export function OrdersManagement({
                     }}
                   />
                 </th>
-                <th className="py-3.5 px-4 w-[220px] whitespace-nowrap">주문/배송번호</th>
-                <th className="py-3.5 px-4 w-[280px]">수령인 / 배송지 주소</th>
-                <th className="py-3.5 px-4 w-[300px]">주문 상품</th>
-                <th className="py-3.5 px-4 w-[180px]">택배사 / 운송장 번호</th>
-                <th className="py-3.5 px-4 w-[160px] min-w-[160px] whitespace-nowrap">진행 상태</th>
-                <th className="py-3.5 px-4 text-right w-[170px] whitespace-nowrap sticky right-0 bg-neutral-50 shadow-[-6px_0_10px_-2px_rgba(0,0,0,0.06)] z-20">관리</th>
+                <th className="py-3.5 px-3 w-[170px] whitespace-nowrap">주문/배송번호</th>
+                <th className="py-3.5 px-3 w-[215px]">수령인 / 배송지 주소</th>
+                <th className="py-3.5 px-3 w-[230px]">주문 상품</th>
+                <th className="py-3.5 px-3 w-[155px]">택배사 / 운송장 번호</th>
+                <th className="py-3.5 px-3 w-[125px] min-w-[125px] whitespace-nowrap">진행 상태</th>
+                <th className="py-3.5 px-3 text-right w-[120px] whitespace-nowrap">관리</th>
               </tr>
             </thead>
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
@@ -1242,7 +1440,7 @@ export function OrdersManagement({
               ) : (
                 paginatedShipments.map((ship) => (
                   <tr key={ship.id} className="hover:bg-neutral-50/70 transition-colors group">
-                    <td className="py-4 px-4 text-center w-[48px]">
+                    <td className="py-3.5 px-3 text-center w-[44px]">
                       <input 
                         type="checkbox" 
                         className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-neutral-950 cursor-pointer"
@@ -1255,30 +1453,17 @@ export function OrdersManagement({
                         }}
                       />
                     </td>
-                    <td className="py-4 px-4 align-top w-[220px]">
+                    <td className="py-3.5 px-3 align-top w-[170px]">
                       <div>
                         {/* 📦 합배송 대상 감지 배지 or 합배송 완료 표시 */}
+                        {/* 📦 합배송 대상 감지 배지 or 합배송 완료 표시 */}
                         {(() => {
-                          const bundleGroup = shipmentBundleGroupMap.get(ship.id);
-                          if (bundleGroup) {
-                            return (
-                              <div className="mb-1.5">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenBundleModal(bundleGroup);
-                                  }}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 hover:border-blue-400 cursor-pointer shadow-2xs transition-all animate-pulse"
-                                  title="클릭하여 48시간 이내 동일 주소지 주문들을 1박스로 합배송"
-                                >
-                                  <Boxes className="w-3 h-3 text-blue-600" />
-                                  <span>📦 주문 1개로 합치기 ({bundleGroup.shipmentIds.length}건)</span>
-                                </button>
-                              </div>
-                            );
-                          }
-                          if (ship.isMergedParent) {
+                          const pkg0 = Array.isArray(ship.packages) && ship.packages[0] ? ship.packages[0] : {};
+                          const memo = String(ship.shippingMemo || ship.shipping_memo || "");
+                          const isMergedChild = Boolean(ship.isMergedChild || ship.mergedIntoId || pkg0.isMergedChild || pkg0.mergedIntoId || memo.includes("[합배송 완료]"));
+                          const isMergedParent = Boolean(ship.isMergedParent || pkg0.isMergedParent || memo.includes("[합배송:"));
+
+                          if (isMergedParent) {
                             return (
                               <div className="mb-1.5 flex items-center gap-1">
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-800 border border-indigo-300 shadow-2xs">
@@ -1299,12 +1484,33 @@ export function OrdersManagement({
                               </div>
                             );
                           }
-                          if (ship.isMergedChild) {
+                          if (isMergedChild) {
+                            const mergedTarget = ship.mergedIntoOrderId || pkg0.mergedIntoOrderId || memo.match(/\[합배송 완료\]\s*([^\s]+)/)?.[1] || "대표주문";
                             return (
                               <div className="mb-1.5">
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-neutral-100 text-neutral-600 border border-neutral-300">
-                                  <span>↳ {ship.mergedIntoOrderId || "대표주문"}에 통합됨</span>
+                                  <span>↳ {mergedTarget}에 통합됨</span>
                                 </span>
+                              </div>
+                            );
+                          }
+
+                          const bundleGroup = shipmentBundleGroupMap.get(ship.id);
+                          if (bundleGroup) {
+                            return (
+                              <div className="mb-1.5">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenBundleModal(bundleGroup);
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 hover:border-blue-400 cursor-pointer shadow-2xs transition-all animate-pulse"
+                                  title="클릭하여 48시간 이내 동일 주소지 주문들을 1박스로 합배송"
+                                >
+                                  <Boxes className="w-3 h-3 text-blue-600" />
+                                  <span>📦 주문 1개로 합치기 ({bundleGroup.shipmentIds.length}건)</span>
+                                </button>
                               </div>
                             );
                           }
@@ -1329,7 +1535,7 @@ export function OrdersManagement({
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4 align-top w-[280px]">
+                    <td className="py-3.5 px-3 align-top w-[215px]">
                       <div>
                         <p className="font-bold text-neutral-950 text-xs flex items-center flex-wrap gap-1">
                           <span>{ship.recipient}</span>
@@ -1367,7 +1573,7 @@ export function OrdersManagement({
                         )}
                       </div>
                     </td>
-                    <td className="py-4 px-4 align-top w-[300px]">
+                    <td className="py-3.5 px-3 align-top w-[230px]">
                       {ship.packages && ship.packages.length > 1 ? (
                         <div className="space-y-2 w-full max-w-[280px]">
                           {ship.packages.map((pkg: any, pi: number) => {
@@ -1443,7 +1649,7 @@ export function OrdersManagement({
                         </div>
                       )}
                     </td>
-                    <td className="py-4 px-4 align-top w-[180px]">
+                    <td className="py-3.5 px-3 align-top w-[155px]">
                       <div>
                         <span className="text-xs font-bold text-neutral-900 block mb-1">{ship.carrier}</span>
                         {/* 분리배송 패키지별 운송장 및 발급 액션 */}
@@ -1555,7 +1761,7 @@ export function OrdersManagement({
                         )}
                       </div>
                     </td>
-                    <td className="py-4 px-4 align-middle w-[160px] min-w-[160px] whitespace-nowrap">
+                    <td className="py-3.5 px-3 align-middle w-[125px] min-w-[125px] whitespace-nowrap">
                       <div className="flex flex-col justify-center items-start">
                         <button
                           type="button"
@@ -1600,14 +1806,14 @@ export function OrdersManagement({
                         )}
                       </div>
                     </td>
-                    <td className="py-4 px-4 align-middle text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-[#f9fafb] transition-colors shadow-[-6px_0_10px_-2px_rgba(0,0,0,0.06)] z-20 w-[170px]">
-                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                    <td className="py-3.5 px-3 align-middle text-right whitespace-nowrap w-[120px]">
+                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                         {/* 1. 주문서 출력 버튼 (툴팁 말풍선 포함) */}
                         <div className="relative group/btn flex items-center justify-center">
                           <button
                             type="button"
                             onClick={() => handleOpenOrderSheet(ship)}
-                            className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
+                            className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
                             aria-label="주문서 인쇄"
                           >
                             <FileText className="w-3.5 h-3.5" />
@@ -1627,7 +1833,7 @@ export function OrdersManagement({
                             <button
                               type="button"
                               onClick={() => handleIssueCjLogisticsTracking?.(ship.id)}
-                              className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 border border-emerald-200 hover:border-emerald-300 transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
+                              className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 border border-emerald-200 hover:border-emerald-300 transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
                               aria-label="송장 발급"
                             >
                               <Barcode className="w-3.5 h-3.5" />
@@ -1666,7 +1872,7 @@ export function OrdersManagement({
                                   p2pCd: (ship as any).cjP2pCd || (ship as any).p2pCd || (ship.packages?.[0] as any)?.cjP2pCd || "P1",
                                 }]);
                               }}
-                              className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
+                              className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
                               aria-label="CJ 송장 출력"
                             >
                               <Printer className="w-3.5 h-3.5" />
@@ -1687,7 +1893,7 @@ export function OrdersManagement({
                             type="button"
                             onClick={() => handleOpenSplitModal(ship)}
                             disabled={ship.status === "Delivered"}
-                            className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all cursor-pointer shrink-0 disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs hover:shadow-xs active:scale-95"
+                            className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all cursor-pointer shrink-0 disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs hover:shadow-xs active:scale-95"
                             aria-label="박스 분할 배송"
                           >
                             <Package className="w-3.5 h-3.5" />
@@ -1696,6 +1902,25 @@ export function OrdersManagement({
                           <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover/btn:flex flex-col items-center pointer-events-none z-30 animate-in fade-in zoom-in-95 duration-150">
                             <div className="bg-neutral-900 text-white text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap shadow-md">
                               박스 분할 배송
+                            </div>
+                            <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-neutral-900 -mt-px" />
+                          </div>
+                        </div>
+
+                        {/* 4. 개별 주문 삭제 버튼 */}
+                        <div className="relative group/btn flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteShipment(ship.id)}
+                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 hover:border-rose-300 transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
+                            aria-label="주문 삭제"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          {/* 호버 말풍선 */}
+                          <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover/btn:flex flex-col items-center pointer-events-none z-30 animate-in fade-in zoom-in-95 duration-150">
+                            <div className="bg-neutral-900 text-white text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap shadow-md">
+                              주문 삭제
                             </div>
                             <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-neutral-900 -mt-px" />
                           </div>
@@ -1836,10 +2061,24 @@ export function OrdersManagement({
 
                   if (typeof window !== "undefined") {
                     localStorage.setItem("admin_shipments", JSON.stringify(updated));
+                    try {
+                      const deletedRaw = localStorage.getItem("admin_deleted_shipment_ids");
+                      const set = new Set(deletedRaw ? JSON.parse(deletedRaw) : []);
+                      ids.forEach((id) => set.add(id));
+                      localStorage.setItem("admin_deleted_shipment_ids", JSON.stringify(Array.from(set)));
+                    } catch {}
                     window.dispatchEvent(new CustomEvent("storage"));
+                    window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
                   }
 
                   try {
+                    // 1. Supabase 및 서버 캐시에서 해당 ID들 영구 삭제
+                    await fetch("/api/admin/shipments", {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ ids }),
+                    });
+                    // 2. 남은 주문 목록 동기화
                     await fetch("/api/admin/shipments", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
@@ -2697,22 +2936,8 @@ export function OrdersManagement({
                           const qty = qtyMatch ? qtyMatch[1] : "1";
                           const cleanName = itemToken.replace(/\s*\d+\s*개$/, "").replace(/\s*x\s*\d+$/i, "").trim();
 
-                          // 상품별 맞춤 썸네일 이미지 매핑
-                          const getThumb = (name: string) => {
-                            const n = name.toLowerCase();
-                            if (n.includes("재킷") || n.includes("자켓") || n.includes("jacket")) return "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=160&auto=format&fit=crop&q=80";
-                            if (n.includes("블라우스") || n.includes("blouse")) return "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=160&auto=format&fit=crop&q=80";
-                            if (n.includes("셔츠") || n.includes("shirt")) return "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=160&auto=format&fit=crop&q=80";
-                            if (n.includes("슬랙스") || n.includes("팬츠") || n.includes("바지") || n.includes("slacks")) return "https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?w=160&auto=format&fit=crop&q=80";
-                            if (n.includes("스커트") || n.includes("skirt")) return "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=160&auto=format&fit=crop&q=80";
-                            if (n.includes("원피스") || n.includes("드레스") || n.includes("dress")) return "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=160&auto=format&fit=crop&q=80";
-                            if (n.includes("코트") || n.includes("coat")) return "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=160&auto=format&fit=crop&q=80";
-                            if (n.includes("니트") || n.includes("knit") || n.includes("스웨터")) return "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=160&auto=format&fit=crop&q=80";
-                            if (n.includes("스카프") || n.includes("머플러") || n.includes("벨트")) return "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=160&auto=format&fit=crop&q=80";
-                            return "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=160&auto=format&fit=crop&q=80";
-                          };
-
-                          const thumbUrl = getThumb(cleanName || itemToken);
+                          // 실제 상품 카탈로그 썸네일 이미지 매핑
+                          const thumbUrl = getProductThumbnail(cleanName || itemToken);
 
                           // 어떤 박스에 포함되어 있는지 확인
                           let assignedBoxText = "기본출고";
@@ -2930,7 +3155,7 @@ export function OrdersManagement({
                           수량 {ord.quantity || 1}개
                         </span>
                         <span className="text-[10px] text-neutral-400">
-                          배송비 ₩3,000 부과됨
+                          배송비 ₩{(ord.shippingFee || (activeBundleGroup.refundableShippingFee ? Math.round(activeBundleGroup.refundableShippingFee / Math.max(1, activeBundleGroup.orders.length - 1)) : 4000)).toLocaleString()} 부과됨
                         </span>
                       </div>
                     </div>

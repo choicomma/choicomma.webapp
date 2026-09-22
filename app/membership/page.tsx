@@ -139,175 +139,247 @@ function MembershipContent() {
 
   // Shipping Policy
   const [shippingPolicy, setShippingPolicy] = useState({
-    baseFee: 3000,
+    baseFee: 4000,
     freeShippingThreshold: 100000,
-    islandExtraFee: 3000,
-    returnExchangeFee: 6000,
+    islandExtraFee: 4000,
+    returnExchangeFee: 8000,
     courierName: "CJ대한통운 (주계약)",
     shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
   });
 
-  const loadData = () => {
-    if (typeof window !== "undefined") {
-      const isValid = validateCustomerSession();
-      const isLoggedIn = localStorage.getItem("is_logged_in") === "true";
-      const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
-      if (!isAdminSession && (!isValid || !isLoggedIn)) {
-        window.location.href = "/login?expired=true";
-        return;
-      }
+  // 1. 로컬 스토리지로부터 프로필 정보 동기 로드 (순수 읽기 전용)
+  const loadProfileFromLocal = () => {
+    if (typeof window === "undefined") return;
 
-      const savedName = localStorage.getItem("membership_user_name");
-      if (savedName) setUserName(savedName);
-      const savedEmail = localStorage.getItem("membership_user_email");
-      if (savedEmail) setUserEmail(savedEmail);
-      const savedPhone = localStorage.getItem("membership_user_phone");
-      if (savedPhone) setUserPhone(savedPhone);
-      const savedPostcode = localStorage.getItem("membership_user_postcode");
-      setUserPostcode(savedPostcode || "");
-      let savedAddress = localStorage.getItem("membership_user_address") || "";
-      const savedDetail = localStorage.getItem("membership_user_address_detail") || "";
-      if (savedDetail && savedAddress.endsWith(savedDetail)) {
-        savedAddress = savedAddress.slice(0, -savedDetail.length).trim();
-        localStorage.setItem("membership_user_address", savedAddress);
-      }
-      setUserAddress(savedAddress);
-      setUserAddressDetail(savedDetail);
+    const isValid = validateCustomerSession();
+    const isLoggedIn = localStorage.getItem("is_logged_in") === "true";
+    const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+    if (!isAdminSession && (!isValid || !isLoggedIn)) {
+      window.location.href = "/login?expired=true";
+      return;
+    }
 
-      const savedPoints = localStorage.getItem("membership_user_points");
-      if (savedPoints && !isNaN(parseInt(savedPoints))) {
-        setUserPoints(parseInt(savedPoints));
-      } else {
-        localStorage.setItem("membership_user_points", "0");
-        setUserPoints(0);
-      }
+    const savedName = localStorage.getItem("membership_user_name");
+    if (savedName) setUserName(savedName);
+    const savedEmail = localStorage.getItem("membership_user_email");
+    if (savedEmail) setUserEmail(savedEmail);
+    const savedPhone = localStorage.getItem("membership_user_phone");
+    if (savedPhone) setUserPhone(savedPhone);
+    const savedPostcode = localStorage.getItem("membership_user_postcode");
+    setUserPostcode(savedPostcode || "");
+    let savedAddress = localStorage.getItem("membership_user_address") || "";
+    const savedDetail = localStorage.getItem("membership_user_address_detail") || "";
+    if (savedDetail && savedAddress.endsWith(savedDetail)) {
+      savedAddress = savedAddress.slice(0, -savedDetail.length).trim();
+    }
+    setUserAddress(savedAddress);
+    setUserAddressDetail(savedDetail);
 
-      // Sync User Grade from admin_customers or localStorage (5 Tiers: GENERAL, SILVER, GOLD, PLATINUM, VVIP)
-      let currentGrade: "GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP" = "GENERAL";
-      const savedGrade = localStorage.getItem("user_grade") || localStorage.getItem("user_role");
-      if (savedGrade) {
-        const up = savedGrade.toUpperCase();
-        if (up.includes("VVIP") || up.includes("BLACK")) currentGrade = "VVIP";
-        else if (up.includes("PLATINUM") || up.includes("플래티넘")) currentGrade = "PLATINUM";
-        else if (up.includes("GOLD") || up.includes("골드")) currentGrade = "GOLD";
-        else if (up.includes("SILVER") || up.includes("실버")) currentGrade = "SILVER";
-        else currentGrade = "GENERAL";
-      }
+    const savedPoints = localStorage.getItem("membership_user_points");
+    if (savedPoints && !isNaN(parseInt(savedPoints))) {
+      setUserPoints(parseInt(savedPoints));
+    }
 
-      const adminCustomersRaw = localStorage.getItem("admin_customers");
-      if (adminCustomersRaw) {
-        try {
-          const list: any[] = JSON.parse(adminCustomersRaw);
-          const currentEmail = (savedEmail || userEmail || "").toLowerCase().trim();
-          const currentName = savedName || userName;
-          const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
-          
-          const found = list.find((c) => {
-            const cEmail = (c.email || "").toLowerCase().trim();
-            const cName = c.name || "";
-            if (isAdminSession && (c.isAdmin || cEmail === "admin@choicomma.com")) return true;
-            return (currentEmail && cEmail === currentEmail) || (currentName && cName === currentName);
-          });
+    // 적립금 내역 로드
+    const savedHistory = localStorage.getItem("membership_points_history");
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        if (Array.isArray(parsed)) setPointsHistory(parsed);
+      } catch (e) {}
+    }
 
-          if (found) {
-            if (found.name) setUserName(found.name);
-            if (found.email && found.email !== "-") setUserEmail(found.email);
-            if (found.phone && found.phone !== "-") setUserPhone(found.phone);
-            if (found.address && found.address !== "-") {
-              setUserAddress(found.address);
-            }
-            if (found.addressDetail !== undefined) {
-              setUserAddressDetail(found.addressDetail);
-            }
-            if (found.postcode) {
-              setUserPostcode(found.postcode);
-            }
-            if (found.points !== undefined) {
-              setUserPoints(found.points);
-            }
-            if (found.grade) {
-              const fg = String(found.grade).toUpperCase();
-              if (fg.includes("VVIP") || fg.includes("BLACK")) currentGrade = "VVIP";
-              else if (fg.includes("PLATINUM") || fg.includes("플래티넘")) currentGrade = "PLATINUM";
-              else if (fg.includes("GOLD") || fg.includes("골드")) currentGrade = "GOLD";
-              else if (fg.includes("SILVER") || fg.includes("실버")) currentGrade = "SILVER";
-              else currentGrade = "GENERAL";
-            }
+    // 등급 로드
+    let currentGrade: "GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP" = "GENERAL";
+    const savedGrade = localStorage.getItem("user_grade") || localStorage.getItem("user_role");
+    if (savedGrade) {
+      const up = savedGrade.toUpperCase();
+      if (up.includes("VVIP") || up.includes("BLACK")) currentGrade = "VVIP";
+      else if (up.includes("PLATINUM") || up.includes("플래티넘")) currentGrade = "PLATINUM";
+      else if (up.includes("GOLD") || up.includes("골드")) currentGrade = "GOLD";
+      else if (up.includes("SILVER") || up.includes("실버")) currentGrade = "SILVER";
+    }
+
+    const adminCustomersRaw = localStorage.getItem("admin_customers");
+    if (adminCustomersRaw) {
+      try {
+        const list: any[] = JSON.parse(adminCustomersRaw);
+        const currentEmail = (savedEmail || userEmail || "").toLowerCase().trim();
+        const currentName = savedName || userName;
+
+        const found = list.find((c) => {
+          const cEmail = (c.email || "").toLowerCase().trim();
+          const cName = c.name || "";
+          if (isAdminSession && (c.isAdmin || cEmail === "admin@choicomma.com")) return true;
+          return (currentEmail && cEmail === currentEmail) || (currentName && cName === currentName);
+        });
+
+        if (found) {
+          if (found.name) setUserName(found.name);
+          if (found.email && found.email !== "-") setUserEmail(found.email);
+          if (found.phone && found.phone !== "-") setUserPhone(found.phone);
+          if (found.address && found.address !== "-") setUserAddress(found.address);
+          if (found.addressDetail !== undefined) setUserAddressDetail(found.addressDetail);
+          if (found.postcode) setUserPostcode(found.postcode);
+          if (found.points !== undefined) setUserPoints(found.points);
+          if (found.grade) {
+            const fg = String(found.grade).toUpperCase();
+            if (fg.includes("VVIP") || fg.includes("BLACK")) currentGrade = "VVIP";
+            else if (fg.includes("PLATINUM") || fg.includes("플래티넘")) currentGrade = "PLATINUM";
+            else if (fg.includes("GOLD") || fg.includes("골드")) currentGrade = "GOLD";
+            else if (fg.includes("SILVER") || fg.includes("실버")) currentGrade = "SILVER";
           }
-        } catch (e) {}
-      }
-      setUserGrade(currentGrade);
-      localStorage.setItem("user_grade", currentGrade);
+        }
+      } catch (e) {}
+    }
+    setUserGrade(currentGrade);
+  };
 
-      const savedPolicy = localStorage.getItem("shipping_policy");
-      if (savedPolicy) {
-        try {
-          setShippingPolicy(JSON.parse(savedPolicy));
-        } catch (e) {}
-      }
-
-      // Load user orders from admin_shipments
-      const savedShipments = localStorage.getItem("admin_shipments");
-      if (savedShipments) {
-        try {
-          const list: any[] = JSON.parse(savedShipments);
-          const currentEmail = (savedEmail || userEmail || "").toLowerCase().trim();
-          const currentName = savedName || userName;
-
-          const matched = list.filter((s) => {
-            const shipEmail = (s.recipientEmail || s.email || "").toLowerCase().trim();
-            const shipName = s.recipient || s.name || "";
-            return (currentEmail && shipEmail === currentEmail) || (currentName && shipName === currentName);
-          });
-
-          if (matched.length > 0) {
-            setUserOrders(matched);
-          } else {
-            // Default sample orders
-            setUserOrders(list.slice(0, 3));
-          }
-        } catch (e) {}
-      } else {
-        // Fallback demo orders
-        setUserOrders([
-          {
-            id: "ORD-20260801-0982",
-            orderId: "ORD-20260801-0982",
-            recipient: userName,
-            orderDate: "2026-08-01",
-            status: "In Transit",
-            carrier: "CJ대한통운",
-            trackingNumber: "5892049102",
-            items: "프리미엄 콤마 테일러드 재킷 (BLACK / 2) 외 1건",
-            amount: 189000,
-            address: userAddress || "서울특별시 강남구 개포로22길 12 6층",
-          },
-          {
-            id: "ORD-20260725-0412",
-            orderId: "ORD-20260725-0412",
-            recipient: userName,
-            orderDate: "2026-07-25",
-            status: "Delivered",
-            carrier: "CJ대한통운",
-            trackingNumber: "1092837461",
-            items: "미니멀 울 와이드 슬랙스 (CHARCOAL / 1)",
-            amount: 129000,
-            address: userAddress || "서울특별시 강남구 개포로22길 12 6층",
-          },
-        ]);
-      }
+  // 2. 배송 정책 로컬 로드
+  const loadPolicyFromLocal = () => {
+    if (typeof window === "undefined") return;
+    const savedPolicy = localStorage.getItem("shipping_policy") || localStorage.getItem("admin_shipping_policy");
+    if (savedPolicy) {
+      try {
+        const parsed = JSON.parse(savedPolicy);
+        if (parsed && typeof parsed.baseFee === "number") {
+          setShippingPolicy((prev) => ({ ...prev, ...parsed }));
+        }
+      } catch (e) {}
     }
   };
 
+  // 3. 사용자 본인 주문 필터링 헬퍼
+  const filterUserOrders = (shipmentList: any[]) => {
+    if (!Array.isArray(shipmentList) || typeof window === "undefined") return [];
+
+    const currentEmail = (localStorage.getItem("membership_user_email") || userEmail || "").toLowerCase().trim();
+    const currentName = (localStorage.getItem("membership_user_name") || userName || "").trim();
+    const currentPhone = (localStorage.getItem("membership_user_phone") || userPhone || "").replace(/[^0-9]/g, "");
+    const isAdminSession =
+      sessionStorage.getItem("choicomma_admin_authenticated") === "true" ||
+      localStorage.getItem("user_role") === "admin" ||
+      currentEmail === "admin@choicomma.com" ||
+      currentName.includes("최고관리자");
+
+    const normalize = (val?: string) =>
+      (val || "")
+        .trim()
+        .replace(/\s+/g, "")
+        .replace(/\(admin\)/gi, "")
+        .replace(/\(실검증\)/gi, "");
+
+    return shipmentList.filter((s: any) => {
+      // 1) 관리자 세션: 최고관리자 주문만 매칭
+      if (isAdminSession) {
+        const rNorm = normalize(s.recipient);
+        const oNorm = normalize(s.ordererName);
+        const sPhone = (s.phone || "").replace(/[^0-9]/g, "");
+        const sAltPhone = (s.altPhone || "").replace(/[^0-9]/g, "");
+        return (
+          rNorm.includes("최고관리자") ||
+          oNorm.includes("최고관리자") ||
+          sPhone.endsWith("5791171") ||
+          sAltPhone.endsWith("5791171")
+        );
+      }
+
+      // 2) 일반 고객: 이메일, 전화번호(끝 8자리), 성명으로 정확 매칭
+      const sEmail = (s.recipientEmail || s.email || "").toLowerCase().trim();
+      const sPhone = (s.phone || "").replace(/[^0-9]/g, "");
+      const sAltPhone = (s.altPhone || "").replace(/[^0-9]/g, "");
+      const sRecipient = normalize(s.recipient);
+      const sOrderer = normalize(s.ordererName);
+      const cName = normalize(currentName);
+
+      if (currentEmail && sEmail && currentEmail === sEmail) return true;
+      if (currentPhone && currentPhone.length >= 8) {
+        const phoneTail = currentPhone.slice(-8);
+        if (sPhone.endsWith(phoneTail) || sAltPhone.endsWith(phoneTail)) return true;
+      }
+      if (cName && (sRecipient === cName || sOrderer === cName)) return true;
+
+      return false;
+    });
+  };
+
+  // 4. 로컬 스토리지로부터 주문 목록 로드 (읽기 전용)
+  const loadShipmentsFromLocal = () => {
+    if (typeof window === "undefined") return;
+    const savedShipments = localStorage.getItem("admin_shipments");
+    if (savedShipments) {
+      try {
+        const list: any[] = JSON.parse(savedShipments);
+        if (Array.isArray(list)) {
+          setUserOrders(filterUserOrders(list));
+        }
+      } catch (e) {}
+    }
+  };
+
+  // 5. 마운트 시 초기화 및 이벤트 리스너 등록 (무한 루프 방지)
   useEffect(() => {
-    loadData();
-    window.addEventListener("storage", loadData);
-    window.addEventListener("shipping_policy_updated", loadData);
-    window.addEventListener("admin_shipments_updated", loadData);
+    // 로컬 스토리지 즉시 동기화
+    loadProfileFromLocal();
+    loadPolicyFromLocal();
+    loadShipmentsFromLocal();
+
+    // 서버 API로부터 1회 초기 동기화 (마운트 시점에만 1회 호출)
+    fetch("/api/shipping/policy")
+      .then((res) => res.json())
+      .then((data) => {
+        const policyObj = data?.policy || data?.shippingPolicy || data;
+        if (policyObj && typeof policyObj.baseFee === "number") {
+          setShippingPolicy((prev) => ({ ...prev, ...policyObj }));
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/admin/shipments")
+      .then((res) => res.json())
+      .then((serverShipments) => {
+        const list = Array.isArray(serverShipments)
+          ? serverShipments
+          : Array.isArray(serverShipments?.shipments)
+          ? serverShipments.shipments
+          : [];
+        if (list.length > 0) {
+          setUserOrders(filterUserOrders(list));
+        }
+      })
+      .catch(() => {});
+
+    // 스토리지 변경 이벤트 리스너 (반드시 특정 key만 검사하고 fetch를 재호출하지 않음)
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (!e.key) return;
+      if (e.key === "admin_shipments" || e.key === "admin_orders") {
+        loadShipmentsFromLocal();
+      } else if (e.key === "shipping_policy" || e.key === "admin_shipping_policy") {
+        loadPolicyFromLocal();
+      } else if (
+        e.key === "admin_customers" ||
+        e.key.startsWith("membership_user_") ||
+        e.key === "user_grade"
+      ) {
+        loadProfileFromLocal();
+      }
+    };
+
+    // 커스텀 이벤트 리스너 (로컬 캐시에서 즉시 상태 반영만 수행)
+    const onShipmentsUpdated = () => loadShipmentsFromLocal();
+    const onPolicyUpdated = () => loadPolicyFromLocal();
+    const onCustomersUpdated = () => loadProfileFromLocal();
+
+    window.addEventListener("storage", handleStorageEvent);
+    window.addEventListener("shipping_policy_updated", onPolicyUpdated);
+    window.addEventListener("admin_shipments_updated", onShipmentsUpdated);
+    window.addEventListener("admin_customers_updated", onCustomersUpdated);
+
     return () => {
-      window.removeEventListener("storage", loadData);
-      window.removeEventListener("shipping_policy_updated", loadData);
-      window.removeEventListener("admin_shipments_updated", loadData);
+      window.removeEventListener("storage", handleStorageEvent);
+      window.removeEventListener("shipping_policy_updated", onPolicyUpdated);
+      window.removeEventListener("admin_shipments_updated", onShipmentsUpdated);
+      window.removeEventListener("admin_customers_updated", onCustomersUpdated);
     };
   }, []);
 
@@ -749,6 +821,16 @@ function MembershipContent() {
                             {ord.packages && ord.packages.length > 1 && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                                 {ord.packages.length}개 박스 분리배송
+                              </span>
+                            )}
+                            {ord.isMergedParent && ord.bundledOrderNumbers && ord.bundledOrderNumbers.length > 0 && (
+                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                                📦 1박스 통합 합배송 ({ord.bundledOrderNumbers.join(", ")})
+                              </span>
+                            )}
+                            {ord.isMergedChild && (
+                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-300">
+                                ↳ {ord.mergedIntoOrderId || "대표 주문"}에 묶음 포장되어 함께 발송됩니다
                               </span>
                             )}
                             <span className="text-neutral-300">•</span>
@@ -1563,7 +1645,7 @@ function MembershipContent() {
           const hasItems = cart?.lines && cart.lines.length > 0;
           const itemSubtotal = hasItems ? parseFloat(cart?.cost?.subtotalAmount?.amount || cart?.cost?.totalAmount?.amount || "0") : 0;
           const freeThresh = shippingPolicy.freeShippingThreshold !== undefined ? shippingPolicy.freeShippingThreshold : 100000;
-          const baseFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 3000;
+          const baseFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 4000;
           const currentShipFee = !hasItems || itemSubtotal === 0 || baseFee === 0 || (freeThresh > 0 && itemSubtotal >= freeThresh) ? 0 : baseFee;
           const grandTotal = itemSubtotal + currentShipFee;
 

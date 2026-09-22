@@ -203,8 +203,33 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       console.warn("Customers Realtime error:", realtimeErr);
     }
 
+    // 로컬 스토리지 변경 및 타 컴포넌트(합배송 등) 적립금 변동 실시간 동기화
+    const handleCustomersUpdated = (e?: any) => {
+      if (e && e.key && e.key !== "admin_customers") return;
+      if (typeof window !== "undefined" && isMounted) {
+        const saved = localStorage.getItem("admin_customers");
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setCustomersList(parsed);
+            }
+          } catch (e) {}
+        }
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("admin_customers_updated", handleCustomersUpdated);
+      window.addEventListener("storage", handleCustomersUpdated);
+    }
+
     return () => {
       isMounted = false;
+      if (typeof window !== "undefined") {
+        window.removeEventListener("admin_customers_updated", handleCustomersUpdated);
+        window.removeEventListener("storage", handleCustomersUpdated);
+      }
       if (realtimeChannel) {
         supabase.removeChannel(realtimeChannel);
       }
