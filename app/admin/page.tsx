@@ -41,6 +41,7 @@ import {
   Pencil,
   UserPlus,
   Shield,
+  ShieldCheck,
   Mail,
   Phone,
   Crown,
@@ -82,6 +83,7 @@ import { TimesaleManagement } from "./components/timesale-management";
 import { RevenueManagement } from "./components/revenue-management";
 import { MainPageManagement } from "./components/main-page-management";
 import { CustomersManagement } from "./components/customers-management";
+import { MembershipTiersManagement } from "./components/membership-tiers-management";
 import { OrdersManagement } from "./components/orders-management";
 import { InboundStockManagement } from "./components/inbound-stock-management";
 import { InquiriesManagement } from "./components/inquiries-management";
@@ -413,7 +415,7 @@ const initialInboundSchedules: any[] = [];
 const initialDailySettlements: any[] = [];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "revenue" | "main" | "customers" | "inquiries" | "settings" | "global_sales">("orders");
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "revenue" | "main" | "customers" | "tiers" | "inquiries" | "settings" | "global_sales">("orders");
 
   // VIP Customer Inquiry State
   const {
@@ -2280,6 +2282,21 @@ export default function AdminPage() {
             </span>
           </button>
 
+          {/* 2-1. 회원 등급 관리 */}
+          <button
+            onClick={() => setActiveTab("tiers")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "tiers"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
+          >
+            <ShieldCheck className="w-4 h-4 text-neutral-900" />
+            회원 등급 관리
+            <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
+              5개 등급
+            </span>
+          </button>
+
           {/* 3. 재고 및 입고 캘린더 */}
           <button
             onClick={() => setActiveTab("inbound")}
@@ -2468,6 +2485,14 @@ export default function AdminPage() {
                 }`}
             >
               회원
+            </button>
+            <button
+              onClick={() => setActiveTab("tiers")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "tiers" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-neutral-900" />
+              회원 등급
             </button>
             <button
               onClick={() => setActiveTab("global_sales")}
@@ -2699,6 +2724,15 @@ export default function AdminPage() {
               handleClearAllCustomers={handleClearAllCustomers}
               handleExcelFileUpload={handleExcelFileUpload}
               handleResetCustomerData={handleResetCustomerData}
+            />
+          )}
+
+          {/* TAB: MEMBERSHIP TIERS MANAGEMENT */}
+          {activeTab === "tiers" && (
+            <MembershipTiersManagement
+              customersList={customersList}
+              setCustomersList={setCustomersList}
+              triggerToast={triggerToast}
             />
           )}
 
