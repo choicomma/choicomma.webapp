@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
 import { generateNextOrderId } from "@/lib/shipping/order-id";
+import { splitKoreanAddress } from "@/lib/address";
 import { useEffect } from "react";
 
 export default function CheckoutClientWrapper() {
@@ -81,28 +82,22 @@ export default function CheckoutClientWrapper() {
       let finalName = matchedCust?.name || savedName || "고객님";
       let finalEmail = matchedCust?.email || savedEmail || "customer@choicomma.com";
       let finalPhone = matchedCust?.phone || savedPhone || "010-1234-5678";
-      let finalPostcode = matchedCust?.postcode || savedPostcode || "06306";
-      let finalAddress = matchedCust?.address || savedAddress || "서울특별시 강남구 테헤란로 123";
-      let finalDetail = matchedCust?.detailAddress || matchedCust?.addressDetail || savedDetail || "";
+      let rawTargetAddress = matchedCust?.address || savedAddress || "서울특별시 강남구 테헤란로 123";
+      let rawFallbackPostcode = matchedCust?.postcode || savedPostcode || "06306";
+      let rawFallbackDetail = matchedCust?.detailAddress || matchedCust?.addressDetail || savedDetail || "";
 
-      // 1) Extract postal code if formatted as (12345) or [12345] in address
-      const zipMatch = finalAddress.match(/^[\(\[](\d{5})[\)\]]\s*(.*)$/);
-      if (zipMatch) {
-        if (!finalPostcode || finalPostcode === "06123") {
-          finalPostcode = zipMatch[1];
-        }
-        finalAddress = zipMatch[2];
-      }
+      // 지능형 한국 주소 파서를 통한 우편번호/기본주소/상세주소 완벽 분리
+      const parsed = splitKoreanAddress(rawTargetAddress, rawFallbackPostcode, rawFallbackDetail);
+      let finalPostcode = parsed.postcode || rawFallbackPostcode || "06306";
+      let finalAddress = parsed.baseAddress || "서울특별시 강남구 테헤란로 123";
+      let finalDetail = parsed.detailAddress || rawFallbackDetail || "";
 
-      // 2) Strip detailAddress from base address if it was combined into a single line
-      if (finalDetail && finalAddress.endsWith(finalDetail)) {
-        finalAddress = finalAddress.slice(0, -finalDetail.length).trim();
-      }
-
-      // 3) Fallback if finalDetail was empty but savedDetail exists in address
-      if (!finalDetail && savedDetail && finalAddress.endsWith(savedDetail)) {
+      // 만약 분리 후에도 상세주소가 비어있고 localStorage에 저장된 savedDetail이 있다면 보정
+      if (!finalDetail && savedDetail) {
         finalDetail = savedDetail;
-        finalAddress = finalAddress.slice(0, -savedDetail.length).trim();
+        if (finalAddress.endsWith(savedDetail)) {
+          finalAddress = finalAddress.slice(0, -savedDetail.length).trim();
+        }
       }
 
       setFormData((prev) => ({

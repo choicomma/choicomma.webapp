@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,6 +38,27 @@ export async function POST(req: NextRequest) {
         { message: data.message || "토스페이먼츠 결제 승인에 실패하였습니다." },
         { status: response.status }
       );
+    }
+
+    // Supabase payment_logs 테이블에 결제 승인 로그 영속 저장
+    try {
+      await supabaseServer.from("payment_logs").upsert(
+        [
+          {
+            id: `PAY-${orderId}-${Date.now().toString().slice(-4)}`,
+            orderId: orderId,
+            paymentKey: paymentKey,
+            amount: Number(amount),
+            status: data.status || "DONE",
+            method: data.method || "간편결제",
+            approvedAt: data.approvedAt || new Date().toISOString(),
+            rawResponse: data,
+          },
+        ],
+        { onConflict: "paymentKey" }
+      );
+    } catch (dbErr) {
+      console.warn("Notice: Failed to insert payment_log into Supabase:", dbErr);
     }
 
     return NextResponse.json({ success: true, data });

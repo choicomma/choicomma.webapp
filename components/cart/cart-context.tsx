@@ -27,6 +27,7 @@ type CartContextValue = {
   cart: Cart;
   updateCartItem: (merchandiseId: string, updateType: UpdateType) => void;
   addCartItem: (variant: ProductVariant, product: Product, quantity?: number) => void;
+  clearCart: () => void;
   mode: SFCCMode;
   isCartOpen: boolean;
   openCart: () => void;
@@ -282,41 +283,52 @@ export function CartProvider({
     []
   );
 
+  const clearCartCB = useCallback(() => {
+    const empty = createEmptyCart();
+    setCartState(empty);
+    localStorage.removeItem("choicomma_cart");
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
+    }, 0);
+  }, []);
+
   useEffect(() => {
     const syncCartFromStorage = () => {
       const saved = localStorage.getItem("choicomma_cart");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed && Array.isArray(parsed.lines)) {
-            // If admin_products exist in storage, filter out cart lines for deleted products
-            const adminProductsRaw = localStorage.getItem("admin_products");
-            if (adminProductsRaw) {
-              try {
-                const adminList = JSON.parse(adminProductsRaw);
-                if (Array.isArray(adminList) && adminList.length > 0) {
-                  const validIds = new Set(adminList.map((p: any) => String(p.id)));
-                  const filteredLines = parsed.lines.filter((item: CartItem) => {
-                    const pid = String(item.merchandise?.product?.id || "");
-                    return validIds.has(pid);
-                  });
-                  if (filteredLines.length !== parsed.lines.length) {
-                    const cleanedCart = {
-                      ...parsed,
-                      ...updateCartTotals(filteredLines),
-                      lines: filteredLines,
-                    };
-                    localStorage.setItem("choicomma_cart", JSON.stringify(cleanedCart));
-                    setCartState(cleanedCart);
-                    return;
-                  }
-                }
-              } catch (e) {}
-            }
-            setCartState(parsed);
-          }
-        } catch (e) {}
+      if (!saved) {
+        setCartState(createEmptyCart());
+        return;
       }
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed.lines)) {
+          // If admin_products exist in storage, filter out cart lines for deleted products
+          const adminProductsRaw = localStorage.getItem("admin_products");
+          if (adminProductsRaw) {
+            try {
+              const adminList = JSON.parse(adminProductsRaw);
+              if (Array.isArray(adminList) && adminList.length > 0) {
+                const validIds = new Set(adminList.map((p: any) => String(p.id)));
+                const filteredLines = parsed.lines.filter((item: CartItem) => {
+                  const pid = String(item.merchandise?.product?.id || "");
+                  return validIds.has(pid);
+                });
+                if (filteredLines.length !== parsed.lines.length) {
+                  const cleanedCart = {
+                    ...parsed,
+                    ...updateCartTotals(filteredLines),
+                    lines: filteredLines,
+                  };
+                  localStorage.setItem("choicomma_cart", JSON.stringify(cleanedCart));
+                  setCartState(cleanedCart);
+                  return;
+                }
+              }
+            } catch (e) {}
+          }
+          setCartState(parsed);
+        }
+      } catch (e) {}
     };
 
     window.addEventListener("storage", syncCartFromStorage);
@@ -332,7 +344,10 @@ export function CartProvider({
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
   useEffect(() => {
-    const handleCartUpdate = () => {
+    const handleCartUpdate = (e?: any) => {
+      if (e?.detail?.action === "clear") {
+        return;
+      }
       setIsCartOpen(true);
     };
     const handleOpenCartEvent = () => {
@@ -351,13 +366,14 @@ export function CartProvider({
       cart: cartState,
       updateCartItem: updateCartItemCB,
       addCartItem: addCartItemCB,
+      clearCart: clearCartCB,
       mode,
       isCartOpen,
       openCart,
       closeCart,
       setIsCartOpen,
     }),
-    [cartState, updateCartItemCB, addCartItemCB, mode, isCartOpen, openCart, closeCart]
+    [cartState, updateCartItemCB, addCartItemCB, clearCartCB, mode, isCartOpen, openCart, closeCart]
   );
 
   return (

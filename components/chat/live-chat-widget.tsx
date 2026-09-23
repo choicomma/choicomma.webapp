@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
 import { DEFAULT_AUTO_RULES, type AutoReplyRule } from "@/app/admin/components/inquiries-management";
+import { supabase } from "@/lib/supabase/client";
 
 export interface ChatMessage {
   id: string;
@@ -452,6 +453,39 @@ export function LiveChatWidget() {
           sessionList = [updatedSession, ...sessionList];
         }
         localStorage.setItem("admin_chat_sessions", JSON.stringify(sessionList));
+
+        // Supabase DB 영속 저장 (chat_sessions & chat_messages)
+        try {
+          supabase
+            .from("chat_sessions")
+            .upsert(
+              [
+                {
+                  id: rawId,
+                  customerName: uName,
+                  customerEmail: uEmail,
+                  customerPhone: phone || "",
+                  status: "active",
+                },
+              ],
+              { onConflict: "id" }
+            )
+            .then(() => {
+              supabase
+                .from("chat_messages")
+                .insert([
+                  {
+                    id: newMsg.id,
+                    sessionId: rawId,
+                    sender: "user",
+                    text: newMsg.text || (newMsg.images?.length ? "[사진 첨부]" : ""),
+                  },
+                ])
+                .then(() => {});
+            });
+        } catch (dbErr) {
+          console.warn("Notice: Failed to sync chat to Supabase:", dbErr);
+        }
       }
     }
 

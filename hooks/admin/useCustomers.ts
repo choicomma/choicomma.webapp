@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/lib/supabase/client";
+import { splitKoreanAddress } from "@/lib/address";
 
 const initialCustomers: any[] = [];
 
@@ -65,19 +66,16 @@ function parseCustomerRow(row: any, idx: number) {
   const rawDetailAddr = String(row["상세주소"] || row["받는분상세주소(분할)"] || row["받는분상세주소"] || "").trim();
 
   // 기본 주소와 상세 주소를 엄격히 분리 (중복 포함 방지)
-  let cleanAddr = rawAddr || "-";
-  if (rawDetailAddr && cleanAddr.endsWith(rawDetailAddr)) {
-    cleanAddr = cleanAddr.slice(0, -rawDetailAddr.length).trim() || cleanAddr;
-  }
+  const parsedAddr = splitKoreanAddress(rawAddr, rawZip, rawDetailAddr);
 
   return {
     id: String(row["고유키"] || `CUST-${Date.now()}-${idx}`),
     name: String(row["이름"] || row["받는분성명"] || row["고객명"] || "무명 회원").trim(),
     email: String(row["이메일"] || row["아이디"] || "-").trim(),
     phone: rawPhone || "-",
-    postcode: rawZip || "",
-    address: cleanAddr,
-    detailAddress: rawDetailAddr || "",
+    postcode: parsedAddr.postcode,
+    address: parsedAddr.baseAddress || "-",
+    detailAddress: parsedAddr.detailAddress,
     grade: grade,
     rawGrade: rawGrade,
     totalSpent: parseFloat(row["구매금액(KRW)"]) || 0,
@@ -116,13 +114,17 @@ export function useCustomers(triggerToast: (msg: string) => void) {
                   detailAddress: "6층 (주)초이콤마 본사",
                 };
               }
-              if (c.detailAddress && c.address && c.address.endsWith(c.detailAddress)) {
-                return {
-                  ...c,
-                  address: c.address.slice(0, -c.detailAddress.length).trim() || c.address,
-                };
-              }
-              return c;
+              const parsed = splitKoreanAddress(
+                c.address,
+                c.postcode || c.zipCode || "",
+                c.detailAddress || c.addressDetail || ""
+              );
+              return {
+                ...c,
+                postcode: parsed.postcode,
+                address: parsed.baseAddress,
+                detailAddress: parsed.detailAddress,
+              };
             });
           const finalList = sanitized.length > 0 ? sanitized : [DEFAULT_ADMIN_CUSTOMER];
           setCustomersList(finalList);
@@ -154,13 +156,17 @@ export function useCustomers(triggerToast: (msg: string) => void) {
                       detailAddress: "6층 (주)초이콤마 본사",
                     };
                   }
-                  if (c.detailAddress && c.address && c.address.endsWith(c.detailAddress)) {
-                    return {
-                      ...c,
-                      address: c.address.slice(0, -c.detailAddress.length).trim() || c.address,
-                    };
-                  }
-                  return c;
+                  const parsed = splitKoreanAddress(
+                    c.address,
+                    c.postcode || c.zipCode || "",
+                    c.detailAddress || c.addressDetail || ""
+                  );
+                  return {
+                    ...c,
+                    postcode: parsed.postcode,
+                    address: parsed.baseAddress,
+                    detailAddress: parsed.detailAddress,
+                  };
                 });
               const finalList = cleaned.length > 0 ? cleaned : DEFAULT_CUSTOMERS;
               setCustomersList(finalList);

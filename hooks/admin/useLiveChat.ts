@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
 
 export function useLiveChat(triggerToast: (msg: string) => void) {
   // Live Chat Admin State & Storage Sync
@@ -113,6 +114,22 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       localStorage.setItem(sessionKey, JSON.stringify(updated));
       window.dispatchEvent(new CustomEvent("live_chat_updated"));
     }
+
+    // Supabase DB 메시지 동기화
+    try {
+      supabase
+        .from("chat_messages")
+        .insert([
+          {
+            id: newReply.id,
+            sessionId: activeSessionId,
+            sender: "admin",
+            text: newReply.text,
+          },
+        ])
+        .then(() => {});
+    } catch (e) {}
+
     setAdminLiveInput("");
     triggerToast("💬 고객 라이브 채팅방으로 답변이 성공적으로 전송되었습니다!");
   };
@@ -137,6 +154,15 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       window.dispatchEvent(new CustomEvent("live_chat_updated"));
       window.dispatchEvent(new CustomEvent("live_chat_ended"));
     }
+
+    // Supabase 세션 상태 업데이트 (closed)
+    try {
+      supabase
+        .from("chat_sessions")
+        .update({ status: "closed", updated_at: new Date().toISOString() })
+        .eq("id", targetId)
+        .then(() => {});
+    } catch (e) {}
 
     setChatSessionsList((prev) => {
       const filtered = prev.filter((s) => s.id !== targetId);

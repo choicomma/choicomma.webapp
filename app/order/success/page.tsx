@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle2, ShoppingBag, ArrowRight, ShieldCheck, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
+import { supabase } from "@/lib/supabase/client";
 
 function OrderSuccessParamsHandler({ onParamsLoaded }: { onParamsLoaded: (p: { paymentKey: string | null; orderId: string | null; amount: string | null }) => void }) {
   const searchParams = useSearchParams();
@@ -138,12 +139,48 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
             window.dispatchEvent(new CustomEvent("storage"));
             window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
 
-            // 서버 API에 백그라운드 영구 동기화
+            // 1) Supabase orders 테이블에 주문 원장 영속 저장
+            const dbOrder = {
+              id: orderId,
+              orderNumber: orderId,
+              customerId: (typeof window !== "undefined" && localStorage.getItem("membership_user_id")) || null,
+              customerName: newOrder.ordererName,
+              customerEmail: newOrder.email,
+              customerPhone: newOrder.phone,
+              totalAmount: Number(amount),
+              shippingFee: 0,
+              discountAmount: 0,
+              pointsUsed: 0,
+              paymentMethod: newOrder.method || "카드결제 (토스)",
+              paymentStatus: "PAID",
+              shippingAddress: {
+                zipCode: newOrder.zipCode,
+                address: newOrder.address,
+                detailAddress: newOrder.detailAddress,
+              },
+              items: pendingOrder?.cart?.lines || [{ title: newOrder.items, quantity: newOrder.quantity, price: Number(amount) }],
+              orderMemo: newOrder.shippingMemo || "",
+            };
+
+            supabase
+              .from("orders")
+              .upsert([dbOrder], { onConflict: "id" })
+              .then(({ error }) => {
+                if (error) console.warn("Supabase orders insert notice:", error.message);
+              });
+
+            // 2) 서버 API에 백그라운드 영구 동기화
             fetch("/api/admin/shipments", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(updatedShipments),
             }).catch(() => {});
+
+            // 3) 결제 성공 후 장바구니 자동 비우기
+            try {
+              localStorage.removeItem("choicomma_cart");
+              window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
+            } catch (e) {}
           }
         } else {
           setErrorMessage(json.message || "결제 승인 과정에서 오류가 발생했습니다.");

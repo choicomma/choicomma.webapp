@@ -47,9 +47,11 @@ import { useCart } from "@/components/cart/cart-context";
 import { mockProducts } from "@/lib/sfcc/mock/products";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { SetBundleSection } from "@/components/products/set-bundle-section";
+import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
+import { supabase } from "@/lib/supabase/client";
 
 function MembershipContent() {
-  const { cart, updateCartItem, addCartItem, openCart } = useCart();
+  const { cart, updateCartItem, addCartItem, openCart, clearCart } = useCart();
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as any) || "dashboard";
 
@@ -291,14 +293,12 @@ function MembershipContent() {
     const savedPhone = localStorage.getItem("membership_user_phone");
     if (savedPhone) setUserPhone(savedPhone);
     const savedPostcode = localStorage.getItem("membership_user_postcode");
-    setUserPostcode(savedPostcode || "");
     let savedAddress = localStorage.getItem("membership_user_address") || "";
     const savedDetail = localStorage.getItem("membership_user_address_detail") || "";
-    if (savedDetail && savedAddress.endsWith(savedDetail)) {
-      savedAddress = savedAddress.slice(0, -savedDetail.length).trim();
-    }
-    setUserAddress(savedAddress);
-    setUserAddressDetail(savedDetail);
+    const parsedSaved = splitKoreanAddress(savedAddress, savedPostcode || "", savedDetail);
+    setUserPostcode(parsedSaved.postcode);
+    setUserAddress(parsedSaved.baseAddress);
+    setUserAddressDetail(parsedSaved.detailAddress);
 
     const savedPoints = localStorage.getItem("membership_user_points");
     if (savedPoints && !isNaN(parseInt(savedPoints))) {
@@ -343,9 +343,19 @@ function MembershipContent() {
           if (found.name) setUserName(found.name);
           if (found.email && found.email !== "-") setUserEmail(found.email);
           if (found.phone && found.phone !== "-") setUserPhone(found.phone);
-          if (found.address && found.address !== "-") setUserAddress(found.address);
-          if (found.addressDetail !== undefined) setUserAddressDetail(found.addressDetail);
-          if (found.postcode) setUserPostcode(found.postcode);
+          if (found.address && found.address !== "-") {
+            const parsedFound = splitKoreanAddress(
+              found.address,
+              found.postcode || "",
+              found.detailAddress || found.addressDetail || savedDetail || ""
+            );
+            if (parsedFound.baseAddress) setUserAddress(parsedFound.baseAddress);
+            if (parsedFound.detailAddress) setUserAddressDetail(parsedFound.detailAddress);
+            if (parsedFound.postcode) setUserPostcode(parsedFound.postcode);
+          } else {
+            if (found.addressDetail !== undefined) setUserAddressDetail(found.addressDetail);
+            if (found.postcode) setUserPostcode(found.postcode);
+          }
           if (found.points !== undefined) setUserPoints(found.points);
           if (found.grade) {
             const fg = String(found.grade).toUpperCase();
@@ -520,8 +530,9 @@ function MembershipContent() {
     localStorage.setItem("membership_user_address", userAddress);
     localStorage.setItem("membership_user_address_detail", userAddressDetail);
 
-    // 회원 정보 관리(admin_customers)에도 분리된 주소 최신화 동기화
+    // 회원 정보 관리(admin_customers) 및 Supabase DB에도 분리된 주소 최신화 동기화
     try {
+      const formattedAddress = formatKoreanAddress(userPostcode, userAddress, userAddressDetail);
       const rawCustomers = localStorage.getItem("admin_customers");
       if (rawCustomers) {
         const list: any[] = JSON.parse(rawCustomers);
@@ -543,6 +554,18 @@ function MembershipContent() {
         localStorage.setItem("admin_customers", JSON.stringify(updated));
         window.dispatchEvent(new CustomEvent("storage"));
         window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+      }
+
+      // Supabase customers 테이블 address 필드 동기화
+      const custId = localStorage.getItem("membership_user_id");
+      if (custId) {
+        supabase
+          .from("customers")
+          .update({ address: formattedAddress })
+          .eq("id", custId)
+          .then(({ error }) => {
+            if (error) console.warn("Supabase address update notice:", error.message);
+          });
       }
     } catch (e) {}
 
@@ -1851,12 +1874,28 @@ function MembershipContent() {
               My Cart ({cart?.totalQuantity || 0})
             </h3>
           </div>
-          <Link
-            href="/shop"
-            className="text-xs text-neutral-500 hover:text-black font-semibold underline"
-          >
-            쇼핑 계속하기
-          </Link>
+          <div className="flex items-center gap-2.5">
+            {cart?.lines && cart.lines.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("장바구니를 모두 비우시겠습니까?")) {
+                    clearCart();
+                  }
+                }}
+                className="text-xs text-neutral-400 hover:text-rose-600 font-semibold cursor-pointer transition-colors"
+                title="장바구니 전체 비우기"
+              >
+                전체 비우기
+              </button>
+            )}
+            <Link
+              href="/shop"
+              className="text-xs text-neutral-500 hover:text-black font-semibold underline"
+            >
+              쇼핑 계속하기
+            </Link>
+          </div>
         </div>
 
         {/* Cart Items List */}

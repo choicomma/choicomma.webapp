@@ -21,6 +21,7 @@ import {
 import { LogoSvg } from "@/components/layout/header/logo-svg";
 import { supabase } from "@/lib/supabase/client";
 import { initCustomerSession } from "@/lib/auth/customer-session";
+import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -452,14 +453,7 @@ export default function LoginPage() {
         }
       }
 
-      const fullAddress = [
-        cleanPostcode ? `(${cleanPostcode})` : "",
-        cleanAddress,
-        cleanDetail,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .trim();
+      const fullAddress = formatKoreanAddress(cleanPostcode, cleanAddress, cleanDetail);
 
       const newCustId = `CUST-${Date.now().toString().slice(-6)}`;
       const newCustomer = {
@@ -630,21 +624,14 @@ export default function LoginPage() {
         localStorage.setItem("user_role", matchedCustomer.role || "CUSTOMER");
       }
 
-      let cleanCustAddr = matchedCustomer.address || "";
-      let cleanCustDetail = matchedCustomer.detailAddress || matchedCustomer.addressDetail || "";
-      let cleanCustZip = matchedCustomer.postcode || matchedCustomer.zipCode || "";
-
-      // Smart separation of (우편번호) from address
-      const zipMatch = cleanCustAddr.match(/^[\(\[](\d{5})[\)\]]\s*(.*)$/);
-      if (zipMatch) {
-        cleanCustZip = cleanCustZip || zipMatch[1];
-        cleanCustAddr = zipMatch[2];
-      }
-
-      // Smart separation of detailAddress from base address
-      if (cleanCustDetail && cleanCustAddr.endsWith(cleanCustDetail)) {
-        cleanCustAddr = cleanCustAddr.slice(0, -cleanCustDetail.length).trim();
-      }
+      const parsedCustAddr = splitKoreanAddress(
+        matchedCustomer.address,
+        matchedCustomer.postcode || matchedCustomer.zipCode || "",
+        matchedCustomer.detailAddress || matchedCustomer.addressDetail || ""
+      );
+      let cleanCustZip = parsedCustAddr.postcode;
+      let cleanCustAddr = parsedCustAddr.baseAddress;
+      let cleanCustDetail = parsedCustAddr.detailAddress;
 
       localStorage.setItem("membership_user_id", matchedCustomer.id);
       localStorage.setItem("membership_user_name", matchedCustomer.name || "회원");
