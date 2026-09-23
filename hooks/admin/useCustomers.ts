@@ -105,7 +105,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
 
         if (!error && Array.isArray(data) && data.length > 0 && isMounted) {
           const sanitized = data
-            .filter((c) => c.id === "ADMIN-001" || (!c.rawGrade && !String(c.id).startsWith("CUST-")))
+            .filter((c) => c.id === "ADMIN-001" || !c.rawGrade)
             .map((c) => {
               if (c.id === "ADMIN-001") {
                 return {
@@ -135,7 +135,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         console.warn("Notice: Using local customers fallback:", err);
       }
 
-      // Local storage fallback (엑셀 원본 회원2026_08_03_1.xls에서 가져온 데이터 완전 배제)
+      // Local storage fallback (엑셀 원본 회원2026_08_03_1.xls에서 가져온 더미 데이터 완전 배제)
       if (typeof window !== "undefined" && isMounted) {
         const saved = localStorage.getItem("admin_customers");
         if (saved) {
@@ -143,7 +143,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
             const parsed: any[] = JSON.parse(saved);
             if (Array.isArray(parsed) && parsed.length > 0) {
               const cleaned = parsed
-                .filter((c) => c.id === "ADMIN-001" || (!c.rawGrade && !String(c.id).startsWith("CUST-")))
+                .filter((c) => c.id === "ADMIN-001" || !c.rawGrade)
                 .map((c) => {
                   if (c.id === "ADMIN-001") {
                     return {

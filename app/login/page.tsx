@@ -452,15 +452,22 @@ export default function LoginPage() {
         }
       }
 
+      const fullAddress = [
+        cleanPostcode ? `(${cleanPostcode})` : "",
+        cleanAddress,
+        cleanDetail,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
       const newCustId = `CUST-${Date.now().toString().slice(-6)}`;
       const newCustomer = {
         id: newCustId,
         name: displayName,
         email: finalEmail,
         phone: phone.trim() || "010-0000-0000",
-        postcode: cleanPostcode || "",
-        address: cleanAddress || "-",
-        detailAddress: cleanDetail || "",
+        address: fullAddress || cleanAddress || "-",
         grade: "GENERAL",
         totalSpent: 0,
         points: 0,
@@ -471,9 +478,15 @@ export default function LoginPage() {
         isAdmin: false,
       };
 
+      const localCustomer = {
+        ...newCustomer,
+        postcode: cleanPostcode || "",
+        detailAddress: cleanDetail || "",
+      };
+
       // 1) Save to local admin_customers
       if (typeof window !== "undefined") {
-        localStorage.setItem("admin_customers", JSON.stringify([newCustomer, ...customerList]));
+        localStorage.setItem("admin_customers", JSON.stringify([localCustomer, ...customerList]));
       }
 
       // 2) Sync to Supabase DB customers table
