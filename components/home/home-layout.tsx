@@ -109,11 +109,11 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   }
   const [allProducts, setAllProducts] = React.useState<any[]>(initialGrid);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [pageSize, setPageSize] = React.useState(9);
+  const [pageSize, setPageSize] = React.useState(12);
 
   React.useEffect(() => {
     const handleResize = () => {
-      setPageSize(window.innerWidth < 768 ? 10 : 9);
+      setPageSize(12);
     };
     handleResize();
     window.addEventListener("resize", handleResize);

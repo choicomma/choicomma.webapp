@@ -8,29 +8,54 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
   const [adminLiveInput, setAdminLiveInput] = useState("");
 
   // Multi-Customer Live Chat Sessions State
-  const [activeSessionId, setActiveSessionId] = useState<string>("vip@choicomma.com");
-  const [chatSessionsList, setChatSessionsList] = useState<any[]>([
-    {
-      id: "vip@choicomma.com",
-      name: "최상위 VIP 회원님",
-      email: "vip@choicomma.com",
-      tier: "VIP",
-      badgeColor: "bg-amber-400 text-neutral-950 font-black",
-      status: "online",
-    },
-  ]);
+  const [activeSessionId, setActiveSessionId] = useState<string>("");
+  const [chatSessionsList, setChatSessionsList] = useState<any[]>([]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const saved = localStorage.getItem("admin_chat_sessions");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setChatSessionsList(parsed);
-        }
-      } catch (e) {}
-    }
+
+    const loadSessions = () => {
+      const saved = localStorage.getItem("admin_chat_sessions");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            const cleaned = parsed.filter(
+              (s: any) =>
+                s?.id !== "vip@choicomma.com" &&
+                s?.email !== "vip@choicomma.com" &&
+                !s?.name?.includes("최상위 VIP")
+            );
+            setChatSessionsList(cleaned);
+            localStorage.setItem("admin_chat_sessions", JSON.stringify(cleaned));
+            setActiveSessionId((prev) => {
+              if (!prev || prev === "vip@choicomma.com") {
+                return cleaned.length > 0 ? cleaned[0].id : "";
+              }
+              return cleaned.some((s: any) => s.id === prev) ? prev : (cleaned[0]?.id || "");
+            });
+            return;
+          }
+        } catch (e) {}
+      }
+      setChatSessionsList([]);
+      setActiveSessionId("");
+      localStorage.setItem("admin_chat_sessions", JSON.stringify([]));
+    };
+
+    loadSessions();
+    localStorage.removeItem("site_live_chat_messages_vip@choicomma.com");
+
+    const handleStorageChange = () => {
+      loadSessions();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("live_chat_updated", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("live_chat_updated", handleStorageChange);
+    };
   }, []);
 
   const [demoSessionMessages, setDemoSessionMessages] = useState<Record<string, any[]>>({});
@@ -94,6 +119,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
 
   const handleAdminEndLiveChat = (sessionIdTarget?: string) => {
     const targetId = sessionIdTarget || activeSessionId;
+    if (!targetId) return;
     const targetSession = chatSessionsList.find((s) => s.id === targetId);
     const sessionName = targetSession?.name || "고객";
 

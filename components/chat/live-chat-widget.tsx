@@ -7,13 +7,11 @@ import {
   X,
   Send,
   Image as ImageIcon,
-  Crown,
   Sparkles,
   Paperclip,
   CheckCheck,
   Minimize2,
   Trash2,
-  Lock,
   ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -39,7 +37,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     close: "닫기",
     welcomeText: "안녕하세요! 초이콤마 오리지널 1:1 라이브 전담 케어 팀입니다. 💫\n상품 문의, 주문/배송 등 어떤 내용이든 편하게 말씀해 주세요.",
     autoReplyText: "문의해주신 내용을 전달되었습니다. 담당자 확인 후 곧 답변드리겠습니다. 잠시만 기다려 주세요! ☕",
-    closeNoticeText: "🔒 [안내] 최상위 VIP 회원님과의 1:1 상담이 종료되었습니다. 추가 문의 사항이 있으시면 언제든지 편하게 새 메시지를 남겨주세요. 이용해 주셔서 감사합니다! 💫",
+    closeNoticeText: "🔒 [안내] 1:1 상담이 종료되었습니다. 추가 문의 사항이 있으시면 언제든지 편하게 새 메시지를 남겨주세요. 이용해 주셔서 감사합니다! 💫",
     teamName: "choicomma VIP 케어팀",
     liveTag: "라이브",
     userName: "고객님",
@@ -62,7 +60,7 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     close: "Close",
     welcomeText: "Hello! Welcome to choicomma 1:1 Live Care Team. 💫\nPlease feel free to ask anything about products, orders, shipping, or custom sizing.",
     autoReplyText: "We have received your message. Our team is reviewing it and will respond shortly. Please wait a moment! ☕",
-    closeNoticeText: "🔒 [Notice] The 1:1 consultation session with our VIP member has been closed. If you have any further inquiries, please feel free to leave a new message anytime. Thank you! 💫",
+    closeNoticeText: "🔒 [Notice] The 1:1 consultation session has been closed. If you have any further inquiries, please feel free to leave a new message anytime. Thank you! 💫",
     teamName: "choicomma VIP Care",
     liveTag: "LIVE",
     userName: "Customer",
@@ -820,19 +818,8 @@ export function LiveChatWidget() {
               <X className="w-5 h-5" />
             </button>
 
-            {/* Premium Lock Icon Badge */}
-            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-neutral-950 text-amber-400 flex items-center justify-center shadow-lg border border-neutral-800">
-              <Lock className="w-6 h-6" />
-            </div>
-
-            {/* Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 text-amber-300 text-[11px] font-black tracking-wider uppercase mb-2.5 border border-amber-400/30">
-              <Crown className="w-3 h-3 text-amber-400" />
-              <span>{t.loginModalBadge}</span>
-            </div>
-
             {/* Title */}
-            <h3 className="text-lg font-black text-neutral-950 tracking-tight mb-2">
+            <h3 className="text-lg font-black text-neutral-950 tracking-tight mb-2 pt-2">
               {t.loginModalTitle}
             </h3>
 

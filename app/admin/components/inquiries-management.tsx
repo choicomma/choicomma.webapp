@@ -521,7 +521,7 @@ export function InquiriesManagement({
             ) : (
               chatSessionsList.map((session) => {
                 const isSelected = activeSessionId === session.id;
-                const isEnded = session.status === "ended" || (session.id === "vip@choicomma.com" && isLiveChatSessionEnded);
+                const isEnded = session.status === "ended" || (session.id === activeSessionId && isLiveChatSessionEnded);
                 const badgeInfo = getSessionBadgeInfo(session);
                 return (
                   <div
@@ -625,14 +625,15 @@ export function InquiriesManagement({
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-emerald-600" />
               <h3 className="text-sm font-black text-neutral-950">
-                실시간 대화 내역 ({chatSessionsList.find((s) => s.id === activeSessionId)?.name || "선택된 고객"})
+                실시간 대화 내역 ({chatSessionsList.find((s) => s.id === activeSessionId)?.name || "진행 중인 상담 없음"})
               </h3>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                disabled={!activeSessionId || chatSessionsList.length === 0}
                 onClick={() => handleAdminEndLiveChat(activeSessionId)}
-                className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold px-3 py-1.5 rounded-xl transition-all text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
+                className="bg-rose-50 hover:bg-rose-100 disabled:opacity-40 disabled:cursor-not-allowed text-rose-700 border border-rose-200 font-bold px-3 py-1.5 rounded-xl transition-all text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
                 title="선택한 고객과의 1:1 라이브 상담을 종료합니다"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -640,8 +641,9 @@ export function InquiriesManagement({
               </button>
               <button
                 type="button"
+                disabled={!activeSessionId || chatSessionsList.length === 0}
                 onClick={handleAdminClearLiveChat}
-                className="bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 font-bold px-3 py-1.5 rounded-xl transition-all text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
+                className="bg-neutral-100 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-700 border border-neutral-300 font-bold px-3 py-1.5 rounded-xl transition-all text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
                 title="라이브 채팅 대화 기록을 전체 초기화합니다"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -702,6 +704,7 @@ export function InquiriesManagement({
           <div className="pt-2 shrink-0 flex gap-2">
             <input
               type="text"
+              disabled={!activeSessionId || chatSessionsList.length === 0}
               value={adminLiveInput}
               onChange={(e) => setAdminLiveInput(e.target.value)}
               onKeyDown={(e) => {
@@ -710,14 +713,18 @@ export function InquiriesManagement({
                   handleAdminSendLiveChat();
                 }
               }}
-              placeholder="고객에게 전달할 답변 메세지를 입력하세요..."
-              className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-xs font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+              placeholder={
+                !activeSessionId || chatSessionsList.length === 0
+                  ? "진행 중인 라이브 대화 세션이 없습니다..."
+                  : "고객에게 전달할 답변 메세지를 입력하세요..."
+              }
+              className="flex-1 bg-neutral-50 disabled:bg-neutral-100 disabled:cursor-not-allowed border border-neutral-200 rounded-xl px-4 py-3 text-xs font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
             />
             <button
               type="button"
               onClick={() => handleAdminSendLiveChat()}
-              disabled={!adminLiveInput.trim()}
-              className="bg-neutral-950 hover:bg-black text-white px-5 py-3 rounded-xl font-black text-xs transition-all cursor-pointer disabled:opacity-40 shrink-0 shadow-md flex items-center gap-1.5"
+              disabled={!adminLiveInput.trim() || !activeSessionId || chatSessionsList.length === 0}
+              className="bg-neutral-950 hover:bg-black text-white px-5 py-3 rounded-xl font-black text-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-md flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
               답변 전송

@@ -1957,6 +1957,12 @@ export default function AdminPage() {
     const updatedList = productsList.filter((p) => String(p.id) !== String(id));
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);
+
+    // Call DELETE API to immediately remove from Supabase DB and server cache
+    fetch(`/api/products?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch((err) =>
+      console.error("Failed to delete product on server:", err)
+    );
+
     triggerToast(`'${title}' 상품이 성공적으로 삭제되었습니다.`);
   };
 
@@ -2061,6 +2067,14 @@ export default function AdminPage() {
     const updatedList = productsList.filter((p) => !idSet.has(String(p.id)));
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);
+
+    // Call DELETE API to immediately remove bulk items from Supabase DB and server cache
+    fetch("/api/products", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: targetIds }),
+    }).catch((err) => console.error("Failed to bulk delete products on server:", err));
+
     triggerToast(`🗑️ 선택한 ${targetIds.length}개 상품이 성공적으로 삭제되었습니다.`);
   };
 

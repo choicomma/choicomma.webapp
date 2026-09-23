@@ -37,8 +37,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:50:02.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:31.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/1.jpg"
   },
@@ -80,8 +80,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:50:01.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:30.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/2.jpg"
   },
@@ -123,8 +123,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:50:00.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:29.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/3.jpg"
   },
@@ -166,8 +166,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:59.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:28.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/4.jpg"
   },
@@ -209,8 +209,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:58.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:27.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/5.jpg"
   },
@@ -252,8 +252,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:57.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:26.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/6.jpg"
   },
@@ -295,8 +295,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:56.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:25.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/7.jpg"
   },
@@ -338,8 +338,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:55.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:24.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/8.jpg"
   },
@@ -381,8 +381,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:54.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:23.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/9.jpg"
   },
@@ -496,8 +496,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:53.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:22.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-451",
@@ -581,8 +581,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:52.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:21.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-450",
@@ -666,8 +666,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:51.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:20.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-449",
@@ -754,8 +754,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:50.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:19.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-448",
@@ -839,8 +839,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:49.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:18.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-447",
@@ -924,8 +924,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:48.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:17.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-446",
@@ -1009,8 +1009,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:47.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:16.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-445",
@@ -1094,8 +1094,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:46.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:15.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-444",
@@ -1179,8 +1179,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:45.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:14.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-443",
@@ -1264,8 +1264,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:44.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:13.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-442",
@@ -1349,8 +1349,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:43.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:12.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-441",
@@ -1434,8 +1434,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:42.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:11.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-439",
@@ -1522,8 +1522,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:41.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:10.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-438",
@@ -1610,8 +1610,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:40.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:09.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "hero-slide-1788841553388",
@@ -1643,8 +1643,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:39.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:08.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true
   },
   {
@@ -1696,8 +1696,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:38.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:07.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "hero-slide-1788841549464",
@@ -1729,8 +1729,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:37.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:06.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true
   },
   {
@@ -1818,8 +1818,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:36.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:05.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-435",
@@ -1906,8 +1906,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:35.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:04.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "hero-slide-1788841526896",
@@ -1939,8 +1939,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:34.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:15:03.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true
   },
   {
@@ -2028,8 +2028,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:33.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:02.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-433",
@@ -2116,8 +2116,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:32.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:01.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-432",
@@ -2169,8 +2169,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:31.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:15:00.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "hero-slide-1788841558271",
@@ -2202,8 +2202,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:30.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:14:59.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true
   },
   {
@@ -2259,8 +2259,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:29.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:58.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-430",
@@ -2347,8 +2347,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:28.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:57.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-429",
@@ -2435,8 +2435,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:27.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:56.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-428",
@@ -2488,8 +2488,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:26.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:55.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-427",
@@ -2544,8 +2544,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:25.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:54.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "hero-slide-1788841531533",
@@ -2577,8 +2577,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:24.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:14:53.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true
   },
   {
@@ -2666,8 +2666,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:23.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:52.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "hero-slide-1788841536283",
@@ -2699,8 +2699,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:22.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:14:51.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true
   },
   {
@@ -2733,8 +2733,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:21.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:14:50.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true
   },
   {
@@ -2822,8 +2822,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:20.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:49.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-423",
@@ -2910,8 +2910,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:19.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:48.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-422",
@@ -2998,8 +2998,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:18.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:47.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-421",
@@ -3086,8 +3086,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:17.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:46.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-420",
@@ -3139,8 +3139,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:16.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:45.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-419",
@@ -3227,8 +3227,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:15.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:44.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-418",
@@ -3315,8 +3315,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:14.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:43.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-417",
@@ -3367,8 +3367,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:13.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:42.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-416",
@@ -3420,8 +3420,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:12.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:41.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-415",
@@ -3473,8 +3473,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:11.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:40.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-414",
@@ -3526,8 +3526,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:10.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:39.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-413",
@@ -3579,8 +3579,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:09.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:38.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-412",
@@ -3631,8 +3631,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:08.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:37.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "hero-slide-1788841541064",
@@ -3664,8 +3664,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:07.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00",
+    "created_at": "2026-09-23T08:14:36.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00",
     "isHeroFeatured": true
   },
   {
@@ -3718,8 +3718,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:06.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:35.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-410",
@@ -3771,8 +3771,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:05.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:34.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-409",
@@ -3859,8 +3859,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:04.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:33.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-408",
@@ -3912,8 +3912,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:03.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:32.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-407",
@@ -3965,8 +3965,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:02.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:31.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-406",
@@ -4018,8 +4018,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:01.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:30.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-405",
@@ -4071,8 +4071,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:49:00.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:29.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-404",
@@ -4124,8 +4124,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:59.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:28.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-403",
@@ -4177,8 +4177,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:58.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:27.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-402",
@@ -4230,8 +4230,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:57.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:26.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-396",
@@ -4283,8 +4283,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:56.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:25.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-395",
@@ -4336,8 +4336,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:55.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:24.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-394",
@@ -4389,8 +4389,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:54.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:23.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-393",
@@ -4442,8 +4442,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:53.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:22.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-392",
@@ -4494,8 +4494,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:52.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:21.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-391",
@@ -4546,8 +4546,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:51.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:20.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-390",
@@ -4598,8 +4598,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:50.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:19.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-389",
@@ -4650,8 +4650,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:49.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:18.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-388",
@@ -4702,8 +4702,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:48.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:17.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-387",
@@ -4754,8 +4754,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:47.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:16.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-386",
@@ -4806,8 +4806,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:46.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:15.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-385",
@@ -4858,8 +4858,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:45.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:14.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-384",
@@ -4910,8 +4910,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:44.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:13.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-380",
@@ -4962,8 +4962,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:43.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:12.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-379",
@@ -5014,8 +5014,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:42.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:11.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-378",
@@ -5066,8 +5066,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:41.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:10.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-377",
@@ -5118,8 +5118,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:40.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:09.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-375",
@@ -5203,8 +5203,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:39.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:08.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-374",
@@ -5255,8 +5255,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:38.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:07.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-373",
@@ -5307,216 +5307,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:37.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-370",
-    "title": "[ALL]비블리안 풀패키지",
-    "handle": "product-370",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "[ALL]비블리안 풀패키지 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/e867fa6379f44.png\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/0572f97d41e72.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/b50ca4debda8b.png\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/a983c04d99f72.jpg\" class=\"fr-dib\" data-files=\"[object Object]\" style=\"width: 720px;\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/5a93c0d7bd50d.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; color: rgb(33, 33, 33); font-family: Raleway, &quot;Noto Sans KR&quot;, sans-serif; font-size: 13px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: left; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;\" class=\"fr-fic fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/b74dec95c66e1.jpg\" class=\"fr-dib\" data-files=\"[object Object]\"><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/bf1cad85b1c4b.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/4008d3de926d0.jpg\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/815bdea3500a0.jpg\" class=\"fr-dib\" data-files=\"[object Object]\"><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/27ceb7f35cd9f.jpg\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><br></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "272000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "272000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260115/cc79f846e02f2.jpg",
-      "altText": "[ALL]비블리안 풀패키지"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260115/cc79f846e02f2.jpg",
-        "altText": "[ALL]비블리안 풀패키지"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:48:36.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-369",
-    "title": "비블리안 앰플 구성",
-    "handle": "product-369",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "비블리안 앰플 구성 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/64fd32f05b181.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/3fcb38833f3e8.png\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/a983c04d99f72.jpg\" class=\"fr-dib\" data-files=\"[object Object]\" style=\"width: 720px;\"><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/a8ac1be066345.jpg\" class=\"fr-dib\" data-files=\"[object Object]\"><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/f20d9f3211e78.jpg\" class=\"fr-dib\" data-files=\"[object Object]\"></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "96000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "96000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260115/65ee02fde43eb.jpg",
-      "altText": "비블리안 앰플 구성"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260115/65ee02fde43eb.jpg",
-        "altText": "비블리안 앰플 구성"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:48:35.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-365",
-    "title": "비블리안(500ml) 샴푸 트리트먼트 헤어마스크 4개 구성",
-    "handle": "product-365",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "비블리안(500ml) 샴푸 트리트먼트 헤어마스크 4개 구성 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/eac9e72af7f2a.jpg\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/a983c04d99f72.jpg\" class=\"fr-dib\" data-files=\"[object Object]\" style=\"width: 720px;\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/0451a7b82bd61.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/52bf149a3b862.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/34d9c1d4d5b09.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/72bed3cb97de9.jpg\"></p><p><br></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "171000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "171000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260119/fed4e8652e827.jpg",
-      "altText": "비블리안(500ml) 샴푸 트리트먼트 헤어마스크 4개 구성"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260119/fed4e8652e827.jpg",
-        "altText": "비블리안(500ml) 샴푸 트리트먼트 헤어마스크 4개 구성"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:48:34.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-358",
-    "title": "비블리안(500ml) 샴푸 트리트먼트 헤어마스크 2개 구성",
-    "handle": "product-358",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "비블리안(500ml) 샴푸 트리트먼트 헤어마스크 2개 구성 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/3a3819100b033.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/43ba3a82d49fd.png\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/5294ebeb2693e.jpg\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/38d0d925818e0.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/00ba404be86f9.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/3239399efab20.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/458b130e717a4.jpg\"></p><p><br></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "87000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "87000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260119/16109d8ec00cf.jpg",
-      "altText": "비블리안(500ml) 샴푸 트리트먼트 헤어마스크 2개 구성"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260119/16109d8ec00cf.jpg",
-        "altText": "비블리안(500ml) 샴푸 트리트먼트 헤어마스크 2개 구성"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:48:33.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:06.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-353",
@@ -5567,8 +5359,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:32.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:05.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-352",
@@ -5619,8 +5411,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:31.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:04.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-351",
@@ -5672,8 +5464,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:30.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:03.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-350",
@@ -5760,8 +5552,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:29.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:02.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-343",
@@ -5814,8 +5606,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:28.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:01.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-342",
@@ -5868,8 +5660,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:27.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:14:00.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-341",
@@ -5920,8 +5712,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:26.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:59.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-340",
@@ -5972,8 +5764,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:25.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:58.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-339",
@@ -6024,8 +5816,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:24.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:57.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-338",
@@ -6076,8 +5868,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:23.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:56.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-335",
@@ -6129,8 +5921,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:22.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:55.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-334",
@@ -6182,8 +5974,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:21.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:54.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-333",
@@ -6236,8 +6028,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:20.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:53.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-332",
@@ -6288,8 +6080,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:19.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:52.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-331",
@@ -6341,8 +6133,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:18.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:51.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-330",
@@ -6394,8 +6186,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:17.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:50.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-329",
@@ -6447,8 +6239,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:16.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:49.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-328",
@@ -6500,8 +6292,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:15.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:48.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-327",
@@ -6553,8 +6345,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:14.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:47.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-326",
@@ -6605,8 +6397,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:13.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:46.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-325",
@@ -6657,8 +6449,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:12.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:45.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-324",
@@ -6709,8 +6501,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:11.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:44.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-323",
@@ -6761,8 +6553,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:10.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:43.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-322",
@@ -6813,8 +6605,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:09.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:42.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-321",
@@ -6866,8 +6658,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:08.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:41.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-320",
@@ -6919,8 +6711,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:07.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:40.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-319",
@@ -6972,61 +6764,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:06.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-344",
-    "title": "럭키박스 20만원",
-    "handle": "product-344",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "럭키박스 20만원 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p style=\"text-align: center;\">드디어 럭키박스데이 에요~~</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\">초이산타가 왔어요~</p><p style=\"text-align: center;\">어른이 된후 주기만했지 우리가 넘치게 받아본적이&nbsp;</p><p style=\"text-align: center;\">있었나 싶어 준비했어요:)</p><p style=\"text-align: center;\">넘치도록 푸짐하고 크레이지한&nbsp;</p><p style=\"text-align: center;\">럭키박스 파티에 오세요🎉🎉🩷</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\"><strong>✔️사이즈별로 박스는 선택하실수 있구요.&nbsp;</strong></p><p style=\"text-align: center;\"><strong>✔️박스 금액에 2-3배 되는 제품들과</strong></p><p style=\"text-align: center;\"><strong>✔️모두다 받는 따로준비한 선물들까지♡♡♡</strong></p><p style=\"text-align: center;\"><strong>✔️산타 복장후 이원방송 해주시는분께는 즉석에서 선물까지♡</strong></p><p style=\"text-align: center;\"><strong>-교환환불은 당연히 안되는거 이해해주시구요 </strong><strong>^^-</strong></p><p style=\"text-align: center;\"><br></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "200000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "200000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20251220/18113df95edeb.jpg",
-      "altText": "럭키박스 20만원"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20251220/18113df95edeb.jpg",
-        "altText": "럭키박스 20만원"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "1",
-      "2"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:48:05.38+00:00",
-    "updated_at": "2026-09-22T13:49:39.38+00:00"
+    "created_at": "2026-09-23T08:13:39.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-318",
@@ -7078,8 +6817,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:05.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:38.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-316",
@@ -7131,8 +6870,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:04.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:37.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-315",
@@ -7184,8 +6923,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:03.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:36.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-314",
@@ -7237,8 +6976,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:02.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:35.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-313",
@@ -7290,8 +7029,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:01.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:34.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-312",
@@ -7343,8 +7082,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:48:00.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:33.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-311",
@@ -7396,8 +7135,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:59.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:32.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-310",
@@ -7448,64 +7187,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:58.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-345",
-    "title": "럭키박스 30만원",
-    "handle": "product-345",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "럭키박스 30만원 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p style=\"text-align: center;\">드디어 럭키박스데이 에요~~</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\">초이산타가 왔어요~</p><p style=\"text-align: center;\">어른이 된후 주기만했지 우리가 넘치게 받아본적이&nbsp;</p><p style=\"text-align: center;\">있었나 싶어 준비했어요:)</p><p style=\"text-align: center;\">넘치도록 푸짐하고 크레이지한&nbsp;</p><p style=\"text-align: center;\">럭키박스 파티에 오세요🎉🎉🩷</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\"><strong>✔️사이즈별로 박스는 선택하실수 있구요.&nbsp;</strong></p><p style=\"text-align: center;\"><strong>✔️박스 금액에 2-3배 되는 제품들과</strong></p><p style=\"text-align: center;\"><strong>✔️모두다 받는 따로준비한 선물들까지♡♡♡</strong></p><p style=\"text-align: center;\"><strong>✔️산타 복장후 이원방송 해주시는분께는 즉석에서 선물까지♡</strong></p><p style=\"text-align: center;\"><strong>-교환환불은 당연히 안되는거 이해해주시구요&nbsp;</strong><strong>^^-</strong></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "300000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "300000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20251220/a2ceab958e38a.jpg",
-      "altText": "럭키박스 30만원"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20251220/a2ceab958e38a.jpg",
-        "altText": "럭키박스 30만원"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "1",
-      "2"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {
-      "1": 0,
-      "2": 0
-    },
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:47:57.439+00:00",
-    "updated_at": "2026-09-22T13:49:31.439+00:00"
+    "created_at": "2026-09-23T08:13:31.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-309",
@@ -7556,61 +7239,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:57.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-347",
-    "title": "럭키박스 70만원",
-    "handle": "product-347",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "럭키박스 70만원 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p style=\"text-align: center;\">드디어 럭키박스데이 에요~~</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\">초이산타가 왔어요~</p><p style=\"text-align: center;\">어른이 된후 주기만했지 우리가 넘치게 받아본적이&nbsp;</p><p style=\"text-align: center;\">있었나 싶어 준비했어요:)</p><p style=\"text-align: center;\">넘치도록 푸짐하고 크레이지한&nbsp;</p><p style=\"text-align: center;\">럭키박스 파티에 오세요🎉🎉🩷</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\"><strong>✔️사이즈별로 박스는 선택하실수 있구요.&nbsp;</strong></p><p style=\"text-align: center;\"><strong>✔️박스 금액에 2-3배 되는 제품들과</strong></p><p style=\"text-align: center;\"><strong>✔️모두다 받는 따로준비한 선물들까지♡♡♡</strong></p><p style=\"text-align: center;\"><strong>✔️산타 복장후 이원방송 해주시는분께는 즉석에서 선물까지♡</strong></p><p style=\"text-align: center;\"><strong>-교환환불은 당연히 안되는거 이해해주시구요&nbsp;</strong><strong>^^-</strong></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "700000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "700000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20251220/040e4c66bc4a6.jpg",
-      "altText": "럭키박스 70만원"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20251220/040e4c66bc4a6.jpg",
-        "altText": "럭키박스 70만원"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "1",
-      "2"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:47:56.403+00:00",
-    "updated_at": "2026-09-22T13:49:30.403+00:00"
+    "created_at": "2026-09-23T08:13:30.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-308",
@@ -7661,64 +7291,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:56.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-346",
-    "title": "럭키박스 50만원",
-    "handle": "product-346",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "럭키박스 50만원 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p style=\"text-align: center;\">드디어 럭키박스데이 에요~~</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\">초이산타가 왔어요~</p><p style=\"text-align: center;\">어른이 된후 주기만했지 우리가 넘치게 받아본적이&nbsp;</p><p style=\"text-align: center;\">있었나 싶어 준비했어요:)</p><p style=\"text-align: center;\">넘치도록 푸짐하고 크레이지한&nbsp;</p><p style=\"text-align: center;\">럭키박스 파티에 오세요🎉🎉🩷</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\"><strong>✔️사이즈별로 박스는 선택하실수 있구요.&nbsp;</strong></p><p style=\"text-align: center;\"><strong>✔️박스 금액에 2-3배 되는 제품들과</strong></p><p style=\"text-align: center;\"><strong>✔️모두다 받는 따로준비한 선물들까지♡♡♡</strong></p><p style=\"text-align: center;\"><strong>✔️산타 복장후 이원방송 해주시는분께는 즉석에서 선물까지♡</strong></p><p style=\"text-align: center;\"><strong>-교환환불은 당연히 안되는거 이해해주시구요&nbsp;</strong><strong>^^-</strong></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "500000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "500000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20251220/7524eff41291c.jpg",
-      "altText": "럭키박스 50만원"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20251220/7524eff41291c.jpg",
-        "altText": "럭키박스 50만원"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "1",
-      "2"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {
-      "1": 0,
-      "2": 0
-    },
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:47:55.403+00:00",
-    "updated_at": "2026-09-22T13:49:30.403+00:00"
+    "created_at": "2026-09-23T08:13:29.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-307",
@@ -7770,8 +7344,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:55.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:28.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-306",
@@ -7822,8 +7396,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:54.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:27.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-305",
@@ -7874,8 +7448,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:53.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:26.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-304",
@@ -7926,8 +7500,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:52.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:25.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-303",
@@ -7978,60 +7552,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:51.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-371",
-    "title": "SPRG 이온 방출 헤어브러쉬",
-    "handle": "product-371",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "SPRG 이온 방출 헤어브러쉬 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/1e8f6523f3066.jpg\" class=\"fr-dib\" data-files=\"[object Object]\"></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "189000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "189000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260119/38a7563cb0983.jpg",
-      "altText": "SPRG 이온 방출 헤어브러쉬"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260119/38a7563cb0983.jpg",
-        "altText": "SPRG 이온 방출 헤어브러쉬"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:47:50.904+00:00",
-    "updated_at": "2026-09-22T13:49:16.905+00:00"
+    "created_at": "2026-09-23T08:13:24.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-302",
@@ -8082,8 +7604,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:50.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:23.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-301",
@@ -8134,8 +7656,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:49.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:22.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-300",
@@ -8186,61 +7708,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:48.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-348",
-    "title": "럭키박스 100만원",
-    "handle": "product-348",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "럭키박스 100만원 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p style=\"text-align: center;\">드디어 럭키박스데이 에요~~</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\">초이산타가 왔어요~</p><p style=\"text-align: center;\">어른이 된후 주기만했지 우리가 넘치게 받아본적이&nbsp;</p><p style=\"text-align: center;\">있었나 싶어 준비했어요:)</p><p style=\"text-align: center;\">넘치도록 푸짐하고 크레이지한&nbsp;</p><p style=\"text-align: center;\">럭키박스 파티에 오세요🎉🎉🩷</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\"><strong>✔️사이즈별로 박스는 선택하실수 있구요.&nbsp;</strong></p><p style=\"text-align: center;\"><strong>✔️박스 금액에 2-3배 되는 제품들과</strong></p><p style=\"text-align: center;\"><strong>✔️모두다 받는 따로준비한 선물들까지♡♡♡</strong></p><p style=\"text-align: center;\"><strong>✔️산타 복장후 이원방송 해주시는분께는 즉석에서 선물까지♡</strong></p><p style=\"text-align: center;\"><strong>-교환환불은 당연히 안되는거 이해해주시구요&nbsp;</strong><strong>^^-</strong></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "1000000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "1000000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20251220/bfa4a5c250a14.jpg",
-      "altText": "럭키박스 100만원"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20251220/bfa4a5c250a14.jpg",
-        "altText": "럭키박스 100만원"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "1",
-      "2"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "BLACK_LABEL",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:47:47.232+00:00",
-    "updated_at": "2026-09-22T13:49:21.235+00:00"
+    "created_at": "2026-09-23T08:13:21.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-299",
@@ -8291,8 +7760,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:47.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:20.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-298",
@@ -8343,8 +7812,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:46.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:19.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-297",
@@ -8395,61 +7864,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:45.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-349",
-    "title": "럭키박스 200만원",
-    "handle": "product-349",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "럭키박스 200만원 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p style=\"text-align: center;\">드디어 럭키박스데이 에요~~</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\">초이산타가 왔어요~</p><p style=\"text-align: center;\">어른이 된후 주기만했지 우리가 넘치게 받아본적이&nbsp;</p><p style=\"text-align: center;\">있었나 싶어 준비했어요:)</p><p style=\"text-align: center;\">넘치도록 푸짐하고 크레이지한&nbsp;</p><p style=\"text-align: center;\">럭키박스 파티에 오세요🎉🎉🩷</p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\"><strong>✔️사이즈별로 박스는 선택하실수 있구요.&nbsp;</strong></p><p style=\"text-align: center;\"><strong>✔️박스 금액에 2-3배 되는 제품들과</strong></p><p style=\"text-align: center;\"><strong>✔️모두다 받는 따로준비한 선물들까지♡♡♡</strong></p><p style=\"text-align: center;\"><strong>✔️산타 복장후 이원방송 해주시는분께는 즉석에서 선물까지♡</strong></p><p style=\"text-align: center;\"><strong>-교환환불은 당연히 안되는거 이해해주시구요&nbsp;</strong><strong>^^-</strong></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "2000000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "2000000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20251220/a660c9ecdf8a5.jpg",
-      "altText": "럭키박스 200만원"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20251220/a660c9ecdf8a5.jpg",
-        "altText": "럭키박스 200만원"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "1",
-      "2"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "BLACK_LABEL",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:47:45.01+00:00",
-    "updated_at": "2026-09-22T13:49:19.01+00:00"
+    "created_at": "2026-09-23T08:13:18.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-296",
@@ -8500,8 +7916,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:44.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:17.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-295",
@@ -8552,8 +7968,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:43.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:16.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-294",
@@ -8604,60 +8020,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:42.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-376",
-    "title": "본에스티스 파이테라피 레저렉션 시리즈",
-    "handle": "product-376",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "본에스티스 파이테라피 레저렉션 시리즈 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/bff74f0667dba.png\" class=\"fr-dib\" data-files=\"[object Object]\" style=\"width: 850px;\"><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/145b2015b621a.png\" style=\"width: 850px;\"></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "0",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "0",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260128/9908fb68bc6a8.png",
-      "altText": "본에스티스 파이테라피 레저렉션 시리즈"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260128/9908fb68bc6a8.png",
-        "altText": "본에스티스 파이테라피 레저렉션 시리즈"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:47:41.409+00:00",
-    "updated_at": "2026-09-22T13:49:04.41+00:00"
+    "created_at": "2026-09-23T08:13:15.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-293",
@@ -8708,8 +8072,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:41.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:14.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-292",
@@ -8760,8 +8124,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:40.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:13.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-291",
@@ -8812,8 +8176,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:39.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:12.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-290",
@@ -8864,8 +8228,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:38.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:11.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-289",
@@ -8916,8 +8280,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:37.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:10.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-288",
@@ -8968,8 +8332,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:36.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:09.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-287",
@@ -9020,8 +8384,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:35.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:08.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-286",
@@ -9072,8 +8436,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:34.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:07.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-285",
@@ -9124,8 +8488,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:33.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:06.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-284",
@@ -9176,8 +8540,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:32.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:05.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-283",
@@ -9228,8 +8592,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:31.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:04.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-282",
@@ -9281,8 +8645,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:30.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:03.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-281",
@@ -9334,8 +8698,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:29.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:02.894+00:00",
+    "updated_at": "2026-09-23T08:15:31.894+00:00"
   },
   {
     "id": "excel-product-280",
@@ -9387,8 +8751,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:28.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:01.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-279",
@@ -9440,8 +8804,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:27.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:13:00.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-278",
@@ -9493,8 +8857,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:26.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:59.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-277",
@@ -9546,8 +8910,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:25.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:58.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-276",
@@ -9599,8 +8963,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:24.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:57.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-275",
@@ -9687,8 +9051,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:23.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:56.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-274",
@@ -9739,8 +9103,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:22.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:55.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-273",
@@ -9792,8 +9156,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:21.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:54.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-272",
@@ -9845,8 +9209,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:20.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:53.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-271",
@@ -9898,8 +9262,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:19.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:52.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-270",
@@ -9951,8 +9315,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:18.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:51.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-269",
@@ -10004,8 +9368,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:17.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:50.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-268",
@@ -10056,8 +9420,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:16.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:49.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-267",
@@ -10108,8 +9472,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:15.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:48.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-266",
@@ -10161,8 +9525,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:14.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:47.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-265",
@@ -10214,8 +9578,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:13.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:46.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-264",
@@ -10267,8 +9631,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:12.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:45.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-263",
@@ -10320,8 +9684,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:11.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:44.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-257",
@@ -10374,8 +9738,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:10.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:43.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-256",
@@ -10462,8 +9826,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:09.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:42.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-255",
@@ -10515,8 +9879,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:08.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:41.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-254",
@@ -10568,8 +9932,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:07.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:40.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-253",
@@ -10621,60 +9985,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:06.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
-  },
-  {
-    "id": "excel-product-381",
-    "title": "새벽집 청담 한우 기프트 세트",
-    "handle": "product-381",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "새벽집 청담 한우 기프트 세트 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/c9280da57a124.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; text-align: left; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/33374b759f263.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; text-align: left; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/f28cff5852f21.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; text-align: left; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/face75a0fdabe.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; text-align: left; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/520c0b9175943.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; text-align: left; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/f2420d33ab99d.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; text-align: left; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/5610e47e63473.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; text-align: left; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/02f71d79c828e.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; text-align: left; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/1c5830232b6f7.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/2ad3ced3f8b8f.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; text-align: left; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p><p><img src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/5802f84e2ee43.jpeg\" style=\"box-sizing: border-box; --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; border: 0px solid rgb(229, 231, 235); cursor: pointer; padding: 0px 1px; max-width: 100%; text-align: left; width: 850px;\" class=\"fr-dib\" data-files=\"[object Object]\"></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "179000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "179000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260206/447bfe0cabf0e.png",
-      "altText": "새벽집 청담 한우 기프트 세트"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260206/447bfe0cabf0e.png",
-        "altText": "새벽집 청담 한우 기프트 세트"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:47:05.967+00:00",
-    "updated_at": "2026-09-22T13:48:24.967+00:00"
+    "created_at": "2026-09-23T08:12:39.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-252",
@@ -10725,8 +10037,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:05.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:38.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-251",
@@ -10813,8 +10125,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:04.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.054+00:00"
+    "created_at": "2026-09-23T08:12:37.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-250",
@@ -10866,8 +10178,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:03.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:36.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-249",
@@ -10954,8 +10266,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:02.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:35.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-248",
@@ -11007,60 +10319,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:01.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
-  },
-  {
-    "id": "excel-product-258",
-    "title": "[CHOICOMMA'S  PICK] 워터젤리 틴트 / 워터멜론",
-    "handle": "product-258",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "[CHOICOMMA'S  PICK] 워터젤리 틴트 / 워터멜론 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p style=\"text-align: center;\"><strong>[CHOICOMMA&#39;S &nbsp;PICK]&nbsp;</strong></p><p style=\"text-align: center;\"><strong>워터젤리 립앤치크 틴트 /WTER MELONG (단독주문)</strong></p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\"><strong><span style=\"color: rgb(255, 0, 0);\">워터멜롱 컬러는 -9월8일 일괄 배송-되므로&nbsp;</span></strong></p><p style=\"text-align: center;\"><strong><span style=\"color: rgb(255, 0, 0);\">단독 구매 부탁드립니다 .</span></strong></p><p style=\"text-align: center;\"><br></p><p><span class=\"fr-video fr-deletable fr-fvc fr-dvb fr-draggable\" contenteditable=\"false\" draggable=\"true\"><iframe width=\"640\" height=\"360\" src=\"https://player.vimeo.com/video/1111961060?transparent=0?share=copy\" frameborder=\"0\" allowfullscreen=\"\" class=\"fr-draggable\"></iframe></span></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/49cd3a0499995.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/97826bc69b059.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/9354d39ddbe4d.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/18b31ab1e8d45.jpg\"></p><p><br></p><p><br></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "24000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "24000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20250905/bfbad3cfe0b6b.jpg",
-      "altText": "[CHOICOMMA'S  PICK] 워터젤리 틴트 / 워터멜론"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20250905/bfbad3cfe0b6b.jpg",
-        "altText": "[CHOICOMMA'S  PICK] 워터젤리 틴트 / 워터멜론"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:47:00.505+00:00",
-    "updated_at": "2026-09-22T13:49:52.505+00:00"
+    "created_at": "2026-09-23T08:12:34.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-247",
@@ -11112,60 +10372,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:47:00.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
-  },
-  {
-    "id": "excel-product-260",
-    "title": "[CHOICOMMA'S  PICK] 3종 (배송메세지에 색상 기입)",
-    "handle": "product-260",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "[CHOICOMMA'S  PICK] 3종 (배송메세지에 색상 기입) - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p style=\"text-align: center;\"><strong>[CHOICOMMA&#39;S &nbsp;PICK]&nbsp;</strong></p><p style=\"text-align: center;\"><strong>워터젤리 립앤치크 틴트 /3종 택일</strong></p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\"><strong>-워터멜롱 컬러는 -9월8일 일괄 배송-되므로&nbsp;</strong></p><p style=\"text-align: center;\"><strong>단독 구매 부탁드립니다 .</strong></p><p style=\"text-align: center;\"><strong>-3종구매 중 워터멜롱 컬러가 포함시 <u>9월8일에&nbsp;</u></strong></p><p style=\"text-align: center;\"><strong><u>일괄배송 되므로&nbsp;</u></strong><strong>참고 탁드립니다.</strong></p><p style=\"text-align: center;\"><strong><u>-워터멜롱 컬러가 아닌 다른 컬러 주문건들은 &nbsp;</u></strong></p><p style=\"text-align: center;\"><strong><u>바로배송 되세요:)</u></strong></p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\"><strong><u><span style=\"font-size: 16px; color: rgb(255, 0, 0);\">-컬러는 배송메세지에 기재해주세요:)</span></u></strong></p><p style=\"text-align: center;\"><br></p><p style=\"text-align: center;\"><span style=\"color: rgb(255, 0, 0);\"><strong><span style=\"font-size: 14px;\">EX)&nbsp;</span></strong></span></p><p style=\"text-align: center;\"><span style=\"color: rgb(255, 0, 0);\"><strong>- 3종 구매시, 피치어택2개+그레이프퀸 1개 =바로배송</strong></span></p><p style=\"text-align: center;\"><span style=\"color: rgb(255, 0, 0);\"><strong>&nbsp;- 3종 구매시,워터멜롱1개+피치어택1개+그레이프퀸1개=9월8일 일괄배송</strong></span></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/afcb0cccb7055.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/401316b36e518.jpg\"></p><p style=\"text-align: center;\"><br></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "72000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "72000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20250905/6f4b50e9c0a46.jpg",
-      "altText": "[CHOICOMMA'S  PICK] 3종 (배송메세지에 색상 기입)"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20250905/6f4b50e9c0a46.jpg",
-        "altText": "[CHOICOMMA'S  PICK] 3종 (배송메세지에 색상 기입)"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:46:59.085+00:00",
-    "updated_at": "2026-09-22T13:49:51.086+00:00"
+    "created_at": "2026-09-23T08:12:33.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-246",
@@ -11217,8 +10425,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:59.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:32.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-245",
@@ -11305,60 +10513,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:58.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
-  },
-  {
-    "id": "excel-product-261",
-    "title": "[CHOICOMMA'S  PICK] 워터젤리 틴트 / 피치어택",
-    "handle": "product-261",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "[CHOICOMMA'S  PICK] 워터젤리 틴트 / 피치어택 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p style=\"text-align: center;\"><strong>[CHOICOMMA&#39;S &nbsp;PICK]&nbsp;</strong></p><p style=\"text-align: center;\"><strong>워터젤리 립앤치크 틴트 /</strong><strong>PEACH ATTACK</strong></p><p style=\"text-align: center;\"><span style=\"font-size: 16px;\"><strong><span style=\"color: rgb(255, 0, 0);\">sold out</span></strong></span></p><p style=\"text-align: center;\"><br></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/d702263857c74.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/ab6435cc2bd31.jpg\"></p><p><br></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "24000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "24000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20250905/762b1ef5cf53e.jpg",
-      "altText": "[CHOICOMMA'S  PICK] 워터젤리 틴트 / 피치어택"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20250905/762b1ef5cf53e.jpg",
-        "altText": "[CHOICOMMA'S  PICK] 워터젤리 틴트 / 피치어택"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:46:57.247+00:00",
-    "updated_at": "2026-09-22T13:49:49.248+00:00"
+    "created_at": "2026-09-23T08:12:31.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-244",
@@ -11445,8 +10601,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:57.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:30.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-243",
@@ -11533,8 +10689,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:56.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:29.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-242",
@@ -11586,8 +10742,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:55.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:28.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-241",
@@ -11639,8 +10795,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:54.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:27.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-240",
@@ -11692,8 +10848,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:53.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:26.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-239",
@@ -11745,8 +10901,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:52.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:25.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-238",
@@ -11798,8 +10954,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:51.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:24.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-237",
@@ -11851,8 +11007,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:50.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:23.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-236",
@@ -11904,8 +11060,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:49.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:22.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-235",
@@ -11957,60 +11113,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:48.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
-  },
-  {
-    "id": "excel-product-262",
-    "title": "[CHOICOMMA'S  PICK] 워터젤리 틴트/그레이프 퀸",
-    "handle": "product-262",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "[CHOICOMMA'S  PICK] 워터젤리 틴트/그레이프 퀸 - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p style=\"text-align: center;\"><strong>[CHOICOMMA&#39;S &nbsp;PICK]&nbsp;</strong></p><p style=\"text-align: center;\"><strong>워터젤리 립앤치크 틴트 / GRAPE QUEEN</strong></p><p style=\"text-align: center;\"><strong>바로배송</strong></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/cabf620f32882.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/78cf08f99ff1e.jpg\"></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "24000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "24000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20250905/1fdd33a0e1db8.jpg",
-      "altText": "[CHOICOMMA'S  PICK] 워터젤리 틴트/그레이프 퀸"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20250905/1fdd33a0e1db8.jpg",
-        "altText": "[CHOICOMMA'S  PICK] 워터젤리 틴트/그레이프 퀸"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:46:47.295+00:00",
-    "updated_at": "2026-09-22T13:49:39.298+00:00"
+    "created_at": "2026-09-23T08:12:21.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-233",
@@ -12061,8 +11165,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:47.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:20.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-232",
@@ -12113,8 +11217,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:46.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:19.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-231",
@@ -12165,8 +11269,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:45.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:18.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-230",
@@ -12218,8 +11322,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:44.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:17.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-229",
@@ -12271,8 +11375,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:43.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:16.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-228",
@@ -12324,8 +11428,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:42.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:15.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-227",
@@ -12377,8 +11481,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:41.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:14.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-226",
@@ -12430,8 +11534,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:40.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:13.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-225",
@@ -12483,8 +11587,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:39.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:12.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-223",
@@ -12535,8 +11639,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:38.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:11.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-222",
@@ -12588,8 +11692,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:37.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:10.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-221",
@@ -12640,8 +11744,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:36.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:09.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-220",
@@ -12693,8 +11797,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:35.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:08.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-219",
@@ -12746,8 +11850,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:34.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:07.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-218",
@@ -12799,8 +11903,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:33.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:06.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-217",
@@ -12852,8 +11956,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:32.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:05.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-216",
@@ -12905,8 +12009,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:31.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:04.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-215",
@@ -12957,8 +12061,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:30.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:03.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-214",
@@ -13010,8 +12114,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:29.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:02.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-213",
@@ -13063,8 +12167,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:28.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:01.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-212",
@@ -13116,8 +12220,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:27.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:12:00.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-211",
@@ -13169,8 +12273,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:26.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:59.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-210",
@@ -13257,8 +12361,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:25.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:58.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-209",
@@ -13345,8 +12449,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:24.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:57.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-208",
@@ -13398,8 +12502,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:23.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:56.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-207",
@@ -13451,8 +12555,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:22.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:55.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-206",
@@ -13504,8 +12608,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:21.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:54.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-205",
@@ -13592,8 +12696,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:20.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:53.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-204",
@@ -13645,8 +12749,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:19.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:52.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-203",
@@ -13698,8 +12802,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:18.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:51.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-202",
@@ -13751,8 +12855,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:17.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:50.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-201",
@@ -13804,8 +12908,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:16.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:49.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-200",
@@ -13857,8 +12961,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:15.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:48.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-199",
@@ -13910,8 +13014,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:14.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:47.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-198",
@@ -13963,8 +13067,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:13.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:46.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-197",
@@ -14016,8 +13120,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:12.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:45.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-196",
@@ -14069,8 +13173,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:11.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:44.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-195",
@@ -14122,8 +13226,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:10.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:43.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-194",
@@ -14175,8 +13279,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:09.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:42.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-193",
@@ -14228,8 +13332,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:08.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:41.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-192",
@@ -14280,8 +13384,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:07.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:40.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-191",
@@ -14332,8 +13436,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:06.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:39.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-190",
@@ -14384,8 +13488,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:05.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:38.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-189",
@@ -14436,8 +13540,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:04.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:37.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-188",
@@ -14489,8 +13593,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:03.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:36.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-187",
@@ -14542,8 +13646,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:02.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:35.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-186",
@@ -14595,8 +13699,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:01.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:34.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-185",
@@ -14648,8 +13752,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:46:00.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:33.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-184",
@@ -14701,8 +13805,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:59.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:32.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-183",
@@ -14754,8 +13858,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:58.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:31.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-182",
@@ -14807,8 +13911,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:57.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:30.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-181",
@@ -14860,8 +13964,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:56.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:29.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-180",
@@ -14913,8 +14017,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:55.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.055+00:00"
+    "created_at": "2026-09-23T08:11:28.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-179",
@@ -14966,8 +14070,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:54.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:27.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-178",
@@ -15019,8 +14123,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:53.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:26.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-177",
@@ -15072,8 +14176,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:52.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:25.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.78+00:00"
   },
   {
     "id": "excel-product-176",
@@ -15124,8 +14228,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:51.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:24.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-175",
@@ -15176,8 +14280,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:50.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:23.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-174",
@@ -15228,8 +14332,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:49.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:22.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-173",
@@ -15280,8 +14384,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:48.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:21.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-172",
@@ -15332,8 +14436,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:47.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:20.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-171",
@@ -15384,8 +14488,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:46.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:19.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-170",
@@ -15436,8 +14540,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:45.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:18.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-169",
@@ -15488,8 +14592,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:44.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:17.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-168",
@@ -15540,8 +14644,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:43.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:16.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-167",
@@ -15592,8 +14696,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:42.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:15.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-166",
@@ -15644,8 +14748,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:41.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:14.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-165",
@@ -15696,8 +14800,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:40.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:13.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-164",
@@ -15748,8 +14852,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:39.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:12.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-163",
@@ -15800,8 +14904,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:38.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:11.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-162",
@@ -15852,8 +14956,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:37.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:10.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-161",
@@ -15904,8 +15008,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:36.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:09.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-160",
@@ -15956,8 +15060,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:35.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:08.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-159",
@@ -16008,8 +15112,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:34.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:07.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-158",
@@ -16060,8 +15164,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:33.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:06.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-157",
@@ -16112,8 +15216,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:32.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:05.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-156",
@@ -16165,8 +15269,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:31.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:04.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-155",
@@ -16217,8 +15321,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:30.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:03.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-154",
@@ -16269,8 +15373,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:29.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:02.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-153",
@@ -16321,8 +15425,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:28.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:01.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-152",
@@ -16373,8 +15477,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:27.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:11:00.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-151",
@@ -16426,8 +15530,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:26.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:59.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-150",
@@ -16479,8 +15583,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:25.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:58.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-149",
@@ -16532,8 +15636,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:24.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:57.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-148",
@@ -16584,8 +15688,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:23.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:56.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-147",
@@ -16636,8 +15740,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:22.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:55.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-146",
@@ -16689,8 +15793,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:21.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:54.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-145",
@@ -16741,8 +15845,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:20.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:53.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-144",
@@ -16793,8 +15897,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:19.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:52.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-143",
@@ -16845,8 +15949,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:18.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:51.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-142",
@@ -16897,8 +16001,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:17.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:50.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-141",
@@ -16949,8 +16053,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:16.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:49.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-140",
@@ -17001,8 +16105,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:15.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:48.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-139",
@@ -17053,8 +16157,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:14.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:47.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-138",
@@ -17106,8 +16210,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:13.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:46.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-136",
@@ -17159,8 +16263,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:12.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:45.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-135",
@@ -17212,8 +16316,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:11.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:44.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-134",
@@ -17265,8 +16369,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:10.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:43.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-133",
@@ -17318,8 +16422,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:09.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:42.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-132",
@@ -17371,8 +16475,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:08.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:41.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-131",
@@ -17423,8 +16527,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:07.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:40.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-130",
@@ -17475,8 +16579,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:06.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:39.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-129",
@@ -17527,8 +16631,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:05.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:38.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-128",
@@ -17579,8 +16683,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:04.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:37.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-127",
@@ -17631,8 +16735,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:03.053+00:00",
-    "updated_at": "2026-09-22T13:50:02.056+00:00"
+    "created_at": "2026-09-23T08:10:36.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-126",
@@ -17683,8 +16787,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:02.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:35.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-125",
@@ -17735,8 +16839,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:01.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:34.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-124",
@@ -17787,8 +16891,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:45:00.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:33.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-123",
@@ -17839,8 +16943,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:59.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:32.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-122",
@@ -17924,8 +17028,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:58.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:31.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-121",
@@ -17977,8 +17081,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:57.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:30.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-120",
@@ -18030,8 +17134,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:56.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:29.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-119",
@@ -18083,8 +17187,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:55.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:28.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-118",
@@ -18136,8 +17240,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:54.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:27.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-117",
@@ -18189,8 +17293,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:53.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:26.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-116",
@@ -18241,8 +17345,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:52.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:25.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-115",
@@ -18294,8 +17398,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:51.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:24.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-114",
@@ -18346,8 +17450,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:50.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:23.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-113",
@@ -18398,8 +17502,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:49.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:22.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-112",
@@ -18450,8 +17554,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:48.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:21.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-111",
@@ -18503,8 +17607,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:47.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:20.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-110",
@@ -18556,8 +17660,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:46.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:19.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-109",
@@ -18609,8 +17713,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:45.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:18.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-107",
@@ -18661,8 +17765,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:44.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:17.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-106",
@@ -18713,8 +17817,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:43.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:16.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-105",
@@ -18801,8 +17905,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:42.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:15.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-103",
@@ -18854,8 +17958,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:41.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:14.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-102",
@@ -18907,8 +18011,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:40.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:13.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-101",
@@ -18959,8 +18063,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:39.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:12.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-100",
@@ -19011,8 +18115,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:38.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:11.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-99",
@@ -19063,8 +18167,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:37.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:10.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-98",
@@ -19116,8 +18220,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:36.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:09.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-97",
@@ -19169,8 +18273,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:35.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:08.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-96",
@@ -19222,8 +18326,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:34.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:07.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-95",
@@ -19275,8 +18379,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:33.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:06.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-94",
@@ -19328,8 +18432,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:32.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:05.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-93",
@@ -19381,8 +18485,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:31.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:04.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-92",
@@ -19434,8 +18538,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:30.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:03.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-91",
@@ -19487,8 +18591,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:29.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:02.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-90",
@@ -19541,8 +18645,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:28.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:01.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-89",
@@ -19595,60 +18699,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:27.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
-  },
-  {
-    "id": "excel-product-88",
-    "title": "[수입] ETE COMME HIVER x CHOICOMMA",
-    "handle": "product-88",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "[수입] ETE COMME HIVER x CHOICOMMA - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><br></p><p style=\"text-align: center;\"><a href=\"https://etecommehiverparis.com/\"><span style=\"font-size: 14px;\">https://etecommehiverparis.com/</span></a></p><p><br></p><p style=\"text-align: center;\"><span style=\"font-size: 12px;\"><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/06050da1d31a2.jpg\"></span></p><p style=\"text-align: center;\"><span style=\"font-size: 12px;\"><br></span></p><p style=\"text-align: center;\"><span style=\"font-size: 12px;\">D&eacute;couvrez le Trench Long BEIGE</span></p><p style=\"text-align: center;\"><span style=\"font-size: 12px;\">un v&eacute;ritable essentiel de la garde-robe au style intemporel.</span></p><p style=\"text-align: center;\"><span style=\"font-size: 12px;\">Confectionn&eacute; dans une gabardine de coton avec traitement d&eacute;perlant,</span></p><p style=\"text-align: center;\"><span style=\"font-size: 12px;\">ce trench est &agrave; la fois fonctionnel et &eacute;l&eacute;gant.</span></p><p><br></p><p style=\"text-align: center;\">시대를 초월한 스타일의 진정한 옷장 필수품인&nbsp;</p><p style=\"text-align: center;\">롱 베이지 트렌치를 만나보세요.&nbsp;</p><p style=\"text-align: center;\">방충제 처리가 된 면 개버딘으로 만든&nbsp;</p><p style=\"text-align: center;\">이 트렌치코트는 기능적이고 우아합니다.</p><p><br></p><p><br></p><p style=\"text-align: center;\"><span style=\"font-size: 12px;\"><br></span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\"><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/19e86c4f35e9a.jpg\"></span></p><p><br></p><p style=\"text-align: center;\">더블 브레스트 크로스 클로저와 허리 벨트는&nbsp;</p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">당신의 룩에 세련된 느낌을 더해줍니다.</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">어깨와 팔목의 단추 탭은 세련된 노트를 가져오고,&nbsp;</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">두 개의 패치 포켓은 실용성과 스타일을 제공합니다.</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\"><br></span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">앞면과 뒷면에 턱받이, 뒷면에 슬릿이 있고&nbsp;</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">길이가 105cm인 이 트렌치 코트는&nbsp;</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">무릎 바로 아래에 닿아 우아한 룩을 연출합니다.&nbsp;</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">65% 폴리에스테르와 35% 면의 메인 원단은&nbsp;</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">편안함과 저항력을 결합하고,&nbsp;</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">편안한 착용감을 위해</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">&nbsp;100% 폴리에스테르 안감으로 완성됩니다.</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\"><br></span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">드라이 클리닝으로 손쉬운 유지 보수를 선택하고,&nbsp;</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">이 긴 트렌치 코트의 프랑스 제조 품질을 선호하십시오.&nbsp;</span></p><p style=\"text-align: center; line-height: 1;\"><span style=\"font-size: 12px;\">이 필수 아이템으로 시대를 초월한 시크함을 선택하세요.</span><br><br><br><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/9a8333be44a90.jpg\"></p><p><br></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "610000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "610000",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20241011/08f482a9eac6f.jpg",
-      "altText": "[수입] ETE COMME HIVER x CHOICOMMA"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20241011/08f482a9eac6f.jpg",
-        "altText": "[수입] ETE COMME HIVER x CHOICOMMA"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:44:26.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:10:00.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-87",
@@ -19700,8 +18752,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:25.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:59.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-86",
@@ -19753,8 +18805,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:24.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:58.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-85",
@@ -19806,8 +18858,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:23.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:57.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-84",
@@ -19859,8 +18911,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:22.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:56.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-83",
@@ -19912,8 +18964,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:21.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:55.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-82",
@@ -19965,8 +19017,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:20.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:54.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-81",
@@ -20018,8 +19070,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:19.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:53.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-80",
@@ -20071,8 +19123,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:18.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:52.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-79",
@@ -20124,8 +19176,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:17.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:51.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-78",
@@ -20177,8 +19229,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:16.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:50.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-77",
@@ -20230,8 +19282,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:15.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:49.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-76",
@@ -20283,8 +19335,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:14.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:48.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-75",
@@ -20336,8 +19388,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:13.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:47.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-74",
@@ -20388,8 +19440,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:12.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:46.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-73",
@@ -20440,8 +19492,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:11.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:45.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-72",
@@ -20528,8 +19580,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:10.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:44.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-71",
@@ -20616,8 +19668,8 @@
       ],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:09.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:43.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-70",
@@ -20669,8 +19721,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:08.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:42.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-69",
@@ -20722,8 +19774,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:07.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:41.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-68",
@@ -20774,8 +19826,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:06.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:40.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-65",
@@ -20826,8 +19878,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:05.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:39.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-64",
@@ -20879,8 +19931,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:04.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:38.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-63",
@@ -20932,8 +19984,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:03.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:37.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-61",
@@ -20984,8 +20036,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:02.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:36.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-60",
@@ -21037,8 +20089,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:01.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:35.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-58",
@@ -21089,8 +20141,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:44:00.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:34.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-57",
@@ -21142,8 +20194,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:59.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:33.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-56",
@@ -21195,8 +20247,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:58.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:32.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-55",
@@ -21248,8 +20300,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:57.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:31.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-54",
@@ -21301,8 +20353,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:56.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:30.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-53",
@@ -21354,8 +20406,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:55.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:29.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-52",
@@ -21407,8 +20459,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:54.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:28.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-51",
@@ -21460,8 +20512,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:53.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:27.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-50",
@@ -21513,8 +20565,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:52.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:26.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-49",
@@ -21566,8 +20618,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:51.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:25.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-48",
@@ -21619,8 +20671,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:50.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:24.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-47",
@@ -21672,8 +20724,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:49.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:23.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-46",
@@ -21725,8 +20777,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:48.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:22.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-45",
@@ -21778,8 +20830,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:47.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:21.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-44",
@@ -21831,8 +20883,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:46.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:20.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-43",
@@ -21884,8 +20936,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:45.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:19.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-42",
@@ -21937,8 +20989,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:44.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:18.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-41",
@@ -21990,216 +21042,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:43.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
-  },
-  {
-    "id": "excel-product-40",
-    "title": "VITA C.LIZ LIZ AMPOULE 20ml  x4ea + 1ea",
-    "handle": "product-40",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "VITA C.LIZ LIZ AMPOULE 20ml  x4ea + 1ea - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7a79e0864c605.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/450504231bd11.jpg\"></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "162400",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "162400",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20240426/3e878b9524511.jpg",
-      "altText": "VITA C.LIZ LIZ AMPOULE 20ml  x4ea + 1ea"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20240426/3e878b9524511.jpg",
-        "altText": "VITA C.LIZ LIZ AMPOULE 20ml  x4ea + 1ea"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:43:42.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
-  },
-  {
-    "id": "excel-product-39",
-    "title": "VITA C.LIZ LIZ AMPOULE 20ml  x3ea",
-    "handle": "product-39",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "VITA C.LIZ LIZ AMPOULE 20ml  x3ea - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/4c42d52f6b2d6.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/1803c683adb41.jpg\"></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "139200",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "139200",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20240426/31f4996516a5d.jpg",
-      "altText": "VITA C.LIZ LIZ AMPOULE 20ml  x3ea"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20240426/31f4996516a5d.jpg",
-        "altText": "VITA C.LIZ LIZ AMPOULE 20ml  x3ea"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:43:41.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
-  },
-  {
-    "id": "excel-product-38",
-    "title": "VITA C.LIZ LIZ AMPOULE 20ml  x2ea",
-    "handle": "product-38",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "VITA C.LIZ LIZ AMPOULE 20ml  x2ea - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/2551a3d51de71.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/b0d4a8a183e35.jpg\"></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "98600",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "98600",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20240426/6a3b2e51859fe.jpg",
-      "altText": "VITA C.LIZ LIZ AMPOULE 20ml  x2ea"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20240426/6a3b2e51859fe.jpg",
-        "altText": "VITA C.LIZ LIZ AMPOULE 20ml  x2ea"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:43:40.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
-  },
-  {
-    "id": "excel-product-37",
-    "title": "VITA C.LIZ LIZ AMPOULE 20ml x1ea",
-    "handle": "product-37",
-    "categoryId": "timesale",
-    "categoryIds": [
-      "timesale"
-    ],
-    "description": "VITA C.LIZ LIZ AMPOULE 20ml x1ea - 초이콤마 오리지널 럭셔리 컬렉션입니다.",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/151fece5f25cc.jpg\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/55cddcaee18b5.jpg\"></p>",
-    "currencyCode": "KRW",
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "52200",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "52200",
-        "currencyCode": "KRW"
-      }
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20240426/f13c9cb4f87fd.jpg",
-      "altText": "VITA C.LIZ LIZ AMPOULE 20ml x1ea"
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20240426/f13c9cb4f87fd.jpg",
-        "altText": "VITA C.LIZ LIZ AMPOULE 20ml x1ea"
-      }
-    ],
-    "variants": [],
-    "options": [],
-    "tags": [],
-    "sizes": [
-      "FREE"
-    ],
-    "colors": [],
-    "stock": 100,
-    "sizeStock": {},
-    "colorHexMap": {},
-    "productLabel": "PREMIUM",
-    "isMainFeatured": false,
-    "availableForSale": false,
-    "isTimeSale": false,
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false
-    },
-    "created_at": "2026-09-22T13:43:39.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:17.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-36",
@@ -22251,8 +21095,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:38.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:16.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-35",
@@ -22304,8 +21148,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:37.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:15.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-34",
@@ -22357,8 +21201,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:36.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:14.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-33",
@@ -22410,8 +21254,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:35.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:13.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-32",
@@ -22463,8 +21307,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:34.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:12.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-31",
@@ -22516,8 +21360,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:33.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:11.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-30",
@@ -22569,8 +21413,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:32.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:10.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-29",
@@ -22621,8 +21465,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:31.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:09.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-28",
@@ -22674,8 +21518,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:30.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:08.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-27",
@@ -22727,8 +21571,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:29.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:07.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-26",
@@ -22779,8 +21623,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:28.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:06.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-25",
@@ -22831,8 +21675,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:27.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:05.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-24",
@@ -22883,8 +21727,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:26.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:04.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-23",
@@ -22935,8 +21779,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:25.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:03.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-22",
@@ -22989,8 +21833,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:24.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:02.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-21",
@@ -23043,8 +21887,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:23.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:01.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-20",
@@ -23095,8 +21939,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:22.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:09:00.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-19",
@@ -23147,8 +21991,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:21.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:59.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-18",
@@ -23199,8 +22043,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:20.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:58.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-17",
@@ -23251,8 +22095,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:19.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:57.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-16",
@@ -23303,8 +22147,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:18.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:56.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-15",
@@ -23355,8 +22199,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:17.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:55.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-14",
@@ -23407,8 +22251,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:16.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:54.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-13",
@@ -23459,8 +22303,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:15.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:53.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-12",
@@ -23511,8 +22355,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:14.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:52.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-11",
@@ -23563,8 +22407,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:13.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:51.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-10",
@@ -23615,8 +22459,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:12.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:50.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-9",
@@ -23667,8 +22511,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:11.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:49.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-8",
@@ -23719,8 +22563,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:10.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:48.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-7",
@@ -23772,8 +22616,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:09.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:47.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-6",
@@ -23824,8 +22668,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:08.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:46.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-5",
@@ -23876,8 +22720,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:07.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:45.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-4",
@@ -23928,8 +22772,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:06.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:44.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-3",
@@ -23980,8 +22824,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:05.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:43.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-2",
@@ -24032,8 +22876,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:04.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:42.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "excel-product-1",
@@ -24085,8 +22929,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:03.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00"
+    "created_at": "2026-09-23T08:08:41.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00"
   },
   {
     "id": "hero-slide-1788159372912",
@@ -24124,8 +22968,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:02.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00",
+    "created_at": "2026-09-23T08:08:40.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00",
     "isHeroFeatured": true
   },
   {
@@ -24158,8 +23002,8 @@
       "rules": [],
       "enabled": false
     },
-    "created_at": "2026-09-22T13:43:01.14+00:00",
-    "updated_at": "2026-09-22T13:50:02.143+00:00",
+    "created_at": "2026-09-23T08:08:39.779+00:00",
+    "updated_at": "2026-09-23T08:15:31.781+00:00",
     "isHeroFeatured": true
   }
 ]

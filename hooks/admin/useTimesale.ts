@@ -15,20 +15,7 @@ export function useTimesale(triggerToast: (msg: string) => void) {
   const [adminTimeSaleProductIds, setAdminTimeSaleProductIds] = useState<string[]>([]);
 
   // Secret Time Sale states (Member Target Specific)
-  const [secretSalesList, setSecretSalesList] = useState<any[]>([
-    {
-      id: "SECRET-TS-001",
-      title: "[VIP 단독] 2026 S/S 시즌 프라이빗 40% 한정 특가",
-      discountRate: 40,
-      productIds: ["product-1", "product-2", "product-3"],
-      targetCustomerEmails: ["vip@example.com", "gold@example.com"],
-      targetGrades: ["VIP", "VVIP"],
-      durationHours: 24,
-      durationMinutes: 0,
-      status: "active",
-      createdAt: "2026-09-01T00:00:00.000Z",
-    },
-  ]);
+  const [secretSalesList, setSecretSalesList] = useState<any[]>([]);
 
   // Load from Supabase and localStorage on mount
   useEffect(() => {
@@ -39,10 +26,14 @@ export function useTimesale(triggerToast: (msg: string) => void) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setSecretSalesList(parsed);
+          if (Array.isArray(parsed)) {
+            const cleaned = parsed.filter((item: any) => item?.id !== "SECRET-TS-001");
+            setSecretSalesList(cleaned);
+            localStorage.setItem("admin_secret_timesales", JSON.stringify(cleaned));
           }
         } catch (e) {}
+      } else {
+        localStorage.setItem("admin_secret_timesales", JSON.stringify([]));
       }
     }
     const fetchTimesales = async () => {
@@ -51,12 +42,15 @@ export function useTimesale(triggerToast: (msg: string) => void) {
           .from("timesales")
           .select("*")
           .order("created_at", { ascending: false });
-        if (!error && Array.isArray(data) && data.length > 0 && isMounted) {
-          setSecretSalesList(data);
+        if (!error && Array.isArray(data) && isMounted) {
+          const cleaned = data.filter((t: any) => t.id !== "SECRET-TS-001");
+          setSecretSalesList(cleaned);
           if (typeof window !== "undefined") {
-            localStorage.setItem("admin_secret_timesales", JSON.stringify(data));
+            localStorage.setItem("admin_secret_timesales", JSON.stringify(cleaned));
           }
         }
+        // Cleanup fake mock sale from Supabase if present
+        await supabase.from("timesales").delete().eq("id", "SECRET-TS-001");
       } catch (err) {
         console.warn("Timesale Supabase notice:", err);
       }
@@ -72,8 +66,10 @@ export function useTimesale(triggerToast: (msg: string) => void) {
           { event: "*", schema: "public", table: "timesales" },
           (payload) => {
             if (payload.eventType === "INSERT") {
+              if (payload.new?.id === "SECRET-TS-001") return;
               setSecretSalesList((prev) => [payload.new, ...prev.filter((t) => t.id !== payload.new.id)]);
             } else if (payload.eventType === "UPDATE") {
+              if (payload.new?.id === "SECRET-TS-001") return;
               setSecretSalesList((prev) =>
                 prev.map((t) => (t.id === payload.new.id ? { ...t, ...payload.new } : t))
               );

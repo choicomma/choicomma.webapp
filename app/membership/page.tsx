@@ -33,6 +33,7 @@ import {
   Ticket,
   Copy,
   Check,
+  Lock,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,7 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { SetBundleSection } from "@/components/products/set-bundle-section";
 
 function MembershipContent() {
-  const { cart, updateCartItem } = useCart();
+  const { cart, updateCartItem, addCartItem, openCart } = useCart();
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as any) || "dashboard";
 
@@ -131,11 +132,135 @@ function MembershipContent() {
 
   // Available Coupons State (Empty by default)
   const [couponsList, setCouponsList] = useState<any[]>([]);
-
   const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null);
 
   // Orders State (Synced from admin_shipments & user session)
   const [userOrders, setUserOrders] = useState<any[]>([]);
+
+  // Secret Time Sales State
+  const [secretSalesList, setSecretSalesList] = useState<any[]>([]);
+  const [nowTick, setNowTick] = useState(Date.now());
+
+  const loadSecretSales = () => {
+    if (typeof window !== "undefined") {
+      const raw = localStorage.getItem("admin_secret_timesales");
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            setSecretSalesList(parsed);
+            return;
+          }
+        } catch (e) {}
+      }
+      setSecretSalesList([]);
+    }
+  };
+
+  useEffect(() => {
+    loadSecretSales();
+    const interval = setInterval(() => setNowTick(Date.now()), 1000);
+    window.addEventListener("storage", loadSecretSales);
+    window.addEventListener("secret_timesales_updated", loadSecretSales);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", loadSecretSales);
+      window.removeEventListener("secret_timesales_updated", loadSecretSales);
+    };
+  }, []);
+
+  const isAdmin = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return (
+      localStorage.getItem("user_role") === "admin" ||
+      sessionStorage.getItem("choicomma_admin_authenticated") === "true" ||
+      Boolean(userEmail && userEmail.toLowerCase().includes("admin"))
+    );
+  }, [userEmail]);
+
+  const applicableSecretSales = useMemo(() => {
+    return secretSalesList.filter((sale) => {
+      if (sale.status !== "active") return false;
+      if (isAdmin) return true;
+      const emailLower = (userEmail || "").toLowerCase().trim();
+      const isEmailTargeted = Boolean(
+        emailLower &&
+          (sale.targetCustomerEmails || []).some(
+            (em: string) => em.toLowerCase().trim() === emailLower
+          )
+      );
+      const isGradeTargeted = Boolean(
+        (sale.targetGrades || []).length > 0 &&
+          (sale.targetGrades.includes("ALL") ||
+            sale.targetGrades.includes(userGrade?.toUpperCase()) ||
+            (userGrade?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")))
+      );
+      return isEmailTargeted || isGradeTargeted;
+    });
+  }, [secretSalesList, userEmail, userGrade, isAdmin]);
+
+  const allAvailableProducts = useMemo(() => {
+    let prods: any[] = mockProducts;
+    if (typeof window !== "undefined") {
+      const savedAdminProds = localStorage.getItem("admin_products");
+      if (savedAdminProds) {
+        try {
+          const parsed = JSON.parse(savedAdminProds);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            prods = [...parsed, ...mockProducts.filter((mp) => !parsed.some((ap: any) => ap.id === mp.id))];
+          }
+        } catch (e) {}
+      }
+    }
+    return prods;
+  }, []);
+
+  const handleAddProductToCart = (product: any, discountedPrice?: number) => {
+    const finalPrice =
+      discountedPrice !== undefined
+        ? discountedPrice
+        : parseFloat(
+            product.priceRange?.minVariantPrice?.amount ||
+              product.price ||
+              "0"
+          );
+    const baseVariant = product.variants?.[0];
+    const variant = {
+      ...(baseVariant || {}),
+      id: baseVariant?.id
+        ? `${baseVariant.id}-secret-${finalPrice}`
+        : `var-${product.id}-secret-${finalPrice}`,
+      title: baseVariant?.title || "Default",
+      price: {
+        amount: String(finalPrice),
+        currencyCode: baseVariant?.price?.currencyCode || "KRW",
+      },
+      availableForSale: true,
+      selectedOptions: baseVariant?.selectedOptions || [],
+    };
+    if (addCartItem) {
+      addCartItem(variant, product, 1);
+      if (openCart) openCart();
+      toast.success(`'${product.title}' 상품이 시크릿 할인가로 장바구니에 담겼습니다!`);
+    }
+  };
+
+  const getRemainingTime = (sale: any) => {
+    if (!sale.createdAt) return null;
+    const durationMs = ((sale.durationHours || 24) * 3600 + (sale.durationMinutes || 0) * 60) * 1000;
+    const expiry = new Date(sale.createdAt).getTime() + durationMs;
+    const diff = expiry - nowTick;
+    if (diff <= 0) {
+      return { isExpired: true, text: "마감됨" };
+    }
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+    return {
+      isExpired: false,
+      text: `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`,
+    };
+  };
 
   // Shipping Policy
   const [shippingPolicy, setShippingPolicy] = useState({
@@ -768,6 +893,175 @@ function MembershipContent() {
                 <p className="text-xs text-neutral-400">주문서 작성 시 100원 단위 사용</p>
               </div>
             </div>
+
+            {/* Secret Time Sale Section in Dashboard Home */}
+            {applicableSecretSales.length > 0 ? (
+              <div className="space-y-6">
+                {applicableSecretSales.map((sale) => {
+                  const timer = getRemainingTime(sale);
+                  const saleProducts = (sale.productIds && sale.productIds.length > 0)
+                    ? allAvailableProducts.filter((p) => sale.productIds.includes(p.id))
+                    : allAvailableProducts.slice(0, 3);
+
+                  return (
+                    <div
+                      key={sale.id}
+                      className="bg-transparent space-y-6"
+                    >
+                      {/* Sale Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200/80">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-300/80">
+                              SECRET PRIVATE SALE
+                            </span>
+                            <span className="text-[10px] font-extrabold text-emerald-600 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                              실시간 단독 특가 진행중
+                            </span>
+                          </div>
+                          <h3 className="text-xl sm:text-2xl font-black text-neutral-950 tracking-tight">
+                            {sale.title}
+                          </h3>
+                          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-50/90 border border-amber-200/80 text-xs sm:text-[13px] font-bold text-neutral-900 shadow-2xs">
+                            <span className="text-amber-600 text-xs font-black">✦</span>
+                            <span>
+                              <strong className="font-extrabold text-neutral-950 underline decoration-amber-400 decoration-2 underline-offset-2">
+                                {userName} 회원님
+                              </strong>
+                              만을 위해 극비리로 오픈된 단독 시크릿 특가전 상품입니다.
+                            </span>
+                          </div>
+                        </div>
+
+                        {timer && (
+                          <div className="flex items-center gap-2.5 bg-white text-neutral-950 px-4 py-2.5 rounded-2xl border border-neutral-200/80 shadow-xs shrink-0 self-start sm:self-center">
+                            <Clock className="w-4 h-4 text-amber-500 animate-spin [animation-duration:8s]" />
+                            <div className="text-left">
+                              <span className="text-[10px] font-bold text-neutral-500 block leading-none">남은 세일 시간</span>
+                              <span className="text-base font-black font-mono tracking-wider text-neutral-950">
+                                {timer.text}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Designated Products Grid */}
+                      {saleProducts.length === 0 ? (
+                        <div className="p-8 text-center bg-white rounded-2xl border border-neutral-200/80 text-xs font-bold text-neutral-500 shadow-xs">
+                          지정된 세일 상품을 준비 중입니다.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                          {saleProducts.map((prod) => {
+                            const originalPrice = parseFloat(prod.priceRange?.minVariantPrice?.amount || prod.price || "0");
+                            const discountedPrice = Math.round(originalPrice * (1 - sale.discountRate / 100));
+
+                            return (
+                              <div
+                                key={prod.id}
+                                className="group bg-white text-neutral-950 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col justify-between border border-neutral-200/80 hover:border-neutral-950"
+                              >
+                                <div>
+                                  {/* Product Image */}
+                                  <div className="relative aspect-square w-full overflow-hidden bg-neutral-100">
+                                    <img
+                                      src={prod.featuredImage?.url || prod.images?.[0]?.url || prod.image || "/placeholder.png"}
+                                      alt={prod.title}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                    <div className="absolute top-2.5 left-2.5 bg-neutral-950 text-amber-400 text-[10px] font-black px-2 py-0.5 rounded-md shadow-md border border-neutral-800">
+                                      {sale.discountRate}% OFF
+                                    </div>
+                                  </div>
+
+                                  {/* Product Info */}
+                                  <div className="p-4 space-y-2">
+                                    <h5 className="font-extrabold text-sm text-neutral-950 line-clamp-1 group-hover:text-black">
+                                      {prod.title}
+                                    </h5>
+
+                                    <div className="space-y-0.5">
+                                      <p className="text-[11px] text-neutral-400 line-through font-mono">
+                                        {formatPrice(originalPrice)}
+                                      </p>
+                                      <p className="text-base font-black text-neutral-950 font-mono flex items-center gap-1.5">
+                                        <span>{formatPrice(discountedPrice)}</span>
+                                        <span className="text-xs font-extrabold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">
+                                          {sale.discountRate}%
+                                        </span>
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="p-4 pt-0 grid grid-cols-2 gap-2">
+                                  <Link
+                                    href={`/product/${prod.handle || prod.id}`}
+                                    className="py-2.5 px-3 rounded-xl border border-neutral-300 hover:border-neutral-950 text-neutral-900 text-xs font-bold text-center transition-colors"
+                                  >
+                                    상세보기
+                                  </Link>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAddProductToCart(prod, discountedPrice)}
+                                    className="py-2.5 px-3 rounded-xl bg-neutral-950 hover:bg-black text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                                  >
+                                    <ShoppingBag className="w-3.5 h-3.5" />
+                                    담기
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* When no secret sale currently active: Clean transparent card */
+              <div className="relative bg-transparent border border-neutral-200/80 rounded-3xl p-6 sm:p-7 transition-all duration-300 overflow-hidden text-neutral-950">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
+                  <div className="flex items-start sm:items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-800 flex items-center justify-center border border-neutral-200 shrink-0 shadow-2xs">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-300/80">
+                          SECRET TIME SALE
+                        </span>
+                        <span className="text-[10px] font-bold text-neutral-500">
+                          {userGrade} 전용 시크릿 할인관
+                        </span>
+                      </div>
+                      <h4 className="text-base sm:text-lg font-black text-neutral-950 tracking-tight">
+                        회원 전용 시크릿 타임세일
+                      </h4>
+                      <p className="text-xs text-neutral-500 font-medium">
+                        현재 진행 중인 시크릿 특가가 없습니다. 지정된 VIP 회원님만을 위해 오픈되는 비공개 단독 게릴라 특가가 등록되면 여기에 지정 상품이 실시간으로 공개됩니다.
+                      </p>
+                    </div>
+                  </div>
+
+                  {isAdmin && (
+                    <div className="self-end sm:self-center shrink-0">
+                      <Link
+                        href="/admin"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold transition-all border border-neutral-900 cursor-pointer"
+                      >
+                        <span>⚙️ 관리자에서 타임세일 개설</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Set Bundle / Recommended Products Section */}
             <SetBundleSection products={popularCollection} />

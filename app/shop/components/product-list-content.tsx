@@ -266,7 +266,7 @@ export function ProductListContent({
   }, [collectionHandle, products, setProducts]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 12;
 
   // Reset page to 1 if search query or collection changes
   useEffect(() => {
