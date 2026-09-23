@@ -2,7 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ShoppingBag, ShieldCheck, Lock, CreditCard, Truck, CheckCircle2, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  ShoppingBag,
+  ShieldCheck,
+  Lock,
+  CreditCard,
+  Truck,
+  CheckCircle2,
+  ChevronRight,
+  Smartphone,
+  Building2,
+  ArrowRightLeft,
+  Zap,
+} from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
@@ -10,6 +23,12 @@ import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translatio
 import { generateNextOrderId } from "@/lib/shipping/order-id";
 import { splitKoreanAddress } from "@/lib/address";
 import { useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
+import {
+  normalizeUserGrade,
+  getTierPointRate,
+  DEFAULT_TIER_POLICIES,
+} from "@/lib/membership/tiers";
 
 export default function CheckoutClientWrapper() {
   const { cart } = useCart();
@@ -42,9 +61,10 @@ export default function CheckoutClientWrapper() {
     refundBank: "국민은행",
     refundAccountNumber: "",
     refundAccountHolder: "",
-    // Payment
-    paymentMethod: "easypay", // easypay | card | vbank
+    // Payment Method: CARD | EASY_PAY | VIRTUAL_ACCOUNT | TRANSFER | MOBILE_PHONE
+    paymentMethod: "CARD",
   });
+
 
   // Sync Member Profile from 회원 정보 관리 & 세션 (admin_customers / membership_user_*)
   useEffect(() => {
@@ -189,40 +209,101 @@ export default function CheckoutClientWrapper() {
   const [appliedPoints, setAppliedPoints] = useState(0);
   const [pointsMessage, setPointsMessage] = useState<string | null>(null);
 
+  // Customer Tier & Point Rate State
+  const [userGrade, setUserGrade] = useState<"GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP">("GENERAL");
+  const [pointRate, setPointRate] = useState<number>(1);
+
+  // 회원 등급 및 적립금 포인트 실시간 동기화 (localStorage 및 Supabase DB 연동)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      let currentPoints = 0;
+    let isMounted = true;
+
+    const syncMemberGradeAndPoints = async () => {
+      if (typeof window === "undefined") return;
+
+      const currentEmail = (formData.ordererEmail || localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+      const currentPhone = (formData.ordererPhone || localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
+      const currentName = (formData.ordererName || localStorage.getItem("membership_user_name") || "").trim();
+
+      let determinedGrade: string = localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || "";
+      let foundPoints: number | null = null;
+
       const savedPoints = localStorage.getItem("membership_user_points");
       if (savedPoints !== null && !isNaN(parseInt(savedPoints))) {
-        currentPoints = parseInt(savedPoints);
+        foundPoints = parseInt(savedPoints);
       }
 
-      // 회원 정보 관리의 최신 적립금 포인트 조회
+      // 회원 정보 관리(admin_customers) 목록 매칭
       const adminCustomersRaw = localStorage.getItem("admin_customers");
       if (adminCustomersRaw) {
         try {
           const list: any[] = JSON.parse(adminCustomersRaw);
-          const currentEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-          const currentPhone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
-          const currentName = localStorage.getItem("membership_user_name") || "";
-          const matched = list.find((c) => {
+          const matched = list.find((c: any) => {
             const cEmail = (c.email || "").toLowerCase().trim();
             const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+            const cName = (c.name || "").trim();
             return (
               (currentEmail && cEmail === currentEmail) ||
               (currentPhone && currentPhone.length >= 8 && cPhone === currentPhone) ||
-              (currentName && c.name === currentName)
+              (currentName && cName === currentName)
             );
           });
-          if (matched && matched.points !== undefined) {
-            currentPoints = Number(matched.points);
+          if (matched) {
+            if (matched.grade) determinedGrade = matched.grade;
+            if (matched.points !== undefined && !isNaN(Number(matched.points))) {
+              foundPoints = Number(matched.points);
+            }
           }
         } catch (e) {}
       }
 
-      setAvailablePoints(currentPoints);
-    }
-  }, []);
+      // Supabase DB customers 실시간 조회 (DB에 최신 등급/적립금이 있는 경우)
+      if (currentEmail || currentPhone) {
+        try {
+          let query = supabase.from("customers").select("grade, points, email, phone");
+          if (currentEmail) {
+            query = query.eq("email", currentEmail);
+          } else if (currentPhone) {
+            query = query.eq("phone", currentPhone);
+          }
+          const { data, error } = await query;
+          if (!error && data && data.length > 0 && isMounted) {
+            const sbCust = data[0];
+            if (sbCust.grade) determinedGrade = sbCust.grade;
+            if (sbCust.points !== undefined && !isNaN(Number(sbCust.points))) {
+              foundPoints = Number(sbCust.points);
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (!isMounted) return;
+
+      const finalGrade = normalizeUserGrade(determinedGrade);
+      const rate = getTierPointRate(finalGrade);
+      setUserGrade(finalGrade);
+      setPointRate(rate);
+
+      if (foundPoints !== null && !isNaN(foundPoints)) {
+        setAvailablePoints(foundPoints);
+      }
+    };
+
+    syncMemberGradeAndPoints();
+
+    const handleStorageUpdate = () => {
+      syncMemberGradeAndPoints();
+    };
+
+    window.addEventListener("storage", handleStorageUpdate);
+    window.addEventListener("admin_customers_updated", handleStorageUpdate);
+    window.addEventListener("membership_points_updated", handleStorageUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener("storage", handleStorageUpdate);
+      window.removeEventListener("admin_customers_updated", handleStorageUpdate);
+      window.removeEventListener("membership_points_updated", handleStorageUpdate);
+    };
+  }, [formData.ordererEmail, formData.ordererPhone, formData.ordererName]);
 
   useEffect(() => {
     const updateShippingPolicy = () => {
@@ -257,9 +338,10 @@ export default function CheckoutClientWrapper() {
   }, []);
 
   const totalItemAmount = Number(cart?.cost?.totalAmount?.amount || 0);
+  const isTierFreeShipping = userGrade === "PLATINUM" || userGrade === "VVIP";
   const freeThreshold = shippingPolicy.freeShippingThreshold !== undefined ? shippingPolicy.freeShippingThreshold : 100000;
   const baseShippingFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 4000;
-  const shippingFee = (freeThreshold > 0 && totalItemAmount >= freeThreshold) || totalItemAmount === 0 || baseShippingFee === 0 ? 0 : baseShippingFee;
+  const shippingFee = isTierFreeShipping || (freeThreshold > 0 && totalItemAmount >= freeThreshold) || totalItemAmount === 0 || baseShippingFee === 0 ? 0 : baseShippingFee;
 
   const handleApplyPoints = (amountToUse?: number) => {
     const amount = amountToUse !== undefined ? amountToUse : parseInt(usedPointsInput) || 0;
@@ -286,7 +368,8 @@ export default function CheckoutClientWrapper() {
   };
 
   const finalTotalAmount = Math.max(0, totalItemAmount + shippingFee - appliedDiscount - appliedPoints);
-  const earnedPoints = Math.floor(finalTotalAmount * 0.01);
+  const earnedPoints = Math.floor(finalTotalAmount * (pointRate / 100));
+
 
   const clientKey =
     process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY &&
@@ -376,15 +459,21 @@ export default function CheckoutClientWrapper() {
             },
             cart,
             finalTotalAmount,
+            earnedPoints,
+            pointRate,
+            userGrade,
+            appliedPoints,
+            appliedDiscount,
+            shippingFee,
             paidAt: new Date().toISOString(),
           })
         );
       }
 
-      // Use direct Payment window request (Card & EasyPay supported)
+      // Use direct Payment window request (Card, EasyPay, Virtual Account, Transfer, Mobile Phone)
       const payment = tossPayments.payment({ customerKey });
-      await (payment as any).requestPayment({
-        method: "CARD",
+
+      const basePaymentConfig = {
         amount: {
           currency: "KRW",
           value: finalTotalAmount > 0 ? finalTotalAmount : 50000,
@@ -395,13 +484,49 @@ export default function CheckoutClientWrapper() {
         failUrl: `${origin}/order/fail`,
         customerEmail: formData.ordererEmail || "customer@choicomma.com",
         customerName: formData.recipientName || "홍길동",
-        card: {
-          useEscrow: false,
-          flowMode: "DEFAULT",
-          useCardPoint: false,
-          useAppCardOnly: false,
-        },
-      });
+      };
+
+      if (formData.paymentMethod === "VIRTUAL_ACCOUNT") {
+        await (payment as any).requestPayment({
+          ...basePaymentConfig,
+          method: "VIRTUAL_ACCOUNT",
+          virtualAccount: {
+            cashReceipt: {
+              type: "소득공제",
+            },
+            useEscrow: false,
+            validHours: 72,
+          },
+        });
+      } else if (formData.paymentMethod === "TRANSFER") {
+        await (payment as any).requestPayment({
+          ...basePaymentConfig,
+          method: "TRANSFER",
+          transfer: {
+            cashReceipt: {
+              type: "소득공제",
+            },
+            useEscrow: false,
+          },
+        });
+      } else if (formData.paymentMethod === "MOBILE_PHONE") {
+        await (payment as any).requestPayment({
+          ...basePaymentConfig,
+          method: "MOBILE_PHONE",
+        });
+      } else {
+        // CARD and EASY_PAY (Toss CARD window includes all Cards & EasyPay)
+        await (payment as any).requestPayment({
+          ...basePaymentConfig,
+          method: "CARD",
+          card: {
+            useEscrow: false,
+            flowMode: "DEFAULT",
+            useCardPoint: false,
+            useAppCardOnly: false,
+          },
+        });
+      }
     } catch (err: any) {
       // Ignore user cancellation (closing the payment popup/window)
       if (
@@ -647,12 +772,165 @@ export default function CheckoutClientWrapper() {
             </div>
           </div>
 
-          {/* Section 3: Refund Account Info (환불 계좌 정보) */}
+          {/* Section 3: Payment Method Selection (결제 방법 선택) */}
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3">
               <h2 className="text-lg font-black text-neutral-900 dark:text-white flex items-center gap-2">
-                <span>🏦</span> 환불 계좌 정보
+                <CreditCard className="w-5 h-5 text-neutral-900 dark:text-white" /> 결제 방법 선택
               </h2>
+              <span className="text-xs text-neutral-400 font-semibold">
+                원하시는 결제 수단을 선택해 주세요
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {/* 1. 신용/체크카드 */}
+              <button
+                type="button"
+                onClick={() => handleInputChange("paymentMethod", "CARD")}
+                className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-3 relative cursor-pointer ${
+                  formData.paymentMethod === "CARD"
+                    ? "border-neutral-950 dark:border-white bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-md ring-2 ring-neutral-950/20 dark:ring-white/20"
+                    : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <CreditCard className="w-5 h-5" />
+                  {formData.paymentMethod === "CARD" && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-black text-sm">신용·체크카드</p>
+                  <p className={`text-[11px] mt-0.5 ${formData.paymentMethod === "CARD" ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-400"}`}>
+                    모든 카드사 · 무이자할부
+                  </p>
+                </div>
+              </button>
+
+              {/* 2. 간편결제 */}
+              <button
+                type="button"
+                onClick={() => handleInputChange("paymentMethod", "EASY_PAY")}
+                className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-3 relative cursor-pointer ${
+                  formData.paymentMethod === "EASY_PAY"
+                    ? "border-neutral-950 dark:border-white bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-md ring-2 ring-neutral-950/20 dark:ring-white/20"
+                    : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <Zap className="w-5 h-5 text-amber-500" />
+                  {formData.paymentMethod === "EASY_PAY" && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-black text-sm">간편결제</p>
+                  <p className={`text-[11px] mt-0.5 ${formData.paymentMethod === "EASY_PAY" ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-400"}`}>
+                    토스 · 카카오 · 네이버페이
+                  </p>
+                </div>
+              </button>
+
+              {/* 3. 가상계좌 (무통장입금) */}
+              <button
+                type="button"
+                onClick={() => handleInputChange("paymentMethod", "VIRTUAL_ACCOUNT")}
+                className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-3 relative cursor-pointer ${
+                  formData.paymentMethod === "VIRTUAL_ACCOUNT"
+                    ? "border-neutral-950 dark:border-white bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-md ring-2 ring-neutral-950/20 dark:ring-white/20"
+                    : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <Building2 className="w-5 h-5 text-blue-500" />
+                  {formData.paymentMethod === "VIRTUAL_ACCOUNT" && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-black text-sm">가상계좌 (무통장)</p>
+                  <p className={`text-[11px] mt-0.5 ${formData.paymentMethod === "VIRTUAL_ACCOUNT" ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-400"}`}>
+                    전용 계좌 발급 (72시간)
+                  </p>
+                </div>
+              </button>
+
+              {/* 4. 실시간 계좌이체 */}
+              <button
+                type="button"
+                onClick={() => handleInputChange("paymentMethod", "TRANSFER")}
+                className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-3 relative cursor-pointer ${
+                  formData.paymentMethod === "TRANSFER"
+                    ? "border-neutral-950 dark:border-white bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-md ring-2 ring-neutral-950/20 dark:ring-white/20"
+                    : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <ArrowRightLeft className="w-5 h-5 text-indigo-500" />
+                  {formData.paymentMethod === "TRANSFER" && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-black text-sm">실시간 계좌이체</p>
+                  <p className={`text-[11px] mt-0.5 ${formData.paymentMethod === "TRANSFER" ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-400"}`}>
+                    은행 즉시 출금 이체
+                  </p>
+                </div>
+              </button>
+
+              {/* 5. 휴대폰 소액결제 */}
+              <button
+                type="button"
+                onClick={() => handleInputChange("paymentMethod", "MOBILE_PHONE")}
+                className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-3 relative cursor-pointer ${
+                  formData.paymentMethod === "MOBILE_PHONE"
+                    ? "border-neutral-950 dark:border-white bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-md ring-2 ring-neutral-950/20 dark:ring-white/20"
+                    : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <Smartphone className="w-5 h-5 text-rose-500" />
+                  {formData.paymentMethod === "MOBILE_PHONE" && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-black text-sm">휴대폰 결제</p>
+                  <p className={`text-[11px] mt-0.5 ${formData.paymentMethod === "MOBILE_PHONE" ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-400"}`}>
+                    통신사 익월 요금 합산
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            {/* Selected Method Description */}
+            <div className="p-3 bg-neutral-50 dark:bg-neutral-800/60 rounded-2xl border border-neutral-100 dark:border-neutral-800 text-xs text-neutral-600 dark:text-neutral-400 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>
+                {formData.paymentMethod === "CARD" && "국내외 모든 신용카드 및 체크카드로 안전하게 결제하실 수 있습니다."}
+                {formData.paymentMethod === "EASY_PAY" && "토스페이, 카카오페이, 네이버페이, 페이코 등 등록된 간편결제 수단으로 원클릭 결제합니다."}
+                {formData.paymentMethod === "VIRTUAL_ACCOUNT" && "주문 완료 후 고객님 전용 가상계좌가 발급되며, 72시간 이내 입금 시 자동 입금 확인됩니다."}
+                {formData.paymentMethod === "TRANSFER" && "금융결제원 연동을 통해 고객님의 은행 계좌에서 실시간으로 이체 결제됩니다."}
+                {formData.paymentMethod === "MOBILE_PHONE" && "통신사(SKT, KT, LGU+) 휴대폰 본인 인증 후 익월 통신요금에 합산 청구됩니다."}
+              </span>
+            </div>
+          </div>
+
+          {/* Section 4: Refund Account Info (환불 계좌 정보) */}
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-black text-neutral-900 dark:text-white flex items-center gap-2">
+                  <span>🏦</span> 환불 계좌 정보
+                </h2>
+                {formData.paymentMethod === "VIRTUAL_ACCOUNT" && (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                    가상계좌 선택 시 필수
+                  </span>
+                )}
+              </div>
               <span className="text-xs text-neutral-400 font-semibold">
                 무통장입금 주문건은 환불 취소 시 환불계좌 입력.
                 주문건 취소시 환불계좌로 자동 입금됩니다.
@@ -834,8 +1112,15 @@ export default function CheckoutClientWrapper() {
                 </div>
               )}
               <div className="p-2.5 bg-neutral-100 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 flex justify-between items-center text-xs text-neutral-900 dark:text-white font-extrabold">
-                <span>🎁 구매 시 적립 예정 혜택 (1%)</span>
-                <span className="font-mono font-black">+{earnedPoints.toLocaleString()}P</span>
+                <div className="flex items-center gap-1.5">
+                  <span>🎁 {userGrade} 등급 적립 예정 혜택</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200">
+                    {pointRate}%
+                  </span>
+                </div>
+                <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">
+                  +{earnedPoints.toLocaleString()}P
+                </span>
               </div>
               <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 flex justify-between items-baseline">
                 <span className="text-base font-black text-neutral-900 dark:text-white">최종 결제 금액</span>
@@ -866,24 +1151,36 @@ export default function CheckoutClientWrapper() {
             </div>
 
             {/* Final Submit Payment Button */}
-            <button
-              type="button"
-              disabled={isDirectPayLoading}
-              onClick={handlePayment}
-              className="w-full bg-neutral-950 hover:bg-neutral-800 disabled:opacity-50 text-white font-black py-4 px-6 rounded-2xl shadow-xl transition-all text-base flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {isDirectPayLoading ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  토스결제창 로딩 중...
-                </span>
-              ) : (
-                <>
-                  <Lock className="w-5 h-5 text-white" />
-                  <span>{formatPrice(finalTotalAmount)} 결제하기</span>
-                </>
-              )}
-            </button>
+            <div className="space-y-2">
+              <button
+                type="button"
+                disabled={isDirectPayLoading}
+                onClick={handlePayment}
+                className="w-full bg-neutral-950 hover:bg-neutral-800 disabled:opacity-50 text-white font-black py-4 px-6 rounded-2xl shadow-xl transition-all text-base flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {isDirectPayLoading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    토스결제창 로딩 중...
+                  </span>
+                ) : (
+                  <>
+                    <Lock className="w-5 h-5 text-white" />
+                    <span>{formatPrice(finalTotalAmount)} 결제하기</span>
+                  </>
+                )}
+              </button>
+
+              <div className="text-center text-[11px] text-neutral-500 font-medium">
+                결제 수단: <span className="font-extrabold text-neutral-900 dark:text-neutral-200">{
+                  formData.paymentMethod === "CARD" ? "신용·체크카드" :
+                  formData.paymentMethod === "EASY_PAY" ? "간편결제 (카카오/네이버/토스)" :
+                  formData.paymentMethod === "VIRTUAL_ACCOUNT" ? "가상계좌 (무통장입금)" :
+                  formData.paymentMethod === "TRANSFER" ? "실시간 계좌이체" :
+                  "휴대폰 소액결제"
+                }</span>
+              </div>
+            </div>
 
             <p className="text-[11px] text-center text-neutral-400 font-medium flex items-center justify-center gap-1">
               <ShieldCheck className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />

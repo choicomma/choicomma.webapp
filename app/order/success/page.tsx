@@ -30,12 +30,46 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [paymentData, setPaymentData] = useState<any>(null);
+  const [earnedPointsInfo, setEarnedPointsInfo] = useState<{
+    earnedPoints: number;
+    pointRate: number;
+    userGrade: string;
+  } | null>(null);
+  const [orderPaymentMethod, setOrderPaymentMethod] = useState<string>("신용·체크카드");
 
   useEffect(() => {
     async function confirmPayment() {
       if (!paymentKey || !orderId || !amount) {
         setIsLoading(false);
         setIsSuccess(true); // Fallback for direct test view
+        if (typeof window !== "undefined") {
+          try {
+            const keys = Object.keys(sessionStorage).filter((k) => k.startsWith("pending_order_"));
+            if (keys.length > 0) {
+              const raw = sessionStorage.getItem(keys[keys.length - 1]);
+              if (raw) {
+                const po = JSON.parse(raw);
+                if (po?.earnedPoints) {
+                  setEarnedPointsInfo({
+                    earnedPoints: Number(po.earnedPoints),
+                    pointRate: Number(po.pointRate) || 1,
+                    userGrade: po.userGrade || "GENERAL",
+                  });
+                }
+                if (po?.formData?.paymentMethod) {
+                  const methodMap: Record<string, string> = {
+                    CARD: "신용·체크카드",
+                    EASY_PAY: "간편결제 (카카오/네이버/토스)",
+                    VIRTUAL_ACCOUNT: "가상계좌 (무통장입금)",
+                    TRANSFER: "실시간 계좌이체",
+                    MOBILE_PHONE: "휴대폰 소액결제",
+                  };
+                  setOrderPaymentMethod(methodMap[po.formData.paymentMethod] || "신용·체크카드");
+                }
+              }
+            }
+          } catch (e) {}
+        }
         return;
       }
 
@@ -87,8 +121,21 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               date: new Date().toISOString().slice(0, 10),
               totalAmount: Number(amount),
               status: "결제완료 (토스)",
-              method: json.data?.method || "토스페이먼츠",
+              method:
+                json.data?.method ||
+                (pendingOrder?.formData?.paymentMethod === "VIRTUAL_ACCOUNT"
+                  ? "가상계좌 (무통장입금)"
+                  : pendingOrder?.formData?.paymentMethod === "TRANSFER"
+                  ? "실시간 계좌이체"
+                  : pendingOrder?.formData?.paymentMethod === "MOBILE_PHONE"
+                  ? "휴대폰 소액결제"
+                  : pendingOrder?.formData?.paymentMethod === "EASY_PAY"
+                  ? "간편결제 (카카오/네이버/토스)"
+                  : "신용·체크카드 (토스)"),
             };
+
+            setOrderPaymentMethod(newOrder.method);
+
 
             const updated = [newOrder, ...ordersList];
             localStorage.setItem("admin_orders", JSON.stringify(updated));
@@ -139,6 +186,20 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
             window.dispatchEvent(new CustomEvent("storage"));
             window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
 
+            // 고객 등급별 적립 혜택 계산
+            const effectiveEarnedPoints = pendingOrder?.earnedPoints !== undefined 
+              ? Number(pendingOrder.earnedPoints) 
+              : Math.floor(Number(amount) * 0.01);
+            const effectivePointRate = Number(pendingOrder?.pointRate) || 1;
+            const effectiveUserGrade = pendingOrder?.userGrade || "GENERAL";
+            const effectiveAppliedPoints = Number(pendingOrder?.appliedPoints || 0);
+
+            setEarnedPointsInfo({
+              earnedPoints: effectiveEarnedPoints,
+              pointRate: effectivePointRate,
+              userGrade: effectiveUserGrade,
+            });
+
             // 1) Supabase orders 테이블에 주문 원장 영속 저장
             const dbOrder = {
               id: orderId,
@@ -148,9 +209,10 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               customerEmail: newOrder.email,
               customerPhone: newOrder.phone,
               totalAmount: Number(amount),
-              shippingFee: 0,
-              discountAmount: 0,
-              pointsUsed: 0,
+              shippingFee: pendingOrder?.shippingFee || 0,
+              discountAmount: pendingOrder?.appliedDiscount || 0,
+              pointsUsed: effectiveAppliedPoints,
+              pointsEarned: effectiveEarnedPoints,
               paymentMethod: newOrder.method || "카드결제 (토스)",
               paymentStatus: "PAID",
               shippingAddress: {
@@ -181,6 +243,130 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               localStorage.removeItem("choicomma_cart");
               window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
             } catch (e) {}
+
+            // 4) 고객 등급에 따른 적립금 지급 및 포인트 이력 저장 (중복 적립 방지)
+            const historyRaw = localStorage.getItem("membership_points_history");
+            let historyList: any[] = [];
+            if (historyRaw) {
+              try { historyList = JSON.parse(historyRaw); } catch (e) {}
+            }
+
+            const alreadyCredited = historyList.some((h: any) => h.id === `point-earn-${orderId}`);
+
+            if (!alreadyCredited) {
+              const newHistoryEntries: any[] = [];
+
+              if (effectiveAppliedPoints > 0) {
+                newHistoryEntries.push({
+                  id: `point-use-${orderId}`,
+                  label: `[상품 결제 사용] 주문번호: ${orderId}`,
+                  date: new Date().toISOString().slice(0, 10),
+                  amount: -effectiveAppliedPoints,
+                });
+              }
+
+              if (effectiveEarnedPoints > 0) {
+                newHistoryEntries.push({
+                  id: `point-earn-${orderId}`,
+                  label: `[상품 구매 적립] 주문번호: ${orderId} (${effectiveUserGrade} 등급 ${effectivePointRate}%)`,
+                  date: new Date().toISOString().slice(0, 10),
+                  amount: effectiveEarnedPoints,
+                });
+              }
+
+              if (newHistoryEntries.length > 0) {
+                const updatedHistory = [...newHistoryEntries, ...historyList];
+                localStorage.setItem("membership_points_history", JSON.stringify(updatedHistory));
+              }
+
+              // 로컬 세션 보유 적립금 갱신
+              let currentPoints = 0;
+              const savedUserPoints = localStorage.getItem("membership_user_points");
+              if (savedUserPoints !== null && !isNaN(parseInt(savedUserPoints))) {
+                currentPoints = parseInt(savedUserPoints);
+              }
+              const updatedUserPoints = currentPoints + effectiveEarnedPoints;
+              localStorage.setItem("membership_user_points", String(updatedUserPoints));
+
+              // admin_customers 동기화
+              const savedCustRaw = localStorage.getItem("admin_customers");
+              let custList: any[] = [];
+              if (savedCustRaw) {
+                try { custList = JSON.parse(savedCustRaw); } catch (e) {}
+              }
+
+              const customerEmail = (newOrder.email || "").toLowerCase().trim();
+              const customerPhone = (newOrder.phone || "").replace(/[^0-9]/g, "");
+              const customerName = (newOrder.ordererName || newOrder.customer || "").trim();
+
+              const matchedIdx = custList.findIndex((c: any) => {
+                const cEmail = (c.email || "").toLowerCase().trim();
+                const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+                return (
+                  (customerEmail && cEmail === customerEmail) ||
+                  (customerPhone && customerPhone.length >= 8 && cPhone === customerPhone) ||
+                  (customerName && c.name === customerName)
+                );
+              });
+
+              if (matchedIdx >= 0) {
+                const cust = custList[matchedIdx];
+                const prevSpent = Number(cust.totalSpent) || 0;
+                const newSpent = prevSpent + Number(amount);
+                cust.totalSpent = newSpent;
+                cust.points = (Number(cust.points) || 0) + effectiveEarnedPoints;
+
+                // 구매금액 누적에 따른 자동 승급 (2000만: VVIP, 1000만: PLATINUM, 300만: GOLD, 100만: SILVER)
+                if (newSpent >= 20000000 && cust.grade !== "VVIP") {
+                  cust.grade = "VVIP";
+                } else if (newSpent >= 10000000 && !["VVIP", "PLATINUM"].includes(cust.grade)) {
+                  cust.grade = "PLATINUM";
+                } else if (newSpent >= 3000000 && !["VVIP", "PLATINUM", "GOLD"].includes(cust.grade)) {
+                  cust.grade = "GOLD";
+                } else if (newSpent >= 1000000 && !["VVIP", "PLATINUM", "GOLD", "SILVER"].includes(cust.grade)) {
+                  cust.grade = "SILVER";
+                }
+
+                localStorage.setItem("admin_customers", JSON.stringify(custList));
+              }
+
+              // Supabase DB customers 실시간 동기화
+              try {
+                const matchFilter = customerEmail
+                  ? { email: customerEmail }
+                  : customerPhone
+                  ? { phone: customerPhone }
+                  : null;
+
+                if (matchFilter) {
+                  supabase
+                    .from("customers")
+                    .select("id, points, totalSpent")
+                    .match(matchFilter)
+                    .then(({ data: sbCusts }) => {
+                      if (sbCusts && sbCusts.length > 0) {
+                        const dbCust = sbCusts[0];
+                        const updatedDbPoints = (Number(dbCust.points) || 0) + effectiveEarnedPoints;
+                        const updatedDbSpent = (Number(dbCust.totalSpent) || 0) + Number(amount);
+                        supabase
+                          .from("customers")
+                          .update({
+                            points: updatedDbPoints,
+                            totalSpent: updatedDbSpent,
+                          })
+                          .eq("id", dbCust.id)
+                          .then(({ error }) => {
+                            if (error) console.warn("Supabase customer points update notice:", error.message);
+                          });
+                      }
+                    });
+                }
+              } catch (e) {}
+
+              window.dispatchEvent(new CustomEvent("storage"));
+              window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+              window.dispatchEvent(new CustomEvent("membership_points_updated"));
+            }
           }
         } else {
           setErrorMessage(json.message || "결제 승인 과정에서 오류가 발생했습니다.");
@@ -249,10 +435,18 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               {amount ? `${Number(amount).toLocaleString()}원` : "50,000원"}
             </span>
           </div>
+          {earnedPointsInfo && earnedPointsInfo.earnedPoints > 0 && (
+            <div className="flex justify-between border-b border-neutral-200 pb-2 pt-1">
+              <span className="text-neutral-400 font-sans font-bold">적립 혜택</span>
+              <span className="font-bold text-emerald-600 font-sans">
+                +{earnedPointsInfo.earnedPoints.toLocaleString()}P ({earnedPointsInfo.userGrade} 등급 {earnedPointsInfo.pointRate}%)
+              </span>
+            </div>
+          )}
           <div className="flex justify-between pt-1">
             <span className="text-neutral-400 font-sans font-bold">결제 수단</span>
             <span className="font-bold text-neutral-900 font-sans">
-              {paymentData?.method || "토스페이먼츠 (테스트)"}
+              {paymentData?.method || orderPaymentMethod || "토스페이먼츠"}
             </span>
           </div>
         </div>

@@ -16,6 +16,7 @@ interface CustomersManagementProps {
   handleClearAllCustomers: () => void;
   handleExcelFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleResetCustomerData?: () => void;
+  isCustomersLoaded?: boolean;
 }
 
 export function CustomersManagement({
@@ -31,6 +32,7 @@ export function CustomersManagement({
   handleClearAllCustomers,
   handleExcelFileUpload,
   handleResetCustomerData,
+  isCustomersLoaded,
 }: CustomersManagementProps) {
   const [customerPage, setCustomerPage] = useState(1);
   const CUSTOMERS_PER_PAGE = 25;
@@ -144,7 +146,9 @@ export function CustomersManagement({
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
             <span>전체 회원</span>
           </div>
-          <p className="text-xl font-extrabold text-neutral-950 mt-1.5">{customersList.length.toLocaleString()} 명</p>
+          <p className="text-xl font-extrabold text-neutral-950 mt-1.5" suppressHydrationWarning>
+            {customersList.length > 1 || isCustomersLoaded ? `${customersList.length.toLocaleString()} 명` : "-"}
+          </p>
           <p className="text-[11px] text-neutral-400 mt-0.5">스토어 전체 등록 회원</p>
         </div>
 

@@ -1528,7 +1528,8 @@ export default function AdminPage() {
     handleExcelFileUpload,
     handleResetCustomerData,
     handleClearAllCustomers,
-    newCustomersThisMonth
+    newCustomersThisMonth,
+    isCustomersLoaded,
   } = useCustomers(triggerToast);
   // Shipment Management State & Handlers
   const {
@@ -2306,7 +2307,7 @@ export default function AdminPage() {
             <Users className="w-4 h-4 text-neutral-900" />
             회원 관리
             <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              {customersList.length.toLocaleString()}
+              {customersList.length > 1 || isCustomersLoaded ? customersList.length.toLocaleString() : "-"}
             </span>
           </button>
 
@@ -2752,6 +2753,7 @@ export default function AdminPage() {
               handleClearAllCustomers={handleClearAllCustomers}
               handleExcelFileUpload={handleExcelFileUpload}
               handleResetCustomerData={handleResetCustomerData}
+              isCustomersLoaded={isCustomersLoaded}
             />
           )}
 

@@ -71,13 +71,62 @@ function parseCustomerRow(row: any, idx: number) {
   };
 }
 
+function getCachedCustomers(): any[] {
+  if (typeof window === "undefined") return [DEFAULT_ADMIN_CUSTOMER];
+  try {
+    const saved = localStorage.getItem("admin_customers");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const cleaned = parsed
+          .filter((c: any) => c.id === "ADMIN-001" || !c.rawGrade)
+          .map((c: any) => {
+            if (c.id === "ADMIN-001") {
+              return {
+                ...c,
+                phone: "02-579-1171",
+                postcode: "06306",
+                address: "서울특별시 강남구 개포로22길 12",
+                detailAddress: "6층 (주)초이콤마 본사",
+              };
+            }
+            const parsedAddr = splitKoreanAddress(
+              c.address,
+              c.postcode || c.zipCode || "",
+              c.detailAddress || c.addressDetail || ""
+            );
+            return {
+              ...c,
+              postcode: parsedAddr.postcode,
+              address: parsedAddr.baseAddress,
+              detailAddress: parsedAddr.detailAddress,
+            };
+          });
+        if (cleaned.length > 0) return cleaned;
+      }
+    }
+  } catch (e) {}
+  return [DEFAULT_ADMIN_CUSTOMER];
+}
+
 export function useCustomers(triggerToast: (msg: string) => void) {
-  // Customer Management Admin State
-  const [customersList, setCustomersList] = useState<any[]>([DEFAULT_ADMIN_CUSTOMER]);
+  const [isCustomersLoaded, setIsCustomersLoaded] = useState(false);
+
+  // Customer Management Admin State - Synchronous initial read from localStorage cache
+  const [customersList, setCustomersList] = useState<any[]>(() => {
+    return getCachedCustomers();
+  });
 
   // Load from Supabase on mount (fallback: localStorage)
   useEffect(() => {
     let isMounted = true;
+
+    // 1. Immediately apply cached customers on client mount (0ms latency, eliminates any 1-count flicker)
+    const cached = getCachedCustomers();
+    if (cached.length > 1) {
+      setCustomersList(cached);
+      setIsCustomersLoaded(true);
+    }
 
     const fetchCustomers = async () => {
       try {
@@ -113,6 +162,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
             });
           const finalList = sanitized.length > 0 ? sanitized : [DEFAULT_ADMIN_CUSTOMER];
           setCustomersList(finalList);
+          setIsCustomersLoaded(true);
           if (typeof window !== "undefined") {
             localStorage.setItem("admin_customers", JSON.stringify(finalList));
           }
@@ -124,44 +174,11 @@ export function useCustomers(triggerToast: (msg: string) => void) {
 
       // Local storage fallback (엑셀 원본 회원2026_08_03_1.xls에서 가져온 더미 데이터 완전 배제)
       if (typeof window !== "undefined" && isMounted) {
-        const saved = localStorage.getItem("admin_customers");
-        if (saved) {
-          try {
-            const parsed: any[] = JSON.parse(saved);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              const cleaned = parsed
-                .filter((c) => c.id === "ADMIN-001" || !c.rawGrade)
-                .map((c) => {
-                  if (c.id === "ADMIN-001") {
-                    return {
-                      ...c,
-                      phone: "02-579-1171",
-                      postcode: "06306",
-                      address: "서울특별시 강남구 개포로22길 12",
-                      detailAddress: "6층 (주)초이콤마 본사",
-                    };
-                  }
-                  const parsed = splitKoreanAddress(
-                    c.address,
-                    c.postcode || c.zipCode || "",
-                    c.detailAddress || c.addressDetail || ""
-                  );
-                  return {
-                    ...c,
-                    postcode: parsed.postcode,
-                    address: parsed.baseAddress,
-                    detailAddress: parsed.detailAddress,
-                  };
-                });
-              const finalList = cleaned.length > 0 ? cleaned : DEFAULT_CUSTOMERS;
-              setCustomersList(finalList);
-              localStorage.setItem("admin_customers", JSON.stringify(finalList));
-              return;
-            }
-          } catch (e) {}
-        }
-        setCustomersList(DEFAULT_CUSTOMERS);
-        localStorage.setItem("admin_customers", JSON.stringify(DEFAULT_CUSTOMERS));
+        const localList = getCachedCustomers();
+        const finalList = localList.length > 0 ? localList : DEFAULT_CUSTOMERS;
+        setCustomersList(finalList);
+        setIsCustomersLoaded(true);
+        localStorage.setItem("admin_customers", JSON.stringify(finalList));
       }
     };
 
@@ -566,5 +583,6 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     totalCustomerPages,
     paginatedCustomers,
     CUSTOMERS_PER_PAGE,
+    isCustomersLoaded,
   };
 }

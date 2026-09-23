@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   MessageSquare,
@@ -26,6 +26,7 @@ export interface ChatMessage {
   text: string;
   images?: string[];
   timestamp: string;
+  created_at?: string;
 }
 
 const CHAT_I18N: Record<string, Record<string, string>> = {
@@ -51,6 +52,9 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     loginModalDesc: "초이콤마 1:1 실시간 맞춤 상담은 회원 전용 서비스입니다.\n로그인 후 1:1 맞춤 케어를 이용해 보세요.",
     loginModalAction: "로그인하러 가기",
     loginModalClose: "닫기",
+    resetChat: "대화 내용 초기화",
+    confirmReset: "1:1 대화 내역을 모두 초기화하시겠습니까?\n초기화 시 이전 대화 내역은 영구 삭제됩니다.",
+    resetSuccess: "대화 내역이 성공적으로 초기화되었습니다.",
   },
   en: {
     floatingButton: "1:1 Live Chat",
@@ -74,6 +78,9 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     loginModalDesc: "choicomma 1:1 Live Consultation is an exclusive service for registered members.\nPlease log in to enjoy 1:1 personalized care.",
     loginModalAction: "Log In",
     loginModalClose: "Close",
+    resetChat: "Reset Chat",
+    confirmReset: "Are you sure you want to reset all conversation history?\nPrevious messages will be permanently deleted.",
+    resetSuccess: "Conversation history has been reset successfully.",
   },
   ja: {
     floatingButton: "1:1 ライブ相談",
@@ -97,6 +104,9 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     loginModalDesc: "choicomma 1:1 リアルタイム相談は会員専用サービスです。\nログイン後、1:1カスタムケアをご利用ください。",
     loginModalAction: "ログインする",
     loginModalClose: "閉じる",
+    resetChat: "チャット初期化",
+    confirmReset: "1:1 チャット履歴を初期化しますか？\n以前の会話内容は完全に削除されます。",
+    resetSuccess: "チャット履歴が正常に初期化されました。",
   },
   zh: {
     floatingButton: "1:1 实时客服",
@@ -120,6 +130,9 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     loginModalDesc: "choicomma 1:1 实时专属客服为会员专享服务。\n登录后即可享受 1:1 专属贴心服务。",
     loginModalAction: "前往登录",
     loginModalClose: "关闭",
+    resetChat: "重置聊天记录",
+    confirmReset: "确定要重置所有 1:1 聊天记录吗？\n重置后之前的对话记录将被永久删除。",
+    resetSuccess: "聊天记录已成功重置。",
   },
   fr: {
     floatingButton: "Chat en direct 1:1",
@@ -143,6 +156,9 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     loginModalDesc: "Le soin 1:1 en direct choicomma est réservé aux membres.\nVeuillez vous connecter pour profiter de notre service personnalisé 1:1.",
     loginModalAction: "Se connecter",
     loginModalClose: "Fermer",
+    resetChat: "Réinitialiser le chat",
+    confirmReset: "Voulez-vous vraiment réinitialiser l'historique de discussion 1:1 ?\nLes messages précédents seront définitivement supprimés.",
+    resetSuccess: "L'historique de discussion a été réinitialisé avec succès.",
   },
   de: {
     floatingButton: "1:1 Live-Beratung",
@@ -166,6 +182,9 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     loginModalDesc: "Die choicomma 1:1 Live-Beratung ist exklusiv für registrierte Mitglieder.\nBitte melden Sie sich an, um Ihren VIP-Berater zu kontaktieren.",
     loginModalAction: "Jetzt anmelden",
     loginModalClose: "Schließen",
+    resetChat: "Chat zurücksetzen",
+    confirmReset: "Möchten Sie den 1:1-Chatverlauf wirklich zurücksetzen?\nFrühere Nachrichten werden dauerhaft gelöscht.",
+    resetSuccess: "Der Chatverlauf wurde erfolgreich zurückgesetzt.",
   },
   es: {
     floatingButton: "Chat en Vivo 1:1",
@@ -189,6 +208,9 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
     loginModalDesc: "La atención 1:1 en vivo de choicomma es un servicio exclusivo para miembros.\nInicie sesión para contactar con su asesor VIP dedicado.",
     loginModalAction: "Iniciar sesión",
     loginModalClose: "Cerrar",
+    resetChat: "Restablecer chat",
+    confirmReset: "¿Está seguro de que desea restablecer todo el historial de chat 1:1?\nLos mensajes anteriores se eliminarán permanentemente.",
+    resetSuccess: "El historial de chat se ha restablecido con éxito.",
   },
 };
 
@@ -213,6 +235,21 @@ export function LiveChatWidget() {
   const [isTyping, setIsTyping] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoReplyTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastResetTimeRef = useRef<number>(0);
+
+  const cancelAutoReply = () => {
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    if (autoReplyTimerRef.current) {
+      clearTimeout(autoReplyTimerRef.current);
+      autoReplyTimerRef.current = null;
+    }
+    setIsTyping(false);
+  };
 
   useEffect(() => {
     setCurrentLang(getCurrentLanguage());
@@ -331,6 +368,46 @@ export function LiveChatWidget() {
     window.dispatchEvent(new CustomEvent("live_chat_updated"));
   };
 
+  // Dynamic Welcome / Default Guidance Text (Synced with Admin Settings)
+  const getEffectiveWelcomeText = useCallback(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("admin_auto_reply_fallback");
+      if (saved && saved.trim()) {
+        return saved.trim();
+      }
+    }
+    return t.welcomeText;
+  }, [t.welcomeText]);
+
+  const updateWelcomeMessageInState = useCallback((newFallbackText?: string) => {
+    const fallback = (
+      newFallbackText ||
+      (typeof window !== "undefined" ? localStorage.getItem("admin_auto_reply_fallback") : "") ||
+      ""
+    ).trim();
+    const effectiveWelcome = fallback || t.welcomeText;
+    const chatKey = getUserChatKey();
+
+    setMessages((prev) => {
+      let found = false;
+      const updated = prev.map((m) => {
+        if (m.id === "msg-welcome-1") {
+          found = true;
+          return { ...m, text: effectiveWelcome };
+        }
+        return m;
+      });
+
+      if (found) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(chatKey, JSON.stringify(updated));
+        }
+        return updated;
+      }
+      return prev;
+    });
+  }, [t.welcomeText]);
+
   // Load chat messages from localStorage + Supabase (only for authenticated members)
   const loadMessages = () => {
     if (typeof window === "undefined") return;
@@ -340,14 +417,27 @@ export function LiveChatWidget() {
       return;
     }
 
+    const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+    const phone = (localStorage.getItem("membership_user_phone") || "").trim();
+    const rawId = email || phone;
     const chatKey = getUserChatKey();
+    const effectiveWelcome = getEffectiveWelcomeText();
+
+    let currentLocal: ChatMessage[] = [];
     const saved = localStorage.getItem(chatKey);
     if (saved !== null) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          setMessages(parsed);
-          const lastMsg = parsed[parsed.length - 1];
+          const refreshed = parsed.map((m: ChatMessage) => {
+            if (m.id === "msg-welcome-1") {
+              return { ...m, text: effectiveWelcome };
+            }
+            return m;
+          });
+          currentLocal = refreshed;
+          setMessages(refreshed);
+          const lastMsg = refreshed[refreshed.length - 1];
           if (lastMsg && (lastMsg.id?.startsWith("admin-close") || lastMsg.text?.includes("상담이 종료되었습니다"))) {
             setIsOpen(false);
           }
@@ -360,26 +450,37 @@ export function LiveChatWidget() {
           id: "msg-welcome-1",
           sender: "admin",
           senderName: t.teamName,
-          text: t.welcomeText,
+          text: effectiveWelcome,
           timestamp: "NOW",
         },
       ];
+      currentLocal = defaultInit;
       setMessages(defaultInit);
       localStorage.setItem(chatKey, JSON.stringify(defaultInit));
     }
 
-    // Sync from Supabase chat_messages
-    const email = localStorage.getItem("membership_user_email");
-    const phone = localStorage.getItem("membership_user_phone");
-    const rawId = email || phone || "";
+    // Sync from Supabase chat_messages with non-destructive merge
     if (rawId) {
       supabase
         .from("chat_messages")
         .select("*")
-        .eq("sessionId", rawId)
+        .or(`sessionId.eq.${rawId},sessionId.eq.${email}`)
         .order("created_at", { ascending: true })
         .then(({ data: dbMsgs, error }) => {
-          if (!error && Array.isArray(dbMsgs) && dbMsgs.length > 0) {
+          // If a reset occurred within the last 1.5s, ignore any in-flight stale data
+          if (Date.now() - lastResetTimeRef.current < 1500) {
+            return;
+          }
+
+          if (!error && Array.isArray(dbMsgs)) {
+            const defaultWelcome: ChatMessage = {
+              id: "msg-welcome-1",
+              sender: "admin",
+              senderName: t.teamName,
+              text: effectiveWelcome,
+              timestamp: "NOW",
+            };
+
             const formatted: ChatMessage[] = dbMsgs.map((m: any) => {
               const d = new Date(m.created_at || Date.now());
               const hours = String(d.getHours()).padStart(2, "0");
@@ -390,10 +491,77 @@ export function LiveChatWidget() {
                 senderName: m.sender === "admin" ? t.teamName : (t.userName || "Customer"),
                 text: m.text,
                 timestamp: `${hours}:${mins}`,
+                created_at: m.created_at,
               };
             });
-            setMessages(formatted);
-            localStorage.setItem(chatKey, JSON.stringify(formatted));
+
+            // If any admin message arrived from DB, cancel auto-reply bot timer
+            if (formatted.some((m) => m.sender === "admin")) {
+              cancelAutoReply();
+            }
+
+            setMessages((prev) => {
+              // If database has 0 messages, the session is brand new or was reset!
+              if (formatted.length === 0) {
+                const now = Date.now();
+                const recentPending = prev.filter((m) => {
+                  if (m.id === "msg-welcome-1") return false;
+                  const match = m.id.match(/\d{10,}/);
+                  if (match) {
+                    return now - parseInt(match[0], 10) < 15000;
+                  }
+                  return false;
+                });
+                const nextList = recentPending.length > 0 ? [defaultWelcome, ...recentPending] : [defaultWelcome];
+                if (typeof window !== "undefined") {
+                  localStorage.setItem(chatKey, JSON.stringify(nextList));
+                }
+                return nextList;
+              }
+
+              const msgMap = new Map<string, ChatMessage>();
+              formatted.forEach((m) => msgMap.set(m.id, m));
+
+              // Retain welcome message if no admin reply yet
+              const existingWelcome = prev.find((m) => m.id === "msg-welcome-1") || currentLocal.find((m) => m.id === "msg-welcome-1");
+              const welcome = existingWelcome
+                ? { ...existingWelcome, text: effectiveWelcome }
+                : defaultWelcome;
+              if (welcome && !formatted.some((m) => m.id === "msg-welcome-1" || m.sender === "admin")) {
+                msgMap.set("msg-welcome-1", welcome);
+              }
+
+              // Retain ANY recent optimistic local messages (user or admin) not yet returned by DB
+              const candidates = [...prev, ...currentLocal];
+              const now = Date.now();
+              candidates.forEach((m) => {
+                if (!m || !m.id || m.id === "msg-welcome-1") return;
+                if (!msgMap.has(m.id)) {
+                  let isRecent = false;
+                  const matchTime = m.id.match(/\d{10,}/);
+                  if (matchTime) {
+                    const timeVal = parseInt(matchTime[0], 10);
+                    if (!isNaN(timeVal) && now - timeVal < 15000) {
+                      isRecent = true;
+                    }
+                  } else if (m.created_at) {
+                    const timeVal = new Date(m.created_at).getTime();
+                    if (!isNaN(timeVal) && now - timeVal < 15000) {
+                      isRecent = true;
+                    }
+                  }
+                  if (isRecent) {
+                    msgMap.set(m.id, m);
+                  }
+                }
+              });
+
+              const merged = Array.from(msgMap.values());
+              if (typeof window !== "undefined") {
+                localStorage.setItem(chatKey, JSON.stringify(merged));
+              }
+              return merged;
+            });
           }
         });
     }
@@ -428,23 +596,161 @@ export function LiveChatWidget() {
     window.addEventListener("live_chat_updated", handleStorageChange);
     window.addEventListener("live_chat_ended", handleChatEnded);
 
+    const handleConfigUpdate = (e: any) => {
+      const fallback = e?.detail?.fallback;
+      if (typeof fallback === "string") {
+        updateWelcomeMessageInState(fallback);
+      }
+    };
+    window.addEventListener("live_chat_config_updated", handleConfigUpdate);
+
+    // Initial sync of auto-reply config from Supabase site_settings
+    const syncAutoReplyConfig = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "chat_auto_reply_config")
+          .maybeSingle();
+
+        if (!error && data?.value) {
+          const val = data.value;
+          if (typeof window !== "undefined") {
+            if (typeof val.enabled === "boolean") {
+              localStorage.setItem("admin_auto_reply_enabled", String(val.enabled));
+            }
+            if (typeof val.delay === "number") {
+              localStorage.setItem("admin_auto_reply_delay", String(val.delay));
+            }
+            if (Array.isArray(val.rules) && val.rules.length > 0) {
+              localStorage.setItem("admin_auto_reply_rules", JSON.stringify(val.rules));
+            }
+            if (typeof val.fallback === "string" && val.fallback.trim()) {
+              localStorage.setItem("admin_auto_reply_fallback", val.fallback.trim());
+            }
+          }
+          if (typeof val.fallback === "string" && val.fallback.trim()) {
+            updateWelcomeMessageInState(val.fallback.trim());
+          }
+        }
+      } catch (e) {}
+    };
+    syncAutoReplyConfig();
+
+    // Supabase Realtime channel for site_settings
+    const settingsChannel = supabase
+      .channel("customer_chat_settings_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "site_settings", filter: "key=eq.chat_auto_reply_config" },
+        (payload: any) => {
+          if (payload?.new?.value) {
+            const val = payload.new.value;
+            if (typeof window !== "undefined") {
+              if (typeof val.fallback === "string") {
+                localStorage.setItem("admin_auto_reply_fallback", val.fallback);
+              }
+              if (typeof val.enabled === "boolean") {
+                localStorage.setItem("admin_auto_reply_enabled", String(val.enabled));
+              }
+              if (typeof val.delay === "number") {
+                localStorage.setItem("admin_auto_reply_delay", String(val.delay));
+              }
+              if (val.rules) {
+                localStorage.setItem("admin_auto_reply_rules", JSON.stringify(val.rules));
+              }
+            }
+            if (typeof val.fallback === "string") {
+              updateWelcomeMessageInState(val.fallback);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    // BroadcastChannel for instant 0ms cross-tab sync with Admin console
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        bc = new BroadcastChannel("choicomma_live_chat_sync");
+        bc.onmessage = (event) => {
+          if (event.data?.type === "CONFIG_UPDATED" && event.data?.config) {
+            const { fallback, enabled, delay, rules } = event.data.config;
+            if (typeof window !== "undefined") {
+              if (typeof fallback === "string") {
+                localStorage.setItem("admin_auto_reply_fallback", fallback);
+              }
+              if (typeof enabled === "boolean") {
+                localStorage.setItem("admin_auto_reply_enabled", String(enabled));
+              }
+              if (typeof delay === "number") {
+                localStorage.setItem("admin_auto_reply_delay", String(delay));
+              }
+              if (rules) {
+                localStorage.setItem("admin_auto_reply_rules", JSON.stringify(rules));
+              }
+            }
+            if (typeof fallback === "string") {
+              updateWelcomeMessageInState(fallback);
+            }
+            return;
+          }
+
+          const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+          const phone = (localStorage.getItem("membership_user_phone") || "").trim();
+          const rawId = email || phone;
+          const targetSessionId = (event.data?.sessionId || "").toLowerCase().trim();
+
+          if (!targetSessionId || targetSessionId === rawId || (email && targetSessionId === email)) {
+            if (event.data?.type === "ADMIN_REPLY" && event.data.message) {
+              cancelAutoReply();
+              const newMsg = event.data.message;
+              setMessages((prev) => {
+                if (prev.some((m) => m.id === newMsg.id)) return prev;
+                const next = [...prev, newMsg];
+                const chatKey = getUserChatKey();
+                if (typeof window !== "undefined") {
+                  localStorage.setItem(chatKey, JSON.stringify(next));
+                }
+                return next;
+              });
+              if (!isOpen) {
+                setUnreadCount((c) => c + 1);
+              }
+            } else if (event.data?.type === "CHAT_ENDED") {
+              setIsOpen(false);
+              setIsMinimized(false);
+              setMessages([]);
+            } else if (event.data?.type === "CHAT_CLEARED" || event.data?.type === "CHAT_RESET") {
+              handleResetChat(true);
+            }
+          }
+        };
+      } catch (e) {}
+    }
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("auth_changed", handleStorageChange);
       window.removeEventListener("live_chat_updated", handleStorageChange);
       window.removeEventListener("live_chat_ended", handleChatEnded);
+      window.removeEventListener("live_chat_config_updated", handleConfigUpdate);
+      supabase.removeChannel(settingsChannel);
+      if (bc) bc.close();
     };
-  }, [currentLang]);
+  }, [currentLang, isOpen]);
 
-  // Periodic sync & realtime updates from Supabase when chat is open
+  // Periodic sync & realtime updates from Supabase (runs continuously for logged-in users)
   useEffect(() => {
-    if (!isOpen) return;
+    const isAuthed = checkAuth();
+    if (!isAuthed) return;
+
     registerUserSession("active");
     loadMessages();
 
-    const email = typeof window !== "undefined" ? localStorage.getItem("membership_user_email") : null;
-    const phone = typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") : null;
-    const rawId = email || phone || "";
+    const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
+    const phone = (typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") || "" : "").trim();
+    const rawId = email || phone;
 
     let channel: any = null;
     if (rawId) {
@@ -454,13 +760,21 @@ export function LiveChatWidget() {
         .on(
           "postgres_changes",
           {
-            event: "INSERT",
+            event: "*",
             schema: "public",
             table: "chat_messages",
-            filter: `sessionId=eq.${rawId}`,
           },
-          () => {
-            loadMessages();
+          (payload: any) => {
+            const sid = (payload?.new?.sessionId || "").toLowerCase().trim();
+            if (!sid || sid === rawId || (email && sid === email)) {
+              if (payload?.new?.sender === "admin") {
+                cancelAutoReply();
+                if (!isOpen) {
+                  setUnreadCount((c) => c + 1);
+                }
+              }
+              loadMessages();
+            }
           }
         )
         .subscribe();
@@ -468,7 +782,7 @@ export function LiveChatWidget() {
 
     const interval = setInterval(() => {
       loadMessages();
-    }, 3500);
+    }, 3000);
 
     return () => {
       if (channel) supabase.removeChannel(channel);
@@ -485,8 +799,7 @@ export function LiveChatWidget() {
   }, [messages, isTyping, isOpen]);
 
   // LiveChatWidget is always visible for all users and members
-
-  const handleSendMessage = (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     // Strict guard: unauthenticated users cannot send messages
@@ -511,21 +824,44 @@ export function LiveChatWidget() {
       text: inputText.trim(),
       images: attachedImages,
       timestamp: timeStr,
+      created_at: new Date().toISOString(),
     };
 
-    const updated = [...messages, newMsg];
-    setMessages(updated);
-    const chatKey = getUserChatKey();
-    localStorage.setItem(chatKey, JSON.stringify(updated));
+    setMessages((prev) => {
+      const next = [...prev, newMsg];
+      const chatKey = getUserChatKey();
+      if (typeof window !== "undefined") {
+        localStorage.setItem(chatKey, JSON.stringify(next));
+      }
+      return next;
+    });
 
-    const email = typeof window !== "undefined" ? localStorage.getItem("membership_user_email") : null;
-    const phone = typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") : null;
+    const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
+    const phone = (typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") || "" : "").trim();
     const rawId = email || phone || "";
 
     // Register active user to admin chat sessions list with accurate grade/tier & Supabase
     registerUserSession("active");
 
-    // Supabase DB message insert
+    // Broadcast user message across tabs (Admin console) immediately (0ms latency)
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        const sendBc = new BroadcastChannel("choicomma_live_chat_sync");
+        sendBc.postMessage({
+          type: "USER_MESSAGE",
+          sessionId: rawId,
+          message: newMsg,
+        });
+        sendBc.close();
+      } catch (e) {}
+    }
+
+    window.dispatchEvent(new CustomEvent("live_chat_updated"));
+
+    setInputText("");
+    setAttachedImages([]);
+
+    // Supabase DB message insert in background without blocking UI
     if (rawId) {
       supabase
         .from("chat_messages")
@@ -537,19 +873,15 @@ export function LiveChatWidget() {
             text: newMsg.text || (newMsg.images?.length ? "[사진 첨부]" : ""),
           },
         ])
-        .then(() => {});
+        .then(({ error }) => {
+          if (error) console.warn("Supabase user message insert error:", error);
+        });
     }
-
-    window.dispatchEvent(new CustomEvent("live_chat_updated"));
-
-    setInputText("");
-    setAttachedImages([]);
 
     // Auto simulated response based on Admin Smart Auto-reply settings
     let isAutoEnabled = true;
     let autoDelayMs = 1500;
-    let autoReplyMessage = t.autoReplyText;
-    // Evaluate keyword matching from DEFAULT_AUTO_RULES or saved rules
+    let autoReplyMessage = getEffectiveWelcomeText() || t.autoReplyText;
     let activeRules: AutoReplyRule[] = DEFAULT_AUTO_RULES;
 
     if (typeof window !== "undefined") {
@@ -567,8 +899,8 @@ export function LiveChatWidget() {
       }
 
       const savedFallback = localStorage.getItem("admin_auto_reply_fallback");
-      if (savedFallback) {
-        autoReplyMessage = savedFallback;
+      if (savedFallback && savedFallback.trim()) {
+        autoReplyMessage = savedFallback.trim();
       }
 
       const savedRules = localStorage.getItem("admin_auto_reply_rules");
@@ -595,75 +927,119 @@ export function LiveChatWidget() {
     }
 
     if (isAutoEnabled) {
-      // 1. 대기시간(말풍선 등장 전 대기)은 5초(5000ms)로 항상 고정
       const fixedWaitDelay = 5000; 
-
-      // 2. '상담원이 답변을 작성 중입니다...' 말풍선이 켜진 후 답변이 전송되기까지의 지연 속도는 관리자 설정(autoDelayMs)으로 동작
       const typingDuration = Math.max(autoDelayMs, 1000); 
-      const totalDeliveryTime = fixedWaitDelay + typingDuration; // 5초 대기 + 관리자 설정 지연시간 후 답변 전송
+      const totalDeliveryTime = fixedWaitDelay + typingDuration;
 
-      // [5초 고정 대기 후] '상담원이 답변을 작성 중입니다...' 말풍선 등장
-      setTimeout(() => {
+      cancelAutoReply();
+
+      typingTimerRef.current = setTimeout(() => {
         setIsTyping(true);
       }, fixedWaitDelay);
 
-      // [말풍선 등장 후 설정된 지연시간 동안 타이핑 후] 최종 자동 답변 전송
-      setTimeout(() => {
+      autoReplyTimerRef.current = setTimeout(() => {
         setIsTyping(false);
-        const savedLatest = localStorage.getItem(chatKey);
-        let latestList: ChatMessage[] = updated;
-        try {
-          if (savedLatest) latestList = JSON.parse(savedLatest);
-        } catch (e) { }
-
-        // If last message is still user's message, send the keyword-matched auto reply
-        if (latestList[latestList.length - 1]?.id === newMsg.id) {
-          const autoReply: ChatMessage = {
-            id: `admin-msg-auto-${Date.now()}`,
-            sender: "admin",
-            senderName: t.teamName,
-            text: autoReplyMessage,
-            timestamp: `${hours}:${mins}`,
-          };
-          const updatedWithAuto = [...latestList, autoReply];
-          setMessages(updatedWithAuto);
-          localStorage.setItem(chatKey, JSON.stringify(updatedWithAuto));
-          window.dispatchEvent(new CustomEvent("live_chat_updated"));
-
-          if (rawId) {
-            supabase
-              .from("chat_messages")
-              .insert([
-                {
-                  id: autoReply.id,
-                  sessionId: rawId,
-                  sender: "admin",
-                  text: autoReply.text,
-                },
-              ])
-              .then(() => {});
+        setMessages((currentMessages) => {
+          const lastMsg = currentMessages[currentMessages.length - 1];
+          // Only auto-reply if the latest message is still user's own message and no admin message has arrived
+          if (lastMsg?.id === newMsg.id && lastMsg?.sender === "user") {
+            const autoReply: ChatMessage = {
+              id: `admin-msg-auto-${Date.now()}`,
+              sender: "admin",
+              senderName: t.teamName,
+              text: autoReplyMessage,
+              timestamp: `${hours}:${mins}`,
+              created_at: new Date().toISOString(),
+            };
+            const updatedWithAuto = [...currentMessages, autoReply];
+            const chatKey = getUserChatKey();
+            if (typeof window !== "undefined") {
+              localStorage.setItem(chatKey, JSON.stringify(updatedWithAuto));
+            }
+            if (rawId) {
+              supabase
+                .from("chat_messages")
+                .insert([
+                  {
+                    id: autoReply.id,
+                    sessionId: rawId,
+                    sender: "admin",
+                    text: autoReply.text,
+                  },
+                ])
+                .then(() => {});
+            }
+            return updatedWithAuto;
           }
-        }
+          return currentMessages;
+        });
       }, totalDeliveryTime);
     }
   };
 
-  const handleResetChat = () => {
+  const handleResetChat = async (skipConfirm = false) => {
+    if (!skipConfirm) {
+      const isConfirmed = window.confirm(
+        t.confirmReset || "1:1 대화 내역을 모두 초기화하시겠습니까?\n초기화 시 이전 대화 내역은 영구 삭제됩니다."
+      );
+      if (!isConfirmed) return;
+    }
+
+    lastResetTimeRef.current = Date.now();
+    cancelAutoReply();
+
     const defaultInit: ChatMessage[] = [
       {
         id: "msg-welcome-1",
         sender: "admin",
         senderName: t.teamName,
-        text: t.welcomeText,
+        text: getEffectiveWelcomeText(),
         timestamp: "NOW",
       },
     ];
     setMessages(defaultInit);
+
+    const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
+    const phone = (typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") || "" : "").trim();
+    const rawId = email || phone;
+    const chatKey = getUserChatKey();
+
     if (typeof window !== "undefined") {
-      const chatKey = getUserChatKey();
       localStorage.setItem(chatKey, JSON.stringify(defaultInit));
       localStorage.removeItem("site_live_chat_ended");
+    }
+
+    // 1. Delete all messages for this customer session from Supabase
+    if (rawId) {
+      try {
+        await supabase
+          .from("chat_messages")
+          .delete()
+          .or(`sessionId.eq.${rawId},sessionId.eq.${email}`);
+      } catch (e) {
+        console.warn("Notice: Failed to delete chat_messages from Supabase:", e);
+      }
+    }
+
+    // 2. Broadcast CHAT_RESET to Admin console & open tabs
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        const sendBc = new BroadcastChannel("choicomma_live_chat_sync");
+        sendBc.postMessage({
+          type: "CHAT_RESET",
+          sessionId: rawId,
+        });
+        sendBc.close();
+      } catch (e) {}
+    }
+
+    // 3. Dispatch local event
+    if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("live_chat_updated"));
+    }
+
+    if (!skipConfirm) {
+      toast.success(t.resetSuccess || "대화 내역이 성공적으로 초기화되었습니다.");
     }
   };
 
@@ -753,9 +1129,9 @@ export function LiveChatWidget() {
 
             <div className="flex items-center gap-1">
               <button
-                onClick={handleResetChat}
+                onClick={() => handleResetChat()}
                 className="text-neutral-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
-                title="Reset Chat"
+                title={t.resetChat || "대화 내용 초기화"}
               >
                 <Trash2 className="w-4 h-4" />
               </button>

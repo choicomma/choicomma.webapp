@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
 import {
   MessageSquare,
   Crown,
@@ -248,6 +249,36 @@ export function InquiriesManagement({
       if (savedFallback) {
         setAutoReplyFallback(savedFallback);
       }
+
+      // Fetch shared settings from Supabase site_settings (for cross-device/browser sync)
+      try {
+        supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "chat_auto_reply_config")
+          .maybeSingle()
+          .then(({ data, error }) => {
+            if (!error && data?.value) {
+              const val = data.value;
+              if (typeof val.enabled === "boolean") {
+                setAutoReplyEnabled(val.enabled);
+                localStorage.setItem("admin_auto_reply_enabled", String(val.enabled));
+              }
+              if (typeof val.delay === "number") {
+                setAutoReplyDelay(val.delay);
+                localStorage.setItem("admin_auto_reply_delay", String(val.delay));
+              }
+              if (Array.isArray(val.rules) && val.rules.length > 0) {
+                setAutoReplyRules(val.rules);
+                localStorage.setItem("admin_auto_reply_rules", JSON.stringify(val.rules));
+              }
+              if (typeof val.fallback === "string" && val.fallback.trim()) {
+                setAutoReplyFallback(val.fallback);
+                localStorage.setItem("admin_auto_reply_fallback", val.fallback);
+              }
+            }
+          });
+      } catch (e) {}
     }
   }, []);
 
@@ -267,8 +298,49 @@ export function InquiriesManagement({
       localStorage.setItem("admin_auto_reply_delay", String(delay));
       localStorage.setItem("admin_auto_reply_rules", JSON.stringify(rules));
       localStorage.setItem("admin_auto_reply_fallback", fallback);
-      window.dispatchEvent(new CustomEvent("live_chat_config_updated"));
+      window.dispatchEvent(
+        new CustomEvent("live_chat_config_updated", {
+          detail: { enabled, delay, rules, fallback },
+        })
+      );
+
+      // Instant 0ms cross-tab broadcast to customer chat widget
+      if ("BroadcastChannel" in window) {
+        try {
+          const bc = new BroadcastChannel("choicomma_live_chat_sync");
+          bc.postMessage({
+            type: "CONFIG_UPDATED",
+            config: { enabled, delay, rules, fallback },
+          });
+          bc.close();
+        } catch (e) {}
+      }
     }
+
+    // Persist to Supabase site_settings for cross-browser, cross-device persistence
+    try {
+      supabase
+        .from("site_settings")
+        .upsert(
+          {
+            key: "chat_auto_reply_config",
+            value: {
+              enabled,
+              delay,
+              rules,
+              fallback,
+            },
+            description: "실시간 채팅 자동 답변 및 기본 안내 문구 설정",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "key" }
+        )
+        .then(({ error }) => {
+          if (error) {
+            console.warn("Notice: Failed to persist auto-reply config to site_settings:", error);
+          }
+        });
+    } catch (e) {}
   };
 
   const handleAddAutoRule = () => {
@@ -674,7 +746,7 @@ export function InquiriesManagement({
                     <div
                       className={`max-w-[80%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs whitespace-pre-wrap ${
                         isAdmin
-                          ? "bg-amber-500 text-neutral-950 font-black rounded-tr-xs"
+                          ? "bg-neutral-950 text-white font-bold rounded-tr-xs border border-neutral-800"
                           : "bg-white text-neutral-900 border border-neutral-200 font-bold rounded-tl-xs"
                       }`}
                     >
@@ -1202,7 +1274,15 @@ export function InquiriesManagement({
             <div className="flex justify-end pt-3 border-t border-neutral-100 shrink-0">
               <button
                 type="button"
-                onClick={() => setIsAutoReplyModalOpen(false)}
+                onClick={() => {
+                  saveAutoReplyConfig(
+                    autoReplyEnabled,
+                    autoReplyDelay,
+                    autoReplyRules,
+                    autoReplyFallback
+                  );
+                  setIsAutoReplyModalOpen(false);
+                }}
                 className="px-5 py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white font-bold text-xs rounded-xl cursor-pointer transition-all"
               >
                 설정 완료 및 창 닫기

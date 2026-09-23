@@ -113,13 +113,24 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
 
   // 2. Load Chat Messages for Active Session (Supabase + localStorage merge)
   const syncAdminLiveChat = useCallback(async () => {
-    const currentId = activeSessionIdRef.current;
-    if (typeof window === "undefined" || !currentId) {
+    const rawId = activeSessionIdRef.current;
+    if (typeof window === "undefined" || !rawId) {
       setAdminLiveChatMessages([]);
       return;
     }
 
-    const sessionKey = `site_live_chat_messages_${currentId.trim().toLowerCase()}`;
+    const currentId = rawId.trim().toLowerCase();
+    const sessionKey = `site_live_chat_messages_${currentId}`;
+
+    // Read existing local messages for optimistic retention
+    let existingLocal: any[] = [];
+    const saved = localStorage.getItem(sessionKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) existingLocal = parsed;
+      } catch (e) {}
+    }
 
     // A. Fetch from Supabase chat_messages
     let dbFormatted: any[] = [];
@@ -127,7 +138,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       const { data: dbMessages, error } = await supabase
         .from("chat_messages")
         .select("*")
-        .eq("sessionId", currentId)
+        .or(`sessionId.eq.${currentId},sessionId.eq.${rawId}`)
         .order("created_at", { ascending: true });
 
       if (!error && Array.isArray(dbMessages) && dbMessages.length > 0) {
@@ -141,6 +152,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
             senderName: m.sender === "admin" ? "choicomma VIP 케어팀" : "고객님",
             text: m.text,
             timestamp: `${hours}:${mins}`,
+            created_at: m.created_at,
           };
         });
       }
@@ -148,25 +160,43 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       console.warn("Notice: Failed to fetch chat_messages from Supabase:", e);
     }
 
-    if (dbFormatted.length > 0) {
-      setAdminLiveChatMessages(dbFormatted);
-      localStorage.setItem(sessionKey, JSON.stringify(dbFormatted));
-      return;
-    }
+    // B. Merge DB messages with any recent local optimistic messages not yet fetched
+    setAdminLiveChatMessages((prev) => {
+      const mergedMap = new Map<string, any>();
+      dbFormatted.forEach((m) => mergedMap.set(m.id, m));
 
-    // B. Fallback to localStorage
-    const saved = localStorage.getItem(sessionKey) || localStorage.getItem("site_live_chat_messages");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAdminLiveChatMessages(parsed);
-          return;
+      const candidates = [...prev, ...existingLocal];
+      const now = Date.now();
+
+      candidates.forEach((m) => {
+        if (!m || !m.id) return;
+        if (!mergedMap.has(m.id)) {
+          let isRecent = false;
+          const matchTime = m.id.match(/\d{10,}/);
+          if (matchTime) {
+            const timeVal = parseInt(matchTime[0], 10);
+            if (!isNaN(timeVal) && now - timeVal < 15000) {
+              isRecent = true;
+            }
+          } else if (m.created_at) {
+            const timeVal = new Date(m.created_at).getTime();
+            if (!isNaN(timeVal) && now - timeVal < 15000) {
+              isRecent = true;
+            }
+          }
+
+          if (isRecent) {
+            mergedMap.set(m.id, m);
+          }
         }
-      } catch (e) {}
-    }
+      });
 
-    setAdminLiveChatMessages([]);
+      const finalList = Array.from(mergedMap.values());
+      if (typeof window !== "undefined") {
+        localStorage.setItem(sessionKey, JSON.stringify(finalList));
+      }
+      return finalList;
+    });
   }, []);
 
   // Initialize and listen for storage & realtime events
@@ -180,6 +210,35 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
 
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("live_chat_updated", handleStorageChange);
+
+    // BroadcastChannel for instant cross-tab sync with customer chat widget
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        bc = new BroadcastChannel("choicomma_live_chat_sync");
+        bc.onmessage = (event) => {
+          if (event.data?.type === "USER_MESSAGE") {
+            const sid = (event.data.sessionId || "").toLowerCase().trim();
+            loadSessions();
+            if (activeSessionIdRef.current.toLowerCase().trim() === sid) {
+              setAdminLiveChatMessages((prev) => {
+                if (prev.some((m) => m.id === event.data.message.id)) return prev;
+                return [...prev, event.data.message];
+              });
+            }
+          } else if (event.data?.type === "CHAT_RESET" || event.data?.type === "CHAT_CLEARED") {
+            const sid = (event.data.sessionId || "").toLowerCase().trim();
+            if (sid) {
+              const sessionKey = `site_live_chat_messages_${sid}`;
+              localStorage.setItem(sessionKey, JSON.stringify([]));
+              if (activeSessionIdRef.current.toLowerCase().trim() === sid) {
+                setAdminLiveChatMessages([]);
+              }
+            }
+          }
+        };
+      } catch (e) {}
+    }
 
     // Supabase Realtime Channel
     const channel = supabase
@@ -209,6 +268,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("live_chat_updated", handleStorageChange);
+      if (bc) bc.close();
       supabase.removeChannel(channel);
       clearInterval(interval);
     };
@@ -231,6 +291,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     const textToSend = presetText || adminLiveInput;
     if (!textToSend.trim() || !activeSessionId) return;
 
+    const normalizedSessionId = activeSessionId.trim().toLowerCase();
     const dateNow = new Date();
     const hours = String(dateNow.getHours()).padStart(2, "0");
     const mins = String(dateNow.getMinutes()).padStart(2, "0");
@@ -241,32 +302,69 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       senderName: "choicomma VIP 케어팀",
       text: textToSend.trim(),
       timestamp: `${hours}:${mins}`,
+      created_at: new Date().toISOString(),
     };
 
-    const sessionKey = `site_live_chat_messages_${activeSessionId.trim().toLowerCase()}`;
-    const updated = [...adminLiveChatMessages, newReply];
-    setAdminLiveChatMessages(updated);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(sessionKey, JSON.stringify(updated));
-      window.dispatchEvent(new CustomEvent("live_chat_updated"));
-    }
+    const sessionKey = `site_live_chat_messages_${normalizedSessionId}`;
+    
+    // 1. Optimistic Local Update
+    setAdminLiveChatMessages((prev) => {
+      if (prev.some((m) => m.id === newReply.id)) return prev;
+      return [...prev, newReply];
+    });
 
-    // Supabase DB 메시지 동기화
-    try {
-      await supabase.from("chat_messages").insert([
-        {
-          id: newReply.id,
-          sessionId: activeSessionId,
-          sender: "admin",
-          text: newReply.text,
-        },
-      ]);
-    } catch (e) {
-      console.warn("Supabase insert admin message notice:", e);
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(sessionKey);
+      let list: any[] = [];
+      try {
+        if (saved) list = JSON.parse(saved);
+      } catch (e) {}
+      const merged = [...list.filter((m) => m.id !== newReply.id), newReply];
+      localStorage.setItem(sessionKey, JSON.stringify(merged));
     }
 
     setAdminLiveInput("");
+
+    // 2. Broadcast across tabs immediately (0ms lag for customer widget)
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        const sendBc = new BroadcastChannel("choicomma_live_chat_sync");
+        sendBc.postMessage({
+          type: "ADMIN_REPLY",
+          sessionId: normalizedSessionId,
+          message: newReply,
+        });
+        sendBc.close();
+      } catch (e) {}
+    }
+
+    // 3. Dispatch update event immediately so UI remains responsive
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("live_chat_updated"));
+    }
+
     triggerToast("💬 고객 라이브 채팅방으로 답변이 성공적으로 전송되었습니다!");
+
+    // 4. Background Supabase insert without blocking or causing UI blink
+    try {
+      supabase
+        .from("chat_messages")
+        .insert([
+          {
+            id: newReply.id,
+            sessionId: normalizedSessionId,
+            sender: "admin",
+            text: newReply.text,
+          },
+        ])
+        .then(({ error }) => {
+          if (error) {
+            console.warn("Supabase insert admin message notice:", error);
+          }
+        });
+    } catch (e) {
+      console.warn("Supabase insert admin message notice:", e);
+    }
   };
 
   // 4. End Live Chat Session
@@ -281,7 +379,8 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     );
     if (!isConfirmed) return;
 
-    const sessionKey = `site_live_chat_messages_${targetId.trim().toLowerCase()}`;
+    const normalizedTargetId = targetId.trim().toLowerCase();
+    const sessionKey = `site_live_chat_messages_${normalizedTargetId}`;
     setAdminLiveChatMessages([]);
     if (typeof window !== "undefined") {
       localStorage.setItem(sessionKey, JSON.stringify([]));
@@ -289,15 +388,33 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       localStorage.setItem("site_live_chat_ended", "true");
       window.dispatchEvent(new CustomEvent("live_chat_updated"));
       window.dispatchEvent(new CustomEvent("live_chat_ended"));
+
+      if ("BroadcastChannel" in window) {
+        try {
+          const sendBc = new BroadcastChannel("choicomma_live_chat_sync");
+          sendBc.postMessage({
+            type: "CHAT_ENDED",
+            sessionId: normalizedTargetId,
+          });
+          sendBc.close();
+        } catch (e) {}
+      }
     }
 
-    // Supabase 세션 상태 업데이트 (closed)
+    // Supabase 세션 상태 업데이트 (closed) 및 chat_messages 삭제
     try {
       await supabase
         .from("chat_sessions")
         .update({ status: "closed", updated_at: new Date().toISOString() })
         .eq("id", targetId);
-    } catch (e) {}
+
+      await supabase
+        .from("chat_messages")
+        .delete()
+        .or(`sessionId.eq.${normalizedTargetId},sessionId.eq.${targetId}`);
+    } catch (e) {
+      console.warn("Notice: Failed to delete chat_messages on end live chat:", e);
+    }
 
     setChatSessionsList((prev) => {
       const filtered = prev.filter((s) => s.id !== targetId);
@@ -313,16 +430,38 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
   };
 
   // 5. Clear Live Chat
-  const handleAdminClearLiveChat = () => {
+  const handleAdminClearLiveChat = async () => {
     const isConfirmed = window.confirm(
       "정말로 라이브 채팅 대화 기록을 전체 초기화하시겠습니까?\n이 작업은 복구할 수 없습니다."
     );
     if (!isConfirmed) return;
 
     if (activeSessionId && typeof window !== "undefined") {
-      const sessionKey = `site_live_chat_messages_${activeSessionId.trim().toLowerCase()}`;
+      const normalizedActiveId = activeSessionId.trim().toLowerCase();
+      const sessionKey = `site_live_chat_messages_${normalizedActiveId}`;
       localStorage.setItem(sessionKey, JSON.stringify([]));
       localStorage.setItem("site_live_chat_messages", JSON.stringify([]));
+
+      // Supabase chat_messages 삭제
+      try {
+        await supabase
+          .from("chat_messages")
+          .delete()
+          .or(`sessionId.eq.${normalizedActiveId},sessionId.eq.${activeSessionId}`);
+      } catch (e) {
+        console.warn("Notice: Failed to delete chat_messages from Supabase:", e);
+      }
+
+      if ("BroadcastChannel" in window) {
+        try {
+          const sendBc = new BroadcastChannel("choicomma_live_chat_sync");
+          sendBc.postMessage({
+            type: "CHAT_CLEARED",
+            sessionId: normalizedActiveId,
+          });
+          sendBc.close();
+        } catch (e) {}
+      }
     }
     setAdminLiveChatMessages([]);
     window.dispatchEvent(new CustomEvent("live_chat_updated"));
