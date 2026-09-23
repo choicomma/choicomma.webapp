@@ -25,21 +25,6 @@ const DEFAULT_CUSTOMERS = [
     role: "ADMIN",
     isAdmin: true,
   },
-  {
-    id: "CUST-DEMO-002",
-    name: "김민지",
-    email: "minji.kim@example.com",
-    phone: "010-9876-5432",
-    postcode: "06035",
-    address: "서울특별시 강남구 가로수길 42",
-    detailAddress: "3층 302호",
-    grade: "PLATINUM",
-    totalSpent: 12500000,
-    points: 35000,
-    couponsCount: 3,
-    joinedDate: "2026-02-15",
-    status: "Active",
-  },
 ];
 
 const DEFAULT_ADMIN_CUSTOMER = DEFAULT_CUSTOMERS[0];

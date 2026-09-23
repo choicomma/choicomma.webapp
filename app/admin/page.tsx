@@ -469,6 +469,28 @@ export default function AdminPage() {
   const isProductsLoadedRef = React.useRef(false);
   const [productsList, setProductsList] = useState<any[]>(INITIAL_CHOICOMMA_PRODUCTS);
 
+  // One-time legacy local storage cleanup on admin mount
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const hasCleaned = localStorage.getItem("choicomma_legacy_cleaned_v2");
+      if (!hasCleaned) {
+        localStorage.removeItem("admin_deleted_shipment_ids");
+        const savedSessions = localStorage.getItem("admin_chat_sessions");
+        if (savedSessions) {
+          try {
+            const parsed = JSON.parse(savedSessions);
+            if (Array.isArray(parsed)) {
+              const cleaned = parsed.filter((s: any) => s?.id && s.id !== "vip@choicomma.com" && !s?.name?.includes("최상위 VIP"));
+              localStorage.setItem("admin_chat_sessions", JSON.stringify(cleaned));
+            }
+          } catch {}
+        }
+        localStorage.setItem("choicomma_legacy_cleaned_v2", "true");
+      }
+    } catch {}
+  }, []);
+
   // Client-side hydration sync for productsList (Source of Truth: Central Server API /api/products)
   React.useEffect(() => {
     const fetchServerProducts = async () => {
@@ -496,7 +518,11 @@ export default function AdminPage() {
             }
             setProductsList(merged);
             if (typeof window !== "undefined") {
-              localStorage.setItem("admin_products", JSON.stringify(merged));
+              try {
+                localStorage.setItem("admin_products", JSON.stringify(merged));
+              } catch (e) {
+                console.warn("Notice: Skipped full products localStorage write due to size limit");
+              }
             }
             isProductsLoadedRef.current = true;
             return;
@@ -508,7 +534,9 @@ export default function AdminPage() {
 
       // Fallback
       if (typeof window !== "undefined") {
-        localStorage.setItem("admin_products", JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
+        try {
+          localStorage.setItem("admin_products", JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
+        } catch (e) {}
         setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
         isProductsLoadedRef.current = true;
       }

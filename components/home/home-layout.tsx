@@ -249,7 +249,9 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
           if (Array.isArray(serverData) && serverData.length > 0) {
             parsed = serverData;
             if (typeof window !== "undefined") {
-              localStorage.setItem("admin_products", JSON.stringify(serverData));
+              try {
+                localStorage.setItem("admin_products", JSON.stringify(serverData));
+              } catch (err) {}
             }
           }
         }

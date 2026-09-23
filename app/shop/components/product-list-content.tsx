@@ -46,7 +46,9 @@ export function ProductListContent({
             if (nonBanner.length > 0) {
               activeSourceProducts = nonBanner;
               if (typeof window !== "undefined") {
-                localStorage.setItem("admin_products", JSON.stringify(serverData));
+                try {
+                  localStorage.setItem("admin_products", JSON.stringify(serverData));
+                } catch (err) {}
               }
             }
           }

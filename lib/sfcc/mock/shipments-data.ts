@@ -1,3 +1,3 @@
-import { allMergedMockShipments } from "./mock-orders-dataset";
+import shipmentsJson from "./shipments-data.json";
 
-export const initialShipments: any[] = allMergedMockShipments;
+export const initialShipments: any[] = shipmentsJson || [];

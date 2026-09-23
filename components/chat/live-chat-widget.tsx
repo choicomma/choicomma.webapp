@@ -254,7 +254,84 @@ export function LiveChatWidget() {
     return `site_live_chat_messages_${id.trim().toLowerCase()}`;
   };
 
-  // Load chat messages from localStorage (only for authenticated members)
+  const registerUserSession = (status: "active" | "online" = "active") => {
+    if (typeof window === "undefined") return;
+    const email = localStorage.getItem("membership_user_email");
+    const phone = localStorage.getItem("membership_user_phone");
+    if (!email && !phone) return;
+
+    const rawId = email || phone || "";
+    const uEmail = email || `${rawId}@customer.choicomma.com`;
+    const uName = localStorage.getItem("membership_user_name") || "회원";
+
+    let userTier = "GENERAL";
+    let badgeColor = "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300";
+
+    const savedCustomers = localStorage.getItem("admin_customers");
+    if (savedCustomers) {
+      try {
+        const list: any[] = JSON.parse(savedCustomers);
+        const found = list.find((c: any) =>
+          (c.email && c.email.toLowerCase() === uEmail.toLowerCase()) ||
+          (c.phone && phone && c.phone.replace(/[^0-9]/g, "") === phone.replace(/[^0-9]/g, "")) ||
+          (c.name && c.name === uName)
+        );
+        if (found && (found.grade || found.tier)) {
+          userTier = (found.grade || found.tier).toUpperCase();
+        }
+      } catch (e) {}
+    }
+
+    if (userTier.includes("VVIP") || userTier.includes("BLACK")) {
+      badgeColor = "bg-neutral-950 text-white font-black border border-neutral-950";
+    } else if (userTier.includes("PLATINUM")) {
+      badgeColor = "bg-neutral-800 text-white font-black border border-neutral-800";
+    } else if (userTier.includes("GOLD")) {
+      badgeColor = "bg-neutral-200 text-neutral-900 border border-neutral-300";
+    } else if (userTier.includes("SILVER")) {
+      badgeColor = "bg-neutral-100 text-neutral-800 border border-neutral-200";
+    }
+
+    const savedSessions = localStorage.getItem("admin_chat_sessions");
+    let sessionList: any[] = [];
+    if (savedSessions) {
+      try { sessionList = JSON.parse(savedSessions); } catch (err) {}
+    }
+
+    const updatedSession = {
+      id: rawId,
+      name: uName.endsWith("님") ? uName : `${uName}님`,
+      email: uEmail,
+      tier: userTier,
+      badgeColor: badgeColor,
+      status: status,
+    };
+
+    const existingIndex = sessionList.findIndex((s) => s.id?.toLowerCase() === rawId.toLowerCase() || s.email?.toLowerCase() === uEmail.toLowerCase());
+    if (existingIndex >= 0) {
+      sessionList[existingIndex] = { ...sessionList[existingIndex], ...updatedSession };
+    } else {
+      sessionList = [updatedSession, ...sessionList];
+    }
+    localStorage.setItem("admin_chat_sessions", JSON.stringify(sessionList));
+
+    try {
+      supabase.from("chat_sessions").upsert([
+        {
+          id: rawId,
+          customerName: uName,
+          customerEmail: uEmail,
+          customerPhone: phone || "",
+          status: status,
+          updated_at: new Date().toISOString(),
+        }
+      ], { onConflict: "id" }).then(() => {});
+    } catch (e) {}
+
+    window.dispatchEvent(new CustomEvent("live_chat_updated"));
+  };
+
+  // Load chat messages from localStorage + Supabase (only for authenticated members)
   const loadMessages = () => {
     if (typeof window === "undefined") return;
     const authed = checkAuth();
@@ -274,23 +351,52 @@ export function LiveChatWidget() {
           if (lastMsg && (lastMsg.id?.startsWith("admin-close") || lastMsg.text?.includes("상담이 종료되었습니다"))) {
             setIsOpen(false);
           }
-          return;
         }
       } catch (e) { }
+    } else {
+      // Default initial message on first ever visit
+      const defaultInit: ChatMessage[] = [
+        {
+          id: "msg-welcome-1",
+          sender: "admin",
+          senderName: t.teamName,
+          text: t.welcomeText,
+          timestamp: "NOW",
+        },
+      ];
+      setMessages(defaultInit);
+      localStorage.setItem(chatKey, JSON.stringify(defaultInit));
     }
 
-    // Default initial message on first ever visit
-    const defaultInit: ChatMessage[] = [
-      {
-        id: "msg-welcome-1",
-        sender: "admin",
-        senderName: t.teamName,
-        text: t.welcomeText,
-        timestamp: "NOW",
-      },
-    ];
-    setMessages(defaultInit);
-    localStorage.setItem(chatKey, JSON.stringify(defaultInit));
+    // Sync from Supabase chat_messages
+    const email = localStorage.getItem("membership_user_email");
+    const phone = localStorage.getItem("membership_user_phone");
+    const rawId = email || phone || "";
+    if (rawId) {
+      supabase
+        .from("chat_messages")
+        .select("*")
+        .eq("sessionId", rawId)
+        .order("created_at", { ascending: true })
+        .then(({ data: dbMsgs, error }) => {
+          if (!error && Array.isArray(dbMsgs) && dbMsgs.length > 0) {
+            const formatted: ChatMessage[] = dbMsgs.map((m: any) => {
+              const d = new Date(m.created_at || Date.now());
+              const hours = String(d.getHours()).padStart(2, "0");
+              const mins = String(d.getMinutes()).padStart(2, "0");
+              return {
+                id: m.id,
+                sender: m.sender || "user",
+                senderName: m.sender === "admin" ? t.teamName : (t.userName || "Customer"),
+                text: m.text,
+                timestamp: `${hours}:${mins}`,
+              };
+            });
+            setMessages(formatted);
+            localStorage.setItem(chatKey, JSON.stringify(formatted));
+          }
+        });
+    }
   };
 
   useEffect(() => {
@@ -329,6 +435,46 @@ export function LiveChatWidget() {
       window.removeEventListener("live_chat_ended", handleChatEnded);
     };
   }, [currentLang]);
+
+  // Periodic sync & realtime updates from Supabase when chat is open
+  useEffect(() => {
+    if (!isOpen) return;
+    registerUserSession("active");
+    loadMessages();
+
+    const email = typeof window !== "undefined" ? localStorage.getItem("membership_user_email") : null;
+    const phone = typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") : null;
+    const rawId = email || phone || "";
+
+    let channel: any = null;
+    if (rawId) {
+      const channelId = `customer_live_chat_${rawId.replace(/[^a-zA-Z0-9]/g, "_")}`;
+      channel = supabase
+        .channel(channelId)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "chat_messages",
+            filter: `sessionId=eq.${rawId}`,
+          },
+          () => {
+            loadMessages();
+          }
+        )
+        .subscribe();
+    }
+
+    const interval = setInterval(() => {
+      loadMessages();
+    }, 3500);
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+  }, [isOpen]);
 
   // Scroll to bottom on new message or typing indicator
   useEffect(() => {
@@ -372,121 +518,26 @@ export function LiveChatWidget() {
     const chatKey = getUserChatKey();
     localStorage.setItem(chatKey, JSON.stringify(updated));
 
-    // Register active user to admin chat sessions list with accurate grade/tier
-    if (typeof window !== "undefined") {
-      const email = localStorage.getItem("membership_user_email");
-      const phone = localStorage.getItem("membership_user_phone");
+    const email = typeof window !== "undefined" ? localStorage.getItem("membership_user_email") : null;
+    const phone = typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") : null;
+    const rawId = email || phone || "";
 
-      // Strictly register only verified logged-in members (never register guests)
-      if (email || phone) {
-        const rawId = email || phone || "";
-        const uEmail = email || `${rawId}@customer.choicomma.com`;
-        const uName = localStorage.getItem("membership_user_name") || "회원";
+    // Register active user to admin chat sessions list with accurate grade/tier & Supabase
+    registerUserSession("active");
 
-        // Determine real tier/grade from admin_customers or user_grade
-        let userTier = "GENERAL";
-        let badgeColor = "bg-neutral-200 text-neutral-800 font-bold";
-
-        if (uEmail === "admin" || uEmail === "admin@choicomma.com" || localStorage.getItem("user_role") === "admin") {
-          userTier = "관리자";
-          badgeColor = "bg-rose-600 text-white font-black";
-        } else {
-          const savedCustomers = localStorage.getItem("admin_customers");
-          let foundGrade = "";
-          if (savedCustomers) {
-            try {
-              const list: any[] = JSON.parse(savedCustomers);
-              const found = list.find((c: any) =>
-                (c.email && c.email.toLowerCase() === uEmail.toLowerCase()) ||
-                (c.phone && phone && c.phone.replace(/[^0-9]/g, "") === phone.replace(/[^0-9]/g, "")) ||
-                (c.name && c.name === uName)
-              );
-              if (found && (found.grade || found.tier)) {
-                foundGrade = (found.grade || found.tier).toUpperCase();
-              }
-            } catch (e) {}
-          }
-          if (!foundGrade) {
-            foundGrade = (localStorage.getItem("user_grade") || "GENERAL").toUpperCase();
-          }
-
-          if (foundGrade.includes("VVIP") || foundGrade.includes("BLACK")) {
-            userTier = "VVIP";
-            badgeColor = "bg-neutral-950 text-amber-400 font-black border border-amber-400/50";
-          } else if (foundGrade.includes("PLATINUM") || foundGrade.includes("플래티넘")) {
-            userTier = "PLATINUM";
-            badgeColor = "bg-purple-100 text-purple-800 font-black border border-purple-300";
-          } else if (foundGrade.includes("GOLD") || foundGrade.includes("골드")) {
-            userTier = "GOLD";
-            badgeColor = "bg-amber-100 text-amber-900 font-black border border-amber-300";
-          } else if (foundGrade.includes("SILVER") || foundGrade.includes("실버")) {
-            userTier = "SILVER";
-            badgeColor = "bg-slate-200 text-slate-800 font-black border border-slate-300";
-          } else if (foundGrade.includes("VIP")) {
-            userTier = "VIP";
-            badgeColor = "bg-amber-400 text-neutral-950 font-black";
-          } else {
-            userTier = "일반회원";
-            badgeColor = "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300";
-          }
-        }
-
-        const savedSessions = localStorage.getItem("admin_chat_sessions");
-        let sessionList: any[] = [];
-        if (savedSessions) {
-          try { sessionList = JSON.parse(savedSessions); } catch (err) { }
-        }
-
-        const updatedSession = {
-          id: rawId,
-          name: uName.endsWith("님") ? uName : `${uName}님`,
-          email: uEmail,
-          tier: userTier,
-          badgeColor: badgeColor,
-          status: "online",
-        };
-
-        const existingIndex = sessionList.findIndex((s) => s.id?.toLowerCase() === rawId.toLowerCase() || s.email?.toLowerCase() === uEmail.toLowerCase());
-        if (existingIndex >= 0) {
-          sessionList[existingIndex] = { ...sessionList[existingIndex], ...updatedSession };
-        } else {
-          sessionList = [updatedSession, ...sessionList];
-        }
-        localStorage.setItem("admin_chat_sessions", JSON.stringify(sessionList));
-
-        // Supabase DB 영속 저장 (chat_sessions & chat_messages)
-        try {
-          supabase
-            .from("chat_sessions")
-            .upsert(
-              [
-                {
-                  id: rawId,
-                  customerName: uName,
-                  customerEmail: uEmail,
-                  customerPhone: phone || "",
-                  status: "active",
-                },
-              ],
-              { onConflict: "id" }
-            )
-            .then(() => {
-              supabase
-                .from("chat_messages")
-                .insert([
-                  {
-                    id: newMsg.id,
-                    sessionId: rawId,
-                    sender: "user",
-                    text: newMsg.text || (newMsg.images?.length ? "[사진 첨부]" : ""),
-                  },
-                ])
-                .then(() => {});
-            });
-        } catch (dbErr) {
-          console.warn("Notice: Failed to sync chat to Supabase:", dbErr);
-        }
-      }
+    // Supabase DB message insert
+    if (rawId) {
+      supabase
+        .from("chat_messages")
+        .insert([
+          {
+            id: newMsg.id,
+            sessionId: rawId,
+            sender: "user",
+            text: newMsg.text || (newMsg.images?.length ? "[사진 첨부]" : ""),
+          },
+        ])
+        .then(() => {});
     }
 
     window.dispatchEvent(new CustomEvent("live_chat_updated"));
@@ -578,6 +629,20 @@ export function LiveChatWidget() {
           setMessages(updatedWithAuto);
           localStorage.setItem(chatKey, JSON.stringify(updatedWithAuto));
           window.dispatchEvent(new CustomEvent("live_chat_updated"));
+
+          if (rawId) {
+            supabase
+              .from("chat_messages")
+              .insert([
+                {
+                  id: autoReply.id,
+                  sessionId: rawId,
+                  sender: "admin",
+                  text: autoReply.text,
+                },
+              ])
+              .then(() => {});
+          }
         }
       }, totalDeliveryTime);
     }
@@ -642,6 +707,7 @@ export function LiveChatWidget() {
               setIsOpen(true);
               setIsMinimized(false);
               setUnreadCount(0);
+              registerUserSession("active");
             }}
             className="group relative w-[60px] h-[60px] rounded-full bg-neutral-950 hover:bg-black text-white shadow-2xl transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 border-2 border-neutral-700 shrink-0"
             title={t.floatingButton}

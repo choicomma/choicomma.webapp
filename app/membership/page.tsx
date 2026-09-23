@@ -662,7 +662,7 @@ function MembershipContent() {
   return (
     <div className="flex min-h-screen bg-[#FAF9F5] text-neutral-900 font-sans items-start">
       {/* Left Sidebar */}
-      <aside className="w-52 xl:w-56 border-r border-neutral-200/80 bg-white/60 backdrop-blur-md px-3.5 xl:px-4 py-8 flex flex-col justify-between max-md:hidden shrink-0 sticky top-0 h-screen">
+      <aside className="w-64 lg:w-72 xl:w-80 border-r border-neutral-200/80 bg-white/60 backdrop-blur-md px-4 xl:px-5 py-8 flex flex-col justify-between max-md:hidden shrink-0 sticky top-0 h-screen">
         <div>
           {/* Brand Logo Header */}
           <div className="mb-6 pl-1">
@@ -678,17 +678,17 @@ function MembershipContent() {
 
           {/* User Card & Logout */}
           <div className="space-y-2 mb-6 pb-4 border-b border-neutral-200/80">
-            <div className="flex items-center gap-2.5 p-2.5 bg-neutral-100/80 rounded-2xl border border-neutral-200/60 shadow-2xs">
-              <Avatar className="w-8 h-8 border border-neutral-300">
-                <AvatarFallback className="bg-neutral-950 text-white font-extrabold text-[10px]">
+            <div className="flex items-center gap-3 p-3 bg-neutral-100/80 rounded-2xl border border-neutral-200/60 shadow-2xs">
+              <Avatar className="w-9 h-9 border border-neutral-300 shrink-0">
+                <AvatarFallback className="bg-neutral-950 text-white font-extrabold text-[11px]">
                   MY
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-extrabold text-neutral-950 truncate">{userName} 님</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs xl:text-sm font-extrabold text-neutral-950 truncate">{userName} 님</p>
                   <span
-                    className={`text-[9px] font-black px-1.5 py-0.2 rounded font-mono ${
+                    className={`text-[10px] font-black px-1.5 py-0.2 rounded font-mono shrink-0 ${
                       userGrade === "VVIP"
                         ? "bg-neutral-950 text-white border border-neutral-800"
                         : userGrade === "PLATINUM"
@@ -703,7 +703,7 @@ function MembershipContent() {
                     {userGrade}
                   </span>
                 </div>
-                <p className="text-[10px] text-neutral-500 truncate">{userEmail}</p>
+                <p className="text-[11px] text-neutral-500 truncate">{userEmail}</p>
               </div>
             </div>
             <button

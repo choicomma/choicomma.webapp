@@ -1,0 +1,700 @@
+[
+  {
+    "key": "STORAGE_KEYS.IS_LOGGED_IN",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.SESSION_EXPIRES_AT",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.SESSION_EXPIRES_AT, String(expiresAt",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.USER_ADDRESS",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.USER_ADDRESS_DETAIL",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.USER_EMAIL",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.USER_GRADE",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.USER_ID",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.USER_NAME",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.USER_PHONE",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.USER_POINTS",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.USER_POSTCODE",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "STORAGE_KEYS.USER_ROLE",
+    "files": [
+      "lib\\auth\\customer-session.ts"
+    ]
+  },
+  {
+    "key": "admin_auto_reply_delay",
+    "files": [
+      "app\\admin\\components\\inquiries-management.tsx",
+      "components\\chat\\live-chat-widget.tsx"
+    ]
+  },
+  {
+    "key": "admin_auto_reply_enabled",
+    "files": [
+      "app\\admin\\components\\inquiries-management.tsx",
+      "components\\chat\\live-chat-widget.tsx"
+    ]
+  },
+  {
+    "key": "admin_auto_reply_fallback",
+    "files": [
+      "app\\admin\\components\\inquiries-management.tsx",
+      "components\\chat\\live-chat-widget.tsx"
+    ]
+  },
+  {
+    "key": "admin_auto_reply_rules",
+    "files": [
+      "app\\admin\\components\\inquiries-management.tsx",
+      "components\\chat\\live-chat-widget.tsx"
+    ]
+  },
+  {
+    "key": "admin_chat_sessions",
+    "files": [
+      "components\\chat\\live-chat-widget.tsx",
+      "hooks\\admin\\useLiveChat.ts"
+    ]
+  },
+  {
+    "key": "admin_customer_inquiries",
+    "files": [
+      "hooks\\admin\\useInquiries.ts"
+    ]
+  },
+  {
+    "key": "admin_customers",
+    "files": [
+      "app\\admin\\components\\inquiries-management.tsx",
+      "app\\admin\\components\\membership-tiers-management.tsx",
+      "app\\admin\\components\\orders-management.tsx",
+      "app\\checkout\\components\\checkout-client-wrapper.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx",
+      "components\\chat\\live-chat-widget.tsx",
+      "hooks\\admin\\useCustomers.ts",
+      "hooks\\admin\\useLiveChat.ts"
+    ]
+  },
+  {
+    "key": "admin_deleted_shipment_ids",
+    "files": [
+      "app\\admin\\components\\orders-management.tsx",
+      "hooks\\admin\\useShipments.ts"
+    ]
+  },
+  {
+    "key": "admin_inbound_schedules",
+    "files": [
+      "hooks\\admin\\useInboundSchedules.ts"
+    ]
+  },
+  {
+    "key": "admin_orders",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\order\\success\\page.tsx",
+      "hooks\\admin\\useShipments.ts",
+      "lib\\shipping\\order-id.ts"
+    ]
+  },
+  {
+    "key": "admin_products",
+    "files": [
+      "app\\admin\\components\\orders-management.tsx",
+      "app\\admin\\page.tsx",
+      "app\\membership\\page.tsx",
+      "app\\product\\[handle]\\components\\client-product-fallback.tsx",
+      "app\\product\\[handle]\\components\\product-detail-header.tsx",
+      "app\\product\\[handle]\\components\\product-page-client-wrapper.tsx",
+      "app\\product\\[handle]\\components\\related-products.tsx",
+      "app\\shop\\components\\product-list-content.tsx",
+      "components\\cart\\cart-context.tsx",
+      "components\\home\\home-layout.tsx",
+      "components\\home\\main-product-display.tsx"
+    ]
+  },
+  {
+    "key": "admin_quick_reply_templates",
+    "files": [
+      "app\\admin\\components\\inquiries-management.tsx"
+    ]
+  },
+  {
+    "key": "admin_secret_timesales",
+    "files": [
+      "app\\admin\\components\\timesale-management.tsx",
+      "app\\membership\\page.tsx",
+      "app\\product\\[handle]\\components\\product-detail-header.tsx",
+      "app\\shop\\components\\product-card\\index.tsx",
+      "app\\shop\\components\\product-list-content.tsx",
+      "components\\home\\home-layout.tsx",
+      "components\\layout\\header\\index.tsx",
+      "hooks\\admin\\useTimesale.ts"
+    ]
+  },
+  {
+    "key": "admin_set_sales",
+    "files": [
+      "app\\admin\\page.tsx",
+      "components\\products\\set-bundle-section.tsx",
+      "lib\\sfcc\\set-products-helper.ts"
+    ]
+  },
+  {
+    "key": "admin_shipments",
+    "files": [
+      "app\\admin\\components\\orders-management.tsx",
+      "app\\membership\\page.tsx",
+      "app\\order\\success\\page.tsx",
+      "hooks\\admin\\useShipments.ts",
+      "lib\\shipping\\order-id.ts"
+    ]
+  },
+  {
+    "key": "admin_shipping_policy",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\checkout\\components\\checkout-client-wrapper.tsx",
+      "app\\membership\\page.tsx",
+      "hooks\\admin\\useShipments.ts",
+      "lib\\shipping\\bundle-detector.ts"
+    ]
+  },
+  {
+    "key": "admin_timesale_product_ids",
+    "files": [
+      "app\\admin\\page.tsx"
+    ]
+  },
+  {
+    "key": "chatKey",
+    "files": [
+      "components\\chat\\live-chat-widget.tsx"
+    ]
+  },
+  {
+    "key": "chatKey, JSON.stringify(defaultInit",
+    "files": [
+      "components\\chat\\live-chat-widget.tsx"
+    ]
+  },
+  {
+    "key": "chatKey, JSON.stringify(formatted",
+    "files": [
+      "components\\chat\\live-chat-widget.tsx"
+    ]
+  },
+  {
+    "key": "chatKey, JSON.stringify(updated",
+    "files": [
+      "components\\chat\\live-chat-widget.tsx"
+    ]
+  },
+  {
+    "key": "chatKey, JSON.stringify(updatedWithAuto",
+    "files": [
+      "components\\chat\\live-chat-widget.tsx"
+    ]
+  },
+  {
+    "key": "choicomma_cart",
+    "files": [
+      "app\\order\\success\\page.tsx",
+      "components\\cart\\cart-context.tsx"
+    ]
+  },
+  {
+    "key": "choicomma_label_offset_x",
+    "files": [
+      "app\\admin\\components\\cj-label-print.tsx"
+    ]
+  },
+  {
+    "key": "choicomma_label_offset_y",
+    "files": [
+      "app\\admin\\components\\cj-label-print.tsx"
+    ]
+  },
+  {
+    "key": "choicomma_label_paper_mode",
+    "files": [
+      "app\\admin\\components\\cj-label-print.tsx"
+    ]
+  },
+  {
+    "key": "choicomma_label_preview_mode",
+    "files": [
+      "app\\admin\\components\\cj-label-print.tsx"
+    ]
+  },
+  {
+    "key": "choicomma_label_rotation",
+    "files": [
+      "app\\admin\\components\\cj-label-print.tsx"
+    ]
+  },
+  {
+    "key": "choicomma_lang",
+    "files": [
+      "lib\\i18n\\translation.ts"
+    ]
+  },
+  {
+    "key": "choicomma_printer_host",
+    "files": [
+      "app\\admin\\components\\cj-label-print.tsx"
+    ]
+  },
+  {
+    "key": "choicomma_saved_printer_hosts",
+    "files": [
+      "app\\admin\\components\\cj-label-print.tsx"
+    ]
+  },
+  {
+    "key": "cj_api_key",
+    "files": [
+      "hooks\\admin\\useShipments.ts"
+    ]
+  },
+  {
+    "key": "cj_client_code",
+    "files": [
+      "app\\admin\\page.tsx",
+      "hooks\\admin\\useShipments.ts"
+    ]
+  },
+  {
+    "key": "cj_contract_no",
+    "files": [
+      "app\\admin\\page.tsx",
+      "hooks\\admin\\useShipments.ts"
+    ]
+  },
+  {
+    "key": "cj_sender_address",
+    "files": [
+      "app\\admin\\page.tsx",
+      "hooks\\admin\\useShipments.ts"
+    ]
+  },
+  {
+    "key": "global_sales_settings",
+    "files": [
+      "lib\\currency\\currency-service.ts"
+    ]
+  },
+  {
+    "key": "googtrans",
+    "files": [
+      "components\\layout\\header\\language-selector.tsx"
+    ]
+  },
+  {
+    "key": "is_logged_in",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx",
+      "components\\chat\\live-chat-widget.tsx",
+      "components\\layout\\header\\index.tsx",
+      "components\\layout\\header\\mobile-menu.tsx"
+    ]
+  },
+  {
+    "key": "key",
+    "files": [
+      "lib\\shipping\\order-id.ts"
+    ]
+  },
+  {
+    "key": "key, String(nextSeq",
+    "files": [
+      "lib\\shipping\\order-id.ts"
+    ]
+  },
+  {
+    "key": "main_badge_text",
+    "files": [
+      "app\\admin\\page.tsx",
+      "components\\home\\main-client-features.tsx"
+    ]
+  },
+  {
+    "key": "main_notice_active",
+    "files": [
+      "app\\admin\\page.tsx"
+    ]
+  },
+  {
+    "key": "main_notice_banner",
+    "files": [
+      "app\\admin\\page.tsx"
+    ]
+  },
+  {
+    "key": "membership_points_history",
+    "files": [
+      "app\\admin\\components\\orders-management.tsx",
+      "app\\membership\\page.tsx"
+    ]
+  },
+  {
+    "key": "membership_tiers_policy",
+    "files": [
+      "app\\admin\\components\\membership-tiers-management.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_address",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\checkout\\components\\checkout-client-wrapper.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_address_detail",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\checkout\\components\\checkout-client-wrapper.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_email",
+    "files": [
+      "app\\admin\\components\\orders-management.tsx",
+      "app\\admin\\page.tsx",
+      "app\\checkout\\components\\checkout-client-wrapper.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx",
+      "app\\product\\[handle]\\components\\product-detail-header.tsx",
+      "app\\shop\\components\\product-card\\index.tsx",
+      "app\\shop\\components\\product-list-content.tsx",
+      "components\\chat\\live-chat-widget.tsx",
+      "components\\home\\home-layout.tsx",
+      "components\\layout\\header\\index.tsx",
+      "components\\layout\\header\\mobile-menu.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_id",
+    "files": [
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx",
+      "app\\order\\success\\page.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_name",
+    "files": [
+      "app\\admin\\components\\orders-management.tsx",
+      "app\\admin\\page.tsx",
+      "app\\checkout\\components\\checkout-client-wrapper.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx",
+      "components\\chat\\live-chat-widget.tsx",
+      "components\\layout\\header\\index.tsx",
+      "components\\layout\\header\\mobile-menu.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_phone",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\checkout\\components\\checkout-client-wrapper.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx",
+      "components\\chat\\live-chat-widget.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_points",
+    "files": [
+      "app\\admin\\components\\orders-management.tsx",
+      "app\\admin\\page.tsx",
+      "app\\checkout\\components\\checkout-client-wrapper.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_postcode",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\checkout\\components\\checkout-client-wrapper.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_refund_account",
+    "files": [
+      "app\\checkout\\components\\checkout-client-wrapper.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_refund_bank",
+    "files": [
+      "app\\checkout\\components\\checkout-client-wrapper.tsx"
+    ]
+  },
+  {
+    "key": "membership_user_refund_holder",
+    "files": [
+      "app\\checkout\\components\\checkout-client-wrapper.tsx"
+    ]
+  },
+  {
+    "key": "secret_timesale_category",
+    "files": [
+      "app\\admin\\page.tsx"
+    ]
+  },
+  {
+    "key": "secret_timesale_discount",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\product\\[handle]\\components\\product-detail-header.tsx",
+      "app\\shop\\components\\product-card\\index.tsx",
+      "app\\shop\\components\\product-list-content.tsx",
+      "components\\products\\featured-product-label.tsx",
+      "components\\products\\latest-product-card.tsx"
+    ]
+  },
+  {
+    "key": "secret_timesale_global_discount",
+    "files": [
+      "components\\home\\home-layout.tsx"
+    ]
+  },
+  {
+    "key": "secret_timesale_item_expiries",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\product\\[handle]\\components\\product-detail-header.tsx",
+      "hooks\\admin\\useTimesale.ts"
+    ]
+  },
+  {
+    "key": "secret_timesale_item_settings",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\product\\[handle]\\components\\product-detail-header.tsx",
+      "app\\shop\\components\\product-list-content.tsx",
+      "components\\home\\home-layout.tsx",
+      "components\\products\\featured-product-label.tsx",
+      "components\\products\\latest-product-card.tsx",
+      "hooks\\admin\\useTimesale.ts"
+    ]
+  },
+  {
+    "key": "secret_timesale_product_ids",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\product\\[handle]\\components\\product-detail-header.tsx",
+      "app\\shop\\components\\product-card\\index.tsx",
+      "app\\shop\\components\\product-list-content.tsx",
+      "components\\home\\home-layout.tsx",
+      "components\\products\\featured-product-label.tsx",
+      "components\\products\\latest-product-card.tsx"
+    ]
+  },
+  {
+    "key": "secret_timesale_seconds",
+    "files": [
+      "app\\admin\\page.tsx"
+    ]
+  },
+  {
+    "key": "secret_timesale_status",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\product\\[handle]\\components\\product-detail-header.tsx",
+      "app\\shop\\components\\product-card\\index.tsx",
+      "components\\home\\home-layout.tsx",
+      "components\\products\\featured-product-label.tsx",
+      "components\\products\\latest-product-card.tsx"
+    ]
+  },
+  {
+    "key": "secret_timesale_title",
+    "files": [
+      "app\\admin\\page.tsx"
+    ]
+  },
+  {
+    "key": "sessionKey",
+    "files": [
+      "hooks\\admin\\useLiveChat.ts"
+    ]
+  },
+  {
+    "key": "sessionKey, JSON.stringify([]",
+    "files": [
+      "hooks\\admin\\useLiveChat.ts"
+    ]
+  },
+  {
+    "key": "sessionKey, JSON.stringify(dbFormatted",
+    "files": [
+      "hooks\\admin\\useLiveChat.ts"
+    ]
+  },
+  {
+    "key": "sessionKey, JSON.stringify(updated",
+    "files": [
+      "hooks\\admin\\useLiveChat.ts"
+    ]
+  },
+  {
+    "key": "shipping_policy",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\checkout\\components\\checkout-client-wrapper.tsx",
+      "app\\membership\\page.tsx",
+      "hooks\\admin\\useShipments.ts",
+      "lib\\shipping\\bundle-detector.ts"
+    ]
+  },
+  {
+    "key": "site_live_chat_ended",
+    "files": [
+      "components\\chat\\live-chat-widget.tsx",
+      "hooks\\admin\\useLiveChat.ts"
+    ]
+  },
+  {
+    "key": "site_live_chat_messages",
+    "files": [
+      "hooks\\admin\\useLiveChat.ts"
+    ]
+  },
+  {
+    "key": "storageKey",
+    "files": [
+      "app\\product\\[handle]\\components\\product-comments.tsx"
+    ]
+  },
+  {
+    "key": "storageKey, JSON.stringify([]",
+    "files": [
+      "app\\product\\[handle]\\components\\product-comments.tsx"
+    ]
+  },
+  {
+    "key": "storageKey, JSON.stringify(cleaned",
+    "files": [
+      "app\\product\\[handle]\\components\\product-comments.tsx"
+    ]
+  },
+  {
+    "key": "storageKey, JSON.stringify(updated",
+    "files": [
+      "app\\product\\[handle]\\components\\product-comments.tsx"
+    ]
+  },
+  {
+    "key": "used_coupon_codes",
+    "files": [
+      "app\\checkout\\components\\checkout-client-wrapper.tsx"
+    ]
+  },
+  {
+    "key": "user_grade",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx"
+    ]
+  },
+  {
+    "key": "user_pwd_",
+    "files": [
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx",
+      "hooks\\admin\\useCustomers.ts"
+    ]
+  },
+  {
+    "key": "user_pwd_admin",
+    "files": [
+      "app\\login\\page.tsx"
+    ]
+  },
+  {
+    "key": "user_role",
+    "files": [
+      "app\\admin\\page.tsx",
+      "app\\login\\page.tsx",
+      "app\\membership\\page.tsx",
+      "app\\product\\[handle]\\components\\product-detail-header.tsx",
+      "app\\shop\\components\\product-card\\index.tsx",
+      "app\\shop\\components\\product-list-content.tsx",
+      "components\\chat\\live-chat-widget.tsx",
+      "components\\home\\home-layout.tsx",
+      "components\\layout\\header\\index.tsx",
+      "components\\layout\\header\\mobile-menu.tsx"
+    ]
+  }
+]

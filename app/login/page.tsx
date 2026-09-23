@@ -166,7 +166,7 @@ export default function LoginPage() {
     } else {
       setEmailCheckMessage({
         status: "success",
-        text: "사용 가능한 로그인 ID (이메일 주소)입니다.",
+        text: "사용 가능한 이메일 주소입니다.",
       });
       setIsEmailChecked(true);
       setToastMsg("사용 가능한 이메일 주소입니다.");
@@ -327,7 +327,7 @@ export default function LoginPage() {
         return;
       }
       if (!isEmailChecked) {
-        alert("이메일 주소(로그인 ID) 중복 확인을 진행해 주세요.");
+        alert("이메일 주소 중복 확인을 진행해 주세요.");
         return;
       }
       if (!phone.trim()) {
@@ -749,7 +749,7 @@ export default function LoginPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
-                      이메일 주소 (로그인 ID) <span className="text-neutral-950 font-bold">*</span>
+                      이메일 <span className="text-neutral-950 font-bold">*</span>
                     </label>
                     <span className="text-[10px] text-neutral-500 font-medium">로그인 아이디로 사용됩니다</span>
                   </div>
@@ -911,7 +911,7 @@ export default function LoginPage() {
             {!isSignUp && (
               <div>
                 <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  이메일 (로그인 ID) 또는 휴대폰 번호
+                  이메일
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-700" />
@@ -922,7 +922,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="이메일 주소 또는 휴대폰 번호 입력"
+                    placeholder="이메일 주소를 입력해주세요"
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium font-mono"
                   />
                 </div>
