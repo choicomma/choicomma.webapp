@@ -87,7 +87,7 @@ export default function TossPaymentModal({
         if (typeof activeWidgets.setAmount === "function") {
           await activeWidgets.setAmount({
             currency: "KRW",
-            value: totalAmount > 0 ? totalAmount : 50000,
+            value: totalAmount,
           });
         }
 
@@ -137,7 +137,7 @@ export default function TossPaymentModal({
           method: "CARD",
           amount: {
             currency: "KRW",
-            value: totalAmount > 0 ? totalAmount : 50000,
+            value: totalAmount,
           },
           orderId,
           orderName: orderName || "초이콤마 오리지널 패션 주문건",

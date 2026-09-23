@@ -39,51 +39,43 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
 
   useEffect(() => {
     async function confirmPayment() {
-      if (!paymentKey || !orderId || !amount) {
+      // 1. 주문 번호가 없는 경우 (직접 URL 접속 등)
+      if (!orderId) {
         setIsLoading(false);
-        setIsSuccess(true); // Fallback for direct test view
-        if (typeof window !== "undefined") {
-          try {
-            const keys = Object.keys(sessionStorage).filter((k) => k.startsWith("pending_order_"));
-            if (keys.length > 0) {
-              const raw = sessionStorage.getItem(keys[keys.length - 1]);
-              if (raw) {
-                const po = JSON.parse(raw);
-                if (po?.earnedPoints) {
-                  setEarnedPointsInfo({
-                    earnedPoints: Number(po.earnedPoints),
-                    pointRate: Number(po.pointRate) || 1,
-                    userGrade: po.userGrade || "GENERAL",
-                  });
-                }
-                if (po?.formData?.paymentMethod) {
-                  const methodMap: Record<string, string> = {
-                    CARD: "신용·체크카드",
-                    EASY_PAY: "간편결제 (카카오/네이버/토스)",
-                    VIRTUAL_ACCOUNT: "가상계좌 (무통장입금)",
-                    TRANSFER: "실시간 계좌이체",
-                    MOBILE_PHONE: "휴대폰 소액결제",
-                  };
-                  setOrderPaymentMethod(methodMap[po.formData.paymentMethod] || "신용·체크카드");
-                }
-              }
-            }
-          } catch (e) {}
-        }
+        setIsSuccess(true);
         return;
       }
 
-      try {
-        const res = await fetch("/api/payment/toss/confirm", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentKey, orderId, amount }),
-        });
+      // 2. 0원 결제 (전액 적립금 또는 전액 쿠폰 결제)인지 확인
+      const isZeroPayment = Number(amount) === 0 || !paymentKey || paymentKey === "FREE";
 
-        const json = await res.json();
-        if (res.ok && json.success) {
-          setIsSuccess(true);
-          setPaymentData(json.data);
+      let paymentResultData: any = null;
+
+      if (!isZeroPayment) {
+        try {
+          const res = await fetch("/api/payment/toss/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentKey, orderId, amount }),
+          });
+
+          const json = await res.json();
+          if (res.ok && json.success) {
+            paymentResultData = json.data;
+            setPaymentData(json.data);
+          } else {
+            setErrorMessage(json.message || "결제 승인 과정에서 오류가 발생했습니다.");
+            setIsLoading(false);
+            return;
+          }
+        } catch (err: any) {
+          setErrorMessage(err.message || "네트워크 통신 오류가 발생했습니다.");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      setIsSuccess(true);
 
           // Save live order into localStorage for Admin live order tracking
           if (typeof window !== "undefined") {
@@ -100,13 +92,22 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               if (rawPending) pendingOrder = JSON.parse(rawPending);
             } catch (e) {}
 
+            const finalMethod = isZeroPayment
+              ? (pendingOrder?.appliedPoints > 0 ? "전액 적립금 결제" : "전액 할인 쿠폰 결제")
+              : (paymentResultData?.method ||
+                  (pendingOrder?.formData?.paymentMethod === "TRANSFER"
+                    ? "실시간 계좌이체"
+                    : pendingOrder?.formData?.paymentMethod === "EASY_PAY"
+                    ? "간편결제 (카카오/네이버/토스)"
+                    : "신용·체크카드 (토스)"));
+
             const newOrder = {
               id: orderId,
               orderId: orderId,
-              customer: json.data?.customerName || pendingOrder?.formData?.ordererName || pendingOrder?.formData?.recipientName || "VIP 고객님",
-              ordererName: pendingOrder?.formData?.ordererName || json.data?.customerName || pendingOrder?.formData?.recipientName || "VIP 고객님",
-              email: json.data?.customerEmail || pendingOrder?.formData?.ordererEmail || "customer@choicomma.com",
-              recipient: pendingOrder?.formData?.recipientName || json.data?.customerName || "고객님",
+              customer: paymentResultData?.customerName || pendingOrder?.formData?.ordererName || pendingOrder?.formData?.recipientName || "VIP 고객님",
+              ordererName: pendingOrder?.formData?.ordererName || paymentResultData?.customerName || pendingOrder?.formData?.recipientName || "VIP 고객님",
+              email: paymentResultData?.customerEmail || pendingOrder?.formData?.ordererEmail || "customer@choicomma.com",
+              recipient: pendingOrder?.formData?.recipientName || paymentResultData?.customerName || "고객님",
               phone: pendingOrder?.formData?.recipientPhone || "010-0000-0000",
               altPhone: pendingOrder?.formData?.recipientAltPhone || "",
               zipCode: pendingOrder?.formData?.postcode || "",
@@ -119,27 +120,24 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               items: pendingOrder?.cart?.lines?.map((l: any) => `${l.merchandise?.product?.title || l.title || "상품"} (${l.quantity}개)`).join(", ") || "초이콤마 오리지널 패션 컬렉션",
               quantity: pendingOrder?.cart?.totalQuantity || 1,
               date: new Date().toISOString().slice(0, 10),
-              totalAmount: Number(amount),
-              status: "결제완료 (토스)",
-              method:
-                json.data?.method ||
-                (pendingOrder?.formData?.paymentMethod === "VIRTUAL_ACCOUNT"
-                  ? "가상계좌 (무통장입금)"
-                  : pendingOrder?.formData?.paymentMethod === "TRANSFER"
-                  ? "실시간 계좌이체"
-                  : pendingOrder?.formData?.paymentMethod === "MOBILE_PHONE"
-                  ? "휴대폰 소액결제"
-                  : pendingOrder?.formData?.paymentMethod === "EASY_PAY"
-                  ? "간편결제 (카카오/네이버/토스)"
-                  : "신용·체크카드 (토스)"),
+              totalAmount: isZeroPayment ? 0 : Number(amount),
+              shippingFee: pendingOrder?.shippingFee || 0,
+              discountAmount: pendingOrder?.appliedDiscount || 0,
+              pointsUsed: Number(pendingOrder?.appliedPoints || 0),
+              status: isZeroPayment ? "결제완료 (전액적립금)" : "결제완료 (토스)",
+              method: finalMethod,
             };
 
             setOrderPaymentMethod(newOrder.method);
+            if (isZeroPayment) {
+              setPaymentData({ method: newOrder.method });
+            }
 
-
-            const updated = [newOrder, ...ordersList];
-            localStorage.setItem("admin_orders", JSON.stringify(updated));
-            window.dispatchEvent(new CustomEvent("admin_orders_updated"));
+            const alreadyExists = ordersList.some((o: any) => o.id === orderId || o.orderId === orderId);
+            if (!alreadyExists) {
+              const updated = [newOrder, ...ordersList];
+              localStorage.setItem("admin_orders", JSON.stringify(updated));
+              window.dispatchEvent(new CustomEvent("admin_orders_updated"));
 
             // admin_shipments (관리자 배송 주문 관리 및 마이페이지 주문조회) 실시간 동기화
             const newShipment = {
@@ -189,7 +187,7 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
             // 고객 등급별 적립 혜택 계산
             const effectiveEarnedPoints = pendingOrder?.earnedPoints !== undefined 
               ? Number(pendingOrder.earnedPoints) 
-              : Math.floor(Number(amount) * 0.01);
+              : Math.floor((isZeroPayment ? 0 : Number(amount)) * 0.01);
             const effectivePointRate = Number(pendingOrder?.pointRate) || 1;
             const effectiveUserGrade = pendingOrder?.userGrade || "GENERAL";
             const effectiveAppliedPoints = Number(pendingOrder?.appliedPoints || 0);
@@ -208,7 +206,7 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               customerName: newOrder.ordererName,
               customerEmail: newOrder.email,
               customerPhone: newOrder.phone,
-              totalAmount: Number(amount),
+              totalAmount: isZeroPayment ? 0 : Number(amount),
               shippingFee: pendingOrder?.shippingFee || 0,
               discountAmount: pendingOrder?.appliedDiscount || 0,
               pointsUsed: effectiveAppliedPoints,
@@ -220,7 +218,7 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
                 address: newOrder.address,
                 detailAddress: newOrder.detailAddress,
               },
-              items: pendingOrder?.cart?.lines || [{ title: newOrder.items, quantity: newOrder.quantity, price: Number(amount) }],
+              items: pendingOrder?.cart?.lines || [{ title: newOrder.items, quantity: newOrder.quantity, price: isZeroPayment ? 0 : Number(amount) }],
               orderMemo: newOrder.shippingMemo || "",
             };
 
@@ -312,7 +310,7 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               if (matchedIdx >= 0) {
                 const cust = custList[matchedIdx];
                 const prevSpent = Number(cust.totalSpent) || 0;
-                const newSpent = prevSpent + Number(amount);
+                const newSpent = prevSpent + (isZeroPayment ? 0 : Number(amount));
                 cust.totalSpent = newSpent;
                 cust.points = (Number(cust.points) || 0) + effectiveEarnedPoints;
 
@@ -347,7 +345,7 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
                       if (sbCusts && sbCusts.length > 0) {
                         const dbCust = sbCusts[0];
                         const updatedDbPoints = (Number(dbCust.points) || 0) + effectiveEarnedPoints;
-                        const updatedDbSpent = (Number(dbCust.totalSpent) || 0) + Number(amount);
+                        const updatedDbSpent = (Number(dbCust.totalSpent) || 0) + (isZeroPayment ? 0 : Number(amount));
                         supabase
                           .from("customers")
                           .update({
@@ -366,16 +364,20 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               window.dispatchEvent(new CustomEvent("storage"));
               window.dispatchEvent(new CustomEvent("admin_customers_updated"));
               window.dispatchEvent(new CustomEvent("membership_points_updated"));
+            } else {
+              // 이미 등록된 경우에도 적립 정보 화면 표시 복구
+              if (pendingOrder?.earnedPoints !== undefined) {
+                setEarnedPointsInfo({
+                  earnedPoints: Number(pendingOrder.earnedPoints),
+                  pointRate: Number(pendingOrder.pointRate) || 1,
+                  userGrade: pendingOrder.userGrade || "GENERAL",
+                });
+              }
             }
           }
-        } else {
-          setErrorMessage(json.message || "결제 승인 과정에서 오류가 발생했습니다.");
+
+          setIsLoading(false);
         }
-      } catch (err: any) {
-        setErrorMessage(err.message || "네트워크 통신 오류가 발생했습니다.");
-      } finally {
-        setIsLoading(false);
-      }
     }
 
     confirmPayment();
@@ -385,8 +387,10 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 space-y-4">
         <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-        <h2 className="text-lg font-black text-neutral-900">토스페이먼츠 결제 승인 처리 중...</h2>
-        <p className="text-xs text-neutral-500 font-medium">안전하게 결제 정보를 확인하고 있습니다. 잠시만 기다려 주세요.</p>
+        <h2 className="text-lg font-black text-neutral-900">
+          {amount === "0" ? "주문 접수 처리 중..." : "결제 승인 처리 중..."}
+        </h2>
+        <p className="text-xs text-neutral-500 font-medium">안전하게 주문 정보를 확인하고 있습니다. 잠시만 기다려 주세요.</p>
       </div>
     );
   }
@@ -418,7 +422,7 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
 
         <div className="space-y-1">
           <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-            ✨ TEST PAYMENT CONFIRMED
+            {amount === "0" ? "✨ REWARD POINTS ORDER CONFIRMED" : "✨ ORDER & PAYMENT CONFIRMED"}
           </span>
           <h1 className="text-2xl font-black text-neutral-950 pt-2">주문 및 결제가 완료되었습니다!</h1>
           <p className="text-xs text-neutral-500">초이콤마를 이용해 주셔서 감사합니다. 주문이 안전하게 접수되었습니다.</p>
@@ -432,7 +436,7 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
           <div className="flex justify-between border-b border-neutral-200 pb-2 pt-1">
             <span className="text-neutral-400 font-sans font-bold">최종 결제 금액</span>
             <span className="font-black text-emerald-600 text-sm font-sans">
-              {amount ? `${Number(amount).toLocaleString()}원` : "50,000원"}
+              {amount !== null && amount !== undefined ? `${Number(amount).toLocaleString()}원` : "0원"}
             </span>
           </div>
           {earnedPointsInfo && earnedPointsInfo.earnedPoints > 0 && (
@@ -446,7 +450,7 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
           <div className="flex justify-between pt-1">
             <span className="text-neutral-400 font-sans font-bold">결제 수단</span>
             <span className="font-bold text-neutral-900 font-sans">
-              {paymentData?.method || orderPaymentMethod || "토스페이먼츠"}
+              {orderPaymentMethod || paymentData?.method || "전액 적립금 결제"}
             </span>
           </div>
         </div>

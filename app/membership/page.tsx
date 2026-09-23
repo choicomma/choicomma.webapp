@@ -49,6 +49,7 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { SetBundleSection } from "@/components/products/set-bundle-section";
 import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
 import { supabase } from "@/lib/supabase/client";
+import { getAllUserCoupons } from "@/lib/membership/coupons";
 
 function MembershipContent() {
   const { cart, updateCartItem, addCartItem, openCart, clearCart } = useCart();
@@ -452,12 +453,19 @@ function MembershipContent() {
     }
   };
 
+  // 4-1. 로컬 스토리지로부터 쿠폰 목록 로드
+  const loadCouponsFromLocal = () => {
+    if (typeof window === "undefined") return;
+    setCouponsList(getAllUserCoupons());
+  };
+
   // 5. 마운트 시 초기화 및 이벤트 리스너 등록 (무한 루프 방지)
   useEffect(() => {
     // 로컬 스토리지 즉시 동기화
     loadProfileFromLocal();
     loadPolicyFromLocal();
     loadShipmentsFromLocal();
+    loadCouponsFromLocal();
 
     // 서버 API로부터 1회 초기 동기화 (마운트 시점에만 1회 호출)
     fetch("/api/shipping/policy")
@@ -497,6 +505,12 @@ function MembershipContent() {
         e.key === "user_grade"
       ) {
         loadProfileFromLocal();
+      } else if (
+        e.key === "used_coupon_codes" ||
+        e.key === "admin_coupons" ||
+        e.key === "membership_user_coupons"
+      ) {
+        loadCouponsFromLocal();
       }
     };
 
@@ -504,17 +518,20 @@ function MembershipContent() {
     const onShipmentsUpdated = () => loadShipmentsFromLocal();
     const onPolicyUpdated = () => loadPolicyFromLocal();
     const onCustomersUpdated = () => loadProfileFromLocal();
+    const onCouponsUpdated = () => loadCouponsFromLocal();
 
     window.addEventListener("storage", handleStorageEvent);
     window.addEventListener("shipping_policy_updated", onPolicyUpdated);
     window.addEventListener("admin_shipments_updated", onShipmentsUpdated);
     window.addEventListener("admin_customers_updated", onCustomersUpdated);
+    window.addEventListener("coupons_updated", onCouponsUpdated);
 
     return () => {
       window.removeEventListener("storage", handleStorageEvent);
       window.removeEventListener("shipping_policy_updated", onPolicyUpdated);
       window.removeEventListener("admin_shipments_updated", onShipmentsUpdated);
       window.removeEventListener("admin_customers_updated", onCustomersUpdated);
+      window.removeEventListener("coupons_updated", onCouponsUpdated);
     };
   }, []);
 
@@ -1297,7 +1314,7 @@ function MembershipContent() {
             <div>
               <h2 className="text-2xl font-black text-neutral-950">보유 쿠폰함</h2>
               <p className="text-xs text-neutral-500 mt-1">
-                주문서 작성 시 쿠폰 코드를 입력하시면 결제 금액에서 즉시 할인 혜택이 적용됩니다.
+                주문서 작성 시 보유 쿠폰 중 최고 혜택 쿠폰이 결제 금액에 자동으로 적용됩니다.
               </p>
             </div>
 
@@ -1324,12 +1341,20 @@ function MembershipContent() {
                   return (
                     <div
                       key={coupon.id}
-                      className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-4 hover:shadow-md transition-all flex flex-col justify-between"
+                      className={`bg-white border rounded-3xl p-6 shadow-xs space-y-4 hover:shadow-md transition-all flex flex-col justify-between ${
+                        coupon.isUsed ? "border-neutral-200/60 opacity-60 bg-neutral-50/60" : "border-neutral-200/80"
+                      }`}
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="bg-neutral-950 text-white text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                            DISCOUNT COUPON
+                          <span
+                            className={`text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                              coupon.isUsed
+                                ? "bg-neutral-200 text-neutral-600"
+                                : "bg-neutral-950 text-white"
+                            }`}
+                          >
+                            {coupon.isUsed ? "USED (사용완료)" : "DISCOUNT COUPON"}
                           </span>
                           <span className="text-[11px] text-neutral-400 font-mono">
                             ~ {coupon.validUntil}
@@ -1344,18 +1369,29 @@ function MembershipContent() {
                         <div className="bg-neutral-100 px-3 py-1.5 rounded-xl border border-neutral-200 font-mono text-xs font-black text-neutral-900 truncate">
                           {coupon.code}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyCoupon(coupon.code)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                            isCopied
-                              ? "bg-neutral-950 text-white"
-                              : "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200"
-                          }`}
-                        >
-                          {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{isCopied ? "복사완료" : "코드 복사"}</span>
-                        </button>
+                        {coupon.isUsed ? (
+                          <span className="text-xs font-bold text-neutral-400 px-3 py-1.5 bg-neutral-100 rounded-xl">
+                            사용 완료
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200 hidden sm:inline-block">
+                              주문서 자동적용
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyCoupon(coupon.code)}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                                isCopied
+                                  ? "bg-neutral-950 text-white"
+                                  : "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200"
+                              }`}
+                            >
+                              {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                              <span>{isCopied ? "복사완료" : "코드 복사"}</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

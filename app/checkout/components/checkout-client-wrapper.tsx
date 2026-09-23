@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ShoppingBag,
@@ -11,10 +12,10 @@ import {
   Truck,
   CheckCircle2,
   ChevronRight,
-  Smartphone,
-  Building2,
   ArrowRightLeft,
   Zap,
+  Ticket,
+  Sparkles,
 } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice } from "@/lib/sfcc/utils";
@@ -29,8 +30,14 @@ import {
   getTierPointRate,
   DEFAULT_TIER_POLICIES,
 } from "@/lib/membership/tiers";
+import {
+  AvailableCoupon,
+  DEFAULT_AVAILABLE_COUPONS,
+  getAvailableCoupons,
+} from "@/lib/membership/coupons";
 
 export default function CheckoutClientWrapper() {
+  const router = useRouter();
   const { cart } = useCart();
   const [isTossModalOpen, setIsTossModalOpen] = useState(false);
   const [isDirectPayLoading, setIsDirectPayLoading] = useState(false);
@@ -138,9 +145,64 @@ export default function CheckoutClientWrapper() {
   }, []);
 
   // Coupon / Discount State
+  const [availableCoupons, setAvailableCoupons] = useState<AvailableCoupon[]>([]);
+  const [selectedCouponCode, setSelectedCouponCode] = useState<string>("");
+  const [isDirectCouponInput, setIsDirectCouponInput] = useState<boolean>(false);
   const [couponCode, setCouponCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [couponMessage, setCouponMessage] = useState<string | null>(null);
+
+  // 주문서 진입 시 보유 쿠폰을 자동으로 불러와 최고 할인 혜택 쿠폰을 기본 '자동 적용'
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const list = getAvailableCoupons();
+    setAvailableCoupons(list);
+
+    if (list.length > 0) {
+      // 할인 금액이 가장 큰 쿠폰을 우선 정렬하여 최우선 쿠폰 자동 선택
+      const sorted = [...list].sort((a, b) => b.discountAmount - a.discountAmount);
+      const bestCoupon = sorted[0];
+
+      setSelectedCouponCode(bestCoupon.code);
+      setCouponCode(bestCoupon.code);
+      setAppliedDiscount(bestCoupon.discountAmount);
+      setCouponMessage(`✨ [자동 적용] ${bestCoupon.title}이 자동 적용되었습니다! (-${bestCoupon.discountAmount.toLocaleString()}원)`);
+    } else {
+      setSelectedCouponCode("NONE");
+      setCouponCode("");
+      setAppliedDiscount(0);
+      setCouponMessage(null);
+    }
+  }, []);
+
+  const handleSelectCoupon = (code: string) => {
+    setSelectedCouponCode(code);
+
+    if (code === "NONE") {
+      setIsDirectCouponInput(false);
+      setCouponCode("");
+      setAppliedDiscount(0);
+      setCouponMessage("쿠폰 적용이 취소되었습니다.");
+      return;
+    }
+
+    if (code === "DIRECT") {
+      setIsDirectCouponInput(true);
+      setCouponCode("");
+      setAppliedDiscount(0);
+      setCouponMessage(null);
+      return;
+    }
+
+    setIsDirectCouponInput(false);
+    const found = availableCoupons.find((c) => c.code === code);
+    if (found) {
+      setCouponCode(found.code);
+      setAppliedDiscount(found.discountAmount);
+      setCouponMessage(`🎉 ${found.title}이 선택 적용되었습니다! (-${found.discountAmount.toLocaleString()}원)`);
+    }
+  };
 
   // Terms Agreement
   const [agreedTerms, setAgreedTerms] = useState({
@@ -338,10 +400,33 @@ export default function CheckoutClientWrapper() {
   }, []);
 
   const totalItemAmount = Number(cart?.cost?.totalAmount?.amount || 0);
-  const isTierFreeShipping = userGrade === "PLATINUM" || userGrade === "VVIP";
   const freeThreshold = shippingPolicy.freeShippingThreshold !== undefined ? shippingPolicy.freeShippingThreshold : 100000;
   const baseShippingFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 4000;
-  const shippingFee = isTierFreeShipping || (freeThreshold > 0 && totalItemAmount >= freeThreshold) || totalItemAmount === 0 || baseShippingFee === 0 ? 0 : baseShippingFee;
+
+  // 실 상품 결제 대상 금액 (총 상품금액에서 쿠폰 할인 및 적립금 사용을 차감한 금액)
+  const netProductAmount = Math.max(0, totalItemAmount - appliedDiscount - appliedPoints);
+
+  // 적립금 또는 할인으로 인해 결제금액이 10만원 미만이 되었는지 확인 (배송비 부과 트리거)
+  const isDiscountedUnderThreshold = (appliedDiscount > 0 || appliedPoints > 0) && netProductAmount < freeThreshold;
+
+  // 등급별 상시 무료배송 혜택 여부 (PLATINUM, VVIP)
+  const isTierFreeShipping = userGrade === "PLATINUM" || userGrade === "VVIP";
+
+  // 배송비 계산:
+  // 1) 장바구니가 비어있거나(0원) 기본 배송비가 0원이면 0원
+  // 2) 적립금이나 할인으로 인해 실 결제금액이 10만원 미만으로 떨어지면 무조건 배송비 발생 (VVIP/플래티넘 포함)
+  // 3) 등급별 상시 무료배송(PLATINUM, VVIP) 대상인 경우 무료배송 (할인/적립금으로 10만원 미만이 되지 않은 경우)
+  // 4) 일반 회원의 경우 실 결제금액이 10만원 이상이면 무료배송, 10만원 미만이면 배송비 발생
+  const shippingFee =
+    totalItemAmount === 0 || baseShippingFee === 0
+      ? 0
+      : isDiscountedUnderThreshold
+      ? baseShippingFee
+      : isTierFreeShipping
+      ? 0
+      : netProductAmount >= freeThreshold
+      ? 0
+      : baseShippingFee;
 
   const handleApplyPoints = (amountToUse?: number) => {
     const amount = amountToUse !== undefined ? amountToUse : parseInt(usedPointsInput) || 0;
@@ -354,14 +439,15 @@ export default function CheckoutClientWrapper() {
       setPointsMessage(`❌ 보유 적립금(${availablePoints.toLocaleString()}P) 초과 사용은 불가능합니다.`);
       return;
     }
-    const maxUsable = Math.max(0, totalItemAmount + shippingFee - appliedDiscount);
+    // 적립금은 상품 금액(쿠폰 할인 차감 후)에 대해 최대 사용 가능 (배송비는 별도 부과)
+    const maxUsable = Math.max(0, totalItemAmount - appliedDiscount);
     const finalUse = Math.min(amount, maxUsable);
     setAppliedPoints(finalUse);
     setPointsMessage(`🎉 ${finalUse.toLocaleString()}P 적립금이 적용되었습니다.`);
   };
 
   const handleUseAllPoints = () => {
-    const maxUsable = Math.max(0, totalItemAmount + shippingFee - appliedDiscount);
+    const maxUsable = Math.max(0, totalItemAmount - appliedDiscount);
     const finalUse = Math.min(availablePoints, maxUsable);
     setUsedPointsInput(String(finalUse));
     handleApplyPoints(finalUse);
@@ -470,13 +556,31 @@ export default function CheckoutClientWrapper() {
         );
       }
 
+      // 전액 적립금 또는 전액 할인 쿠폰으로 최종 결제 금액이 0원인 경우
+      // 외부 PG 결제창(신용카드 등)을 호출하지 않고 즉시 주문 완료로 이동
+      if (finalTotalAmount <= 0) {
+        setIsDirectPayLoading(true);
+        try {
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.removeItem("choicomma_cart");
+              window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
+            } catch (e) {}
+          }
+          router.push(`/order/success?orderId=${orderId}&amount=0&paymentType=FREE`);
+          return;
+        } finally {
+          setIsDirectPayLoading(false);
+        }
+      }
+
       // Use direct Payment window request (Card, EasyPay, Virtual Account, Transfer, Mobile Phone)
       const payment = tossPayments.payment({ customerKey });
 
       const basePaymentConfig = {
         amount: {
           currency: "KRW",
-          value: finalTotalAmount > 0 ? finalTotalAmount : 50000,
+          value: finalTotalAmount,
         },
         orderId,
         orderName,
@@ -783,7 +887,7 @@ export default function CheckoutClientWrapper() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* 1. 신용/체크카드 */}
               <button
                 type="button"
@@ -832,31 +936,7 @@ export default function CheckoutClientWrapper() {
                 </div>
               </button>
 
-              {/* 3. 가상계좌 (무통장입금) */}
-              <button
-                type="button"
-                onClick={() => handleInputChange("paymentMethod", "VIRTUAL_ACCOUNT")}
-                className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-3 relative cursor-pointer ${
-                  formData.paymentMethod === "VIRTUAL_ACCOUNT"
-                    ? "border-neutral-950 dark:border-white bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-md ring-2 ring-neutral-950/20 dark:ring-white/20"
-                    : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200"
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <Building2 className="w-5 h-5 text-blue-500" />
-                  {formData.paymentMethod === "VIRTUAL_ACCOUNT" && (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-black text-sm">가상계좌 (무통장)</p>
-                  <p className={`text-[11px] mt-0.5 ${formData.paymentMethod === "VIRTUAL_ACCOUNT" ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-400"}`}>
-                    전용 계좌 발급 (72시간)
-                  </p>
-                </div>
-              </button>
-
-              {/* 4. 실시간 계좌이체 */}
+              {/* 3. 실시간 계좌이체 */}
               <button
                 type="button"
                 onClick={() => handleInputChange("paymentMethod", "TRANSFER")}
@@ -879,30 +959,6 @@ export default function CheckoutClientWrapper() {
                   </p>
                 </div>
               </button>
-
-              {/* 5. 휴대폰 소액결제 */}
-              <button
-                type="button"
-                onClick={() => handleInputChange("paymentMethod", "MOBILE_PHONE")}
-                className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-3 relative cursor-pointer ${
-                  formData.paymentMethod === "MOBILE_PHONE"
-                    ? "border-neutral-950 dark:border-white bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-md ring-2 ring-neutral-950/20 dark:ring-white/20"
-                    : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 bg-neutral-50/50 dark:bg-neutral-800/50 text-neutral-800 dark:text-neutral-200"
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <Smartphone className="w-5 h-5 text-rose-500" />
-                  {formData.paymentMethod === "MOBILE_PHONE" && (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-black text-sm">휴대폰 결제</p>
-                  <p className={`text-[11px] mt-0.5 ${formData.paymentMethod === "MOBILE_PHONE" ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-400"}`}>
-                    통신사 익월 요금 합산
-                  </p>
-                </div>
-              </button>
             </div>
 
             {/* Selected Method Description */}
@@ -911,9 +967,7 @@ export default function CheckoutClientWrapper() {
               <span>
                 {formData.paymentMethod === "CARD" && "국내외 모든 신용카드 및 체크카드로 안전하게 결제하실 수 있습니다."}
                 {formData.paymentMethod === "EASY_PAY" && "토스페이, 카카오페이, 네이버페이, 페이코 등 등록된 간편결제 수단으로 원클릭 결제합니다."}
-                {formData.paymentMethod === "VIRTUAL_ACCOUNT" && "주문 완료 후 고객님 전용 가상계좌가 발급되며, 72시간 이내 입금 시 자동 입금 확인됩니다."}
                 {formData.paymentMethod === "TRANSFER" && "금융결제원 연동을 통해 고객님의 은행 계좌에서 실시간으로 이체 결제됩니다."}
-                {formData.paymentMethod === "MOBILE_PHONE" && "통신사(SKT, KT, LGU+) 휴대폰 본인 인증 후 익월 통신요금에 합산 청구됩니다."}
               </span>
             </div>
           </div>
@@ -925,15 +979,9 @@ export default function CheckoutClientWrapper() {
                 <h2 className="text-lg font-black text-neutral-900 dark:text-white flex items-center gap-2">
                   <span>🏦</span> 환불 계좌 정보
                 </h2>
-                {formData.paymentMethod === "VIRTUAL_ACCOUNT" && (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                    가상계좌 선택 시 필수
-                  </span>
-                )}
               </div>
               <span className="text-xs text-neutral-400 font-semibold">
-                무통장입금 주문건은 환불 취소 시 환불계좌 입력.
-                주문건 취소시 환불계좌로 자동 입금됩니다.
+                주문 취소 및 반품 시 입력하신 환불계좌로 자동 입금됩니다.
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -1026,31 +1074,81 @@ export default function CheckoutClientWrapper() {
               ))}
             </div>
 
-            {/* Coupon Code Section inside Order Summary */}
-            <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
-              <label className="block text-xs font-extrabold text-neutral-900 dark:text-white">
-                🎟️ 쿠폰 할인 적용
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value)}
-                  placeholder="쿠폰 코드 (예: CHOI10, WELCOME)"
-                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 text-xs uppercase"
-                />
-                <button
-                  type="button"
-                  onClick={handleApplyCoupon}
-                  className="px-4 py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-black transition-colors"
-                >
-                  적용
-                </button>
+            {/* Coupon Auto-Apply & Selector Section inside Order Summary */}
+            <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2.5">
+              <div className="flex items-center justify-between text-xs font-extrabold text-neutral-900 dark:text-white">
+                <span className="flex items-center gap-1.5">
+                  <Ticket className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
+                  쿠폰 할인
+                  {appliedDiscount > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      <Sparkles className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
+                      자동 적용
+                    </span>
+                  )}
+                </span>
+                <span className="text-[11px] text-neutral-500 font-bold">
+                  보유 쿠폰: <strong className="text-neutral-900 dark:text-white">{availableCoupons.length}장</strong>
+                </span>
               </div>
+
+              {/* Coupon Select Dropdown */}
+              <div className="space-y-2">
+                <div className="relative">
+                  <select
+                    value={selectedCouponCode}
+                    onChange={(e) => handleSelectCoupon(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 text-xs appearance-none pr-8 cursor-pointer text-neutral-900 dark:text-white"
+                  >
+                    {availableCoupons.length > 0 ? (
+                      availableCoupons.map((coupon, idx) => (
+                        <option key={coupon.id} value={coupon.code}>
+                          {idx === 0 ? "✨ [자동 적용] " : "🎟️ "}
+                          {coupon.title} (-{coupon.discountAmount.toLocaleString()}원)
+                        </option>
+                      ))
+                    ) : (
+                      <option value="NONE">사용 가능한 보유 쿠폰 없음</option>
+                    )}
+                    <option value="NONE">❌ 쿠폰 적용 안 함 (0원)</option>
+                    <option value="DIRECT">✍️ 쿠폰 코드 직접 입력하기</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-neutral-400">
+                    <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+                  </div>
+                </div>
+
+                {/* Direct Coupon Input Field (shown when user chooses '직접 입력하기') */}
+                {isDirectCouponInput && (
+                  <div className="flex gap-2 pt-1 animate-in fade-in duration-200">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="쿠폰 코드 직접 입력 (예: CHOI10)"
+                      className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 text-xs uppercase"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      className="px-4 py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-black transition-colors shrink-0"
+                    >
+                      적용
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {couponMessage && (
-                <p className="text-[11px] font-bold text-neutral-900 dark:text-white">
+                <div
+                  className={`p-2.5 rounded-xl text-[11px] font-bold ${
+                    appliedDiscount > 0
+                      ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                      : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
+                  }`}
+                >
                   {couponMessage}
-                </p>
+                </div>
               )}
             </div>
 
@@ -1094,7 +1192,14 @@ export default function CheckoutClientWrapper() {
                 <span className="font-bold text-neutral-900 dark:text-white">{formatPrice(totalItemAmount)}</span>
               </div>
               <div className="flex justify-between text-neutral-500">
-                <span>배송비</span>
+                <div className="flex items-center gap-1.5">
+                  <span>배송비</span>
+                  {isDiscountedUnderThreshold && (
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                      실결제 10만원 미만
+                    </span>
+                  )}
+                </div>
                 <span className="font-bold text-neutral-900 dark:text-white">
                   {shippingFee === 0 ? "무료배송 (0원)" : formatPrice(shippingFee)}
                 </span>
@@ -1175,9 +1280,7 @@ export default function CheckoutClientWrapper() {
                 결제 수단: <span className="font-extrabold text-neutral-900 dark:text-neutral-200">{
                   formData.paymentMethod === "CARD" ? "신용·체크카드" :
                   formData.paymentMethod === "EASY_PAY" ? "간편결제 (카카오/네이버/토스)" :
-                  formData.paymentMethod === "VIRTUAL_ACCOUNT" ? "가상계좌 (무통장입금)" :
-                  formData.paymentMethod === "TRANSFER" ? "실시간 계좌이체" :
-                  "휴대폰 소액결제"
+                  "실시간 계좌이체"
                 }</span>
               </div>
             </div>
