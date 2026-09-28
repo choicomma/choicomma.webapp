@@ -85,6 +85,23 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Supabase 원격 DB와 로컬 캐시 자동 동기화 (탈퇴 회원의 오래된 로컬 잔여물 자동 정리)
+  useEffect(() => {
+    let isMounted = true;
+    const syncCustomersWithSupabase = async () => {
+      try {
+        const { data, error } = await supabase.from("customers").select("*");
+        if (!error && Array.isArray(data) && isMounted && typeof window !== "undefined") {
+          localStorage.setItem("admin_customers", JSON.stringify(data));
+        }
+      } catch (e) {}
+    };
+    syncCustomersWithSupabase();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Daum Postcode Open API Handler
   const handleOpenPostcode = () => {
     if (typeof window !== "undefined" && (window as any).daum?.Postcode) {
@@ -157,33 +174,36 @@ export default function LoginPage() {
     }
 
     let isDuplicate = false;
-    if (typeof window !== "undefined") {
+
+    // 1. Supabase 원격 DB 최우선 확인 (실제 존재하는 회원인지 단일 진실 공급원 검증)
+    try {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id")
+        .or(`id.eq.${trimmedId},email.ilike.${trimmedId}`)
+        .limit(1);
+      if (!error && data && data.length > 0) {
+        isDuplicate = true;
+      }
+    } catch (err) {}
+
+    // 2. Supabase에 없는데 로컬 admin_customers 캐시에 남아있다면 탈퇴/삭제된 회원이므로 로컬 캐시 자동 정리
+    if (!isDuplicate && typeof window !== "undefined") {
       const savedCustomers = localStorage.getItem("admin_customers");
       if (savedCustomers) {
         try {
           const customerList: any[] = JSON.parse(savedCustomers);
-          isDuplicate = customerList.some(
+          const filtered = customerList.filter(
             (c) =>
-              (c.loginId && c.loginId.trim().toLowerCase() === trimmedId) ||
-              (c.login_id && c.login_id.trim().toLowerCase() === trimmedId) ||
-              (c.id && c.id.trim().toLowerCase() === trimmedId)
+              !(c.loginId && c.loginId.trim().toLowerCase() === trimmedId) &&
+              !(c.login_id && c.login_id.trim().toLowerCase() === trimmedId) &&
+              !(c.id && c.id.trim().toLowerCase() === trimmedId)
           );
+          if (filtered.length !== customerList.length) {
+            localStorage.setItem("admin_customers", JSON.stringify(filtered));
+          }
         } catch (e) {}
       }
-    }
-
-    // Check Supabase
-    if (!isDuplicate) {
-      try {
-        const { data, error } = await supabase
-          .from("customers")
-          .select("id")
-          .or(`id.eq.${trimmedId},email.ilike.${trimmedId}`)
-          .limit(1);
-        if (!error && data && data.length > 0) {
-          isDuplicate = true;
-        }
-      } catch (err) {}
     }
 
     if (isDuplicate) {
@@ -217,19 +237,18 @@ export default function LoginPage() {
     }
 
     let isDuplicate = false;
-    if (typeof window !== "undefined") {
-      const savedCustomers = localStorage.getItem("admin_customers");
-      if (savedCustomers) {
-        try {
-          const customerList: any[] = JSON.parse(savedCustomers);
-          isDuplicate = customerList.some(
-            (c) => c.email && c.email.trim().toLowerCase() === trimmedEmail
-          );
-        } catch (e) { }
-      }
+
+    // Check admin and special IDs
+    if (
+      trimmedEmail === "admin" ||
+      trimmedEmail === "admin@choicomma.com" ||
+      trimmedEmail === "mypage" ||
+      trimmedEmail === "mypage@choicomma.com"
+    ) {
+      isDuplicate = true;
     }
 
-    // Check Supabase
+    // 1. Supabase 원격 DB 최우선 확인
     if (!isDuplicate) {
       try {
         const { data, error } = await supabase
@@ -240,17 +259,23 @@ export default function LoginPage() {
         if (!error && data && data.length > 0) {
           isDuplicate = true;
         }
-      } catch (err) { }
+      } catch (err) {}
     }
 
-    // Check admin and special IDs
-    if (
-      trimmedEmail === "admin" ||
-      trimmedEmail === "admin@choicomma.com" ||
-      trimmedEmail === "mypage" ||
-      trimmedEmail === "mypage@choicomma.com"
-    ) {
-      isDuplicate = true;
+    // 2. Supabase에 없는데 로컬 캐시에 남아있다면 탈퇴 회원이므로 로컬 캐시에서 자동 제거
+    if (!isDuplicate && typeof window !== "undefined") {
+      const savedCustomers = localStorage.getItem("admin_customers");
+      if (savedCustomers) {
+        try {
+          const customerList: any[] = JSON.parse(savedCustomers);
+          const filtered = customerList.filter(
+            (c) => !(c.email && c.email.trim().toLowerCase() === trimmedEmail)
+          );
+          if (filtered.length !== customerList.length) {
+            localStorage.setItem("admin_customers", JSON.stringify(filtered));
+          }
+        } catch (e) {}
+      }
     }
 
     if (isDuplicate) {
@@ -283,30 +308,33 @@ export default function LoginPage() {
     }
 
     let isDuplicate = false;
-    if (typeof window !== "undefined") {
+
+    // 1. Supabase 원격 DB 최우선 확인 (실제 가입된 회원인지 검증)
+    try {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id")
+        .or(`phone.eq.${cleanPhone},phone.eq.${phone.trim()}`)
+        .limit(1);
+      if (!error && data && data.length > 0) {
+        isDuplicate = true;
+      }
+    } catch (err) {}
+
+    // 2. Supabase에 없는데 로컬 캐시에 남아있다면 탈퇴/삭제된 회원이므로 로컬 캐시에서 자동 제거
+    if (!isDuplicate && typeof window !== "undefined") {
       const savedCustomers = localStorage.getItem("admin_customers");
       if (savedCustomers) {
         try {
           const customerList: any[] = JSON.parse(savedCustomers);
-          isDuplicate = customerList.some(
-            (c) => c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhone
+          const filtered = customerList.filter(
+            (c) => !(c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhone)
           );
-        } catch (e) { }
+          if (filtered.length !== customerList.length) {
+            localStorage.setItem("admin_customers", JSON.stringify(filtered));
+          }
+        } catch (e) {}
       }
-    }
-
-    // Check Supabase
-    if (!isDuplicate) {
-      try {
-        const { data, error } = await supabase
-          .from("customers")
-          .select("id")
-          .or(`phone.eq.${cleanPhone},phone.eq.${phone.trim()}`)
-          .limit(1);
-        if (!error && data && data.length > 0) {
-          isDuplicate = true;
-        }
-      } catch (err) { }
     }
 
     if (isDuplicate) {
@@ -457,42 +485,7 @@ export default function LoginPage() {
       const targetEmail = email.trim().toLowerCase();
       const targetLoginId = loginId.trim().toLowerCase();
 
-      if (typeof window !== "undefined") {
-        const savedCustomers = localStorage.getItem("admin_customers");
-        if (savedCustomers) {
-          try {
-            const customerList: any[] = JSON.parse(savedCustomers);
-            const isDuplicateLoginId = customerList.some(
-              (c) =>
-                (c.loginId && c.loginId.trim().toLowerCase() === targetLoginId) ||
-                (c.login_id && c.login_id.trim().toLowerCase() === targetLoginId) ||
-                (c.id && c.id.trim().toLowerCase() === targetLoginId)
-            );
-            if (isDuplicateLoginId) {
-              setToastMsg("이미 사용 중인 로그인 ID입니다. 다른 아이디를 입력해 주세요.");
-              return;
-            }
-
-            const isDuplicatePhone = customerList.some(
-              (c) => c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhone
-            );
-            if (isDuplicatePhone) {
-              setToastMsg("이미 가입된 휴대폰 번호입니다. 기존 번호로 로그인해 주세요.");
-              return;
-            }
-
-            const isDuplicateEmail = customerList.some(
-              (c) => c.email && c.email.trim().toLowerCase() === targetEmail
-            );
-            if (isDuplicateEmail) {
-              setToastMsg("이미 가입된 이메일 주소입니다. 다른 이메일을 입력해 주세요.");
-              return;
-            }
-          } catch (e) { }
-        }
-      }
-
-      // Supabase duplicate check
+      // 1. Supabase 원격 DB 중복 검증 (단일 진실 공급원)
       try {
         const { data: existingLoginId } = await supabase
           .from("customers")
@@ -524,6 +517,28 @@ export default function LoginPage() {
           return;
         }
       } catch (err) {}
+
+      // 2. Supabase에 없는데 로컬 캐시에 남아있다면 탈퇴 회원의 오래된 잔여물이므로 캐시 정리
+      if (typeof window !== "undefined") {
+        const savedCustomers = localStorage.getItem("admin_customers");
+        if (savedCustomers) {
+          try {
+            const customerList: any[] = JSON.parse(savedCustomers);
+            const cleanedList = customerList.filter((c) => {
+              const cLoginId = (c.loginId || c.login_id || c.id || "").trim().toLowerCase();
+              const cEmail = (c.email || "").trim().toLowerCase();
+              const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+              if (cLoginId === targetLoginId) return false;
+              if (cEmail === targetEmail) return false;
+              if (cleanPhone && cPhone === cleanPhone) return false;
+              return true;
+            });
+            if (cleanedList.length !== customerList.length) {
+              localStorage.setItem("admin_customers", JSON.stringify(cleanedList));
+            }
+          } catch (e) {}
+        }
+      }
     }
 
     setIsLoading(true);
