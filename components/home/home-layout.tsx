@@ -9,6 +9,7 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { translateProductTitle, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 import useEmblaCarousel from "embla-carousel-react";
 import { ProductCard } from "@/app/shop/components/product-card";
+import { HomePopupModal } from "@/components/home/home-popup-modal";
 
 function HomeProductTitle({ title, lang }: { title: string; lang: string }) {
   const [translated, setTranslated] = useState(() => translateProductTitle(title, lang));
@@ -365,6 +366,9 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
 
   return (
     <div className="w-full flex flex-col bg-white">
+      {/* Home Popup Modal (Centered, immediate on visit) */}
+      <HomePopupModal />
+
       {/* SECTION 1: Auto Slider Hero Image (True Infinite Seamless Loop) */}
       {heroImages.length > 0 && (
         <section className="relative w-full h-[80vh] md:h-[105vh] min-h-[500px] md:min-h-[800px] bg-white overflow-hidden">

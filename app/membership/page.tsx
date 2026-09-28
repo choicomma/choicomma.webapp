@@ -53,6 +53,7 @@ import { SetBundleSection } from "@/components/products/set-bundle-section";
 import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
 import { supabase } from "@/lib/supabase/client";
 import { getAllUserCoupons, getUserCoupons } from "@/lib/membership/coupons";
+import { MembershipPopupBanner } from "@/components/membership/membership-popup-banner";
 
 function MembershipContent() {
   const { cart, updateCartItem, addCartItem, openCart, clearCart } = useCart();
@@ -60,9 +61,9 @@ function MembershipContent() {
   const initialTab = (searchParams.get("tab") as any) || "dashboard";
 
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "orders" | "coupons" | "points" | "tiers" | "profile"
+    "dashboard" | "orders" | "coupons" | "points" | "profile"
   >(
-    ["dashboard", "orders", "coupons", "points", "tiers", "profile"].includes(initialTab)
+    ["dashboard", "orders", "coupons", "points", "profile"].includes(initialTab)
       ? initialTab
       : "dashboard"
   );
@@ -71,7 +72,7 @@ function MembershipContent() {
   // Update tab when URL param changes
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["dashboard", "orders", "coupons", "points", "tiers", "profile"].includes(tabParam)) {
+    if (tabParam && ["dashboard", "orders", "coupons", "points", "profile"].includes(tabParam)) {
       setActiveTab(tabParam as any);
     }
   }, [searchParams]);
@@ -1086,23 +1087,6 @@ function MembershipContent() {
             </button>
 
             <button
-              onClick={() => setActiveTab("tiers")}
-              className={`w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-xs xl:text-sm font-bold transition-all cursor-pointer ${
-                activeTab === "tiers"
-                  ? "bg-neutral-950 text-white shadow-sm"
-                  : "text-neutral-600 hover:bg-neutral-100/80 hover:text-black"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="h-4 w-4 shrink-0 text-neutral-900" />
-                <span>회원 등급 혜택</span>
-              </div>
-              <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-neutral-300">
-                {userGrade}
-              </span>
-            </button>
-
-            <button
               onClick={() => setActiveTab("profile")}
               className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs xl:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "profile"
@@ -1131,19 +1115,21 @@ function MembershipContent() {
               </span>
             </div>
             <p className="text-xs text-neutral-500">
-              초이콤마의 회원 등급 혜택, 주문 내역, 보유 쿠폰 및 적립금을 간편하게 확인하세요.
+              초이콤마의 주문 내역, 보유 쿠폰 및 적립금을 간편하게 확인하세요.
             </p>
           </div>
 
           {/* Clean Quick Summary (No Card Borders) */}
           <div className="flex items-center gap-4 text-xs">
             <button
-              onClick={() => setActiveTab("tiers")}
+              onClick={() => setActiveTab("coupons")}
               className="flex items-center gap-1.5 text-neutral-600 hover:text-neutral-950 transition-colors cursor-pointer"
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-neutral-700" />
-              <span className="text-neutral-500">회원 등급</span>
-              <span className="font-bold text-neutral-950 font-mono">{userGrade}</span>
+              <Ticket className="w-3.5 h-3.5 text-neutral-700" />
+              <span className="text-neutral-500">쿠폰함</span>
+              <span className="font-bold text-neutral-950 font-mono">
+                {couponsList.filter((c) => !c.isUsed).length}장
+              </span>
             </button>
 
             <span className="text-neutral-300">|</span>
@@ -1215,6 +1201,9 @@ function MembershipContent() {
                 <p className="text-xs text-neutral-400">주문서 작성 시 100원 단위 사용</p>
               </div>
             </div>
+
+            {/* Membership Popup Banner (Fixed directly above Secret Time Sale) */}
+            <MembershipPopupBanner />
 
             {/* Secret Time Sale Section in Dashboard Home */}
             {applicableSecretSales.length > 0 ? (
@@ -1736,298 +1725,7 @@ function MembershipContent() {
           </div>
         )}
 
-        {/* Tab 5: TIERS (회원 등급 혜택) */}
-        {activeTab === "tiers" && (
-          <div className="space-y-8 animate-in fade-in duration-300">
-            {/* Current Tier Status Hero Banner */}
-            <div className="bg-neutral-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-neutral-800 relative overflow-hidden">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-extrabold uppercase tracking-widest text-neutral-400 bg-white/10 px-3 py-1 rounded-full border border-white/15">
-                      MY MEMBERSHIP STATUS
-                    </span>
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-                    {userName} 님의 등급은{" "}
-                    <span className="px-3 py-0.5 rounded-xl font-mono text-xl sm:text-2xl font-black bg-white text-neutral-950 shadow-md">
-                      {userGrade}
-                    </span>{" "}
-                    입니다
-                  </h3>
-                  <p className="text-xs sm:text-sm text-neutral-300 font-medium">
-                    {userGrade === "VVIP" && "최상위 VVIP 회원님만을 위한 1% 적립, 상시 무료배송 및 전용 빠른 출고 혜택이 적용됩니다."}
-                    {userGrade === "PLATINUM" && "플래티넘 회원님을 위한 1% 적립 및 전 주문 무료배송 혜택이 적용됩니다."}
-                    {userGrade === "GOLD" && "골드 회원님을 위한 1% 적립 및 5만원 이상 무료배송 혜택이 적용됩니다."}
-                    {userGrade === "SILVER" && "실버 우수 회원님을 위한 1% 상시 적립 및 첫 구매 지원 혜택이 적용됩니다."}
-                    {userGrade === "GENERAL" && "일반 회원님을 위한 기본 혜택과 1% 적립금 혜택이 적용됩니다."}
-                  </p>
-                </div>
-
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl sm:text-right shrink-0">
-                  <span className="text-[11px] font-bold text-neutral-400 block">보유 적립금</span>
-                  <span className="text-2xl font-black font-mono text-white">{userPoints.toLocaleString()} P</span>
-                  <span className="text-[10px] text-neutral-400 block mt-0.5">결제 시 현금처럼 즉시 사용 가능</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 5 Tier Cards Grid - Monochromatic Black & White Design */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-              {/* 1. GENERAL (일반) */}
-              <div className={`rounded-3xl p-5 transition-all flex flex-col justify-between border bg-white ${
-                userGrade === "GENERAL"
-                  ? "border-2 border-neutral-950 shadow-lg ring-4 ring-neutral-200 relative"
-                  : "border-neutral-200 hover:border-neutral-950 shadow-xs"
-              }`}>
-                {userGrade === "GENERAL" && (
-                  <span className="absolute -top-3 left-5 bg-neutral-950 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                    현재 회원 등급
-                  </span>
-                )}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-black px-2 py-0.5 rounded-lg bg-neutral-100 text-neutral-900 border border-neutral-200">
-                      GENERAL
-                    </span>
-                    <span className="text-[10px] font-bold text-neutral-400">신규 가입</span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-base font-black text-neutral-950">일반 회원</h4>
-                    <p className="text-[11px] text-neutral-500 mt-0.5">가입 즉시 적용되는 기본 등급</p>
-                  </div>
-
-                  <div className="pt-2 border-t border-neutral-100 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>신규 가입 웰컴 혜택</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>구매금액 <strong>1% 적립금</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>10만원 이상 무료배송</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-neutral-100">
-                  <p className="text-[10px] font-medium text-neutral-400">
-                    승급 기준: <strong>가입 즉시 부여</strong>
-                  </p>
-                </div>
-              </div>
-
-              {/* 2. SILVER */}
-              <div className={`rounded-3xl p-5 transition-all flex flex-col justify-between border bg-white ${
-                userGrade === "SILVER"
-                  ? "border-2 border-neutral-950 shadow-lg ring-4 ring-neutral-200 relative"
-                  : "border-neutral-200 hover:border-neutral-950 shadow-xs"
-              }`}>
-                {userGrade === "SILVER" && (
-                  <span className="absolute -top-3 left-5 bg-neutral-950 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                    현재 회원 등급
-                  </span>
-                )}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-black px-2 py-0.5 rounded-lg bg-neutral-100 text-neutral-900 border border-neutral-200">
-                      SILVER
-                    </span>
-                    <span className="text-[10px] font-bold text-neutral-400">100만원 이상</span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-base font-black text-neutral-950">실버 등급</h4>
-                    <p className="text-[11px] text-neutral-500 mt-0.5">상시 1% 적립금 지원</p>
-                  </div>
-
-                  <div className="pt-2 border-t border-neutral-100 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>구매금액 <strong>1% 적립금</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>실버 전용 할인 이벤트</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>10만원 이상 무료배송</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-neutral-100">
-                  <p className="text-[10px] font-medium text-neutral-400">
-                    승급 기준: <strong>누적 100만원 이상</strong>
-                  </p>
-                </div>
-              </div>
-
-              {/* 3. GOLD */}
-              <div className={`rounded-3xl p-5 transition-all flex flex-col justify-between border bg-white ${
-                userGrade === "GOLD"
-                  ? "border-2 border-neutral-950 shadow-lg ring-4 ring-neutral-200 relative"
-                  : "border-neutral-200 hover:border-neutral-950 shadow-xs"
-              }`}>
-                {userGrade === "GOLD" && (
-                  <span className="absolute -top-3 left-5 bg-neutral-950 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                    현재 회원 등급
-                  </span>
-                )}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-black px-2 py-0.5 rounded-lg bg-neutral-100 text-neutral-900 border border-neutral-200">
-                      GOLD
-                    </span>
-                    <span className="text-[10px] font-bold text-neutral-400">500만원 이상</span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-base font-black text-neutral-950">골드 등급</h4>
-                    <p className="text-[11px] text-neutral-500 mt-0.5">우수 회원 전용 우대 혜택</p>
-                  </div>
-
-                  <div className="pt-2 border-t border-neutral-100 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>구매금액 <strong>1% 적립금</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span><strong>5만원 이상 무료배송</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>생일 축하 5% 할인 쿠폰</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-neutral-100">
-                  <p className="text-[10px] font-medium text-neutral-400">
-                    승급 기준: <strong>누적 500만원 이상</strong>
-                  </p>
-                </div>
-              </div>
-
-              {/* 4. PLATINUM */}
-              <div className={`rounded-3xl p-5 transition-all flex flex-col justify-between border bg-white ${
-                userGrade === "PLATINUM"
-                  ? "border-2 border-neutral-950 shadow-lg ring-4 ring-neutral-200 relative"
-                  : "border-neutral-200 hover:border-neutral-950 shadow-xs"
-              }`}>
-                {userGrade === "PLATINUM" && (
-                  <span className="absolute -top-3 left-5 bg-neutral-950 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                    현재 회원 등급
-                  </span>
-                )}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-black px-2 py-0.5 rounded-lg bg-neutral-100 text-neutral-900 border border-neutral-200">
-                      PLATINUM
-                    </span>
-                    <span className="text-[10px] font-bold text-neutral-400">1,000만원 이상</span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-base font-black text-neutral-950">플래티넘 등급</h4>
-                    <p className="text-[11px] text-neutral-500 mt-0.5">상시 무료배송 지원</p>
-                  </div>
-
-                  <div className="pt-2 border-t border-neutral-100 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>구매금액 <strong>1% 적립금</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>전 주문 <strong>상시 무료배송</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>플래티넘 전용 프로모션</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-neutral-100">
-                  <p className="text-[10px] font-medium text-neutral-400">
-                    승급 기준: <strong>누적 1,000만원 이상</strong>
-                  </p>
-                </div>
-              </div>
-
-              {/* 5. VVIP */}
-              <div className={`rounded-3xl p-5 transition-all flex flex-col justify-between border bg-white ${
-                userGrade === "VVIP"
-                  ? "border-2 border-neutral-950 shadow-lg ring-4 ring-neutral-200 relative"
-                  : "border-neutral-200 hover:border-neutral-950 shadow-xs"
-              }`}>
-                {userGrade === "VVIP" && (
-                  <span className="absolute -top-3 left-5 bg-neutral-950 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                    현재 회원 등급
-                  </span>
-                )}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-black px-2 py-0.5 rounded-lg bg-neutral-100 text-neutral-900 border border-neutral-200">
-                      VVIP
-                    </span>
-                    <span className="text-[10px] font-bold text-neutral-400">2,000만원 이상</span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-base font-black text-neutral-950">
-                      VVIP 등급
-                    </h4>
-                    <p className="text-[11px] text-neutral-500 mt-0.5">최상위 프리미엄 혜택</p>
-                  </div>
-
-                  <div className="pt-2 border-t border-neutral-100 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>구매금액 <strong>1% 적립금</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span>전 주문 <strong>상시 무료배송</strong></span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neutral-900 shrink-0" />
-                      <span><strong>전용 빠른 당일 출고</strong></span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-neutral-100">
-                  <p className="text-[10px] font-medium text-neutral-400">
-                    승급 기준: <strong>누적 2,000만원 이상</strong>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Additional Tier Guide Note */}
-            <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-2 text-xs text-neutral-600">
-              <h4 className="font-extrabold text-sm text-neutral-950 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-neutral-900" />
-                등급 산정 및 혜택 이용 안내
-              </h4>
-              <ul className="list-disc list-inside space-y-1 text-neutral-500 pl-1 leading-relaxed">
-                <li>회원 등급은 최근 12개월간의 누적 실결제 금액을 기준으로 매월 1일 자동 갱신 및 반영됩니다.</li>
-                <li>관리자(어드민) 페이지에서 고객 등급이 조정되는 경우 멤버십 페이지에 즉시 실시간으로 동기화됩니다.</li>
-                <li>할인 혜택 및 적립금은 주문서 결제 시 중복 적용이 가능합니다.</li>
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 6: PROFILE */}
+        {/* Tab 5: PROFILE */}
         {activeTab === "profile" && (
           <div className="space-y-6 max-w-2xl animate-in fade-in duration-300">
             <h3 className="text-xl font-bold tracking-tight text-neutral-950">회원 정보 관리</h3>
@@ -2311,18 +2009,18 @@ function MembershipContent() {
 
                 {/* 6. Grade Info Card */}
                 <div className="py-2.5 px-3.5 bg-neutral-50 rounded-2xl border border-neutral-200 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-extrabold text-neutral-900 block">회원 등급 상태</span>
-                    <span className="text-[11px] text-neutral-500">
-                      현재 <strong>{userGrade}</strong> 등급 혜택이 적용 중입니다.
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-neutral-700" />
+                    <div>
+                      <span className="text-xs font-extrabold text-neutral-900 block">회원 등급 상태</span>
+                      <span className="text-[11px] text-neutral-500">
+                        현재 <strong>{userGrade}</strong> 등급 회원입니다.
+                      </span>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => setActiveTab("tiers")}
-                    className="text-xs font-bold text-neutral-900 underline hover:text-black cursor-pointer"
-                  >
-                    등급 혜택 보기 →
-                  </button>
+                  <span className="text-xs font-mono font-black px-2.5 py-1 rounded-lg bg-neutral-950 text-white">
+                    {userGrade}
+                  </span>
                 </div>
 
                 {/* 7. Delivery Address with Daum Postcode Open API */}
@@ -2423,12 +2121,6 @@ function MembershipContent() {
                 전체 비우기
               </button>
             )}
-            <Link
-              href="/shop"
-              className="text-xs text-neutral-500 hover:text-black font-semibold underline"
-            >
-              쇼핑 계속하기
-            </Link>
           </div>
         </div>
 

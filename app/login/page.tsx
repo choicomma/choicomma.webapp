@@ -86,14 +86,36 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Supabase 원격 DB와 로컬 캐시 자동 동기화 (탈퇴 회원의 오래된 로컬 잔여물 자동 정리)
+  // Supabase 원격 DB와 로컬 캐시 안전 병합 동기화 (기존 가입 회원이 덮어쓰기로 삭제되지 않도록 보존)
   useEffect(() => {
     let isMounted = true;
     const syncCustomersWithSupabase = async () => {
       try {
         const { data, error } = await supabase.from("customers").select("*");
         if (!error && Array.isArray(data) && isMounted && typeof window !== "undefined") {
-          localStorage.setItem("admin_customers", JSON.stringify(data));
+          const savedRaw = localStorage.getItem("admin_customers");
+          let localList: any[] = [];
+          if (savedRaw) {
+            try {
+              localList = JSON.parse(savedRaw);
+            } catch (err) {}
+          }
+          const customerMap = new Map<string, any>();
+          localList.forEach((c) => {
+            const key = (c.id || c.email || "").trim().toLowerCase();
+            if (key) customerMap.set(key, c);
+          });
+          data.forEach((c) => {
+            const key = (c.id || c.email || "").trim().toLowerCase();
+            if (key) {
+              const existing = customerMap.get(key) || {};
+              customerMap.set(key, { ...existing, ...c });
+            }
+          });
+          const merged = Array.from(customerMap.values());
+          if (merged.length > 0) {
+            localStorage.setItem("admin_customers", JSON.stringify(merged));
+          }
         }
       } catch (e) {}
     };
@@ -188,21 +210,19 @@ export default function LoginPage() {
       }
     } catch (err) {}
 
-    // 2. Supabase에 없는데 로컬 admin_customers 캐시에 남아있다면 탈퇴/삭제된 회원이므로 로컬 캐시 자동 정리
+    // 2. 로컬 캐시에서도 중복 여부 확인
     if (!isDuplicate && typeof window !== "undefined") {
       const savedCustomers = localStorage.getItem("admin_customers");
       if (savedCustomers) {
         try {
           const customerList: any[] = JSON.parse(savedCustomers);
-          const filtered = customerList.filter(
+          const found = customerList.some(
             (c) =>
-              !(c.loginId && c.loginId.trim().toLowerCase() === trimmedId) &&
-              !(c.login_id && c.login_id.trim().toLowerCase() === trimmedId) &&
-              !(c.id && c.id.trim().toLowerCase() === trimmedId)
+              (c.loginId && c.loginId.trim().toLowerCase() === trimmedId) ||
+              (c.login_id && c.login_id.trim().toLowerCase() === trimmedId) ||
+              (c.id && c.id.trim().toLowerCase() === trimmedId)
           );
-          if (filtered.length !== customerList.length) {
-            localStorage.setItem("admin_customers", JSON.stringify(filtered));
-          }
+          if (found) isDuplicate = true;
         } catch (e) {}
       }
     }
@@ -263,18 +283,16 @@ export default function LoginPage() {
       } catch (err) {}
     }
 
-    // 2. Supabase에 없는데 로컬 캐시에 남아있다면 탈퇴 회원이므로 로컬 캐시에서 자동 제거
+    // 2. 로컬 캐시에서도 중복 여부 확인
     if (!isDuplicate && typeof window !== "undefined") {
       const savedCustomers = localStorage.getItem("admin_customers");
       if (savedCustomers) {
         try {
           const customerList: any[] = JSON.parse(savedCustomers);
-          const filtered = customerList.filter(
-            (c) => !(c.email && c.email.trim().toLowerCase() === trimmedEmail)
+          const found = customerList.some(
+            (c) => c.email && c.email.trim().toLowerCase() === trimmedEmail
           );
-          if (filtered.length !== customerList.length) {
-            localStorage.setItem("admin_customers", JSON.stringify(filtered));
-          }
+          if (found) isDuplicate = true;
         } catch (e) {}
       }
     }
@@ -322,18 +340,16 @@ export default function LoginPage() {
       }
     } catch (err) {}
 
-    // 2. Supabase에 없는데 로컬 캐시에 남아있다면 탈퇴/삭제된 회원이므로 로컬 캐시에서 자동 제거
+    // 2. 로컬 캐시에서도 중복 여부 확인
     if (!isDuplicate && typeof window !== "undefined") {
       const savedCustomers = localStorage.getItem("admin_customers");
       if (savedCustomers) {
         try {
           const customerList: any[] = JSON.parse(savedCustomers);
-          const filtered = customerList.filter(
-            (c) => !(c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhone)
+          const found = customerList.some(
+            (c) => c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhone
           );
-          if (filtered.length !== customerList.length) {
-            localStorage.setItem("admin_customers", JSON.stringify(filtered));
-          }
+          if (found) isDuplicate = true;
         } catch (e) {}
       }
     }
@@ -519,27 +535,7 @@ export default function LoginPage() {
         }
       } catch (err) {}
 
-      // 2. Supabase에 없는데 로컬 캐시에 남아있다면 탈퇴 회원의 오래된 잔여물이므로 캐시 정리
-      if (typeof window !== "undefined") {
-        const savedCustomers = localStorage.getItem("admin_customers");
-        if (savedCustomers) {
-          try {
-            const customerList: any[] = JSON.parse(savedCustomers);
-            const cleanedList = customerList.filter((c) => {
-              const cLoginId = (c.loginId || c.login_id || c.id || "").trim().toLowerCase();
-              const cEmail = (c.email || "").trim().toLowerCase();
-              const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
-              if (cLoginId === targetLoginId) return false;
-              if (cEmail === targetEmail) return false;
-              if (cleanPhone && cPhone === cleanPhone) return false;
-              return true;
-            });
-            if (cleanedList.length !== customerList.length) {
-              localStorage.setItem("admin_customers", JSON.stringify(cleanedList));
-            }
-          } catch (e) {}
-        }
-      }
+
     }
 
     setIsLoading(true);
@@ -599,11 +595,11 @@ export default function LoginPage() {
 
       const fullAddress = formatKoreanAddress(cleanPostcode, cleanAddress, cleanDetail);
 
-      const newCustId = `CUST-${Date.now().toString().slice(-6)}`;
-      const newCustomer = {
+      const newCustId = finalLoginId || `CUST-${Date.now().toString().slice(-6)}`;
+      
+      // Supabase customers 테이블에 실제로 존재하는 컬럼만 선별 (loginId 컬럼 누락 에러 방지)
+      const dbCustomer = {
         id: newCustId,
-        loginId: finalLoginId,
-        login_id: finalLoginId,
         name: displayName,
         email: finalEmail,
         phone: phone.trim() || "010-0000-0000",
@@ -619,24 +615,30 @@ export default function LoginPage() {
       };
 
       const localCustomer = {
-        ...newCustomer,
+        ...dbCustomer,
+        loginId: finalLoginId,
+        login_id: finalLoginId,
         postcode: cleanPostcode || "",
         detailAddress: cleanDetail || "",
       };
 
       // 1) Save to local admin_customers
       if (typeof window !== "undefined") {
-        localStorage.setItem("admin_customers", JSON.stringify([localCustomer, ...customerList]));
+        const filteredList = customerList.filter((c) => c.id !== newCustId && c.email !== finalEmail);
+        localStorage.setItem("admin_customers", JSON.stringify([localCustomer, ...filteredList]));
       }
 
-      // 2) Sync to Supabase DB customers table
+      // 2) Sync to Supabase DB via Server API & Client SDK
       try {
-        const { error } = await supabase.from("customers").upsert([newCustomer], { onConflict: "id" });
-        if (error) {
-          console.warn("Supabase customer sync notice:", error.message);
-        }
-      } catch (err) {
-        console.warn("Failed to sync customer to Supabase:", err);
+        await fetch("/api/admin/customers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dbCustomer),
+        });
+      } catch (apiErr) {
+        try {
+          await supabase.from("customers").upsert([dbCustomer], { onConflict: "id" });
+        } catch (err) {}
       }
 
       // 3) Save password in localStorage
@@ -651,7 +653,7 @@ export default function LoginPage() {
 
         // 4) Set login session
         sessionStorage.removeItem("choicomma_admin_authenticated");
-        localStorage.setItem("membership_user_id", newCustomer.id);
+        localStorage.setItem("membership_user_id", newCustId);
         localStorage.setItem("membership_user_login_id", finalLoginId);
         localStorage.setItem("membership_user_name", displayName);
         localStorage.setItem("membership_user_email", finalEmail);

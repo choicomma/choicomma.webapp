@@ -12,6 +12,7 @@ import { useShipments } from "@/hooks/admin/useShipments";
 import excelParsedProducts from "@/lib/sfcc/mock/parsed-products.json";
 import {
   LayoutDashboard,
+  LayoutTemplate,
   Package,
   ShoppingBag,
   FolderTree,
@@ -90,6 +91,7 @@ import { OrdersManagement } from "./components/orders-management";
 import { InboundStockManagement } from "./components/inbound-stock-management";
 import { InquiriesManagement } from "./components/inquiries-management";
 import { GlobalSalesManagement } from "./components/global-sales-management";
+import { PopupManagement } from "./components/popup-management";
 import { LanguageSelector } from "@/components/layout/header/language-selector";
 import { getAllUserCoupons } from "@/lib/membership/coupons";
 
@@ -418,7 +420,7 @@ const initialInboundSchedules: any[] = [];
 const initialDailySettlements: any[] = [];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "revenue" | "main" | "customers" | "tiers" | "coupons" | "inquiries" | "settings" | "global_sales">("orders");
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "popup" | "revenue" | "main" | "customers" | "tiers" | "coupons" | "inquiries" | "settings" | "global_sales">("orders");
 
   // Admin Coupons Count State
   const [adminCouponsCount, setAdminCouponsCount] = useState<number>(3);
@@ -2419,6 +2421,18 @@ export default function AdminPage() {
             프로모션
           </button>
 
+          {/* 7-1. 팝업 관리 */}
+          <button
+            onClick={() => setActiveTab("popup")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "popup"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
+          >
+            <LayoutTemplate className="w-4 h-4 text-neutral-900" />
+            팝업 관리
+          </button>
+
           {/* 8. 매출 관리 */}
           <button
             onClick={() => setActiveTab("revenue")}
@@ -2542,6 +2556,13 @@ export default function AdminPage() {
                 }`}
             >
               프로모션
+            </button>
+            <button
+              onClick={() => setActiveTab("popup")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "popup" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
+            >
+              팝업 관리
             </button>
             <button
               onClick={() => setActiveTab("main")}
@@ -2762,6 +2783,11 @@ export default function AdminPage() {
               setSecretSalesList={setSecretSalesList}
               triggerToast={triggerToast}
             />
+          )}
+
+          {/* TAB: POPUP MANAGEMENT */}
+          {activeTab === "popup" && (
+            <PopupManagement triggerToast={triggerToast} />
           )}
 
           {/* TAB: REVENUE MANAGEMENT (VISITORS & NET SALES ANALYTICS) */}

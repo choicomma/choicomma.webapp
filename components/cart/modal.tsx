@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, TriangleAlert, PlusCircleIcon, ShoppingBag } from "lucide-react";
+import { ArrowRight, TriangleAlert, ShoppingBag } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -73,7 +73,7 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
           </p>
         </div>
       </div>
-      <div className="pt-2">
+      <div className="pt-2 space-y-2">
         <Link
           href="/checkout"
           onClick={closeCart}
@@ -82,6 +82,13 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
           <span>📋 {translateUiText("결제하기", currentLang)}</span>
           <ArrowRight className="size-5 text-neutral-300" />
         </Link>
+        <button
+          type="button"
+          onClick={closeCart}
+          className="w-full py-3 px-4 rounded-2xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-bold text-xs transition-colors cursor-pointer text-center"
+        >
+          {translateUiText("쇼핑 계속하기", currentLang)}
+        </button>
       </div>
     </div>
   );
@@ -164,25 +171,26 @@ export function CartDrawer() {
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="w-full flex"
                       >
-                        <Link
-                          href="/shop"
-                          className="bg-background rounded-lg p-2 border border-dashed border-border w-full"
-                          onClick={closeCart}
-                        >
-                          <div className="flex flex-row gap-6">
-                            <div className="relative size-20 overflow-hidden rounded-sm shrink-0 border border-dashed border-border flex items-center justify-center">
-                              <PlusCircleIcon className="size-6 text-muted-foreground" />
-                            </div>
-                            <div className="flex flex-col gap-2 2xl:gap-3 flex-1 justify-center">
-                              <span className="text-lg 2xl:text-xl font-semibold">
-                                {translateUiText("장바구니가 비어 있습니다.", currentLang)}
-                              </span>
-                              <p className="text-sm text-muted-foreground hover:underline">
-                                {translateUiText("쇼핑 계속하기", currentLang)}
-                              </p>
-                            </div>
+                        <div className="bg-background rounded-2xl p-6 border border-dashed border-border w-full flex flex-col items-center justify-center text-center py-10 space-y-3">
+                          <div className="size-16 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
+                            <ShoppingBag className="size-7 stroke-1 text-muted-foreground" />
                           </div>
-                        </Link>
+                          <div>
+                            <span className="text-base font-bold text-neutral-900 dark:text-white block">
+                              {translateUiText("장바구니가 비어 있습니다.", currentLang)}
+                            </span>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {translateUiText("원하시는 상품을 장바구니에 담아보세요.", currentLang)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={closeCart}
+                            className="mt-2 px-5 py-2.5 bg-neutral-950 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-950 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                          >
+                            {translateUiText("쇼핑 계속하기", currentLang)}
+                          </button>
+                        </div>
                       </motion.div>
                     </AnimatePresence>
                   ) : (

@@ -130,44 +130,82 @@ export function useCustomers(triggerToast: (msg: string) => void) {
 
     const fetchCustomers = async () => {
       try {
-        const { data, error } = await supabase
-          .from("customers")
-          .select("*")
-          .order("created_at", { ascending: false });
+        let serverData: any[] = [];
+        try {
+          const apiRes = await fetch("/api/admin/customers");
+          const apiJson = await apiRes.json();
+          if (apiJson.success && Array.isArray(apiJson.customers)) {
+            serverData = apiJson.customers;
+          }
+        } catch (e) {}
 
-        if (!error && Array.isArray(data) && data.length > 0 && isMounted) {
-          const sanitized = data
-            .filter((c) => c.id === "ADMIN-001" || !c.rawGrade)
-            .map((c) => {
-              if (c.id === "ADMIN-001") {
-                return {
-                  ...c,
-                  phone: "02-579-1171",
-                  postcode: "06306",
-                  address: "서울특별시 강남구 개포로22길 12",
-                  detailAddress: "6층 (주)초이콤마 본사",
-                };
-              }
-              const parsed = splitKoreanAddress(
-                c.address,
-                c.postcode || c.zipCode || "",
-                c.detailAddress || c.addressDetail || ""
-              );
-              return {
-                ...c,
-                postcode: parsed.postcode,
-                address: parsed.baseAddress,
-                detailAddress: parsed.detailAddress,
-              };
+        if (serverData.length === 0) {
+          const { data, error } = await supabase
+            .from("customers")
+            .select("*")
+            .order("created_at", { ascending: false });
+          if (!error && Array.isArray(data)) {
+            serverData = data;
+          }
+        }
+
+        const localCached = getCachedCustomers();
+        const customerMap = new Map<string, any>();
+
+        // 1. 최고관리자 기본 추가
+        customerMap.set("ADMIN-001", DEFAULT_ADMIN_CUSTOMER);
+
+        // 2. 로컬 캐시 회원 우선 유지
+        localCached.forEach((c) => {
+          const key = (c.id || c.email || "").trim().toLowerCase();
+          if (key && (c.id === "ADMIN-001" || !c.rawGrade)) {
+            customerMap.set(key, c);
+          }
+        });
+
+        // 3. Supabase 원격 DB 회원 병합 및 주소 정제
+        serverData.forEach((c) => {
+          const key = (c.id || c.email || "").trim().toLowerCase();
+          if (key && (c.id === "ADMIN-001" || !c.rawGrade)) {
+            const existing = customerMap.get(key) || {};
+            const parsed = splitKoreanAddress(
+              c.address,
+              c.postcode || c.zipCode || existing.postcode || "",
+              c.detailAddress || c.addressDetail || existing.detailAddress || ""
+            );
+            customerMap.set(key, {
+              ...existing,
+              ...c,
+              postcode: parsed.postcode,
+              address: parsed.baseAddress,
+              detailAddress: parsed.detailAddress,
             });
-          const finalList = sanitized.length > 0 ? sanitized : [DEFAULT_ADMIN_CUSTOMER];
+          }
+        });
+
+        const finalList = Array.from(customerMap.values());
+        if (isMounted) {
           setCustomersList(finalList);
           setIsCustomersLoaded(true);
           if (typeof window !== "undefined") {
             localStorage.setItem("admin_customers", JSON.stringify(finalList));
           }
-          return;
+
+          // 4. 로컬에만 있고 원격 DB에 누락된 회원은 백그라운드 자동 동기화
+          localCached.forEach((lc) => {
+            if (
+              lc.id !== "ADMIN-001" &&
+              !serverData.some((sc) => sc.id === lc.id || (sc.email && sc.email === lc.email))
+            ) {
+              fetch("/api/admin/customers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(lc),
+              }).catch(() => {});
+            }
+          });
         }
+        return;
       } catch (err) {
         console.warn("Notice: Using local customers fallback:", err);
       }
@@ -296,9 +334,15 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       localStorage.setItem("admin_customers", JSON.stringify(updated));
     }
 
-    // Supabase DB 비동기 저장
-    supabase.from("customers").upsert([newCust], { onConflict: "id" }).then(({ error }) => {
-      if (error) console.warn("Supabase customer insert notice:", error.message);
+    // Supabase DB 비동기 저장 (Server API & Client SDK)
+    fetch("/api/admin/customers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newCust),
+    }).catch(() => {
+      supabase.from("customers").upsert([newCust], { onConflict: "id" }).then(({ error }) => {
+        if (error) console.warn("Supabase customer insert notice:", error.message);
+      });
     });
 
     setIsAddCustomerModalOpen(false);
