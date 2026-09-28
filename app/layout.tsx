@@ -11,55 +11,10 @@ import { isDevelopment } from "@/lib/constants";
 import { HeaderWithData } from "@/components/layout/header/server-wrapper";
 
 const pretendard = localFont({
-  src: [
-    {
-      path: "../public/font/Pretendard-Thin.otf",
-      weight: "100",
-      style: "normal",
-    },
-    {
-      path: "../public/font/Pretendard-ExtraLight.otf",
-      weight: "200",
-      style: "normal",
-    },
-    {
-      path: "../public/font/Pretendard-Light.otf",
-      weight: "300",
-      style: "normal",
-    },
-    {
-      path: "../public/font/Pretendard-Regular.otf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../public/font/Pretendard-Medium.otf",
-      weight: "500",
-      style: "normal",
-    },
-    {
-      path: "../public/font/Pretendard-SemiBold.otf",
-      weight: "600",
-      style: "normal",
-    },
-    {
-      path: "../public/font/Pretendard-Bold.otf",
-      weight: "700",
-      style: "normal",
-    },
-    {
-      path: "../public/font/Pretendard-ExtraBold.otf",
-      weight: "800",
-      style: "normal",
-    },
-    {
-      path: "../public/font/Pretendard-Black.otf",
-      weight: "900",
-      style: "normal",
-    },
-  ],
+  src: "../public/font/PretendardVariable.woff2",
   variable: "--font-pretendard",
   display: "swap",
+  weight: "100 900",
 });
 
 export const viewport: Viewport = {

@@ -22,6 +22,31 @@ export interface AvailableCoupon {
 
 export const DEFAULT_AVAILABLE_COUPONS: AvailableCoupon[] = [];
 
+// 삭제 대상 레거시 기본 3대 쿠폰 식별자 및 코드
+export const LEGACY_COUPON_IDS = [
+  "coupon-special-10k",
+  "coupon-welcome-5k",
+  "coupon-freeship",
+];
+export const LEGACY_COUPON_CODES = ["CHOI10", "WELCOME", "FREESHIP"];
+
+export function isLegacyCoupon(c: any): boolean {
+  if (!c) return false;
+  const id = String(c.id || "").toLowerCase();
+  const code = String(c.code || "").toUpperCase();
+  const title = String(c.title || "");
+  if (LEGACY_COUPON_IDS.includes(id)) return true;
+  if (LEGACY_COUPON_CODES.includes(code)) return true;
+  if (
+    title.includes("스페셜 감사") ||
+    title.includes("웰컴 첫 구매") ||
+    title.includes("무료 배송 지원")
+  ) {
+    return true;
+  }
+  return false;
+}
+
 /**
  * 모든 쿠폰 목록(사용 완료 여부 포함)을 반환합니다. 마이페이지 쿠폰함 및 관리자용.
  */
@@ -56,16 +81,10 @@ export function getAllUserCoupons(): AvailableCoupon[] {
     } catch (e) {}
   }
 
-  // 삭제된 레거시 기본 쿠폰(CHOI10, WELCOME, FREESHIP 등) 영구 제거
-  const LEGACY_DEFAULT_IDS = ["coupon-special-10k", "coupon-welcome-5k", "coupon-freeship"];
-  const LEGACY_DEFAULT_CODES = ["CHOI10", "WELCOME", "FREESHIP"];
-  const filteredCoupons = allCoupons.filter(
-    (c) =>
-      !LEGACY_DEFAULT_IDS.includes(c.id) &&
-      !LEGACY_DEFAULT_CODES.includes((c.code || "").toUpperCase())
-  );
+  // 삭제된 레거시 기본 쿠폰(CHOI10, WELCOME, FREESHIP 등) 영구 완전 삭제
+  const filteredCoupons = allCoupons.filter((c) => !isLegacyCoupon(c));
 
-  if (filteredCoupons.length !== allCoupons.length) {
+  if (filteredCoupons.length !== allCoupons.length || legacyCouponsRaw !== null) {
     allCoupons = filteredCoupons;
     try {
       localStorage.setItem("admin_coupons", JSON.stringify(allCoupons));
@@ -159,7 +178,9 @@ export function saveAdminCoupons(coupons: AvailableCoupon[]): void {
   if (typeof window === "undefined") return;
 
   try {
-    localStorage.setItem("admin_coupons", JSON.stringify(coupons));
+    const cleanCoupons = coupons.filter((c) => !isLegacyCoupon(c));
+    localStorage.setItem("admin_coupons", JSON.stringify(cleanCoupons));
+    localStorage.removeItem("membership_user_coupons");
     window.dispatchEvent(new CustomEvent("storage", { detail: { key: "admin_coupons" } }));
     window.dispatchEvent(new CustomEvent("coupons_updated"));
 
@@ -168,7 +189,7 @@ export function saveAdminCoupons(coupons: AvailableCoupon[]): void {
         .from("site_settings")
         .upsert({
           key: "admin_coupons_config",
-          value: JSON.stringify(coupons),
+          value: JSON.stringify(cleanCoupons),
           updated_at: new Date().toISOString(),
         })
     )
@@ -182,13 +203,13 @@ export function saveAdminCoupons(coupons: AvailableCoupon[]): void {
 }
 
 /**
- * 관리자가 등록한 쿠폰 설정을 초기 기본 3대 쿠폰으로 복원합니다.
+ * 관리자가 등록한 쿠폰 설정을 초기화합니다 (빈 목록).
  */
 export function resetAdminCoupons(): AvailableCoupon[] {
-  if (typeof window === "undefined") return DEFAULT_AVAILABLE_COUPONS;
+  if (typeof window === "undefined") return [];
 
-  saveAdminCoupons(DEFAULT_AVAILABLE_COUPONS);
-  return DEFAULT_AVAILABLE_COUPONS;
+  saveAdminCoupons([]);
+  return [];
 }
 
 /**

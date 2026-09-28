@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { supabase } from "@/lib/supabase/client";
+import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
 
 export interface SecretTimeSale {
   id: string;
@@ -198,7 +199,7 @@ export function TimesaleManagement({
     return matchCat && matchQ;
   });
 
-  const filteredModalCustomers = customersList.filter((c) => {
+  const filteredModalCustomers = deduplicateCustomers(customersList).filter((c) => {
     const matchGrade = customerGradeFilter === "all" || c.grade === customerGradeFilter;
     const matchQ =
       !customerSearchQuery ||
@@ -286,7 +287,7 @@ export function TimesaleManagement({
         ) : (
           secretSalesList.map((sale) => {
             const targetProducts = productsList.filter((p) => (sale.productIds || []).includes(p.id));
-            const targetCustomers = customersList.filter((c) => (sale.targetCustomerEmails || []).includes(c.email));
+            const targetCustomers = deduplicateCustomers(customersList).filter((c) => (sale.targetCustomerEmails || []).includes(c.email));
 
             return (
               <div
@@ -368,9 +369,9 @@ export function TimesaleManagement({
                       {targetCustomers.length === 0 && (!sale.targetGrades || sale.targetGrades.length === 0) ? (
                         <span className="text-xs text-neutral-400">지정된 회원이 없습니다.</span>
                       ) : (
-                        targetCustomers.map((cust) => (
+                        targetCustomers.map((cust, index) => (
                           <span
-                            key={cust.id || cust.email}
+                            key={`${cust.id || cust.email || 'cust'}-${index}`}
                             className="bg-white border border-neutral-200 text-neutral-800 text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-2xs"
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
@@ -580,11 +581,11 @@ export function TimesaleManagement({
                   {filteredModalCustomers.length === 0 ? (
                     <p className="text-xs text-neutral-400 text-center py-4">검색 결과가 없습니다.</p>
                   ) : (
-                    filteredModalCustomers.map((cust) => {
+                    filteredModalCustomers.map((cust, index) => {
                       const isSelected = selectedCustomerEmails.includes(cust.email);
                       return (
                         <div
-                          key={cust.id || cust.email}
+                          key={`${cust.id || cust.email || 'cust'}-${index}`}
                           onClick={() => toggleCustomer(cust.email)}
                           className={`flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer transition-colors ${
                             isSelected ? "bg-neutral-950 text-white font-bold" : "hover:bg-white bg-neutral-50 text-neutral-900"

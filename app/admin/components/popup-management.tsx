@@ -397,21 +397,6 @@ export function PopupManagement({
               </p>
             </div>
 
-            <div className="pt-2 border-t border-neutral-100 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-neutral-900 block">'오늘 하루 보지 않기' 버튼 제공</span>
-                <span className="text-[11px] text-neutral-500">방문자가 24시간 동안 팝업을 숨길 수 있도록 선택 옵션 제공</span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={config.hideForTodayEnabled}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, hideForTodayEnabled: e.target.checked }))}
-                  className="sr-only peer"
-                />
-                <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neutral-950"></div>
-              </label>
-            </div>
           </div>
         </div>
 
@@ -486,17 +471,6 @@ export function PopupManagement({
                     )}
                   </div>
 
-                  {/* Modal Footer Controls (하단 닫기 버튼 제거, 오늘 하루 보지 않기만 유지) */}
-                  {config.hideForTodayEnabled && (
-                    <div className="px-4 py-3 bg-white border-t border-neutral-100 flex items-center justify-start text-xs">
-                      <button
-                        type="button"
-                        className="text-neutral-500 hover:text-neutral-950 font-bold text-[11px] transition-colors cursor-pointer"
-                      >
-                        오늘 하루 보지 않기
-                      </button>
-                    </div>
-                  )}
                 </div>
               ) : (
                 /* TAB 2: Membership Fixed Banner Preview */

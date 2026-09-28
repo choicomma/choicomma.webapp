@@ -23,6 +23,7 @@ import { LogoSvg } from "@/components/layout/header/logo-svg";
 import { supabase } from "@/lib/supabase/client";
 import { initCustomerSession } from "@/lib/auth/customer-session";
 import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
+import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -112,7 +113,7 @@ export default function LoginPage() {
               customerMap.set(key, { ...existing, ...c });
             }
           });
-          const merged = Array.from(customerMap.values());
+          const merged = deduplicateCustomers(Array.from(customerMap.values()));
           if (merged.length > 0) {
             localStorage.setItem("admin_customers", JSON.stringify(merged));
           }

@@ -92,7 +92,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   );
   let heroUrlsFiltered = initialHeroCandidates.map((p: any) => p.heroCustomImage || p.featuredImage?.url).filter(Boolean);
   if (heroUrlsFiltered.length === 0) {
-    heroUrlsFiltered = Array.from({ length: 9 }, (_, i) => `/main_slider/${i + 1}.jpg`);
+    heroUrlsFiltered = Array.from({ length: 9 }, (_, i) => `/main_slider/${i + 1}.webp`);
   }
   const [heroImages, setHeroImages] = React.useState<string[]>(heroUrlsFiltered);
   const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
@@ -244,7 +244,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
 
       // Fetch live authoritative products from Central Server API
       try {
-        const res = await fetch("/api/products", { cache: "no-store" });
+        const res = await fetch("/api/products");
         if (res.ok) {
           const serverData = await res.json();
           if (Array.isArray(serverData) && serverData.length > 0) {
@@ -294,7 +294,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
         .filter(Boolean);
 
       if (urls.length === 0) {
-        urls = Array.from({ length: 9 }, (_, i) => `/main_slider/${i + 1}.jpg`);
+        urls = Array.from({ length: 9 }, (_, i) => `/main_slider/${i + 1}.webp`);
       }
 
       setHeroImages(urls);
@@ -383,10 +383,10 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
                     src={src}
                     alt={`Main Hero ${idx}`}
                     fill
-                    quality={100}
-                    unoptimized={true}
+                    sizes="(max-width: 768px) 100vw, 1920px"
                     className="object-cover object-center pointer-events-none select-none"
                     priority={idx === 0}
+                    loading={idx === 0 ? "eager" : "lazy"}
                   />
                 </div>
               ))}

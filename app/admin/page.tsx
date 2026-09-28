@@ -42,7 +42,6 @@ import {
   Pencil,
   UserPlus,
   Shield,
-  ShieldCheck,
   Mail,
   Phone,
   Crown,
@@ -85,7 +84,6 @@ import { TimesaleManagement } from "./components/timesale-management";
 import { RevenueManagement } from "./components/revenue-management";
 import { MainPageManagement } from "./components/main-page-management";
 import { CustomersManagement } from "./components/customers-management";
-import { MembershipTiersManagement } from "./components/membership-tiers-management";
 import { CouponsManagement } from "./components/coupons-management";
 import { OrdersManagement } from "./components/orders-management";
 import { InboundStockManagement } from "./components/inbound-stock-management";
@@ -420,10 +418,19 @@ const initialInboundSchedules: any[] = [];
 const initialDailySettlements: any[] = [];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "popup" | "revenue" | "main" | "customers" | "tiers" | "coupons" | "inquiries" | "settings" | "global_sales">("orders");
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "popup" | "revenue" | "main" | "customers" | "coupons" | "inquiries" | "settings" | "global_sales">("orders");
 
   // Admin Coupons Count State
-  const [adminCouponsCount, setAdminCouponsCount] = useState<number>(3);
+  const [adminCouponsCount, setAdminCouponsCount] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return getAllUserCoupons().length;
+      } catch (e) {
+        return 0;
+      }
+    }
+    return 0;
+  });
   useEffect(() => {
     const updateCount = () => {
       if (typeof window !== "undefined") {
@@ -517,7 +524,7 @@ export default function AdminPage() {
   React.useEffect(() => {
     const fetchServerProducts = async () => {
       try {
-        const res = await fetch("/api/products", { cache: "no-store" });
+        const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
@@ -1074,6 +1081,13 @@ export default function AdminPage() {
     const isCurrentlyAvailable = targetProduct.availableForSale !== false;
     const nextAvailable = !isCurrentlyAvailable;
 
+    const confirmMessage = nextAvailable
+      ? `'${targetProduct.title}' 상품의 구매를 [ON (구매 가능)] 상태로 변경하시겠습니까?`
+      : `'${targetProduct.title}' 상품의 구매를 [OFF (구매 불가)] 상태로 변경하시겠습니까?\n\n변경 시 고객 쇼핑몰 화면에서 구매 버튼이 비활성화됩니다.`;
+
+    const isConfirmed = window.confirm(confirmMessage);
+    if (!isConfirmed) return;
+
     const updated = productsList.map((p) => {
       if (String(p.id) === String(id)) {
         return {
@@ -1552,7 +1566,7 @@ export default function AdminPage() {
     grade: "VVIP",
     totalSpent: 25000000,
     points: 100000,
-    couponsCount: 5,
+    couponsCount: 0,
     joinedDate: "2026-01-01",
     status: "Active",
     role: "ADMIN",
@@ -2239,6 +2253,39 @@ export default function AdminPage() {
     triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
   };
 
+  const handleSortOrderChange = (newOrder: "productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom") => {
+    setProductSortOrder(newOrder);
+    if (newOrder === "custom") return;
+
+    setProductsList((prev) => {
+      const sorted = [...prev].sort((a, b) => {
+        if (newOrder === "productNoDesc") {
+          return getProductNoNum(b) - getProductNoNum(a);
+        }
+        if (newOrder === "productNoAsc") {
+          return getProductNoNum(a) - getProductNoNum(b);
+        }
+        if (newOrder === "nameAsc") {
+          return (a.title || "").localeCompare(b.title || "");
+        }
+        if (newOrder === "priceDesc") {
+          const pA = Number(a.priceRange?.minVariantPrice?.amount || a.price?.amount || 0);
+          const pB = Number(b.priceRange?.minVariantPrice?.amount || b.price?.amount || 0);
+          return pB - pA;
+        }
+        if (newOrder === "priceAsc") {
+          const pA = Number(a.priceRange?.minVariantPrice?.amount || a.price?.amount || 0);
+          const pB = Number(b.priceRange?.minVariantPrice?.amount || b.price?.amount || 0);
+          return pA - pB;
+        }
+        return 0;
+      });
+      saveProductsToStorage(sorted);
+      triggerToast("✨ 쇼핑몰 상품 순서가 즉시 반영되었습니다.");
+      return sorted;
+    });
+  };
+
   // Order Status Cycle
   const updateOrderStatus = (orderId: string) => {
     if (!orderId || typeof orderId !== "string") return;
@@ -2366,7 +2413,7 @@ export default function AdminPage() {
             <ShoppingBag className="w-4 h-4 text-neutral-900" />
             주문 및 배송 관리
             <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              {shipmentsList.length}
+              {shipmentsList.length}건
             </span>
           </button>
 
@@ -2381,20 +2428,8 @@ export default function AdminPage() {
             <Users className="w-4 h-4 text-neutral-900" />
             회원 관리
             <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              {customersList.length.toLocaleString()}
+              {customersList.length.toLocaleString()}명
             </span>
-          </button>
-
-          {/* 2-1. 회원 등급 관리 */}
-          <button
-            onClick={() => setActiveTab("tiers")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "tiers"
-                ? "bg-neutral-100 text-neutral-950 font-extrabold"
-                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
-              }`}
-          >
-            <ShieldCheck className="w-4 h-4 text-neutral-900" />
-            회원 등급 관리
           </button>
 
           {/* 2-2. 쿠폰 관리 */}
@@ -2516,7 +2551,7 @@ export default function AdminPage() {
               href="/membership"
               onClick={() => {
                 if (typeof window !== "undefined") {
-                  localStorage.setItem("membership_user_name", "최고관리자");
+                  localStorage.setItem("membership_user_name", "최고관리자 (Admin)");
                   localStorage.setItem("membership_user_email", "admin@choicomma.com");
                   localStorage.setItem("membership_user_phone", "010-1234-5678");
                   localStorage.setItem("membership_user_postcode", "06306");
@@ -2621,14 +2656,6 @@ export default function AdminPage() {
               회원
             </button>
             <button
-              onClick={() => setActiveTab("tiers")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "tiers" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-                }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-neutral-900" />
-              회원 등급
-            </button>
-            <button
               onClick={() => setActiveTab("coupons")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "coupons" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
                 }`}
@@ -2668,7 +2695,7 @@ export default function AdminPage() {
               selectedCategoryFilter={selectedCategoryFilter}
               setSelectedCategoryFilter={setSelectedCategoryFilter}
               productSortOrder={productSortOrder}
-              setProductSortOrder={setProductSortOrder}
+              setProductSortOrder={handleSortOrderChange}
               categoriesList={categoriesList}
               getProductStock={getProductStock}
               getProductNo={getProductNo}
@@ -2810,10 +2837,6 @@ export default function AdminPage() {
                   triggerToast(`[${targetProduct.title}] 재고가 ${newTotalStock}개로 업데이트되었습니다.`);
                 }
               }}
-              onSaveToDisk={() => {
-                saveProductsToStorage(productsList);
-                triggerToast("💾 현재 모든 상품 데이터가 서버 JSON 파일에 성공적으로 저장되었습니다!");
-              }}
             />
           )}
 
@@ -2873,15 +2896,6 @@ export default function AdminPage() {
               handleExcelFileUpload={handleExcelFileUpload}
               handleResetCustomerData={handleResetCustomerData}
               isCustomersLoaded={isCustomersLoaded}
-            />
-          )}
-
-          {/* TAB: MEMBERSHIP TIERS MANAGEMENT */}
-          {activeTab === "tiers" && (
-            <MembershipTiersManagement
-              customersList={customersList}
-              setCustomersList={setCustomersList}
-              triggerToast={triggerToast}
             />
           )}
 
@@ -6890,8 +6904,8 @@ export default function AdminPage() {
                     className="w-full bg-white border border-sky-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-sky-600 cursor-pointer"
                   >
                     <option value="">-- 등록된 회원 선택 ({customersList.length.toLocaleString()}명) --</option>
-                    {customersList.map((c: any) => (
-                      <option key={c.id} value={c.id}>
+                    {customersList.map((c: any, index: number) => (
+                      <option key={`${c.id || 'cust'}-${index}`} value={c.id}>
                         [{c.grade || "일반"}] {c.name} ({c.phone || c.email})
                       </option>
                     ))}

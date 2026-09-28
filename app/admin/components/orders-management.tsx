@@ -39,6 +39,7 @@ import {
   normalizePhone,
   type BundleGroup,
 } from "@/lib/shipping/bundle-detector";
+import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
 
 interface OrdersManagementProps {
   productsList?: any[];
@@ -239,8 +240,10 @@ export function OrdersManagement({
           const currentPoints = Number(cust.points || 0);
           const newPoints = currentPoints + refundPoints;
 
-          const updatedCusts = allCusts.map((c: any) =>
-            c.id === cust.id ? { ...c, points: newPoints } : c
+          const updatedCusts = deduplicateCustomers(
+            allCusts.map((c: any) =>
+              c.id === cust.id ? { ...c, points: newPoints } : c
+            )
           );
 
           if (setCustomersList) {
@@ -391,8 +394,10 @@ export function OrdersManagement({
           const currentPoints = Number(cust.points || 0);
           const newPoints = Math.max(0, currentPoints - revokePoints);
 
-          const updatedCusts = allCusts.map((c: any) =>
-            c.id === cust.id ? { ...c, points: newPoints } : c
+          const updatedCusts = deduplicateCustomers(
+            allCusts.map((c: any) =>
+              c.id === cust.id ? { ...c, points: newPoints } : c
+            )
           );
 
           if (setCustomersList) {
@@ -2675,18 +2680,9 @@ export function OrdersManagement({
                             }
                             @font-face {
                               font-family: 'Pretendard';
-                              src: url('/font/Pretendard-Regular.otf') format('opentype');
-                              font-weight: 400;
-                            }
-                            @font-face {
-                              font-family: 'Pretendard';
-                              src: url('/font/Pretendard-Bold.otf') format('opentype');
-                              font-weight: 700;
-                            }
-                            @font-face {
-                              font-family: 'Pretendard';
-                              src: url('/font/Pretendard-ExtraBold.otf') format('opentype');
-                              font-weight: 800;
+                              src: url('/font/PretendardVariable.woff2') format('woff2-variations');
+                              font-weight: 100 900;
+                              font-style: normal;
                             }
                             * {
                               font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif !important;

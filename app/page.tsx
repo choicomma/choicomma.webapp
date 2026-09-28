@@ -2,8 +2,7 @@ import { PageLayout } from "@/components/layout/page-layout";
 import { getCollectionProducts } from "@/lib/sfcc";
 import { HomeLayout } from "@/components/home/home-layout";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function Home() {
   const [allProducts] = await Promise.all([

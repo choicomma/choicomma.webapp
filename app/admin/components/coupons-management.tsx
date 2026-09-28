@@ -30,8 +30,10 @@ import {
   getAllUserCoupons,
   saveAdminCoupons,
   resetUsedCoupons,
+  isLegacyCoupon,
 } from "@/lib/membership/coupons";
 import { supabase } from "@/lib/supabase/client";
+import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
 
 interface CouponsManagementProps {
   customersList?: any[];
@@ -45,18 +47,27 @@ export function CouponsManagement({
   triggerToast,
 }: CouponsManagementProps) {
   const [activeTab, setActiveTab] = useState<"list" | "usage">("list");
-  const [coupons, setCoupons] = useState<AvailableCoupon[]>([]);
+  const [coupons, setCoupons] = useState<AvailableCoupon[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return getAllUserCoupons();
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
   const [usedCodes, setUsedCodes] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Customers list for target designation
-  const [allCustomers, setAllCustomers] = useState<any[]>(propCustomersList);
+  const [allCustomers, setAllCustomers] = useState<any[]>(() => deduplicateCustomers(propCustomersList));
 
   useEffect(() => {
     if (propCustomersList && propCustomersList.length > 0) {
-      setAllCustomers(propCustomersList);
+      setAllCustomers(deduplicateCustomers(propCustomersList));
       return;
     }
     if (typeof window !== "undefined") {
@@ -64,7 +75,7 @@ export function CouponsManagement({
       if (raw) {
         try {
           const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) setAllCustomers(parsed);
+          if (Array.isArray(parsed)) setAllCustomers(deduplicateCustomers(parsed));
         } catch (e) {}
       }
     }
@@ -127,8 +138,9 @@ export function CouponsManagement({
             try {
               const parsed = JSON.parse(data.value);
               if (Array.isArray(parsed)) {
-                localStorage.setItem("admin_coupons", JSON.stringify(parsed));
-                setCoupons(parsed);
+                const sanitized = parsed.filter((c: any) => !isLegacyCoupon(c));
+                localStorage.setItem("admin_coupons", JSON.stringify(sanitized));
+                setCoupons(sanitized);
               }
             } catch (e) {}
           }
@@ -386,7 +398,7 @@ export function CouponsManagement({
 
   // Filtered Customers in Modal
   const filteredModalCustomers = useMemo(() => {
-    return allCustomers.filter((cust) => {
+    return deduplicateCustomers(allCustomers).filter((cust) => {
       const q = customerSearchQuery.toLowerCase().trim();
       const name = (cust.name || "").toLowerCase();
       const email = (cust.email || "").toLowerCase();
@@ -1038,11 +1050,11 @@ export function CouponsManagement({
                       {filteredModalCustomers.length === 0 ? (
                         <p className="text-xs text-neutral-400 text-center py-6">일치하는 회원이 없습니다.</p>
                       ) : (
-                        filteredModalCustomers.map((cust) => {
+                        filteredModalCustomers.map((cust, index) => {
                           const isSelected = formSelectedCustomerEmails.includes(cust.email);
                           return (
                             <div
-                              key={cust.id || cust.email}
+                              key={`${cust.id || cust.email || 'cust'}-${index}`}
                               onClick={() => toggleCustomer(cust.email)}
                               className={`flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer transition-colors ${
                                 isSelected

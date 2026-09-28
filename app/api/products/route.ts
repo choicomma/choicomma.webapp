@@ -10,8 +10,44 @@ function getProductsFilePath() {
 // In-memory cache for ultra-fast response
 const globalForProducts = global as unknown as { serverProductsCache?: any[] };
 
+// Helper to generate ETag and Edge caching headers
+function makeResponse(products: any[], req?: NextRequest) {
+  const isFresh = req?.nextUrl.searchParams.get("fresh") === "1";
+  if (isFresh) {
+    return NextResponse.json(products, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        Pragma: "no-cache",
+      },
+    });
+  }
+
+  // Generate lightweight deterministic ETag
+  const sampleId = products[0]?.id || "empty";
+  const sampleTime = products[0]?.updated_at || products[0]?.created_at || "0";
+  const etag = `W/"prod-${products.length}-${sampleId}-${sampleTime}"`;
+
+  const ifNoneMatch = req?.headers.get("if-none-match");
+  if (ifNoneMatch && ifNoneMatch === etag) {
+    return new NextResponse(null, {
+      status: 304,
+      headers: {
+        "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+        ETag: etag,
+      },
+    });
+  }
+
+  return NextResponse.json(products, {
+    headers: {
+      "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+      ETag: etag,
+    },
+  });
+}
+
 // GET: Return authoritative products catalog from Supabase (with fallback to local JSON)
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     // 1. Primary: Supabase DB 조회
     if (isSupabaseConfigured) {
@@ -61,13 +97,7 @@ export async function GET() {
         });
 
         globalForProducts.serverProductsCache = finalProducts;
-        return NextResponse.json(finalProducts, {
-          headers: {
-            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        });
+        return makeResponse(finalProducts, req);
       }
 
       if (dbError) {
@@ -77,13 +107,7 @@ export async function GET() {
 
     // 2. In-memory cache fallback
     if (globalForProducts.serverProductsCache && Array.isArray(globalForProducts.serverProductsCache)) {
-      return NextResponse.json(globalForProducts.serverProductsCache, {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      });
+      return makeResponse(globalForProducts.serverProductsCache, req);
     }
 
     // 3. Local disk fallback
@@ -92,16 +116,10 @@ export async function GET() {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
       globalForProducts.serverProductsCache = data;
-      return NextResponse.json(data, {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      });
+      return makeResponse(data, req);
     }
 
-    return NextResponse.json([]);
+    return makeResponse([], req);
   } catch (error: any) {
     console.error("Failed to read products:", error);
     return NextResponse.json(

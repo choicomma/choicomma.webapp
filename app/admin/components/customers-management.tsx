@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
+import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
 
 interface CustomersManagementProps {
   customersList: any[];
@@ -37,14 +38,19 @@ export function CustomersManagement({
   const [customerPage, setCustomerPage] = useState(1);
   const CUSTOMERS_PER_PAGE = 25;
 
+  // 항상 중복이 완전히 제거된 단일 관리자 기반 회원 목록 유지
+  const sanitizedCustomersList = React.useMemo(() => {
+    return deduplicateCustomers(customersList);
+  }, [customersList]);
+
   const handleDownloadCustomersExcel = () => {
-    if (customersList.length === 0) {
+    if (sanitizedCustomersList.length === 0) {
       alert("다운로드할 회원 데이터가 없습니다.");
       return;
     }
 
     try {
-      const exportData = customersList.map((c, index) => ({
+      const exportData = sanitizedCustomersList.map((c, index) => ({
         "번호": index + 1,
         "회원ID": c.id,
         "이름": c.name,
@@ -71,11 +77,11 @@ export function CustomersManagement({
 
   const newCustomersThisMonth = React.useMemo(() => {
     const currentYM = new Date().toISOString().slice(0, 7);
-    return customersList.filter((c) => c.joinedDate && c.joinedDate.startsWith(currentYM)).length;
-  }, [customersList]);
+    return sanitizedCustomersList.filter((c) => c.joinedDate && c.joinedDate.startsWith(currentYM)).length;
+  }, [sanitizedCustomersList]);
 
   const filteredCustomers = React.useMemo(() => {
-    return customersList.filter((c) => {
+    return sanitizedCustomersList.filter((c) => {
       const matchesSearch =
         c.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
         c.email.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
@@ -88,7 +94,7 @@ export function CustomersManagement({
         c.grade === customerGradeFilter;
       return matchesSearch && matchesGrade;
     });
-  }, [customersList, customerSearchQuery, customerGradeFilter]);
+  }, [sanitizedCustomersList, customerSearchQuery, customerGradeFilter]);
 
   const totalCustomerPages = Math.ceil(filteredCustomers.length / CUSTOMERS_PER_PAGE) || 1;
   const paginatedCustomers = React.useMemo(() => {
@@ -147,7 +153,7 @@ export function CustomersManagement({
             <span>전체 회원</span>
           </div>
           <p className="text-xl font-extrabold text-neutral-950 mt-1.5" suppressHydrationWarning>
-            {customersList.length > 1 || isCustomersLoaded ? `${customersList.length.toLocaleString()} 명` : "-"}
+            {sanitizedCustomersList.length > 1 || isCustomersLoaded ? `${sanitizedCustomersList.length.toLocaleString()} 명` : "-"}
           </p>
           <p className="text-[11px] text-neutral-400 mt-0.5">스토어 전체 등록 회원</p>
         </div>
@@ -163,7 +169,7 @@ export function CustomersManagement({
             <span>일반 (GENERAL)</span>
           </div>
           <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
-            {customersList.filter((c) => c.grade === "GENERAL" || c.grade === "REGULAR" || !c.grade).length.toLocaleString()} 명
+            {sanitizedCustomersList.filter((c) => c.grade === "GENERAL" || c.grade === "REGULAR" || !c.grade).length.toLocaleString()} 명
           </p>
           <p className="text-[11px] text-neutral-500 font-bold mt-0.5">기본 회원</p>
         </div>
@@ -179,7 +185,7 @@ export function CustomersManagement({
             <span>실버 (SILVER)</span>
           </div>
           <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
-            {customersList.filter((c) => c.grade === "SILVER").length.toLocaleString()} 명
+            {sanitizedCustomersList.filter((c) => c.grade === "SILVER").length.toLocaleString()} 명
           </p>
           <p className="text-[11px] text-neutral-500 font-bold mt-0.5">실버 등급 회원</p>
         </div>
@@ -195,7 +201,7 @@ export function CustomersManagement({
             <span>골드 (GOLD)</span>
           </div>
           <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
-            {customersList.filter((c) => c.grade === "GOLD").length.toLocaleString()} 명
+            {sanitizedCustomersList.filter((c) => c.grade === "GOLD").length.toLocaleString()} 명
           </p>
           <p className="text-[11px] text-neutral-500 font-bold mt-0.5">골드 등급 회원</p>
         </div>
@@ -211,7 +217,7 @@ export function CustomersManagement({
             <span>플래티넘 (PLATINUM)</span>
           </div>
           <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
-            {customersList.filter((c) => c.grade === "PLATINUM").length.toLocaleString()} 명
+            {sanitizedCustomersList.filter((c) => c.grade === "PLATINUM").length.toLocaleString()} 명
           </p>
           <p className="text-[11px] text-neutral-500 font-bold mt-0.5">플래티넘 등급 회원</p>
         </div>
@@ -227,7 +233,7 @@ export function CustomersManagement({
             <span className="font-black">VVIP</span>
           </div>
           <p className="text-xl font-black text-neutral-950 mt-1.5">
-            {customersList.filter((c) => c.grade === "VVIP" || c.grade?.includes("VIP") || c.role === "ADMIN").length.toLocaleString()} 명
+            {sanitizedCustomersList.filter((c) => c.grade === "VVIP" || c.grade?.includes("VIP") || c.role === "ADMIN").length.toLocaleString()} 명
           </p>
           <p className="text-[11px] text-neutral-900 font-extrabold mt-0.5">최상위 VIP 회원</p>
         </div>
@@ -284,8 +290,8 @@ export function CustomersManagement({
                   </td>
                 </tr>
               ) : (
-                paginatedCustomers.map((cust) => (
-                  <tr key={cust.id} className="hover:bg-neutral-50/70 transition-colors">
+                paginatedCustomers.map((cust, index) => (
+                  <tr key={`${cust.id || 'cust'}-${cust.email || index}-${index}`} className="hover:bg-neutral-50/70 transition-colors">
                     <td className="py-4 px-5">
                       <div>
                         <p className="font-extrabold text-neutral-950 text-sm flex items-center gap-1.5">

@@ -364,32 +364,8 @@ export function CjLabelPrint({
     }
     @font-face {
       font-family: 'Pretendard';
-      src: url('/font/Pretendard-Regular.otf') format('opentype');
-      font-weight: 400;
-      font-style: normal;
-    }
-    @font-face {
-      font-family: 'Pretendard';
-      src: url('/font/Pretendard-Medium.otf') format('opentype');
-      font-weight: 500;
-      font-style: normal;
-    }
-    @font-face {
-      font-family: 'Pretendard';
-      src: url('/font/Pretendard-Bold.otf') format('opentype');
-      font-weight: 700;
-      font-style: normal;
-    }
-    @font-face {
-      font-family: 'Pretendard';
-      src: url('/font/Pretendard-ExtraBold.otf') format('opentype');
-      font-weight: 800;
-      font-style: normal;
-    }
-    @font-face {
-      font-family: 'Pretendard';
-      src: url('/font/Pretendard-Black.otf') format('opentype');
-      font-weight: 900;
+      src: url('/font/PretendardVariable.woff2') format('woff2-variations');
+      font-weight: 100 900;
       font-style: normal;
     }
     * {

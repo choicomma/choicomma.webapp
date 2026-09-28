@@ -35,12 +35,14 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:39.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.628+00:00",
+    "created_at": "2026-09-28T13:40:23.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
     "isHeroFeatured": true,
-    "heroCustomImage": "/main_slider/1.jpg"
+    "heroCustomImage": "/main_slider/1.jpg",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-2",
@@ -78,12 +80,14 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:38.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.628+00:00",
+    "created_at": "2026-09-28T13:40:22.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
     "isHeroFeatured": true,
-    "heroCustomImage": "/main_slider/2.jpg"
+    "heroCustomImage": "/main_slider/2.jpg",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-3",
@@ -121,12 +125,14 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:37.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.628+00:00",
+    "created_at": "2026-09-28T13:40:21.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
     "isHeroFeatured": true,
-    "heroCustomImage": "/main_slider/3.jpg"
+    "heroCustomImage": "/main_slider/3.jpg",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-4",
@@ -164,12 +170,14 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:36.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.628+00:00",
+    "created_at": "2026-09-28T13:40:20.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
     "isHeroFeatured": true,
-    "heroCustomImage": "/main_slider/4.jpg"
+    "heroCustomImage": "/main_slider/4.jpg",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-5",
@@ -207,12 +215,14 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:35.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.628+00:00",
+    "created_at": "2026-09-28T13:40:19.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
     "isHeroFeatured": true,
-    "heroCustomImage": "/main_slider/5.jpg"
+    "heroCustomImage": "/main_slider/5.jpg",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-6",
@@ -250,12 +260,14 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:34.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.628+00:00",
+    "created_at": "2026-09-28T13:40:18.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
     "isHeroFeatured": true,
-    "heroCustomImage": "/main_slider/6.jpg"
+    "heroCustomImage": "/main_slider/6.jpg",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-7",
@@ -293,12 +305,14 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:33.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.628+00:00",
+    "created_at": "2026-09-28T13:40:17.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
     "isHeroFeatured": true,
-    "heroCustomImage": "/main_slider/7.jpg"
+    "heroCustomImage": "/main_slider/7.jpg",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-8",
@@ -336,12 +350,14 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:32.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.628+00:00",
+    "created_at": "2026-09-28T13:40:16.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
     "isHeroFeatured": true,
-    "heroCustomImage": "/main_slider/8.jpg"
+    "heroCustomImage": "/main_slider/8.jpg",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-9",
@@ -379,12 +395,14 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:31.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00",
+    "created_at": "2026-09-28T13:40:15.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
     "isHeroFeatured": true,
-    "heroCustomImage": "/main_slider/9.jpg"
+    "heroCustomImage": "/main_slider/9.jpg",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-452",
@@ -494,10 +512,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:30.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:14.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-451",
@@ -579,10 +599,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:29.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:13.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-450",
@@ -664,10 +686,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:28.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:12.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-449",
@@ -752,10 +776,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:27.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:11.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-448",
@@ -837,10 +863,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:26.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:10.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-447",
@@ -922,10 +950,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:25.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:09.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-446",
@@ -1007,10 +1037,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:24.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:08.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-445",
@@ -1092,10 +1124,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:23.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:07.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-444",
@@ -1177,10 +1211,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:22.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:06.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-443",
@@ -1262,10 +1298,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:21.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:05.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-442",
@@ -1347,10 +1385,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:20.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:04.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-441",
@@ -1432,10 +1472,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:19.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:03.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-439",
@@ -1520,10 +1562,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:18.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:02.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-438",
@@ -1608,10 +1652,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:17.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:40:01.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-1788841553388",
@@ -1641,11 +1687,13 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:16.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00",
-    "isHeroFeatured": true
+    "created_at": "2026-09-28T13:40:00.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "isHeroFeatured": true,
+    "releaseDate": ""
   },
   {
     "id": "excel-product-437",
@@ -1694,10 +1742,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:15.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:59.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-1788841549464",
@@ -1727,11 +1777,13 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:14.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00",
-    "isHeroFeatured": true
+    "created_at": "2026-09-28T13:39:58.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "isHeroFeatured": true,
+    "releaseDate": ""
   },
   {
     "id": "excel-product-436",
@@ -1816,10 +1868,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:13.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:57.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-435",
@@ -1904,10 +1958,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:12.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:56.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-1788841526896",
@@ -1937,11 +1993,13 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:11.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00",
-    "isHeroFeatured": true
+    "created_at": "2026-09-28T13:39:55.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "isHeroFeatured": true,
+    "releaseDate": ""
   },
   {
     "id": "excel-product-434",
@@ -2026,10 +2084,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:10.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:54.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-433",
@@ -2114,10 +2174,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:09.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:53.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-1788841558271",
@@ -2147,11 +2209,13 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:08.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00",
-    "isHeroFeatured": true
+    "created_at": "2026-09-28T13:39:52.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "isHeroFeatured": true,
+    "releaseDate": ""
   },
   {
     "id": "excel-product-430",
@@ -2236,10 +2300,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:07.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:51.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-1788841531533",
@@ -2269,11 +2335,13 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:06.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00",
-    "isHeroFeatured": true
+    "created_at": "2026-09-28T13:39:50.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "isHeroFeatured": true,
+    "releaseDate": ""
   },
   {
     "id": "excel-product-419",
@@ -2358,10 +2426,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:05.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:49.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-426",
@@ -2446,10 +2516,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:04.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:48.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-1788841536283",
@@ -2479,11 +2551,13 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:03.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00",
-    "isHeroFeatured": true
+    "created_at": "2026-09-28T13:39:47.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "isHeroFeatured": true,
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-1788841522634",
@@ -2513,11 +2587,13 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:02.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00",
-    "isHeroFeatured": true
+    "created_at": "2026-09-28T13:39:46.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "isHeroFeatured": true,
+    "releaseDate": ""
   },
   {
     "id": "excel-product-424",
@@ -2602,10 +2678,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:01.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:45.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-423",
@@ -2690,10 +2768,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:45:00.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:44.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-422",
@@ -2778,10 +2858,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:59.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:43.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-421",
@@ -2866,10 +2948,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:58.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:42.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-418",
@@ -2954,10 +3038,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:57.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:41.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-417",
@@ -3006,10 +3092,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:56.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:40.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-416",
@@ -3059,10 +3147,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:55.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:39.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-414",
@@ -3112,10 +3202,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:54.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:38.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-413",
@@ -3165,10 +3257,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:53.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:37.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-412",
@@ -3217,10 +3311,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:52.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:36.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-1788841541064",
@@ -3250,11 +3346,13 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:51.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00",
-    "isHeroFeatured": true
+    "created_at": "2026-09-28T13:39:35.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "isHeroFeatured": true,
+    "releaseDate": ""
   },
   {
     "id": "excel-product-411",
@@ -3304,10 +3402,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:50.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:34.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-410",
@@ -3357,10 +3457,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:49.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:33.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-409",
@@ -3445,10 +3547,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:48.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:32.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-408",
@@ -3498,10 +3602,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:47.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:31.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-407",
@@ -3551,10 +3657,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:46.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:30.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-406",
@@ -3604,10 +3712,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:45.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:29.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-405",
@@ -3657,10 +3767,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:44.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:28.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-404",
@@ -3710,10 +3822,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:43.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:27.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-403",
@@ -3763,10 +3877,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:42.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:26.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-402",
@@ -3816,10 +3932,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:41.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:25.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-396",
@@ -3869,10 +3987,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:40.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:24.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-395",
@@ -3922,10 +4042,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:39.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:23.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-394",
@@ -3975,10 +4097,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:38.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:22.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-393",
@@ -4028,10 +4152,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:37.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:21.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-392",
@@ -4080,10 +4206,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:36.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:20.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-391",
@@ -4132,10 +4260,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:35.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:19.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-390",
@@ -4184,10 +4314,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:34.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:18.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-389",
@@ -4236,10 +4368,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:33.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:17.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-388",
@@ -4288,10 +4422,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:32.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:16.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-387",
@@ -4340,10 +4476,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:31.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:15.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-386",
@@ -4392,10 +4530,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:30.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:14.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-385",
@@ -4444,10 +4584,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:29.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:13.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-384",
@@ -4496,10 +4638,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:28.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:12.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-375",
@@ -4581,10 +4725,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:27.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:11.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-378",
@@ -4633,10 +4779,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:26.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:10.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-374",
@@ -4685,10 +4833,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:25.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:09.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-377",
@@ -4737,10 +4887,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:24.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:08.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-373",
@@ -4789,10 +4941,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:23.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:07.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-353",
@@ -4841,10 +4995,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:22.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:06.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-379",
@@ -4893,10 +5049,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:21.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:05.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-352",
@@ -4945,10 +5103,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:20.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:04.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-351",
@@ -4998,10 +5158,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:19.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:03.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-350",
@@ -5086,10 +5248,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:18.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:02.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-343",
@@ -5140,10 +5304,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:17.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:01.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-342",
@@ -5194,10 +5360,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:16.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:39:00.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-341",
@@ -5246,10 +5414,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:15.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:59.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-340",
@@ -5298,10 +5468,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:14.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:58.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-339",
@@ -5350,10 +5522,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:13.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:57.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-338",
@@ -5402,10 +5576,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:12.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:56.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-335",
@@ -5455,10 +5631,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:11.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:55.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-334",
@@ -5508,10 +5686,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:10.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:54.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-333",
@@ -5562,10 +5742,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:09.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:53.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-380",
@@ -5614,10 +5796,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:08.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:52.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-332",
@@ -5666,10 +5850,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:07.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:51.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-331",
@@ -5719,10 +5905,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:06.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:50.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-330",
@@ -5772,10 +5960,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:05.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:49.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-329",
@@ -5825,10 +6015,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:04.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:48.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-328",
@@ -5878,10 +6070,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:03.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:47.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-327",
@@ -5931,10 +6125,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:02.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:46.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-326",
@@ -5983,10 +6179,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:01.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:45.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-325",
@@ -6035,10 +6233,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:44:00.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:44.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-324",
@@ -6087,10 +6287,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:59.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:43.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-323",
@@ -6139,10 +6341,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:58.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:42.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-320",
@@ -6192,10 +6396,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:57.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:41.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-322",
@@ -6244,10 +6450,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:56.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:40.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-319",
@@ -6297,10 +6505,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:55.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:39.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-321",
@@ -6350,10 +6560,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:54.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:38.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-318",
@@ -6403,10 +6615,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:53.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:37.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-316",
@@ -6456,10 +6670,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:52.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:36.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-315",
@@ -6509,10 +6725,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:51.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:35.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-314",
@@ -6562,10 +6780,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:50.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:34.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-313",
@@ -6615,10 +6835,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:49.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:33.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-312",
@@ -6668,10 +6890,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:48.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:32.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-311",
@@ -6721,10 +6945,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:47.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:31.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-310",
@@ -6773,10 +6999,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:46.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:30.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-309",
@@ -6825,10 +7053,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:45.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:29.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-308",
@@ -6877,10 +7107,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:44.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:28.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-307",
@@ -6930,10 +7162,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:43.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:27.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-306",
@@ -6982,10 +7216,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:42.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:26.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-305",
@@ -7034,10 +7270,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:41.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:25.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-304",
@@ -7086,10 +7324,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:40.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:24.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-303",
@@ -7138,10 +7378,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:39.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:23.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.158+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-302",
@@ -7190,10 +7432,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:38.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:22.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-301",
@@ -7242,10 +7486,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:37.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:21.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-300",
@@ -7294,10 +7540,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:36.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:20.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-299",
@@ -7346,10 +7594,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:35.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:19.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-298",
@@ -7398,10 +7648,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:34.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:18.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-297",
@@ -7450,10 +7702,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:33.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:17.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-296",
@@ -7502,10 +7756,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:32.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:16.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-295",
@@ -7554,10 +7810,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:31.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:15.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-294",
@@ -7606,10 +7864,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:30.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:14.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-293",
@@ -7658,10 +7918,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:29.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:13.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-292",
@@ -7710,10 +7972,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:28.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:12.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-291",
@@ -7762,10 +8026,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:27.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:11.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-290",
@@ -7814,10 +8080,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:26.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:10.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-289",
@@ -7866,10 +8134,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:25.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:09.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-288",
@@ -7918,10 +8188,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:24.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:08.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-287",
@@ -7970,10 +8242,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:23.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:07.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-286",
@@ -8022,10 +8296,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:22.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:06.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-285",
@@ -8074,10 +8350,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:21.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:05.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-284",
@@ -8126,10 +8404,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:20.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:04.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-283",
@@ -8178,10 +8458,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:19.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:03.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-282",
@@ -8231,10 +8513,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:18.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:02.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-281",
@@ -8284,10 +8568,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:17.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:01.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-267",
@@ -8336,10 +8622,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:16.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:38:00.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-280",
@@ -8389,10 +8677,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:15.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:59.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-266",
@@ -8442,10 +8732,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:14.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:58.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-279",
@@ -8495,10 +8787,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:13.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:57.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-265",
@@ -8548,10 +8842,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:12.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:56.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-278",
@@ -8601,10 +8897,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:11.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:55.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-264",
@@ -8654,10 +8952,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:10.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:54.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-277",
@@ -8707,10 +9007,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:09.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:53.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-263",
@@ -8760,10 +9062,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:08.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:52.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-276",
@@ -8813,10 +9117,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:07.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:51.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-257",
@@ -8867,10 +9173,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:06.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:50.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-275",
@@ -8955,10 +9263,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:05.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:49.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-256",
@@ -9043,10 +9353,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:04.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:48.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-274",
@@ -9095,10 +9407,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:03.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:47.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-255",
@@ -9148,10 +9462,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:02.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:46.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-273",
@@ -9201,10 +9517,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:01.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:45.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-254",
@@ -9254,10 +9572,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:43:00.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:44.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-272",
@@ -9307,10 +9627,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:59.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:43.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-253",
@@ -9360,10 +9682,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:58.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:42.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-252",
@@ -9412,10 +9736,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:57.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:41.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-251",
@@ -9500,10 +9826,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:56.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:40.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-269",
@@ -9553,10 +9881,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:55.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:39.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-271",
@@ -9606,10 +9936,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:54.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:38.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-250",
@@ -9659,10 +9991,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:53.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:37.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-268",
@@ -9711,10 +10045,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:52.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:36.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-270",
@@ -9764,10 +10100,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:51.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:35.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-249",
@@ -9852,10 +10190,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:50.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:34.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-248",
@@ -9905,10 +10245,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:49.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:33.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-247",
@@ -9958,10 +10300,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:48.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:32.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-246",
@@ -10011,10 +10355,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:47.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:31.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-245",
@@ -10099,10 +10445,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:46.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:30.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-244",
@@ -10187,10 +10535,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:45.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:29.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-243",
@@ -10275,10 +10625,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:44.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:28.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-242",
@@ -10328,10 +10680,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:43.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:27.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-241",
@@ -10381,10 +10735,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:42.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:26.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-240",
@@ -10434,10 +10790,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:41.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:25.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-239",
@@ -10487,10 +10845,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:40.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:24.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-238",
@@ -10540,10 +10900,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:39.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:23.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-237",
@@ -10593,10 +10955,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:38.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:22.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-236",
@@ -10646,10 +11010,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:37.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:21.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-235",
@@ -10699,10 +11065,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:36.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:20.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-233",
@@ -10751,10 +11119,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:35.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:19.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-232",
@@ -10803,10 +11173,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:34.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:18.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-231",
@@ -10855,10 +11227,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:33.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:17.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-230",
@@ -10908,10 +11282,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:32.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:16.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-229",
@@ -10961,10 +11337,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:31.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:15.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-228",
@@ -11014,10 +11392,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:30.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:14.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-227",
@@ -11067,10 +11447,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:29.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:13.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-226",
@@ -11120,10 +11502,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:28.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:12.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-225",
@@ -11173,10 +11557,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:27.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:11.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-223",
@@ -11225,10 +11611,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:26.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:10.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-222",
@@ -11278,10 +11666,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:25.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:09.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-221",
@@ -11330,10 +11720,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:24.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:08.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-220",
@@ -11383,10 +11775,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:23.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:07.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-219",
@@ -11436,10 +11830,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:22.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:06.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-218",
@@ -11489,10 +11885,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:21.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:05.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-217",
@@ -11542,10 +11940,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:20.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:37:04.157+00:00",
+    "updated_at": "2026-09-28T13:40:23.159+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-216",
@@ -11595,10 +11995,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:19.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:24:02.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-215",
@@ -11647,10 +12049,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:18.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:24:01.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-210",
@@ -11735,10 +12139,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:17.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:24:00.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-209",
@@ -11823,10 +12229,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:16.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:59.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-208",
@@ -11876,10 +12284,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:15.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:58.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-207",
@@ -11929,10 +12339,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:14.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:57.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-206",
@@ -11982,10 +12394,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:13.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:56.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-205",
@@ -12070,10 +12484,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:12.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:55.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-204",
@@ -12123,10 +12539,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:11.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:54.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-203",
@@ -12176,10 +12594,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:10.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:53.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-202",
@@ -12229,10 +12649,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:09.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:52.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-201",
@@ -12282,10 +12704,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:08.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:51.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-200",
@@ -12335,10 +12759,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:07.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:50.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-199",
@@ -12388,10 +12814,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:06.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:49.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-212",
@@ -12441,10 +12869,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:05.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:48.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-214",
@@ -12494,10 +12924,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:04.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:47.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-198",
@@ -12547,10 +12979,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:03.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:46.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-211",
@@ -12600,10 +13034,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:02.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:45.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-213",
@@ -12653,10 +13089,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:01.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:44.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-197",
@@ -12706,10 +13144,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:42:00.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:43.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-196",
@@ -12759,10 +13199,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:59.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:42.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-195",
@@ -12812,10 +13254,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:58.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:41.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-194",
@@ -12865,10 +13309,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:57.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:40.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-193",
@@ -12918,10 +13364,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:56.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:39.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-192",
@@ -12970,10 +13418,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:55.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:38.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-191",
@@ -13022,10 +13472,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:54.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:37.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-190",
@@ -13074,10 +13526,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:53.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:36.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-189",
@@ -13126,10 +13580,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:52.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:35.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-188",
@@ -13179,10 +13635,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:51.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:34.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-187",
@@ -13232,10 +13690,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:50.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:33.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-186",
@@ -13285,10 +13745,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:49.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:32.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-185",
@@ -13338,10 +13800,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:48.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:31.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-184",
@@ -13391,10 +13855,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:47.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:30.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-183",
@@ -13444,10 +13910,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:46.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:29.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-182",
@@ -13497,10 +13965,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:45.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:28.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-181",
@@ -13550,10 +14020,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:44.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:27.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-180",
@@ -13603,10 +14075,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:43.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:26.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-179",
@@ -13656,10 +14130,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:42.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:25.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-178",
@@ -13709,10 +14185,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:41.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:24.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-177",
@@ -13762,10 +14240,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:40.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:23.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-176",
@@ -13814,10 +14294,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:39.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:22.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-175",
@@ -13866,10 +14348,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:38.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:21.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-174",
@@ -13918,10 +14402,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:37.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:20.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-173",
@@ -13970,10 +14456,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:36.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:19.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-172",
@@ -14022,10 +14510,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:35.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:18.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-171",
@@ -14074,10 +14564,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:34.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:17.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-170",
@@ -14126,10 +14618,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:33.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:16.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-169",
@@ -14178,10 +14672,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:32.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:15.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-168",
@@ -14230,10 +14726,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:31.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:14.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-167",
@@ -14282,10 +14780,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:30.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:13.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-166",
@@ -14334,10 +14834,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:29.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:12.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-165",
@@ -14386,10 +14888,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:28.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:11.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-164",
@@ -14438,10 +14942,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:27.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:10.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-163",
@@ -14490,10 +14996,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:26.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:09.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-162",
@@ -14542,10 +15050,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:25.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:08.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-161",
@@ -14594,10 +15104,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:24.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:07.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-160",
@@ -14646,10 +15158,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:23.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:06.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-159",
@@ -14698,10 +15212,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:22.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:05.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-158",
@@ -14750,10 +15266,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:21.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:04.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-157",
@@ -14802,10 +15320,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:20.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:03.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-156",
@@ -14855,10 +15375,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:19.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:02.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-155",
@@ -14907,10 +15429,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:18.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:01.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-154",
@@ -14959,10 +15483,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:17.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:23:00.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-153",
@@ -15011,10 +15537,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:16.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:59.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-152",
@@ -15063,10 +15591,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:15.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:58.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-151",
@@ -15116,10 +15646,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:14.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:57.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-150",
@@ -15169,10 +15701,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:13.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:56.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-149",
@@ -15222,10 +15756,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:12.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:55.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-148",
@@ -15274,10 +15810,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:11.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:54.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-147",
@@ -15326,10 +15864,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:10.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:53.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-146",
@@ -15379,10 +15919,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:09.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:52.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-145",
@@ -15431,10 +15973,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:08.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:51.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-144",
@@ -15483,10 +16027,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:07.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:50.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-143",
@@ -15535,10 +16081,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:06.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:49.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-142",
@@ -15587,10 +16135,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:05.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:48.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-141",
@@ -15639,10 +16189,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:04.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:47.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-140",
@@ -15691,10 +16243,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:03.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:46.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-139",
@@ -15743,10 +16297,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:02.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:45.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-138",
@@ -15796,10 +16352,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:01.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:44.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-136",
@@ -15849,10 +16407,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:41:00.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:43.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-135",
@@ -15902,10 +16462,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:59.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:42.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-134",
@@ -15955,10 +16517,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:58.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:41.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-133",
@@ -16008,10 +16572,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:57.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:40.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-132",
@@ -16061,10 +16627,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:56.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:39.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-131",
@@ -16113,10 +16681,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:55.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:38.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-130",
@@ -16165,10 +16735,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:54.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:37.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-129",
@@ -16217,10 +16789,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:53.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:36.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-128",
@@ -16269,10 +16843,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:52.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:35.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-127",
@@ -16321,10 +16897,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:51.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:34.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-126",
@@ -16373,10 +16951,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:50.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:33.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-125",
@@ -16425,10 +17005,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:49.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.629+00:00"
+    "created_at": "2026-09-28T13:22:32.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-124",
@@ -16477,10 +17059,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:48.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:31.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-123",
@@ -16529,10 +17113,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:47.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:30.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-122",
@@ -16614,10 +17200,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:46.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:29.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-121",
@@ -16667,10 +17255,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:45.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:28.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-120",
@@ -16720,10 +17310,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:44.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:27.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-119",
@@ -16773,10 +17365,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:43.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:26.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-118",
@@ -16826,10 +17420,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:42.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:25.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-117",
@@ -16879,10 +17475,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:41.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:24.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-116",
@@ -16931,10 +17529,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:40.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:23.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-115",
@@ -16984,10 +17584,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:39.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:22.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-114",
@@ -17036,10 +17638,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:38.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:21.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-113",
@@ -17088,10 +17692,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:37.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:20.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-112",
@@ -17140,10 +17746,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:36.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:19.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-111",
@@ -17193,10 +17801,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:35.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:18.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-110",
@@ -17246,10 +17856,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:34.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:17.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-109",
@@ -17299,10 +17911,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:33.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:16.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-107",
@@ -17351,10 +17965,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:32.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:15.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-106",
@@ -17403,10 +18019,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:31.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:14.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-105",
@@ -17491,10 +18109,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:30.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:13.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-103",
@@ -17544,10 +18164,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:29.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:12.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-102",
@@ -17597,10 +18219,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:28.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:11.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-101",
@@ -17649,10 +18273,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:27.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:10.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-100",
@@ -17701,10 +18327,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:26.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:09.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-99",
@@ -17753,10 +18381,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:25.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:08.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-98",
@@ -17806,10 +18436,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:24.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:07.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-97",
@@ -17859,10 +18491,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:23.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:06.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-96",
@@ -17912,10 +18546,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:22.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:05.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-95",
@@ -17965,10 +18601,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:21.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:04.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-94",
@@ -18018,10 +18656,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:20.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:03.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-93",
@@ -18071,10 +18711,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:19.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:02.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-92",
@@ -18124,10 +18766,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:18.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:01.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-91",
@@ -18177,10 +18821,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:17.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:22:00.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-90",
@@ -18231,10 +18877,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:16.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:59.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-89",
@@ -18285,10 +18933,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:15.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:58.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-87",
@@ -18338,10 +18988,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:14.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:57.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-86",
@@ -18391,10 +19043,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:13.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:56.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-85",
@@ -18444,10 +19098,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:12.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:55.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-84",
@@ -18497,10 +19153,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:11.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:54.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-83",
@@ -18550,10 +19208,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:10.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:53.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-82",
@@ -18603,10 +19263,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:09.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:52.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-81",
@@ -18656,10 +19318,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:08.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:51.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-80",
@@ -18709,10 +19373,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:07.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:50.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-79",
@@ -18762,10 +19428,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:06.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:49.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-78",
@@ -18815,10 +19483,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:05.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:48.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-77",
@@ -18868,10 +19538,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:04.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:47.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-76",
@@ -18921,10 +19593,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:03.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:46.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-75",
@@ -18974,10 +19648,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:02.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:45.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-74",
@@ -19026,10 +19702,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:01.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:44.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-73",
@@ -19078,10 +19756,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:40:00.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:43.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-72",
@@ -19166,10 +19846,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:59.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:42.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-71",
@@ -19254,10 +19936,12 @@
           "rate": 5
         }
       ],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:58.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:41.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-70",
@@ -19307,10 +19991,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:57.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:40.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-69",
@@ -19360,10 +20046,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:56.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:39.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-68",
@@ -19412,10 +20100,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:55.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:38.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-65",
@@ -19464,10 +20154,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:54.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:37.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-64",
@@ -19517,10 +20209,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:53.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:36.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-63",
@@ -19570,10 +20264,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:52.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:35.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-61",
@@ -19622,10 +20318,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:51.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:34.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-60",
@@ -19675,10 +20373,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:50.628+00:00",
-    "updated_at": "2026-09-28T04:45:39.63+00:00"
+    "created_at": "2026-09-28T13:21:33.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-58",
@@ -19727,10 +20427,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:49.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:32.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-57",
@@ -19780,10 +20482,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:48.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:31.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-56",
@@ -19833,10 +20537,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:47.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:30.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-55",
@@ -19886,10 +20592,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:46.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:29.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-54",
@@ -19939,10 +20647,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:45.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:28.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-53",
@@ -19992,10 +20702,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:44.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:27.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-52",
@@ -20045,10 +20757,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:43.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:26.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-51",
@@ -20098,10 +20812,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:42.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:25.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-50",
@@ -20151,10 +20867,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:41.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:24.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-49",
@@ -20204,10 +20922,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:40.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:23.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-48",
@@ -20257,10 +20977,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:39.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:22.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-47",
@@ -20310,10 +21032,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:38.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:21.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-46",
@@ -20363,10 +21087,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:37.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:20.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-45",
@@ -20416,10 +21142,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:36.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:19.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-44",
@@ -20469,10 +21197,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:35.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:18.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-43",
@@ -20522,10 +21252,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:34.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:17.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-42",
@@ -20575,10 +21307,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:33.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:16.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-41",
@@ -20628,10 +21362,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:32.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:15.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-36",
@@ -20681,10 +21417,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:31.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:14.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-35",
@@ -20734,10 +21472,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:30.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:13.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-34",
@@ -20787,10 +21527,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:29.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:12.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-33",
@@ -20840,10 +21582,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:28.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:11.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-32",
@@ -20893,10 +21637,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:27.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:10.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-31",
@@ -20946,10 +21692,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:26.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:09.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-30",
@@ -20999,10 +21747,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:25.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:08.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-29",
@@ -21051,10 +21801,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:24.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:07.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-28",
@@ -21104,10 +21856,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:23.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:06.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-27",
@@ -21157,10 +21911,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:22.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:05.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-26",
@@ -21209,10 +21965,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:21.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:04.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-25",
@@ -21261,10 +22019,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:20.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:03.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-24",
@@ -21313,10 +22073,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:19.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:02.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-23",
@@ -21365,10 +22127,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:18.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:01.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-22",
@@ -21419,10 +22183,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:17.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:21:00.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-21",
@@ -21473,10 +22239,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:16.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:59.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-20",
@@ -21525,10 +22293,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:15.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:58.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-19",
@@ -21577,10 +22347,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:14.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:57.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-18",
@@ -21629,10 +22401,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:13.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:56.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-17",
@@ -21681,10 +22455,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:12.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:55.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-16",
@@ -21733,10 +22509,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:11.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:54.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-15",
@@ -21785,10 +22563,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:10.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:53.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-14",
@@ -21837,10 +22617,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:09.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:52.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-13",
@@ -21889,10 +22671,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:08.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:51.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-12",
@@ -21941,10 +22725,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:07.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:50.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-11",
@@ -21993,10 +22779,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:06.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:49.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-10",
@@ -22045,10 +22833,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:05.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:48.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-9",
@@ -22097,10 +22887,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:04.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:47.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-8",
@@ -22149,10 +22941,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:03.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:46.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-7",
@@ -22202,10 +22996,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:02.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:45.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-6",
@@ -22254,10 +23050,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:01.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:44.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-5",
@@ -22306,10 +23104,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:39:00.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:43.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-4",
@@ -22358,10 +23158,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:38:59.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:42.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-3",
@@ -22410,10 +23212,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:38:58.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:41.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-2",
@@ -22462,10 +23266,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:38:57.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:40.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "excel-product-1",
@@ -22515,10 +23321,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:38:56.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00"
+    "created_at": "2026-09-28T13:20:39.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-1788159372912",
@@ -22554,11 +23362,13 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:38:55.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00",
-    "isHeroFeatured": true
+    "created_at": "2026-09-28T13:20:38.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "isHeroFeatured": true,
+    "releaseDate": ""
   },
   {
     "id": "hero-slide-1788841545092",
@@ -22588,10 +23398,12 @@
     "isTimeSale": false,
     "bulkDiscount": {
       "rules": [],
-      "enabled": false
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-28T04:38:54.021+00:00",
-    "updated_at": "2026-09-28T04:45:39.024+00:00",
-    "isHeroFeatured": true
+    "created_at": "2026-09-28T13:20:37.46+00:00",
+    "updated_at": "2026-09-28T13:27:22.461+00:00",
+    "isHeroFeatured": true,
+    "releaseDate": ""
   }
 ]

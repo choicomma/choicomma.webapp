@@ -52,7 +52,7 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { SetBundleSection } from "@/components/products/set-bundle-section";
 import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
 import { supabase } from "@/lib/supabase/client";
-import { getAllUserCoupons, getUserCoupons } from "@/lib/membership/coupons";
+import { getAllUserCoupons, getUserCoupons, isLegacyCoupon } from "@/lib/membership/coupons";
 import { MembershipPopupBanner } from "@/components/membership/membership-popup-banner";
 
 function MembershipContent() {
@@ -499,7 +499,8 @@ function MembershipContent() {
           try {
             const parsed = JSON.parse(data.value);
             if (Array.isArray(parsed)) {
-              localStorage.setItem("admin_coupons", JSON.stringify(parsed));
+              const sanitized = parsed.filter((c: any) => !isLegacyCoupon(c));
+              localStorage.setItem("admin_coupons", JSON.stringify(sanitized));
               localStorage.removeItem("membership_user_coupons");
               loadCouponsFromLocal();
             }

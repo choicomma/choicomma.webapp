@@ -11,8 +11,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
     formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       {
         protocol: "https",
@@ -21,6 +21,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "edge.disstg.commercecloud.salesforce.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
       },
     ],
   },

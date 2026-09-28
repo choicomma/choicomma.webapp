@@ -36,7 +36,7 @@ export function ProductListContent({
 
       // Fetch live authoritative products from Central Server API
       try {
-        const res = await fetch("/api/products", { cache: "no-store" });
+        const res = await fetch("/api/products");
         if (res.ok) {
           const serverData: any[] = await res.json();
           if (Array.isArray(serverData) && serverData.length > 0) {

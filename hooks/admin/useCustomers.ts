@@ -19,7 +19,7 @@ const DEFAULT_CUSTOMERS = [
     grade: "VVIP",
     totalSpent: 25000000,
     points: 100000,
-    couponsCount: 5,
+    couponsCount: 0,
     joinedDate: "2026-01-01",
     status: "Active",
     role: "ADMIN",
@@ -27,7 +27,80 @@ const DEFAULT_CUSTOMERS = [
   },
 ];
 
-const DEFAULT_ADMIN_CUSTOMER = DEFAULT_CUSTOMERS[0];
+export const DEFAULT_ADMIN_CUSTOMER = DEFAULT_CUSTOMERS[0];
+
+export function isSuperAdmin(c: any): boolean {
+  if (!c) return false;
+  const id = String(c.id || "").trim().toUpperCase();
+  const email = String(c.email || "").trim().toLowerCase();
+  const name = String(c.name || "");
+  return (
+    id === "ADMIN-001" ||
+    email === "admin@choicomma.com" ||
+    email === "admin" ||
+    name.includes("최고관리자") ||
+    c.isAdmin === true ||
+    c.role === "ADMIN"
+  );
+}
+
+export function getCustomerKey(c: any): string {
+  if (isSuperAdmin(c)) return "ADMIN-001";
+  const id = String(c.id || "").trim().toLowerCase();
+  const email = String(c.email || "").trim().toLowerCase();
+  return id || email || "";
+}
+
+/**
+ * 회원 목록 중복 완전 제거 (최고관리자 ADMIN-001 단 1개 보장 및 ID/이메일 충돌 원천 방지)
+ */
+export function deduplicateCustomers(list: any[]): any[] {
+  if (!Array.isArray(list) || list.length === 0) return [DEFAULT_ADMIN_CUSTOMER];
+  const seenIds = new Set<string>();
+  const seenEmails = new Set<string>();
+  const result: any[] = [];
+
+  let adminAdded = false;
+
+  for (const c of list) {
+    if (!c) continue;
+    if (isSuperAdmin(c)) {
+      if (!adminAdded) {
+        result.push({
+          ...DEFAULT_ADMIN_CUSTOMER,
+          ...c,
+          id: "ADMIN-001",
+          name: "최고관리자 (Admin)",
+          email: "admin@choicomma.com",
+          role: "ADMIN",
+          isAdmin: true,
+        });
+        seenIds.add("ADMIN-001");
+        seenEmails.add("admin@choicomma.com");
+        adminAdded = true;
+      }
+      continue;
+    }
+
+    const id = String(c.id || "").trim();
+    const email = String(c.email || "").trim().toLowerCase();
+
+    // ID 또는 고유 이메일 중복 시 건너뜀
+    if (id && seenIds.has(id.toUpperCase())) continue;
+    if (email && email !== "-" && seenEmails.has(email)) continue;
+
+    if (id) seenIds.add(id.toUpperCase());
+    if (email && email !== "-") seenEmails.add(email);
+
+    result.push(c);
+  }
+
+  if (!adminAdded) {
+    result.unshift(DEFAULT_ADMIN_CUSTOMER);
+  }
+
+  return result;
+}
 
 function parseCustomerRow(row: any, idx: number) {
   const rawGrade = String(row["회원 등급"] || row["회원 그룹"] || "").toUpperCase().trim();
@@ -71,25 +144,16 @@ function parseCustomerRow(row: any, idx: number) {
   };
 }
 
-function getCachedCustomers(): any[] {
+export function getCachedCustomers(): any[] {
   if (typeof window === "undefined") return [DEFAULT_ADMIN_CUSTOMER];
   try {
     const saved = localStorage.getItem("admin_customers");
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const cleaned = parsed
-          .filter((c: any) => c.id === "ADMIN-001" || !c.rawGrade)
-          .map((c: any) => {
-            if (c.id === "ADMIN-001") {
-              return {
-                ...c,
-                phone: "02-579-1171",
-                postcode: "06306",
-                address: "서울특별시 강남구 개포로22길 12",
-                detailAddress: "6층 (주)초이콤마 본사",
-              };
-            }
+        const cleaned = deduplicateCustomers(
+          parsed.map((c: any) => {
+            if (!c || isSuperAdmin(c)) return c;
             const parsedAddr = splitKoreanAddress(
               c.address,
               c.postcode || c.zipCode || "",
@@ -101,7 +165,11 @@ function getCachedCustomers(): any[] {
               address: parsedAddr.baseAddress,
               detailAddress: parsedAddr.detailAddress,
             };
-          });
+          })
+        );
+        try {
+          localStorage.setItem("admin_customers", JSON.stringify(cleaned));
+        } catch (e) {}
         if (cleaned.length > 0) return cleaned;
       }
     }
@@ -132,10 +200,12 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       try {
         let serverData: any[] = [];
         try {
-          const apiRes = await fetch("/api/admin/customers");
-          const apiJson = await apiRes.json();
-          if (apiJson.success && Array.isArray(apiJson.customers)) {
-            serverData = apiJson.customers;
+          const apiRes = await fetch("/api/admin/customers", { cache: "no-store" });
+          if (apiRes.ok) {
+            const apiJson = await apiRes.json();
+            if (apiJson.success && Array.isArray(apiJson.customers)) {
+              serverData = apiJson.customers;
+            }
           }
         } catch (e) {}
 
@@ -152,38 +222,68 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         const localCached = getCachedCustomers();
         const customerMap = new Map<string, any>();
 
-        // 1. 최고관리자 기본 추가
+        // 1. 최고관리자 단 1명만 기본 등록 (키: "ADMIN-001")
         customerMap.set("ADMIN-001", DEFAULT_ADMIN_CUSTOMER);
 
-        // 2. 로컬 캐시 회원 우선 유지
+        // 2. 로컬 캐시 회원 우선 유지 (최고관리자는 ADMIN-001 단일 키로 병합)
         localCached.forEach((c) => {
-          const key = (c.id || c.email || "").trim().toLowerCase();
-          if (key && (c.id === "ADMIN-001" || !c.rawGrade)) {
-            customerMap.set(key, c);
+          const key = getCustomerKey(c);
+          if (key && (key === "ADMIN-001" || !c.rawGrade)) {
+            if (key === "ADMIN-001") {
+              const existingAdmin = customerMap.get("ADMIN-001") || DEFAULT_ADMIN_CUSTOMER;
+              customerMap.set("ADMIN-001", {
+                ...DEFAULT_ADMIN_CUSTOMER,
+                ...existingAdmin,
+                ...c,
+                id: "ADMIN-001",
+                name: "최고관리자 (Admin)",
+                email: "admin@choicomma.com",
+                role: "ADMIN",
+                isAdmin: true,
+              });
+            } else {
+              customerMap.set(key, c);
+            }
           }
         });
 
-        // 3. Supabase 원격 DB 회원 병합 및 주소 정제
+        // 3. Supabase 원격 DB 회원 병합 및 주소 정제 (최고관리자는 ADMIN-001 단일 키로 병합)
         serverData.forEach((c) => {
-          const key = (c.id || c.email || "").trim().toLowerCase();
-          if (key && (c.id === "ADMIN-001" || !c.rawGrade)) {
+          const key = getCustomerKey(c);
+          if (key && (key === "ADMIN-001" || !c.rawGrade)) {
             const existing = customerMap.get(key) || {};
             const parsed = splitKoreanAddress(
               c.address,
               c.postcode || c.zipCode || existing.postcode || "",
               c.detailAddress || c.addressDetail || existing.detailAddress || ""
             );
-            customerMap.set(key, {
-              ...existing,
-              ...c,
-              postcode: parsed.postcode,
-              address: parsed.baseAddress,
-              detailAddress: parsed.detailAddress,
-            });
+            if (key === "ADMIN-001") {
+              customerMap.set("ADMIN-001", {
+                ...DEFAULT_ADMIN_CUSTOMER,
+                ...existing,
+                ...c,
+                id: "ADMIN-001",
+                name: "최고관리자 (Admin)",
+                email: "admin@choicomma.com",
+                role: "ADMIN",
+                isAdmin: true,
+                postcode: parsed.postcode,
+                address: parsed.baseAddress,
+                detailAddress: parsed.detailAddress,
+              });
+            } else {
+              customerMap.set(key, {
+                ...existing,
+                ...c,
+                postcode: parsed.postcode,
+                address: parsed.baseAddress,
+                detailAddress: parsed.detailAddress,
+              });
+            }
           }
         });
 
-        const finalList = Array.from(customerMap.values());
+        const finalList = deduplicateCustomers(Array.from(customerMap.values()));
         if (isMounted) {
           setCustomersList(finalList);
           setIsCustomersLoaded(true);
@@ -191,10 +291,10 @@ export function useCustomers(triggerToast: (msg: string) => void) {
             localStorage.setItem("admin_customers", JSON.stringify(finalList));
           }
 
-          // 4. 로컬에만 있고 원격 DB에 누락된 회원은 백그라운드 자동 동기화
+          // 4. 로컬에만 있고 원격 DB에 누락된 회원은 백그라운드 자동 동기화 (최고관리자 제외)
           localCached.forEach((lc) => {
             if (
-              lc.id !== "ADMIN-001" &&
+              !isSuperAdmin(lc) &&
               !serverData.some((sc) => sc.id === lc.id || (sc.email && sc.email === lc.email))
             ) {
               fetch("/api/admin/customers", {
@@ -213,7 +313,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       // Local storage fallback (엑셀 원본 회원2026_08_03_1.xls에서 가져온 더미 데이터 완전 배제)
       if (typeof window !== "undefined" && isMounted) {
         const localList = getCachedCustomers();
-        const finalList = localList.length > 0 ? localList : DEFAULT_CUSTOMERS;
+        const finalList = deduplicateCustomers(localList.length > 0 ? localList : DEFAULT_CUSTOMERS);
         setCustomersList(finalList);
         setIsCustomersLoaded(true);
         localStorage.setItem("admin_customers", JSON.stringify(finalList));
@@ -233,14 +333,18 @@ export function useCustomers(triggerToast: (msg: string) => void) {
           (payload) => {
             if (payload.eventType === "INSERT") {
               const newRow = payload.new;
-              setCustomersList((prev) => [newRow, ...prev.filter((c) => c.id !== newRow.id)]);
+              setCustomersList((prev) => deduplicateCustomers([newRow, ...prev]));
             } else if (payload.eventType === "UPDATE") {
               const updatedRow = payload.new;
               setCustomersList((prev) =>
-                prev.map((c) => (c.id === updatedRow.id ? { ...c, ...updatedRow } : c))
+                deduplicateCustomers(
+                  prev.map((c) => (c.id === updatedRow.id ? { ...c, ...updatedRow } : c))
+                )
               );
             } else if (payload.eventType === "DELETE") {
-              setCustomersList((prev) => prev.filter((c) => c.id !== payload.old.id));
+              setCustomersList((prev) =>
+                deduplicateCustomers(prev.filter((c) => c.id !== payload.old.id))
+              );
             }
           }
         )
@@ -253,15 +357,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     const handleCustomersUpdated = (e?: any) => {
       if (e && e.key && e.key !== "admin_customers") return;
       if (typeof window !== "undefined" && isMounted) {
-        const saved = localStorage.getItem("admin_customers");
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setCustomersList(parsed);
-            }
-          } catch (e) {}
-        }
+        setCustomersList(getCachedCustomers());
       }
     };
 
@@ -313,6 +409,10 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       triggerToast("회원 이름과 이메일 주소를 정확히 입력해 주세요.");
       return;
     }
+    if (isSuperAdmin({ name: newCustName, email: newCustEmail })) {
+      triggerToast("최고관리자 계정은 추가로 등록할 수 없습니다.");
+      return;
+    }
 
     const newCust = {
       id: `CUST-${1000 + customersList.length + 1}`,
@@ -328,7 +428,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       status: newCustStatus,
     };
 
-    const updated = [newCust, ...customersList];
+    const updated = deduplicateCustomers([newCust, ...customersList]);
     setCustomersList(updated);
     if (typeof window !== "undefined") {
       localStorage.setItem("admin_customers", JSON.stringify(updated));
@@ -477,9 +577,13 @@ export function useCustomers(triggerToast: (msg: string) => void) {
   };
 
   const handleDeleteCustomer = (id: string, name: string) => {
+    const targetCustomer = customersList.find((c) => c.id === id);
+    if (isSuperAdmin(targetCustomer) || id === "ADMIN-001") {
+      triggerToast("최고관리자 계정은 시스템 기본 계정으로 삭제할 수 없습니다.");
+      return;
+    }
     if (window.confirm(`정말로 회원 '${name}'님의 계정 정보를 삭제하시겠습니까?`)) {
-      const targetCustomer = customersList.find((c) => c.id === id);
-      const updated = customersList.filter((c) => c.id !== id);
+      const updated = deduplicateCustomers(customersList.filter((c) => c.id !== id));
       setCustomersList(updated);
       if (typeof window !== "undefined") {
         localStorage.setItem("admin_customers", JSON.stringify(updated));
@@ -557,7 +661,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
 
         const parsedCustomers = rows.map((row, idx) => parseCustomerRow(row, idx));
 
-        const combined = [...parsedCustomers, ...customersList];
+        const combined = deduplicateCustomers([...parsedCustomers, ...customersList]);
         setCustomersList(combined);
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_customers", JSON.stringify(combined));

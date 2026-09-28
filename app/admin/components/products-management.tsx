@@ -15,7 +15,6 @@ import {
   ExternalLink,
   FileSpreadsheet,
   Download,
-  Save,
   AlertCircle,
   ArrowUpDown,
   ChevronUp,
@@ -92,7 +91,6 @@ interface ProductsManagementProps {
   handleQuickUpdateCategory?: (id: string, newCategory: string) => void;
   handleQuickUpdatePrice?: (id: string, newPrice: number | string) => boolean | void;
   handleQuickUpdateStock?: (id: string, newTotalStock: number, newSizeStock?: Record<string, number>) => boolean | void;
-  onSaveToDisk?: () => void;
 }
 
 function StockPopover({
@@ -430,7 +428,6 @@ export function ProductsManagement({
   handleQuickUpdateCategory,
   handleQuickUpdatePrice,
   handleQuickUpdateStock,
-  onSaveToDisk,
 }: ProductsManagementProps) {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [excelPreviewItems, setExcelPreviewItems] = useState<any[]>([]);
@@ -994,17 +991,6 @@ export function ProductsManagement({
             </select>
           </div>
 
-          {onSaveToDisk && (
-            <button
-              type="button"
-              onClick={onSaveToDisk}
-              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all shadow-sm cursor-pointer"
-              title="현재 순서 및 변경사항을 쇼핑몰 전체 및 데이터베이스에 영구 저장"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>쇼핑몰 순서 반영 (저장)</span>
-            </button>
-          )}
 
           {selectedProductIds.length > 0 && (
             <div className="relative inline-block text-left animate-in fade-in">
@@ -1101,15 +1087,15 @@ export function ProductsManagement({
                     title="전체 선택 / 해제"
                   />
                 </th>
-                <th className="py-3 px-2.5 text-center whitespace-nowrap font-bold text-neutral-800">
-                  구매 ON/OFF
-                </th>
                 <th className="py-3 px-3 font-sans font-black text-neutral-950 whitespace-nowrap">상품번호</th>
                 <th className="py-3 px-3 whitespace-nowrap">이미지</th>
                 <th className="py-3 px-4 max-w-xs whitespace-nowrap">상품명</th>
                 <th className="py-3 px-3 whitespace-nowrap">카테고리</th>
                 <th className="py-3 px-3 whitespace-nowrap">판매가</th>
                 <th className="py-3 px-3 whitespace-nowrap">남은 재고 수량 / 상태</th>
+                <th className="py-3 px-2.5 text-center whitespace-nowrap font-bold text-neutral-800">
+                  구매 ON/OFF
+                </th>
                 <th className="py-3 px-3 text-right whitespace-nowrap">관리</th>
               </tr>
             </thead>
@@ -1142,31 +1128,6 @@ export function ProductsManagement({
                           onChange={(e) => handleToggleSelect(String(p.id), e)}
                           className="w-3.5 h-3.5 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
                         />
-                      </td>
-                      <td className="py-2 px-2.5 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex flex-col items-center justify-center gap-0.5">
-                          <button
-                            type="button"
-                            onClick={() => toggleProductPurchasable ? toggleProductPurchasable(String(p.id)) : toggleStock(String(p.id))}
-                            title={p.availableForSale !== false ? "현재 구매 가능 상태 (클릭하여 OFF 전환)" : "현재 구매 불가 상태 (클릭하여 ON 전환)"}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black tracking-wider transition-all cursor-pointer shadow-2xs select-none ${
-                              p.availableForSale !== false
-                                ? "bg-emerald-500 text-white hover:bg-emerald-600 ring-2 ring-emerald-500/20"
-                                : "bg-neutral-200 text-neutral-600 hover:bg-neutral-300 ring-1 ring-neutral-300"
-                            }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${p.availableForSale !== false ? "bg-white animate-pulse" : "bg-neutral-400"}`} />
-                            <span>{p.availableForSale !== false ? "ON" : "OFF"}</span>
-                          </button>
-                          {p.releaseDate && new Date(p.releaseDate).getTime() > Date.now() && (
-                            <span
-                              className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded tracking-tighter"
-                              title={`판매 오픈 일시: ${new Date(p.releaseDate).toLocaleString('ko-KR')}`}
-                            >
-                              ⏰ 오픈예정
-                            </span>
-                          )}
-                        </div>
                       </td>
                       <td className="py-2 px-3 font-sans font-extrabold text-neutral-950 text-xs whitespace-nowrap">
                         {prodNo}
@@ -1273,6 +1234,31 @@ export function ProductsManagement({
                               <span>⚙️ 미진열</span>
                             )}
                           </button>
+                        </div>
+                      </td>
+                      <td className="py-2 px-2.5 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-col items-center justify-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => toggleProductPurchasable ? toggleProductPurchasable(String(p.id)) : toggleStock(String(p.id))}
+                            title={p.availableForSale !== false ? "현재 구매 가능 상태 (클릭하여 OFF 전환)" : "현재 구매 불가 상태 (클릭하여 ON 전환)"}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black tracking-wider transition-all cursor-pointer shadow-2xs select-none ${
+                              p.availableForSale !== false
+                                ? "bg-emerald-500 text-white hover:bg-emerald-600 ring-2 ring-emerald-500/20"
+                                : "bg-neutral-200 text-neutral-600 hover:bg-neutral-300 ring-1 ring-neutral-300"
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${p.availableForSale !== false ? "bg-white animate-pulse" : "bg-neutral-400"}`} />
+                            <span>{p.availableForSale !== false ? "ON" : "OFF"}</span>
+                          </button>
+                          {p.releaseDate && new Date(p.releaseDate).getTime() > Date.now() && (
+                            <span
+                              className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded tracking-tighter"
+                              title={`판매 오픈 일시: ${new Date(p.releaseDate).toLocaleString('ko-KR')}`}
+                            >
+                              ⏰ 오픈예정
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-2 px-3 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>

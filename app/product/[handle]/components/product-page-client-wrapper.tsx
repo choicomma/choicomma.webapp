@@ -16,7 +16,7 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
     const syncProductFromStorage = async () => {
       // 1. Try Central Server API first
       try {
-        const res = await fetch("/api/products", { cache: "no-store" });
+        const res = await fetch("/api/products");
         if (res.ok) {
           const serverData = await res.json();
           if (Array.isArray(serverData)) {

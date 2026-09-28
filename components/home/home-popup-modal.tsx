@@ -82,13 +82,6 @@ export function HomePopupModal() {
     setIsOpen(false);
   };
 
-  const handleHideForToday = () => {
-    if (typeof window !== "undefined") {
-      const tomorrow = Date.now() + 24 * 60 * 60 * 1000;
-      localStorage.setItem(POPUP_HIDE_UNTIL_KEY, String(tomorrow));
-    }
-    setIsOpen(false);
-  };
 
   const handleImageClick = () => {
     if (config?.linkUrl) {
@@ -147,18 +140,6 @@ export function HomePopupModal() {
           )}
         </div>
 
-        {/* Footer Controls: 오늘 하루 보지 않기 (닫기 버튼 제거, 상단 엑스로만 종료) */}
-        {config.hideForTodayEnabled && (
-          <div className="px-4 py-3 bg-white border-t border-neutral-100 flex items-center justify-start text-xs shrink-0">
-            <button
-              type="button"
-              onClick={handleHideForToday}
-              className="text-neutral-500 hover:text-neutral-950 font-bold text-xs py-1 transition-colors cursor-pointer"
-            >
-              오늘 하루 보지 않기
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
