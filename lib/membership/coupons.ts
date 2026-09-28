@@ -20,68 +20,13 @@ export interface AvailableCoupon {
   createdAt?: string;
 }
 
-export const DEFAULT_AVAILABLE_COUPONS: AvailableCoupon[] = [
-  {
-    id: "coupon-special-10k",
-    code: "CHOI10",
-    title: "10,000원 스페셜 감사 쿠폰",
-    discount: "10,000원 할인",
-    discountAmount: 10000,
-    condition: "전 상품 10,000원 즉시 할인",
-    validUntil: "2026.12.31",
-    type: "FIXED",
-    badge: "최대할인",
-    isActive: true,
-    targetType: "ALL",
-    targetGrades: ["ALL"],
-    targetCustomerEmails: [],
-    targetCustomerNames: [],
-    minOrderAmount: 0,
-    createdAt: "2026-01-01",
-  },
-  {
-    id: "coupon-welcome-5k",
-    code: "WELCOME",
-    title: "5,000원 웰컴 첫 구매 쿠폰",
-    discount: "5,000원 할인",
-    discountAmount: 5000,
-    condition: "첫 구매 회원 즉시 5,000원 할인",
-    validUntil: "2026.12.31",
-    type: "FIXED",
-    badge: "웰컴혜택",
-    isActive: true,
-    targetType: "ALL",
-    targetGrades: ["ALL"],
-    targetCustomerEmails: [],
-    targetCustomerNames: [],
-    minOrderAmount: 0,
-    createdAt: "2026-01-01",
-  },
-  {
-    id: "coupon-freeship",
-    code: "FREESHIP",
-    title: "무료 배송 지원 쿠폰",
-    discount: "배송비 4,000원 지원",
-    discountAmount: 4000,
-    condition: "배송비 전액 지원",
-    validUntil: "2026.12.31",
-    type: "SHIPPING",
-    badge: "배송비지원",
-    isActive: true,
-    targetType: "ALL",
-    targetGrades: ["ALL"],
-    targetCustomerEmails: [],
-    targetCustomerNames: [],
-    minOrderAmount: 0,
-    createdAt: "2026-01-01",
-  },
-];
+export const DEFAULT_AVAILABLE_COUPONS: AvailableCoupon[] = [];
 
 /**
  * 모든 쿠폰 목록(사용 완료 여부 포함)을 반환합니다. 마이페이지 쿠폰함 및 관리자용.
  */
 export function getAllUserCoupons(): AvailableCoupon[] {
-  if (typeof window === "undefined") return DEFAULT_AVAILABLE_COUPONS;
+  if (typeof window === "undefined") return [];
 
   const usedCouponsRaw = localStorage.getItem("used_coupon_codes") || "[]";
   let usedCoupons: string[] = [];
@@ -92,7 +37,7 @@ export function getAllUserCoupons(): AvailableCoupon[] {
   const customCouponsRaw = localStorage.getItem("admin_coupons");
   const legacyCouponsRaw = localStorage.getItem("membership_user_coupons");
 
-  let allCoupons: AvailableCoupon[] = [...DEFAULT_AVAILABLE_COUPONS];
+  let allCoupons: AvailableCoupon[] = [];
 
   // admin_coupons가 로컬 스토리지에 존재하는 경우 (빈 배열 [] 포함) 관리자가 설정한 값을 최우선 반영
   if (customCouponsRaw !== null) {
@@ -108,6 +53,23 @@ export function getAllUserCoupons(): AvailableCoupon[] {
       if (Array.isArray(parsed)) {
         allCoupons = parsed;
       }
+    } catch (e) {}
+  }
+
+  // 삭제된 레거시 기본 쿠폰(CHOI10, WELCOME, FREESHIP 등) 영구 제거
+  const LEGACY_DEFAULT_IDS = ["coupon-special-10k", "coupon-welcome-5k", "coupon-freeship"];
+  const LEGACY_DEFAULT_CODES = ["CHOI10", "WELCOME", "FREESHIP"];
+  const filteredCoupons = allCoupons.filter(
+    (c) =>
+      !LEGACY_DEFAULT_IDS.includes(c.id) &&
+      !LEGACY_DEFAULT_CODES.includes((c.code || "").toUpperCase())
+  );
+
+  if (filteredCoupons.length !== allCoupons.length) {
+    allCoupons = filteredCoupons;
+    try {
+      localStorage.setItem("admin_coupons", JSON.stringify(allCoupons));
+      localStorage.removeItem("membership_user_coupons");
     } catch (e) {}
   }
 

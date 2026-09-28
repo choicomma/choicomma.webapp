@@ -485,6 +485,28 @@ function MembershipContent() {
     loadShipmentsFromLocal();
     loadCouponsFromLocal();
 
+    // Supabase 원격 DB(site_settings)로부터 쿠폰 설정 최신 동기화 (삭제된 쿠폰 캐시 정리)
+    Promise.resolve(
+      supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "admin_coupons_config")
+        .maybeSingle()
+    )
+      .then(({ data, error }: any) => {
+        if (!error && data?.value) {
+          try {
+            const parsed = JSON.parse(data.value);
+            if (Array.isArray(parsed)) {
+              localStorage.setItem("admin_coupons", JSON.stringify(parsed));
+              localStorage.removeItem("membership_user_coupons");
+              loadCouponsFromLocal();
+            }
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
+
     // 서버 API로부터 1회 초기 동기화 (마운트 시점에만 1회 호출)
     fetch("/api/shipping/policy")
       .then((res) => res.json())
