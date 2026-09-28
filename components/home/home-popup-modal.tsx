@@ -147,28 +147,18 @@ export function HomePopupModal() {
           )}
         </div>
 
-        {/* Footer Controls: 오늘 하루 보지 않기 & 닫기 */}
-        <div className="p-3 sm:p-3.5 bg-white border-t border-neutral-100 flex items-center justify-between text-xs shrink-0">
-          {config.hideForTodayEnabled ? (
+        {/* Footer Controls: 오늘 하루 보지 않기 (닫기 버튼 제거, 상단 엑스로만 종료) */}
+        {config.hideForTodayEnabled && (
+          <div className="px-4 py-3 bg-white border-t border-neutral-100 flex items-center justify-start text-xs shrink-0">
             <button
               type="button"
               onClick={handleHideForToday}
-              className="text-neutral-500 hover:text-neutral-950 font-bold text-xs py-1 px-2 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
+              className="text-neutral-500 hover:text-neutral-950 font-bold text-xs py-1 transition-colors cursor-pointer"
             >
               오늘 하루 보지 않기
             </button>
-          ) : (
-            <span />
-          )}
-
-          <button
-            type="button"
-            onClick={handleClose}
-            className="px-4 py-2 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs rounded-xl transition-all cursor-pointer shadow-2xs"
-          >
-            닫기
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

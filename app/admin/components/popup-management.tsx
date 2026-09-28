@@ -462,18 +462,13 @@ export function PopupManagement({
                 </div>
               ) : previewTab === "home" ? (
                 /* TAB 1: Home Modal Preview */
-                <div className="w-full max-w-[360px] sm:max-w-[400px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-200">
-                  {/* Modal Header */}
-                  <div className="px-4 py-3 bg-neutral-950 text-white flex items-center justify-between">
-                    <span className="text-[11px] font-black tracking-widest uppercase font-mono">
-                      CHOICOMMA SPECIAL
-                    </span>
-                    <button
-                      type="button"
-                      className="p-1 text-neutral-400 hover:text-white rounded-lg transition-colors cursor-pointer"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                <div className="relative w-full max-w-[360px] sm:max-w-[400px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+                  {/* Top Floating Close Button (상단에 엑스만 남김) */}
+                  <div
+                    title="팝업 닫기 (상단 X)"
+                    className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-md transition-all shadow-md cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
                   </div>
 
                   {/* Image Display */}
@@ -491,25 +486,17 @@ export function PopupManagement({
                     )}
                   </div>
 
-                  {/* Modal Footer Controls */}
-                  <div className="p-3 bg-white border-t border-neutral-100 flex items-center justify-between text-xs">
-                    {config.hideForTodayEnabled ? (
+                  {/* Modal Footer Controls (하단 닫기 버튼 제거, 오늘 하루 보지 않기만 유지) */}
+                  {config.hideForTodayEnabled && (
+                    <div className="px-4 py-3 bg-white border-t border-neutral-100 flex items-center justify-start text-xs">
                       <button
                         type="button"
                         className="text-neutral-500 hover:text-neutral-950 font-bold text-[11px] transition-colors cursor-pointer"
                       >
                         오늘 하루 보지 않기
                       </button>
-                    ) : (
-                      <span />
-                    )}
-                    <button
-                      type="button"
-                      className="px-3.5 py-1.5 bg-neutral-950 text-white font-extrabold text-xs rounded-xl hover:bg-neutral-800 transition-all cursor-pointer shadow-2xs"
-                    >
-                      닫기
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* TAB 2: Membership Fixed Banner Preview */

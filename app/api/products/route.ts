@@ -44,6 +44,22 @@ export async function GET() {
           }
         } catch (e) {}
 
+        // Ensure releaseDate and availableForSale are cleanly populated
+        finalProducts = finalProducts.map((p: any) => {
+          const relDate =
+            p.releaseDate ||
+            p.bulkDiscount?.releaseDate ||
+            (Array.isArray(p.tags)
+              ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("release_date:"))?.replace("release_date:", "")
+              : "") ||
+            "";
+          return {
+            ...p,
+            releaseDate: relDate,
+            availableForSale: p.availableForSale !== false,
+          };
+        });
+
         globalForProducts.serverProductsCache = finalProducts;
         return NextResponse.json(finalProducts, {
           headers: {
@@ -132,34 +148,43 @@ export async function POST(req: NextRequest) {
 
         // 1-2. Upsert active products with ordered timestamps to guarantee frozen sort order
         const baseTime = Date.now();
-        const formatted = products.map((p: any, idx: number) => ({
-          id: p.id,
-          title: p.title || "",
-          handle: p.handle || p.id,
-          categoryId: p.categoryId || "",
-          categoryIds: p.categoryIds || [],
-          description: p.description || "",
-          detailDescription: p.detailDescription || "",
-          currencyCode: p.currencyCode || "KRW",
-          priceRange: p.priceRange || {},
-          featuredImage: p.featuredImage || {},
-          images: p.images || [],
-          variants: p.variants || [],
-          options: p.options || [],
-          tags: p.tags || [],
-          sizes: p.sizes || [],
-          colors: p.colors || [],
-          stock: p.stock || 100,
-          sizeStock: p.sizeStock || {},
-          colorHexMap: p.colorHexMap || {},
-          productLabel: p.productLabel || "",
-          isMainFeatured: Boolean(p.isMainFeatured),
-          availableForSale: p.availableForSale !== false,
-          isTimeSale: Boolean(p.isTimeSale),
-          bulkDiscount: p.bulkDiscount || { enabled: false, rules: [] },
-          created_at: new Date(baseTime - idx * 1000).toISOString(),
-          updated_at: new Date().toISOString(),
-        }));
+        const formatted = products.map((p: any, idx: number) => {
+          const relDate = p.releaseDate || "";
+          return {
+            id: p.id,
+            title: p.title || "",
+            handle: p.handle || p.id,
+            categoryId: p.categoryId || "",
+            categoryIds: p.categoryIds || [],
+            description: p.description || "",
+            detailDescription: p.detailDescription || "",
+            currencyCode: p.currencyCode || "KRW",
+            priceRange: p.priceRange || {},
+            featuredImage: p.featuredImage || {},
+            images: p.images || [],
+            variants: p.variants || [],
+            options: p.options || [],
+            tags: [
+              ...(Array.isArray(p.tags) ? p.tags.filter((t: any) => typeof t === "string" && !t.startsWith("release_date:")) : []),
+              ...(relDate ? [`release_date:${relDate}`] : []),
+            ],
+            sizes: p.sizes || [],
+            colors: p.colors || [],
+            stock: p.stock || 100,
+            sizeStock: p.sizeStock || {},
+            colorHexMap: p.colorHexMap || {},
+            productLabel: p.productLabel || "",
+            isMainFeatured: Boolean(p.isMainFeatured),
+            availableForSale: p.availableForSale !== false,
+            isTimeSale: Boolean(p.isTimeSale),
+            bulkDiscount: {
+              ...(p.bulkDiscount || { enabled: false, rules: [] }),
+              releaseDate: relDate,
+            },
+            created_at: new Date(baseTime - idx * 1000).toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+        });
 
         // 배치 분할 Upsert (50개 단위 안정적 처리)
         const batchSize = 50;

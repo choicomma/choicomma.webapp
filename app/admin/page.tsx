@@ -1067,6 +1067,35 @@ export default function AdminPage() {
     saveProductsToStorage(updated);
   };
 
+  const toggleProductPurchasable = (id: string) => {
+    const targetProduct = productsList.find((p) => String(p.id) === String(id));
+    if (!targetProduct) return;
+
+    const isCurrentlyAvailable = targetProduct.availableForSale !== false;
+    const nextAvailable = !isCurrentlyAvailable;
+
+    const updated = productsList.map((p) => {
+      if (String(p.id) === String(id)) {
+        return {
+          ...p,
+          availableForSale: nextAvailable,
+          variants: Array.isArray(p.variants)
+            ? p.variants.map((v: any) => ({ ...v, availableForSale: nextAvailable }))
+            : p.variants,
+        };
+      }
+      return p;
+    });
+
+    setProductsList(updated);
+    saveProductsToStorage(updated);
+    triggerToast(
+      nextAvailable
+        ? `'${targetProduct.title}' 상품이 [구매 가능(ON)]으로 설정되었습니다.`
+        : `'${targetProduct.title}' 상품이 [구매 불가(OFF)]로 설정되었습니다.`
+    );
+  };
+
   const toggleMainFeatured = (id: string) => {
     const targetProduct = productsList.find((p) => p.id === id);
     if (!targetProduct) return;
@@ -1109,6 +1138,8 @@ export default function AdminPage() {
   const [editUrlInput, setEditUrlInput] = useState("");
   const [editStock, setEditStock] = useState<number>(50);
   const [editAvailable, setEditAvailable] = useState(true);
+  const [editIsScheduledRelease, setEditIsScheduledRelease] = useState(false);
+  const [editReleaseDate, setEditReleaseDate] = useState("");
   const [editIsMainFeatured, setEditIsMainFeatured] = useState(true);
   const [editLabel, setEditLabel] = useState<"" | "BLACK_LABEL" | "PREMIUM" | "ESSENTIAL">("PREMIUM");
   const [editColors, setEditColors] = useState<string[]>([]);
@@ -1160,6 +1191,9 @@ export default function AdminPage() {
     setEditUrlInput("");
     setEditStock(getProductStock(product));
     setEditAvailable(product.availableForSale !== false);
+    const hasRelDate = Boolean(product.releaseDate);
+    setEditIsScheduledRelease(hasRelDate);
+    setEditReleaseDate(product.releaseDate || "");
     setEditIsMainFeatured(product.isMainFeatured !== false);
     setEditLabel(product.productLabel || "PREMIUM");
     const initialColors = Array.isArray(product.colors) ? product.colors : [];
@@ -1263,7 +1297,8 @@ export default function AdminPage() {
           detailDescription: editDetailDescription,
           stock: totalStock,
           sizeStock: editSizeStock,
-          availableForSale: totalStock > 0,
+          availableForSale: editAvailable,
+          releaseDate: editIsScheduledRelease && editReleaseDate ? editReleaseDate : undefined,
           isMainFeatured: editIsMainFeatured,
           productLabel: editLabel,
           colors: editColors,
@@ -1280,7 +1315,7 @@ export default function AdminPage() {
             editSizes.map((size: string) => ({
               id: `${editingProduct.id}-${color}-${size}`,
               title: `${editTitle} - ${color} / ${size}`,
-              availableForSale: totalStock > 0,
+              availableForSale: editAvailable,
               image: editColorImages[color] ? { url: editColorImages[color], altText: `${editTitle} - ${color}` } : undefined,
               selectedOptions: [
                 { name: "Color", value: color },
@@ -1386,6 +1421,9 @@ export default function AdminPage() {
   const [newImages, setNewImages] = useState<string[]>([]);
   const [newUrlInput, setNewUrlInput] = useState("");
   const [newStock, setNewStock] = useState<number>(50);
+  const [newAvailableForSale, setNewAvailableForSale] = useState(true);
+  const [newIsScheduledRelease, setNewIsScheduledRelease] = useState(false);
+  const [newReleaseDate, setNewReleaseDate] = useState("");
   const [newIsMainFeatured, setNewIsMainFeatured] = useState(true);
   const [newColors, setNewColors] = useState<string[]>([]);
   const [newColorHexMap, setNewColorHexMap] = useState<Record<string, string>>(DEFAULT_COLOR_HEX_MAP);
@@ -1883,7 +1921,8 @@ export default function AdminPage() {
       categoryIds: newCategories,
       stock: totalNewStock,
       sizeStock: newSizeStock,
-      availableForSale: totalNewStock > 0,
+      availableForSale: newAvailableForSale,
+      releaseDate: newIsScheduledRelease && newReleaseDate ? newReleaseDate : undefined,
       isMainFeatured: newIsMainFeatured,
       colors: newColors,
       colorHexMap: newColorHexMap,
@@ -1899,7 +1938,7 @@ export default function AdminPage() {
         newSizes.map((size: string) => ({
           id: `custom-prod-${Date.now()}-${color}-${size}`,
           title: `${newTitle} - ${color} / ${size}`,
-          availableForSale: totalNewStock > 0,
+          availableForSale: newAvailableForSale,
           image: newColorImages[color] ? { url: newColorImages[color], altText: `${newTitle} - ${color}` } : undefined,
           selectedOptions: [
             { name: "Color", value: color },
@@ -1996,6 +2035,9 @@ export default function AdminPage() {
     setNewIsTimeSale(false);
     setNewTimeSaleHours("24");
     setNewTimeSaleMinutes("0");
+    setNewAvailableForSale(true);
+    setNewIsScheduledRelease(false);
+    setNewReleaseDate("");
   };
 
 
@@ -2653,6 +2695,7 @@ export default function AdminPage() {
               handleBulkDeleteProducts={handleBulkDeleteProducts}
               handleBulkUpdateMainFeatured={handleBulkUpdateMainFeatured}
               handleBulkUpdateStock={handleBulkUpdateStock}
+              toggleProductPurchasable={toggleProductPurchasable}
               handleReorderProducts={handleReorderProducts}
               handleQuickUpdateCategory={(id: string, newCategory: string) => {
                 const targetProd = productsList.find((p) => String(p.id) === String(id));
@@ -3108,6 +3151,90 @@ export default function AdminPage() {
                     <span className="absolute right-3.5 top-2.5 text-xs font-black text-neutral-400 pointer-events-none">
                       원
                     </span>
+                  </div>
+                </div>
+
+                {/* 2 & 1번 기능: 상품 구매 가능 상태 ON/OFF 및 판매 시작 일시 지정 (예약 오픈) */}
+                <div className="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/80">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="text-xs font-black text-neutral-950">상품 구매 가능 상태 (ON/OFF)</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-500">
+                        OFF 설정 시 고객이 해당 상품을 장바구니에 담거나 구매할 수 없습니다.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNewAvailableForSale(!newAvailableForSale)}
+                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider transition-all cursor-pointer shadow-2xs ${
+                        newAvailableForSale
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700 ring-2 ring-emerald-500/20"
+                          : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300 ring-1 ring-neutral-300"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${newAvailableForSale ? "bg-white animate-ping" : "bg-neutral-400"}`} />
+                      <span>{newAvailableForSale ? "ON (구매 가능)" : "OFF (구매 불가)"}</span>
+                    </button>
+                  </div>
+
+                  {/* 1번 기능: 시간 지정 판매 오픈 (예약 오픈) */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={newIsScheduledRelease}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setNewIsScheduledRelease(checked);
+                          if (checked && !newReleaseDate) {
+                            const d = new Date();
+                            d.setDate(d.getDate() + 1);
+                            d.setHours(10, 0, 0, 0);
+                            const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                            setNewReleaseDate(iso);
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
+                      />
+                      <span className="text-xs font-black text-neutral-900">
+                        판매 시작 시간 지정 (예약 오픈)
+                      </span>
+                      <span className="text-[10px] text-amber-700 font-extrabold bg-amber-100/80 px-2 py-0.5 rounded-full">
+                        지정 시간 도달 시 자동 구매 오픈
+                      </span>
+                    </label>
+
+                    {newIsScheduledRelease && (
+                      <div className="pl-6 space-y-2 pt-1 animate-in fade-in duration-200">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <input
+                            type="datetime-local"
+                            value={newReleaseDate}
+                            onChange={(e) => setNewReleaseDate(e.target.value)}
+                            className="bg-white border border-neutral-300 rounded-xl px-3.5 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs font-mono"
+                          />
+                          {newReleaseDate && (
+                            <span className="text-xs font-bold text-neutral-900">
+                              {new Date(newReleaseDate).getTime() > Date.now() ? (
+                                <span className="text-amber-800 flex items-center gap-1 font-bold">
+                                  ⏰ {new Date(newReleaseDate).toLocaleString("ko-KR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}에 구매가 자동 오픈됩니다.
+                                </span>
+                              ) : (
+                                <span className="text-emerald-700 font-bold">
+                                  ✓ 설정된 시간이 이미 지나 현재 즉시 구매 가능한 상태입니다.
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-neutral-500 leading-relaxed">
+                          * 지정한 시간이 도래하기 전에는 쇼핑몰 상품 상세 및 목록에서 "오픈 예정"으로 표시되며 장바구니 담기 및 결제가 불가능합니다. 지정한 시간이 되면 자동으로 구매 가능 상태로 즉시 전환됩니다.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -4429,6 +4556,90 @@ export default function AdminPage() {
                     <span className="absolute right-3.5 top-2.5 text-xs font-black text-neutral-400 pointer-events-none">
                       원
                     </span>
+                  </div>
+                </div>
+
+                {/* 3번 기능: 상품수정에도 상품 구매 가능 상태 ON/OFF 및 판매 시작 일시 지정 (예약 오픈) 동일 적용 */}
+                <div className="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/80">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="text-xs font-black text-neutral-950">상품 구매 가능 상태 (ON/OFF)</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-500">
+                        OFF 설정 시 고객이 해당 상품을 장바구니에 담거나 구매할 수 없습니다.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditAvailable(!editAvailable)}
+                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider transition-all cursor-pointer shadow-2xs ${
+                        editAvailable
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700 ring-2 ring-emerald-500/20"
+                          : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300 ring-1 ring-neutral-300"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${editAvailable ? "bg-white animate-ping" : "bg-neutral-400"}`} />
+                      <span>{editAvailable ? "ON (구매 가능)" : "OFF (구매 불가)"}</span>
+                    </button>
+                  </div>
+
+                  {/* 1번 기능: 시간 지정 판매 오픈 (예약 오픈) */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editIsScheduledRelease}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setEditIsScheduledRelease(checked);
+                          if (checked && !editReleaseDate) {
+                            const d = new Date();
+                            d.setDate(d.getDate() + 1);
+                            d.setHours(10, 0, 0, 0);
+                            const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                            setEditReleaseDate(iso);
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
+                      />
+                      <span className="text-xs font-black text-neutral-900">
+                        판매 시작 시간 지정 (예약 오픈)
+                      </span>
+                      <span className="text-[10px] text-amber-700 font-extrabold bg-amber-100/80 px-2 py-0.5 rounded-full">
+                        지정 시간 도달 시 자동 구매 오픈
+                      </span>
+                    </label>
+
+                    {editIsScheduledRelease && (
+                      <div className="pl-6 space-y-2 pt-1 animate-in fade-in duration-200">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <input
+                            type="datetime-local"
+                            value={editReleaseDate}
+                            onChange={(e) => setEditReleaseDate(e.target.value)}
+                            className="bg-white border border-neutral-300 rounded-xl px-3.5 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs font-mono"
+                          />
+                          {editReleaseDate && (
+                            <span className="text-xs font-bold text-neutral-900">
+                              {new Date(editReleaseDate).getTime() > Date.now() ? (
+                                <span className="text-amber-800 flex items-center gap-1 font-bold">
+                                  ⏰ {new Date(editReleaseDate).toLocaleString("ko-KR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}에 구매가 자동 오픈됩니다.
+                                </span>
+                              ) : (
+                                <span className="text-emerald-700 font-bold">
+                                  ✓ 설정된 시간이 이미 지나 현재 즉시 구매 가능한 상태입니다.
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-neutral-500 leading-relaxed">
+                          * 지정한 시간이 도래하기 전에는 쇼핑몰 상품 상세 및 목록에서 "오픈 예정"으로 표시되며 장바구니 담기 및 결제가 불가능합니다. 지정한 시간이 되면 자동으로 구매 가능 상태로 즉시 전환됩니다.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 

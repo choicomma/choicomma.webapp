@@ -52,6 +52,7 @@ export type SalesforceProduct = {
   colors?: string[];
   isMainFeatured?: boolean;
   bulkDiscount?: { enabled: boolean; rules: { qty: number; rate: number }[] };
+  releaseDate?: string;
 };
 
 export type SelectedOptions = {

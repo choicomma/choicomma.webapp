@@ -447,8 +447,20 @@ export function ProductDetailHeader({
     return () => clearInterval(interval);
   }, [isTimeSaleItem, isSetProduct, product.id]);
 
+  const isScheduled = Boolean(
+    product.releaseDate && new Date(product.releaseDate).getTime() > Date.now()
+  );
+  const scheduledDateStr = isScheduled
+    ? new Date(product.releaseDate!).toLocaleString("ko-KR", {
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
   const handleAddToCart = () => {
-    if (!product.availableForSale) return;
+    if (!product.availableForSale || isScheduled) return;
     setIsAdding(true);
 
     const variant: ProductVariant = {
@@ -472,7 +484,7 @@ export function ProductDetailHeader({
     }, 500);
   };
 
-  const isOutOfStock = !product.availableForSale;
+  const isOutOfStock = !product.availableForSale || isScheduled;
 
   const t = HEADER_I18N[currentLang] || HEADER_I18N.ko;
 
@@ -525,12 +537,17 @@ export function ProductDetailHeader({
             </div>
           )}
 
-          {/* 품절 Badge: 가장 마지막에 배치 */}
-          {product.availableForSale === false && (
+          {/* 오픈 예정 / 품절 Badge: 가장 마지막에 배치 */}
+          {isScheduled ? (
+            <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-neutral-950" />
+              <span>{scheduledDateStr} 오픈 예정</span>
+            </span>
+          ) : product.availableForSale === false ? (
             <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
               품절
             </span>
-          )}
+          ) : null}
         </div>
 
         <h1 className="text-2xl md:text-3xl font-normal tracking-tight uppercase">
@@ -709,7 +726,7 @@ export function ProductDetailHeader({
           disabled={isOutOfStock || isAdding}
           className="flex-1 bg-black hover:bg-neutral-800 text-white font-normal text-[13px] tracking-widest h-[52px] transition-colors uppercase disabled:bg-neutral-300 disabled:text-neutral-500 disabled:opacity-100 cursor-pointer"
         >
-          {isOutOfStock ? t.outOfStock : isAdding ? t.adding : t.addToCart}
+          {isScheduled ? `오픈 예정 (${scheduledDateStr} 오픈)` : isOutOfStock ? t.outOfStock : isAdding ? t.adding : t.addToCart}
         </button>
       </div>
 

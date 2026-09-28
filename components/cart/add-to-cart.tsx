@@ -65,13 +65,18 @@ export function AddToCart({
     selectedVariantId,
   ]);
 
+  const isScheduled = Boolean(
+    product.releaseDate && new Date(product.releaseDate).getTime() > Date.now()
+  );
+
   const getButtonText = () => {
+    if (isScheduled) return "오픈 예정";
     if (!availableForSale) return "품절";
     if (!resolvedVariant) return "옵션 선택";
     return "장바구니 담기";
   };
 
-  const isDisabled = !availableForSale || !resolvedVariant || isLoading;
+  const isDisabled = !availableForSale || isScheduled || !resolvedVariant || isLoading;
 
   const addItemAction = async (formData: FormData) => {
     if (resolvedVariant) {

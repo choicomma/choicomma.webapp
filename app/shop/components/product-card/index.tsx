@@ -186,12 +186,17 @@ export const ProductCard = ({ product }: { product: Product }) => {
               <span>TIME SALE {timeSaleDiscount}% OFF</span>
             </span>
           ) : null}
-          {/* 품절 Badge: 가장 마지막에 배치 */}
-          {product.availableForSale === false && (
+          {/* 오픈 예정 / 품절 Badge: 가장 마지막에 배치 */}
+          {product.releaseDate && new Date(product.releaseDate).getTime() > Date.now() ? (
+            <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-neutral-950" />
+              <span>오픈 예정</span>
+            </span>
+          ) : product.availableForSale === false ? (
             <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
               품절
             </span>
-          )}
+          ) : null}
         </div>
 
         {/* Row 2: Product Title (Left) + Price (Right) - Identical & Larger Size */}

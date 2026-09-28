@@ -270,6 +270,22 @@ export function CartProvider({
 
   const addCartItemCB = useCallback(
     (variant: ProductVariant, product: Product, quantity: number = 1) => {
+      if (product.availableForSale === false) {
+        alert("해당 상품은 현재 구매가 불가능한 상품입니다.");
+        return;
+      }
+      if (product.releaseDate && new Date(product.releaseDate).getTime() > Date.now()) {
+        const dateStr = new Date(product.releaseDate).toLocaleString("ko-KR", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        alert(`해당 상품은 ${dateStr}에 판매가 시작되는 [오픈 예정] 상품입니다.`);
+        return;
+      }
+
       setCartState((prevCart) => {
         const newCart = cartReducer(prevCart, {
           type: "ADD_ITEM",

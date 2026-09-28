@@ -87,6 +87,7 @@ interface ProductsManagementProps {
   handleBulkDeleteProducts?: (targetIds: string[]) => void;
   handleBulkUpdateMainFeatured?: (targetIds: string[], isFeatured: boolean) => void;
   handleBulkUpdateStock?: (targetIds: string[], stockQty: number) => void;
+  toggleProductPurchasable?: (id: string) => void;
   handleReorderProducts?: (fromId: string, toId: string, showToast?: boolean) => void;
   handleQuickUpdateCategory?: (id: string, newCategory: string) => void;
   handleQuickUpdatePrice?: (id: string, newPrice: number | string) => boolean | void;
@@ -424,6 +425,7 @@ export function ProductsManagement({
   handleBulkDeleteProducts,
   handleBulkUpdateMainFeatured,
   handleBulkUpdateStock,
+  toggleProductPurchasable,
   handleReorderProducts,
   handleQuickUpdateCategory,
   handleQuickUpdatePrice,
@@ -1090,7 +1092,6 @@ export function ProductsManagement({
           <table className="w-full text-left text-xs text-neutral-700">
             <thead className="bg-neutral-50 text-neutral-500 text-[11px] uppercase font-semibold border-b border-neutral-200">
               <tr>
-                <th className="py-3 px-2 w-14 text-center whitespace-nowrap">순서</th>
                 <th className="py-3 px-2 w-8 text-center whitespace-nowrap">
                   <input
                     type="checkbox"
@@ -1099,6 +1100,9 @@ export function ProductsManagement({
                     className="w-3.5 h-3.5 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
                     title="전체 선택 / 해제"
                   />
+                </th>
+                <th className="py-3 px-2.5 text-center whitespace-nowrap font-bold text-neutral-800">
+                  구매 ON/OFF
                 </th>
                 <th className="py-3 px-3 font-sans font-black text-neutral-950 whitespace-nowrap">상품번호</th>
                 <th className="py-3 px-3 whitespace-nowrap">이미지</th>
@@ -1131,38 +1135,6 @@ export function ProductsManagement({
                         isSelected ? "bg-amber-50/80" : ""
                       }`}
                     >
-                      <td
-                        className="py-2 px-1 w-14 text-center text-neutral-400 transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="flex items-center justify-center gap-0.5">
-                          <button
-                            type="button"
-                            onClick={() => handleMoveProduct && handleMoveProduct(String(p.id), "up")}
-                            title="위로 이동"
-                            className="p-1 text-neutral-400 hover:text-neutral-950 hover:bg-neutral-200/60 rounded transition-colors cursor-pointer"
-                          >
-                            <ChevronUp className="w-3.5 h-3.5" />
-                          </button>
-                          <div
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, String(p.id))}
-                            onDragEnd={handleDragEnd}
-                            className="cursor-grab active:cursor-grabbing p-0.5 text-neutral-400 hover:text-neutral-950 transition-colors"
-                            title="드래그하여 실시간 순서 변경"
-                          >
-                            <GripVertical className="w-3.5 h-3.5 pointer-events-none" />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleMoveProduct && handleMoveProduct(String(p.id), "down")}
-                            title="아래로 이동"
-                            className="p-1 text-neutral-400 hover:text-neutral-950 hover:bg-neutral-200/60 rounded transition-colors cursor-pointer"
-                          >
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
                       <td className="py-2 px-2 w-8 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
@@ -1170,6 +1142,31 @@ export function ProductsManagement({
                           onChange={(e) => handleToggleSelect(String(p.id), e)}
                           className="w-3.5 h-3.5 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
                         />
+                      </td>
+                      <td className="py-2 px-2.5 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-col items-center justify-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => toggleProductPurchasable ? toggleProductPurchasable(String(p.id)) : toggleStock(String(p.id))}
+                            title={p.availableForSale !== false ? "현재 구매 가능 상태 (클릭하여 OFF 전환)" : "현재 구매 불가 상태 (클릭하여 ON 전환)"}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black tracking-wider transition-all cursor-pointer shadow-2xs select-none ${
+                              p.availableForSale !== false
+                                ? "bg-emerald-500 text-white hover:bg-emerald-600 ring-2 ring-emerald-500/20"
+                                : "bg-neutral-200 text-neutral-600 hover:bg-neutral-300 ring-1 ring-neutral-300"
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${p.availableForSale !== false ? "bg-white animate-pulse" : "bg-neutral-400"}`} />
+                            <span>{p.availableForSale !== false ? "ON" : "OFF"}</span>
+                          </button>
+                          {p.releaseDate && new Date(p.releaseDate).getTime() > Date.now() && (
+                            <span
+                              className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded tracking-tighter"
+                              title={`판매 오픈 일시: ${new Date(p.releaseDate).toLocaleString('ko-KR')}`}
+                            >
+                              ⏰ 오픈예정
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-2 px-3 font-sans font-extrabold text-neutral-950 text-xs whitespace-nowrap">
                         {prodNo}
