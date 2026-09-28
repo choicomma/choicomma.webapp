@@ -6,6 +6,7 @@ import { CheckCircle2, ShoppingBag, ArrowRight, ShieldCheck, RefreshCw } from "l
 import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { supabase } from "@/lib/supabase/client";
+import { recordCouponUsage } from "@/lib/membership/coupons";
 
 function OrderSuccessParamsHandler({ onParamsLoaded }: { onParamsLoaded: (p: { paymentKey: string | null; orderId: string | null; amount: string | null }) => void }) {
   const searchParams = useSearchParams();
@@ -235,6 +236,25 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(updatedShipments),
             }).catch(() => {});
+
+            // 2-1) 회원이 사용한 쿠폰 내역 영구 기록 및 실시간 보장
+            if (
+              pendingOrder?.selectedCouponId &&
+              (Number(pendingOrder?.appliedDiscount || 0) > 0 || Number(newOrder.discountAmount || 0) > 0)
+            ) {
+              recordCouponUsage({
+                orderId: orderId,
+                couponId: pendingOrder.selectedCouponId,
+                couponTitle: pendingOrder.selectedCouponTitle || "할인 쿠폰",
+                couponType: pendingOrder.selectedCouponType || "FIXED",
+                discountAmount: Number(pendingOrder.appliedDiscount || newOrder.discountAmount || 0),
+                customerName: newOrder.customer || newOrder.ordererName || "고객",
+                customerEmail: newOrder.email || "-",
+                customerPhone: newOrder.phone || "-",
+                orderTotalAmount: newOrder.totalAmount,
+                orderItemsSummary: newOrder.items || "-",
+              });
+            }
 
             // 3) 결제 성공 후 장바구니 자동 비우기
             try {

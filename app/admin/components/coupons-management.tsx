@@ -24,6 +24,7 @@ import {
   UserCheck,
   Globe,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import {
   AvailableCoupon,
   DEFAULT_AVAILABLE_COUPONS,
@@ -31,6 +32,10 @@ import {
   saveAdminCoupons,
   resetUsedCoupons,
   isLegacyCoupon,
+  CouponUsageRecord,
+  getCouponUsageHistory,
+  cancelCouponUsage,
+  resetCouponUsageHistory,
 } from "@/lib/membership/coupons";
 import { supabase } from "@/lib/supabase/client";
 import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
@@ -58,6 +63,17 @@ export function CouponsManagement({
     return [];
   });
   const [usedCodes, setUsedCodes] = useState<string[]>([]);
+  const [usageHistory, setUsageHistory] = useState<CouponUsageRecord[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return getCouponUsageHistory();
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [usageSearchQuery, setUsageSearchQuery] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -106,7 +122,7 @@ export function CouponsManagement({
     else alert(msg);
   };
 
-  // 1. Load Coupons & Used Codes
+  // 1. Load Coupons & Used Codes & Usage History
   const loadData = () => {
     if (typeof window === "undefined") return;
 
@@ -119,6 +135,8 @@ export function CouponsManagement({
     } catch (e) {
       setUsedCodes([]);
     }
+
+    setUsageHistory(getCouponUsageHistory());
   };
 
   useEffect(() => {
@@ -148,12 +166,37 @@ export function CouponsManagement({
         .catch(() => {});
     }
 
+    // 로컬 스토리지에 admin_coupon_usage_history가 없을 때 Supabase site_settings에서 복원
+    if (typeof window !== "undefined" && localStorage.getItem("admin_coupon_usage_history") === null) {
+      Promise.resolve(
+        supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "admin_coupon_usage_history")
+          .maybeSingle()
+      )
+        .then(({ data, error }: any) => {
+          if (!error && data?.value) {
+            try {
+              const parsed = JSON.parse(data.value);
+              if (Array.isArray(parsed)) {
+                localStorage.setItem("admin_coupon_usage_history", JSON.stringify(parsed));
+                setUsageHistory(parsed);
+              }
+            } catch (e) {}
+          }
+        })
+        .catch(() => {});
+    }
+
     const handleUpdate = () => loadData();
     window.addEventListener("storage", handleUpdate);
     window.addEventListener("coupons_updated", handleUpdate);
+    window.addEventListener("coupon_usage_updated", handleUpdate);
     return () => {
       window.removeEventListener("storage", handleUpdate);
       window.removeEventListener("coupons_updated", handleUpdate);
+      window.removeEventListener("coupon_usage_updated", handleUpdate);
     };
   }, []);
 
@@ -356,7 +399,7 @@ export function CouponsManagement({
   };
 
   // 8. Reset All Used Coupons History
-  const handleResetAllUsedCodes = () => {
+  const handleResetAllUsage = () => {
     if (
       !window.confirm(
         "고객들의 모든 쿠폰 사용 완료 이력을 초기화하시겠습니까?\n\n초기화 시 이미 주문했던 고객도 다시 쿠폰을 사용할 수 있게 됩니다."
@@ -365,9 +408,78 @@ export function CouponsManagement({
       return;
 
     resetUsedCoupons();
+    resetCouponUsageHistory();
     setUsedCodes([]);
+    setUsageHistory([]);
     notify("🔄 모든 쿠폰 사용 이력이 초기화되었습니다.");
   };
+  const handleResetAllUsedCodes = handleResetAllUsage;
+
+  // 9. Cancel Single Usage Record and Restore Coupon
+  const handleCancelUsage = (record: CouponUsageRecord) => {
+    if (
+      window.confirm(
+        `[주문번호: ${record.orderId}]\n'${record.customerName}' 고객님의 '${record.couponTitle}' 쿠폰 사용 내역을 취소하고, 회원이 다시 쿠폰을 사용할 수 있도록 재활성화하시겠습니까?`
+      )
+    ) {
+      cancelCouponUsage(record.id, true);
+      notify(`✅ [${record.couponTitle}] 쿠폰이 정상적으로 재활성화(회수)되었습니다.`);
+    }
+  };
+
+  // 10. Download Usage History as Excel
+  const handleDownloadUsageExcel = () => {
+    if (filteredUsageHistory.length === 0) {
+      notify("다운로드할 쿠폰 사용 내역이 없습니다.");
+      return;
+    }
+
+    try {
+      const exportData = filteredUsageHistory.map((u, index) => ({
+        "번호": index + 1,
+        "사용일시": u.usedAt,
+        "주문번호": u.orderId,
+        "쿠폰ID": u.couponId,
+        "쿠폰명": u.couponTitle,
+        "쿠폰유형": u.couponType === "SHIPPING" ? "배송비지원" : "일반할인",
+        "할인금액": Number(u.discountAmount || 0),
+        "사용회원명": u.customerName,
+        "회원이메일": u.customerEmail,
+        "전화번호": u.customerPhone || "-",
+        "주문상품": u.orderItemsSummary || "-",
+        "실결제금액": Number(u.orderTotalAmount || 0),
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "쿠폰사용내역");
+      const today = new Date().toISOString().split("T")[0];
+      XLSX.writeFile(wb, `스토어_쿠폰사용내역_${today}.xlsx`);
+    } catch (e) {
+      console.error(e);
+      notify("쿠폰 사용 내역 엑셀 다운로드 중 오류가 발생했습니다.");
+    }
+  };
+
+  // Filtered Usage History
+  const filteredUsageHistory = useMemo(() => {
+    if (!usageSearchQuery.trim()) return usageHistory;
+    const q = usageSearchQuery.toLowerCase().trim();
+    return usageHistory.filter(
+      (u) =>
+        u.orderId.toLowerCase().includes(q) ||
+        u.customerName.toLowerCase().includes(q) ||
+        u.customerEmail.toLowerCase().includes(q) ||
+        u.couponTitle.toLowerCase().includes(q) ||
+        (u.customerPhone && u.customerPhone.includes(q)) ||
+        (u.orderItemsSummary && u.orderItemsSummary.toLowerCase().includes(q))
+    );
+  }, [usageHistory, usageSearchQuery]);
+
+  // Total Discount Amount Used
+  const totalDiscountUsed = useMemo(() => {
+    return usageHistory.reduce((sum, u) => sum + Number(u.discountAmount || 0), 0);
+  }, [usageHistory]);
 
   // Filtered Coupons
   const filteredCoupons = useMemo(() => {
@@ -448,6 +560,162 @@ export function CouponsManagement({
     return null;
   };
 
+  // 11. Render Coupon Usage History Section (Bottom & Tab)
+  const renderUsageSection = () => {
+    return (
+      <div className="space-y-4 pt-6 border-t border-neutral-200/80 dark:border-neutral-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-5 rounded-3xl border border-neutral-200/80 dark:border-neutral-800 shadow-xs">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white rounded-xl">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              </span>
+              <h3 className="font-black text-sm text-neutral-900 dark:text-white">
+                회원 쿠폰 사용 내역 (주문 결제 실시간 연동)
+              </h3>
+              <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900">
+                총 {usageHistory.length}건 (누적 ₩{totalDiscountUsed.toLocaleString()}원 할인 지원)
+              </span>
+            </div>
+            <p className="text-xs text-neutral-500">
+              회원이 주문서에서 쿠폰을 적용하여 결제를 완료했을 때 실시간으로 기록되는 사용 내역입니다. 주문 취소 또는 테스트 시 회수(재활성화)할 수 있습니다.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {usageHistory.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleDownloadUsageExcel}
+                  className="px-3.5 py-2 bg-white hover:bg-neutral-50 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 border border-neutral-300 dark:border-neutral-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <span>엑셀 다운로드 (.xlsx)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetAllUsage}
+                  className="px-3 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>사용 이력 초기화</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Search Toolbar for Usage History */}
+        {usageHistory.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3.5 rounded-2xl border border-neutral-200/80 dark:border-neutral-800">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+              <input
+                type="text"
+                value={usageSearchQuery}
+                onChange={(e) => setUsageSearchQuery(e.target.value)}
+                placeholder="주문번호, 회원명, 이메일, 쿠폰명 검색..."
+                className="w-full pl-9 pr-4 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-neutral-950 dark:focus:ring-white transition-all"
+              />
+            </div>
+            <div className="text-xs text-neutral-500 font-bold px-2">
+              조회 결과: <strong className="text-neutral-900 dark:text-white">{filteredUsageHistory.length}</strong>건
+            </div>
+          </div>
+        )}
+
+        {/* Table / Empty State */}
+        {filteredUsageHistory.length === 0 ? (
+          <div className="bg-white dark:bg-neutral-900 p-12 text-center rounded-3xl border border-neutral-200/80 dark:border-neutral-800 space-y-2">
+            <CheckCircle2 className="w-8 h-8 text-neutral-300 dark:text-neutral-600 mx-auto" />
+            <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
+              {usageSearchQuery ? "검색 조건과 일치하는 쿠폰 사용 내역이 없습니다." : "아직 사용 완료된 쿠폰 내역이 없습니다."}
+            </p>
+            <p className="text-xs text-neutral-400">
+              회원이 주문서에서 쿠폰을 적용하여 결제를 완료하면 이곳에 주문번호, 고객 정보, 할인 금액이 실시간으로 자동 기록됩니다.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-800/50 text-neutral-500 font-extrabold">
+                    <th className="py-3 px-3.5 text-center w-12">#</th>
+                    <th className="py-3 px-3.5">사용 일시</th>
+                    <th className="py-3 px-3.5">주문 번호</th>
+                    <th className="py-3 px-3.5">쿠폰 정보</th>
+                    <th className="py-3 px-3.5 text-right">할인 금액</th>
+                    <th className="py-3 px-3.5">사용 회원 (고객)</th>
+                    <th className="py-3 px-3.5">주문 상품 요약</th>
+                    <th className="py-3 px-3.5 text-right">실 결제금액</th>
+                    <th className="py-3 px-3.5 text-center">관리</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                  {filteredUsageHistory.map((item, index) => (
+                    <tr key={item.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors">
+                      <td className="py-3 px-3.5 text-center text-neutral-400 font-mono text-[11px]">
+                        {index + 1}
+                      </td>
+                      <td className="py-3 px-3.5 font-mono text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+                        {item.usedAt}
+                      </td>
+                      <td className="py-3 px-3.5 font-mono font-black text-neutral-900 dark:text-white whitespace-nowrap">
+                        {item.orderId}
+                      </td>
+                      <td className="py-3 px-3.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-neutral-900 dark:text-white">
+                            {item.couponTitle}
+                          </span>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                            item.couponType === "SHIPPING"
+                              ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200/60"
+                              : "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200/60"
+                          }`}>
+                            {item.couponType === "SHIPPING" ? "배송비지원" : "일반할인"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3.5 text-right font-mono font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                        -{item.discountAmount.toLocaleString()}원
+                      </td>
+                      <td className="py-3 px-3.5 whitespace-nowrap">
+                        <div className="font-bold text-neutral-900 dark:text-white">
+                          {item.customerName}
+                        </div>
+                        <div className="text-[11px] text-neutral-500 font-mono">
+                          {item.customerEmail}
+                        </div>
+                      </td>
+                      <td className="py-3 px-3.5 max-w-[200px] truncate text-neutral-700 dark:text-neutral-300" title={item.orderItemsSummary}>
+                        {item.orderItemsSummary || "-"}
+                      </td>
+                      <td className="py-3 px-3.5 text-right font-mono font-bold text-neutral-900 dark:text-white whitespace-nowrap">
+                        ₩{item.orderTotalAmount.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-3.5 text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleCancelUsage(item)}
+                          className="px-2.5 py-1.5 bg-neutral-100 hover:bg-rose-50 text-neutral-700 hover:text-rose-600 dark:bg-neutral-800 dark:hover:bg-rose-950/50 dark:text-neutral-300 dark:hover:text-rose-400 border border-neutral-200 dark:border-neutral-700 hover:border-rose-200 rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-2xs"
+                          title="사용 내역을 취소하고 회원이 쿠폰을 다시 사용할 수 있도록 복원"
+                        >
+                          사용 취소 (재활성화)
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. Header Section */}
@@ -489,6 +757,39 @@ export function CouponsManagement({
         </div>
       </div>
 
+      {/* Metric Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl p-4 shadow-xs">
+          <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">전체 등록 쿠폰</div>
+          <p className="text-xl font-black text-neutral-950 dark:text-white mt-1.5">{coupons.length}개</p>
+          <p className="text-[11px] text-neutral-400 mt-0.5">시스템 발급 관리 중인 쿠폰</p>
+        </div>
+
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl p-4 shadow-xs">
+          <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">활성 쿠폰</div>
+          <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1.5">
+            {coupons.filter((c) => c.isActive !== false).length}개
+          </p>
+          <p className="text-[11px] text-neutral-400 mt-0.5">주문서 즉시 적용 가능</p>
+        </div>
+
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl p-4 shadow-xs">
+          <div className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">누적 사용 건수</div>
+          <p className="text-xl font-black text-purple-600 dark:text-purple-400 mt-1.5">
+            {usageHistory.length}건
+          </p>
+          <p className="text-[11px] text-neutral-400 mt-0.5">회원 결제 완료 적용 건수</p>
+        </div>
+
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-2xl p-4 shadow-xs">
+          <div className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">총 할인 지원액</div>
+          <p className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1.5">
+            ₩{totalDiscountUsed.toLocaleString()}원
+          </p>
+          <p className="text-[11px] text-neutral-400 mt-0.5">고객 혜택 누적 제공액</p>
+        </div>
+      </div>
+
       {/* 2. Sub Tabs (쿠폰 목록 / 사용 현황) */}
       <div className="flex items-center gap-2 border-b border-neutral-200 dark:border-neutral-800 pb-3">
         <button
@@ -514,7 +815,7 @@ export function CouponsManagement({
           }`}
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
-          쿠폰 사용 현황 및 회수 ({usedCodes.length})
+          쿠폰 사용 내역 ({usageHistory.length}건)
         </button>
       </div>
 
@@ -686,93 +987,16 @@ export function CouponsManagement({
               })}
             </div>
           )}
+
+          {/* 쿠폰 관리 하단: 회원 쿠폰 사용 내역 실시간 연동 */}
+          {renderUsageSection()}
         </div>
       )}
 
       {/* 4. Tab 2: Used Coupons Tracking */}
       {activeTab === "usage" && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-5 rounded-3xl border border-neutral-200/80 dark:border-neutral-800">
-            <div>
-              <h3 className="font-extrabold text-sm text-neutral-900 dark:text-white">
-                고객 쿠폰 사용 및 중복 방지 현황
-              </h3>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                주문서에서 이미 사용되어 재사용이 제한된 쿠폰 목록입니다. 테스트 또는 주문 취소 시 개별 회수(재활성화)할 수 있습니다.
-              </p>
-            </div>
-
-            {usedCodes.length > 0 && (
-              <button
-                type="button"
-                onClick={handleResetAllUsedCodes}
-                className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
-              >
-                전체 사용 이력 초기화
-              </button>
-            )}
-          </div>
-
-          {usedCodes.length === 0 ? (
-            <div className="bg-white dark:bg-neutral-900 p-12 text-center rounded-3xl border border-neutral-200/80 dark:border-neutral-800 space-y-2">
-              <CheckCircle2 className="w-8 h-8 text-neutral-300 mx-auto" />
-              <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
-                현재 사용 완료 처리된 1회용 쿠폰이 없습니다.
-              </p>
-              <p className="text-xs text-neutral-400">
-                고객이 주문서에서 쿠폰을 적용하여 결제를 완료하면 이곳에 자동으로 기록됩니다.
-              </p>
-            </div>
-          ) : (
-            <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden shadow-xs">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-800/50 text-neutral-500 font-extrabold">
-                    <th className="py-3 px-4">사용된 쿠폰 ID</th>
-                    <th className="py-3 px-4">매칭 쿠폰명</th>
-                    <th className="py-3 px-4">할인 금액</th>
-                    <th className="py-3 px-4">상태</th>
-                    <th className="py-3 px-4 text-right">관리 (재사용 허용)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {usedCodes.map((code) => {
-                    const matched = coupons.find(
-                      (c) => c.id === code || (c.code && c.code.toUpperCase() === code.toUpperCase())
-                    );
-
-                    return (
-                      <tr key={code} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30">
-                        <td className="py-3 px-4 font-mono font-black text-neutral-900 dark:text-white">
-                          {code}
-                        </td>
-                        <td className="py-3 px-4 font-bold text-neutral-800 dark:text-neutral-200">
-                          {matched ? matched.title : "(삭제되었거나 알 수 없는 쿠폰)"}
-                        </td>
-                        <td className="py-3 px-4 font-mono font-bold text-neutral-700 dark:text-neutral-300">
-                          {matched ? matched.discount : "-"}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            사용 완료 (재사용 불가)
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleReactivateUsedCode(code)}
-                            className="px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
-                          >
-                            사용 취소 (재활성화)
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {renderUsageSection()}
         </div>
       )}
 

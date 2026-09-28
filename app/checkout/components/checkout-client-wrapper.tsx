@@ -34,6 +34,7 @@ import {
   AvailableCoupon,
   DEFAULT_AVAILABLE_COUPONS,
   getAvailableCoupons,
+  recordCouponUsage,
 } from "@/lib/membership/coupons";
 
 export default function CheckoutClientWrapper() {
@@ -449,23 +450,24 @@ export default function CheckoutClientWrapper() {
           : cart.lines[0].merchandise.product.title
         : "초이콤마 오리지널 패션 주문건";
 
-      // If coupon was applied, mark this coupon as used to prevent reuse
+      // If coupon was applied, mark this coupon as used and save usage history
+      const foundCoupon = (selectedCouponId && selectedCouponId !== "NONE")
+        ? availableCoupons.find((c) => c.id === selectedCouponId)
+        : null;
+
       if (selectedCouponId && selectedCouponId !== "NONE" && appliedDiscount > 0) {
-        const usedCouponsRaw = localStorage.getItem("used_coupon_codes") || "[]";
-        let usedCoupons: string[] = [];
-        try {
-          usedCoupons = JSON.parse(usedCouponsRaw);
-        } catch (e) { }
-        const foundCoupon = availableCoupons.find((c) => c.id === selectedCouponId);
-        const couponKey = foundCoupon?.id || selectedCouponId;
-        if (!usedCoupons.includes(couponKey)) {
-          usedCoupons.push(couponKey);
-          if (foundCoupon?.code && !usedCoupons.includes(foundCoupon.code.toUpperCase())) {
-            usedCoupons.push(foundCoupon.code.toUpperCase());
-          }
-          localStorage.setItem("used_coupon_codes", JSON.stringify(usedCoupons));
-          window.dispatchEvent(new CustomEvent("coupons_updated"));
-        }
+        recordCouponUsage({
+          orderId,
+          couponId: foundCoupon?.id || selectedCouponId,
+          couponTitle: foundCoupon?.title || "할인 쿠폰",
+          couponType: foundCoupon?.type || "FIXED",
+          discountAmount: appliedDiscount,
+          customerName: formData.ordererName || formData.recipientName || "회원",
+          customerEmail: formData.ordererEmail || (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "-" : "-"),
+          customerPhone: formData.recipientPhone || formData.ordererPhone || "-",
+          orderTotalAmount: finalTotalAmount,
+          orderItemsSummary: orderName,
+        });
       }
 
       // Deduct used rewards points if any
@@ -502,6 +504,9 @@ export default function CheckoutClientWrapper() {
             userGrade,
             appliedPoints,
             appliedDiscount,
+            selectedCouponId: selectedCouponId && selectedCouponId !== "NONE" ? selectedCouponId : null,
+            selectedCouponTitle: foundCoupon?.title || null,
+            selectedCouponType: foundCoupon?.type || "FIXED",
             shippingFee,
             paidAt: new Date().toISOString(),
           })

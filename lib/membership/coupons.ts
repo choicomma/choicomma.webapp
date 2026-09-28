@@ -222,3 +222,150 @@ export function resetUsedCoupons(): void {
   window.dispatchEvent(new CustomEvent("storage", { detail: { key: "used_coupon_codes" } }));
   window.dispatchEvent(new CustomEvent("coupons_updated"));
 }
+
+export interface CouponUsageRecord {
+  id: string;
+  orderId: string;
+  couponId: string;
+  couponTitle: string;
+  couponType: "FIXED" | "SHIPPING";
+  discountAmount: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  orderTotalAmount: number;
+  orderItemsSummary?: string;
+  usedAt: string;
+}
+
+/**
+ * 저장된 쿠폰 사용 내역 목록을 조회합니다.
+ */
+export function getCouponUsageHistory(): CouponUsageRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("admin_coupon_usage_history");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+}
+
+/**
+ * 쿠폰 사용 내역을 로컬 및 Supabase site_settings에 저장합니다.
+ */
+export function saveCouponUsageHistory(history: CouponUsageRecord[]): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.setItem("admin_coupon_usage_history", JSON.stringify(history));
+    window.dispatchEvent(new CustomEvent("storage", { detail: { key: "admin_coupon_usage_history" } }));
+    window.dispatchEvent(new CustomEvent("coupon_usage_updated"));
+
+    Promise.resolve(
+      supabase
+        .from("site_settings")
+        .upsert({
+          key: "admin_coupon_usage_history",
+          value: JSON.stringify(history),
+          updated_at: new Date().toISOString(),
+        })
+    )
+      .then(({ error }: any) => {
+        if (error) console.warn("Supabase coupon usage history sync notice:", error?.message);
+      })
+      .catch(() => {});
+  } catch (e) {
+    console.error("Failed to save coupon usage history:", e);
+  }
+}
+
+/**
+ * 회원이 상품 구매 시 적용한 쿠폰 사용 내역을 실시간으로 등록합니다.
+ */
+export function recordCouponUsage(
+  usage: Omit<CouponUsageRecord, "id" | "usedAt"> & Partial<Pick<CouponUsageRecord, "id" | "usedAt">>
+): CouponUsageRecord {
+  const current = getCouponUsageHistory();
+
+  // 동일 주문번호 및 쿠폰ID 중복 등록 방지 (Idempotency)
+  const existing = current.find(
+    (item) => item.orderId === usage.orderId && item.couponId === usage.couponId
+  );
+  if (existing) {
+    return existing;
+  }
+
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const formattedDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+  const newRecord: CouponUsageRecord = {
+    id: usage.id || `USAGE-${usage.orderId || Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    orderId: usage.orderId || "-",
+    couponId: usage.couponId,
+    couponTitle: usage.couponTitle || "할인 쿠폰",
+    couponType: usage.couponType || "FIXED",
+    discountAmount: Number(usage.discountAmount || 0),
+    customerName: usage.customerName || "고객",
+    customerEmail: (usage.customerEmail || "-").toLowerCase().trim(),
+    customerPhone: usage.customerPhone || "-",
+    orderTotalAmount: Number(usage.orderTotalAmount || 0),
+    orderItemsSummary: usage.orderItemsSummary || "-",
+    usedAt: usage.usedAt || formattedDate,
+  };
+
+  const updated = [newRecord, ...current];
+  saveCouponUsageHistory(updated);
+
+  // 고객 보유 쿠폰 재사용 방지 목록에 자동 등록
+  if (typeof window !== "undefined") {
+    try {
+      const usedRaw = localStorage.getItem("used_coupon_codes") || "[]";
+      let usedCodes: string[] = [];
+      try {
+        usedCodes = JSON.parse(usedRaw);
+      } catch (e) {}
+      if (!usedCodes.includes(newRecord.couponId)) {
+        usedCodes.push(newRecord.couponId);
+        localStorage.setItem("used_coupon_codes", JSON.stringify(usedCodes));
+        window.dispatchEvent(new CustomEvent("coupons_updated"));
+      }
+    } catch (e) {}
+  }
+
+  return newRecord;
+}
+
+/**
+ * 관리자가 특정 쿠폰 사용 내역을 취소하고 회원의 쿠폰을 다시 사용할 수 있도록 재활성화(회수)합니다.
+ */
+export function cancelCouponUsage(usageId: string, restoreCoupon: boolean = true): void {
+  const current = getCouponUsageHistory();
+  const target = current.find((r) => r.id === usageId);
+  const updated = current.filter((r) => r.id !== usageId);
+  saveCouponUsageHistory(updated);
+
+  if (restoreCoupon && target && typeof window !== "undefined") {
+    try {
+      const usedRaw = localStorage.getItem("used_coupon_codes") || "[]";
+      let usedCodes: string[] = [];
+      try {
+        usedCodes = JSON.parse(usedRaw);
+      } catch (e) {}
+      usedCodes = usedCodes.filter((c) => c !== target.couponId);
+      localStorage.setItem("used_coupon_codes", JSON.stringify(usedCodes));
+      window.dispatchEvent(new CustomEvent("coupons_updated"));
+    } catch (e) {}
+  }
+}
+
+/**
+ * 모든 쿠폰 사용 내역을 초기화합니다.
+ */
+export function resetCouponUsageHistory(): void {
+  saveCouponUsageHistory([]);
+}
+
