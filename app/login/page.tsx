@@ -40,14 +40,26 @@ export default function LoginPage() {
 
   const [postcode, setPostcode] = useState("");
   const [addressDetail, setAddressDetail] = useState("");
+  const [loginId, setLoginId] = useState("");
+  const [isLoginIdChecked, setIsLoginIdChecked] = useState(false);
+  const [loginIdCheckMessage, setLoginIdCheckMessage] = useState<{ status: "success" | "error"; text: string } | null>(null);
   const [isEmailChecked, setIsEmailChecked] = useState(false);
   const [emailCheckMessage, setEmailCheckMessage] = useState<{ status: "success" | "error"; text: string } | null>(null);
   const [isPhoneChecked, setIsPhoneChecked] = useState(false);
   const [phoneCheckMessage, setPhoneCheckMessage] = useState<{ status: "success" | "error"; text: string } | null>(null);
 
-  // Terms and SNS Marketing Consent States
+  // Terms and Marketing Consent States
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreeMarketing, setAgreeMarketing] = useState(false);
+
+  // Toast auto-dismiss timer (4 seconds)
+  useEffect(() => {
+    if (!toastMsg) return;
+    const timer = setTimeout(() => {
+      setToastMsg(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [toastMsg]);
 
   // Load Daum Postcode script dynamically & check session expiration notice
   useEffect(() => {
@@ -55,6 +67,12 @@ export default function LoginPage() {
       const searchParams = new URLSearchParams(window.location.search);
       if (searchParams.get("expired") === "true") {
         setToastMsg("안전한 쇼핑을 위해 로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
+        // URL에서 ?expired=true 파라미터를 정리하여 새로고침 시 무한 반복 표시 방지
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("expired");
+          window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
+        } catch (e) {}
       }
 
       if (!(window as any).daum) {
@@ -106,7 +124,86 @@ export default function LoginPage() {
     }
   };
 
-  // Check Email (Login ID) Duplicate
+  // Check Login ID Duplicate
+  const handleCheckLoginIdDuplicate = async () => {
+    const trimmedId = loginId.trim().toLowerCase();
+    if (!trimmedId || trimmedId.length < 4) {
+      setLoginIdCheckMessage({
+        status: "error",
+        text: "아이디는 4자 이상으로 입력해 주세요.",
+      });
+      setIsLoginIdChecked(false);
+      return;
+    }
+
+    const validIdRegex = /^[a-zA-Z0-9_-]{4,20}$/;
+    if (!validIdRegex.test(trimmedId)) {
+      setLoginIdCheckMessage({
+        status: "error",
+        text: "아이디는 4~20자의 영문, 숫자, 특수문자(-, _)만 사용 가능합니다.",
+      });
+      setIsLoginIdChecked(false);
+      return;
+    }
+
+    const reservedIds = ["admin", "administrator", "root", "mypage", "choicomma", "system", "test"];
+    if (reservedIds.includes(trimmedId)) {
+      setLoginIdCheckMessage({
+        status: "error",
+        text: "사용할 수 없는 예약 아이디입니다.",
+      });
+      setIsLoginIdChecked(false);
+      return;
+    }
+
+    let isDuplicate = false;
+    if (typeof window !== "undefined") {
+      const savedCustomers = localStorage.getItem("admin_customers");
+      if (savedCustomers) {
+        try {
+          const customerList: any[] = JSON.parse(savedCustomers);
+          isDuplicate = customerList.some(
+            (c) =>
+              (c.loginId && c.loginId.trim().toLowerCase() === trimmedId) ||
+              (c.login_id && c.login_id.trim().toLowerCase() === trimmedId) ||
+              (c.id && c.id.trim().toLowerCase() === trimmedId)
+          );
+        } catch (e) {}
+      }
+    }
+
+    // Check Supabase
+    if (!isDuplicate) {
+      try {
+        const { data, error } = await supabase
+          .from("customers")
+          .select("id")
+          .or(`id.eq.${trimmedId},email.ilike.${trimmedId}`)
+          .limit(1);
+        if (!error && data && data.length > 0) {
+          isDuplicate = true;
+        }
+      } catch (err) {}
+    }
+
+    if (isDuplicate) {
+      setLoginIdCheckMessage({
+        status: "error",
+        text: "이미 사용 중인 로그인 ID입니다. 다른 아이디를 입력해 주세요.",
+      });
+      setIsLoginIdChecked(false);
+      setToastMsg("이미 사용 중인 로그인 ID입니다.");
+    } else {
+      setLoginIdCheckMessage({
+        status: "success",
+        text: "사용 가능한 로그인 ID입니다.",
+      });
+      setIsLoginIdChecked(true);
+      setToastMsg("사용 가능한 로그인 ID입니다.");
+    }
+  };
+
+  // Check Email Duplicate
   const handleCheckEmailDuplicate = async () => {
     const trimmedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -322,6 +419,14 @@ export default function LoginPage() {
         alert("이름(성함)을 입력해 주세요.");
         return;
       }
+      if (!loginId.trim()) {
+        alert("로그인 ID를 입력해 주세요.");
+        return;
+      }
+      if (!isLoginIdChecked) {
+        alert("로그인 ID 중복 확인을 진행해 주세요.");
+        return;
+      }
       if (!email.trim()) {
         alert("이메일 주소를 입력해 주세요.");
         return;
@@ -347,15 +452,27 @@ export default function LoginPage() {
         return;
       }
 
-      // Check for duplicate phone or email in registered customers
+      // Check for duplicate phone, email, or login ID in registered customers
       const cleanPhone = phone.replace(/[^0-9]/g, "");
       const targetEmail = email.trim().toLowerCase();
+      const targetLoginId = loginId.trim().toLowerCase();
 
       if (typeof window !== "undefined") {
         const savedCustomers = localStorage.getItem("admin_customers");
         if (savedCustomers) {
           try {
             const customerList: any[] = JSON.parse(savedCustomers);
+            const isDuplicateLoginId = customerList.some(
+              (c) =>
+                (c.loginId && c.loginId.trim().toLowerCase() === targetLoginId) ||
+                (c.login_id && c.login_id.trim().toLowerCase() === targetLoginId) ||
+                (c.id && c.id.trim().toLowerCase() === targetLoginId)
+            );
+            if (isDuplicateLoginId) {
+              setToastMsg("이미 사용 중인 로그인 ID입니다. 다른 아이디를 입력해 주세요.");
+              return;
+            }
+
             const isDuplicatePhone = customerList.some(
               (c) => c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhone
             );
@@ -377,6 +494,16 @@ export default function LoginPage() {
 
       // Supabase duplicate check
       try {
+        const { data: existingLoginId } = await supabase
+          .from("customers")
+          .select("id")
+          .or(`id.eq.${targetLoginId},email.ilike.${targetLoginId}`)
+          .limit(1);
+        if (existingLoginId && existingLoginId.length > 0) {
+          setToastMsg("이미 사용 중인 로그인 ID입니다. 다른 아이디를 입력해 주세요.");
+          return;
+        }
+
         const { data: existingEmail } = await supabase
           .from("customers")
           .select("id")
@@ -439,6 +566,7 @@ export default function LoginPage() {
     if (isSignUp) {
       const displayName = name.trim() || "신규회원";
       const finalEmail = email.trim().toLowerCase();
+      const finalLoginId = loginId.trim().toLowerCase();
       const cleanPostcode = postcode.trim();
       const cleanAddress = address.trim();
       const cleanDetail = addressDetail.trim();
@@ -458,6 +586,8 @@ export default function LoginPage() {
       const newCustId = `CUST-${Date.now().toString().slice(-6)}`;
       const newCustomer = {
         id: newCustId,
+        loginId: finalLoginId,
+        login_id: finalLoginId,
         name: displayName,
         email: finalEmail,
         phone: phone.trim() || "010-0000-0000",
@@ -500,11 +630,13 @@ export default function LoginPage() {
           localStorage.setItem(`user_pwd_${cleanPhone}`, inputPassword);
           localStorage.setItem(`user_pwd_${phone.trim()}`, inputPassword);
         }
+        localStorage.setItem(`user_pwd_${finalLoginId}`, inputPassword);
         localStorage.setItem(`user_pwd_${finalEmail}`, inputPassword);
 
         // 4) Set login session
         sessionStorage.removeItem("choicomma_admin_authenticated");
         localStorage.setItem("membership_user_id", newCustomer.id);
+        localStorage.setItem("membership_user_login_id", finalLoginId);
         localStorage.setItem("membership_user_name", displayName);
         localStorage.setItem("membership_user_email", finalEmail);
         localStorage.setItem("membership_user_phone", phone.trim());
@@ -516,6 +648,10 @@ export default function LoginPage() {
         localStorage.setItem("user_role", "CUSTOMER");
         localStorage.setItem("is_logged_in", "true");
         initCustomerSession();
+
+        // 5) 신규 회원가입 시 이전 비회원 시절의 브라우저 장바구니 잔여물 완전 초기화 (새 계정은 항상 빈 장바구니로 시작)
+        localStorage.removeItem("choicomma_cart");
+        window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
 
         window.dispatchEvent(new CustomEvent("storage"));
         window.dispatchEvent(new CustomEvent("admin_customers_updated"));
@@ -542,10 +678,14 @@ export default function LoginPage() {
         try {
           const list: any[] = JSON.parse(savedCustomers);
           matchedCustomer = list.find((c) => {
+            const cLoginId = (c.loginId || c.login_id || "").trim().toLowerCase();
             const cEmail = (c.email || "").trim().toLowerCase();
             const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+            const cId = (c.id || "").trim().toLowerCase();
             return (
+              (cLoginId && cLoginId === inputLoginId) ||
               (cEmail && cEmail === inputLoginId) ||
+              (cId && cId === inputLoginId) ||
               (cleanPhoneId.length >= 8 && cPhone === cleanPhoneId) ||
               (c.phone && c.phone.trim() === inputLoginId)
             );
@@ -563,7 +703,7 @@ export default function LoginPage() {
         } else if (cleanPhoneId.length >= 8) {
           query = query.or(`phone.eq.${inputLoginId},phone.eq.${cleanPhoneId}`);
         } else {
-          query = query.or(`email.ilike.${inputLoginId},phone.eq.${inputLoginId}`);
+          query = query.or(`email.ilike.${inputLoginId},phone.eq.${inputLoginId},id.eq.${inputLoginId}`);
         }
         const { data, error } = await query.limit(1).maybeSingle();
         if (!error && data) {
@@ -591,10 +731,12 @@ export default function LoginPage() {
     }
 
     // 3) 비밀번호 일치 여부 검증
+    const custLoginId = (matchedCustomer.loginId || matchedCustomer.login_id || "").trim().toLowerCase();
     const custCleanPhone = (matchedCustomer.phone || "").replace(/[^0-9]/g, "");
     const custEmail = (matchedCustomer.email || "").trim().toLowerCase();
 
     const savedPwd = (typeof window !== "undefined" && (
+      (custLoginId ? localStorage.getItem(`user_pwd_${custLoginId}`) : null) ||
       (custCleanPhone ? localStorage.getItem(`user_pwd_${custCleanPhone}`) : null) ||
       (matchedCustomer.phone ? localStorage.getItem(`user_pwd_${matchedCustomer.phone.trim()}`) : null) ||
       (custEmail ? localStorage.getItem(`user_pwd_${custEmail}`) : null) ||
@@ -634,6 +776,9 @@ export default function LoginPage() {
       let cleanCustDetail = parsedCustAddr.detailAddress;
 
       localStorage.setItem("membership_user_id", matchedCustomer.id);
+      if (custLoginId) {
+        localStorage.setItem("membership_user_login_id", custLoginId);
+      }
       localStorage.setItem("membership_user_name", matchedCustomer.name || "회원");
       localStorage.setItem("membership_user_email", matchedCustomer.email || inputLoginId);
       localStorage.setItem("membership_user_phone", matchedCustomer.phone || "");
@@ -667,11 +812,19 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F5] text-neutral-900 flex flex-col justify-between p-6 relative font-sans">
-      {/* Toast Notification (Top Center Floating - Compact Blue Pill) */}
+      {/* Toast Notification (Top Center Floating - Compact Blue Pill with Close Button) */}
       {toastMsg && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-lg shadow-blue-900/25 flex items-center justify-center gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200 max-w-md w-auto text-center border border-blue-400/40">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg shadow-blue-900/25 flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200 max-w-md w-auto text-center border border-blue-400/40">
           <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-blue-100" />
           <span>{toastMsg}</span>
+          <button
+            type="button"
+            onClick={() => setToastMsg(null)}
+            className="ml-1 p-0.5 hover:bg-blue-700/60 rounded-full transition-colors cursor-pointer text-blue-200 hover:text-white"
+            aria-label="알림 닫기"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
@@ -746,12 +899,66 @@ export default function LoginPage() {
                   </div>
                 </div>
 
+                {/* 1. 로그인 ID (신규 추가 & 중복확인 버튼) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
+                      로그인 ID <span className="text-neutral-950 font-bold">*</span>
+                    </label>
+                    <span className="text-[10px] text-neutral-500 font-medium">영문, 숫자 4~20자</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-600" />
+                      <input
+                        type="text"
+                        name="loginId"
+                        autoComplete="username"
+                        required
+                        value={loginId}
+                        onChange={(e) => {
+                          setLoginId(e.target.value);
+                          setIsLoginIdChecked(false);
+                          setLoginIdCheckMessage(null);
+                        }}
+                        placeholder="아이디를 입력해주세요"
+                        className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold ${
+                          loginIdCheckMessage?.status === "success"
+                            ? "border-neutral-950 bg-neutral-100/60"
+                            : loginIdCheckMessage?.status === "error"
+                              ? "border-neutral-400 bg-neutral-50"
+                              : "border-neutral-200 focus:border-neutral-950"
+                        }`}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCheckLoginIdDuplicate}
+                      className="px-3.5 py-3 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer active:scale-95"
+                    >
+                      중복 확인
+                    </button>
+                  </div>
+                  {loginIdCheckMessage && (
+                    <p
+                      className={`text-xs font-extrabold mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${
+                        loginIdCheckMessage.status === "success"
+                          ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
+                          : "text-rose-700 bg-rose-50 border border-rose-200"
+                      }`}
+                    >
+                      <span>{loginIdCheckMessage.status === "success" ? "✓" : "✕"}</span>
+                      <span>{loginIdCheckMessage.text}</span>
+                    </p>
+                  )}
+                </div>
+
+                {/* 2. 이메일 (로그인 ID 하단으로 이동) */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
                       이메일 <span className="text-neutral-950 font-bold">*</span>
                     </label>
-                    <span className="text-[10px] text-neutral-500 font-medium">로그인 아이디로 사용됩니다</span>
                   </div>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -759,7 +966,7 @@ export default function LoginPage() {
                       <input
                         type="email"
                         name="email"
-                        autoComplete="username email"
+                        autoComplete="email"
                         required
                         value={email}
                         onChange={(e) => {
@@ -768,18 +975,19 @@ export default function LoginPage() {
                           setEmailCheckMessage(null);
                         }}
                         placeholder="이메일 주소를 입력해주세요"
-                        className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold ${emailCheckMessage?.status === "success"
-                          ? "border-neutral-950 bg-neutral-100/60"
-                          : emailCheckMessage?.status === "error"
-                            ? "border-neutral-400 bg-neutral-50"
-                            : "border-neutral-200 focus:border-neutral-950"
-                          }`}
+                        className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold ${
+                          emailCheckMessage?.status === "success"
+                            ? "border-neutral-950 bg-neutral-100/60"
+                            : emailCheckMessage?.status === "error"
+                              ? "border-neutral-400 bg-neutral-50"
+                              : "border-neutral-200 focus:border-neutral-950"
+                        }`}
                       />
                     </div>
                     <button
                       type="button"
                       onClick={handleCheckEmailDuplicate}
-                      className="px-3.5 py-3 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer"
+                      className="px-3.5 py-3 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer active:scale-95"
                     >
                       중복 확인
                     </button>
@@ -911,10 +1119,10 @@ export default function LoginPage() {
             {!isSignUp && (
               <div>
                 <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  이메일
+                  로그인 ID
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-700" />
+                  <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-700" />
                   <input
                     type="text"
                     name="username"
@@ -922,7 +1130,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="이메일 주소를 입력해주세요"
+                    placeholder="아이디 또는 이메일을 입력해주세요"
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium font-mono"
                   />
                 </div>
@@ -1014,7 +1222,7 @@ export default function LoginPage() {
                   </div>
                 </label>
 
-                {/* 2. SNS & Marketing Consent */}
+                {/* 2. Marketing Consent (이메일/문자) */}
                 <label className="flex items-start gap-2.5 cursor-pointer select-none group">
                   <input
                     type="checkbox"
@@ -1024,7 +1232,7 @@ export default function LoginPage() {
                   />
                   <div className="text-xs text-neutral-600 leading-tight">
                     <span className="font-medium text-neutral-500">[선택]</span>{" "}
-                    <span>이벤트, 신상품 런칭 및 VIP 전용 혜택 SNS/SMS 수신에 동의합니다.</span>
+                    <span>이벤트, 신상품 런칭 및 VIP 전용 혜택 이메일/문자 수신에 동의합니다.</span>
                   </div>
                 </label>
               </div>

@@ -53,7 +53,7 @@ export const DEFAULT_AUTO_RULES: AutoReplyRule[] = [
     id: "auto-3",
     name: "회원 등급 및 할인 혜택",
     keywords: "VIP, 등급, 혜택, 할인, 적립금, 포인트, 쿠폰, 멤버십",
-    replyText: "초이콤마 회원님께는 등급별 최대 10% 추가할인 및 전 상품 무료배송 혜택이 상시 적용됩니다. 마이페이지에서 상세 혜택을 확인해 보세요! ✨",
+    replyText: "초이콤마 회원님께는 1% 포인트 적립 및 등급별 무료배송 혜택이 상시 적용됩니다. 마이페이지에서 상세 혜택을 확인해 보세요! ✨",
     enabled: true,
   },
   {

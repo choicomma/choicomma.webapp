@@ -23,6 +23,10 @@ export function CustomerSessionWatcher() {
     const checkSession = () => {
       if (isCurrentUserAdmin()) return;
 
+      // 비로그인 상태인 경우에는 세션 만료 검사 및 알림 리다이렉트를 수행하지 않음
+      const isLoggedIn = typeof window !== "undefined" && localStorage.getItem("is_logged_in") === "true";
+      if (!isLoggedIn) return;
+
       const isValid = validateCustomerSession();
       if (!isValid) {
         // 회원 전용 페이지(마이페이지 등)에 머물고 있을 경우 로그인 페이지로 이동

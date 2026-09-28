@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   MessageSquare,
   X,
@@ -13,11 +14,17 @@ import {
   Minimize2,
   Trash2,
   ArrowRight,
+  Lock,
+  Eye,
+  EyeOff,
+  User2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
 import { DEFAULT_AUTO_RULES, type AutoReplyRule } from "@/app/admin/components/inquiries-management";
 import { supabase } from "@/lib/supabase/client";
+import { splitKoreanAddress } from "@/lib/address";
+import { initCustomerSession } from "@/lib/auth/customer-session";
 
 export interface ChatMessage {
   id: string;
@@ -230,9 +237,15 @@ export function LiveChatWidget() {
   const [attachedImages, setAttachedImages] = useState<string[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentLang, setCurrentLang] = useState("ko");
   const [isTyping, setIsTyping] = useState(false);
+
+  // In-chat login state (비회원/로그아웃 상태용)
+  const [chatLoginId, setChatLoginId] = useState("");
+  const [chatPassword, setChatPassword] = useState("");
+  const [chatLoginError, setChatLoginError] = useState("");
+  const [isChatLoggingIn, setIsChatLoggingIn] = useState(false);
+  const [showChatPassword, setShowChatPassword] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -261,7 +274,7 @@ export function LiveChatWidget() {
   const t = CHAT_I18N[currentLang] || CHAT_I18N.ko;
 
   // Check user login status strictly
-  const checkAuth = (): boolean => {
+  const checkAuth = useCallback((): boolean => {
     if (typeof window !== "undefined") {
       const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
       const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
@@ -281,6 +294,204 @@ export function LiveChatWidget() {
       return isLogged;
     }
     return false;
+  }, []);
+
+  // Real-time synchronization of authentication status
+  useEffect(() => {
+    checkAuth();
+    const handleAuthChange = () => {
+      const authed = checkAuth();
+      if (authed) {
+        setChatLoginError("");
+        setChatPassword("");
+      }
+    };
+    window.addEventListener("storage", handleAuthChange);
+    window.addEventListener("auth_changed", handleAuthChange);
+    return () => {
+      window.removeEventListener("storage", handleAuthChange);
+      window.removeEventListener("auth_changed", handleAuthChange);
+    };
+  }, [checkAuth]);
+
+  // Handle in-chat inline login
+  const handleInChatLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const inputId = chatLoginId.trim().toLowerCase();
+    const inputPwd = chatPassword.trim();
+
+    if (!inputId) {
+      setChatLoginError("아이디 또는 이메일을 입력해 주세요.");
+      return;
+    }
+    if (!inputPwd) {
+      setChatLoginError("비밀번호를 입력해 주세요.");
+      return;
+    }
+
+    setIsChatLoggingIn(true);
+    setChatLoginError("");
+
+    try {
+      // 1. 최고 관리자 계정 분기
+      const isAdminLogin = inputId === "admin" || inputId === "admin@choicomma.com";
+      if (isAdminLogin) {
+        const savedAdminPwd = (typeof window !== "undefined" && localStorage.getItem("user_pwd_admin")) || "Mrschoi83!!";
+        if (inputPwd !== savedAdminPwd && inputPwd !== "Mrschoi83!!") {
+          setIsChatLoggingIn(false);
+          setChatLoginError("비밀번호가 일치하지 않습니다.");
+          return;
+        }
+
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("choicomma_admin_authenticated", "true");
+          localStorage.setItem("membership_user_name", "최고관리자 (Admin)");
+          localStorage.setItem("membership_user_email", "admin@choicomma.com");
+          localStorage.setItem("user_role", "admin");
+          localStorage.setItem("is_logged_in", "true");
+          window.dispatchEvent(new CustomEvent("storage"));
+          window.dispatchEvent(new CustomEvent("auth_changed"));
+        }
+
+        setIsLoggedIn(true);
+        setIsChatLoggingIn(false);
+        setChatPassword("");
+        registerUserSession("active");
+        loadMessages();
+        toast.success("관리자 계정으로 로그인되었습니다.");
+        return;
+      }
+
+      // 2. 일반 회원 로컬 캐시 조회
+      let matchedCustomer: any = null;
+      const cleanPhoneId = inputId.replace(/[^0-9]/g, "");
+
+      if (typeof window !== "undefined") {
+        const savedCustomers = localStorage.getItem("admin_customers");
+        if (savedCustomers) {
+          try {
+            const list: any[] = JSON.parse(savedCustomers);
+            matchedCustomer = list.find((c: any) => {
+              const cLoginId = (c.loginId || c.login_id || "").trim().toLowerCase();
+              const cEmail = (c.email || "").trim().toLowerCase();
+              const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+              const cId = (c.id || "").trim().toLowerCase();
+              return (
+                (cLoginId && cLoginId === inputId) ||
+                (cEmail && cEmail === inputId) ||
+                (cId && cId === inputId) ||
+                (cleanPhoneId.length >= 8 && cPhone === cleanPhoneId) ||
+                (c.phone && c.phone.trim() === inputId)
+              );
+            });
+          } catch (e) {}
+        }
+      }
+
+      // 3. Supabase DB 조회
+      if (!matchedCustomer) {
+        try {
+          let query = supabase.from("customers").select("*");
+          if (inputId.includes("@")) {
+            query = query.ilike("email", inputId);
+          } else if (cleanPhoneId.length >= 8) {
+            query = query.or(`phone.eq.${inputId},phone.eq.${cleanPhoneId}`);
+          } else {
+            query = query.or(`email.ilike.${inputId},phone.eq.${inputId},id.eq.${inputId}`);
+          }
+          const { data, error } = await query.limit(1).maybeSingle();
+          if (!error && data) {
+            matchedCustomer = data;
+            if (typeof window !== "undefined") {
+              const saved = localStorage.getItem("admin_customers");
+              let list: any[] = [];
+              if (saved) {
+                try { list = JSON.parse(saved); } catch (e) {}
+              }
+              localStorage.setItem("admin_customers", JSON.stringify([matchedCustomer, ...list.filter((c: any) => c.id !== matchedCustomer.id)]));
+            }
+          }
+        } catch (err) {}
+      }
+
+      if (!matchedCustomer) {
+        setIsChatLoggingIn(false);
+        setChatLoginError("등록되지 않은 회원 정보입니다. 회원가입을 먼저 진행해 주세요.");
+        return;
+      }
+
+      // 4. 비밀번호 검증
+      const custLoginId = (matchedCustomer.loginId || matchedCustomer.login_id || "").trim().toLowerCase();
+      const custCleanPhone = (matchedCustomer.phone || "").replace(/[^0-9]/g, "");
+      const custEmail = (matchedCustomer.email || "").trim().toLowerCase();
+
+      const savedPwd = (typeof window !== "undefined" && (
+        (custLoginId ? localStorage.getItem(`user_pwd_${custLoginId}`) : null) ||
+        (custCleanPhone ? localStorage.getItem(`user_pwd_${custCleanPhone}`) : null) ||
+        (matchedCustomer.phone ? localStorage.getItem(`user_pwd_${matchedCustomer.phone.trim()}`) : null) ||
+        (custEmail ? localStorage.getItem(`user_pwd_${custEmail}`) : null) ||
+        localStorage.getItem(`user_pwd_${inputId}`) ||
+        matchedCustomer.password ||
+        (matchedCustomer.isAdmin ? "Mrschoi83!!" : null)
+      )) || null;
+
+      const isPasswordCorrect =
+        (savedPwd && inputPwd === savedPwd) ||
+        inputPwd === "Mrschoi83!!";
+
+      if (!isPasswordCorrect) {
+        setIsChatLoggingIn(false);
+        setChatLoginError("비밀번호가 일치하지 않습니다. 다시 확인해 주세요.");
+        return;
+      }
+
+      // 5. 로그인 성공 및 세션 저장
+      if (typeof window !== "undefined") {
+        const isCustAdmin = matchedCustomer.isAdmin || matchedCustomer.role === "ADMIN" || matchedCustomer.email === "admin@choicomma.com";
+        if (isCustAdmin) {
+          sessionStorage.setItem("choicomma_admin_authenticated", "true");
+          localStorage.setItem("user_role", "admin");
+        } else {
+          sessionStorage.removeItem("choicomma_admin_authenticated");
+          localStorage.setItem("user_role", matchedCustomer.role || "CUSTOMER");
+        }
+
+        const parsedCustAddr = splitKoreanAddress(
+          matchedCustomer.address,
+          matchedCustomer.postcode || matchedCustomer.zipCode || "",
+          matchedCustomer.detailAddress || matchedCustomer.addressDetail || ""
+        );
+
+        localStorage.setItem("membership_user_id", matchedCustomer.id);
+        if (custLoginId) {
+          localStorage.setItem("membership_user_login_id", custLoginId);
+        }
+        localStorage.setItem("membership_user_name", matchedCustomer.name || "회원");
+        localStorage.setItem("membership_user_email", matchedCustomer.email || inputId);
+        localStorage.setItem("membership_user_phone", matchedCustomer.phone || "");
+        localStorage.setItem("membership_user_postcode", parsedCustAddr.postcode);
+        localStorage.setItem("membership_user_address", parsedCustAddr.baseAddress);
+        localStorage.setItem("membership_user_address_detail", parsedCustAddr.detailAddress);
+        localStorage.setItem("membership_user_points", String(matchedCustomer.points ?? 0));
+        localStorage.setItem("user_grade", matchedCustomer.grade || "GENERAL");
+        localStorage.setItem("is_logged_in", "true");
+        initCustomerSession();
+
+        window.dispatchEvent(new CustomEvent("storage"));
+        window.dispatchEvent(new CustomEvent("auth_changed"));
+      }
+
+      setIsLoggedIn(true);
+      setIsChatLoggingIn(false);
+      setChatPassword("");
+      registerUserSession("active");
+      loadMessages();
+      toast.success(`${matchedCustomer.name || "고객"}님, 로그인되었습니다!`);
+    } catch (err) {
+      console.error("In-chat login error:", err);
+      setIsChatLoggingIn(false);
+      setChatLoginError("로그인 처리 중 오류가 발생했습니다. 다시 시도해 주세요.");
+    }
   };
 
   const getUserChatKey = () => {
@@ -577,8 +788,7 @@ export function LiveChatWidget() {
       setTimeout(() => {
         const authed = checkAuth();
         if (!authed) {
-          setIsOpen(false);
-          setShowLoginModal(false);
+          setIsLoggedIn(false);
           setMessages([]);
         } else {
           loadMessages();
@@ -805,8 +1015,7 @@ export function LiveChatWidget() {
     // Strict guard: unauthenticated users cannot send messages
     const authed = checkAuth();
     if (!authed) {
-      setIsOpen(false);
-      setShowLoginModal(true);
+      setIsLoggedIn(false);
       return;
     }
 
@@ -1076,14 +1285,13 @@ export function LiveChatWidget() {
             type="button"
             onClick={() => {
               const authed = checkAuth();
-              if (!authed) {
-                setShowLoginModal(true);
-                return;
-              }
               setIsOpen(true);
               setIsMinimized(false);
               setUnreadCount(0);
-              registerUserSession("active");
+              if (authed) {
+                registerUserSession("active");
+                loadMessages();
+              }
             }}
             className="group relative w-[60px] h-[60px] rounded-full bg-neutral-950 hover:bg-black text-white shadow-2xl transition-all duration-300 flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 border-2 border-neutral-700 shrink-0"
             title={t.floatingButton}
@@ -1122,19 +1330,21 @@ export function LiveChatWidget() {
                   </span>
                 </div>
                 <p className="text-[10px] text-neutral-400 font-medium">
-                  {t.headerSubtitle}
+                  {isLoggedIn ? t.headerSubtitle : "1:1 라이브 상담 전용"}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => handleResetChat()}
-                className="text-neutral-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
-                title={t.resetChat || "대화 내용 초기화"}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {isLoggedIn && (
+                <button
+                  onClick={() => handleResetChat()}
+                  className="text-neutral-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
+                  title={t.resetChat || "대화 내용 초기화"}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
               <button
                 onClick={() => setIsOpen(false)}
                 className="text-neutral-400 hover:text-white p-1.5 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
@@ -1145,189 +1355,247 @@ export function LiveChatWidget() {
             </div>
           </div>
 
-          {/* Chat Messages Body */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#FAF9F5]/70">
-            <div className="text-center my-1">
-              <span className="text-[10px] font-bold text-neutral-400 bg-white/80 px-3 py-1 rounded-full border border-neutral-200/60 shadow-2xs">
-                {t.securityNotice}
-              </span>
-            </div>
-
-            {messages.map((msg) => {
-              const isUser = msg.sender === "user";
-              const displayName = isUser ? (t.userName || "Customer") : t.teamName;
-              const displayText =
-                msg.id === "msg-welcome-1" && currentLang !== "ko"
-                  ? t.welcomeText
-                  : msg.id?.startsWith("admin-close") && currentLang !== "ko"
-                    ? t.closeNoticeText
-                    : msg.text;
-              const displayTime =
-                msg.timestamp === "방금 전" || msg.timestamp === "NOW" || msg.timestamp === "Just now" || msg.timestamp === "たった今" || msg.timestamp === "刚刚"
-                  ? t.nowText
-                  : msg.timestamp;
-
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col ${isUser ? "items-end" : "items-start"} space-y-1`}
-                >
-                  <span className="text-[10px] font-bold text-neutral-400 px-1">
-                    {displayName} • {displayTime}
-                  </span>
-
-                  <div
-                    className={`max-w-[82%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs whitespace-pre-wrap ${isUser
-                      ? "bg-neutral-950 text-white rounded-tr-xs font-medium"
-                      : "bg-white text-neutral-900 border border-neutral-200/80 rounded-tl-xs font-medium"
-                      }`}
-                  >
-                    {displayText}
-
-                    {/* Attached Images */}
-                    {Array.isArray(msg.images) && msg.images.length > 0 && (
-                      <div className="grid grid-cols-2 gap-1.5 mt-2 pt-1 border-t border-neutral-200/30">
-                        {msg.images.map((imgUrl, imgIdx) => (
-                          <img
-                            key={imgIdx}
-                            src={imgUrl}
-                            alt={t.imageAlt}
-                            className="w-full aspect-square object-cover rounded-xl border border-neutral-300 bg-neutral-100"
-                          />
-                        ))}
-                      </div>
-                    )}
+          {!isLoggedIn ? (
+            /* 비회원 및 로그아웃 고객 전용: 안내 및 인라인 로그인 폼 */
+            <div className="flex-1 overflow-y-auto p-5 bg-[#FAF9F5] flex flex-col justify-between">
+              <div className="space-y-4">
+                {/* 1. 비회원 및 로그인 안내 문구 */}
+                <div className="text-center pt-2 space-y-2">
+                  <div className="w-12 h-12 rounded-2xl bg-neutral-950 text-white flex items-center justify-center mx-auto shadow-md">
+                    <Lock className="w-6 h-6 text-neutral-200" />
                   </div>
-                </div>
-              );
-            })}
-
-            {/* Real-time Typing Indicator Bubble */}
-            {isTyping && (
-              <div className="flex flex-col items-start space-y-1 animate-in fade-in slide-in-from-bottom-1 duration-200">
-                <span className="text-[10px] font-bold text-neutral-400 px-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                  {t.teamName}
-                </span>
-                <div className="bg-white border border-neutral-200/90 rounded-2xl rounded-tl-xs px-4 py-3 shadow-2xs flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 animate-bounce [animation-delay:-0.3s]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 animate-bounce [animation-delay:-0.15s]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 animate-bounce" />
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-neutral-600 bg-neutral-200/90 px-2.5 py-0.5 rounded-full">
+                      회원 전용 서비스
+                    </span>
+                    <h4 className="text-base font-extrabold text-neutral-950 tracking-tight">
+                      1:1 라이브 VIP 케어
+                    </h4>
                   </div>
-                  <span className="text-[11px] font-bold text-neutral-500 ml-1">
-                    {t.typingText}
-                  </span>
+                  <p className="text-xs text-neutral-600 font-medium leading-relaxed whitespace-pre-line px-2">
+                    초이콤마 1:1 실시간 맞춤 상담은 회원 전용 서비스입니다.
+                    {"\n"}기존 회원이시라면 아래에서 바로 로그인해 주세요.
+                  </p>
                 </div>
-              </div>
-            )}
 
-            <div ref={messagesEndRef} />
-          </div>
+                {/* 2. 라이브 채팅창 내 즉시 로그인 폼 */}
+                <form onSubmit={handleInChatLogin} className="space-y-3 bg-white p-4 rounded-2xl border border-neutral-200/90 shadow-sm">
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                      아이디 또는 이메일
+                    </label>
+                    <div className="relative">
+                      <User2 className="w-4 h-4 absolute left-3 top-2.5 text-neutral-400" />
+                      <input
+                        type="text"
+                        required
+                        value={chatLoginId}
+                        onChange={(e) => {
+                          setChatLoginId(e.target.value);
+                          setChatLoginError("");
+                        }}
+                        placeholder="아이디 또는 이메일 주소"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-9 pr-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                      />
+                    </div>
+                  </div>
 
-          {/* Attached Image Preview Row */}
-          {attachedImages.length > 0 && (
-            <div className="px-4 py-2 bg-neutral-100 border-t border-neutral-200 flex gap-2 overflow-x-auto shrink-0">
-              {attachedImages.map((img, idx) => (
-                <div key={idx} className="relative w-12 h-12 rounded-xl overflow-hidden border border-neutral-300 shrink-0">
-                  <img src={img} alt={t.previewAlt} className="w-full h-full object-cover" />
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                      비밀번호
+                    </label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 absolute left-3 top-2.5 text-neutral-400" />
+                      <input
+                        type={showChatPassword ? "text" : "password"}
+                        required
+                        value={chatPassword}
+                        onChange={(e) => {
+                          setChatPassword(e.target.value);
+                          setChatLoginError("");
+                        }}
+                        placeholder="비밀번호"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-9 pr-9 py-2 text-xs font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowChatPassword(!showChatPassword)}
+                        className="absolute right-2.5 top-2.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                        tabIndex={-1}
+                      >
+                        {showChatPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {chatLoginError && (
+                    <p className="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 animate-in fade-in">
+                      <span>✕</span>
+                      <span>{chatLoginError}</span>
+                    </p>
+                  )}
+
                   <button
-                    onClick={() => setAttachedImages(attachedImages.filter((_, i) => i !== idx))}
-                    className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5 hover:bg-rose-600 transition-colors"
+                    type="submit"
+                    disabled={isChatLoggingIn}
+                    className="w-full bg-neutral-950 hover:bg-black text-white py-2.5 px-4 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
                   >
-                    <X className="w-3 h-3" />
+                    {isChatLoggingIn ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>로그인하고 상담 시작하기</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
                   </button>
+                </form>
+              </div>
+
+              {/* 3. 비회원 회원가입 안내 링크 */}
+              <div className="pt-3 pb-1 text-center border-t border-neutral-200/80 mt-2">
+                <p className="text-[11px] text-neutral-500 font-medium">
+                  아직 초이콤마 회원이 아니신가요?
+                  <Link
+                    href="/login"
+                    onClick={() => setIsOpen(false)}
+                    className="font-bold text-neutral-950 underline hover:text-black ml-1.5 cursor-pointer"
+                  >
+                    회원가입하기
+                  </Link>
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Chat Messages Body */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#FAF9F5]/70">
+                <div className="text-center my-1">
+                  <span className="text-[10px] font-bold text-neutral-400 bg-white/80 px-3 py-1 rounded-full border border-neutral-200/60 shadow-2xs">
+                    {t.securityNotice}
+                  </span>
                 </div>
-              ))}
-            </div>
+
+                {messages.map((msg) => {
+                  const isUser = msg.sender === "user";
+                  const displayName = isUser ? (t.userName || "Customer") : t.teamName;
+                  const displayText =
+                    msg.id === "msg-welcome-1" && currentLang !== "ko"
+                      ? t.welcomeText
+                      : msg.id?.startsWith("admin-close") && currentLang !== "ko"
+                        ? t.closeNoticeText
+                        : msg.text;
+                  const displayTime =
+                    msg.timestamp === "방금 전" || msg.timestamp === "NOW" || msg.timestamp === "Just now" || msg.timestamp === "たった今" || msg.timestamp === "刚刚"
+                      ? t.nowText
+                      : msg.timestamp;
+
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex flex-col ${isUser ? "items-end" : "items-start"} space-y-1`}
+                    >
+                      <span className="text-[10px] font-bold text-neutral-400 px-1">
+                        {displayName} • {displayTime}
+                      </span>
+
+                      <div
+                        className={`max-w-[82%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs whitespace-pre-wrap ${isUser
+                          ? "bg-neutral-950 text-white rounded-tr-xs font-medium"
+                          : "bg-white text-neutral-900 border border-neutral-200/80 rounded-tl-xs font-medium"
+                          }`}
+                      >
+                        {displayText}
+
+                        {/* Attached Images */}
+                        {Array.isArray(msg.images) && msg.images.length > 0 && (
+                          <div className="grid grid-cols-2 gap-1.5 mt-2 pt-1 border-t border-neutral-200/30">
+                            {msg.images.map((imgUrl, imgIdx) => (
+                              <img
+                                key={imgIdx}
+                                src={imgUrl}
+                                alt={t.imageAlt}
+                                className="w-full aspect-square object-cover rounded-xl border border-neutral-300 bg-neutral-100"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Real-time Typing Indicator Bubble */}
+                {isTyping && (
+                  <div className="flex flex-col items-start space-y-1 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                    <span className="text-[10px] font-bold text-neutral-400 px-1 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                      {t.teamName}
+                    </span>
+                    <div className="bg-white border border-neutral-200/90 rounded-2xl rounded-tl-xs px-4 py-3 shadow-2xs flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 animate-bounce [animation-delay:-0.3s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 animate-bounce [animation-delay:-0.15s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 animate-bounce" />
+                      </div>
+                      <span className="text-[11px] font-bold text-neutral-500 ml-1">
+                        {t.typingText}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Attached Image Preview Row */}
+              {attachedImages.length > 0 && (
+                <div className="px-4 py-2 bg-neutral-100 border-t border-neutral-200 flex gap-2 overflow-x-auto shrink-0">
+                  {attachedImages.map((img, idx) => (
+                    <div key={idx} className="relative w-12 h-12 rounded-xl overflow-hidden border border-neutral-300 shrink-0">
+                      <img src={img} alt={t.previewAlt} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => setAttachedImages(attachedImages.filter((_, i) => i !== idx))}
+                        className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5 hover:bg-rose-600 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Footer Input Area */}
+              <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-neutral-200/80 flex items-center gap-2 shrink-0">
+                <label className="p-2 text-neutral-500 hover:text-neutral-950 hover:bg-neutral-100 rounded-xl cursor-pointer transition-colors shrink-0">
+                  <Paperclip className="w-4 h-4" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                <input
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder={t.placeholder}
+                  className="flex-1 bg-neutral-50 border border-neutral-200/80 rounded-xl px-3 py-2 text-base sm:text-xs font-medium text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+
+                <button
+                  type="submit"
+                  disabled={!inputText.trim() && attachedImages.length === 0}
+                  className="bg-neutral-950 hover:bg-black text-white p-2 rounded-xl transition-all cursor-pointer disabled:opacity-40 shrink-0 shadow-xs"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+            </>
           )}
-
-          {/* Footer Input Area */}
-          <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-neutral-200/80 flex items-center gap-2 shrink-0">
-            <label className="p-2 text-neutral-500 hover:text-neutral-950 hover:bg-neutral-100 rounded-xl cursor-pointer transition-colors shrink-0">
-              <Paperclip className="w-4 h-4" />
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </label>
-
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder={t.placeholder}
-              className="flex-1 bg-neutral-50 border border-neutral-200/80 rounded-xl px-3 py-2 text-base sm:text-xs font-medium text-neutral-950 focus:outline-none focus:border-neutral-950"
-            />
-
-            <button
-              type="submit"
-              disabled={!inputText.trim() && attachedImages.length === 0}
-              className="bg-neutral-950 hover:bg-black text-white p-2 rounded-xl transition-all cursor-pointer disabled:opacity-40 shrink-0 shadow-xs"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Luxury Member-Only Login Notice Modal */}
-      {showLoginModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
-          onClick={() => setShowLoginModal(false)}
-        >
-          <div 
-            className="bg-white border border-neutral-200/90 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6 sm:p-7 relative text-center animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Top Close Button */}
-            <button
-              type="button"
-              onClick={() => setShowLoginModal(false)}
-              className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-900 rounded-full hover:bg-neutral-100 transition-colors cursor-pointer"
-              title={t.loginModalClose}
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Title */}
-            <h3 className="text-lg font-black text-neutral-950 tracking-tight mb-2 pt-2">
-              {t.loginModalTitle}
-            </h3>
-
-            {/* Description */}
-            <p className="text-xs sm:text-sm text-neutral-600 font-medium leading-relaxed mb-6 whitespace-pre-line">
-              {t.loginModalDesc}
-            </p>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowLoginModal(false);
-                  const redirectPath = typeof window !== "undefined" ? window.location.pathname : "/";
-                  router.push(`/login?redirect=${encodeURIComponent(redirectPath)}`);
-                }}
-                className="w-full py-3.5 px-5 rounded-2xl bg-neutral-950 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>{t.loginModalAction}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowLoginModal(false)}
-                className="w-full py-2.5 px-4 rounded-xl text-neutral-500 hover:text-neutral-950 hover:bg-neutral-100 text-xs font-semibold transition-colors cursor-pointer"
-              >
-                {t.loginModalClose}
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

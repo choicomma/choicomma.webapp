@@ -258,7 +258,9 @@ export function CartProvider({
         });
         localStorage.setItem("choicomma_cart", JSON.stringify(newCart));
         setTimeout(() => {
-          window.dispatchEvent(new CustomEvent("choicomma_cart_updated"));
+          window.dispatchEvent(
+            new CustomEvent("choicomma_cart_updated", { detail: { action: updateType } })
+          );
         }, 0);
         return newCart;
       });
@@ -275,7 +277,9 @@ export function CartProvider({
         });
         localStorage.setItem("choicomma_cart", JSON.stringify(newCart));
         setTimeout(() => {
-          window.dispatchEvent(new CustomEvent("choicomma_cart_updated"));
+          window.dispatchEvent(
+            new CustomEvent("choicomma_cart_updated", { detail: { action: "add" } })
+          );
         }, 0);
         return newCart;
       });
@@ -345,10 +349,21 @@ export function CartProvider({
 
   useEffect(() => {
     const handleCartUpdate = (e?: any) => {
-      if (e?.detail?.action === "clear") {
+      // 1) 마이페이지(/membership)에서는 이미 우측 사이드바에 장바구니가 상시 열려 있으므로 슬라이드 드로어를 절대 띄우지 않음
+      if (typeof window !== "undefined" && window.location.pathname.startsWith("/membership")) {
         return;
       }
-      setIsCartOpen(true);
+
+      // 2) 상품 삭제(delete), 수량 조절(plus, minus), 장바구니 비우기(clear) 시에는 드로어를 띄우지 않음
+      const action = e?.detail?.action;
+      if (action === "delete" || action === "minus" || action === "plus" || action === "clear") {
+        return;
+      }
+
+      // 3) 상품 추가(add) 등 명시적인 추가 액션일 때만 슬라이드 장바구니 열기
+      if (action === "add") {
+        setIsCartOpen(true);
+      }
     };
     const handleOpenCartEvent = () => {
       setIsCartOpen(true);

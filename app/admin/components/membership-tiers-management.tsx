@@ -10,7 +10,6 @@ import {
   Sliders,
   CheckCircle2,
   Save,
-  RotateCcw,
   Edit3,
   X,
   Plus,
@@ -21,6 +20,8 @@ import {
   Coins,
   ChevronRight,
   Info,
+  Ticket,
+  Trash2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
@@ -31,6 +32,11 @@ import {
   getTierPointRate,
   calculateEarnedPoints,
 } from "@/lib/membership/tiers";
+import {
+  AvailableCoupon,
+  getAllUserCoupons,
+  saveAdminCoupons,
+} from "@/lib/membership/coupons";
 
 export type { TierPolicy };
 export { DEFAULT_TIER_POLICIES, normalizeUserGrade, getTierPointRate, calculateEarnedPoints };
@@ -56,7 +62,20 @@ export function MembershipTiersManagement({
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length === 5) return parsed;
+          if (Array.isArray(parsed) && parsed.length === 5) {
+            // 전체 회원 모두 추가 할인율 삭제(0%) 및 포인트 적립률 1%로 자동 최신화
+            const normalized = parsed.map((p: any) => {
+              const def = DEFAULT_TIER_POLICIES.find((d) => d.key === p.key);
+              return {
+                ...p,
+                discountRate: 0,
+                pointRate: 1,
+                specialBenefit: def?.specialBenefit || p.specialBenefit,
+              };
+            });
+            localStorage.setItem("membership_tiers_policy", JSON.stringify(normalized));
+            return normalized;
+          }
         } catch (e) {}
       }
     }
@@ -72,7 +91,6 @@ export function MembershipTiersManagement({
 
   // Member Benefit Form State
   const [targetGrade, setTargetGrade] = useState("GENERAL");
-  const [customDiscountRate, setCustomDiscountRate] = useState<number>(0);
   const [customFreeShipping, setCustomFreeShipping] = useState<boolean>(false);
   const [pointsAdjustmentAction, setPointsAdjustmentAction] = useState<"add" | "subtract" | "set">("add");
   const [pointsAdjustmentAmount, setPointsAdjustmentAmount] = useState<number>(0);
@@ -117,17 +135,113 @@ export function MembershipTiersManagement({
     toast("회원 등급별 정책이 성공적으로 저장되었습니다.");
   };
 
-  // Reset to Default Tier Policies
-  const handleResetTierPolicies = () => {
-    if (window.confirm("회원 등급 정책을 시스템 기본값으로 복원하시겠습니까?")) {
-      setTierPolicies(DEFAULT_TIER_POLICIES);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("membership_tiers_policy", JSON.stringify(DEFAULT_TIER_POLICIES));
-        window.dispatchEvent(new CustomEvent("membership_tiers_updated"));
-      }
-      setEditingTier(null);
-      toast("회원 등급 정책이 기본값으로 초기화되었습니다.");
+  // Dedicated Coupon Issuance State for Individual Member
+  const [adminCoupons, setAdminCoupons] = useState<AvailableCoupon[]>([]);
+  const [newCouponTitle, setNewCouponTitle] = useState("");
+  const [newCouponAmount, setNewCouponAmount] = useState<number>(10000);
+  const [newCouponType, setNewCouponType] = useState<"FIXED" | "SHIPPING">("FIXED");
+  const [newCouponValidUntil, setNewCouponValidUntil] = useState("2026.12.31");
+  const [isCouponFormOpen, setIsCouponFormOpen] = useState(false);
+
+  const loadAdminCoupons = () => {
+    if (typeof window !== "undefined") {
+      setAdminCoupons(getAllUserCoupons());
     }
+  };
+
+  useEffect(() => {
+    loadAdminCoupons();
+    const handleCouponsUpdate = () => loadAdminCoupons();
+    window.addEventListener("coupons_updated", handleCouponsUpdate);
+    window.addEventListener("storage", handleCouponsUpdate);
+    return () => {
+      window.removeEventListener("coupons_updated", handleCouponsUpdate);
+      window.removeEventListener("storage", handleCouponsUpdate);
+    };
+  }, []);
+
+  const memberCoupons = useMemo(() => {
+    if (!editingMember) return [];
+    const targetEmail = (editingMember.email || "").toLowerCase().trim();
+    if (!targetEmail) return [];
+    return adminCoupons.filter((c) => {
+      if (c.targetType !== "CUSTOMER") return false;
+      const emails = (c.targetCustomerEmails || []).map((e) => e.toLowerCase().trim());
+      return emails.includes(targetEmail);
+    });
+  }, [editingMember, adminCoupons]);
+
+  const handleIssueDedicatedCoupon = () => {
+    if (!editingMember) return;
+    const targetEmail = (editingMember.email || "").toLowerCase().trim();
+    if (!targetEmail) {
+      toast("❌ 해당 회원의 이메일 정보가 없어 전용 쿠폰을 발급할 수 없습니다.");
+      return;
+    }
+
+    if (!newCouponTitle.trim()) {
+      toast("❌ 쿠폰명을 입력해 주세요.");
+      return;
+    }
+
+    const discountText =
+      newCouponType === "SHIPPING"
+        ? "배송비 무료 지원"
+        : `${newCouponAmount.toLocaleString()}원 할인`;
+
+    const newCoupon: AvailableCoupon = {
+      id: `coupon-${Date.now()}`,
+      code: `CPN-${Date.now().toString(36).toUpperCase()}`,
+      title: newCouponTitle.trim(),
+      discount: discountText,
+      discountAmount: newCouponType === "SHIPPING" ? 4000 : newCouponAmount,
+      condition: `${discountText} 즉시 적용`,
+      validUntil: newCouponValidUntil.trim() || "2026.12.31",
+      type: newCouponType,
+      badge: "회원전용",
+      targetType: "CUSTOMER",
+      targetGrades: ["ALL"],
+      targetCustomerEmails: [targetEmail],
+      targetCustomerNames: [editingMember.name || "회원"],
+      isActive: true,
+    };
+
+    const nextCoupons = [newCoupon, ...adminCoupons];
+    saveAdminCoupons(nextCoupons);
+    setAdminCoupons(nextCoupons);
+    setIsCouponFormOpen(false);
+    toast(`🎟️ [${editingMember.name || "회원"}]님 전용 쿠폰이 성공적으로 발급되었습니다!`);
+  };
+
+  const handleRevokeDedicatedCoupon = (couponId: string) => {
+    if (!window.confirm("이 회원에게 발급된 전용 쿠폰을 회수(삭제)하시겠습니까?")) return;
+
+    const targetEmail = (editingMember?.email || "").toLowerCase().trim();
+    const nextCoupons = adminCoupons
+      .map((c) => {
+        if (c.id !== couponId) return c;
+        const filteredEmails = (c.targetCustomerEmails || []).filter(
+          (e) => e.toLowerCase().trim() !== targetEmail
+        );
+        const filteredNames = (c.targetCustomerNames || []).filter(
+          (n) => n.trim() !== (editingMember?.name || "").trim()
+        );
+        return {
+          ...c,
+          targetCustomerEmails: filteredEmails,
+          targetCustomerNames: filteredNames,
+        };
+      })
+      .filter((c) => {
+        if (c.targetType === "CUSTOMER" && (!c.targetCustomerEmails || c.targetCustomerEmails.length === 0)) {
+          return false;
+        }
+        return true;
+      });
+
+    saveAdminCoupons(nextCoupons);
+    setAdminCoupons(nextCoupons);
+    toast("🗑️ 전용 쿠폰이 성공적으로 회수(삭제)되었습니다.");
   };
 
   // Open Member Benefit Modal
@@ -141,11 +255,17 @@ export function MembershipTiersManagement({
     else if (rawGrade.includes("SILVER")) currentGrade = "SILVER";
 
     setTargetGrade(currentGrade);
-    setCustomDiscountRate(customer.customDiscountRate || 0);
     setCustomFreeShipping(Boolean(customer.customFreeShipping));
     setPointsAdjustmentAction("add");
     setPointsAdjustmentAmount(0);
     setCustomBenefitMemo(customer.customMemo || customer.customBenefitMemo || "");
+
+    const memberName = customer.name || "고객";
+    setNewCouponTitle(`[${memberName}님 전용] 특별 10,000원 할인 쿠폰`);
+    setNewCouponAmount(10000);
+    setNewCouponType("FIXED");
+    setNewCouponValidUntil("2026.12.31");
+    setIsCouponFormOpen(false);
   };
 
   // Save Member Benefit Adjustment
@@ -165,7 +285,7 @@ export function MembershipTiersManagement({
     const updatedMember = {
       ...editingMember,
       grade: targetGrade,
-      customDiscountRate: Number(customDiscountRate || 0),
+      customDiscountRate: 0,
       customFreeShipping: Boolean(customFreeShipping),
       points: newPoints,
       customMemo: customBenefitMemo.trim(),
@@ -269,7 +389,7 @@ export function MembershipTiersManagement({
             </h1>
           </div>
           <p className="text-xs text-neutral-500 mt-1">
-            스토어 회원 등급 정책(할인율, 적립률, 승급기준) 설정 및 회원별 맞춤 우대 혜택 통합 조정
+            스토어 회원 등급 정책(적립률, 승급기준) 설정 및 회원별 맞춤 우대 혜택 통합 조정
           </p>
         </div>
 
@@ -304,23 +424,11 @@ export function MembershipTiersManagement({
       {activeSubTab === "tiers" && (
         <div className="space-y-6">
           {/* Action Bar */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-neutral-500">
-              <Info className="w-4 h-4 text-neutral-700" />
-              <span>
-                설정한 등급별 할인율과 적립률은 쇼핑몰 전체 주문서 및 마이페이지에 실시간 반영됩니다.
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleResetTierPolicies}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-100 text-neutral-800 rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-2xs"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-neutral-700" />
-                <span>기본값 복원</span>
-              </button>
-            </div>
+          <div className="flex items-center gap-2 text-xs text-neutral-500">
+            <Info className="w-4 h-4 text-neutral-700 shrink-0" />
+            <span>
+              설정한 등급별 적립률과 배송 혜택은 쇼핑몰 전체 주문서 및 마이페이지에 실시간 반영됩니다.
+            </span>
           </div>
 
           {/* 5 Tiers Monochrome Cards Grid */}
@@ -350,14 +458,8 @@ export function MembershipTiersManagement({
                       </p>
                     </div>
 
-                    {/* Benefit Details */}
+                    {/* Benefit Details (추가 할인율 삭제, 적립률 1% 및 배송비 혜택) */}
                     <div className="pt-3 border-t border-neutral-100 space-y-2 text-xs">
-                      <div className="flex justify-between items-center text-neutral-700">
-                        <span className="text-neutral-500 font-medium">추가 할인율</span>
-                        <span className="font-extrabold text-neutral-950">
-                          {tier.discountRate}%
-                        </span>
-                      </div>
                       <div className="flex justify-between items-center text-neutral-700">
                         <span className="text-neutral-500 font-medium">포인트 적립률</span>
                         <span className="font-extrabold text-neutral-950">
@@ -407,10 +509,10 @@ export function MembershipTiersManagement({
                 회원 등급은 고객의 누적 실결제액을 기준으로 시스템에서 자동 판정되거나, 관리자가 [회원별 혜택 조정] 탭에서 특정 회원의 등급을 수동으로 상향/하향 조정할 수 있습니다.
               </li>
               <li>
-                설정된 등급별 추가 할인율과 배송비 기준은 주문서(/checkout) 작성 시 결제 금액 계산에 즉시 적용됩니다.
+                설정된 등급별 적립률과 배송비 기준은 주문서(/checkout) 작성 시 결제 금액 계산에 실시간 적용됩니다.
               </li>
               <li>
-                개별 회원에게 부여된 추가 할인율 및 상시 무료배송 혜택은 기본 등급 정책보다 최우선으로 적용됩니다.
+                개별 회원에게 부여된 상시 무료배송 혜택은 기본 등급 정책보다 최우선으로 적용됩니다.
               </li>
             </ul>
           </div>
@@ -477,9 +579,14 @@ export function MembershipTiersManagement({
                     </tr>
                   ) : (
                     filteredCustomers.map((cust) => {
-                      const hasCustomDiscount = cust.customDiscountRate && cust.customDiscountRate > 0;
                       const hasCustomFreeShip = cust.customFreeShipping;
                       const hasMemo = Boolean(cust.customMemo);
+                      const custEmail = (cust.email || "").toLowerCase().trim();
+                      const dedicatedCoupons = adminCoupons.filter((c) => {
+                        if (c.targetType !== "CUSTOMER") return false;
+                        const emails = (c.targetCustomerEmails || []).map((e) => e.toLowerCase().trim());
+                        return Boolean(custEmail && emails.includes(custEmail));
+                      });
 
                       return (
                         <tr key={cust.id} className="hover:bg-neutral-50/60 transition-colors">
@@ -515,22 +622,23 @@ export function MembershipTiersManagement({
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              {hasCustomDiscount ? (
-                                <span className="bg-neutral-100 text-neutral-950 border border-neutral-300 px-2 py-0.5 rounded text-[10px] font-bold">
-                                  특별할인 +{cust.customDiscountRate}%
+                              {dedicatedCoupons.length > 0 && (
+                                <span className="bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded text-[10px] font-bold inline-flex items-center gap-1">
+                                  <Ticket className="w-3 h-3 text-purple-600" />
+                                  전용 쿠폰 {dedicatedCoupons.length}장
                                 </span>
-                              ) : null}
-                              {hasCustomFreeShip ? (
+                              )}
+                              {hasCustomFreeShip && (
                                 <span className="bg-neutral-100 text-neutral-950 border border-neutral-300 px-2 py-0.5 rounded text-[10px] font-bold">
                                   상시 무료배송
                                 </span>
-                              ) : null}
-                              {hasMemo ? (
+                              )}
+                              {hasMemo && (
                                 <span className="bg-neutral-50 text-neutral-600 border border-neutral-200 px-2 py-0.5 rounded text-[10px] font-medium truncate max-w-[140px]" title={cust.customMemo}>
                                   {cust.customMemo}
                                 </span>
-                              ) : null}
-                              {!hasCustomDiscount && !hasCustomFreeShip && !hasMemo && (
+                              )}
+                              {dedicatedCoupons.length === 0 && !hasCustomFreeShip && !hasMemo && (
                                 <span className="text-neutral-400 text-[11px]">기본 등급 정책 적용 중</span>
                               )}
                             </div>
@@ -593,37 +701,20 @@ export function MembershipTiersManagement({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-neutral-800 mb-1.5">
-                    추가 할인율 (%)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={editingTier.discountRate}
-                    onChange={(e) =>
-                      setEditingTier({ ...editingTier, discountRate: Number(e.target.value) || 0 })
-                    }
-                    className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl font-mono text-xs focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-neutral-800 mb-1.5">
-                    적립금 비율 (%)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={editingTier.pointRate}
-                    onChange={(e) =>
-                      setEditingTier({ ...editingTier, pointRate: Number(e.target.value) || 0 })
-                    }
-                    className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl font-mono text-xs focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
+              <div>
+                <label className="block font-bold text-neutral-800 mb-1.5">
+                  포인트 적립률 (%)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={editingTier.pointRate}
+                  onChange={(e) =>
+                    setEditingTier({ ...editingTier, pointRate: Number(e.target.value) || 0 })
+                  }
+                  className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl font-mono text-xs focus:outline-none focus:border-neutral-950"
+                />
               </div>
 
               <div>
@@ -775,29 +866,8 @@ export function MembershipTiersManagement({
                 </p>
               </div>
 
-              {/* 2) 개별 특별 추가 할인율 (%) */}
-              <div>
-                <label className="block font-bold text-neutral-800 mb-1.5">
-                  회원 전용 개별 우대 할인율 (%)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={0}
-                    max={50}
-                    value={customDiscountRate}
-                    onChange={(e) => setCustomDiscountRate(Number(e.target.value) || 0)}
-                    placeholder="0"
-                    className="flex-1 px-3.5 py-2.5 border border-neutral-300 rounded-xl font-mono text-xs focus:outline-none focus:border-neutral-950"
-                  />
-                  <span className="text-neutral-500 font-bold">% 추가할인</span>
-                </div>
-                <p className="text-[11px] text-neutral-400 mt-1">
-                  기본 등급 할인 외에 이 회원에게만 상시 적용할 특별 우대 할인율을 지정할 수 있습니다 (0% 설정 시 미적용).
-                </p>
-              </div>
 
-              {/* 3) 상시 무료배송 강제 부여 */}
+              {/* 2) 상시 무료배송 강제 부여 */}
               <div className="bg-neutral-50 p-3.5 rounded-xl border border-neutral-200">
                 <label className="flex items-center justify-between cursor-pointer">
                   <div>
@@ -817,7 +887,7 @@ export function MembershipTiersManagement({
                 </label>
               </div>
 
-              {/* 4) 적립금(포인트) 즉시 조정 */}
+              {/* 3) 적립금(포인트) 즉시 조정 */}
               <div className="border border-neutral-200 rounded-2xl p-4 space-y-3 bg-white">
                 <div className="flex items-center justify-between">
                   <label className="font-bold text-neutral-800">
@@ -875,6 +945,185 @@ export function MembershipTiersManagement({
                   />
                   <span className="font-bold text-neutral-700">P</span>
                 </div>
+              </div>
+
+              {/* 4) 회원 전용 맞춤 쿠폰 발급 혜택 */}
+              <div className="border border-purple-200/90 rounded-2xl p-4 space-y-3 bg-purple-50/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Ticket className="w-4 h-4 text-purple-700" />
+                    <label className="font-bold text-neutral-900">
+                      회원 전용 맞춤 쿠폰 혜택
+                    </label>
+                  </div>
+                  <span className="text-[11px] font-bold text-purple-700 bg-purple-100/80 px-2 py-0.5 rounded-full">
+                    발급 완료: {memberCoupons.length}장
+                  </span>
+                </div>
+
+                {/* 현재 발급된 전용 쿠폰 목록 */}
+                {memberCoupons.length > 0 ? (
+                  <div className="space-y-2">
+                    {memberCoupons.map((cpn) => (
+                      <div
+                        key={cpn.id}
+                        className="bg-white border border-purple-100 rounded-xl p-3 flex items-center justify-between gap-3 shadow-2xs"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-xs text-neutral-900 truncate">
+                              {cpn.title}
+                            </span>
+                            <span className="text-[10px] font-extrabold bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">
+                              {cpn.discount}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-[11px] text-neutral-400">
+                            <span className="font-mono">코드: {cpn.code}</span>
+                            <span>•</span>
+                            <span>유효기간: ~{cpn.validUntil}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeDedicatedCoupon(cpn.id)}
+                          title="전용 쿠폰 회수(삭제)"
+                          className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white/80 border border-dashed border-neutral-200 rounded-xl py-3 px-4 text-center text-[11px] text-neutral-500">
+                    현재 이 회원에게 발급된 개별 전용 쿠폰이 없습니다.
+                  </div>
+                )}
+
+                {/* 전용 쿠폰 신규 발급 폼 */}
+                {!isCouponFormOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsCouponFormOpen(true)}
+                    className="w-full py-2.5 bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>이 회원에게 새 전용 쿠폰 발급하기</span>
+                  </button>
+                ) : (
+                  <div className="bg-white border border-purple-200 rounded-xl p-3.5 space-y-3 shadow-sm animate-in fade-in zoom-in-95 duration-150">
+                    <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+                      <span className="font-bold text-neutral-900 text-xs flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                        새 전용 쿠폰 발급 설정
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsCouponFormOpen(false)}
+                        className="text-neutral-400 hover:text-neutral-700 p-1 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                        쿠폰 명칭
+                      </label>
+                      <input
+                        type="text"
+                        value={newCouponTitle}
+                        onChange={(e) => setNewCouponTitle(e.target.value)}
+                        placeholder="예: [회원명 전용] 특별 10,000원 감사 할인 쿠폰"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-xs focus:outline-none focus:border-purple-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                        쿠폰 혜택 유형
+                      </label>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setNewCouponType("FIXED")}
+                          className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                            newCouponType === "FIXED"
+                              ? "bg-purple-700 text-white border-purple-700"
+                              : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50"
+                          }`}
+                        >
+                          금액 할인 (원)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewCouponType("SHIPPING")}
+                          className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                            newCouponType === "SHIPPING"
+                              ? "bg-purple-700 text-white border-purple-700"
+                              : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50"
+                          }`}
+                        >
+                          배송비 무료 쿠폰
+                        </button>
+                      </div>
+                    </div>
+
+                    {newCouponType === "FIXED" && (
+                      <div>
+                        <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                          할인 금액 (원)
+                        </label>
+                        <input
+                          type="number"
+                          step={1000}
+                          min={1000}
+                          value={newCouponAmount}
+                          onChange={(e) => setNewCouponAmount(Math.max(0, Number(e.target.value) || 0))}
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-lg font-mono text-xs focus:outline-none focus:border-purple-600"
+                        />
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {[5000, 10000, 20000, 30000, 50000].map((amt) => (
+                            <button
+                              key={amt}
+                              type="button"
+                              onClick={() => setNewCouponAmount(amt)}
+                              className="px-2 py-0.5 bg-neutral-100 hover:bg-purple-100 hover:text-purple-700 text-neutral-600 rounded text-[10px] font-semibold transition-colors cursor-pointer"
+                            >
+                              +{amt.toLocaleString()}원
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                        유효기간
+                      </label>
+                      <input
+                        type="text"
+                        value={newCouponValidUntil}
+                        onChange={(e) => setNewCouponValidUntil(e.target.value)}
+                        placeholder="2026.12.31"
+                        className="w-full px-3 py-2 border border-neutral-300 rounded-lg font-mono text-xs focus:outline-none focus:border-purple-600"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleIssueDedicatedCoupon}
+                      className="w-full py-2.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-md flex items-center justify-center gap-1.5"
+                    >
+                      <Ticket className="w-3.5 h-3.5" />
+                      <span>이 회원 전용 쿠폰 즉시 발급</span>
+                    </button>
+                    <p className="text-[10px] text-neutral-400 text-center">
+                      * 발급 즉시 해당 회원의 마이페이지 및 주문서 결제창에 전용 쿠폰으로 표시됩니다.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* 5) 관리자 회원 혜택 메모 */}

@@ -2,7 +2,7 @@ export interface TierPolicy {
   key: "GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP";
   name: string;
   minSpend: number;
-  discountRate: number;
+  discountRate?: number;
   pointRate: number;
   freeShipping: boolean;
   minFreeShippingSpend: number;
@@ -24,41 +24,41 @@ export const DEFAULT_TIER_POLICIES: TierPolicy[] = [
     key: "SILVER",
     name: "SILVER (실버)",
     minSpend: 1000000,
-    discountRate: 3,
-    pointRate: 2,
+    discountRate: 0,
+    pointRate: 1,
     freeShipping: false,
     minFreeShippingSpend: 100000,
-    specialBenefit: "전 상품 3% 추가 할인, 2% 적립",
+    specialBenefit: "우수 회원 혜택, 1% 적립금, 10만원 이상 무료배송",
   },
   {
     key: "GOLD",
     name: "GOLD (골드)",
     minSpend: 3000000,
-    discountRate: 5,
-    pointRate: 3,
+    discountRate: 0,
+    pointRate: 1,
     freeShipping: false,
     minFreeShippingSpend: 50000,
-    specialBenefit: "전 상품 5% 추가 할인, 3% 적립, 5만원 이상 무료배송",
+    specialBenefit: "우수 회원 혜택, 1% 적립금, 5만원 이상 무료배송",
   },
   {
     key: "PLATINUM",
     name: "PLATINUM (플래티넘)",
     minSpend: 10000000,
-    discountRate: 7,
-    pointRate: 4,
+    discountRate: 0,
+    pointRate: 1,
     freeShipping: true,
     minFreeShippingSpend: 0,
-    specialBenefit: "전 상품 7% 추가 할인, 4% 적립, 상시 무료배송",
+    specialBenefit: "플래티넘 회원 혜택, 1% 적립금, 상시 무료배송",
   },
   {
     key: "VVIP",
     name: "VVIP (최상위)",
     minSpend: 20000000,
-    discountRate: 10,
-    pointRate: 5,
+    discountRate: 0,
+    pointRate: 1,
     freeShipping: true,
     minFreeShippingSpend: 0,
-    specialBenefit: "전 상품 10% 추가 할인, 5% 적립, 상시 무료배송 및 전용 빠른 출고",
+    specialBenefit: "최상위 VVIP 혜택, 1% 적립금, 상시 무료배송 및 전용 빠른 출고",
   },
 ];
 
@@ -91,19 +91,7 @@ export function getTierPointRate(grade: "GENERAL" | "SILVER" | "GOLD" | "PLATINU
   const defaultPolicy = DEFAULT_TIER_POLICIES.find((p) => p.key === grade);
   if (defaultPolicy) return defaultPolicy.pointRate;
 
-  switch (grade) {
-    case "VVIP":
-      return 5;
-    case "PLATINUM":
-      return 4;
-    case "GOLD":
-      return 3;
-    case "SILVER":
-      return 2;
-    case "GENERAL":
-    default:
-      return 1;
-  }
+  return 1;
 }
 
 export function calculateEarnedPoints(

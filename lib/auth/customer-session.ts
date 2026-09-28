@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   SESSION_ACTIVE: "customer_session_active", // sessionStorage: 브라우저 종료 감지용
   SESSION_EXPIRES_AT: "customer_session_expires_at", // localStorage: 24시간 만료 타임스탬프
   USER_ID: "membership_user_id",
+  USER_LOGIN_ID: "membership_user_login_id",
   USER_NAME: "membership_user_name",
   USER_EMAIL: "membership_user_email",
   USER_PHONE: "membership_user_phone",
@@ -81,6 +82,7 @@ export function clearCustomerSession(triggerEvents = true): void {
     localStorage.removeItem(STORAGE_KEYS.SESSION_EXPIRES_AT);
     localStorage.removeItem(STORAGE_KEYS.IS_LOGGED_IN);
     localStorage.removeItem(STORAGE_KEYS.USER_ID);
+    localStorage.removeItem(STORAGE_KEYS.USER_LOGIN_ID);
     localStorage.removeItem(STORAGE_KEYS.USER_NAME);
     localStorage.removeItem(STORAGE_KEYS.USER_EMAIL);
     localStorage.removeItem(STORAGE_KEYS.USER_PHONE);

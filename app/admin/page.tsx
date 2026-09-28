@@ -70,6 +70,7 @@ import {
   Sliders,
   Globe,
   User2,
+  Ticket,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { mockProducts } from "@/lib/sfcc/mock/products";
@@ -84,11 +85,13 @@ import { RevenueManagement } from "./components/revenue-management";
 import { MainPageManagement } from "./components/main-page-management";
 import { CustomersManagement } from "./components/customers-management";
 import { MembershipTiersManagement } from "./components/membership-tiers-management";
+import { CouponsManagement } from "./components/coupons-management";
 import { OrdersManagement } from "./components/orders-management";
 import { InboundStockManagement } from "./components/inbound-stock-management";
 import { InquiriesManagement } from "./components/inquiries-management";
 import { GlobalSalesManagement } from "./components/global-sales-management";
 import { LanguageSelector } from "@/components/layout/header/language-selector";
+import { getAllUserCoupons } from "@/lib/membership/coupons";
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -415,7 +418,24 @@ const initialInboundSchedules: any[] = [];
 const initialDailySettlements: any[] = [];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "revenue" | "main" | "customers" | "tiers" | "inquiries" | "settings" | "global_sales">("orders");
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "revenue" | "main" | "customers" | "tiers" | "coupons" | "inquiries" | "settings" | "global_sales">("orders");
+
+  // Admin Coupons Count State
+  const [adminCouponsCount, setAdminCouponsCount] = useState<number>(3);
+  useEffect(() => {
+    const updateCount = () => {
+      if (typeof window !== "undefined") {
+        setAdminCouponsCount(getAllUserCoupons().length);
+      }
+    };
+    updateCount();
+    window.addEventListener("coupons_updated", updateCount);
+    window.addEventListener("storage", updateCount);
+    return () => {
+      window.removeEventListener("coupons_updated", updateCount);
+      window.removeEventListener("storage", updateCount);
+    };
+  }, []);
 
   // VIP Customer Inquiry State
   const {
@@ -2307,7 +2327,7 @@ export default function AdminPage() {
             <Users className="w-4 h-4 text-neutral-900" />
             회원 관리
             <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              {customersList.length > 1 || isCustomersLoaded ? customersList.length.toLocaleString() : "-"}
+              {customersList.length.toLocaleString()}
             </span>
           </button>
 
@@ -2321,8 +2341,20 @@ export default function AdminPage() {
           >
             <ShieldCheck className="w-4 h-4 text-neutral-900" />
             회원 등급 관리
+          </button>
+
+          {/* 2-2. 쿠폰 관리 */}
+          <button
+            onClick={() => setActiveTab("coupons")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "coupons"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
+          >
+            <Ticket className="w-4 h-4 text-neutral-900" />
+            쿠폰 관리
             <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              5개 등급
+              {adminCouponsCount}개
             </span>
           </button>
 
@@ -2522,6 +2554,14 @@ export default function AdminPage() {
             >
               <ShieldCheck className="w-3.5 h-3.5 text-neutral-900" />
               회원 등급
+            </button>
+            <button
+              onClick={() => setActiveTab("coupons")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "coupons" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
+            >
+              <Ticket className="w-3.5 h-3.5 text-neutral-900" />
+              쿠폰 관리
             </button>
             <button
               onClick={() => setActiveTab("global_sales")}
@@ -2762,6 +2802,14 @@ export default function AdminPage() {
             <MembershipTiersManagement
               customersList={customersList}
               setCustomersList={setCustomersList}
+              triggerToast={triggerToast}
+            />
+          )}
+
+          {/* TAB: COUPONS MANAGEMENT */}
+          {activeTab === "coupons" && (
+            <CouponsManagement
+              customersList={customersList}
               triggerToast={triggerToast}
             />
           )}

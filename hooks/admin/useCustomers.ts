@@ -110,7 +110,7 @@ function getCachedCustomers(): any[] {
 }
 
 export function useCustomers(triggerToast: (msg: string) => void) {
-  const [isCustomersLoaded, setIsCustomersLoaded] = useState(false);
+  const [isCustomersLoaded, setIsCustomersLoaded] = useState(true);
 
   // Customer Management Admin State - Synchronous initial read from localStorage cache
   const [customersList, setCustomersList] = useState<any[]>(() => {
@@ -123,7 +123,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
 
     // 1. Immediately apply cached customers on client mount (0ms latency, eliminates any 1-count flicker)
     const cached = getCachedCustomers();
-    if (cached.length > 1) {
+    if (cached.length > 0) {
       setCustomersList(cached);
       setIsCustomersLoaded(true);
     }
@@ -439,22 +439,60 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       setCustomersList(updated);
       if (typeof window !== "undefined") {
         localStorage.setItem("admin_customers", JSON.stringify(updated));
-        if (targetCustomer?.email) {
-          localStorage.removeItem(`user_pwd_${targetCustomer.email.trim().toLowerCase()}`);
+        const custEmail = targetCustomer?.email ? targetCustomer.email.trim().toLowerCase() : "";
+        const custLoginId = targetCustomer?.loginId || targetCustomer?.login_id ? (targetCustomer.loginId || targetCustomer.login_id).trim().toLowerCase() : "";
+        const custPhone = targetCustomer?.phone ? targetCustomer.phone.trim() : "";
+        const cleanPhone = custPhone.replace(/[^0-9]/g, "");
+
+        if (custEmail) {
+          localStorage.removeItem(`user_pwd_${custEmail}`);
+          localStorage.removeItem(`site_live_chat_messages_${custEmail}`);
         }
-        if (targetCustomer?.phone) {
-          const cleanPhone = targetCustomer.phone.replace(/[^0-9]/g, "");
+        if (custLoginId) {
+          localStorage.removeItem(`user_pwd_${custLoginId}`);
+          localStorage.removeItem(`site_live_chat_messages_${custLoginId}`);
+        }
+        if (cleanPhone) {
           localStorage.removeItem(`user_pwd_${cleanPhone}`);
-          localStorage.removeItem(`user_pwd_${targetCustomer.phone.trim()}`);
+          localStorage.removeItem(`site_live_chat_messages_${cleanPhone}`);
         }
+        if (custPhone) {
+          localStorage.removeItem(`user_pwd_${custPhone}`);
+          localStorage.removeItem(`site_live_chat_messages_${custPhone}`);
+        }
+        localStorage.removeItem(`user_pwd_${id}`);
+        localStorage.removeItem(`site_live_chat_messages_${id}`);
+
         window.dispatchEvent(new CustomEvent("storage"));
         window.dispatchEvent(new CustomEvent("admin_customers_updated"));
       }
 
-      // Supabase DB 비동기 삭제
+      // Supabase DB 비동기 영구 삭제 (고객 정보 및 채팅 세션/메시지)
       supabase.from("customers").delete().eq("id", id).then(({ error }) => {
         if (error) console.warn("Supabase customer delete notice:", error.message);
       });
+      const custEmail = targetCustomer?.email ? targetCustomer.email.trim().toLowerCase() : "";
+      const custLoginId = targetCustomer?.loginId || targetCustomer?.login_id ? (targetCustomer.loginId || targetCustomer.login_id).trim().toLowerCase() : "";
+      const custPhone = targetCustomer?.phone ? targetCustomer.phone.trim() : "";
+      const cleanPhone = custPhone.replace(/[^0-9]/g, "");
+
+      if (custEmail && custEmail !== "admin@choicomma.com") {
+        supabase.from("customers").delete().ilike("email", custEmail).then(() => {});
+        supabase.from("chat_sessions").delete().eq("id", custEmail).then(() => {});
+        supabase.from("chat_messages").delete().eq("sessionId", custEmail).then(() => {});
+      }
+      if (custLoginId) {
+        supabase.from("customers").delete().eq("loginId", custLoginId).then(() => {});
+        supabase.from("customers").delete().eq("login_id", custLoginId).then(() => {});
+        supabase.from("chat_sessions").delete().eq("id", custLoginId).then(() => {});
+        supabase.from("chat_messages").delete().eq("sessionId", custLoginId).then(() => {});
+      }
+      if (cleanPhone && cleanPhone.length >= 8) {
+        supabase.from("customers").delete().eq("phone", custPhone).then(() => {});
+        supabase.from("customers").delete().eq("phone", cleanPhone).then(() => {});
+        supabase.from("chat_sessions").delete().eq("id", cleanPhone).then(() => {});
+        supabase.from("chat_messages").delete().eq("sessionId", cleanPhone).then(() => {});
+      }
 
       triggerToast(`회원 '${name}'님의 정보가 삭제되었습니다.`);
     }

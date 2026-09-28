@@ -144,65 +144,25 @@ export default function CheckoutClientWrapper() {
     }
   }, []);
 
-  // Coupon / Discount State
-  const [availableCoupons, setAvailableCoupons] = useState<AvailableCoupon[]>([]);
-  const [selectedCouponCode, setSelectedCouponCode] = useState<string>("");
-  const [isDirectCouponInput, setIsDirectCouponInput] = useState<boolean>(false);
-  const [couponCode, setCouponCode] = useState("");
-  const [appliedDiscount, setAppliedDiscount] = useState(0);
-  const [couponMessage, setCouponMessage] = useState<string | null>(null);
+  // Customer Tier & Point Rate State
+  const [userGrade, setUserGrade] = useState<"GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP">("GENERAL");
+  const [pointRate, setPointRate] = useState<number>(1);
 
-  // 주문서 진입 시 보유 쿠폰을 자동으로 불러와 최고 할인 혜택 쿠폰을 기본 '자동 적용'
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  // Rewards Points (적립금) State
+  const [availablePoints, setAvailablePoints] = useState(5000);
+  const [usedPointsInput, setUsedPointsInput] = useState("");
+  const [appliedPoints, setAppliedPoints] = useState(0);
+  const [pointsMessage, setPointsMessage] = useState<string | null>(null);
 
-    const list = getAvailableCoupons();
-    setAvailableCoupons(list);
-
-    if (list.length > 0) {
-      // 할인 금액이 가장 큰 쿠폰을 우선 정렬하여 최우선 쿠폰 자동 선택
-      const sorted = [...list].sort((a, b) => b.discountAmount - a.discountAmount);
-      const bestCoupon = sorted[0];
-
-      setSelectedCouponCode(bestCoupon.code);
-      setCouponCode(bestCoupon.code);
-      setAppliedDiscount(bestCoupon.discountAmount);
-      setCouponMessage(`✨ [자동 적용] ${bestCoupon.title}이 자동 적용되었습니다! (-${bestCoupon.discountAmount.toLocaleString()}원)`);
-    } else {
-      setSelectedCouponCode("NONE");
-      setCouponCode("");
-      setAppliedDiscount(0);
-      setCouponMessage(null);
-    }
-  }, []);
-
-  const handleSelectCoupon = (code: string) => {
-    setSelectedCouponCode(code);
-
-    if (code === "NONE") {
-      setIsDirectCouponInput(false);
-      setCouponCode("");
-      setAppliedDiscount(0);
-      setCouponMessage("쿠폰 적용이 취소되었습니다.");
-      return;
-    }
-
-    if (code === "DIRECT") {
-      setIsDirectCouponInput(true);
-      setCouponCode("");
-      setAppliedDiscount(0);
-      setCouponMessage(null);
-      return;
-    }
-
-    setIsDirectCouponInput(false);
-    const found = availableCoupons.find((c) => c.code === code);
-    if (found) {
-      setCouponCode(found.code);
-      setAppliedDiscount(found.discountAmount);
-      setCouponMessage(`🎉 ${found.title}이 선택 적용되었습니다! (-${found.discountAmount.toLocaleString()}원)`);
-    }
-  };
+  // Dynamic Shipping Policy State
+  const [shippingPolicy, setShippingPolicy] = useState({
+    baseFee: 4000,
+    freeShippingThreshold: 100000,
+    islandExtraFee: 4000,
+    returnExchangeFee: 8000,
+    courierName: "CJ대한통운 (주계약)",
+    shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
+  });
 
   // Terms Agreement
   const [agreedTerms, setAgreedTerms] = useState({
@@ -216,64 +176,51 @@ export default function CheckoutClientWrapper() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleApplyCoupon = () => {
-    const cleanedCode = couponCode.trim().toUpperCase().replace(/\s+/g, "");
-    if (!cleanedCode) return;
+  // Coupon / Discount State
+  const [availableCoupons, setAvailableCoupons] = useState<AvailableCoupon[]>([]);
+  const [selectedCouponId, setSelectedCouponId] = useState<string>("");
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [couponMessage, setCouponMessage] = useState<string | null>(null);
 
-    // Check if this coupon has already been used by the user
-    const usedCouponsRaw = localStorage.getItem("used_coupon_codes") || "[]";
-    let usedCoupons: string[] = [];
-    try {
-      usedCoupons = JSON.parse(usedCouponsRaw);
-    } catch (e) { }
+  // 주문서 진입 시 보유 쿠폰을 자동으로 불러와 최고 할인 혜택 쿠폰을 기본 '자동 적용'
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
-    if (usedCoupons.includes(cleanedCode)) {
-      setCouponMessage("⚠️ 이미 사용 완료된 1회용 쿠폰 코드입니다. 다른 쿠폰을 입력해 주세요.");
+    const email = (formData.ordererEmail || localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+    const grade = userGrade || "GENERAL";
+    const list = getAvailableCoupons(email, grade);
+    setAvailableCoupons(list);
+
+    if (list.length > 0) {
+      // 할인 금액이 가장 큰 쿠폰을 우선 정렬하여 최우선 쿠폰 자동 선택
+      const sorted = [...list].sort((a, b) => b.discountAmount - a.discountAmount);
+      const bestCoupon = sorted[0];
+
+      setSelectedCouponId(bestCoupon.id);
+      setAppliedDiscount(bestCoupon.discountAmount);
+      setCouponMessage(`✨ [자동 적용] ${bestCoupon.title}이 자동 적용되었습니다! (-${bestCoupon.discountAmount.toLocaleString()}원)`);
+    } else {
+      setSelectedCouponId("NONE");
       setAppliedDiscount(0);
+      setCouponMessage(null);
+    }
+  }, [formData.ordererEmail, userGrade]);
+
+  const handleSelectCoupon = (couponId: string) => {
+    setSelectedCouponId(couponId);
+
+    if (couponId === "NONE") {
+      setAppliedDiscount(0);
+      setCouponMessage("쿠폰 적용이 취소되었습니다.");
       return;
     }
 
-    // 10,000 KRW Discount
-    if (cleanedCode === "CC26-X8K9-10KRW" || cleanedCode === "CHOI10" || cleanedCode === "VIP") {
-      setAppliedDiscount(10000);
-      setCouponMessage("🎉 10,000원 스페셜 할인 쿠폰이 정상 적용되었습니다! (-10,000원)");
-    }
-    // 5,000 KRW Welcome Discount
-    else if (cleanedCode === "CC26-W9L4-5KRW" || cleanedCode === "WELCOME") {
-      setAppliedDiscount(5000);
-      setCouponMessage("🎉 5,000원 웰컴 첫 구매 할인 쿠폰이 정상 적용되었습니다! (-5,000원)");
-    }
-    // Free Shipping Voucher
-    else if (cleanedCode === "CC26-FREE-S8P2" || cleanedCode === "FREESHIP") {
-      const freeAmount = shippingPolicy.baseFee || 4000;
-      setAppliedDiscount(freeAmount);
-      setCouponMessage(`🎉 무료 배송 지원 쿠폰이 정상 적용되었습니다! (-${freeAmount.toLocaleString()}원)`);
-    }
-    else {
-      setCouponMessage("❌ 유효하지 않은 쿠폰 코드입니다. 마이페이지 [쿠폰함]의 코드를 복사하여 입력해 주세요.");
-      setAppliedDiscount(0);
+    const found = availableCoupons.find((c) => c.id === couponId);
+    if (found) {
+      setAppliedDiscount(found.discountAmount);
+      setCouponMessage(`🎉 ${found.title}이 선택 적용되었습니다! (-${found.discountAmount.toLocaleString()}원)`);
     }
   };
-
-  // Dynamic Shipping Policy State
-  const [shippingPolicy, setShippingPolicy] = useState({
-    baseFee: 4000,
-    freeShippingThreshold: 100000,
-    islandExtraFee: 4000,
-    returnExchangeFee: 8000,
-    courierName: "CJ대한통운 (주계약)",
-    shippingNotice: "평일 14:00 이전 결제 완료 시 당일 출고됩니다.",
-  });
-
-  // Rewards Points (적립금) State
-  const [availablePoints, setAvailablePoints] = useState(5000);
-  const [usedPointsInput, setUsedPointsInput] = useState("");
-  const [appliedPoints, setAppliedPoints] = useState(0);
-  const [pointsMessage, setPointsMessage] = useState<string | null>(null);
-
-  // Customer Tier & Point Rate State
-  const [userGrade, setUserGrade] = useState<"GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP">("GENERAL");
-  const [pointRate, setPointRate] = useState<number>(1);
 
   // 회원 등급 및 적립금 포인트 실시간 동기화 (localStorage 및 Supabase DB 연동)
   useEffect(() => {
@@ -502,17 +449,22 @@ export default function CheckoutClientWrapper() {
           : cart.lines[0].merchandise.product.title
         : "초이콤마 오리지널 패션 주문건";
 
-      // If coupon was applied, mark this coupon code as used to prevent reuse
-      if (couponCode.trim() && appliedDiscount > 0) {
-        const cleanedCode = couponCode.trim().toUpperCase().replace(/\s+/g, "");
+      // If coupon was applied, mark this coupon as used to prevent reuse
+      if (selectedCouponId && selectedCouponId !== "NONE" && appliedDiscount > 0) {
         const usedCouponsRaw = localStorage.getItem("used_coupon_codes") || "[]";
         let usedCoupons: string[] = [];
         try {
           usedCoupons = JSON.parse(usedCouponsRaw);
         } catch (e) { }
-        if (!usedCoupons.includes(cleanedCode)) {
-          usedCoupons.push(cleanedCode);
+        const foundCoupon = availableCoupons.find((c) => c.id === selectedCouponId);
+        const couponKey = foundCoupon?.id || selectedCouponId;
+        if (!usedCoupons.includes(couponKey)) {
+          usedCoupons.push(couponKey);
+          if (foundCoupon?.code && !usedCoupons.includes(foundCoupon.code.toUpperCase())) {
+            usedCoupons.push(foundCoupon.code.toUpperCase());
+          }
           localStorage.setItem("used_coupon_codes", JSON.stringify(usedCoupons));
+          window.dispatchEvent(new CustomEvent("coupons_updated"));
         }
       }
 
@@ -1096,13 +1048,13 @@ export default function CheckoutClientWrapper() {
               <div className="space-y-2">
                 <div className="relative">
                   <select
-                    value={selectedCouponCode}
+                    value={selectedCouponId}
                     onChange={(e) => handleSelectCoupon(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 text-xs appearance-none pr-8 cursor-pointer text-neutral-900 dark:text-white"
                   >
                     {availableCoupons.length > 0 ? (
                       availableCoupons.map((coupon, idx) => (
-                        <option key={coupon.id} value={coupon.code}>
+                        <option key={coupon.id} value={coupon.id}>
                           {idx === 0 ? "✨ [자동 적용] " : "🎟️ "}
                           {coupon.title} (-{coupon.discountAmount.toLocaleString()}원)
                         </option>
@@ -1111,32 +1063,11 @@ export default function CheckoutClientWrapper() {
                       <option value="NONE">사용 가능한 보유 쿠폰 없음</option>
                     )}
                     <option value="NONE">❌ 쿠폰 적용 안 함 (0원)</option>
-                    <option value="DIRECT">✍️ 쿠폰 코드 직접 입력하기</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-neutral-400">
                     <ChevronRight className="w-3.5 h-3.5 rotate-90" />
                   </div>
                 </div>
-
-                {/* Direct Coupon Input Field (shown when user chooses '직접 입력하기') */}
-                {isDirectCouponInput && (
-                  <div className="flex gap-2 pt-1 animate-in fade-in duration-200">
-                    <input
-                      type="text"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      placeholder="쿠폰 코드 직접 입력 (예: CHOI10)"
-                      className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 text-xs uppercase"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleApplyCoupon}
-                      className="px-4 py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-black transition-colors shrink-0"
-                    >
-                      적용
-                    </button>
-                  </div>
-                )}
               </div>
 
               {couponMessage && (
