@@ -17,6 +17,7 @@ import {
   Phone,
   MapPin,
   X,
+  Check,
 } from "lucide-react";
 import { LogoSvg } from "@/components/layout/header/logo-svg";
 import { supabase } from "@/lib/supabase/client";
@@ -444,39 +445,39 @@ export default function LoginPage() {
 
     if (isSignUp) {
       if (!name.trim()) {
-        alert("이름(성함)을 입력해 주세요.");
+        setToastMsg("이름(성함)을 입력해 주세요.");
         return;
       }
       if (!loginId.trim()) {
-        alert("로그인 ID를 입력해 주세요.");
+        setToastMsg("로그인 ID를 입력해 주세요.");
         return;
       }
       if (!isLoginIdChecked) {
-        alert("로그인 ID 중복 확인을 진행해 주세요.");
+        setToastMsg("로그인 ID 중복 확인을 진행해 주세요.");
         return;
       }
       if (!email.trim()) {
-        alert("이메일 주소를 입력해 주세요.");
+        setToastMsg("이메일 주소를 입력해 주세요.");
         return;
       }
       if (!isEmailChecked) {
-        alert("이메일 주소 중복 확인을 진행해 주세요.");
+        setToastMsg("이메일 주소 중복 확인을 진행해 주세요.");
         return;
       }
       if (!phone.trim()) {
-        alert("휴대폰 번호를 입력해 주세요.");
+        setToastMsg("휴대폰 번호를 입력해 주세요.");
         return;
       }
       if (!isPhoneChecked) {
-        alert("휴대폰 번호 중복 확인을 진행해 주세요.");
+        setToastMsg("휴대폰 번호 중복 확인을 진행해 주세요.");
         return;
       }
       if (password !== confirmPassword) {
-        alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        setToastMsg("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
         return;
       }
       if (!agreeTerms) {
-        alert("회원가입 및 서비스 이용약관에 동의해 주세요.");
+        setToastMsg("회원가입 및 서비스 이용약관에 동의해 주세요.");
         return;
       }
 
@@ -827,19 +828,21 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F5] text-neutral-900 flex flex-col justify-between p-6 relative font-sans">
-      {/* Toast Notification (Top Center Floating - Compact Blue Pill with Close Button) */}
+      {/* Toast Notification (Top Center Floating - White Card Design) */}
       {toastMsg && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg shadow-blue-900/25 flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200 max-w-md w-auto text-center border border-blue-400/40">
-          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-blue-100" />
-          <span>{toastMsg}</span>
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-white text-neutral-950 font-bold text-xs sm:text-[13px] px-5 py-3.5 rounded-2xl shadow-[0_10px_30px_-4px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] border border-neutral-200/90 flex items-center gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200 max-w-[90vw] w-auto">
           <button
             type="button"
             onClick={() => setToastMsg(null)}
-            className="ml-1 p-0.5 hover:bg-blue-700/60 rounded-full transition-colors cursor-pointer text-blue-200 hover:text-white"
+            className="absolute -top-2.5 -left-2.5 w-5 h-5 rounded-full bg-white border border-neutral-200 shadow-sm flex items-center justify-center text-neutral-400 hover:text-neutral-900 transition-colors cursor-pointer"
             aria-label="알림 닫기"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-3 h-3 stroke-[2.5]" />
           </button>
+          <div className="w-4 h-4 rounded-full bg-neutral-950 text-white flex items-center justify-center shrink-0">
+            <Check className="w-2.5 h-2.5 stroke-[3.5]" />
+          </div>
+          <span>{toastMsg}</span>
         </div>
       )}
 

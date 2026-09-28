@@ -2228,10 +2228,20 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F5] text-neutral-900 flex flex-col font-sans" suppressHydrationWarning>
-      {/* Toast Notification (Compact Blue Pill) */}
+      {/* Toast Notification (Top Center Floating - White Card Design) */}
       {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-lg shadow-blue-900/25 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200 border border-blue-400/40">
-          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-blue-100" />
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-white text-neutral-950 font-bold text-xs sm:text-[13px] px-5 py-3.5 rounded-2xl shadow-[0_10px_30px_-4px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] border border-neutral-200/90 flex items-center gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200 max-w-[90vw] w-auto">
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="absolute -top-2.5 -left-2.5 w-5 h-5 rounded-full bg-white border border-neutral-200 shadow-sm flex items-center justify-center text-neutral-400 hover:text-neutral-900 transition-colors cursor-pointer"
+            aria-label="알림 닫기"
+          >
+            <X className="w-3 h-3 stroke-[2.5]" />
+          </button>
+          <div className="w-4 h-4 rounded-full bg-neutral-950 text-white flex items-center justify-center shrink-0">
+            <Check className="w-2.5 h-2.5 stroke-[3.5]" />
+          </div>
           <span>{toastMessage}</span>
         </div>
       )}

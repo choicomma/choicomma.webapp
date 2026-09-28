@@ -134,7 +134,7 @@ export default async function RootLayout({
             {children}
             <LiveChatWidget />
             <CartDrawer />
-            <Toaster closeButton position="top-center" />
+            <Toaster closeButton position="top-center" offset="24px" duration={3500} />
             {isDevelopment && <DebugGrid />}
           </NuqsProvider>
         </CartProvider>
