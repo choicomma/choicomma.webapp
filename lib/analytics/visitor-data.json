@@ -1,6 +1,26 @@
 {
   "logs": [
     {
+      "id": "LOG-1790681646133-405",
+      "timestamp": "2026-09-29 20:34:06",
+      "isoDate": "2026-09-29T11:34:06.133Z",
+      "ip": "127.0.0.1",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Web Browser",
+      "os": "기타 OS",
+      "landingPath": "/test",
+      "landingTitle": "/test",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1790681646133_hgvk5s",
+      "sessionId": "s_1790681646133",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
       "id": "LOG-1790680658823-248",
       "timestamp": "2026-09-29 20:17:38",
       "isoDate": "2026-09-29T11:17:38.823Z",
@@ -1084,5 +1104,5 @@
     "localhost",
     "172.30.1.74"
   ],
-  "updatedAt": "2026-09-29T11:17:38.823Z"
+  "updatedAt": "2026-09-29T11:34:06.133Z"
 }

@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useRef, Suspense } from "react";
+import { usePathname } from "next/navigation";
 
-export function VisitorTracker() {
+function VisitorTrackerCore() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const lastTrackedPathRef = useRef<string>("");
   const lastTrackedTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // 관리자 페이지 내부 동작 및 정적 자산 로딩 등 제외할 경로
-    const currentPath = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "");
+    // 브라우저 환경에서 window.location.search를 직접 참조하여 쿼리스트링 포함 (Next.js 빌드 CSR bailout 방지)
+    const search = window.location.search || "";
+    const currentPath = (pathname || window.location.pathname || "/") + search;
 
     // 1초 이내 동일 경로 중복 호출 방지 (Debounce)
     const now = Date.now();
@@ -96,7 +96,15 @@ export function VisitorTracker() {
         })
         .catch(() => {});
     } catch (err) {}
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   return null;
+}
+
+export function VisitorTracker() {
+  return (
+    <Suspense fallback={null}>
+      <VisitorTrackerCore />
+    </Suspense>
+  );
 }
