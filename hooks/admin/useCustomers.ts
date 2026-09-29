@@ -25,6 +25,23 @@ const DEFAULT_CUSTOMERS = [
     role: "ADMIN",
     isAdmin: true,
   },
+  {
+    id: "chogun",
+    name: "조건",
+    email: "cho@findcategory.co.kr",
+    phone: "010-7576-3031",
+    postcode: "10835",
+    address: "경기 파주시 파주읍 파주리 722-1",
+    detailAddress: "한울하임 106동 202호",
+    grade: "GENERAL",
+    totalSpent: 0,
+    points: 0,
+    couponsCount: 0,
+    joinedDate: "2026-09-28",
+    status: "Active",
+    role: "CUSTOMER",
+    isAdmin: false,
+  },
 ];
 
 export const DEFAULT_ADMIN_CUSTOMER = DEFAULT_CUSTOMERS[0];
@@ -55,7 +72,7 @@ export function getCustomerKey(c: any): string {
  * 회원 목록 중복 완전 제거 (최고관리자 ADMIN-001 단 1개 보장 및 ID/이메일 충돌 원천 방지)
  */
 export function deduplicateCustomers(list: any[]): any[] {
-  if (!Array.isArray(list) || list.length === 0) return [DEFAULT_ADMIN_CUSTOMER];
+  if (!Array.isArray(list) || list.length === 0) return DEFAULT_CUSTOMERS;
   const seenIds = new Set<string>();
   const seenEmails = new Set<string>();
   const result: any[] = [];
@@ -145,14 +162,15 @@ function parseCustomerRow(row: any, idx: number) {
 }
 
 export function getCachedCustomers(): any[] {
-  if (typeof window === "undefined") return [DEFAULT_ADMIN_CUSTOMER];
+  if (typeof window === "undefined") return DEFAULT_CUSTOMERS;
   try {
     const saved = localStorage.getItem("admin_customers");
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const cleaned = deduplicateCustomers(
-          parsed.map((c: any) => {
+        const cleaned = deduplicateCustomers([
+          ...DEFAULT_CUSTOMERS,
+          ...parsed.map((c: any) => {
             if (!c || isSuperAdmin(c)) return c;
             const parsedAddr = splitKoreanAddress(
               c.address,
@@ -165,8 +183,8 @@ export function getCachedCustomers(): any[] {
               address: parsedAddr.baseAddress,
               detailAddress: parsedAddr.detailAddress,
             };
-          })
-        );
+          }),
+        ]);
         try {
           localStorage.setItem("admin_customers", JSON.stringify(cleaned));
         } catch (e) {}
@@ -174,7 +192,7 @@ export function getCachedCustomers(): any[] {
       }
     }
   } catch (e) {}
-  return [DEFAULT_ADMIN_CUSTOMER];
+  return DEFAULT_CUSTOMERS;
 }
 
 export function useCustomers(triggerToast: (msg: string) => void) {
@@ -222,8 +240,13 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         const localCached = getCachedCustomers();
         const customerMap = new Map<string, any>();
 
-        // 1. 최고관리자 단 1명만 기본 등록 (키: "ADMIN-001")
-        customerMap.set("ADMIN-001", DEFAULT_ADMIN_CUSTOMER);
+        // 1. 최고관리자 및 기본 등록 회원 우선 등록
+        DEFAULT_CUSTOMERS.forEach((dc) => {
+          const key = getCustomerKey(dc);
+          if (key) {
+            customerMap.set(key, dc);
+          }
+        });
 
         // 2. 로컬 캐시 회원 우선 유지 (최고관리자는 ADMIN-001 단일 키로 병합)
         localCached.forEach((c) => {
@@ -677,13 +700,13 @@ export function useCustomers(triggerToast: (msg: string) => void) {
   };
 
   const handleResetCustomerData = async () => {
-    if (window.confirm("회원 목록을 초기화하고 최고관리자 기본 상태로 설정하시겠습니까?")) {
-      setCustomersList([DEFAULT_ADMIN_CUSTOMER]);
+    if (window.confirm("회원 목록을 초기화하고 최고관리자 및 기본 등록 회원 상태로 설정하시겠습니까?")) {
+      setCustomersList(DEFAULT_CUSTOMERS);
       if (typeof window !== "undefined") {
-        localStorage.setItem("admin_customers", JSON.stringify([DEFAULT_ADMIN_CUSTOMER]));
+        localStorage.setItem("admin_customers", JSON.stringify(DEFAULT_CUSTOMERS));
         window.dispatchEvent(new CustomEvent("storage"));
       }
-      triggerToast("회원 목록이 최고관리자 기본 상태로 초기화되었습니다.");
+      triggerToast("회원 목록이 최고관리자 및 기본 등록 회원 상태로 초기화되었습니다.");
     }
   };
 

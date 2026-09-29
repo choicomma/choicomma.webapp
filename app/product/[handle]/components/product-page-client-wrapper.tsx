@@ -7,7 +7,7 @@ import { MobileGallerySlider } from "./mobile-gallery-slider";
 import { DesktopGallery } from "./desktop-gallery";
 import { ProductDetailHeader } from "./product-detail-header";
 import { ProductDetailAccordions } from "./product-detail-accordions";
-import { ProductComments } from "./product-comments";
+import { ProductReviews } from "./product-reviews";
 
 export function ProductPageClientWrapper({ initialProduct }: { initialProduct: Product }) {
   const [product, setProduct] = useState<Product>(initialProduct);
@@ -71,25 +71,25 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
         </div>
 
         {/* Desktop Gallery */}
-        <div className="hidden md:block w-full">
+        <div className="hidden md:flex justify-center w-full">
           <Suspense fallback={null}>
             <DesktopGallery product={product} />
           </Suspense>
         </div>
 
-        {/* Desktop Comments Section directly under the product image */}
+        {/* Desktop Reviews Section directly under the product image */}
         <div className="hidden md:block w-full">
-          <ProductComments productId={product.id} productTitle={product.title} />
+          <ProductReviews productId={product.id} productTitle={product.title} />
         </div>
       </div>
 
-      {/* Right Column: Product Details + Mobile Comments */}
+      {/* Right Column: Product Details + Mobile Reviews */}
       <div className="flex flex-col md:pl-8 md:pt-8 w-full max-w-xl">
         <ProductDetailHeader product={product} hasVariants={hasVariants} />
         
-        {/* Mobile Comments: Placed right under Add to Cart button */}
+        {/* Mobile Reviews: Placed right under Add to Cart button */}
         <div className="md:hidden w-full mt-4">
-          <ProductComments productId={product.id} productTitle={product.title} />
+          <ProductReviews productId={product.id} productTitle={product.title} />
         </div>
 
         <ProductDetailAccordions product={product} />

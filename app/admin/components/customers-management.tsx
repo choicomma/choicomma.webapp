@@ -153,7 +153,7 @@ export function CustomersManagement({
             <span>전체 회원</span>
           </div>
           <p className="text-xl font-extrabold text-neutral-950 mt-1.5" suppressHydrationWarning>
-            {sanitizedCustomersList.length > 1 || isCustomersLoaded ? `${sanitizedCustomersList.length.toLocaleString()} 명` : "-"}
+            {sanitizedCustomersList.length > 0 || isCustomersLoaded ? `${sanitizedCustomersList.length.toLocaleString()} 명` : "-"}
           </p>
           <p className="text-[11px] text-neutral-400 mt-0.5">스토어 전체 등록 회원</p>
         </div>

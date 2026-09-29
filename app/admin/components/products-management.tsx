@@ -25,6 +25,8 @@ import {
   Sparkles,
   EyeOff,
   Layers,
+  Clock,
+  Check,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import * as XLSX from "xlsx";
@@ -91,6 +93,7 @@ interface ProductsManagementProps {
   handleQuickUpdateCategory?: (id: string, newCategory: string) => void;
   handleQuickUpdatePrice?: (id: string, newPrice: number | string) => boolean | void;
   handleQuickUpdateStock?: (id: string, newTotalStock: number, newSizeStock?: Record<string, number>) => boolean | void;
+  handleQuickUpdateReleaseSchedule?: (id: string, availableForSale: boolean, releaseDate?: string) => void;
 }
 
 function StockPopover({
@@ -167,7 +170,7 @@ function StockPopover({
       {/* Header */}
       <div className="flex items-center justify-between pb-2 border-b border-neutral-100 mb-3">
         <div className="flex items-center gap-1.5 min-w-0">
-          <Box className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <Box className="w-3.5 h-3.5 text-blue-600 shrink-0" />
           <span className="text-xs font-black text-neutral-900 truncate">
             {product.productCode || "CC-000"} 재고 설정
           </span>
@@ -292,7 +295,7 @@ function StockPopover({
       <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between">
         <div className="text-xs">
           <span className="text-neutral-500 text-[10px] block font-bold">합계 재고</span>
-          <span className={`font-mono font-black text-sm ${calculatedTotal > 0 ? "text-emerald-700" : "text-rose-600"}`}>
+          <span className={`font-mono font-black text-sm ${calculatedTotal > 0 ? "text-blue-700" : "text-rose-600"}`}>
             {calculatedTotal}개 {calculatedTotal === 0 && "(품절)"}
           </span>
         </div>
@@ -302,6 +305,216 @@ function StockPopover({
           className="px-4 py-1.5 rounded-lg bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-black shadow-xs transition-colors cursor-pointer"
         >
           저장
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TimeSettingPopover({
+  product,
+  onSaveSchedule,
+  onClose,
+}: {
+  product: any;
+  onSaveSchedule: (availableForSale: boolean, releaseDate?: string) => void;
+  onClose: () => void;
+}) {
+  const [available, setAvailable] = useState<boolean>(product.availableForSale !== false);
+  const [isScheduled, setIsScheduled] = useState<boolean>(Boolean(product.releaseDate));
+  const [releaseDate, setReleaseDate] = useState<string>(product.releaseDate || "");
+
+  const handleApplyPreset = (preset: "tomorrow10" | "today18" | "day3_10" | "day7_10") => {
+    setIsScheduled(true);
+    const d = new Date();
+    if (preset === "tomorrow10") {
+      d.setDate(d.getDate() + 1);
+      d.setHours(10, 0, 0, 0);
+    } else if (preset === "today18") {
+      d.setHours(18, 0, 0, 0);
+    } else if (preset === "day3_10") {
+      d.setDate(d.getDate() + 3);
+      d.setHours(10, 0, 0, 0);
+    } else if (preset === "day7_10") {
+      d.setDate(d.getDate() + 7);
+      d.setHours(10, 0, 0, 0);
+    }
+    const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setReleaseDate(iso);
+  };
+
+  const handleClearSchedule = () => {
+    setIsScheduled(false);
+    setReleaseDate("");
+  };
+
+  const handleSave = () => {
+    const finalDate = isScheduled && releaseDate ? releaseDate : undefined;
+    onSaveSchedule(available, finalDate);
+    onClose();
+  };
+
+  const isFuture = releaseDate && new Date(releaseDate).getTime() > Date.now();
+
+  return (
+    <div
+      draggable={false}
+      onDragStart={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      className="absolute top-full right-0 mt-2 z-50 bg-white border border-neutral-300 rounded-2xl shadow-2xl p-4 w-84 text-left animate-in fade-in zoom-in-95 duration-150 select-text cursor-default"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2.5 border-b border-neutral-100 mb-3">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+          <span className="text-xs font-black text-neutral-900 truncate">
+            {product.productCode || "상품"} 판매 시간 &amp; ON/OFF 설정
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-neutral-400 hover:text-neutral-700 p-0.5 rounded hover:bg-neutral-100 transition-colors cursor-pointer"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Body: 1. Purchase ON / OFF Status */}
+      <div className="mb-3.5 bg-neutral-50 border border-neutral-200/80 rounded-xl p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-extrabold text-neutral-900">상품 구매 가능 상태</span>
+          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${available ? "bg-blue-100 text-blue-800" : "bg-neutral-200 text-neutral-700"}`}>
+            {available ? "ON (구매 가능)" : "OFF (구매 불가)"}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setAvailable(true)}
+            className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+              available
+                ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
+            }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${available ? "bg-white animate-pulse" : "bg-neutral-400"}`} />
+            <span>ON (구매 가능)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setAvailable(false)}
+            className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+              !available
+                ? "bg-neutral-900 text-white border-neutral-900 shadow-xs"
+                : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
+            }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${!available ? "bg-rose-400" : "bg-neutral-400"}`} />
+            <span>OFF (구매 불가)</span>
+          </button>
+        </div>
+        <p className="text-[10px] text-neutral-500 leading-tight">
+          * OFF 시 쇼핑몰 화면에서 구매/장바구니 담기가 차단됩니다.
+        </p>
+      </div>
+
+      {/* Body: 2. Scheduled Release Time */}
+      <div className="bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 space-y-2.5">
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={isScheduled}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setIsScheduled(checked);
+              if (checked && !releaseDate) {
+                handleApplyPreset("tomorrow10");
+              }
+            }}
+            className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-950 accent-neutral-950 cursor-pointer"
+          />
+          <span className="text-xs font-black text-neutral-900">판매 시작 시간 지정 (예약 오픈)</span>
+        </label>
+
+        {isScheduled && (
+          <div className="space-y-2 pt-1 animate-in fade-in duration-150">
+            <input
+              type="datetime-local"
+              value={releaseDate}
+              onChange={(e) => setReleaseDate(e.target.value)}
+              className="w-full bg-white border border-neutral-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs"
+            />
+
+            {/* Quick Presets */}
+            <div className="flex flex-wrap gap-1">
+              <button
+                type="button"
+                onClick={() => handleApplyPreset("today18")}
+                className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-neutral-200 hover:border-amber-400 text-neutral-700 hover:text-amber-800 transition-colors cursor-pointer"
+              >
+                오늘 18시
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset("tomorrow10")}
+                className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-neutral-200 hover:border-amber-400 text-neutral-700 hover:text-amber-800 transition-colors cursor-pointer"
+              >
+                내일 10시
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset("day3_10")}
+                className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-neutral-200 hover:border-amber-400 text-neutral-700 hover:text-amber-800 transition-colors cursor-pointer"
+              >
+                3일 뒤 10시
+              </button>
+              <button
+                type="button"
+                onClick={handleClearSchedule}
+                className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 hover:border-rose-400 text-rose-700 transition-colors cursor-pointer ml-auto"
+              >
+                해제 (즉시 오픈)
+              </button>
+            </div>
+
+            {/* Status explanation */}
+            {releaseDate && (
+              <div className="text-[10px] font-bold leading-tight">
+                {isFuture ? (
+                  <span className="text-amber-800 flex items-center gap-1">
+                    ⏰ {new Date(releaseDate).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}에 자동 구매 오픈
+                  </span>
+                ) : (
+                  <span className="text-emerald-700 flex items-center gap-1">
+                    ✓ 설정된 시간이 이미 지나 현재 즉시 구매 가능 상태입니다.
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Footer Actions */}
+      <div className="mt-3.5 pt-2.5 border-t border-neutral-100 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-xs font-bold text-neutral-500 hover:text-neutral-800 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+        >
+          취소
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          className="text-xs font-black text-white bg-neutral-950 hover:bg-black px-4 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1"
+        >
+          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+          <span>시간 설정 저장</span>
         </button>
       </div>
     </div>
@@ -428,12 +641,16 @@ export function ProductsManagement({
   handleQuickUpdateCategory,
   handleQuickUpdatePrice,
   handleQuickUpdateStock,
+  handleQuickUpdateReleaseSchedule,
 }: ProductsManagementProps) {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [excelPreviewItems, setExcelPreviewItems] = useState<any[]>([]);
 
   // Active Stock Popover Product ID
   const [activeStockPopoverId, setActiveStockPopoverId] = useState<string | null>(null);
+
+  // Active Time Setting Popover Product ID
+  const [activeTimePopoverId, setActiveTimePopoverId] = useState<string | null>(null);
 
   // Drag & Drop Reordering State
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -563,38 +780,50 @@ export function ProductsManagement({
     setSelectedProductIds([]);
   };
 
-  // Real-Time Drag & Drop Handlers (Live Shifting of Other Items)
+  // Drag & Drop Reordering State & Handlers
   const [draggedProductId, setDraggedProductId] = useState<string | null>(null);
-  const lastTargetIdRef = React.useRef<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
+    if (productSortOrder !== "custom") {
+      setProductSortOrder("custom");
+    }
     setDraggedProductId(id);
-    lastTargetIdRef.current = id;
     e.dataTransfer.effectAllowed = "move";
+    try {
+      e.dataTransfer.setData("text/plain", id);
+    } catch {}
   };
 
   const handleDragOver = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    if (
-      draggedProductId &&
-      targetId &&
-      draggedProductId !== targetId &&
-      lastTargetIdRef.current !== targetId
-    ) {
-      lastTargetIdRef.current = targetId;
-      if (handleReorderProducts) {
-        handleReorderProducts(draggedProductId, targetId, false);
+    if (draggedProductId && targetId && draggedProductId !== targetId) {
+      if (dropTargetId !== targetId) {
+        setDropTargetId(targetId);
       }
     }
   };
 
-  const handleDragEnd = () => {
-    if (draggedProductId && handleReorderProducts && lastTargetIdRef.current) {
-      handleReorderProducts(draggedProductId, lastTargetIdRef.current, true);
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggedProductId && targetId && draggedProductId !== targetId) {
+      if (handleReorderProducts) {
+        handleReorderProducts(draggedProductId, targetId, true);
+      }
     }
     setDraggedProductId(null);
-    lastTargetIdRef.current = null;
+    setDropTargetId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedProductId(null);
+    setDropTargetId(null);
   };
 
   // Calculate maximum existing productNo integer
@@ -1074,10 +1303,13 @@ export function ProductsManagement({
 
       {/* Products Table */}
       <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-sm">
-        <div className="overflow-x-auto pb-16 -mb-16">
-          <table className="w-full text-left text-xs text-neutral-700">
+        <div className="overflow-x-auto pb-16 -mb-16 scrollbar-thin">
+          <table className="w-full text-left text-xs text-neutral-700 min-w-[1080px]">
             <thead className="bg-neutral-50 text-neutral-500 text-[11px] uppercase font-semibold border-b border-neutral-200">
               <tr>
+                <th className="py-3 px-1.5 w-8 text-center whitespace-nowrap text-neutral-400 font-bold" title="드래그하여 순서 변경">
+                  순서
+                </th>
                 <th className="py-3 px-2 w-8 text-center whitespace-nowrap">
                   <input
                     type="checkbox"
@@ -1089,20 +1321,20 @@ export function ProductsManagement({
                 </th>
                 <th className="py-3 px-3 font-sans font-black text-neutral-950 whitespace-nowrap">상품번호</th>
                 <th className="py-3 px-3 whitespace-nowrap">이미지</th>
-                <th className="py-3 px-4 max-w-xs whitespace-nowrap">상품명</th>
+                <th className="py-3 px-4 min-w-[200px] whitespace-nowrap">상품명</th>
                 <th className="py-3 px-3 whitespace-nowrap">카테고리</th>
                 <th className="py-3 px-3 whitespace-nowrap">판매가</th>
-                <th className="py-3 px-3 whitespace-nowrap">남은 재고 수량 / 상태</th>
-                <th className="py-3 px-2.5 text-center whitespace-nowrap font-bold text-neutral-800">
-                  구매 ON/OFF
+                <th className="py-3 px-3 min-w-[180px] whitespace-nowrap">남은 재고 수량 / 상태</th>
+                <th className="py-3 px-2.5 text-center whitespace-nowrap min-w-[130px] font-bold text-neutral-800">
+                  시간 설정
                 </th>
-                <th className="py-3 px-3 text-right whitespace-nowrap">관리</th>
+                <th className="py-3 px-4 text-center whitespace-nowrap min-w-[110px]">관리</th>
               </tr>
             </thead>
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-neutral-500 text-xs">
+                  <td colSpan={10} className="py-12 text-center text-neutral-500 text-xs">
                     검색 조건에 해당 상품이 없습니다.
                   </td>
                 </tr>
@@ -1111,17 +1343,39 @@ export function ProductsManagement({
                   const prodNo = getProductNo(p);
                   const isSelected = selectedProductIds.includes(String(p.id));
                   const isDragging = draggedProductId === String(p.id);
+                  const isDropTarget = dropTargetId === String(p.id);
 
                   return (
                     <tr
                       key={`${p.id}-${index}`}
-                      onClick={() => handleOpenEditModal(p)}
+                      draggable={true}
+                      onDragStart={(e) => handleDragStart(e, String(p.id))}
                       onDragOver={(e) => handleDragOver(e, String(p.id))}
-                      className={`hover:bg-amber-50/60 transition-all duration-200 cursor-pointer group ${
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, String(p.id))}
+                      onDragEnd={handleDragEnd}
+                      onClick={() => handleOpenEditModal(p)}
+                      className={`hover:bg-amber-50/60 transition-all duration-150 cursor-pointer group ${
                         isSelected ? "bg-amber-50/80" : ""
+                      } ${
+                        isDragging
+                          ? "opacity-30 bg-neutral-200 border-2 border-dashed border-amber-400 scale-[0.99]"
+                          : isDropTarget
+                          ? "bg-amber-100/90 ring-2 ring-amber-500 ring-inset shadow-md"
+                          : ""
                       }`}
                     >
-                      <td className="py-2 px-2 w-8 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      {/* Drag Handle Column */}
+                      <td
+                        className="py-2 px-1 text-center whitespace-nowrap cursor-grab active:cursor-grabbing text-neutral-400 hover:text-amber-800 transition-colors select-none"
+                        title="마우스로 드래그하여 상품 순서를 위/아래로 이동할 수 있습니다."
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center justify-center p-1 rounded hover:bg-neutral-200/50">
+                          <GripVertical className="w-4 h-4 text-neutral-400 group-hover:text-amber-800 transition-colors" />
+                        </div>
+                      </td>
+                      <td className="py-2 px-2 w-8 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -1141,7 +1395,7 @@ export function ProductsManagement({
                           />
                         </div>
                       </td>
-                      <td className="py-2 px-4 max-w-sm">
+                      <td className="py-2 px-4 min-w-[200px]">
                         <p className="font-bold text-neutral-950 text-xs group-hover:text-amber-800 transition-colors flex items-center gap-1.5 whitespace-normal">
                           <span>{p.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim()}</span>
                           <span className="text-[10px] text-amber-700 font-normal shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1149,11 +1403,11 @@ export function ProductsManagement({
                           </span>
                         </p>
                         {p.description && (
-                          <p className="text-[11px] text-neutral-500 truncate max-w-xs mt-0.5">{p.description}</p>
+                          <p className="text-[11px] text-neutral-500 truncate max-w-sm mt-0.5">{p.description}</p>
                         )}
                       </td>
                       {/* Category Quick Change Dropdown */}
-                      <td className="py-2 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-2 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
                         <select
                           value={p.categoryId || "outer"}
                           onChange={(e) => {
@@ -1175,7 +1429,7 @@ export function ProductsManagement({
                       </td>
 
                       {/* Price Quick Edit Input */}
-                      <td className="py-2 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-2 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
                         <TablePriceInput
                           initialPrice={p.priceRange?.minVariantPrice?.amount || p.price?.amount || 0}
                           onSavePrice={(newPrice) => {
@@ -1185,15 +1439,16 @@ export function ProductsManagement({
                           }}
                         />
                       </td>
-                      <td className="py-2 px-3 whitespace-nowrap relative" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-2 px-3 whitespace-nowrap relative" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1.5 relative">
                           <button
                             onClick={() => {
+                              setActiveTimePopoverId(null);
                               setActiveStockPopoverId(activeStockPopoverId === String(p.id) ? null : String(p.id));
                             }}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 whitespace-nowrap border ${
                               p.availableForSale !== false && (p.stock === undefined || Number(p.stock) > 0)
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-500"
+                                ? "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100 hover:border-blue-500"
                                 : "bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 hover:border-rose-500"
                             }`}
                             title="클릭하여 옵션/컬러/사이즈별 재고 수량 수정"
@@ -1221,10 +1476,10 @@ export function ProductsManagement({
 
                           <button
                             onClick={() => toggleMainFeatured(p.id)}
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-black transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 border select-none whitespace-nowrap ${
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 border select-none whitespace-nowrap ${
                               p.isMainFeatured
-                                ? "bg-amber-500 text-neutral-950 border-amber-400 hover:bg-amber-400"
-                                : "bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200 hover:text-neutral-700"
+                                ? "bg-neutral-950 text-white border-neutral-950 hover:bg-neutral-800"
+                                : "bg-white text-neutral-500 border-neutral-300 hover:bg-neutral-100 hover:text-neutral-800"
                             }`}
                             title="클릭 시 메인 진열 ↔ 미진열 원클릭 전환"
                           >
@@ -1236,36 +1491,69 @@ export function ProductsManagement({
                           </button>
                         </div>
                       </td>
-                      <td className="py-2 px-2.5 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex flex-col items-center justify-center gap-0.5">
+                      <td className="py-2 px-2.5 text-center whitespace-nowrap relative" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+                        <div className="flex flex-col items-center justify-center gap-0.5 relative">
                           <button
                             type="button"
-                            onClick={() => toggleProductPurchasable ? toggleProductPurchasable(String(p.id)) : toggleStock(String(p.id))}
-                            title={p.availableForSale !== false ? "현재 구매 가능 상태 (클릭하여 OFF 전환)" : "현재 구매 불가 상태 (클릭하여 ON 전환)"}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black tracking-wider transition-all cursor-pointer shadow-2xs select-none ${
-                              p.availableForSale !== false
-                                ? "bg-emerald-500 text-white hover:bg-emerald-600 ring-2 ring-emerald-500/20"
-                                : "bg-neutral-200 text-neutral-600 hover:bg-neutral-300 ring-1 ring-neutral-300"
+                            onClick={() => {
+                              setActiveStockPopoverId(null);
+                              setActiveTimePopoverId(activeTimePopoverId === String(p.id) ? null : String(p.id));
+                            }}
+                            title="클릭하여 판매 시작 시간 지정 및 ON/OFF 설정"
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 whitespace-nowrap border select-none ${
+                              p.availableForSale === false
+                                ? "bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 hover:border-rose-500"
+                                : p.releaseDate && new Date(p.releaseDate).getTime() > Date.now()
+                                ? "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 hover:border-amber-500"
+                                : "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100 hover:border-blue-500"
                             }`}
                           >
-                            <span className={`w-1.5 h-1.5 rounded-full ${p.availableForSale !== false ? "bg-white animate-pulse" : "bg-neutral-400"}`} />
-                            <span>{p.availableForSale !== false ? "ON" : "OFF"}</span>
+                            <Clock className={`w-3 h-3 ${
+                              p.availableForSale === false
+                                ? "text-rose-600"
+                                : p.releaseDate && new Date(p.releaseDate).getTime() > Date.now()
+                                ? "text-amber-800 animate-pulse"
+                                : "text-blue-600"
+                            }`} />
+                            <span>
+                              {p.availableForSale === false
+                                ? "OFF (구매불가) ▾"
+                                : p.releaseDate && new Date(p.releaseDate).getTime() > Date.now()
+                                ? `${new Date(p.releaseDate).getMonth() + 1}/${new Date(p.releaseDate).getDate()} 오픈 ▾`
+                                : "시간 설정 (ON) ▾"}
+                            </span>
                           </button>
+
                           {p.releaseDate && new Date(p.releaseDate).getTime() > Date.now() && (
                             <span
-                              className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded tracking-tighter"
+                              className="text-[9px] font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded tracking-tighter"
                               title={`판매 오픈 일시: ${new Date(p.releaseDate).toLocaleString('ko-KR')}`}
                             >
                               ⏰ 오픈예정
                             </span>
                           )}
+
+                          {/* Time Setting Popover attached to this button */}
+                          {activeTimePopoverId === String(p.id) && (
+                            <TimeSettingPopover
+                              product={p}
+                              onSaveSchedule={(avail, date) => {
+                                if (handleQuickUpdateReleaseSchedule) {
+                                  handleQuickUpdateReleaseSchedule(String(p.id), avail, date);
+                                } else if (toggleProductPurchasable) {
+                                  toggleProductPurchasable(String(p.id));
+                                }
+                              }}
+                              onClose={() => setActiveTimePopoverId(null)}
+                            />
+                          )}
                         </div>
                       </td>
-                      <td className="py-2 px-3 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1">
+                      <td className="py-2 px-4 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1.5 shrink-0">
                           <button
                             onClick={() => handleOpenEditModal(p)}
-                            className="p-1 text-amber-900 hover:text-amber-950 hover:bg-amber-100 rounded-md transition-colors cursor-pointer border border-amber-200"
+                            className="p-1.5 text-amber-900 hover:text-amber-950 hover:bg-amber-100 rounded-md transition-colors cursor-pointer border border-amber-200 shadow-2xs"
                             title="상품 정보 및 재고 수정"
                           >
                             <Pencil className="w-3.5 h-3.5" />
@@ -1273,14 +1561,14 @@ export function ProductsManagement({
                           <Link
                             href={`/product/${p.handle}`}
                             target="_blank"
-                            className="p-1 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 rounded-md transition-colors border border-neutral-200"
+                            className="p-1.5 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 rounded-md transition-colors border border-neutral-200 shadow-2xs"
                             title="쇼핑몰 상품 페이지 미리보기"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                           </Link>
                           <button
                             onClick={() => handleDeleteProduct(p.id, p.title)}
-                            className="p-1 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer border border-rose-200"
+                            className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer border border-rose-200 shadow-2xs"
                             title="상품 완전 삭제"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1388,7 +1676,7 @@ export function ProductsManagement({
                           </td>
                           <td className="py-2.5 px-3 space-y-1">
                             <div className="flex items-center gap-1">
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold ${item.isMainFeatured ? "bg-amber-100 text-amber-900 border border-amber-300" : "bg-neutral-100 text-neutral-500"}`}>
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold ${item.isMainFeatured ? "bg-neutral-950 text-white border border-neutral-950" : "bg-neutral-100 text-neutral-500"}`}>
                                 {item.isMainFeatured ? "메인진열 Y" : "메인진열 N"}
                               </span>
                               <span className="bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded text-[10px] font-bold">

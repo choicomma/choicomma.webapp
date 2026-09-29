@@ -35,6 +35,7 @@ import {
   DEFAULT_AVAILABLE_COUPONS,
   getAvailableCoupons,
   recordCouponUsage,
+  syncAdminCouponsFromSupabase,
 } from "@/lib/membership/coupons";
 
 export default function CheckoutClientWrapper() {
@@ -187,24 +188,41 @@ export default function CheckoutClientWrapper() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const email = (formData.ordererEmail || localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-    const grade = userGrade || "GENERAL";
-    const list = getAvailableCoupons(email, grade);
-    setAvailableCoupons(list);
+    let isSubscribed = true;
 
-    if (list.length > 0) {
-      // 할인 금액이 가장 큰 쿠폰을 우선 정렬하여 최우선 쿠폰 자동 선택
-      const sorted = [...list].sort((a, b) => b.discountAmount - a.discountAmount);
-      const bestCoupon = sorted[0];
+    const loadAndApplyCoupons = async () => {
+      // 신규 기기/브라우저 접속 시에도 최신 쿠폰 혜택이 즉시 반영되도록 Supabase 원격 동기화
+      if (localStorage.getItem("admin_coupons") === null) {
+        await syncAdminCouponsFromSupabase();
+      }
 
-      setSelectedCouponId(bestCoupon.id);
-      setAppliedDiscount(bestCoupon.discountAmount);
-      setCouponMessage(`✨ [자동 적용] ${bestCoupon.title}이 자동 적용되었습니다! (-${bestCoupon.discountAmount.toLocaleString()}원)`);
-    } else {
-      setSelectedCouponId("NONE");
-      setAppliedDiscount(0);
-      setCouponMessage(null);
-    }
+      if (!isSubscribed) return;
+
+      const email = (formData.ordererEmail || localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+      const grade = userGrade || "GENERAL";
+      const list = getAvailableCoupons(email, grade);
+      setAvailableCoupons(list);
+
+      if (list.length > 0) {
+        // 할인 금액이 가장 큰 쿠폰을 우선 정렬하여 최우선 쿠폰 자동 선택
+        const sorted = [...list].sort((a, b) => b.discountAmount - a.discountAmount);
+        const bestCoupon = sorted[0];
+
+        setSelectedCouponId(bestCoupon.id);
+        setAppliedDiscount(bestCoupon.discountAmount);
+        setCouponMessage(`✨ [자동 적용] ${bestCoupon.title}이 자동 적용되었습니다! (-${bestCoupon.discountAmount.toLocaleString()}원)`);
+      } else {
+        setSelectedCouponId("NONE");
+        setAppliedDiscount(0);
+        setCouponMessage(null);
+      }
+    };
+
+    loadAndApplyCoupons();
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [formData.ordererEmail, userGrade]);
 
   const handleSelectCoupon = (couponId: string) => {

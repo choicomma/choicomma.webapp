@@ -9,7 +9,7 @@ import { ProductDetailAccordions } from "./product-detail-accordions";
 import { RelatedProducts } from "./related-products";
 import { mockProducts } from "@/lib/sfcc/mock/products";
 
-import { ProductComments } from "./product-comments";
+import { ProductReviews } from "./product-reviews";
 
 export function ClientProductFallback({ handle }: { handle: string }) {
   const [product, setProduct] = useState<any | null>(null);
@@ -84,22 +84,22 @@ export function ClientProductFallback({ handle }: { handle: string }) {
           <div className="md:hidden h-[60vh] min-h-[380px]">
             <MobileGallerySlider product={product} />
           </div>
-          <div className="hidden md:block w-full">
+          <div className="hidden md:flex justify-center w-full">
             <DesktopGallery product={product} />
           </div>
           {/* Desktop only */}
           <div className="hidden md:block w-full">
-            <ProductComments productId={product.id} productTitle={product.title} />
+            <ProductReviews productId={product.id} productTitle={product.title} />
           </div>
         </div>
 
-        {/* Right Column: Product Details + Mobile Comments */}
+        {/* Right Column: Product Details + Mobile Reviews */}
         <div className="flex flex-col md:pl-8 md:pt-8 w-full max-w-xl">
           <ProductDetailHeader product={product} hasVariants={hasVariants} />
           
           {/* Mobile only: Right under Add to Cart button */}
           <div className="md:hidden w-full mt-4">
-            <ProductComments productId={product.id} productTitle={product.title} />
+            <ProductReviews productId={product.id} productTitle={product.title} />
           </div>
 
           <ProductDetailAccordions product={product} />

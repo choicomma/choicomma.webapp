@@ -32,6 +32,7 @@ export const metadata: Metadata = {
 
 import { LiveChatWidget } from "@/components/chat/live-chat-widget";
 import { CustomerSessionWatcher } from "@/components/auth/customer-session-watcher";
+import { VisitorTracker } from "@/components/analytics/visitor-tracker";
 
 export default async function RootLayout({
   children,
@@ -84,6 +85,7 @@ export default async function RootLayout({
       >
         <CartProvider cartPromise={cart} mode={mode}>
           <NuqsProvider>
+            <VisitorTracker />
             <CustomerSessionWatcher />
             <HeaderWithData />
             {children}

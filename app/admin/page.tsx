@@ -57,6 +57,7 @@ import {
 import {
   Archive,
   AlertCircle,
+  Activity,
   BarChart3,
   PieChart,
   CreditCard,
@@ -90,8 +91,9 @@ import { InboundStockManagement } from "./components/inbound-stock-management";
 import { InquiriesManagement } from "./components/inquiries-management";
 import { GlobalSalesManagement } from "./components/global-sales-management";
 import { PopupManagement } from "./components/popup-management";
+import { VisitorsManagement } from "./components/visitors-management";
 import { LanguageSelector } from "@/components/layout/header/language-selector";
-import { getAllUserCoupons } from "@/lib/membership/coupons";
+import { getAllUserCoupons, syncAdminCouponsFromSupabase } from "@/lib/membership/coupons";
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -418,7 +420,7 @@ const initialInboundSchedules: any[] = [];
 const initialDailySettlements: any[] = [];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "popup" | "revenue" | "main" | "customers" | "coupons" | "inquiries" | "settings" | "global_sales">("orders");
+  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "popup" | "visitors" | "revenue" | "main" | "customers" | "coupons" | "inquiries" | "settings" | "global_sales">("orders");
 
   // Admin Coupons Count State
   const [adminCouponsCount, setAdminCouponsCount] = useState<number>(() => {
@@ -431,16 +433,29 @@ export default function AdminPage() {
     }
     return 0;
   });
+
   useEffect(() => {
+    let isMounted = true;
+
     const updateCount = () => {
       if (typeof window !== "undefined") {
         setAdminCouponsCount(getAllUserCoupons().length);
       }
     };
+
     updateCount();
+
+    // Supabase 원격 DB로부터 최신 쿠폰 목록 즉시 동기화하여 사이드바 배지에 즉시 반영
+    syncAdminCouponsFromSupabase().then((list) => {
+      if (isMounted && Array.isArray(list)) {
+        setAdminCouponsCount(list.length);
+      }
+    });
+
     window.addEventListener("coupons_updated", updateCount);
     window.addEventListener("storage", updateCount);
     return () => {
+      isMounted = false;
       window.removeEventListener("coupons_updated", updateCount);
       window.removeEventListener("storage", updateCount);
     };
@@ -2417,6 +2432,30 @@ export default function AdminPage() {
             </span>
           </button>
 
+          {/* 매출 관리 (주문 및 배송 관리 바로 밑) */}
+          <button
+            onClick={() => setActiveTab("revenue")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "revenue"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
+          >
+            <TrendingUp className="w-4 h-4 text-neutral-900" />
+            매출 관리
+          </button>
+
+          {/* CS 관리 (고객 문의 및 라이브 채팅) */}
+          <button
+            onClick={() => setActiveTab("inquiries")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "inquiries"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
+          >
+            <MessageSquare className="w-4 h-4 text-neutral-900" />
+            CS
+          </button>
+
           {/* 2. 회원 관리 */}
           <button
             onClick={() => setActiveTab("customers")}
@@ -2432,34 +2471,19 @@ export default function AdminPage() {
             </span>
           </button>
 
-          {/* 2-2. 쿠폰 관리 */}
+          {/* 방문자 관리 (쿠폰 관리와 위치 교환) */}
           <button
-            onClick={() => setActiveTab("coupons")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "coupons"
+            onClick={() => setActiveTab("visitors")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "visitors"
                 ? "bg-neutral-100 text-neutral-950 font-extrabold"
                 : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
               }`}
           >
-            <Ticket className="w-4 h-4 text-neutral-900" />
-            쿠폰 관리
-            <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              {adminCouponsCount}개
-            </span>
+            <Activity className="w-4 h-4 text-neutral-900" />
+            방문자 관리
           </button>
 
-          {/* 3. 재고 및 입고 캘린더 */}
-          <button
-            onClick={() => setActiveTab("inbound")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "inbound"
-                ? "bg-neutral-100 text-neutral-950 font-extrabold"
-                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
-              }`}
-          >
-            <Calendar className="w-4 h-4 text-neutral-900" />
-            재고 및 입고 캘린더
-          </button>
-
-          {/* 4. 메인 슬라이더 */}
+          {/* 3. 메인 이미지 관리 */}
           <button
             onClick={() => setActiveTab("main")}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "main"
@@ -2469,6 +2493,18 @@ export default function AdminPage() {
           >
             <Layers className="w-4 h-4 text-neutral-900" />
             메인 이미지 관리
+          </button>
+
+          {/* 4. 재고 및 입고 캘린더 */}
+          <button
+            onClick={() => setActiveTab("inbound")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "inbound"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
+          >
+            <Calendar className="w-4 h-4 text-neutral-900" />
+            재고 및 입고 캘린더
           </button>
 
           {/* 5. 상품관리 */}
@@ -2510,16 +2546,19 @@ export default function AdminPage() {
             팝업 관리
           </button>
 
-          {/* 8. 매출 관리 */}
+          {/* 쿠폰 관리 (방문자 관리와 위치 교환) */}
           <button
-            onClick={() => setActiveTab("revenue")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "revenue"
+            onClick={() => setActiveTab("coupons")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "coupons"
                 ? "bg-neutral-100 text-neutral-950 font-extrabold"
                 : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
               }`}
           >
-            <TrendingUp className="w-4 h-4 text-neutral-900" />
-            매출 관리
+            <Ticket className="w-4 h-4 text-neutral-900" />
+            쿠폰 관리
+            <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
+              {adminCouponsCount}개
+            </span>
           </button>
 
           {/* 9. 해외 판매가 */}
@@ -2534,17 +2573,6 @@ export default function AdminPage() {
             해외 판매가
           </button>
 
-          {/* 10. CS 관리 (고객 문의 및 라이브 채팅) */}
-          <button
-            onClick={() => setActiveTab("inquiries")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "inquiries"
-                ? "bg-neutral-100 text-neutral-950 font-extrabold"
-                : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
-              }`}
-          >
-            <MessageSquare className="w-4 h-4 text-neutral-900" />
-            CS
-          </button>
 
           <div className="mt-auto pt-4 border-t border-neutral-200 space-y-1.5">
             <Link
@@ -2588,7 +2616,11 @@ export default function AdminPage() {
         </aside>
 
         {/* Main Content Area */}
-        <main className={`flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto mx-auto w-full ${activeTab === "orders" ? "max-w-[1600px]" : "max-w-7xl"}`}>
+        <main className={`flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto mx-auto w-full ${
+          activeTab === "products" || activeTab === "orders" || activeTab === "inbound" || activeTab === "revenue" || activeTab === "global_sales" || activeTab === "visitors"
+            ? "max-w-[1850px]"
+            : "max-w-7xl"
+        }`}>
           {/* Mobile Horizontal Tab Navigation */}
           <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-neutral-200/80 scrollbar-thin">
             <button
@@ -2606,12 +2638,43 @@ export default function AdminPage() {
               매출 관리
             </button>
             <button
+              onClick={() => setActiveTab("inquiries")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "inquiries"
+                  ? "bg-neutral-950 text-white"
+                  : "bg-neutral-100 text-neutral-600"
+                }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-neutral-900" />
+              CS 관리
+            </button>
+            <button
+              onClick={() => setActiveTab("customers")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "customers" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
+            >
+              회원
+            </button>
+            <button
+              onClick={() => setActiveTab("visitors")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "visitors" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
+            >
+              방문자 관리
+            </button>
+            <button
               onClick={() => setActiveTab("timesale")}
               className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-1 ${activeTab === "timesale" ? "bg-amber-500 text-neutral-950 shadow-xs" : "bg-amber-100/70 text-amber-900"
                 }`}
             >
               <Sparkles className="w-3.5 h-3.5 fill-neutral-950 text-neutral-950" />
               타임세일
+            </button>
+            <button
+              onClick={() => setActiveTab("main")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "main" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
+            >
+              메인
             </button>
             <button
               onClick={() => setActiveTab("inbound")}
@@ -2642,20 +2705,6 @@ export default function AdminPage() {
               팝업 관리
             </button>
             <button
-              onClick={() => setActiveTab("main")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "main" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-                }`}
-            >
-              메인
-            </button>
-            <button
-              onClick={() => setActiveTab("customers")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "customers" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-                }`}
-            >
-              회원
-            </button>
-            <button
               onClick={() => setActiveTab("coupons")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "coupons" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
                 }`}
@@ -2672,16 +2721,6 @@ export default function AdminPage() {
             >
               <Globe className="w-3.5 h-3.5 text-neutral-900" />
               해외 판매가
-            </button>
-            <button
-              onClick={() => setActiveTab("inquiries")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "inquiries"
-                  ? "bg-neutral-950 text-white"
-                  : "bg-neutral-100 text-neutral-600"
-                }`}
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-neutral-900" />
-              CS 관리
             </button>
           </div>
 
@@ -2724,6 +2763,35 @@ export default function AdminPage() {
               handleBulkUpdateStock={handleBulkUpdateStock}
               toggleProductPurchasable={toggleProductPurchasable}
               handleReorderProducts={handleReorderProducts}
+              handleQuickUpdateReleaseSchedule={(id: string, availableForSale: boolean, releaseDate?: string) => {
+                const targetProduct = productsList.find((p) => String(p.id) === String(id));
+                if (!targetProduct) return;
+
+                const updatedList = productsList.map((p) => {
+                  if (String(p.id) === String(id)) {
+                    return {
+                      ...p,
+                      availableForSale,
+                      releaseDate: releaseDate || undefined,
+                      variants: Array.isArray(p.variants)
+                        ? p.variants.map((v: any) => ({ ...v, availableForSale }))
+                        : p.variants,
+                    };
+                  }
+                  return p;
+                });
+
+                setProductsList(updatedList);
+                saveProductsToStorage(updatedList);
+
+                if (releaseDate && new Date(releaseDate).getTime() > Date.now()) {
+                  triggerToast(`⏰ '${targetProduct.title}' 상품 오픈이 ${new Date(releaseDate).toLocaleString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}으로 예약되었습니다.`);
+                } else if (!availableForSale) {
+                  triggerToast(`🚫 '${targetProduct.title}' 상품이 [구매 불가(OFF)]로 설정되었습니다.`);
+                } else {
+                  triggerToast(`✓ '${targetProduct.title}' 상품이 [구매 가능(ON / 상시판매)]으로 설정되었습니다.`);
+                }
+              }}
               handleQuickUpdateCategory={(id: string, newCategory: string) => {
                 const targetProd = productsList.find((p) => String(p.id) === String(id));
                 const updatedList = productsList.map((p) => {
@@ -2854,6 +2922,11 @@ export default function AdminPage() {
           {/* TAB: POPUP MANAGEMENT */}
           {activeTab === "popup" && (
             <PopupManagement triggerToast={triggerToast} />
+          )}
+
+          {/* TAB: VISITORS MANAGEMENT */}
+          {activeTab === "visitors" && (
+            <VisitorsManagement triggerToast={triggerToast} />
           )}
 
           {/* TAB: REVENUE MANAGEMENT (VISITORS & NET SALES ANALYTICS) */}
@@ -3168,90 +3241,6 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* 2 & 1번 기능: 상품 구매 가능 상태 ON/OFF 및 판매 시작 일시 지정 (예약 오픈) */}
-                <div className="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/80">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                        <span className="text-xs font-black text-neutral-950">상품 구매 가능 상태 (ON/OFF)</span>
-                      </div>
-                      <p className="text-[11px] text-neutral-500">
-                        OFF 설정 시 고객이 해당 상품을 장바구니에 담거나 구매할 수 없습니다.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setNewAvailableForSale(!newAvailableForSale)}
-                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider transition-all cursor-pointer shadow-2xs ${
-                        newAvailableForSale
-                          ? "bg-emerald-600 text-white hover:bg-emerald-700 ring-2 ring-emerald-500/20"
-                          : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300 ring-1 ring-neutral-300"
-                      }`}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${newAvailableForSale ? "bg-white animate-ping" : "bg-neutral-400"}`} />
-                      <span>{newAvailableForSale ? "ON (구매 가능)" : "OFF (구매 불가)"}</span>
-                    </button>
-                  </div>
-
-                  {/* 1번 기능: 시간 지정 판매 오픈 (예약 오픈) */}
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={newIsScheduledRelease}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setNewIsScheduledRelease(checked);
-                          if (checked && !newReleaseDate) {
-                            const d = new Date();
-                            d.setDate(d.getDate() + 1);
-                            d.setHours(10, 0, 0, 0);
-                            const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-                            setNewReleaseDate(iso);
-                          }
-                        }}
-                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
-                      />
-                      <span className="text-xs font-black text-neutral-900">
-                        판매 시작 시간 지정 (예약 오픈)
-                      </span>
-                      <span className="text-[10px] text-amber-700 font-extrabold bg-amber-100/80 px-2 py-0.5 rounded-full">
-                        지정 시간 도달 시 자동 구매 오픈
-                      </span>
-                    </label>
-
-                    {newIsScheduledRelease && (
-                      <div className="pl-6 space-y-2 pt-1 animate-in fade-in duration-200">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                          <input
-                            type="datetime-local"
-                            value={newReleaseDate}
-                            onChange={(e) => setNewReleaseDate(e.target.value)}
-                            className="bg-white border border-neutral-300 rounded-xl px-3.5 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs font-mono"
-                          />
-                          {newReleaseDate && (
-                            <span className="text-xs font-bold text-neutral-900">
-                              {new Date(newReleaseDate).getTime() > Date.now() ? (
-                                <span className="text-amber-800 flex items-center gap-1 font-bold">
-                                  ⏰ {new Date(newReleaseDate).toLocaleString("ko-KR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}에 구매가 자동 오픈됩니다.
-                                </span>
-                              ) : (
-                                <span className="text-emerald-700 font-bold">
-                                  ✓ 설정된 시간이 이미 지나 현재 즉시 구매 가능한 상태입니다.
-                                </span>
-                              )}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-neutral-500 leading-relaxed">
-                          * 지정한 시간이 도래하기 전에는 쇼핑몰 상품 상세 및 목록에서 "오픈 예정"으로 표시되며 장바구니 담기 및 결제가 불가능합니다. 지정한 시간이 되면 자동으로 구매 가능 상태로 즉시 전환됩니다.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-neutral-700">
@@ -3441,6 +3430,90 @@ export default function AdminPage() {
                       {newIsMainFeatured ? "전시 중" : "미전시"}
                     </span>
                   </button>
+                </div>
+
+                {/* 상품 구매 가능 상태 ON/OFF 및 판매 시작 일시 지정 (예약 오픈) */}
+                <div className="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/80">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="text-xs font-black text-neutral-950">상품 구매 가능 상태 (ON/OFF)</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-500">
+                        OFF 설정 시 고객이 해당 상품을 장바구니에 담거나 구매할 수 없습니다.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNewAvailableForSale(!newAvailableForSale)}
+                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider transition-all cursor-pointer shadow-2xs ${
+                        newAvailableForSale
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700 ring-2 ring-emerald-500/20"
+                          : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300 ring-1 ring-neutral-300"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${newAvailableForSale ? "bg-white animate-ping" : "bg-neutral-400"}`} />
+                      <span>{newAvailableForSale ? "ON (구매 가능)" : "OFF (구매 불가)"}</span>
+                    </button>
+                  </div>
+
+                  {/* 시간 지정 판매 오픈 (예약 오픈) */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={newIsScheduledRelease}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setNewIsScheduledRelease(checked);
+                          if (checked && !newReleaseDate) {
+                            const d = new Date();
+                            d.setDate(d.getDate() + 1);
+                            d.setHours(10, 0, 0, 0);
+                            const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                            setNewReleaseDate(iso);
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
+                      />
+                      <span className="text-xs font-black text-neutral-900">
+                        판매 시작 시간 지정 (예약 오픈)
+                      </span>
+                      <span className="text-[10px] text-amber-700 font-extrabold bg-amber-100/80 px-2 py-0.5 rounded-full">
+                        지정 시간 도달 시 자동 구매 오픈
+                      </span>
+                    </label>
+
+                    {newIsScheduledRelease && (
+                      <div className="pl-6 space-y-2 pt-1 animate-in fade-in duration-200">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <input
+                            type="datetime-local"
+                            value={newReleaseDate}
+                            onChange={(e) => setNewReleaseDate(e.target.value)}
+                            className="bg-white border border-neutral-300 rounded-xl px-3.5 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs font-mono"
+                          />
+                          {newReleaseDate && (
+                            <span className="text-xs font-bold text-neutral-900">
+                              {new Date(newReleaseDate).getTime() > Date.now() ? (
+                                <span className="text-amber-800 flex items-center gap-1 font-bold">
+                                  ⏰ {new Date(newReleaseDate).toLocaleString("ko-KR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}에 구매가 자동 오픈됩니다.
+                                </span>
+                              ) : (
+                                <span className="text-emerald-700 font-bold">
+                                  ✓ 설정된 시간이 이미 지나 현재 즉시 구매 가능한 상태입니다.
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-neutral-500 leading-relaxed">
+                          * 지정한 시간이 도래하기 전에는 쇼핑몰 상품 상세 및 목록에서 "오픈 예정"으로 표시되며 장바구니 담기 및 결제가 불가능합니다. 지정한 시간이 되면 자동으로 구매 가능 상태로 즉시 전환됩니다.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -4573,90 +4646,6 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* 3번 기능: 상품수정에도 상품 구매 가능 상태 ON/OFF 및 판매 시작 일시 지정 (예약 오픈) 동일 적용 */}
-                <div className="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/80">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                        <span className="text-xs font-black text-neutral-950">상품 구매 가능 상태 (ON/OFF)</span>
-                      </div>
-                      <p className="text-[11px] text-neutral-500">
-                        OFF 설정 시 고객이 해당 상품을 장바구니에 담거나 구매할 수 없습니다.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setEditAvailable(!editAvailable)}
-                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider transition-all cursor-pointer shadow-2xs ${
-                        editAvailable
-                          ? "bg-emerald-600 text-white hover:bg-emerald-700 ring-2 ring-emerald-500/20"
-                          : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300 ring-1 ring-neutral-300"
-                      }`}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${editAvailable ? "bg-white animate-ping" : "bg-neutral-400"}`} />
-                      <span>{editAvailable ? "ON (구매 가능)" : "OFF (구매 불가)"}</span>
-                    </button>
-                  </div>
-
-                  {/* 1번 기능: 시간 지정 판매 오픈 (예약 오픈) */}
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={editIsScheduledRelease}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setEditIsScheduledRelease(checked);
-                          if (checked && !editReleaseDate) {
-                            const d = new Date();
-                            d.setDate(d.getDate() + 1);
-                            d.setHours(10, 0, 0, 0);
-                            const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-                            setEditReleaseDate(iso);
-                          }
-                        }}
-                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
-                      />
-                      <span className="text-xs font-black text-neutral-900">
-                        판매 시작 시간 지정 (예약 오픈)
-                      </span>
-                      <span className="text-[10px] text-amber-700 font-extrabold bg-amber-100/80 px-2 py-0.5 rounded-full">
-                        지정 시간 도달 시 자동 구매 오픈
-                      </span>
-                    </label>
-
-                    {editIsScheduledRelease && (
-                      <div className="pl-6 space-y-2 pt-1 animate-in fade-in duration-200">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                          <input
-                            type="datetime-local"
-                            value={editReleaseDate}
-                            onChange={(e) => setEditReleaseDate(e.target.value)}
-                            className="bg-white border border-neutral-300 rounded-xl px-3.5 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs font-mono"
-                          />
-                          {editReleaseDate && (
-                            <span className="text-xs font-bold text-neutral-900">
-                              {new Date(editReleaseDate).getTime() > Date.now() ? (
-                                <span className="text-amber-800 flex items-center gap-1 font-bold">
-                                  ⏰ {new Date(editReleaseDate).toLocaleString("ko-KR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}에 구매가 자동 오픈됩니다.
-                                </span>
-                              ) : (
-                                <span className="text-emerald-700 font-bold">
-                                  ✓ 설정된 시간이 이미 지나 현재 즉시 구매 가능한 상태입니다.
-                                </span>
-                              )}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-neutral-500 leading-relaxed">
-                          * 지정한 시간이 도래하기 전에는 쇼핑몰 상품 상세 및 목록에서 "오픈 예정"으로 표시되며 장바구니 담기 및 결제가 불가능합니다. 지정한 시간이 되면 자동으로 구매 가능 상태로 즉시 전환됩니다.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-neutral-700">
@@ -4816,6 +4805,90 @@ export default function AdminPage() {
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* 상품 구매 가능 상태 ON/OFF 및 판매 시작 일시 지정 (예약 오픈) */}
+                <div className="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/80">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="text-xs font-black text-neutral-950">상품 구매 가능 상태 (ON/OFF)</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-500">
+                        OFF 설정 시 고객이 해당 상품을 장바구니에 담거나 구매할 수 없습니다.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditAvailable(!editAvailable)}
+                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider transition-all cursor-pointer shadow-2xs ${
+                        editAvailable
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700 ring-2 ring-emerald-500/20"
+                          : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300 ring-1 ring-neutral-300"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${editAvailable ? "bg-white animate-ping" : "bg-neutral-400"}`} />
+                      <span>{editAvailable ? "ON (구매 가능)" : "OFF (구매 불가)"}</span>
+                    </button>
+                  </div>
+
+                  {/* 시간 지정 판매 오픈 (예약 오픈) */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editIsScheduledRelease}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setEditIsScheduledRelease(checked);
+                          if (checked && !editReleaseDate) {
+                            const d = new Date();
+                            d.setDate(d.getDate() + 1);
+                            d.setHours(10, 0, 0, 0);
+                            const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                            setEditReleaseDate(iso);
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
+                      />
+                      <span className="text-xs font-black text-neutral-900">
+                        판매 시작 시간 지정 (예약 오픈)
+                      </span>
+                      <span className="text-[10px] text-amber-700 font-extrabold bg-amber-100/80 px-2 py-0.5 rounded-full">
+                        지정 시간 도달 시 자동 구매 오픈
+                      </span>
+                    </label>
+
+                    {editIsScheduledRelease && (
+                      <div className="pl-6 space-y-2 pt-1 animate-in fade-in duration-200">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <input
+                            type="datetime-local"
+                            value={editReleaseDate}
+                            onChange={(e) => setEditReleaseDate(e.target.value)}
+                            className="bg-white border border-neutral-300 rounded-xl px-3.5 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs font-mono"
+                          />
+                          {editReleaseDate && (
+                            <span className="text-xs font-bold text-neutral-900">
+                              {new Date(editReleaseDate).getTime() > Date.now() ? (
+                                <span className="text-amber-800 flex items-center gap-1 font-bold">
+                                  ⏰ {new Date(editReleaseDate).toLocaleString("ko-KR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}에 구매가 자동 오픈됩니다.
+                                </span>
+                              ) : (
+                                <span className="text-emerald-700 font-bold">
+                                  ✓ 설정된 시간이 이미 지나 현재 즉시 구매 가능한 상태입니다.
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-neutral-500 leading-relaxed">
+                          * 지정한 시간이 도래하기 전에는 쇼핑몰 상품 상세 및 목록에서 "오픈 예정"으로 표시되며 장바구니 담기 및 결제가 불가능합니다. 지정한 시간이 되면 자동으로 구매 가능 상태로 즉시 전환됩니다.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -7213,8 +7286,8 @@ export default function AdminPage() {
                   <Truck className="w-5 h-5 text-sky-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-extrabold text-neutral-950">배송 정책 & CJ대한통운 설정</h3>
-                  <p className="text-xs text-neutral-500">기본 배송비, 무료배송 기준 및 CJ대한통운 API 연동 정보</p>
+                  <h3 className="text-xl font-extrabold text-neutral-950">배송 정책 설정</h3>
+                  <p className="text-xs text-neutral-500">기본 배송비, 무료배송 기준 및 배송 정책 설정</p>
                 </div>
               </div>
               <button
@@ -7226,41 +7299,12 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* TAB SELECTION */}
-            <div className="flex bg-neutral-100 p-1 rounded-2xl gap-1">
-              <button
-                type="button"
-                onClick={() => setConfigModalTab("policy")}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${configModalTab === "policy"
-                    ? "bg-white text-neutral-950 shadow-xs"
-                    : "text-neutral-500 hover:text-neutral-900"
-                  }`}
-              >
-                <Truck className="w-3.5 h-3.5 text-sky-600" />
-                배송비 및 정책 설정
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfigModalTab("cj")}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${configModalTab === "cj"
-                    ? "bg-white text-neutral-950 shadow-xs"
-                    : "text-neutral-500 hover:text-neutral-900"
-                  }`}
-              >
-                <Settings className="w-3.5 h-3.5 text-neutral-700" />
-                CJ대한통운 (로이스 파셀) 설정
-              </button>
-            </div>
-
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
                 if (typeof window !== "undefined") {
                   localStorage.setItem("shipping_policy", JSON.stringify(shippingPolicy));
                   localStorage.setItem("admin_shipping_policy", JSON.stringify(shippingPolicy));
-                  localStorage.setItem("cj_client_code", cjClientCode);
-                  localStorage.setItem("cj_contract_no", cjContractNo);
-                  localStorage.setItem("cj_sender_address", cjSenderAddress);
                   window.dispatchEvent(new CustomEvent("shipping_policy_updated"));
                   window.dispatchEvent(new CustomEvent("storage"));
                 }
@@ -7274,134 +7318,82 @@ export default function AdminPage() {
                   console.warn("Failed to persist shipping policy to server:", apiErr);
                 }
                 setIsCjConfigModalOpen(false);
-                triggerToast("배송 정책 및 CJ대한통운 설정이 영구 저장되었습니다.");
+                triggerToast("배송 정책 설정이 영구 저장되었습니다.");
               }}
               className="space-y-4"
             >
-              {configModalTab === "policy" ? (
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">기본 배송비 (원) *</label>
-                      <input
-                        type="number"
-                        required
-                        value={shippingPolicy.baseFee}
-                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, baseFee: parseInt(e.target.value) || 0 })}
-                        placeholder="4000"
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">무료 배송 기준 금액 (원) *</label>
-                      <input
-                        type="number"
-                        required
-                        value={shippingPolicy.freeShippingThreshold}
-                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, freeShippingThreshold: parseInt(e.target.value) || 0 })}
-                        placeholder="100000"
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-amber-600 focus:outline-none focus:border-neutral-950"
-                      />
-                      <span className="text-[11px] text-neutral-400 mt-0.5 block">예: 100,000원 이상 결제 시 무료배송</span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">도서산간/제주 추가 배송비 (원)</label>
-                      <input
-                        type="number"
-                        value={shippingPolicy.islandExtraFee}
-                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, islandExtraFee: parseInt(e.target.value) || 0 })}
-                        placeholder="4000"
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">반품/교환 왕복 배송비 (원)</label>
-                      <input
-                        type="number"
-                        value={shippingPolicy.returnExchangeFee}
-                        onChange={(e) => setShippingPolicy({ ...shippingPolicy, returnExchangeFee: parseInt(e.target.value) || 0 })}
-                        placeholder="8000"
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      />
-                    </div>
-                  </div>
-
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">기본 지정 택배사</label>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">기본 배송비 (원) *</label>
                     <input
-                      type="text"
-                      value={shippingPolicy.courierName}
-                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, courierName: e.target.value })}
-                      placeholder="CJ대한통운 (주계약)"
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      type="number"
+                      required
+                      value={shippingPolicy.baseFee}
+                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, baseFee: parseInt(e.target.value) || 0 })}
+                      placeholder="4000"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">배송 안내 문구 (고객 노출)</label>
-                    <textarea
-                      rows={2}
-                      value={shippingPolicy.shippingNotice}
-                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, shippingNotice: e.target.value })}
-                      placeholder="평일 14:00 이전 결제 완료 시 당일 출고됩니다."
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-3 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-none"
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">무료 배송 기준 금액 (원) *</label>
+                    <input
+                      type="number"
+                      required
+                      value={shippingPolicy.freeShippingThreshold}
+                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, freeShippingThreshold: parseInt(e.target.value) || 0 })}
+                      placeholder="100000"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-amber-600 focus:outline-none focus:border-neutral-950"
+                    />
+                    <span className="text-[11px] text-neutral-400 mt-0.5 block">예: 100,000원 이상 결제 시 무료배송</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">도서산간/제주 추가 배송비 (원)</label>
+                    <input
+                      type="number"
+                      value={shippingPolicy.islandExtraFee}
+                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, islandExtraFee: parseInt(e.target.value) || 0 })}
+                      placeholder="4000"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">반품/교환 왕복 배송비 (원)</label>
+                    <input
+                      type="number"
+                      value={shippingPolicy.returnExchangeFee}
+                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, returnExchangeFee: parseInt(e.target.value) || 0 })}
+                      placeholder="8000"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
                     />
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">CJ대한통운 고객사 코드 (Client Code) *</label>
-                    <input
-                      type="text"
-                      required
-                      value={cjClientCode}
-                      onChange={(e) => setCjClientCode(e.target.value)}
-                      placeholder="예: CJ-882910"
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                    />
-                  </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">계약 고객 번호 (Contract No) *</label>
-                    <input
-                      type="text"
-                      required
-                      value={cjContractNo}
-                      onChange={(e) => setCjContractNo(e.target.value)}
-                      placeholder="예: 30291049"
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1.5">출고지 / 보내는 분 주소</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={cjSenderAddress}
-                        onChange={(e) => setCjSenderAddress(e.target.value)}
-                        placeholder="주소 찾기 버튼을 눌러 출고지 주소를 입력해 주세요"
-                        className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleOpenSenderPostcode}
-                        className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0 shadow-xs flex items-center gap-1.5 hover:scale-105 active:scale-95"
-                      >
-                        <Search className="w-3.5 h-3.5" />
-                        <span>주소 찾기</span>
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-neutral-500 mt-1.5">
-                      * 주소 찾기 버튼을 누르면 우편번호 및 도로명 주소가 자동으로 완성됩니다.
-                    </p>
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">기본 지정 택배사</label>
+                  <input
+                    type="text"
+                    value={shippingPolicy.courierName}
+                    onChange={(e) => setShippingPolicy({ ...shippingPolicy, courierName: e.target.value })}
+                    placeholder="CJ대한통운 (주계약)"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
                 </div>
-              )}
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">배송 안내 문구 (고객 노출)</label>
+                  <textarea
+                    rows={2}
+                    value={shippingPolicy.shippingNotice}
+                    onChange={(e) => setShippingPolicy({ ...shippingPolicy, shippingNotice: e.target.value })}
+                    placeholder="평일 14:00 이전 결제 완료 시 당일 출고됩니다."
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-3 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-none"
+                  />
+                </div>
+              </div>
 
               <div className="pt-3 flex justify-end items-center border-t border-neutral-100">
                 <div className="flex gap-2">

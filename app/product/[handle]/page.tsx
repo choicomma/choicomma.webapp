@@ -91,19 +91,19 @@ export default async function ProductPage(props: {
     "@type": "Product",
     name: product.title,
     description: product.description,
-    image: product.featuredImage.url,
+    image: product.featuredImage?.url || "",
     offers: {
       "@type": "AggregateOffer",
       availability: product.availableForSale
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
-      priceCurrency: product.currencyCode,
-      highPrice: product.priceRange.maxVariantPrice.amount,
-      lowPrice: product.priceRange.minVariantPrice.amount,
+      priceCurrency: product.currencyCode || "KRW",
+      highPrice: product.priceRange?.maxVariantPrice?.amount || "0",
+      lowPrice: product.priceRange?.minVariantPrice?.amount || "0",
     },
   };
 
-  const [rootParentCategory] = collection?.parentCategoryTree.filter(
+  const [rootParentCategory] = collection?.parentCategoryTree?.filter(
     (c) => c.id !== storeCatalog.rootCategoryId
   ) ?? [undefined];
 

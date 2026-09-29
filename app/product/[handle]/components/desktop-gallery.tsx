@@ -32,7 +32,7 @@ export const DesktopGallery = ({ product }: { product: Product }) => {
   if (!images.length) return null;
 
   return (
-    <div className="flex gap-4 md:gap-6 w-full items-start">
+    <div className="flex gap-4 md:gap-6 w-full items-start justify-center mx-auto">
       {/* Thumbnails (Left Column) */}
       {images.length > 1 && (
         <div className="w-16 sm:w-20 shrink-0 flex flex-col gap-2.5 overflow-y-auto no-scrollbar max-h-[500px]">
@@ -47,7 +47,7 @@ export const DesktopGallery = ({ product }: { product: Product }) => {
               <img
                 src={image.url}
                 alt={image.altText || `Thumbnail ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center"
               />
             </button>
           ))}
@@ -55,13 +55,13 @@ export const DesktopGallery = ({ product }: { product: Product }) => {
       )}
 
       {/* Main Image (Center Column: Exact 1:1 aspect-square without outline/border) */}
-      <div className="flex-1 max-w-[500px] aspect-square relative bg-transparent overflow-hidden">
+      <div className="w-full max-w-[500px] aspect-square relative bg-transparent overflow-hidden mx-auto sm:mx-0">
         {images.map((image, index) => (
           <img
             key={`${image.url}-${index}`}
             src={image.url}
             alt={image.altText || product.title}
-            className={`w-full h-full object-cover object-top absolute inset-0 transition-opacity duration-700 block ${
+            className={`w-full h-full object-cover object-center absolute inset-0 transition-opacity duration-700 block ${
               activeIndex === index
                 ? "opacity-100 z-10"
                 : "opacity-0 z-0 pointer-events-none"

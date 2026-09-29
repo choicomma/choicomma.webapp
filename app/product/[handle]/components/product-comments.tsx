@@ -18,9 +18,9 @@ interface ProductCommentsProps {
 
 const COMMENTS_I18N: Record<string, Record<string, string>> = {
   ko: {
-    title: "상품 문의 및 한줄 댓글",
+    title: "한줄 댓글",
     count: "개의 댓글",
-    placeholder: "상품에 대한 궁금한 점이나 착용 후기를 자유롭게 남겨주세요.",
+    placeholder: "상품에 대한 한줄 댓글을 자유롭게 남겨주세요.",
     namePlaceholder: "작성자명 (미입력 시 고객님)",
     submit: "댓글 등록",
     empty: "작성된 댓글이 없습니다. 첫 번째 댓글을 남겨보세요!",
@@ -28,9 +28,9 @@ const COMMENTS_I18N: Record<string, Record<string, string>> = {
     rating: "평점",
   },
   en: {
-    title: "Comments & Inquiries",
+    title: "Comments",
     count: "comments",
-    placeholder: "Leave your question or feedback about this product.",
+    placeholder: "Leave a quick comment about this product.",
     namePlaceholder: "Your Name",
     submit: "Post Comment",
     empty: "No comments yet. Be the first to leave a comment!",
@@ -38,9 +38,9 @@ const COMMENTS_I18N: Record<string, Record<string, string>> = {
     rating: "Rating",
   },
   ja: {
-    title: "商品のお問い合わせ・コメント",
+    title: "コメント",
     count: "件のコメント",
-    placeholder: "商品についてのご質問やご感想をご自由にご記入ください。",
+    placeholder: "商品へのひとことコメントをご自由にご記入ください。",
     namePlaceholder: "お名前",
     submit: "投稿する",
     empty: "まだコメントがありません。最初のコメントを投稿してみましょう！",
@@ -48,9 +48,9 @@ const COMMENTS_I18N: Record<string, Record<string, string>> = {
     rating: "評価",
   },
   zh: {
-    title: "商品咨询与留言",
+    title: "简评留言",
     count: "条留言",
-    placeholder: "欢迎留下关于商品的疑问或穿着体验。",
+    placeholder: "欢迎留下您的一句话简评。",
     namePlaceholder: "您的姓名",
     submit: "提交留言",
     empty: "暂无留言，快来抢先留下第一条吧！",
@@ -58,9 +58,9 @@ const COMMENTS_I18N: Record<string, Record<string, string>> = {
     rating: "评分",
   },
   fr: {
-    title: "Commentaires & Questions",
+    title: "Commentaires rapides",
     count: "commentaires",
-    placeholder: "Laissez vos questions ou avis sur ce produit.",
+    placeholder: "Laissez un commentaire rapide sur ce produit.",
     namePlaceholder: "Votre nom",
     submit: "Publier",
     empty: "Aucun commentaire pour le moment. Soyez le premier à commenter !",

@@ -3,6 +3,9 @@ import fs from "fs";
 import path from "path";
 import { supabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 function getProductsFilePath() {
   return path.join(process.cwd(), "lib", "sfcc", "mock", "parsed-products.json");
 }
@@ -89,8 +92,12 @@ export async function GET(req: NextRequest) {
               ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("release_date:"))?.replace("release_date:", "")
               : "") ||
             "";
+          const m = String(p.id).match(/\d+/);
+          const num = p.productNo !== undefined && !isNaN(Number(p.productNo)) ? Number(p.productNo) : (m ? parseInt(m[0], 10) : 0);
           return {
             ...p,
+            productNo: num,
+            productCode: p.productCode || (num > 0 ? `CC-${String(num).padStart(3, "0")}` : undefined),
             releaseDate: relDate,
             availableForSale: p.availableForSale !== false,
           };

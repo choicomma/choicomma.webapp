@@ -142,8 +142,8 @@ export function CouponsManagement({
   useEffect(() => {
     loadData();
 
-    // 로컬 스토리지에 아직 admin_coupons 키가 존재하지 않을 때만 Supabase site_settings에서 복원
-    if (typeof window !== "undefined" && localStorage.getItem("admin_coupons") === null) {
+    // Supabase site_settings로부터 최신 관리자 쿠폰 설정 동기화
+    if (typeof window !== "undefined") {
       Promise.resolve(
         supabase
           .from("site_settings")
@@ -159,6 +159,7 @@ export function CouponsManagement({
                 const sanitized = parsed.filter((c: any) => !isLegacyCoupon(c));
                 localStorage.setItem("admin_coupons", JSON.stringify(sanitized));
                 setCoupons(sanitized);
+                window.dispatchEvent(new CustomEvent("coupons_updated"));
               }
             } catch (e) {}
           }
@@ -166,8 +167,8 @@ export function CouponsManagement({
         .catch(() => {});
     }
 
-    // 로컬 스토리지에 admin_coupon_usage_history가 없을 때 Supabase site_settings에서 복원
-    if (typeof window !== "undefined" && localStorage.getItem("admin_coupon_usage_history") === null) {
+    // Supabase site_settings로부터 최신 쿠폰 사용 내역 동기화
+    if (typeof window !== "undefined") {
       Promise.resolve(
         supabase
           .from("site_settings")

@@ -26,6 +26,7 @@ import {
   Layers,
   Sparkles,
   Barcode,
+  ChevronDown,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { CjLabelPrint } from "./cj-label-print";
@@ -100,6 +101,22 @@ export function OrdersManagement({
 
   // 배송 건 다중 선택 상태 (체크박스)
   const [selectedShipmentIds, setSelectedShipmentIds] = useState<Set<string>>(new Set());
+
+  // 주문 아이템 상세 드롭다운 활성화 상태 (특정 주문 ID)
+  const [openItemsDropdownId, setOpenItemsDropdownId] = useState<string | null>(null);
+
+  // 드롭다운 바깥 영역 클릭 시 닫기
+  useEffect(() => {
+    if (!openItemsDropdownId) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-items-dropdown]")) {
+        setOpenItemsDropdownId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openItemsDropdownId]);
 
   // 주문서(거래명세서) 인쇄 모달 상태
   const [isOrderSheetModalOpen, setIsOrderSheetModalOpen] = useState(false);
@@ -579,8 +596,8 @@ export function OrdersManagement({
     return fallbackList[idx];
   };
 
-  // 주문 상품 문자열을 개별 라인 목록으로 파싱 (한 줄씩 표시용)
-  const parseItemLines = (itemsStr: string): { name: string; qty: number; option?: string; raw: string }[] => {
+  // 주문 상품 문자열을 개별 라인 목록으로 파싱 (상품명, 색상/옵션, 수량)
+  const parseItemLines = (itemsStr: string): { name: string; qty: number; option?: string; raw: string; pkgIndex?: number }[] => {
     if (!itemsStr) return [];
     return itemsStr
       .split(/,\s*/)
@@ -589,16 +606,31 @@ export function OrdersManagement({
       .map((token) => {
         const qtyMatch = token.match(/(\d+)\s*개$/) || token.match(/x\s*(\d+)$/i);
         const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
-        const nameWithoutQty = token.replace(/\s*\d+\s*개$/, "").replace(/\s*x\s*\d+$/i, "").trim();
+        let text = token.replace(/\s*\d+\s*개$/, "").replace(/\s*x\s*\d+$/i, "").trim();
 
-        const optionMatch = nameWithoutQty.match(/\(([^)]+)\)$/);
-        const option = optionMatch ? optionMatch[1] : undefined;
-        const cleanName = optionMatch ? nameWithoutQty.replace(/\s*\([^)]+\)$/, "").trim() : nameWithoutQty;
+        // 1) 괄호 안의 옵션 추출 (예: (FREE), (M), (블랙 / L))
+        let parenOption = "";
+        const parenMatch = text.match(/\(([^)]+)\)$/);
+        if (parenMatch) {
+          parenOption = parenMatch[1].trim();
+          text = text.replace(/\s*\([^)]+\)$/, "").trim();
+        }
+
+        // 2) 슬래시(/) 분리된 색상/옵션 추출 (예: 브라우스 / 아이보리)
+        let name = text;
+        let slashOption = "";
+        if (text.includes("/")) {
+          const parts = text.split(/\s*\/\s*/);
+          name = parts[0].trim();
+          slashOption = parts.slice(1).join(" / ").trim();
+        }
+
+        const combinedOption = [slashOption, parenOption].filter(Boolean).join(" / ");
 
         return {
-          name: cleanName || nameWithoutQty,
+          name: name || text,
           qty,
-          option,
+          option: combinedOption || undefined,
           raw: token,
         };
       });
@@ -1268,10 +1300,10 @@ export function OrdersManagement({
             type="button"
             onClick={() => setIsCjConfigModalOpen(true)}
             className="bg-white hover:bg-neutral-50 text-neutral-700 font-bold px-3.5 py-2.5 rounded-xl border border-neutral-200 transition-all shadow-xs flex items-center justify-center gap-1.5 text-xs cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-            title="배송 정책 & CJ대한통운 환경설정 열기"
+            title="배송 정책 설정 열기"
           >
             <Settings className="w-4 h-4 text-neutral-500" />
-            <span>배송 정책 / CJ 설정</span>
+            <span>배송 정책 설정</span>
           </button>
           <button
             type="button"
@@ -1396,13 +1428,13 @@ export function OrdersManagement({
 
       {/* Integrated Orders & Shipments Table */}
       <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto relative">
+        <div className="overflow-x-auto relative min-h-[420px]">
           <table className="w-full text-left text-sm text-neutral-700 min-w-[1059px]">
             <colgroup>
               <col className="w-[44px]" />
               <col className="w-[170px]" />
               <col className="w-[215px]" />
-              <col className="w-[230px]" />
+              <col className="w-[210px]" />
               <col className="w-[155px]" />
               <col className="w-[125px]" />
               <col className="w-[120px]" />
@@ -1429,7 +1461,7 @@ export function OrdersManagement({
                 </th>
                 <th className="py-3.5 px-3 w-[170px] whitespace-nowrap">주문/배송번호</th>
                 <th className="py-3.5 px-3 w-[215px]">수령인 / 배송지 주소</th>
-                <th className="py-3.5 px-3 w-[230px]">주문 상품</th>
+                <th className="py-3.5 px-3 w-[210px] whitespace-nowrap">주문 상품 (요약)</th>
                 <th className="py-3.5 px-3 w-[155px]">택배사 / 운송장 번호</th>
                 <th className="py-3.5 px-3 w-[125px] min-w-[125px] whitespace-nowrap">진행 상태</th>
                 <th className="py-3.5 px-3 text-right w-[120px] whitespace-nowrap">관리</th>
@@ -1443,84 +1475,103 @@ export function OrdersManagement({
                   </td>
                 </tr>
               ) : (
-                paginatedShipments.map((ship) => (
-                  <tr key={ship.id} className="hover:bg-neutral-50/70 transition-colors group">
-                    <td className="py-3.5 px-3 text-center w-[44px]">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-neutral-950 cursor-pointer"
-                        checked={selectedShipmentIds.has(ship.id)}
-                        onChange={(e) => {
-                          const newSet = new Set(selectedShipmentIds);
-                          if (e.target.checked) newSet.add(ship.id);
-                          else newSet.delete(ship.id);
-                          setSelectedShipmentIds(newSet);
-                        }}
-                      />
-                    </td>
-                    <td className="py-3.5 px-3 align-top w-[170px]">
-                      <div>
-                        {/* 📦 합배송 대상 감지 배지 or 합배송 완료 표시 */}
-                        {/* 📦 합배송 대상 감지 배지 or 합배송 완료 표시 */}
-                        {(() => {
-                          const pkg0 = Array.isArray(ship.packages) && ship.packages[0] ? ship.packages[0] : {};
-                          const memo = String(ship.shippingMemo || ship.shipping_memo || "");
-                          const isMergedChild = Boolean(ship.isMergedChild || ship.mergedIntoId || pkg0.isMergedChild || pkg0.mergedIntoId || memo.includes("[합배송 완료]"));
-                          const isMergedParent = Boolean(ship.isMergedParent || pkg0.isMergedParent || memo.includes("[합배송:"));
+                paginatedShipments.map((ship, shipIndex) => {
+                  const pkg0 = Array.isArray(ship.packages) && ship.packages[0] ? ship.packages[0] : {};
+                  const memo = String(ship.shippingMemo || ship.shipping_memo || "");
+                  const isMergedChild = Boolean(ship.isMergedChild || ship.mergedIntoId || pkg0.isMergedChild || pkg0.mergedIntoId || memo.includes("[합배송 완료]"));
+                  const isMergedParent = Boolean(ship.isMergedParent || pkg0.isMergedParent || memo.includes("[합배송:"));
+                  const bundleGroup = shipmentBundleGroupMap.get(ship.id);
+                  const isCombined = Boolean(isMergedParent || isMergedChild || bundleGroup || (ship as any).isBundle || (ship as any).isMerged);
 
-                          if (isMergedParent) {
-                            return (
-                              <div className="mb-1.5 flex items-center gap-1">
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-800 border border-indigo-300 shadow-2xs">
-                                  <Layers className="w-3 h-3 text-indigo-600" />
-                                  <span>📦 통합 1박스 합배송 (대표)</span>
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUnbundle(ship);
-                                  }}
-                                  className="text-[10px] font-bold text-neutral-500 hover:text-rose-600 hover:underline px-1 cursor-pointer"
-                                  title="합배송 해제 및 원래 개별 주문으로 분리"
-                                >
-                                  해제
-                                </button>
-                              </div>
-                            );
-                          }
-                          if (isMergedChild) {
-                            const mergedTarget = ship.mergedIntoOrderId || pkg0.mergedIntoOrderId || memo.match(/\[합배송 완료\]\s*([^\s]+)/)?.[1] || "대표주문";
-                            return (
-                              <div className="mb-1.5">
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-neutral-100 text-neutral-600 border border-neutral-300">
-                                  <span>↳ {mergedTarget}에 통합됨</span>
-                                </span>
-                              </div>
-                            );
-                          }
+                  // 주문 상품 통합 리스트 파싱 (분리배송/합배송 패키지 포함)
+                  const allItems = (() => {
+                    if (Array.isArray(ship.packages) && ship.packages.length > 0) {
+                      const list: Array<{ name: string; qty: number; option?: string; raw: string; pkgIndex?: number }> = [];
+                      ship.packages.forEach((pkg: any, pIdx: number) => {
+                        const parsed = parseItemLines(pkg.items || "");
+                        parsed.forEach((it) => list.push({ ...it, pkgIndex: pkg.pkgIndex || pIdx + 1 }));
+                      });
+                      if (list.length > 0) return list;
+                    }
+                    return parseItemLines(ship.items || "");
+                  })();
 
-                          const bundleGroup = shipmentBundleGroupMap.get(ship.id);
-                          if (bundleGroup) {
-                            return (
-                              <div className="mb-1.5">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenBundleModal(bundleGroup);
-                                  }}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 hover:border-blue-400 cursor-pointer shadow-2xs transition-all animate-pulse"
-                                  title="클릭하여 48시간 이내 동일 주소지 주문들을 1박스로 합배송"
-                                >
-                                  <Boxes className="w-3 h-3 text-blue-600" />
-                                  <span>📦 주문 1개로 합치기 ({bundleGroup.shipmentIds.length}건)</span>
-                                </button>
-                              </div>
-                            );
-                          }
-                          return null;
-                        })()}
+                  const visibleItems = allItems.slice(0, 3);
+                  const hasMore = allItems.length > 3;
+                  const remainingCount = allItems.length - 3;
+                  const totalOrderQty = allItems.reduce((acc, x) => acc + (x.qty || 1), 0);
+                  const isDropdownOpen = openItemsDropdownId === ship.id;
+                  const isBottomRow = paginatedShipments.length > 3 && shipIndex >= paginatedShipments.length - 2;
+
+                  return (
+                    <tr
+                      key={ship.id}
+                      className={`transition-colors group ${
+                        selectedShipmentIds.has(ship.id)
+                          ? isCombined
+                            ? "bg-blue-100/90"
+                            : "bg-neutral-100/80"
+                          : isCombined
+                            ? "bg-blue-50/80 hover:bg-blue-100/70"
+                            : "hover:bg-neutral-50/70"
+                      }`}
+                    >
+                      <td className="py-3.5 px-3 text-center w-[44px]">
+                        <input 
+                          type="checkbox" 
+                          className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-neutral-950 cursor-pointer"
+                          checked={selectedShipmentIds.has(ship.id)}
+                          onChange={(e) => {
+                            const newSet = new Set(selectedShipmentIds);
+                            if (e.target.checked) newSet.add(ship.id);
+                            else newSet.delete(ship.id);
+                            setSelectedShipmentIds(newSet);
+                          }}
+                        />
+                      </td>
+                      <td className="py-3.5 px-3 align-top w-[170px]">
+                        <div>
+                          {/* 📦 합배송 대상 감지 배지 or 합배송 완료 표시 */}
+                          {isMergedParent ? (
+                            <div className="mb-1.5 flex items-center gap-1">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-800 border border-indigo-300 shadow-2xs">
+                                <Layers className="w-3 h-3 text-indigo-600" />
+                                <span>📦 통합 1박스 합배송 (대표)</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUnbundle(ship);
+                                }}
+                                className="text-[10px] font-bold text-neutral-500 hover:text-rose-600 hover:underline px-1 cursor-pointer"
+                                title="합배송 해제 및 원래 개별 주문으로 분리"
+                              >
+                                해제
+                              </button>
+                            </div>
+                          ) : isMergedChild ? (
+                            <div className="mb-1.5">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-neutral-100 text-neutral-600 border border-neutral-300">
+                                <span>↳ {ship.mergedIntoOrderId || pkg0.mergedIntoOrderId || memo.match(/\[합배송 완료\]\s*([^\s]+)/)?.[1] || "대표주문"}에 통합됨</span>
+                              </span>
+                            </div>
+                          ) : bundleGroup ? (
+                            <div className="mb-1.5">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenBundleModal(bundleGroup);
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 hover:border-blue-400 cursor-pointer shadow-2xs transition-all animate-pulse"
+                                title="클릭하여 48시간 이내 동일 주소지 주문들을 1박스로 합배송"
+                              >
+                                <Boxes className="w-3 h-3 text-blue-600" />
+                                <span>📦 주문 1개로 합치기 ({bundleGroup.shipmentIds.length}건)</span>
+                              </button>
+                            </div>
+                          ) : null}
 
                         <p className="font-extrabold text-neutral-950 text-xs font-mono break-all" title={ship.orderId}>
                           {ship.orderId}
@@ -1578,79 +1629,148 @@ export function OrdersManagement({
                         )}
                       </div>
                     </td>
-                    <td className="py-3.5 px-3 align-top w-[230px]">
-                      {ship.packages && ship.packages.length > 1 ? (
-                        <div className="space-y-2 w-full max-w-[280px]">
-                          {ship.packages.map((pkg: any, pi: number) => {
-                            const pkgItems = parseItemLines(pkg.items);
-                            return (
-                              <div key={pi} className="text-xs bg-blue-50/50 p-2.5 rounded-2xl border border-blue-200/70 space-y-1.5">
-                                <div className="flex items-center justify-between pb-1 border-b border-blue-200/50 mb-1">
-                                  <span className="font-extrabold text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-mono">
-                                    박스 {pkg.pkgIndex || pi + 1}
-                                  </span>
-                                  <span className="text-[11px] font-bold text-blue-700 font-mono">
-                                    총 {pkg.quantity || pkgItems.reduce((acc, x) => acc + x.qty, 0)}개
-                                  </span>
-                                </div>
-                                <div className="space-y-1.5">
-                                  {pkgItems.map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-2">
-                                      <img
-                                        src={getProductThumbnail(item.name)}
-                                        alt={item.name}
-                                        className="w-8 h-8 rounded-lg object-cover border border-neutral-200/80 shrink-0 bg-white shadow-2xs"
-                                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/product_1.webp"; }}
-                                      />
-                                      <div className="min-w-0 flex-1">
-                                        <p className="text-xs font-bold text-neutral-900 leading-snug line-clamp-2 break-words" title={item.name}>
-                                          {item.name}
-                                        </p>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                          {item.option && (
-                                            <span className="text-[10px] font-semibold text-neutral-500 bg-white px-1.5 py-0.2 rounded border border-neutral-200 font-mono">
-                                              {item.option}
-                                            </span>
-                                          )}
-                                          <span className="text-blue-700 font-mono text-[11px] font-extrabold">
-                                            {item.qty}개
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                    <td className="py-3 px-3 align-middle w-[210px] relative">
+                      {visibleItems.length === 0 ? (
+                        <span className="text-xs text-neutral-400 italic">상품 정보 없음</span>
                       ) : (
-                        <div className="space-y-2 w-full max-w-[280px]">
-                          {parseItemLines(ship.items).map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-2.5 py-0.5">
+                        <div data-items-dropdown className="relative flex items-center gap-1.5 flex-nowrap">
+                          {/* 최대 3개 썸네일 노출 */}
+                          {visibleItems.map((item, vIdx) => (
+                            <div
+                              key={vIdx}
+                              className="relative group/thumb shrink-0 cursor-pointer"
+                              title={`${item.name}${item.option ? ` (${item.option})` : ""} × ${item.qty}개 (클릭 시 상세정보)`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenItemsDropdownId(isDropdownOpen ? null : ship.id);
+                              }}
+                            >
                               <img
                                 src={getProductThumbnail(item.name)}
                                 alt={item.name}
-                                className="w-9 h-9 rounded-xl object-cover border border-neutral-200/80 shrink-0 bg-neutral-100 shadow-2xs"
-                                onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/product_1.webp"; }}
+                                className="w-10 h-10 rounded-xl object-cover border border-neutral-200/90 bg-white shadow-2xs hover:scale-105 hover:border-neutral-400 transition-all"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).src = "/product_1.webp";
+                                }}
                               />
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-neutral-950 leading-snug line-clamp-2 break-words" title={item.name}>
-                                  {item.name}
-                                </p>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                  {item.option && (
-                                    <span className="text-[10px] font-semibold text-neutral-500 bg-neutral-100 px-1.5 py-0.2 rounded border border-neutral-200 font-mono">
-                                      {item.option}
-                                    </span>
-                                  )}
-                                  <span className="text-[11px] font-extrabold text-neutral-800 font-mono">
-                                    {item.qty}개
-                                  </span>
-                                </div>
-                              </div>
+                              {item.qty > 1 && (
+                                <span className="absolute -bottom-1 -right-1 bg-neutral-950 text-white text-[9px] font-black font-mono px-1 rounded-full shadow-xs border border-white leading-tight">
+                                  {item.qty}
+                                </span>
+                              )}
                             </div>
                           ))}
+
+                          {/* 3개 초과 건 +N 드롭다운 메뉴 버튼 및 상세 보기 토글 */}
+                          {hasMore ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenItemsDropdownId(isDropdownOpen ? null : ship.id);
+                              }}
+                              className={`h-10 px-2 rounded-xl text-xs font-black transition-all flex items-center gap-1 cursor-pointer border shadow-2xs shrink-0 ${
+                                isDropdownOpen
+                                  ? "bg-blue-600 text-white border-blue-600 shadow-sm ring-2 ring-blue-300"
+                                  : "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-200 hover:border-neutral-300"
+                              }`}
+                              title={`외 ${remainingCount}개 상품 전체보기 (클릭)`}
+                            >
+                              <span>+{remainingCount}</span>
+                              <ChevronDown
+                                className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                  isDropdownOpen ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenItemsDropdownId(isDropdownOpen ? null : ship.id);
+                              }}
+                              className={`w-7 h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center cursor-pointer border shrink-0 ${
+                                isDropdownOpen
+                                  ? "bg-neutral-900 text-white border-neutral-900 shadow-xs"
+                                  : "bg-neutral-50 hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700 border-neutral-200/70"
+                              }`}
+                              title="상품명 및 상세 옵션 보기"
+                            >
+                              <ChevronDown
+                                className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                  isDropdownOpen ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                          )}
+
+                          {/* 드롭다운 메뉴: 상품명, 색상/옵션, 수량 제품정보 상세 표시 */}
+                          {isDropdownOpen && (
+                            <div
+                              className={`absolute z-50 left-0 ${
+                                isBottomRow ? "bottom-full mb-2" : "top-full mt-2"
+                              } w-80 sm:w-96 bg-white rounded-2xl border border-neutral-200 shadow-2xl p-4 text-left text-neutral-900 animate-in fade-in zoom-in-95 duration-150`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-neutral-100">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-extrabold text-xs text-neutral-950">
+                                    주문 상품 상세 ({allItems.length}개 품목)
+                                  </span>
+                                  <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 font-mono">
+                                    총 {totalOrderQty}개 수량
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setOpenItemsDropdownId(null)}
+                                  className="p-1 rounded-lg text-neutral-400 hover:text-neutral-950 hover:bg-neutral-100 cursor-pointer"
+                                  title="닫기"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+
+                              <div className="max-h-72 overflow-y-auto space-y-2.5 pr-1 divide-y divide-neutral-100">
+                                {allItems.map((item, iIdx) => (
+                                  <div
+                                    key={iIdx}
+                                    className={`flex items-start gap-3 ${iIdx > 0 ? "pt-2.5" : ""}`}
+                                  >
+                                    <img
+                                      src={getProductThumbnail(item.name)}
+                                      alt={item.name}
+                                      className="w-12 h-12 rounded-xl object-cover border border-neutral-200 bg-neutral-50 shrink-0 shadow-2xs"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).src = "/product_1.webp";
+                                      }}
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-xs font-bold text-neutral-950 leading-snug break-words">
+                                        {item.name}
+                                      </p>
+                                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                        {item.option && (
+                                          <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 font-mono">
+                                            색상/옵션: {item.option}
+                                          </span>
+                                        )}
+                                        <span className="text-[11px] font-extrabold text-neutral-800 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200 font-mono">
+                                          수량: {item.qty}개
+                                        </span>
+                                        {item.pkgIndex && (
+                                          <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 font-mono">
+                                            📦 박스 {item.pkgIndex}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </td>
@@ -1933,7 +2053,8 @@ export function OrdersManagement({
                       </div>
                     </td>
                   </tr>
-                ))
+                );
+              })
               )}
             </tbody>
           </table>

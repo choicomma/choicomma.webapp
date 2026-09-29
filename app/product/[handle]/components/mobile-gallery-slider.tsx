@@ -64,13 +64,13 @@ export function MobileGallerySlider({ product }: MobileGallerySliderProps) {
               key={`${image.url}-${index}-${image.selectedOptions
                 ?.map((o) => `${o.name},${o.value}`)
                 .join("-")}`}
-              className="flex-shrink-0 w-full h-full relative"
+              className="flex-shrink-0 w-full h-full relative flex items-center justify-center"
             >
               <Image
                 src={image.url}
                 alt={image.altText || product.title}
                 fill
-                className="object-contain object-top p-0"
+                className="object-contain object-center p-0"
                 quality={100}
                 priority={index === 0}
               />

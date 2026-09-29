@@ -142,26 +142,40 @@ export function getUserCoupons(userEmail?: string, userGrade?: string): Availabl
       ? "SILVER"
       : "GENERAL";
 
-  return all.filter((c) => {
-    const tType = c.targetType || "ALL";
+  const history = getCouponUsageHistory();
 
-    // 1. 전체 회원 대상
-    if (tType === "ALL") return true;
+  return all
+    .map((c) => {
+      const hasUsedInHistory = Boolean(
+        currentEmail &&
+        history.some(
+          (h) =>
+            (h.couponId === c.id || (c.code && h.couponId === c.code)) &&
+            (h.customerEmail || "").toLowerCase().trim() === currentEmail
+        )
+      );
+      return hasUsedInHistory ? { ...c, isUsed: true } : c;
+    })
+    .filter((c) => {
+      const tType = c.targetType || "ALL";
 
-    // 2. 등급별 지정 대상
-    if (tType === "GRADE") {
-      const grades = c.targetGrades || ["ALL"];
-      return grades.includes("ALL") || grades.includes(currentGrade);
-    }
+      // 1. 전체 회원 대상
+      if (tType === "ALL") return true;
 
-    // 3. 특정 회원 직접 지정 대상
-    if (tType === "CUSTOMER") {
-      const emails = (c.targetCustomerEmails || []).map((e) => e.toLowerCase().trim());
-      return Boolean(currentEmail && emails.includes(currentEmail));
-    }
+      // 2. 등급별 지정 대상
+      if (tType === "GRADE") {
+        const grades = c.targetGrades || ["ALL"];
+        return grades.includes("ALL") || grades.includes(currentGrade);
+      }
 
-    return true;
-  });
+      // 3. 특정 회원 직접 지정 대상
+      if (tType === "CUSTOMER") {
+        const emails = (c.targetCustomerEmails || []).map((e) => e.toLowerCase().trim());
+        return Boolean(currentEmail && emails.includes(currentEmail));
+      }
+
+      return true;
+    });
 }
 
 /**
@@ -200,6 +214,36 @@ export function saveAdminCoupons(coupons: AvailableCoupon[]): void {
   } catch (e) {
     console.error("Failed to save admin coupons:", e);
   }
+}
+
+/**
+ * Supabase 원격 DB(site_settings)로부터 최신 관리자 쿠폰 설정을 비동기 동기화합니다.
+ */
+export async function syncAdminCouponsFromSupabase(): Promise<AvailableCoupon[]> {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const { data, error } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "admin_coupons_config")
+      .maybeSingle();
+
+    if (!error && data?.value) {
+      const parsed = JSON.parse(data.value);
+      if (Array.isArray(parsed)) {
+        const sanitized = parsed.filter((c: any) => !isLegacyCoupon(c));
+        localStorage.setItem("admin_coupons", JSON.stringify(sanitized));
+        localStorage.removeItem("membership_user_coupons");
+        window.dispatchEvent(new CustomEvent("coupons_updated"));
+        return sanitized;
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to sync coupons from Supabase:", e);
+  }
+
+  return getAllUserCoupons();
 }
 
 /**
