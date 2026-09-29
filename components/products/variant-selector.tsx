@@ -249,7 +249,26 @@ export const useProductImages = (
     }, {} as Record<string, string>);
   }, [selectedOptions]);
 
-  const images = product?.images || [];
+  const rawImages = product?.images || [];
+  const images = useMemo(() => {
+    if (!rawImages.length) {
+      return product?.featuredImage ? [product.featuredImage] : [];
+    }
+
+    const detailHtml = (product as any)?.detailDescription || (product as any)?.descriptionHtml || "";
+    // If multiple images are present and all additional images exist in detailDescription, exclude them from gallery
+    if (rawImages.length > 1 && detailHtml) {
+      const extraImages = rawImages.slice(1);
+      const allExtrasInDetail = extraImages.every(
+        (img) => img.url && detailHtml.includes(img.url)
+      );
+      if (allExtrasInDetail) {
+        return [rawImages[0]];
+      }
+    }
+
+    return rawImages;
+  }, [rawImages, product?.featuredImage, (product as any)?.detailDescription, (product as any)?.descriptionHtml]);
 
   const variantImages = useMemo(() => {
     if (!optionsObject) return [];

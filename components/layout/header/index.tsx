@@ -10,7 +10,6 @@ import CartModal from "@/components/cart/modal";
 import { NavItem } from "@/lib/types";
 import { Collection } from "@/lib/sfcc/types";
 import { MainNoticeBanner } from "@/components/home/main-client-features";
-import { motion, AnimatePresence } from "motion/react";
 import { LanguageSelector } from "./language-selector";
 import { validateCustomerSession } from "@/lib/auth/customer-session";
 
@@ -41,27 +40,10 @@ interface HeaderProps {
   collections: Collection[];
 }
 
-
-
 export function Header({ collections }: HeaderProps) {
   const pathname = usePathname();
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -147,7 +129,7 @@ export function Header({ collections }: HeaderProps) {
     }),
   ];
 
-  const isLightHeaderRoute = pathname?.startsWith("/shop") || pathname === "/checkout" || pathname?.startsWith("/product");
+  const isLightHeaderRoute = pathname?.startsWith("/shop") || pathname === "/checkout" || pathname?.startsWith("/product") || pathname?.startsWith("/order");
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
@@ -161,30 +143,16 @@ export function Header({ collections }: HeaderProps) {
         "relative w-full pointer-events-auto overflow-visible transition-colors duration-300",
         isLightHeaderRoute ? "bg-white/95 backdrop-blur-md border-b border-neutral-200/60 shadow-xs" : ""
       )}>
-        {/* Animated Black Background Slide-Down Panel (Only on non-shop pages or when dark mode desired) */}
-        <AnimatePresence>
-          {isScrolled && !isLightHeaderRoute && (
-            <motion.div
-              initial={{ y: "-100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "-100%" }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute inset-0 bg-black/95 backdrop-blur-md shadow-xl z-0 overflow-hidden"
-            />
-          )}
-        </AnimatePresence>
-
         {/* Header Content Bar */}
         <div
           className={cn(
             "relative z-10 w-full pl-2 sm:pl-4 md:pl-6 pr-sides flex items-center justify-between md:grid md:grid-cols-12 md:gap-sides transition-colors duration-400 pt-0.5 pb-1 md:py-1",
-            isLightHeaderRoute ? "text-neutral-900" : isScrolled ? "text-white" : "text-neutral-900"
+            "text-neutral-900"
           )}
         >
           {/* Mobile: Logo on far left / Desktop: col-span-5 */}
           <Link href="/" className="md:col-span-5 flex items-center justify-start py-0 -ml-1 sm:ml-0" prefetch>
             <LogoSvg
-              isScrolled={isLightHeaderRoute ? false : isScrolled}
               className="cursor-pointer justify-start"
             />
           </Link>
@@ -194,7 +162,7 @@ export function Header({ collections }: HeaderProps) {
             <div
               className={cn(
                 "items-center gap-2 h-11 px-4 rounded-full backdrop-blur-md flex transition-colors duration-400 shadow-sm",
-                isScrolled ? "bg-white/10 text-white" : "bg-black/5 text-neutral-900"
+                "bg-black/5 text-neutral-900 border border-black/5"
               )}
             >
               <ul className="flex items-center gap-6">
@@ -206,10 +174,6 @@ export function Header({ collections }: HeaderProps) {
                         "font-bold text-sm transition-colors duration-300 uppercase flex items-center gap-1.5 whitespace-nowrap",
                         item.isSecret
                           ? "bg-amber-400 text-neutral-950 px-2.5 py-0.5 rounded-full font-black shadow-xs hover:bg-amber-300"
-                          : isScrolled
-                          ? pathname === item.href
-                            ? "text-white font-black"
-                            : "text-neutral-300 hover:text-white"
                           : pathname === item.href
                             ? "text-black font-black"
                             : "text-neutral-700 hover:text-black"
@@ -222,33 +186,27 @@ export function Header({ collections }: HeaderProps) {
                 ))}
               </ul>
 
-              <div className={cn("w-px h-4 mx-2", isScrolled ? "bg-white/20" : "bg-black/10")} />
+              <div className="w-px h-4 mx-2 bg-black/10" />
 
-              <LanguageSelector isScrolled={isScrolled} />
+              <LanguageSelector />
 
-              <div className={cn("w-px h-4 mx-2", isScrolled ? "bg-white/20" : "bg-black/10")} />
+              <div className="w-px h-4 mx-2 bg-black/10" />
 
               <CartModal
                 variant="ghost"
-                className={cn(
-                  "transition-colors duration-400 h-8 px-2.5 rounded-full border-0 bg-transparent hover:bg-transparent shadow-none font-bold text-sm",
-                  isScrolled ? "text-white hover:text-neutral-300" : "text-neutral-900 hover:text-black"
-                )}
+                className="transition-colors duration-400 h-8 px-2.5 rounded-full border-0 bg-transparent hover:bg-transparent shadow-none font-bold text-sm text-neutral-900 hover:text-black"
               />
             </div>
           </nav>
 
           {/* Mobile: Language Selector, Cart Icon & MENU on far right */}
           <div className="flex items-center gap-1.5 md:hidden">
-            <LanguageSelector isScrolled={isScrolled} />
+            <LanguageSelector />
             <CartModal
               variant="ghost"
-              className={cn(
-                "transition-colors duration-400 p-2 border-0 bg-transparent hover:bg-transparent shadow-none",
-                isScrolled ? "text-white hover:text-neutral-300" : "text-neutral-900 hover:text-black"
-              )}
+              className="transition-colors duration-400 p-2 border-0 bg-transparent hover:bg-transparent shadow-none text-neutral-900 hover:text-black"
             />
-            <MobileMenu collections={collections} isScrolled={isScrolled} />
+            <MobileMenu collections={collections} />
           </div>
         </div>
       </div>

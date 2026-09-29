@@ -78,7 +78,7 @@ export function RelatedProducts() {
               </div>
               <div className="flex flex-col items-start gap-1">
                 <span className="text-xs font-medium text-neutral-900 uppercase tracking-wider truncate w-full">
-                  {translateProductTitle(product.title, currentLang)}
+                  {translateProductTitle(product.title, currentLang)?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim()}
                 </span>
                 <span className="text-xs text-neutral-600 font-bold">{price}</span>
               </div>

@@ -71,18 +71,18 @@ interface ProductsManagementProps {
   toggleStock: (id: string) => void;
   toggleMainFeatured: (id: string) => void;
   setIsAddModalOpen: (val: boolean) => void;
-  setNewTitle: (val: string) => void;
-  setNewPrice: (val: string) => void;
-  setNewDescription: (val: string) => void;
+  setNewTitle?: (val: string) => void;
+  setNewPrice?: (val: string) => void;
+  setNewDescription?: (val: string) => void;
   setNewDetailDescription?: (val: string) => void;
-  setNewImageUrl: (val: string) => void;
-  setNewImages: (val: string[]) => void;
-  setNewUrlInput: (val: string) => void;
-  setNewFabricImage: (val: string) => void;
-  setNewColors: (val: string[]) => void;
-  setNewIsTimeSale: (val: boolean) => void;
-  setNewTimeSaleHours: (val: string) => void;
-  setNewTimeSaleMinutes: (val: string) => void;
+  setNewImageUrl?: (val: string) => void;
+  setNewImages?: (val: string[]) => void;
+  setNewUrlInput?: (val: string) => void;
+  setNewFabricImage?: (val: string) => void;
+  setNewColors?: (val: string[]) => void;
+  setNewIsTimeSale?: (val: boolean) => void;
+  setNewTimeSaleHours?: (val: string) => void;
+  setNewTimeSaleMinutes?: (val: string) => void;
   handleBulkAddProducts?: (newProducts: any[]) => void;
   handleMoveProduct?: (id: string, direction: "up" | "down") => void;
   handleBulkDeleteProducts?: (targetIds: string[]) => void;
@@ -1105,18 +1105,18 @@ export function ProductsManagement({
         <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
           <button
             onClick={() => {
-              setNewTitle("");
-              setNewPrice("");
-              setNewDescription("");
-              if (setNewDetailDescription) setNewDetailDescription("");
-              setNewImageUrl("");
-              setNewImages([]);
-              setNewUrlInput("");
-              setNewFabricImage("");
-              setNewColors([]);
-              setNewIsTimeSale(false);
-              setNewTimeSaleHours("24");
-              setNewTimeSaleMinutes("0");
+              setNewTitle?.("");
+              setNewPrice?.("");
+              setNewDescription?.("");
+              setNewDetailDescription?.("");
+              setNewImageUrl?.("");
+              setNewImages?.([]);
+              setNewUrlInput?.("");
+              setNewFabricImage?.("");
+              setNewColors?.([]);
+              setNewIsTimeSale?.(false);
+              setNewTimeSaleHours?.("24");
+              setNewTimeSaleMinutes?.("0");
               setIsAddModalOpen(true);
             }}
             className="flex items-center gap-2 bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md text-xs cursor-pointer"

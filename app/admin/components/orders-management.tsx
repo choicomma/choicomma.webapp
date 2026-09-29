@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
+  Truck,
   ShoppingBag,
   Plus,
   Package,
@@ -64,6 +65,48 @@ interface OrdersManagementProps {
   handleDeleteShipment: (id: string) => void;
   cjPrintData?: any;
   setCjPrintData?: (val: any) => void;
+  triggerToast?: (msg: string) => void;
+  isAddShipmentModalOpen?: boolean;
+  editingShipment?: any;
+  setEditingShipment?: (val: any) => void;
+  isCjConfigModalOpen?: boolean;
+  newShipmentRecipient?: string;
+  setNewShipmentRecipient?: (val: string) => void;
+  newShipmentPhone?: string;
+  setNewShipmentPhone?: (val: string) => void;
+  newShipmentAltPhone?: string;
+  setNewShipmentAltPhone?: (val: string) => void;
+  newShipmentZipCode?: string;
+  setNewShipmentZipCode?: (val: string) => void;
+  newShipmentAddress?: string;
+  setNewShipmentAddress?: (val: string) => void;
+  newShipmentDetailAddress?: string;
+  setNewShipmentDetailAddress?: (val: string) => void;
+  newShipmentItems?: string;
+  setNewShipmentItems?: (val: string) => void;
+  newShipmentQuantity?: number;
+  setNewShipmentQuantity?: (val: number) => void;
+  newShipmentShippingMemo?: string;
+  setNewShipmentShippingMemo?: (val: string) => void;
+  newShipmentCarrier?: string;
+  setNewShipmentCarrier?: (val: string) => void;
+  newShipmentTracking?: string;
+  setNewShipmentTracking?: (val: string) => void;
+  newShipmentStatus?: string;
+  setNewShipmentStatus?: (val: string) => void;
+  newShipmentOrderId?: string;
+  setNewShipmentOrderId?: (val: string) => void;
+  editShipmentTracking?: string;
+  setEditShipmentTracking?: (val: string) => void;
+  editShipmentCarrier?: string;
+  setEditShipmentCarrier?: (val: string) => void;
+  editShipmentStatus?: string;
+  setEditShipmentStatus?: (val: string) => void;
+  shippingPolicy?: any;
+  setShippingPolicy?: (val: any) => void;
+  handleAddShipmentSubmit?: () => void;
+  handleOpenNewShipmentPostcode?: () => void;
+  handleSaveEditShipment?: () => void;
 }
 
 export function OrdersManagement({
@@ -88,6 +131,48 @@ export function OrdersManagement({
   handleDeleteShipment,
   cjPrintData,
   setCjPrintData,
+  triggerToast = () => {},
+  isAddShipmentModalOpen = false,
+  editingShipment = null,
+  setEditingShipment = () => {},
+  isCjConfigModalOpen = false,
+  newShipmentRecipient = "",
+  setNewShipmentRecipient = () => {},
+  newShipmentPhone = "",
+  setNewShipmentPhone = () => {},
+  newShipmentAltPhone = "",
+  setNewShipmentAltPhone = () => {},
+  newShipmentZipCode = "",
+  setNewShipmentZipCode = () => {},
+  newShipmentAddress = "",
+  setNewShipmentAddress = () => {},
+  newShipmentDetailAddress = "",
+  setNewShipmentDetailAddress = () => {},
+  newShipmentItems = "",
+  setNewShipmentItems = () => {},
+  newShipmentQuantity = 1,
+  setNewShipmentQuantity = () => {},
+  newShipmentShippingMemo = "",
+  setNewShipmentShippingMemo = () => {},
+  newShipmentCarrier = "CJ대한통운",
+  setNewShipmentCarrier = () => {},
+  newShipmentTracking = "",
+  setNewShipmentTracking = () => {},
+  newShipmentStatus = "Pending",
+  setNewShipmentStatus = () => {},
+  newShipmentOrderId = "",
+  setNewShipmentOrderId = () => {},
+  editShipmentTracking = "",
+  setEditShipmentTracking = () => {},
+  editShipmentCarrier = "CJ대한통운",
+  setEditShipmentCarrier = () => {},
+  editShipmentStatus = "Pending",
+  setEditShipmentStatus = () => {},
+  shippingPolicy = {},
+  setShippingPolicy = () => {},
+  handleAddShipmentSubmit = () => {},
+  handleOpenNewShipmentPostcode = () => {},
+  handleSaveEditShipment = () => {},
 }: OrdersManagementProps) {
   const [isMounted, setIsMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -3322,6 +3407,515 @@ export function OrdersManagement({
                 <span>합배송 확정 및 1박스로 묶기</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ADD SHIPMENT MODAL (택배사 접수 표준 양식 맞춤) */}
+      {isAddShipmentModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-5 my-8 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
+                  <Truck className="w-5 h-5 text-sky-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-neutral-950">수동 주문/배송 접수 등록</h3>
+                  <p className="text-xs text-neutral-500">CJ대한통운 LoIS 파일접수 규격 10개 필드 완벽 호환</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddShipmentModalOpen(false)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddShipmentSubmit} className="space-y-4 overflow-y-auto pr-1 flex-1">
+              {/* 고객주문번호 */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">고객주문번호</label>
+                <input
+                  type="text"
+                  value={newShipmentOrderId}
+                  onChange={(e) => setNewShipmentOrderId(e.target.value)}
+                  placeholder="미입력 시 CH + 날짜 + 주문순서 (예: CH20260916-001) 자동 채번"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              {/* 회원 정보 관리에서 빠른 불러오기 */}
+              {customersList && customersList.length > 0 && (
+                <div className="bg-sky-50/70 border border-sky-200/80 rounded-2xl p-3 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold text-sky-950">
+                    <span className="flex items-center gap-1.5">
+                      <span>👤</span> 회원 정보 관리에서 불러오기
+                    </span>
+                    <span className="text-[10px] text-sky-600 font-normal">선택 시 이름, 연락처, 주소가 자동 입력됩니다</span>
+                  </div>
+                  <select
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      if (!selectedId) return;
+                      const cust = customersList.find((c: any) => c.id === selectedId);
+                      if (cust) {
+                        setNewShipmentRecipient(cust.name || "");
+                        setNewShipmentPhone(cust.phone || "");
+                        let zip = cust.postcode || "";
+                        let addr = cust.address || "";
+                        let detail = cust.detailAddress || "";
+                        const zipMatch = addr.match(/^\[(\d{5})\]\s*(.*)$/);
+                        if (zipMatch) {
+                          zip = zipMatch[1];
+                          addr = zipMatch[2];
+                        }
+                        setNewShipmentZipCode(zip);
+                        setNewShipmentAddress(addr !== "-" ? addr : "");
+                        setNewShipmentDetailAddress(detail);
+                      }
+                    }}
+                    defaultValue=""
+                    className="w-full bg-white border border-sky-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-sky-600 cursor-pointer"
+                  >
+                    <option value="">-- 등록된 회원 선택 ({customersList.length.toLocaleString()}명) --</option>
+                    {customersList.map((c: any, index: number) => (
+                      <option key={`${c.id || 'cust'}-${index}`} value={c.id}>
+                        [{c.grade || "일반"}] {c.name} ({c.phone || c.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* 수령인 성명 */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">받는분 성명 *</label>
+                <input
+                  type="text"
+                  required
+                  value={newShipmentRecipient}
+                  onChange={(e) => setNewShipmentRecipient(e.target.value)}
+                  placeholder="예: 홍길동"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              {/* 전화번호 & 기타연락처 */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">받는분 전화번호 *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newShipmentPhone}
+                    onChange={(e) => setNewShipmentPhone(e.target.value)}
+                    placeholder="010-1234-5678"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">기타 연락처 (선택)</label>
+                  <input
+                    type="text"
+                    value={newShipmentAltPhone}
+                    onChange={(e) => setNewShipmentAltPhone(e.target.value)}
+                    placeholder="02-555-1234"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+              </div>
+
+              {/* 주소 및 우편번호 */}
+              <div className="space-y-2 bg-neutral-50/70 p-3.5 rounded-2xl border border-neutral-200/80">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-extrabold text-neutral-900">배송지 주소 / 우편번호 *</label>
+                  <button
+                    type="button"
+                    onClick={handleOpenNewShipmentPostcode}
+                    className="bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-[11px] px-2.5 py-1 rounded-lg transition-all cursor-pointer shadow-2xs"
+                  >
+                    우편번호 검색
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    value={newShipmentZipCode}
+                    onChange={(e) => setNewShipmentZipCode(e.target.value)}
+                    placeholder="우편번호"
+                    className="col-span-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-mono text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                  />
+                  <input
+                    type="text"
+                    required
+                    value={newShipmentAddress}
+                    onChange={(e) => setNewShipmentAddress(e.target.value)}
+                    placeholder="기본 주소 (도로명 / 지번)"
+                    className="col-span-2 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-950 font-medium focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={newShipmentDetailAddress}
+                  onChange={(e) => setNewShipmentDetailAddress(e.target.value)}
+                  placeholder="상세 주소 (동/호수, 층 등)"
+                  className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              {/* 품목명 & 박스수량 */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">품목명 *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newShipmentItems}
+                    onChange={(e) => setNewShipmentItems(e.target.value)}
+                    placeholder="예: 클래식 울 싱글 재킷 (BLACK / 1)"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+                <div className="col-span-1">
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">박스 수량</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newShipmentQuantity}
+                    onChange={(e) => setNewShipmentQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-mono font-bold text-center text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+              </div>
+
+              {/* 배송메세지1 */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">배송메세지1</label>
+                <input
+                  type="text"
+                  value={newShipmentShippingMemo}
+                  onChange={(e) => setNewShipmentShippingMemo(e.target.value)}
+                  placeholder="예: 부재시 문앞에 놓아주세요 (안전배송)"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              {/* 택배사 & 운송장 번호 */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">택배사</label>
+                  <select
+                    value={newShipmentCarrier}
+                    onChange={(e) => setNewShipmentCarrier(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  >
+                    <option value="CJ대한통운">CJ대한통운</option>
+                    <option value="우체국택배">우체국택배</option>
+                    <option value="한진택배">한진택배</option>
+                    <option value="로젠택배">로젠택배</option>
+                    <option value="롯데택배">롯데택배</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">운송장 번호 (선택)</label>
+                  <input
+                    type="text"
+                    value={newShipmentTracking}
+                    onChange={(e) => setNewShipmentTracking(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    placeholder="미부여 시 '-' 유지"
+                  />
+                </div>
+              </div>
+
+              {/* 초기 배송 상태 */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">초기 배송 상태</label>
+                <select
+                  value={newShipmentStatus}
+                  onChange={(e) => setNewShipmentStatus(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                >
+                  <option value="Pending">배송 준비 중 (로이스 엑셀 접수 대상)</option>
+                  <option value="In Transit">배송 중 (In Transit)</option>
+                  <option value="Delivered">배송 완료 (Delivered)</option>
+                </select>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsAddShipmentModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Truck className="w-4 h-4 text-sky-400" />
+                  <span>주문/배송 접수 등록</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT SHIPMENT MODAL */}
+      {editingShipment && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
+                  <Pencil className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-neutral-950">운송장 / 배송 상태 변경</h3>
+                  <p className="text-xs text-neutral-500 font-mono">{editingShipment.id} ({editingShipment.recipient}님)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingShipment(null)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditShipment} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">택배사 선택</label>
+                <select
+                  value={editShipmentCarrier}
+                  onChange={(e) => setEditShipmentCarrier(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                >
+                  <option value="CJ대한통운">CJ대한통운</option>
+                  <option value="우체국택배">우체국택배</option>
+                  <option value="한진택배">한진택배</option>
+                  <option value="로젠택배">로젠택배</option>
+                  <option value="롯데택배">롯데택배</option>
+                </select>
+              </div>
+
+              {editingShipment.packages && editingShipment.packages.length > 1 ? (
+                <div className="space-y-3 p-3.5 bg-purple-50/60 rounded-2xl border border-purple-200">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-purple-900">📦 분리배송 박스별 운송장 번호 직접 입력</label>
+                    <span className="text-[10px] text-purple-600 font-bold">{editingShipment.packages.length}개 박스</span>
+                  </div>
+                  {editingShipment.packages.map((pkg: any, pIdx: number) => (
+                    <div key={pIdx} className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-extrabold text-neutral-800">박스 {pkg.pkgIndex || pIdx + 1} ({pkg.quantity || 1}개)</span>
+                        <span className="text-neutral-500 truncate max-w-[150px]">{pkg.items}</span>
+                      </div>
+                      <input
+                        type="text"
+                        value={pkg.trackingNumber === "-" ? "" : pkg.trackingNumber || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const updatedPkgs = editingShipment.packages.map((p: any, i: number) =>
+                            i === pIdx ? { ...p, trackingNumber: val } : p
+                          );
+                          setEditingShipment({ ...editingShipment, packages: updatedPkgs });
+                          if (pIdx === 0) setEditShipmentTracking(val);
+                        }}
+                        placeholder={`박스 ${pkg.pkgIndex || pIdx + 1} 운송장 번호 직접 입력`}
+                        className="w-full bg-white border border-neutral-200 rounded-xl px-3.5 py-2 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-purple-600"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">운송장 번호</label>
+                  <input
+                    type="text"
+                    value={editShipmentTracking}
+                    onChange={(e) => setEditShipmentTracking(e.target.value)}
+                    placeholder="운송장 번호 입력"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">배송 상태 변경</label>
+                <select
+                  value={editShipmentStatus}
+                  onChange={(e) => setEditShipmentStatus(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                >
+                  <option value="Pending">배송 준비 중 (Pending)</option>
+                  <option value="In Transit">배송 중 (In Transit)</option>
+                  <option value="Delivered">배송 완료 (Delivered)</option>
+                </select>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingShipment(null)}
+                  className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
+                >
+                  변경사항 저장
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* SHIPPING POLICY & CJ LOGISTICS CONFIG MODAL */}
+      {isCjConfigModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-950 text-white rounded-2xl shadow-sm">
+                  <Truck className="w-5 h-5 text-sky-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-neutral-950">배송 정책 설정</h3>
+                  <p className="text-xs text-neutral-500">기본 배송비, 무료배송 기준 및 배송 정책 설정</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCjConfigModalOpen(false)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("shipping_policy", JSON.stringify(shippingPolicy));
+                  localStorage.setItem("admin_shipping_policy", JSON.stringify(shippingPolicy));
+                  window.dispatchEvent(new CustomEvent("shipping_policy_updated"));
+                  window.dispatchEvent(new CustomEvent("storage"));
+                }
+                try {
+                  await fetch("/api/shipping/policy", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(shippingPolicy),
+                  });
+                } catch (apiErr) {
+                  console.warn("Failed to persist shipping policy to server:", apiErr);
+                }
+                setIsCjConfigModalOpen(false);
+                triggerToast("배송 정책 설정이 영구 저장되었습니다.");
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">기본 배송비 (원) *</label>
+                    <input
+                      type="number"
+                      required
+                      value={shippingPolicy.baseFee}
+                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, baseFee: parseInt(e.target.value) || 0 })}
+                      placeholder="4000"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">무료 배송 기준 금액 (원) *</label>
+                    <input
+                      type="number"
+                      required
+                      value={shippingPolicy.freeShippingThreshold}
+                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, freeShippingThreshold: parseInt(e.target.value) || 0 })}
+                      placeholder="100000"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-amber-600 focus:outline-none focus:border-neutral-950"
+                    />
+                    <span className="text-[11px] text-neutral-400 mt-0.5 block">예: 100,000원 이상 결제 시 무료배송</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">도서산간/제주 추가 배송비 (원)</label>
+                    <input
+                      type="number"
+                      value={shippingPolicy.islandExtraFee}
+                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, islandExtraFee: parseInt(e.target.value) || 0 })}
+                      placeholder="4000"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">반품/교환 왕복 배송비 (원)</label>
+                    <input
+                      type="number"
+                      value={shippingPolicy.returnExchangeFee}
+                      onChange={(e) => setShippingPolicy({ ...shippingPolicy, returnExchangeFee: parseInt(e.target.value) || 0 })}
+                      placeholder="8000"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">기본 지정 택배사</label>
+                  <input
+                    type="text"
+                    value={shippingPolicy.courierName}
+                    onChange={(e) => setShippingPolicy({ ...shippingPolicy, courierName: e.target.value })}
+                    placeholder="CJ대한통운 (주계약)"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">배송 안내 문구 (고객 노출)</label>
+                  <textarea
+                    rows={2}
+                    value={shippingPolicy.shippingNotice}
+                    onChange={(e) => setShippingPolicy({ ...shippingPolicy, shippingNotice: e.target.value })}
+                    placeholder="평일 14:00 이전 결제 완료 시 당일 출고됩니다."
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-3 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end items-center border-t border-neutral-100">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCjConfigModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
+                  >
+                    설정 저장
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

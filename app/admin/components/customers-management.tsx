@@ -1,4 +1,5 @@
 "use client";
+import { Pencil, UserPlus, Shield, Mail, Phone, Crown, Lock as LockIcon, X, Plus, Minus } from "lucide-react";
 
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
@@ -18,6 +19,30 @@ interface CustomersManagementProps {
   handleExcelFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleResetCustomerData?: () => void;
   isCustomersLoaded?: boolean;
+  isAddCustomerModalOpen?: boolean;
+  newCustName?: string;
+  setNewCustName?: (val: string) => void;
+  newCustEmail?: string;
+  setNewCustEmail?: (val: string) => void;
+  newCustPhone?: string;
+  setNewCustPhone?: (val: string) => void;
+  newCustGrade?: string;
+  setNewCustGrade?: (val: string) => void;
+  newCustPoints?: number;
+  setNewCustPoints?: (val: number) => void;
+  newCustAddress?: string;
+  setNewCustAddress?: (val: string) => void;
+  handleAddCustomerSubmit?: (e: React.FormEvent) => void;
+  editingCustomer?: any;
+  setEditingCustomer?: (c: any) => void;
+  editCustGrade?: string;
+  setEditCustGrade?: (val: string) => void;
+  editCustPointAmount?: string;
+  setEditCustPointAmount?: (val: string) => void;
+  editCustAddress?: string;
+  setEditCustAddress?: (val: string) => void;
+  handleApplyCustomerPoints?: (action: "add" | "sub", customAmount?: number) => void;
+  handleSaveEditCustomer?: (e: React.FormEvent) => void;
 }
 
 export function CustomersManagement({
@@ -34,6 +59,30 @@ export function CustomersManagement({
   handleExcelFileUpload,
   handleResetCustomerData,
   isCustomersLoaded,
+  isAddCustomerModalOpen = false,
+  newCustName = "",
+  setNewCustName = () => {},
+  newCustEmail = "",
+  setNewCustEmail = () => {},
+  newCustPhone = "",
+  setNewCustPhone = () => {},
+  newCustGrade = "BASIC",
+  setNewCustGrade = () => {},
+  newCustPoints = 0,
+  setNewCustPoints = () => {},
+  newCustAddress = "",
+  setNewCustAddress = () => {},
+  handleAddCustomerSubmit = (e) => e.preventDefault(),
+  editingCustomer = null,
+  setEditingCustomer = () => {},
+  editCustGrade = "BASIC",
+  setEditCustGrade = () => {},
+  editCustPointAmount = "",
+  setEditCustPointAmount = () => {},
+  editCustAddress = "",
+  setEditCustAddress = () => {},
+  handleApplyCustomerPoints = () => {},
+  handleSaveEditCustomer = (e) => e.preventDefault(),
 }: CustomersManagementProps) {
   const [customerPage, setCustomerPage] = useState(1);
   const CUSTOMERS_PER_PAGE = 25;
@@ -397,6 +446,278 @@ export function CustomersManagement({
           )}
         </div>
       </div>
+      {/* ADD CUSTOMER MODAL */}
+      {isAddCustomerModalOpen && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-500 text-white rounded-2xl shadow-sm">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-neutral-950">신규 회원 등록</h3>
+                  <p className="text-xs text-neutral-500">관리자가 직접 회원 계정을 새로 생성합니다.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddCustomerModalOpen(false)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCustomerSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">회원 이름 *</label>
+                <input
+                  type="text"
+                  required
+                  value={newCustName}
+                  onChange={(e) => setNewCustName(e.target.value)}
+                  placeholder="예: 홍길동"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">이메일 주소 *</label>
+                <input
+                  type="email"
+                  required
+                  value={newCustEmail}
+                  onChange={(e) => setNewCustEmail(e.target.value)}
+                  placeholder="hong@example.com"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">전화번호</label>
+                <input
+                  type="text"
+                  value={newCustPhone}
+                  onChange={(e) => setNewCustPhone(e.target.value)}
+                  placeholder="010-0000-0000"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">배송지 주소</label>
+                <input
+                  type="text"
+                  value={newCustAddress}
+                  onChange={(e) => setNewCustAddress(e.target.value)}
+                  placeholder="(우편번호) 주소 상세주소"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">초기 회원 등급</label>
+                  <select
+                    value={newCustGrade}
+                    onChange={(e) => setNewCustGrade(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                  >
+                    <option value="GENERAL">일반 (GENERAL)</option>
+                    <option value="SILVER">실버 (SILVER)</option>
+                    <option value="GOLD">골드 (GOLD)</option>
+                    <option value="PLATINUM">플래티넘 (PLATINUM)</option>
+                    <option value="VVIP">VVIP</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">초기 적립금 (₩)</label>
+                  <input
+                    type="number"
+                    value={newCustPoints}
+                    onChange={(e) => setNewCustPoints(parseInt(e.target.value, 10) || 0)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddCustomerModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <UserPlus className="w-4 h-4 text-emerald-400" />
+                  <span>회원 등록 완료</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT CUSTOMER MODAL */}
+      {editingCustomer && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-neutral-950 text-white rounded-2xl shadow-sm">
+                  <Pencil className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-neutral-950">회원 정보 / 등급 수정</h3>
+                  <p className="text-xs text-neutral-500 font-mono">{editingCustomer.name} ({editingCustomer.email})</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingCustomer(null)}
+                className="p-2 text-neutral-400 hover:text-neutral-900 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditCustomer} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">회원 등급 변경</label>
+                <select
+                  value={editCustGrade}
+                  onChange={(e) => setEditCustGrade(e.target.value)}
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                >
+                  <option value="GENERAL">일반 (GENERAL)</option>
+                  <option value="SILVER">실버 (SILVER)</option>
+                  <option value="GOLD">골드 (GOLD)</option>
+                  <option value="PLATINUM">플래티넘 (PLATINUM)</option>
+                  <option value="VVIP">VVIP</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">
+                  배송지 주소
+                </label>
+                <div className="w-full bg-neutral-100/90 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-700 font-medium select-all cursor-default">
+                  {editingCustomer.address || editCustAddress || "등록된 배송지 주소가 없습니다."}
+                </div>
+              </div>
+
+              {/* 적립금 지급 / 차감 섹션 (금액 입력 후 지급/차감 버튼 클릭 시 즉시 반영) */}
+              <div className="bg-neutral-50/90 border border-neutral-200/90 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-neutral-800">
+                    적립금 지급 / 차감 관리
+                  </label>
+                  <span className="text-xs font-medium text-neutral-500">
+                    현재 보유: <strong className="font-extrabold text-neutral-950 font-mono text-sm">₩{Number(editingCustomer.points || 0).toLocaleString()}</strong>
+                  </span>
+                </div>
+
+                {/* 금액 입력란 + [지급] [차감] 버튼 그룹 */}
+                <div className="flex flex-col sm:flex-row items-stretch gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={editCustPointAmount ? Number(editCustPointAmount.replace(/[^0-9]/g, "")).toLocaleString() : ""}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9]/g, "");
+                        setEditCustPointAmount(raw);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyCustomerPoints("add");
+                        }
+                      }}
+                      placeholder="금액 입력 (예: 5000)"
+                      className="w-full bg-white border border-neutral-200 rounded-xl pl-3.5 pr-8 py-2.5 text-sm font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-neutral-500 pointer-events-none">
+                      원
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleApplyCustomerPoints("add")}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all cursor-pointer"
+                      title="입력한 금액만큼 적립금을 즉시 지급합니다"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>지급</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyCustomerPoints("sub")}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all cursor-pointer"
+                      title="입력한 금액만큼 적립금을 즉시 차감합니다"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                      <span>차감</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 빠른 금액 증액 칩 */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  {[1000, 5000, 10000, 50000].map((quick) => (
+                    <button
+                      key={quick}
+                      type="button"
+                      onClick={() => {
+                        const curr = parseInt(editCustPointAmount || "0", 10);
+                        setEditCustPointAmount(String(curr + quick));
+                      }}
+                      className="text-[11px] font-bold px-2.5 py-1 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-700 rounded-lg transition-colors cursor-pointer"
+                    >
+                      +{quick.toLocaleString()}원
+                    </button>
+                  ))}
+                  {editCustPointAmount && (
+                    <button
+                      type="button"
+                      onClick={() => setEditCustPointAmount("")}
+                      className="text-[11px] font-bold px-2 py-1 text-neutral-400 hover:text-neutral-700 rounded-lg transition-colors cursor-pointer ml-auto"
+                    >
+                      초기화
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-3 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingCustomer(null)}
+                  className="px-5 py-2.5 rounded-xl border border-neutral-200 font-bold text-xs text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
+                >
+                  변경사항 저장
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

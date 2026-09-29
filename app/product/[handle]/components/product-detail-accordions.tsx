@@ -171,7 +171,7 @@ export function ProductDetailAccordions({ product }: ProductDetailAccordionsProp
     ? prod.detailDescription
     : hasDistinctDetailedInfo
     ? prod.detailedInfo
-    : `• 디자이너 노트: 본 상품(${product.title})은 choicomma 오리지널 실루엣 디자인으로 섬세하게 디테일을 더해 연출된 메인 컬렉션 작품입니다.\n• 소재 및 아웃핏: 최고급 소재와 감각적인 핏 설계로 바디 라인을 아름답게 잡아줍니다.\n• 관리 안내: 전문 드라이클리닝을 권장합니다.`;
+    : `• 디자이너 노트: 본 상품(${product.title.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim()})은 choicomma 오리지널 실루엣 디자인으로 섬세하게 디테일을 더해 연출된 메인 컬렉션 작품입니다.\n• 소재 및 아웃핏: 최고급 소재와 감각적인 핏 설계로 바디 라인을 아름답게 잡아줍니다.\n• 관리 안내: 전문 드라이클리닝을 권장합니다.`;
 
   const isHtmlContent = typeof detailText === "string" && (detailText.includes("<img") || detailText.includes("<p>") || detailText.includes("<div"));
 

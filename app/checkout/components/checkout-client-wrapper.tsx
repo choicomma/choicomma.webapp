@@ -191,10 +191,10 @@ export default function CheckoutClientWrapper() {
     let isSubscribed = true;
 
     const loadAndApplyCoupons = async () => {
-      // 신규 기기/브라우저 접속 시에도 최신 쿠폰 혜택이 즉시 반영되도록 Supabase 원격 동기화
-      if (localStorage.getItem("admin_coupons") === null) {
+      // 최신 쿠폰 혜택이 주문서에 즉시 반영되도록 Supabase 원격 동기화
+      try {
         await syncAdminCouponsFromSupabase();
-      }
+      } catch (e) {}
 
       if (!isSubscribed) return;
 
@@ -220,8 +220,11 @@ export default function CheckoutClientWrapper() {
 
     loadAndApplyCoupons();
 
+    window.addEventListener("coupons_updated", loadAndApplyCoupons);
+
     return () => {
       isSubscribed = false;
+      window.removeEventListener("coupons_updated", loadAndApplyCoupons);
     };
   }, [formData.ordererEmail, userGrade]);
 

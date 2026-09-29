@@ -9,7 +9,8 @@ import { ProductImage } from "./product-image";
 import { QuickOptionModal } from "@/components/products/quick-option-modal";
 import { FeaturedProductLabel } from "@/components/products/featured-product-label";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Plus, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, Plus, Clock, ChevronLeft, ChevronRight, Ticket } from "lucide-react";
+import { getAvailableCoupons } from "@/lib/membership/coupons";
 
 import { translateProductTitle, translateProductDescription, translateUiText, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 
@@ -17,6 +18,8 @@ export const ProductCard = ({ product }: { product: Product }) => {
   const [currentLang, setCurrentLang] = React.useState("ko");
   const [timeSaleDiscount, setTimeSaleDiscount] = React.useState<number | null>(null);
   const [secretSaleInfo, setSecretSaleInfo] = React.useState<{ discount: number; title?: string } | null>(null);
+  const [bestCouponDiscount, setBestCouponDiscount] = React.useState<number>(0);
+  const [bestCouponTitle, setBestCouponTitle] = React.useState<string>("");
 
   React.useEffect(() => {
     setCurrentLang(getCurrentLanguage());
@@ -126,12 +129,121 @@ export const ProductCard = ({ product }: { product: Product }) => {
   const maxPrice = parseFloat(product.priceRange?.maxVariantPrice?.amount || (product as any).price || "0");
   const origPriceNum = maxPrice > basePrice ? maxPrice : basePrice;
 
-  let finalPriceNum = basePrice;
+  // Calculate Best Available Coupon for this Customer
+  React.useEffect(() => {
+    const updateCouponStatus = () => {
+      if (typeof window === "undefined") return;
+      try {
+        const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
+        const userName = localStorage.getItem("membership_user_name");
+        const isLogged = isLoggedInFlag || Boolean(userName && userName.trim().length > 0);
+
+        if (!isLogged) {
+          setBestCouponDiscount(0);
+          setBestCouponTitle("");
+          return;
+        }
+
+        // Check if Time Sale is active for this product
+        const isTimeSaleActive = timeSaleDiscount !== null && timeSaleDiscount > 0;
+        const allowCouponInTimeSale = (product as any).timeSaleAllowCoupon !== false;
+
+        // 타임세일 중인데 해당 상품의 타임세일 설정에서 쿠폰 적용이 비활성화된 경우 제외
+        if (isTimeSaleActive && !allowCouponInTimeSale) {
+          setBestCouponDiscount(0);
+          setBestCouponTitle("");
+          return;
+        }
+
+        const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const grade = (localStorage.getItem("user_grade") || localStorage.getItem("user_role") || "GENERAL").toUpperCase();
+        const availableCoupons = getAvailableCoupons(email, grade);
+
+        // 배송비 쿠폰(SHIPPING) 및 사용완료 쿠폰 제외, 상품 할인 가능한 쿠폰만 필터링
+        const eligibleCoupons = availableCoupons.filter(
+          (c) => c.type !== "SHIPPING" && !c.isUsed && c.isActive !== false
+        );
+
+        if (eligibleCoupons.length === 0) {
+          setBestCouponDiscount(0);
+          setBestCouponTitle("");
+          return;
+        }
+
+        // 쿠폰 할인 계산 기준 금액 (타임세일 적용 시 타임세일가, 아닐 시 정상가)
+        const currentTargetPrice = isTimeSaleActive
+          ? Math.round(origPriceNum * (1 - (timeSaleDiscount || 0) / 100))
+          : origPriceNum;
+
+        let maxDiscount = 0;
+        let bestTitle = "";
+
+        // 보유 쿠폰 중 가장 할인 금액이 큰 쿠폰 1개 자동 선택
+        for (const coupon of eligibleCoupons) {
+          if (coupon.minOrderAmount && currentTargetPrice < coupon.minOrderAmount) {
+            continue;
+          }
+
+          let discountVal = 0;
+          const isPercent =
+            (coupon.discount && coupon.discount.includes("%")) ||
+            (coupon.discountAmount > 0 && coupon.discountAmount <= 99 && (coupon as any).discountType === "RATE");
+
+          if (isPercent) {
+            discountVal = Math.round(currentTargetPrice * (coupon.discountAmount / 100));
+          } else {
+            discountVal = coupon.discountAmount || 0;
+          }
+
+          if (discountVal > currentTargetPrice) {
+            discountVal = currentTargetPrice;
+          }
+
+          if (discountVal > maxDiscount) {
+            maxDiscount = discountVal;
+            bestTitle = coupon.title;
+          }
+        }
+
+        setBestCouponDiscount(maxDiscount);
+        setBestCouponTitle(bestTitle);
+      } catch (e) {
+        setBestCouponDiscount(0);
+        setBestCouponTitle("");
+      }
+    };
+
+    updateCouponStatus();
+    window.addEventListener("storage", updateCouponStatus);
+    window.addEventListener("auth_changed", updateCouponStatus);
+    window.addEventListener("coupons_updated", updateCouponStatus);
+    window.addEventListener("secret_timesales_updated", updateCouponStatus);
+    window.addEventListener("admin_products_updated", updateCouponStatus);
+    return () => {
+      window.removeEventListener("storage", updateCouponStatus);
+      window.removeEventListener("auth_changed", updateCouponStatus);
+      window.removeEventListener("coupons_updated", updateCouponStatus);
+      window.removeEventListener("secret_timesales_updated", updateCouponStatus);
+      window.removeEventListener("admin_products_updated", updateCouponStatus);
+    };
+  }, [product, timeSaleDiscount, origPriceNum]);
+
+  const isTimeSaleActive = timeSaleDiscount !== null && timeSaleDiscount > 0;
+  const timeSalePrice = isTimeSaleActive
+    ? Math.round(origPriceNum * (1 - (timeSaleDiscount || 0) / 100))
+    : origPriceNum;
+
+  let finalPriceNum = isTimeSaleActive ? timeSalePrice : origPriceNum;
   let strikethroughPriceNum: number | null = null;
 
-  if (timeSaleDiscount !== null && timeSaleDiscount > 0) {
+  if (isTimeSaleActive) {
     strikethroughPriceNum = origPriceNum;
-    finalPriceNum = Math.round(origPriceNum * (1 - timeSaleDiscount / 100));
+    if (bestCouponDiscount > 0) {
+      finalPriceNum = Math.max(0, timeSalePrice - bestCouponDiscount);
+    }
+  } else if (bestCouponDiscount > 0) {
+    strikethroughPriceNum = origPriceNum;
+    finalPriceNum = Math.max(0, origPriceNum - bestCouponDiscount);
   }
 
   const currCode = product.currencyCode || product.priceRange?.minVariantPrice?.currencyCode || "KRW";
@@ -141,8 +253,60 @@ export const ProductCard = ({ product }: { product: Product }) => {
       href={`/product/${product.handle || "item"}`}
       className="group relative flex flex-col items-center justify-between aspect-[4/5] overflow-hidden border-b md:border-r border-neutral-200 bg-white w-full"
     >
-      {/* 1:1 Square Product Image Area with White Background */}
-      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-6 sm:p-8 md:p-8 mt-2">
+      {/* 1. Badges: Moved to Top (상단으로 위치 변경) */}
+      <div className="absolute top-3 inset-x-3 sm:top-4 sm:inset-x-4 flex items-center gap-1.5 flex-wrap z-20 pointer-events-none">
+        {(product as any).productLabel && (
+          <span
+            className={`text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm shrink-0 whitespace-nowrap shadow-xs ${
+              (product as any).productLabel === "BLACK_LABEL"
+                ? "bg-black text-white"
+                : (product as any).productLabel === "PREMIUM"
+                ? "bg-neutral-600 text-white"
+                : "bg-neutral-200 text-neutral-800"
+            }`}
+          >
+            {(product as any).productLabel.replace("_", " ")}
+          </span>
+        )}
+        {/* Black-outlined Badge for Fabric Composition (체크박스 활성화된 경우만 노출) */}
+        {(product as any).showFabricBadge && Boolean((product as any).fabricComposition || (product as any).fabric || (product as any).fabricMaterial) && (
+          <span className="text-[11px] sm:text-xs font-bold px-2.5 py-1 uppercase tracking-wider rounded-sm bg-white text-black border border-black shadow-xs shrink-0 whitespace-nowrap">
+            {String((product as any).fabricComposition || (product as any).fabric || (product as any).fabricMaterial).replace(/^ORIGIN:\s*/i, "").trim()}
+          </span>
+        )}
+        {secretSaleInfo ? (
+          <span className="text-[11px] sm:text-xs px-2.5 py-1 font-black uppercase tracking-wider rounded-sm bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 flex items-center gap-1 border border-amber-400 shadow-xs shrink-0 whitespace-nowrap">
+            <Sparkles className="w-3.5 h-3.5 fill-neutral-950 text-neutral-950 shrink-0 animate-spin-slow" />
+            <span>SECRET SALE {secretSaleInfo.discount}% OFF</span>
+          </span>
+        ) : timeSaleDiscount !== null ? (
+          <span className="text-[11px] sm:text-xs px-2.5 py-1 font-black uppercase tracking-wider rounded-sm bg-white text-neutral-950 flex items-center gap-1 border border-neutral-300 shadow-xs shrink-0 whitespace-nowrap">
+            <Clock className="w-3.5 h-3.5 text-neutral-950 shrink-0" />
+            <span>TIME SALE {timeSaleDiscount}% OFF</span>
+          </span>
+        ) : null}
+        {/* 쿠폰 최대할인 뱃지 */}
+        {bestCouponDiscount > 0 && (
+          <span className="text-[11px] sm:text-xs px-2.5 py-1 font-black uppercase tracking-wider rounded-sm bg-neutral-900 text-white flex items-center gap-1 shadow-xs shrink-0 whitespace-nowrap">
+            <Ticket className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>쿠폰 (-{bestCouponDiscount.toLocaleString()}원)</span>
+          </span>
+        )}
+        {/* 오픈 예정 / 품절 Badge: 가장 마지막에 배치 */}
+        {product.releaseDate && new Date(product.releaseDate).getTime() > Date.now() ? (
+          <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-amber-500 text-neutral-950 shadow-xs shrink-0 whitespace-nowrap flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5 text-neutral-950" />
+            <span>오픈 예정</span>
+          </span>
+        ) : product.availableForSale === false ? (
+          <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-xs shrink-0 whitespace-nowrap">
+            품절
+          </span>
+        ) : null}
+      </div>
+
+      {/* 1:1 Square Product Image Area with White Background (상단 뱃지와의 여백을 위해 mt-8 sm:mt-10 적용) */}
+      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-5 sm:p-7 md:p-7 mt-8 sm:mt-10">
         <Image
           src={product.featuredImage?.url || "/product_1.webp"}
           alt={product.title || "Product"}
@@ -152,70 +316,23 @@ export const ProductCard = ({ product }: { product: Product }) => {
         />
       </div>
 
-      {/* Bottom Bar: Full Width Badges on Top Row, Title on Left & Price on Right */}
-      <div className="absolute bottom-0 inset-x-0 p-4 sm:p-5 flex flex-col gap-2 z-10 w-full bg-gradient-to-t from-white/95 via-white/70 to-transparent pt-10">
-        {/* Row 1: Full-Width Badges (Always horizontal & fully visible) */}
-        <div className="flex items-center gap-1.5 flex-wrap w-full">
-          {(product as any).productLabel && (
-            <span
-              className={`text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm shrink-0 whitespace-nowrap ${
-                (product as any).productLabel === "BLACK_LABEL"
-                  ? "bg-black text-white"
-                  : (product as any).productLabel === "PREMIUM"
-                  ? "bg-neutral-600 text-white"
-                  : "bg-neutral-200 text-neutral-800"
-              }`}
-            >
-              {(product as any).productLabel.replace("_", " ")}
-            </span>
-          )}
-          {/* Black-outlined Badge for Fabric Composition (체크박스 활성화된 경우만 노출) */}
-          {(product as any).showFabricBadge && Boolean((product as any).fabricComposition || (product as any).fabric || (product as any).fabricMaterial) && (
-            <span className="text-[11px] sm:text-xs font-bold px-2.5 py-1 uppercase tracking-wider rounded-sm bg-white text-black border border-black shadow-2xs shrink-0 whitespace-nowrap">
-              {String((product as any).fabricComposition || (product as any).fabric || (product as any).fabricMaterial).replace(/^ORIGIN:\s*/i, "").trim()}
-            </span>
-          )}
-          {secretSaleInfo ? (
-            <span className="text-[11px] sm:text-xs px-2.5 py-1 font-black uppercase tracking-wider rounded-sm bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 flex items-center gap-1 border border-amber-400 shadow-2xs shrink-0 whitespace-nowrap">
-              <Sparkles className="w-3.5 h-3.5 fill-neutral-950 text-neutral-950 shrink-0 animate-spin-slow" />
-              <span>SECRET SALE {secretSaleInfo.discount}% OFF</span>
-            </span>
-          ) : timeSaleDiscount !== null ? (
-            <span className="text-[11px] sm:text-xs px-2.5 py-1 font-black uppercase tracking-wider rounded-sm bg-white text-neutral-950 flex items-center gap-1 border border-neutral-300 shadow-2xs shrink-0 whitespace-nowrap">
-              <Clock className="w-3.5 h-3.5 text-neutral-950 shrink-0" />
-              <span>TIME SALE {timeSaleDiscount}% OFF</span>
-            </span>
-          ) : null}
-          {/* 오픈 예정 / 품절 Badge: 가장 마지막에 배치 */}
-          {product.releaseDate && new Date(product.releaseDate).getTime() > Date.now() ? (
-            <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-neutral-950" />
-              <span>오픈 예정</span>
-            </span>
-          ) : product.availableForSale === false ? (
-            <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
-              품절
-            </span>
-          ) : null}
-        </div>
+      {/* Bottom Bar: Title on Top (Single Full Line) & Price on Bottom */}
+      <div className="absolute bottom-0 inset-x-0 p-4 sm:p-5 flex flex-col gap-1.5 z-10 w-full bg-gradient-to-t from-white via-white/80 to-transparent pt-8">
+        {/* 2. 상품명은 한줄로 변경 (모바일에서 2배 크기, PC는 기존 md:text-lg 유지) */}
+        <span className="text-2xl sm:text-3xl md:text-lg font-black text-neutral-950 uppercase tracking-tight truncate block w-full leading-tight md:leading-normal">
+          {product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
+        </span>
 
-        {/* Row 2: Product Title (Left) + Price (Right) - Identical & Larger Size */}
-        <div className="flex items-center justify-between gap-3 w-full">
-          <span className="text-base sm:text-lg md:text-xl font-black text-neutral-950 uppercase tracking-tight line-clamp-1 min-w-0 flex-1">
-            {product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
+        {/* 3. 가격은 하단으로 위치 변경 & 4. 빗금친 원래 가격이 할인 가격 바로 옆에 붙어있도록 수정 (justify-end) */}
+        <div className="flex items-baseline justify-end gap-2 sm:gap-2.5 w-full">
+          {strikethroughPriceNum !== null && (
+            <span className="text-xs sm:text-sm text-neutral-400 line-through font-bold whitespace-nowrap notranslate" translate="no">
+              {formatPrice(strikethroughPriceNum.toString(), currCode)}
+            </span>
+          )}
+          <span className="text-base sm:text-lg md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap notranslate" translate="no">
+            {formatPrice(finalPriceNum.toString(), currCode)}
           </span>
-
-          {/* Right Side: Price Display */}
-          <div className="flex flex-col items-end shrink-0 leading-tight notranslate" translate="no">
-            {strikethroughPriceNum !== null && (
-              <span className="text-xs sm:text-sm text-neutral-400 line-through font-bold mb-0.5 notranslate" translate="no">
-                {formatPrice(strikethroughPriceNum.toString(), currCode)}
-              </span>
-            )}
-            <span className="text-base sm:text-lg md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap notranslate" translate="no">
-              {formatPrice(finalPriceNum.toString(), currCode)}
-            </span>
-          </div>
         </div>
       </div>
     </Link>

@@ -16,7 +16,7 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
     const syncProductFromStorage = async () => {
       // 1. Try Central Server API first
       try {
-        const res = await fetch("/api/products");
+        const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok) {
           const serverData = await res.json();
           if (Array.isArray(serverData)) {
@@ -24,6 +24,14 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
               (p: any) => p.id === initialProduct.id || p.handle === initialProduct.handle
             );
             if (found) {
+              const detail = found.detailDescription || found.descriptionHtml || "";
+              if (found.images && found.images.length > 1 && detail) {
+                const extras = found.images.slice(1);
+                if (extras.every((img: any) => detail.includes(img.url || img))) {
+                  const rep = found.featuredImage || found.images[0];
+                  found.images = [rep];
+                }
+              }
               setProduct(found);
               return;
             }
@@ -41,6 +49,14 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
             (p: any) => p.id === initialProduct.id || p.handle === initialProduct.handle
           );
           if (found) {
+            const detail = found.detailDescription || found.descriptionHtml || "";
+            if (found.images && found.images.length > 1 && detail) {
+              const extras = found.images.slice(1);
+              if (extras.every((img: any) => detail.includes(img.url || img))) {
+                const rep = found.featuredImage || found.images[0];
+                found.images = [rep];
+              }
+            }
             setProduct(found);
           }
         } catch (e) {}

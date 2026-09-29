@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { Product, ProductVariant } from "@/lib/sfcc/types";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Check, Clock } from "lucide-react";
+import { Sparkles, Check, Clock, Ticket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/cart/cart-context";
 import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
+import { getAvailableCoupons } from "@/lib/membership/coupons";
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -118,6 +119,11 @@ const HEADER_I18N: Record<string, Record<string, string>> = {
   },
 };
 
+export function cleanProductTitle(title?: string): string {
+  if (!title) return "";
+  return title.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim();
+}
+
 interface ProductDetailHeaderProps {
   product: Product;
   hasVariants?: boolean;
@@ -141,6 +147,8 @@ export function ProductDetailHeader({
   const [isTimeSaleItem, setIsTimeSaleItem] = useState<boolean>(false);
   const [originalPriceNum, setOriginalPriceNum] = useState<number>(0);
   const [discountedPriceNum, setDiscountedPriceNum] = useState<number>(0);
+  const [couponDiscountAmount, setCouponDiscountAmount] = useState<number>(0);
+  const [couponTitle, setCouponTitle] = useState<string>("");
 
   const isSetProduct =
     product.tags?.includes("SET_SALE") || product.id.startsWith("set-product-");
@@ -162,23 +170,24 @@ export function ProductDetailHeader({
   const { addCartItem } = useCart();
   const [isAdding, setIsAdding] = useState(false);
 
-  const [displayTitle, setDisplayTitle] = useState(product.title);
+  const [displayTitle, setDisplayTitle] = useState(cleanProductTitle(product.title));
   const [displayDesc, setDisplayDesc] = useState(product.description || "");
 
   useEffect(() => {
     const lang = getCurrentLanguage();
 
     const updateTranslations = (targetLang: string) => {
+      const cleanOriginal = cleanProductTitle(product.title);
       if (targetLang === "ko") {
-        setDisplayTitle(product.title);
+        setDisplayTitle(cleanOriginal);
         setDisplayDesc(product.description || "");
         return;
       }
-      setDisplayTitle(translateProductTitle(product.title, targetLang));
+      setDisplayTitle(cleanProductTitle(translateProductTitle(cleanOriginal, targetLang)));
       setDisplayDesc(translateProductDescription(product.description || "", targetLang));
 
-      fetchAsyncTranslation(product.title, targetLang, "title").then((res) => {
-        if (res) setDisplayTitle(res);
+      fetchAsyncTranslation(cleanOriginal, targetLang, "title").then((res) => {
+        if (res) setDisplayTitle(cleanProductTitle(res));
       });
       if (product.description) {
         fetchAsyncTranslation(product.description, targetLang, "ui").then((res) => {
@@ -378,17 +387,69 @@ export function ProductDetailHeader({
         setOriginalPriceNum(basePrice);
         setDiscountedPriceNum(basePrice);
       }
+
+      // Customer Coupon Discount check (보유 쿠폰 중 최대 할인 적용)
+      try {
+        let maxDisc = 0;
+        let bestTitle = "";
+        const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
+        const userName = localStorage.getItem("membership_user_name");
+        const isLogged = isLoggedInFlag || Boolean(userName && userName.trim().length > 0);
+        const allowCouponInTimeSale = (activeProd as any).timeSaleAllowCoupon !== false;
+
+        if (isLogged && (!isSaleActive || allowCouponInTimeSale)) {
+          const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+          const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("user_role") || "GENERAL").toUpperCase();
+          const availableCoupons = getAvailableCoupons(userEmail, userGrade).filter(
+            (c) => c.type !== "SHIPPING" && !c.isUsed && c.isActive !== false
+          );
+
+          if (availableCoupons.length > 0) {
+            const currentBase = isSaleActive
+              ? ((customDiscountPrice && !isNaN(parseFloat(customDiscountPrice))) ? parseFloat(customDiscountPrice) : Math.round(origPrice * (1 - itemRate / 100)))
+              : origPrice;
+
+            for (const c of availableCoupons) {
+              if (c.minOrderAmount && currentBase < c.minOrderAmount) continue;
+              let d = 0;
+              const isPercent = (c.discount && c.discount.includes("%")) || (c.discountAmount > 0 && c.discountAmount <= 99 && (c as any).discountType === "RATE");
+              if (isPercent) {
+                d = Math.round(currentBase * (c.discountAmount / 100));
+              } else {
+                d = c.discountAmount || 0;
+              }
+              if (d > currentBase) d = currentBase;
+              if (d > maxDisc) {
+                maxDisc = d;
+                bestTitle = c.title;
+              }
+            }
+
+            if (maxDisc > 0) {
+              setOriginalPriceNum(origPrice);
+              setDiscountedPriceNum(Math.max(0, currentBase - maxDisc));
+            }
+          }
+        }
+        setCouponDiscountAmount(maxDisc);
+        setCouponTitle(bestTitle);
+      } catch (e) {
+        setCouponDiscountAmount(0);
+        setCouponTitle("");
+      }
     };
 
     updateTimeSaleProduct();
 
     window.addEventListener("storage", updateTimeSaleProduct);
     window.addEventListener("auth_changed", updateTimeSaleProduct);
+    window.addEventListener("coupons_updated", updateTimeSaleProduct);
     window.addEventListener("secret_timesales_updated", updateTimeSaleProduct);
     window.addEventListener("admin_products_updated", updateTimeSaleProduct);
     return () => {
       window.removeEventListener("storage", updateTimeSaleProduct);
       window.removeEventListener("auth_changed", updateTimeSaleProduct);
+      window.removeEventListener("coupons_updated", updateTimeSaleProduct);
       window.removeEventListener("secret_timesales_updated", updateTimeSaleProduct);
       window.removeEventListener("admin_products_updated", updateTimeSaleProduct);
     };
@@ -465,7 +526,7 @@ export function ProductDetailHeader({
 
     const variant: ProductVariant = {
       id: `${product.id}-${selectedColor}-${selectedSize}`,
-      title: `${product.title} ${selectedColor ? `- ${selectedColor}` : ""} ${selectedSize ? `/ ${selectedSize}` : ""}`.trim(),
+      title: `${cleanProductTitle(product.title)} ${selectedColor ? `- ${selectedColor}` : ""} ${selectedSize ? `/ ${selectedSize}` : ""}`.trim(),
       availableForSale: true,
       selectedOptions: [],
       price: { amount: discountedPriceNum.toString(), currencyCode: product.currencyCode || "KRW" }
@@ -537,6 +598,14 @@ export function ProductDetailHeader({
             </div>
           )}
 
+          {/* 쿠폰 최대할인가 뱃지 (상품명 상단 노출) */}
+          {couponDiscountAmount > 0 && (
+            <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-900 text-white flex items-center gap-1.5 shadow-2xs shrink-0 whitespace-nowrap">
+              <Ticket className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>쿠폰 (-{couponDiscountAmount.toLocaleString()}원)</span>
+            </span>
+          )}
+
           {/* 오픈 예정 / 품절 Badge: 가장 마지막에 배치 */}
           {isScheduled ? (
             <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
@@ -550,8 +619,8 @@ export function ProductDetailHeader({
           ) : null}
         </div>
 
-        <h1 className="text-2xl md:text-3xl font-normal tracking-tight uppercase">
-          {product.title}
+        <h1 className="text-4xl sm:text-5xl md:text-3xl font-normal tracking-tight uppercase leading-tight md:leading-normal">
+          {cleanProductTitle(displayTitle || product.title)}
         </h1>
 
         {/* Price Section directly below Title */}
@@ -564,6 +633,11 @@ export function ProductDetailHeader({
           <span className="text-xl md:text-2xl font-black text-neutral-950 tracking-tight">
             {formatPrice(discountedPriceNum.toString(), product.currencyCode || "KRW")}
           </span>
+          {couponDiscountAmount > 0 && (
+            <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-sm">
+              쿠폰 적용가
+            </span>
+          )}
         </div>
 
         {product.description && (

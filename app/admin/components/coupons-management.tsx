@@ -30,6 +30,7 @@ import {
   DEFAULT_AVAILABLE_COUPONS,
   getAllUserCoupons,
   saveAdminCoupons,
+  syncAdminCouponsFromSupabase,
   resetUsedCoupons,
   isLegacyCoupon,
   CouponUsageRecord,
@@ -43,6 +44,7 @@ import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
 interface CouponsManagementProps {
   customersList?: any[];
   triggerToast?: (msg: string) => void;
+  onCouponsCountChange?: (count: number) => void;
 }
 
 const ALL_GRADES = ["GENERAL", "SILVER", "GOLD", "PLATINUM", "VVIP"];
@@ -50,6 +52,7 @@ const ALL_GRADES = ["GENERAL", "SILVER", "GOLD", "PLATINUM", "VVIP"];
 export function CouponsManagement({
   customersList: propCustomersList = [],
   triggerToast,
+  onCouponsCountChange,
 }: CouponsManagementProps) {
   const [activeTab, setActiveTab] = useState<"list" | "usage">("list");
   const [coupons, setCoupons] = useState<AvailableCoupon[]>(() => {
@@ -128,6 +131,9 @@ export function CouponsManagement({
 
     const allCoupons = getAllUserCoupons();
     setCoupons(allCoupons);
+    if (typeof onCouponsCountChange === "function") {
+      onCouponsCountChange(allCoupons.length);
+    }
 
     const usedRaw = localStorage.getItem("used_coupon_codes") || "[]";
     try {
@@ -139,33 +145,25 @@ export function CouponsManagement({
     setUsageHistory(getCouponUsageHistory());
   };
 
+  // Sync count to parent whenever coupons change
+  useEffect(() => {
+    if (typeof onCouponsCountChange === "function") {
+      onCouponsCountChange(coupons.length);
+    }
+  }, [coupons.length, onCouponsCountChange]);
+
   useEffect(() => {
     loadData();
 
-    // Supabase site_settings로부터 최신 관리자 쿠폰 설정 동기화
-    if (typeof window !== "undefined") {
-      Promise.resolve(
-        supabase
-          .from("site_settings")
-          .select("value")
-          .eq("key", "admin_coupons_config")
-          .maybeSingle()
-      )
-        .then(({ data, error }: any) => {
-          if (!error && data?.value) {
-            try {
-              const parsed = JSON.parse(data.value);
-              if (Array.isArray(parsed)) {
-                const sanitized = parsed.filter((c: any) => !isLegacyCoupon(c));
-                localStorage.setItem("admin_coupons", JSON.stringify(sanitized));
-                setCoupons(sanitized);
-                window.dispatchEvent(new CustomEvent("coupons_updated"));
-              }
-            } catch (e) {}
-          }
-        })
-        .catch(() => {});
-    }
+    // Supabase 원격 DB로부터 최신 관리자 쿠폰 설정 동기화
+    syncAdminCouponsFromSupabase().then((sanitized) => {
+      if (Array.isArray(sanitized)) {
+        setCoupons(sanitized);
+        if (typeof onCouponsCountChange === "function") {
+          onCouponsCountChange(sanitized.length);
+        }
+      }
+    });
 
     // Supabase site_settings로부터 최신 쿠폰 사용 내역 동기화
     if (typeof window !== "undefined") {

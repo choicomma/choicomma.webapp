@@ -52,7 +52,7 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { SetBundleSection } from "@/components/products/set-bundle-section";
 import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
 import { supabase } from "@/lib/supabase/client";
-import { getAllUserCoupons, getUserCoupons, isLegacyCoupon } from "@/lib/membership/coupons";
+import { getAllUserCoupons, getUserCoupons, isLegacyCoupon, syncAdminCouponsFromSupabase } from "@/lib/membership/coupons";
 import { MembershipPopupBanner } from "@/components/membership/membership-popup-banner";
 
 function MembershipContent() {
@@ -486,28 +486,10 @@ function MembershipContent() {
     loadShipmentsFromLocal();
     loadCouponsFromLocal();
 
-    // Supabase 원격 DB(site_settings)로부터 쿠폰 설정 최신 동기화 (삭제된 쿠폰 캐시 정리)
-    Promise.resolve(
-      supabase
-        .from("site_settings")
-        .select("value")
-        .eq("key", "admin_coupons_config")
-        .maybeSingle()
-    )
-      .then(({ data, error }: any) => {
-        if (!error && data?.value) {
-          try {
-            const parsed = JSON.parse(data.value);
-            if (Array.isArray(parsed)) {
-              const sanitized = parsed.filter((c: any) => !isLegacyCoupon(c));
-              localStorage.setItem("admin_coupons", JSON.stringify(sanitized));
-              localStorage.removeItem("membership_user_coupons");
-              loadCouponsFromLocal();
-            }
-          } catch (e) {}
-        }
-      })
-      .catch(() => {});
+    // Supabase 원격 DB로부터 쿠폰 설정 최신 동기화 (삭제된 쿠폰 캐시 정리 및 신규 쿠폰 반영)
+    syncAdminCouponsFromSupabase().then(() => {
+      loadCouponsFromLocal();
+    });
 
     // 서버 API로부터 1회 초기 동기화 (마운트 시점에만 1회 호출)
     fetch("/api/shipping/policy")

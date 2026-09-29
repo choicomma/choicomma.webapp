@@ -47,52 +47,71 @@ export function isLegacyCoupon(c: any): boolean {
   return false;
 }
 
+// In-memory cache to guarantee state consistency even if localStorage is full or out of sync
+let memoryCouponsCache: AvailableCoupon[] | null = null;
+
+export function setMemoryCouponsCache(coupons: AvailableCoupon[]): void {
+  memoryCouponsCache = coupons.filter((c) => !isLegacyCoupon(c));
+}
+
 /**
  * 모든 쿠폰 목록(사용 완료 여부 포함)을 반환합니다. 마이페이지 쿠폰함 및 관리자용.
  */
 export function getAllUserCoupons(): AvailableCoupon[] {
-  if (typeof window === "undefined") return [];
-
-  const usedCouponsRaw = localStorage.getItem("used_coupon_codes") || "[]";
+  const usedCouponsRaw = typeof window !== "undefined" ? localStorage.getItem("used_coupon_codes") || "[]" : "[]";
   let usedCoupons: string[] = [];
   try {
     usedCoupons = JSON.parse(usedCouponsRaw);
   } catch (e) {}
 
-  const customCouponsRaw = localStorage.getItem("admin_coupons");
-  const legacyCouponsRaw = localStorage.getItem("membership_user_coupons");
-
   let allCoupons: AvailableCoupon[] = [];
 
-  // admin_coupons가 로컬 스토리지에 존재하는 경우 (빈 배열 [] 포함) 관리자가 설정한 값을 최우선 반영
-  if (customCouponsRaw !== null) {
-    try {
-      const parsed = JSON.parse(customCouponsRaw);
-      if (Array.isArray(parsed)) {
-        allCoupons = parsed;
-      }
-    } catch (e) {}
-  } else if (legacyCouponsRaw !== null) {
-    try {
-      const parsed = JSON.parse(legacyCouponsRaw);
-      if (Array.isArray(parsed)) {
-        allCoupons = parsed;
-      }
-    } catch (e) {}
+  if (memoryCouponsCache !== null && memoryCouponsCache.length > 0) {
+    allCoupons = [...memoryCouponsCache];
+  } else if (typeof window !== "undefined") {
+    const customCouponsRaw = localStorage.getItem("admin_coupons");
+    const legacyCouponsRaw = localStorage.getItem("membership_user_coupons");
+
+    // admin_coupons가 로컬 스토리지에 존재하는 경우 관리자가 설정한 값을 반영
+    if (customCouponsRaw !== null) {
+      try {
+        const parsed = JSON.parse(customCouponsRaw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          allCoupons = parsed;
+        }
+      } catch (e) {}
+    }
+
+    if (allCoupons.length === 0 && legacyCouponsRaw !== null) {
+      try {
+        const parsed = JSON.parse(legacyCouponsRaw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          allCoupons = parsed;
+        }
+      } catch (e) {}
+    }
   }
 
   // 삭제된 레거시 기본 쿠폰(CHOI10, WELCOME, FREESHIP 등) 영구 완전 삭제
   const filteredCoupons = allCoupons.filter((c) => !isLegacyCoupon(c));
 
-  if (filteredCoupons.length !== allCoupons.length || legacyCouponsRaw !== null) {
-    allCoupons = filteredCoupons;
-    try {
-      localStorage.setItem("admin_coupons", JSON.stringify(allCoupons));
-      localStorage.removeItem("membership_user_coupons");
-    } catch (e) {}
+  if (typeof window !== "undefined") {
+    if (filteredCoupons.length !== allCoupons.length || localStorage.getItem("membership_user_coupons") !== null) {
+      allCoupons = filteredCoupons;
+      try {
+        localStorage.setItem("admin_coupons", JSON.stringify(allCoupons));
+        localStorage.removeItem("membership_user_coupons");
+      } catch (e) {}
+    }
   }
 
-  return allCoupons.map((c) => {
+  if (allCoupons.length > 0 || memoryCouponsCache === null) {
+    memoryCouponsCache = allCoupons;
+  }
+
+  const finalSource = (memoryCouponsCache && memoryCouponsCache.length > 0) ? memoryCouponsCache : allCoupons;
+
+  return finalSource.map((c) => {
     const isUsed =
       usedCoupons.includes(c.id) ||
       (c.code ? usedCoupons.includes(c.code.toUpperCase()) : false);
@@ -189,14 +208,25 @@ export function getAvailableCoupons(userEmail?: string, userGrade?: string): Ava
  * 관리자가 쿠폰 목록을 저장합니다.
  */
 export function saveAdminCoupons(coupons: AvailableCoupon[]): void {
-  if (typeof window === "undefined") return;
+  const cleanCoupons = coupons.filter((c) => !isLegacyCoupon(c));
+  memoryCouponsCache = cleanCoupons;
 
-  try {
-    const cleanCoupons = coupons.filter((c) => !isLegacyCoupon(c));
-    localStorage.setItem("admin_coupons", JSON.stringify(cleanCoupons));
-    localStorage.removeItem("membership_user_coupons");
-    window.dispatchEvent(new CustomEvent("storage", { detail: { key: "admin_coupons" } }));
-    window.dispatchEvent(new CustomEvent("coupons_updated"));
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("admin_coupons", JSON.stringify(cleanCoupons));
+      localStorage.removeItem("membership_user_coupons");
+    } catch (e) {
+      console.warn("Notice: Skipped localStorage write due to size limit", e);
+    }
+
+    try {
+      window.dispatchEvent(new CustomEvent("storage", { detail: { key: "admin_coupons" } }));
+      window.dispatchEvent(
+        new CustomEvent("coupons_updated", {
+          detail: { count: cleanCoupons.length, coupons: cleanCoupons },
+        })
+      );
+    } catch (e) {}
 
     Promise.resolve(
       supabase
@@ -211,8 +241,6 @@ export function saveAdminCoupons(coupons: AvailableCoupon[]): void {
         if (error) console.warn("Supabase coupons config sync notice:", error?.message);
       })
       .catch(() => {});
-  } catch (e) {
-    console.error("Failed to save admin coupons:", e);
   }
 }
 
@@ -220,8 +248,6 @@ export function saveAdminCoupons(coupons: AvailableCoupon[]): void {
  * Supabase 원격 DB(site_settings)로부터 최신 관리자 쿠폰 설정을 비동기 동기화합니다.
  */
 export async function syncAdminCouponsFromSupabase(): Promise<AvailableCoupon[]> {
-  if (typeof window === "undefined") return [];
-
   try {
     const { data, error } = await supabase
       .from("site_settings")
@@ -230,12 +256,37 @@ export async function syncAdminCouponsFromSupabase(): Promise<AvailableCoupon[]>
       .maybeSingle();
 
     if (!error && data?.value) {
-      const parsed = JSON.parse(data.value);
+      let parsed: any = null;
+      if (typeof data.value === "string") {
+        try {
+          parsed = JSON.parse(data.value);
+        } catch (e) {
+          console.warn("JSON parse error for admin_coupons_config:", e);
+        }
+      } else if (Array.isArray(data.value)) {
+        parsed = data.value;
+      }
+
       if (Array.isArray(parsed)) {
         const sanitized = parsed.filter((c: any) => !isLegacyCoupon(c));
-        localStorage.setItem("admin_coupons", JSON.stringify(sanitized));
-        localStorage.removeItem("membership_user_coupons");
-        window.dispatchEvent(new CustomEvent("coupons_updated"));
+        memoryCouponsCache = sanitized;
+
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("admin_coupons", JSON.stringify(sanitized));
+            localStorage.removeItem("membership_user_coupons");
+          } catch (e) {
+            console.warn("Notice: Skipped localStorage write due to size limit", e);
+          }
+
+          try {
+            window.dispatchEvent(
+              new CustomEvent("coupons_updated", {
+                detail: { count: sanitized.length, coupons: sanitized },
+              })
+            );
+          } catch (e) {}
+        }
         return sanitized;
       }
     }
@@ -250,8 +301,7 @@ export async function syncAdminCouponsFromSupabase(): Promise<AvailableCoupon[]>
  * 관리자가 등록한 쿠폰 설정을 초기화합니다 (빈 목록).
  */
 export function resetAdminCoupons(): AvailableCoupon[] {
-  if (typeof window === "undefined") return [];
-
+  memoryCouponsCache = [];
   saveAdminCoupons([]);
   return [];
 }

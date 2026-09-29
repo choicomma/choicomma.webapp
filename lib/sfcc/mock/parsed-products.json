@@ -38,8 +38,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:30.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:16.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/1.jpg",
     "productNo": 1,
@@ -85,8 +85,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:29.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:15.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/2.jpg",
     "productNo": 2,
@@ -132,8 +132,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:28.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:14.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/3.jpg",
     "productNo": 3,
@@ -179,8 +179,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:27.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:13.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/4.jpg",
     "productNo": 4,
@@ -226,8 +226,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:26.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:12.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/5.jpg",
     "productNo": 5,
@@ -273,8 +273,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:25.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:11.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/6.jpg",
     "productNo": 6,
@@ -320,8 +320,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:24.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:10.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/7.jpg",
     "productNo": 7,
@@ -367,8 +367,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:23.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:09.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/8.jpg",
     "productNo": 8,
@@ -414,8 +414,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:22.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:08.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "isHeroFeatured": true,
     "heroCustomImage": "/main_slider/9.jpg",
     "productNo": 9,
@@ -453,8 +453,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:21.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:07.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "isHeroFeatured": true,
     "productNo": 1788841553388,
     "productCode": "CC-1788841553388",
@@ -469,7 +469,7 @@
       "top"
     ],
     "description": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
-    "detailDescription": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
+    "detailDescription": "상세 페이지 업데이트 중입니다 ",
     "currencyCode": "KRW",
     "priceRange": {
       "maxVariantPrice": {
@@ -483,26 +483,27 @@
     },
     "featuredImage": {
       "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
-      "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트"
+      "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "width": 1200,
+      "height": 1600
     },
     "images": [
       {
         "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - 이미지 1"
+        "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 1",
+        "width": 1200,
+        "height": 1600
       }
     ],
     "variants": [
       {
-        "id": "excel-product-465-블랙-FREE",
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
-          "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - 블랙 / FREE"
-        },
+        "id": "var-블랙-FREE-1790688665319",
+        "title": "블랙 / FREE",
         "price": {
           "amount": "510000",
           "currencyCode": "KRW"
         },
-        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - 블랙 / FREE",
+        "availableForSale": true,
         "selectedOptions": [
           {
             "name": "Color",
@@ -512,8 +513,7 @@
             "name": "Size",
             "value": "FREE"
           }
-        ],
-        "availableForSale": true
+        ]
       }
     ],
     "options": [
@@ -547,23 +547,23 @@
       "블랙-FREE": 30
     },
     "colorHexMap": {
+      "BLACK": "#000000",
+      "CREAM": "#FDFBF7",
+      "CHARCOAL": "#36454F",
+      "NAVY": "#000080",
+      "BEIGE": "#F5F5DC",
+      "WHITE": "#FFFFFF",
+      "BROWN": "#8B4513",
       "RED": "#DC2626",
       "BLUE": "#2563EB",
-      "NAVY": "#000080",
-      "PINK": "#EC4899",
-      "BEIGE": "#F5F5DC",
-      "BLACK": "#000000",
-      "BROWN": "#8B4513",
-      "CREAM": "#FDFBF7",
       "GREEN": "#16A34A",
       "KHAKI": "#708090",
-      "WHITE": "#FFFFFF",
+      "PINK": "#EC4899",
       "모카": "#8B5A2B",
       "블랙": "#000000",
       "차콜": "#36454F",
       "A타입": "#1C1C1C",
       "B타입": "#2B2B2B",
-      "CHARCOAL": "#36454F",
       "베이지": "#F5F5DC",
       "오트밀": "#D8C7B5",
       "아이보리": "#FFFFF0",
@@ -577,20 +577,74 @@
     "availableForSale": true,
     "isTimeSale": false,
     "bulkDiscount": {
+      "enabled": false,
       "rules": [
         {
           "qty": 2,
           "rate": 5
         }
-      ],
-      "enabled": false,
-      "releaseDate": ""
+      ]
     },
-    "created_at": "2026-09-29T11:17:18.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:06.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 465,
     "productCode": "CC-465",
-    "releaseDate": ""
+    "updatedAt": "2026-09-29T13:31:05.319Z",
+    "descriptionHtml": "<p>[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트</p>",
+    "colorImages": {},
+    "sizeMeasurements": [
+      {
+        "name": "어깨단면",
+        "values": {
+          "1": "50",
+          "2": "52",
+          "3": "54",
+          "FREE": "56"
+        }
+      },
+      {
+        "name": "가슴단면",
+        "values": {
+          "1": "56.5",
+          "2": "58.5",
+          "3": "60.5",
+          "FREE": "62.5"
+        }
+      },
+      {
+        "name": "팔길이",
+        "values": {
+          "1": "59",
+          "2": "60",
+          "3": "61",
+          "FREE": "61.5"
+        }
+      },
+      {
+        "name": "총장",
+        "values": {
+          "1": "58/62.5",
+          "2": "60/64.5",
+          "3": "62/66.5",
+          "FREE": "63/67.5"
+        }
+      }
+    ],
+    "showFabricBadge": false,
+    "showSizeGuide": false,
+    "fabricComposition": "COTTON 100% (프리미엄 콤마 코튼)",
+    "elasticity": "보통",
+    "sheerness": "없음",
+    "thickness": "적당함",
+    "lining": "없음",
+    "fabricImage": "",
+    "price": {
+      "amount": "510000",
+      "currencyCode": "KRW"
+    },
+    "timeSaleDiscountRate": 30,
+    "timeSaleAllowCoupon": true,
+    "timeSaleAllowPoints": true
   },
   {
     "id": "excel-product-464",
@@ -718,8 +772,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:17.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:05.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 464,
     "productCode": "CC-464",
     "releaseDate": ""
@@ -850,8 +904,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:16.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:04.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 463,
     "productCode": "CC-463",
     "releaseDate": ""
@@ -884,23 +938,7 @@
     "images": [
       {
         "url": "https://cdn.imweb.me/thumbnail/20260916/d5e6ec93ef8b49e5.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 차콜 - 이미지 1"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 차콜 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 차콜 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/dabfcac8d635e.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 차콜 - 이미지 4"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/a3e99a1710bd3.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 차콜 - 이미지 5"
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 차콜"
       }
     ],
     "variants": [
@@ -1050,8 +1088,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:15.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:03.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 462,
     "productCode": "CC-462",
     "releaseDate": ""
@@ -1084,23 +1122,7 @@
     "images": [
       {
         "url": "https://cdn.imweb.me/thumbnail/20260916/740f2473a44f45a6.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 모카 - 이미지 1"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 모카 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 모카 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7cc7e4ece7617.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 모카 - 이미지 4"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/fe2e470ff3ec7.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 모카 - 이미지 5"
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 멜란지 모카"
       }
     ],
     "variants": [
@@ -1250,8 +1272,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:14.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:02.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 461,
     "productCode": "CC-461",
     "releaseDate": ""
@@ -1284,23 +1306,7 @@
     "images": [
       {
         "url": "https://cdn.imweb.me/thumbnail/20260923/b20de2087d1948a7.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 블랙 - 이미지 1"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 블랙 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 블랙 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/74dc33ac2b0af.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 블랙 - 이미지 4"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/9869a7510fdaf.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 블랙 - 이미지 5"
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 블랙"
       }
     ],
     "variants": [
@@ -1450,8 +1456,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:13.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:01.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 460,
     "productCode": "CC-460",
     "releaseDate": ""
@@ -1484,23 +1490,7 @@
     "images": [
       {
         "url": "https://cdn.imweb.me/thumbnail/20260916/fce9879c3f8f4393.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이 - 이미지 1"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/2d37edf566abc.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이 - 이미지 4"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/4ddcf1d3b8eba.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이 - 이미지 5"
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이"
       }
     ],
     "variants": [
@@ -1650,8 +1640,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:12.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:30:00.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 459,
     "productCode": "CC-459",
     "releaseDate": ""
@@ -1684,23 +1674,7 @@
     "images": [
       {
         "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 이미지 1"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/958b7ae470f7f.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 이미지 4"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/69cd91c8e275b.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 이미지 5"
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리"
       }
     ],
     "variants": [
@@ -1850,8 +1824,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:11.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:59.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 458,
     "productCode": "CC-458",
     "releaseDate": ""
@@ -1885,30 +1859,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260911/67bdc74585fd4228.jpg",
         "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건 / 라이트옐로우베이지 - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/765771bb50513.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건 / 라이트옐로우베이지 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/ab7054c183855.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건 / 라이트옐로우베이지 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/91430c619b75f.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건 / 라이트옐로우베이지 - 이미지 4"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/955bed02c4baf.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건 / 라이트옐로우베이지 - 이미지 5"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/cfaa59ac2c68e.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건 / 라이트옐로우베이지 - 이미지 6"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/48999a2103892.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건 / 라이트옐로우베이지 - 이미지 7"
       }
     ],
     "variants": [
@@ -2024,8 +1974,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:10.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:58.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 457,
     "productCode": "CC-457",
     "releaseDate": ""
@@ -2059,30 +2009,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260911/0e637b5a1e354a09.jpg",
         "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건  / 라이트 메로나 - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/3f278bed88d8e.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건  / 라이트 메로나 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/45d90594e06cb.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건  / 라이트 메로나 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/4d164055f8965.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건  / 라이트 메로나 - 이미지 4"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/42fdff1429547.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건  / 라이트 메로나 - 이미지 5"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/5c9adeb5088ca.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건  / 라이트 메로나 - 이미지 6"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/224243893ce4a.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 가디건  / 라이트 메로나 - 이미지 7"
       }
     ],
     "variants": [
@@ -2198,8 +2124,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:09.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:57.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 456,
     "productCode": "CC-456",
     "releaseDate": ""
@@ -2233,30 +2159,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260911/03e2f1d386eb435f.jpg",
         "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 이너 탑 / 라이트 메로나 - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/3f278bed88d8e.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 이너 탑 / 라이트 메로나 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/45d90594e06cb.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 이너 탑 / 라이트 메로나 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/4d164055f8965.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 이너 탑 / 라이트 메로나 - 이미지 4"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/42fdff1429547.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 이너 탑 / 라이트 메로나 - 이미지 5"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/5c9adeb5088ca.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 이너 탑 / 라이트 메로나 - 이미지 6"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/224243893ce4a.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 이너 탑 / 라이트 메로나 - 이미지 7"
       }
     ],
     "variants": [
@@ -2372,8 +2274,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:08.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:56.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 455,
     "productCode": "CC-455",
     "releaseDate": ""
@@ -2407,30 +2309,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260911/9d3b8d6abb264438.jpg",
         "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 이너 탑 / 라이트옐로우베이지 - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/765771bb50513.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 이너 탑 / 라이트옐로우베이지 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/ab7054c183855.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 이너 탑 / 라이트옐로우베이지 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/91430c619b75f.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 이너 탑 / 라이트옐로우베이지 - 이미지 4"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/955bed02c4baf.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 이너 탑 / 라이트옐로우베이지 - 이미지 5"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/cfaa59ac2c68e.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 이너 탑 / 라이트옐로우베이지 - 이미지 6"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/48999a2103892.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크100 클래식 니트 이너 탑 / 라이트옐로우베이지 - 이미지 7"
       }
     ],
     "variants": [
@@ -2546,8 +2424,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:07.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:55.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 454,
     "productCode": "CC-454",
     "releaseDate": ""
@@ -2661,8 +2539,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:06.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:54.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 453,
     "productCode": "CC-453",
     "releaseDate": ""
@@ -2778,8 +2656,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:05.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:53.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 452,
     "productCode": "CC-452",
     "releaseDate": ""
@@ -2867,8 +2745,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:04.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:52.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 451,
     "productCode": "CC-451",
     "releaseDate": ""
@@ -2956,8 +2834,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:03.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:51.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 450,
     "productCode": "CC-450",
     "releaseDate": ""
@@ -3048,8 +2926,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:02.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:50.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 449,
     "productCode": "CC-449",
     "releaseDate": ""
@@ -3137,8 +3015,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:01.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:49.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 448,
     "productCode": "CC-448",
     "releaseDate": ""
@@ -3226,8 +3104,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:17:00.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:48.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 447,
     "productCode": "CC-447",
     "releaseDate": ""
@@ -3315,8 +3193,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:59.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:47.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 446,
     "productCode": "CC-446",
     "releaseDate": ""
@@ -3404,8 +3282,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:58.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:46.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 445,
     "productCode": "CC-445",
     "releaseDate": ""
@@ -3493,8 +3371,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:57.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:45.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 444,
     "productCode": "CC-444",
     "releaseDate": ""
@@ -3582,8 +3460,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:56.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:44.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 443,
     "productCode": "CC-443",
     "releaseDate": ""
@@ -3671,8 +3549,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:55.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:43.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 442,
     "productCode": "CC-442",
     "releaseDate": ""
@@ -3760,8 +3638,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:54.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:42.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 441,
     "productCode": "CC-441",
     "releaseDate": ""
@@ -3795,10 +3673,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260728/07c0c1c3c5d94b34.jpg",
         "altText": "[PREMIUM] 오간자 레이어드 호보백 /ALL - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7950f2de9fc7e.jpg",
-        "altText": "[PREMIUM] 오간자 레이어드 호보백 /ALL - 이미지 2"
       }
     ],
     "variants": [
@@ -3888,8 +3762,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:53.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:41.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 440,
     "productCode": "CC-440",
     "releaseDate": ""
@@ -3980,8 +3854,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:52.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:40.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 439,
     "productCode": "CC-439",
     "releaseDate": ""
@@ -4045,83 +3919,38 @@
       "2": 11
     },
     "colorHexMap": {
-      "BLACK": "#000000",
-      "CREAM": "#FDFBF7",
-      "CHARCOAL": "#36454F",
-      "NAVY": "#000080",
-      "BEIGE": "#F5F5DC",
-      "WHITE": "#FFFFFF",
-      "BROWN": "#8B4513",
       "RED": "#DC2626",
       "BLUE": "#2563EB",
+      "NAVY": "#000080",
+      "PINK": "#EC4899",
+      "BEIGE": "#F5F5DC",
+      "BLACK": "#000000",
+      "BROWN": "#8B4513",
+      "CREAM": "#FDFBF7",
       "GREEN": "#16A34A",
       "KHAKI": "#708090",
-      "PINK": "#EC4899"
+      "WHITE": "#FFFFFF",
+      "CHARCOAL": "#36454F"
     },
     "productLabel": "PREMIUM",
     "isMainFeatured": true,
     "availableForSale": true,
     "isTimeSale": false,
     "bulkDiscount": {
-      "enabled": false,
       "rules": [
         {
           "qty": 2,
           "rate": 5
         }
-      ]
+      ],
+      "enabled": false,
+      "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:51.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:39.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 438,
     "productCode": "CC-438",
-    "colorImages": {},
-    "sizeMeasurements": [
-      {
-        "name": "어깨단면",
-        "values": {
-          "1": "50",
-          "2": "52",
-          "3": "54",
-          "FREE": "56"
-        }
-      },
-      {
-        "name": "가슴단면",
-        "values": {
-          "1": "56.5",
-          "2": "58.5",
-          "3": "60.5",
-          "FREE": "62.5"
-        }
-      },
-      {
-        "name": "팔길이",
-        "values": {
-          "1": "59",
-          "2": "60",
-          "3": "61",
-          "FREE": "61.5"
-        }
-      },
-      {
-        "name": "총장",
-        "values": {
-          "1": "58/62.5",
-          "2": "60/64.5",
-          "3": "62/66.5",
-          "FREE": "63/67.5"
-        }
-      }
-    ],
-    "showSizeGuide": false,
-    "fabricComposition": "COTTON 100% (프리미엄 콤마 코튼)",
-    "showFabricBadge": false,
-    "elasticity": "보통",
-    "sheerness": "없음",
-    "thickness": "적당함",
-    "lining": "없음",
-    "fabricImage": ""
+    "releaseDate": ""
   },
   {
     "id": "excel-product-437",
@@ -4173,8 +4002,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:50.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:38.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 437,
     "productCode": "CC-437",
     "releaseDate": ""
@@ -4265,8 +4094,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:49.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:37.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 436,
     "productCode": "CC-436",
     "releaseDate": ""
@@ -4357,8 +4186,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:48.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:36.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 435,
     "productCode": "CC-435",
     "releaseDate": ""
@@ -4449,8 +4278,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:47.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:35.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 434,
     "productCode": "CC-434",
     "releaseDate": ""
@@ -4541,8 +4370,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:46.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:34.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 433,
     "productCode": "CC-433",
     "releaseDate": ""
@@ -4576,18 +4405,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260616/8231972de417497f.png",
         "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 / 6개구매 - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/c0061852021f0.jpg",
-        "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 / 6개구매 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/3854667285dbc.jpg",
-        "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 / 6개구매 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/10acc842c24b4.jpg",
-        "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 / 6개구매 - 이미지 4"
       }
     ],
     "variants": [
@@ -4960,8 +4777,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:45.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:33.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 432,
     "productCode": "CC-432",
     "releaseDate": ""
@@ -4995,18 +4812,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260616/0d6f560722e24839.png",
         "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 / 3~5개구매 - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/c0061852021f0.jpg",
-        "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 / 3~5개구매 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/3854667285dbc.jpg",
-        "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 / 3~5개구매 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/10acc842c24b4.jpg",
-        "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 / 3~5개구매 - 이미지 4"
       }
     ],
     "variants": [
@@ -5379,8 +5184,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:44.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:32.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 431,
     "productCode": "CC-431",
     "releaseDate": ""
@@ -5413,11 +5218,7 @@
     "images": [
       {
         "url": "https://cdn.imweb.me/thumbnail/20260528/f69c920118824927.jpg",
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입 - 이미지 1"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/87b30dc7d6266.jpg",
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입 - 이미지 2"
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입"
       }
     ],
     "variants": [
@@ -5541,8 +5342,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:43.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:31.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 430,
     "productCode": "CC-430",
     "releaseDate": ""
@@ -5576,14 +5377,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260525/5c8704c5a51f400f.jpg",
         "altText": "[PREMIUM] Worsted 실크캐시미어100 니트 폴로 /4EA - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/411c812e6760b.jpg",
-        "altText": "[PREMIUM] Worsted 실크캐시미어100 니트 폴로 /4EA - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/c6f246d36438d.jpg",
-        "altText": "[PREMIUM] Worsted 실크캐시미어100 니트 폴로 /4EA - 이미지 3"
       }
     ],
     "variants": [
@@ -5856,8 +5649,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:42.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:30.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 429,
     "productCode": "CC-429",
     "releaseDate": ""
@@ -5891,14 +5684,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260525/05d22971923e4a2e.jpg",
         "altText": "[PREMIUM] Worsted 실크캐시미어100 니트 폴로 /3EA - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/411c812e6760b.jpg",
-        "altText": "[PREMIUM] Worsted 실크캐시미어100 니트 폴로 /3EA - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/c6f246d36438d.jpg",
-        "altText": "[PREMIUM] Worsted 실크캐시미어100 니트 폴로 /3EA - 이미지 3"
       }
     ],
     "variants": [
@@ -6171,8 +5956,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:41.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:29.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 428,
     "productCode": "CC-428",
     "releaseDate": ""
@@ -6206,14 +5991,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260525/0e8178e43b044210.jpg",
         "altText": "[PREMIUM] Worsted 실크캐시미어100 니트 폴로 /2EA - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/411c812e6760b.jpg",
-        "altText": "[PREMIUM] Worsted 실크캐시미어100 니트 폴로 /2EA - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/c6f246d36438d.jpg",
-        "altText": "[PREMIUM] Worsted 실크캐시미어100 니트 폴로 /2EA - 이미지 3"
       }
     ],
     "variants": [
@@ -6486,8 +6263,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:40.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:28.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 427,
     "productCode": "CC-427",
     "releaseDate": ""
@@ -6578,8 +6355,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:39.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:27.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 426,
     "productCode": "CC-426",
     "releaseDate": ""
@@ -6613,18 +6390,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260615/d9aa0f1180ee4be5.png",
         "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/c0061852021f0.jpg",
-        "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/3854667285dbc.jpg",
-        "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/10acc842c24b4.jpg",
-        "altText": "[BLACK LABEL] 메리노울100 썸머 가디건 세트 - 이미지 4"
       }
     ],
     "variants": [
@@ -6997,8 +6762,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:38.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:26.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 425,
     "productCode": "CC-425",
     "releaseDate": ""
@@ -7089,8 +6854,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:37.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:25.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 424,
     "productCode": "CC-424",
     "releaseDate": ""
@@ -7181,8 +6946,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:36.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:24.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 423,
     "productCode": "CC-423",
     "releaseDate": ""
@@ -7273,8 +7038,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:35.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:23.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 422,
     "productCode": "CC-422",
     "releaseDate": ""
@@ -7365,8 +7130,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:34.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:22.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 421,
     "productCode": "CC-421",
     "releaseDate": ""
@@ -7400,14 +7165,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260518/32fc2a56f776489f.jpg",
         "altText": "[PREMIUM] 하이엔드 테일러링 메리노울 플레어 버뮤다 팬츠 / ALL - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/5a70cfbfd491b.jpg",
-        "altText": "[PREMIUM] 하이엔드 테일러링 메리노울 플레어 버뮤다 팬츠 / ALL - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/3b4ca7ca56c8b.jpg",
-        "altText": "[PREMIUM] 하이엔드 테일러링 메리노울 플레어 버뮤다 팬츠 / ALL - 이미지 3"
       }
     ],
     "variants": [
@@ -7549,8 +7306,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:33.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:21.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 420,
     "productCode": "CC-420",
     "releaseDate": ""
@@ -7583,11 +7340,7 @@
     "images": [
       {
         "url": "https://cdn.imweb.me/thumbnail/20260528/d016743167bb49cb.jpg",
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입 - 이미지 1"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/35f518b71c41c.jpg",
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입 - 이미지 2"
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입"
       }
     ],
     "variants": [
@@ -7711,8 +7464,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:32.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:20.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 419,
     "productCode": "CC-419",
     "releaseDate": ""
@@ -7803,8 +7556,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:31.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:19.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 418,
     "productCode": "CC-418",
     "releaseDate": ""
@@ -7859,8 +7612,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:30.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:18.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 417,
     "productCode": "CC-417",
     "releaseDate": ""
@@ -7916,8 +7669,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:29.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:17.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 416,
     "productCode": "CC-416",
     "releaseDate": ""
@@ -7951,42 +7704,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20260331/b3a0f75d08e66.jpg",
         "altText": "[BLACK LABEL] 캐시미어 실크 클래식 가디건 셋업 / ALL - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/b1234e2a09915.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크 클래식 가디건 셋업 / ALL - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/03d927b516ee1.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크 클래식 가디건 셋업 / ALL - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/000b546783797.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크 클래식 가디건 셋업 / ALL - 이미지 4"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7a1cc03b3d1a4.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크 클래식 가디건 셋업 / ALL - 이미지 5"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/047e6b7458962.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크 클래식 가디건 셋업 / ALL - 이미지 6"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/3fe51ff739bd9.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크 클래식 가디건 셋업 / ALL - 이미지 7"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/bf5a51d76a2cb.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크 클래식 가디건 셋업 / ALL - 이미지 8"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/a82c78dcda57e.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크 클래식 가디건 셋업 / ALL - 이미지 9"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/e9227d321ce1f.png",
-        "altText": "[BLACK LABEL] 캐시미어 실크 클래식 가디건 셋업 / ALL - 이미지 10"
       }
     ],
     "variants": [
@@ -8102,8 +7819,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:28.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:16.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 415,
     "productCode": "CC-415",
     "releaseDate": ""
@@ -8159,8 +7876,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:27.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:15.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 414,
     "productCode": "CC-414",
     "releaseDate": ""
@@ -8216,8 +7933,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:26.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:14.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 413,
     "productCode": "CC-413",
     "releaseDate": ""
@@ -8272,8 +7989,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:25.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:13.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 412,
     "productCode": "CC-412",
     "releaseDate": ""
@@ -8329,8 +8046,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:24.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:12.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 411,
     "productCode": "CC-411",
     "releaseDate": ""
@@ -8386,8 +8103,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:23.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:11.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 410,
     "productCode": "CC-410",
     "releaseDate": ""
@@ -8478,8 +8195,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:22.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:10.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 409,
     "productCode": "CC-409",
     "releaseDate": ""
@@ -8535,8 +8252,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:21.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:09.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 408,
     "productCode": "CC-408",
     "releaseDate": ""
@@ -8592,8 +8309,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:20.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:08.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 407,
     "productCode": "CC-407",
     "releaseDate": ""
@@ -8649,8 +8366,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:19.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:07.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 406,
     "productCode": "CC-406",
     "releaseDate": ""
@@ -8706,8 +8423,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:18.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:06.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 405,
     "productCode": "CC-405",
     "releaseDate": ""
@@ -8763,8 +8480,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:17.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:05.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 404,
     "productCode": "CC-404",
     "releaseDate": ""
@@ -8820,8 +8537,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:16.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:04.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 403,
     "productCode": "CC-403",
     "releaseDate": ""
@@ -8877,8 +8594,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:15.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:03.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 402,
     "productCode": "CC-402",
     "releaseDate": ""
@@ -8934,8 +8651,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:14.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:02.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 396,
     "productCode": "CC-396",
     "releaseDate": ""
@@ -8991,8 +8708,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:13.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:01.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 395,
     "productCode": "CC-395",
     "releaseDate": ""
@@ -9048,8 +8765,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:12.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:29:00.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 394,
     "productCode": "CC-394",
     "releaseDate": ""
@@ -9105,8 +8822,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:11.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:59.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 393,
     "productCode": "CC-393",
     "releaseDate": ""
@@ -9161,8 +8878,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:10.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:58.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 392,
     "productCode": "CC-392",
     "releaseDate": ""
@@ -9217,8 +8934,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:09.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:57.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 391,
     "productCode": "CC-391",
     "releaseDate": ""
@@ -9273,8 +8990,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:08.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:56.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 390,
     "productCode": "CC-390",
     "releaseDate": ""
@@ -9329,8 +9046,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:07.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:55.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 389,
     "productCode": "CC-389",
     "releaseDate": ""
@@ -9385,8 +9102,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:06.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:54.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 388,
     "productCode": "CC-388",
     "releaseDate": ""
@@ -9441,8 +9158,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:05.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:53.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 387,
     "productCode": "CC-387",
     "releaseDate": ""
@@ -9497,8 +9214,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:04.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:52.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 386,
     "productCode": "CC-386",
     "releaseDate": ""
@@ -9553,8 +9270,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:03.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:51.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 385,
     "productCode": "CC-385",
     "releaseDate": ""
@@ -9609,8 +9326,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:16:02.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:50.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 384,
     "productCode": "CC-384",
     "releaseDate": ""
@@ -9665,8 +9382,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:59.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:49.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 379,
     "productCode": "CC-379",
     "releaseDate": ""
@@ -9754,8 +9471,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:55.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:48.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 375,
     "productCode": "CC-375",
     "releaseDate": ""
@@ -9810,8 +9527,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:54.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:47.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 374,
     "productCode": "CC-374",
     "releaseDate": ""
@@ -9866,8 +9583,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:53.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:46.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 373,
     "productCode": "CC-373",
     "releaseDate": ""
@@ -9922,8 +9639,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:47.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:45.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 353,
     "productCode": "CC-353",
     "releaseDate": ""
@@ -9978,8 +9695,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:46.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:44.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 352,
     "productCode": "CC-352",
     "releaseDate": ""
@@ -10035,8 +9752,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:45.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:43.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 351,
     "productCode": "CC-351",
     "releaseDate": ""
@@ -10127,8 +9844,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:44.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:42.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 350,
     "productCode": "CC-350",
     "releaseDate": ""
@@ -10276,8 +9993,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:38.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:41.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 344,
     "productCode": "CC-344",
     "releaseDate": ""
@@ -10334,8 +10051,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:37.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:40.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 343,
     "productCode": "CC-343",
     "releaseDate": ""
@@ -10392,8 +10109,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:36.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:39.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 342,
     "productCode": "CC-342",
     "releaseDate": ""
@@ -10448,8 +10165,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:35.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:38.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 341,
     "productCode": "CC-341",
     "releaseDate": ""
@@ -10504,8 +10221,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:34.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:37.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 340,
     "productCode": "CC-340",
     "releaseDate": ""
@@ -10560,8 +10277,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:33.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:36.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 339,
     "productCode": "CC-339",
     "releaseDate": ""
@@ -10616,8 +10333,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:32.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:35.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 338,
     "productCode": "CC-338",
     "releaseDate": ""
@@ -10673,8 +10390,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:31.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:34.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 335,
     "productCode": "CC-335",
     "releaseDate": ""
@@ -10730,8 +10447,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:30.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:33.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 334,
     "productCode": "CC-334",
     "releaseDate": ""
@@ -10788,8 +10505,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:29.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:32.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 333,
     "productCode": "CC-333",
     "releaseDate": ""
@@ -10844,8 +10561,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:28.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:31.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 332,
     "productCode": "CC-332",
     "releaseDate": ""
@@ -10901,8 +10618,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:27.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:30.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 331,
     "productCode": "CC-331",
     "releaseDate": ""
@@ -10958,8 +10675,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:26.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:29.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 330,
     "productCode": "CC-330",
     "releaseDate": ""
@@ -11015,8 +10732,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:25.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:28.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 329,
     "productCode": "CC-329",
     "releaseDate": ""
@@ -11072,8 +10789,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:24.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:27.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 328,
     "productCode": "CC-328",
     "releaseDate": ""
@@ -11129,8 +10846,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:23.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:26.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 327,
     "productCode": "CC-327",
     "releaseDate": ""
@@ -11185,8 +10902,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:22.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:25.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 326,
     "productCode": "CC-326",
     "releaseDate": ""
@@ -11241,8 +10958,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:21.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:24.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 325,
     "productCode": "CC-325",
     "releaseDate": ""
@@ -11297,8 +11014,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:20.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:23.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 324,
     "productCode": "CC-324",
     "releaseDate": ""
@@ -11353,8 +11070,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:19.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:22.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 323,
     "productCode": "CC-323",
     "releaseDate": ""
@@ -11409,8 +11126,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:18.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:21.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 322,
     "productCode": "CC-322",
     "releaseDate": ""
@@ -11466,8 +11183,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:17.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:20.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 321,
     "productCode": "CC-321",
     "releaseDate": ""
@@ -11523,8 +11240,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:16.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:19.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 320,
     "productCode": "CC-320",
     "releaseDate": ""
@@ -11580,8 +11297,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:15.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:18.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 319,
     "productCode": "CC-319",
     "releaseDate": ""
@@ -11637,8 +11354,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:14.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:17.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 318,
     "productCode": "CC-318",
     "releaseDate": ""
@@ -11694,8 +11411,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:13.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:16.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 316,
     "productCode": "CC-316",
     "releaseDate": ""
@@ -11751,8 +11468,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:12.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:15.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 315,
     "productCode": "CC-315",
     "releaseDate": ""
@@ -11808,8 +11525,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:11.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:14.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 314,
     "productCode": "CC-314",
     "releaseDate": ""
@@ -11865,8 +11582,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:10.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:13.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 313,
     "productCode": "CC-313",
     "releaseDate": ""
@@ -11922,8 +11639,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:09.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:12.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 312,
     "productCode": "CC-312",
     "releaseDate": ""
@@ -11979,8 +11696,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:08.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:11.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 311,
     "productCode": "CC-311",
     "releaseDate": ""
@@ -12035,8 +11752,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:07.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:10.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 310,
     "productCode": "CC-310",
     "releaseDate": ""
@@ -12091,8 +11808,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:06.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:09.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 309,
     "productCode": "CC-309",
     "releaseDate": ""
@@ -12147,8 +11864,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:05.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:08.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 308,
     "productCode": "CC-308",
     "releaseDate": ""
@@ -12204,8 +11921,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:04.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:07.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 307,
     "productCode": "CC-307",
     "releaseDate": ""
@@ -12260,8 +11977,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:03.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:06.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 306,
     "productCode": "CC-306",
     "releaseDate": ""
@@ -12316,8 +12033,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:02.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:05.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 305,
     "productCode": "CC-305",
     "releaseDate": ""
@@ -12372,8 +12089,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:01.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:04.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 304,
     "productCode": "CC-304",
     "releaseDate": ""
@@ -12428,8 +12145,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:15:00.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.874+00:00",
+    "created_at": "2026-09-29T13:28:03.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 303,
     "productCode": "CC-303",
     "releaseDate": ""
@@ -12484,8 +12201,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:59.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:28:02.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 302,
     "productCode": "CC-302",
     "releaseDate": ""
@@ -12540,8 +12257,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:58.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:28:01.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 301,
     "productCode": "CC-301",
     "releaseDate": ""
@@ -12596,8 +12313,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:57.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:28:00.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 300,
     "productCode": "CC-300",
     "releaseDate": ""
@@ -12652,8 +12369,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:56.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:59.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 299,
     "productCode": "CC-299",
     "releaseDate": ""
@@ -12708,8 +12425,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:55.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:58.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 298,
     "productCode": "CC-298",
     "releaseDate": ""
@@ -12764,8 +12481,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:54.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:57.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 297,
     "productCode": "CC-297",
     "releaseDate": ""
@@ -12820,8 +12537,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:53.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:56.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 296,
     "productCode": "CC-296",
     "releaseDate": ""
@@ -12876,8 +12593,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:52.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:55.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 295,
     "productCode": "CC-295",
     "releaseDate": ""
@@ -12932,8 +12649,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:51.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:54.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 294,
     "productCode": "CC-294",
     "releaseDate": ""
@@ -12988,8 +12705,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:50.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:53.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 293,
     "productCode": "CC-293",
     "releaseDate": ""
@@ -13044,8 +12761,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:49.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:52.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 292,
     "productCode": "CC-292",
     "releaseDate": ""
@@ -13100,8 +12817,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:48.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:51.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 291,
     "productCode": "CC-291",
     "releaseDate": ""
@@ -13156,8 +12873,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:47.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:50.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 290,
     "productCode": "CC-290",
     "releaseDate": ""
@@ -13212,8 +12929,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:46.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:49.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 289,
     "productCode": "CC-289",
     "releaseDate": ""
@@ -13268,8 +12985,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:45.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:48.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 288,
     "productCode": "CC-288",
     "releaseDate": ""
@@ -13324,8 +13041,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:44.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:47.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 287,
     "productCode": "CC-287",
     "releaseDate": ""
@@ -13380,8 +13097,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:43.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:46.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 286,
     "productCode": "CC-286",
     "releaseDate": ""
@@ -13436,8 +13153,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:42.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:45.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 285,
     "productCode": "CC-285",
     "releaseDate": ""
@@ -13492,8 +13209,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:41.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:44.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 284,
     "productCode": "CC-284",
     "releaseDate": ""
@@ -13548,8 +13265,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:40.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:43.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 283,
     "productCode": "CC-283",
     "releaseDate": ""
@@ -13605,8 +13322,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:39.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:42.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 282,
     "productCode": "CC-282",
     "releaseDate": ""
@@ -13662,8 +13379,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:38.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:41.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 281,
     "productCode": "CC-281",
     "releaseDate": ""
@@ -13719,8 +13436,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:37.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:40.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 280,
     "productCode": "CC-280",
     "releaseDate": ""
@@ -13776,8 +13493,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:36.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:39.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 279,
     "productCode": "CC-279",
     "releaseDate": ""
@@ -13833,8 +13550,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:35.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:38.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 278,
     "productCode": "CC-278",
     "releaseDate": ""
@@ -13890,8 +13607,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:34.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:37.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 277,
     "productCode": "CC-277",
     "releaseDate": ""
@@ -13947,8 +13664,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:33.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:36.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 276,
     "productCode": "CC-276",
     "releaseDate": ""
@@ -14039,8 +13756,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:32.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:35.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 275,
     "productCode": "CC-275",
     "releaseDate": ""
@@ -14095,8 +13812,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:31.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:34.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 274,
     "productCode": "CC-274",
     "releaseDate": ""
@@ -14152,8 +13869,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:30.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:33.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 273,
     "productCode": "CC-273",
     "releaseDate": ""
@@ -14209,8 +13926,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:29.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:32.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 272,
     "productCode": "CC-272",
     "releaseDate": ""
@@ -14266,8 +13983,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:28.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:31.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 271,
     "productCode": "CC-271",
     "releaseDate": ""
@@ -14323,8 +14040,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:27.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:30.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 270,
     "productCode": "CC-270",
     "releaseDate": ""
@@ -14380,8 +14097,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:26.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:29.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 269,
     "productCode": "CC-269",
     "releaseDate": ""
@@ -14436,8 +14153,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:25.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:28.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 268,
     "productCode": "CC-268",
     "releaseDate": ""
@@ -14492,8 +14209,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:24.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:27.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 267,
     "productCode": "CC-267",
     "releaseDate": ""
@@ -14549,8 +14266,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:23.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:26.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 266,
     "productCode": "CC-266",
     "releaseDate": ""
@@ -14606,8 +14323,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:22.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:25.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 265,
     "productCode": "CC-265",
     "releaseDate": ""
@@ -14663,8 +14380,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:21.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:24.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 264,
     "productCode": "CC-264",
     "releaseDate": ""
@@ -14720,8 +14437,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:20.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:23.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 263,
     "productCode": "CC-263",
     "releaseDate": ""
@@ -14778,8 +14495,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:15.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:22.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 257,
     "productCode": "CC-257",
     "releaseDate": ""
@@ -14870,8 +14587,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:14.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:21.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 256,
     "productCode": "CC-256",
     "releaseDate": ""
@@ -14927,8 +14644,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:13.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:20.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 255,
     "productCode": "CC-255",
     "releaseDate": ""
@@ -14984,8 +14701,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:12.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:19.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 254,
     "productCode": "CC-254",
     "releaseDate": ""
@@ -15041,8 +14758,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:11.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:18.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 253,
     "productCode": "CC-253",
     "releaseDate": ""
@@ -15097,8 +14814,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:10.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:17.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 252,
     "productCode": "CC-252",
     "releaseDate": ""
@@ -15189,8 +14906,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:09.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:16.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 251,
     "productCode": "CC-251",
     "releaseDate": ""
@@ -15246,8 +14963,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:08.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:15.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 250,
     "productCode": "CC-250",
     "releaseDate": ""
@@ -15338,8 +15055,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:07.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:14.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 249,
     "productCode": "CC-249",
     "releaseDate": ""
@@ -15395,8 +15112,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:06.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:13.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 248,
     "productCode": "CC-248",
     "releaseDate": ""
@@ -15452,8 +15169,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:05.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:12.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 247,
     "productCode": "CC-247",
     "releaseDate": ""
@@ -15509,8 +15226,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:04.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:11.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 246,
     "productCode": "CC-246",
     "releaseDate": ""
@@ -15601,8 +15318,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:03.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:10.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 245,
     "productCode": "CC-245",
     "releaseDate": ""
@@ -15693,8 +15410,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:02.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:09.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 244,
     "productCode": "CC-244",
     "releaseDate": ""
@@ -15785,8 +15502,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:01.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:08.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 243,
     "productCode": "CC-243",
     "releaseDate": ""
@@ -15842,8 +15559,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:14:00.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:07.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 242,
     "productCode": "CC-242",
     "releaseDate": ""
@@ -15899,8 +15616,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:59.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:06.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 241,
     "productCode": "CC-241",
     "releaseDate": ""
@@ -15956,8 +15673,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:58.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:05.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 240,
     "productCode": "CC-240",
     "releaseDate": ""
@@ -16013,8 +15730,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:57.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:04.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 239,
     "productCode": "CC-239",
     "releaseDate": ""
@@ -16070,8 +15787,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:56.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:03.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 238,
     "productCode": "CC-238",
     "releaseDate": ""
@@ -16127,8 +15844,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:55.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:02.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 237,
     "productCode": "CC-237",
     "releaseDate": ""
@@ -16184,8 +15901,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:54.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:01.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 236,
     "productCode": "CC-236",
     "releaseDate": ""
@@ -16241,8 +15958,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:53.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:27:00.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 235,
     "productCode": "CC-235",
     "releaseDate": ""
@@ -16276,14 +15993,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20250624/8b5e76cf4105c.jpg",
         "altText": "[PREMIUM]SILK CASHMERE SCARF / ALL - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/dbcbe11d45ae6.jpg",
-        "altText": "[PREMIUM]SILK CASHMERE SCARF / ALL - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/637ccac6e05fb.jpg",
-        "altText": "[PREMIUM]SILK CASHMERE SCARF / ALL - 이미지 3"
       }
     ],
     "variants": [
@@ -16365,8 +16074,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:52.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:59.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 234,
     "productCode": "CC-234",
     "releaseDate": ""
@@ -16421,8 +16130,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:51.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:58.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 233,
     "productCode": "CC-233",
     "releaseDate": ""
@@ -16477,8 +16186,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:50.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:57.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 232,
     "productCode": "CC-232",
     "releaseDate": ""
@@ -16533,8 +16242,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:49.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:56.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 231,
     "productCode": "CC-231",
     "releaseDate": ""
@@ -16590,8 +16299,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:48.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:55.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 230,
     "productCode": "CC-230",
     "releaseDate": ""
@@ -16647,8 +16356,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:47.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:54.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 229,
     "productCode": "CC-229",
     "releaseDate": ""
@@ -16704,8 +16413,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:46.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:53.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 228,
     "productCode": "CC-228",
     "releaseDate": ""
@@ -16761,8 +16470,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:45.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:52.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 227,
     "productCode": "CC-227",
     "releaseDate": ""
@@ -16818,8 +16527,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:44.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:51.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 226,
     "productCode": "CC-226",
     "releaseDate": ""
@@ -16875,8 +16584,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:43.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:50.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 225,
     "productCode": "CC-225",
     "releaseDate": ""
@@ -16931,8 +16640,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:42.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:49.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 223,
     "productCode": "CC-223",
     "releaseDate": ""
@@ -16988,8 +16697,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:41.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:48.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 222,
     "productCode": "CC-222",
     "releaseDate": ""
@@ -17044,8 +16753,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:40.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:47.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 221,
     "productCode": "CC-221",
     "releaseDate": ""
@@ -17101,8 +16810,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:39.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:46.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 220,
     "productCode": "CC-220",
     "releaseDate": ""
@@ -17158,8 +16867,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:38.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:45.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 219,
     "productCode": "CC-219",
     "releaseDate": ""
@@ -17215,8 +16924,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:37.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:44.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 218,
     "productCode": "CC-218",
     "releaseDate": ""
@@ -17272,8 +16981,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:36.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:43.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 217,
     "productCode": "CC-217",
     "releaseDate": ""
@@ -17329,8 +17038,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:35.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:42.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 216,
     "productCode": "CC-216",
     "releaseDate": ""
@@ -17385,8 +17094,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:34.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:41.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 215,
     "productCode": "CC-215",
     "releaseDate": ""
@@ -17442,8 +17151,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:33.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:40.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 214,
     "productCode": "CC-214",
     "releaseDate": ""
@@ -17499,8 +17208,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:32.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:39.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 213,
     "productCode": "CC-213",
     "releaseDate": ""
@@ -17556,8 +17265,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:31.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:38.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 212,
     "productCode": "CC-212",
     "releaseDate": ""
@@ -17613,8 +17322,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:30.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:37.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 211,
     "productCode": "CC-211",
     "releaseDate": ""
@@ -17705,8 +17414,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:29.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:36.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 210,
     "productCode": "CC-210",
     "releaseDate": ""
@@ -17797,8 +17506,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:28.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:35.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 209,
     "productCode": "CC-209",
     "releaseDate": ""
@@ -17854,8 +17563,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:27.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:34.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 208,
     "productCode": "CC-208",
     "releaseDate": ""
@@ -17911,8 +17620,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:26.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:33.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 207,
     "productCode": "CC-207",
     "releaseDate": ""
@@ -17968,8 +17677,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:25.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:32.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 206,
     "productCode": "CC-206",
     "releaseDate": ""
@@ -18060,8 +17769,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:24.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:31.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 205,
     "productCode": "CC-205",
     "releaseDate": ""
@@ -18117,8 +17826,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:23.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:30.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 204,
     "productCode": "CC-204",
     "releaseDate": ""
@@ -18174,8 +17883,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:22.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:29.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 203,
     "productCode": "CC-203",
     "releaseDate": ""
@@ -18231,8 +17940,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:21.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:28.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 202,
     "productCode": "CC-202",
     "releaseDate": ""
@@ -18288,8 +17997,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:20.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:27.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 201,
     "productCode": "CC-201",
     "releaseDate": ""
@@ -18345,8 +18054,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:19.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:26.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 200,
     "productCode": "CC-200",
     "releaseDate": ""
@@ -18402,8 +18111,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:18.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:25.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 199,
     "productCode": "CC-199",
     "releaseDate": ""
@@ -18459,8 +18168,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:17.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:24.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 198,
     "productCode": "CC-198",
     "releaseDate": ""
@@ -18516,8 +18225,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:16.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:23.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 197,
     "productCode": "CC-197",
     "releaseDate": ""
@@ -18573,8 +18282,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:15.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:22.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 196,
     "productCode": "CC-196",
     "releaseDate": ""
@@ -18630,8 +18339,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:14.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:21.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 195,
     "productCode": "CC-195",
     "releaseDate": ""
@@ -18687,8 +18396,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:13.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:20.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 194,
     "productCode": "CC-194",
     "releaseDate": ""
@@ -18744,8 +18453,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:12.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:19.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 193,
     "productCode": "CC-193",
     "releaseDate": ""
@@ -18800,8 +18509,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:11.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:18.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 192,
     "productCode": "CC-192",
     "releaseDate": ""
@@ -18856,8 +18565,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:10.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:17.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 191,
     "productCode": "CC-191",
     "releaseDate": ""
@@ -18912,8 +18621,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:09.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:16.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 190,
     "productCode": "CC-190",
     "releaseDate": ""
@@ -18968,8 +18677,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:08.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:15.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 189,
     "productCode": "CC-189",
     "releaseDate": ""
@@ -19025,8 +18734,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:07.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:14.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 188,
     "productCode": "CC-188",
     "releaseDate": ""
@@ -19082,8 +18791,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:06.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:13.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 187,
     "productCode": "CC-187",
     "releaseDate": ""
@@ -19139,8 +18848,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:05.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:12.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 186,
     "productCode": "CC-186",
     "releaseDate": ""
@@ -19196,8 +18905,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:04.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:11.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 185,
     "productCode": "CC-185",
     "releaseDate": ""
@@ -19253,8 +18962,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:03.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:10.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 184,
     "productCode": "CC-184",
     "releaseDate": ""
@@ -19310,8 +19019,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:02.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:09.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 183,
     "productCode": "CC-183",
     "releaseDate": ""
@@ -19367,8 +19076,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:01.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:08.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 182,
     "productCode": "CC-182",
     "releaseDate": ""
@@ -19424,8 +19133,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:13:00.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:07.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 181,
     "productCode": "CC-181",
     "releaseDate": ""
@@ -19481,8 +19190,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:59.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:06.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 180,
     "productCode": "CC-180",
     "releaseDate": ""
@@ -19538,8 +19247,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:58.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:05.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 179,
     "productCode": "CC-179",
     "releaseDate": ""
@@ -19595,8 +19304,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:57.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:04.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 178,
     "productCode": "CC-178",
     "releaseDate": ""
@@ -19652,8 +19361,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:56.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:03.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 177,
     "productCode": "CC-177",
     "releaseDate": ""
@@ -19708,8 +19417,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:55.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:02.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 176,
     "productCode": "CC-176",
     "releaseDate": ""
@@ -19764,8 +19473,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:54.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:01.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 175,
     "productCode": "CC-175",
     "releaseDate": ""
@@ -19820,8 +19529,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:53.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:26:00.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 174,
     "productCode": "CC-174",
     "releaseDate": ""
@@ -19876,8 +19585,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:52.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:59.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 173,
     "productCode": "CC-173",
     "releaseDate": ""
@@ -19932,8 +19641,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:51.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:58.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 172,
     "productCode": "CC-172",
     "releaseDate": ""
@@ -19988,8 +19697,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:50.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:57.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 171,
     "productCode": "CC-171",
     "releaseDate": ""
@@ -20044,8 +19753,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:49.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:56.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 170,
     "productCode": "CC-170",
     "releaseDate": ""
@@ -20100,8 +19809,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:48.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:55.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 169,
     "productCode": "CC-169",
     "releaseDate": ""
@@ -20156,8 +19865,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:47.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:54.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 168,
     "productCode": "CC-168",
     "releaseDate": ""
@@ -20212,8 +19921,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:46.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:53.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 167,
     "productCode": "CC-167",
     "releaseDate": ""
@@ -20268,8 +19977,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:45.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:52.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 166,
     "productCode": "CC-166",
     "releaseDate": ""
@@ -20324,8 +20033,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:44.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:51.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 165,
     "productCode": "CC-165",
     "releaseDate": ""
@@ -20380,8 +20089,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:43.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:50.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 164,
     "productCode": "CC-164",
     "releaseDate": ""
@@ -20436,8 +20145,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:42.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:49.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 163,
     "productCode": "CC-163",
     "releaseDate": ""
@@ -20492,8 +20201,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:41.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:48.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 162,
     "productCode": "CC-162",
     "releaseDate": ""
@@ -20548,8 +20257,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:40.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:47.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 161,
     "productCode": "CC-161",
     "releaseDate": ""
@@ -20604,8 +20313,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:39.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:46.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 160,
     "productCode": "CC-160",
     "releaseDate": ""
@@ -20660,8 +20369,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:38.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:45.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 159,
     "productCode": "CC-159",
     "releaseDate": ""
@@ -20716,8 +20425,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:37.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:44.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 158,
     "productCode": "CC-158",
     "releaseDate": ""
@@ -20772,8 +20481,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:36.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:43.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 157,
     "productCode": "CC-157",
     "releaseDate": ""
@@ -20817,7 +20526,7 @@
       "2"
     ],
     "colors": [],
-    "stock": 0,
+    "stock": 100,
     "sizeStock": {
       "1": 0,
       "2": 0
@@ -20832,8 +20541,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:35.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:42.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 156,
     "productCode": "CC-156",
     "releaseDate": ""
@@ -20888,8 +20597,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:34.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:41.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 155,
     "productCode": "CC-155",
     "releaseDate": ""
@@ -20944,8 +20653,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:33.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:40.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 154,
     "productCode": "CC-154",
     "releaseDate": ""
@@ -21000,8 +20709,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:32.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:39.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 153,
     "productCode": "CC-153",
     "releaseDate": ""
@@ -21056,8 +20765,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:31.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:38.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 152,
     "productCode": "CC-152",
     "releaseDate": ""
@@ -21113,8 +20822,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:30.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:37.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 151,
     "productCode": "CC-151",
     "releaseDate": ""
@@ -21170,8 +20879,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:29.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:36.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 150,
     "productCode": "CC-150",
     "releaseDate": ""
@@ -21227,8 +20936,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:28.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:35.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 149,
     "productCode": "CC-149",
     "releaseDate": ""
@@ -21283,8 +20992,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:27.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:34.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 148,
     "productCode": "CC-148",
     "releaseDate": ""
@@ -21339,8 +21048,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:26.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:33.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 147,
     "productCode": "CC-147",
     "releaseDate": ""
@@ -21396,8 +21105,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:25.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:32.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 146,
     "productCode": "CC-146",
     "releaseDate": ""
@@ -21452,8 +21161,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:24.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:31.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 145,
     "productCode": "CC-145",
     "releaseDate": ""
@@ -21508,8 +21217,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:23.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:30.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 144,
     "productCode": "CC-144",
     "releaseDate": ""
@@ -21564,8 +21273,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:22.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:29.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 143,
     "productCode": "CC-143",
     "releaseDate": ""
@@ -21620,8 +21329,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:21.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:28.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 142,
     "productCode": "CC-142",
     "releaseDate": ""
@@ -21676,8 +21385,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:20.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:27.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 141,
     "productCode": "CC-141",
     "releaseDate": ""
@@ -21732,8 +21441,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:19.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:26.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 140,
     "productCode": "CC-140",
     "releaseDate": ""
@@ -21788,8 +21497,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:18.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:25.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 139,
     "productCode": "CC-139",
     "releaseDate": ""
@@ -21845,8 +21554,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:17.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:24.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 138,
     "productCode": "CC-138",
     "releaseDate": ""
@@ -21902,8 +21611,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:16.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:23.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 136,
     "productCode": "CC-136",
     "releaseDate": ""
@@ -21959,8 +21668,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:15.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:22.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 135,
     "productCode": "CC-135",
     "releaseDate": ""
@@ -22016,8 +21725,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:14.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:21.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 134,
     "productCode": "CC-134",
     "releaseDate": ""
@@ -22073,8 +21782,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:13.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:20.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 133,
     "productCode": "CC-133",
     "releaseDate": ""
@@ -22130,8 +21839,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:12.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:19.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 132,
     "productCode": "CC-132",
     "releaseDate": ""
@@ -22186,8 +21895,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:11.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:18.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 131,
     "productCode": "CC-131",
     "releaseDate": ""
@@ -22242,8 +21951,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:10.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:17.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 130,
     "productCode": "CC-130",
     "releaseDate": ""
@@ -22298,8 +22007,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:09.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:16.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 129,
     "productCode": "CC-129",
     "releaseDate": ""
@@ -22354,8 +22063,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:08.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:15.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 128,
     "productCode": "CC-128",
     "releaseDate": ""
@@ -22410,8 +22119,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:07.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:14.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 127,
     "productCode": "CC-127",
     "releaseDate": ""
@@ -22466,8 +22175,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:06.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:13.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 126,
     "productCode": "CC-126",
     "releaseDate": ""
@@ -22522,8 +22231,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:05.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:12.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 125,
     "productCode": "CC-125",
     "releaseDate": ""
@@ -22578,8 +22287,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:04.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:11.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 124,
     "productCode": "CC-124",
     "releaseDate": ""
@@ -22634,8 +22343,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:03.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:10.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 123,
     "productCode": "CC-123",
     "releaseDate": ""
@@ -22723,8 +22432,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:02.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:09.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 122,
     "productCode": "CC-122",
     "releaseDate": ""
@@ -22780,8 +22489,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:01.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:08.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 121,
     "productCode": "CC-121",
     "releaseDate": ""
@@ -22837,8 +22546,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:12:00.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:07.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 120,
     "productCode": "CC-120",
     "releaseDate": ""
@@ -22894,8 +22603,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:59.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:06.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 119,
     "productCode": "CC-119",
     "releaseDate": ""
@@ -22951,8 +22660,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:58.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:05.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 118,
     "productCode": "CC-118",
     "releaseDate": ""
@@ -23008,8 +22717,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:57.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:04.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 117,
     "productCode": "CC-117",
     "releaseDate": ""
@@ -23064,8 +22773,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:56.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:03.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 116,
     "productCode": "CC-116",
     "releaseDate": ""
@@ -23109,7 +22818,7 @@
       "2"
     ],
     "colors": [],
-    "stock": 0,
+    "stock": 100,
     "sizeStock": {
       "1": 0,
       "2": 0
@@ -23124,8 +22833,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:55.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:02.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 115,
     "productCode": "CC-115",
     "releaseDate": ""
@@ -23168,7 +22877,7 @@
       "FREE"
     ],
     "colors": [],
-    "stock": 0,
+    "stock": 100,
     "sizeStock": {},
     "colorHexMap": {},
     "productLabel": "BLACK_LABEL",
@@ -23180,8 +22889,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:54.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:01.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 114,
     "productCode": "CC-114",
     "releaseDate": ""
@@ -23236,8 +22945,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:53.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:25:00.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 113,
     "productCode": "CC-113",
     "releaseDate": ""
@@ -23292,8 +23001,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:52.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:59.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 112,
     "productCode": "CC-112",
     "releaseDate": ""
@@ -23349,8 +23058,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:51.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:58.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 111,
     "productCode": "CC-111",
     "releaseDate": ""
@@ -23406,8 +23115,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:50.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:57.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 110,
     "productCode": "CC-110",
     "releaseDate": ""
@@ -23463,8 +23172,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:49.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:56.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 109,
     "productCode": "CC-109",
     "releaseDate": ""
@@ -23519,8 +23228,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:48.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:55.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 107,
     "productCode": "CC-107",
     "releaseDate": ""
@@ -23575,8 +23284,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:47.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:54.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 106,
     "productCode": "CC-106",
     "releaseDate": ""
@@ -23634,7 +23343,7 @@
       "2"
     ],
     "colors": [],
-    "stock": 0,
+    "stock": 100,
     "sizeStock": {
       "1": 0,
       "2": 0
@@ -23667,8 +23376,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:46.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:53.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 105,
     "productCode": "CC-105",
     "releaseDate": ""
@@ -23724,8 +23433,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:45.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:52.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 103,
     "productCode": "CC-103",
     "releaseDate": ""
@@ -23781,8 +23490,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:44.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:51.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 102,
     "productCode": "CC-102",
     "releaseDate": ""
@@ -23837,8 +23546,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:43.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:50.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 101,
     "productCode": "CC-101",
     "releaseDate": ""
@@ -23893,8 +23602,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:42.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:49.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 100,
     "productCode": "CC-100",
     "releaseDate": ""
@@ -23949,8 +23658,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:41.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:48.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 99,
     "productCode": "CC-099",
     "releaseDate": ""
@@ -24006,8 +23715,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:40.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:47.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 98,
     "productCode": "CC-098",
     "releaseDate": ""
@@ -24063,8 +23772,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:39.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:46.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 97,
     "productCode": "CC-097",
     "releaseDate": ""
@@ -24120,8 +23829,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:38.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:45.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 96,
     "productCode": "CC-096",
     "releaseDate": ""
@@ -24177,8 +23886,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:37.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:44.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 95,
     "productCode": "CC-095",
     "releaseDate": ""
@@ -24234,8 +23943,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:36.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:43.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 94,
     "productCode": "CC-094",
     "releaseDate": ""
@@ -24291,8 +24000,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:35.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:42.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 93,
     "productCode": "CC-093",
     "releaseDate": ""
@@ -24348,8 +24057,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:34.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:41.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 92,
     "productCode": "CC-092",
     "releaseDate": ""
@@ -24405,8 +24114,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:33.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:40.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 91,
     "productCode": "CC-091",
     "releaseDate": ""
@@ -24463,8 +24172,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:32.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:39.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 90,
     "productCode": "CC-090",
     "releaseDate": ""
@@ -24521,8 +24230,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:31.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:38.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 89,
     "productCode": "CC-089",
     "releaseDate": ""
@@ -24556,18 +24265,6 @@
       {
         "url": "https://cdn.imweb.me/thumbnail/20241011/08f482a9eac6f.jpg",
         "altText": "[수입] ETE COMME HIVER x CHOICOMMA - 대표 이미지"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/06050da1d31a2.jpg",
-        "altText": "[수입] ETE COMME HIVER x CHOICOMMA - 이미지 2"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/19e86c4f35e9a.jpg",
-        "altText": "[수입] ETE COMME HIVER x CHOICOMMA - 이미지 3"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/9a8333be44a90.jpg",
-        "altText": "[수입] ETE COMME HIVER x CHOICOMMA - 이미지 4"
       }
     ],
     "variants": [
@@ -24708,8 +24405,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:30.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:37.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 88,
     "productCode": "CC-088",
     "releaseDate": ""
@@ -24765,8 +24462,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:29.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:36.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 87,
     "productCode": "CC-087",
     "releaseDate": ""
@@ -24822,8 +24519,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:28.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:35.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 86,
     "productCode": "CC-086",
     "releaseDate": ""
@@ -24879,8 +24576,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:27.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:34.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 85,
     "productCode": "CC-085",
     "releaseDate": ""
@@ -24936,8 +24633,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:26.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:33.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 84,
     "productCode": "CC-084",
     "releaseDate": ""
@@ -24993,8 +24690,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:25.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:32.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 83,
     "productCode": "CC-083",
     "releaseDate": ""
@@ -25050,8 +24747,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:24.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:31.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 82,
     "productCode": "CC-082",
     "releaseDate": ""
@@ -25107,8 +24804,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:23.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:30.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 81,
     "productCode": "CC-081",
     "releaseDate": ""
@@ -25164,8 +24861,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:22.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:29.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 80,
     "productCode": "CC-080",
     "releaseDate": ""
@@ -25221,8 +24918,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:21.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:28.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 79,
     "productCode": "CC-079",
     "releaseDate": ""
@@ -25278,8 +24975,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:20.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:27.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 78,
     "productCode": "CC-078",
     "releaseDate": ""
@@ -25335,8 +25032,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:19.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:26.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 77,
     "productCode": "CC-077",
     "releaseDate": ""
@@ -25392,8 +25089,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:18.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:25.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 76,
     "productCode": "CC-076",
     "releaseDate": ""
@@ -25449,8 +25146,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:17.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:24.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 75,
     "productCode": "CC-075",
     "releaseDate": ""
@@ -25505,8 +25202,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:16.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:23.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 74,
     "productCode": "CC-074",
     "releaseDate": ""
@@ -25561,8 +25258,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:15.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:22.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 73,
     "productCode": "CC-073",
     "releaseDate": ""
@@ -25653,8 +25350,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:14.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:21.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 72,
     "productCode": "CC-072",
     "releaseDate": ""
@@ -25745,8 +25442,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:13.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:20.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 71,
     "productCode": "CC-071",
     "releaseDate": ""
@@ -25802,8 +25499,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:12.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:19.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 70,
     "productCode": "CC-070",
     "releaseDate": ""
@@ -25859,8 +25556,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:11.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:18.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.184+00:00",
     "productNo": 69,
     "productCode": "CC-069",
     "releaseDate": ""
@@ -25915,8 +25612,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:10.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:17.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 68,
     "productCode": "CC-068",
     "releaseDate": ""
@@ -25971,8 +25668,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:09.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:16.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 65,
     "productCode": "CC-065",
     "releaseDate": ""
@@ -26028,8 +25725,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:08.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:15.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 64,
     "productCode": "CC-064",
     "releaseDate": ""
@@ -26085,8 +25782,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:07.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:14.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 63,
     "productCode": "CC-063",
     "releaseDate": ""
@@ -26141,8 +25838,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:06.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:13.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 61,
     "productCode": "CC-061",
     "releaseDate": ""
@@ -26198,8 +25895,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:05.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:12.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 60,
     "productCode": "CC-060",
     "releaseDate": ""
@@ -26254,8 +25951,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:04.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:11.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 58,
     "productCode": "CC-058",
     "releaseDate": ""
@@ -26311,8 +26008,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:03.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:10.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 57,
     "productCode": "CC-057",
     "releaseDate": ""
@@ -26368,8 +26065,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:02.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:09.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 56,
     "productCode": "CC-056",
     "releaseDate": ""
@@ -26425,8 +26122,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:01.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:08.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 55,
     "productCode": "CC-055",
     "releaseDate": ""
@@ -26482,8 +26179,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:11:00.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:07.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 54,
     "productCode": "CC-054",
     "releaseDate": ""
@@ -26539,8 +26236,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:59.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:06.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 53,
     "productCode": "CC-053",
     "releaseDate": ""
@@ -26596,8 +26293,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:58.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:05.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 52,
     "productCode": "CC-052",
     "releaseDate": ""
@@ -26653,8 +26350,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:57.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:04.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 51,
     "productCode": "CC-051",
     "releaseDate": ""
@@ -26710,8 +26407,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:56.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:03.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 50,
     "productCode": "CC-050",
     "releaseDate": ""
@@ -26767,8 +26464,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:55.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:02.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 49,
     "productCode": "CC-049",
     "releaseDate": ""
@@ -26824,8 +26521,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:54.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:01.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 48,
     "productCode": "CC-048",
     "releaseDate": ""
@@ -26881,8 +26578,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:53.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:24:00.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 47,
     "productCode": "CC-047",
     "releaseDate": ""
@@ -26938,8 +26635,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:52.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:59.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 46,
     "productCode": "CC-046",
     "releaseDate": ""
@@ -26995,8 +26692,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:51.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:58.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 45,
     "productCode": "CC-045",
     "releaseDate": ""
@@ -27052,8 +26749,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:50.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:57.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 44,
     "productCode": "CC-044",
     "releaseDate": ""
@@ -27109,8 +26806,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:49.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:56.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 43,
     "productCode": "CC-043",
     "releaseDate": ""
@@ -27166,8 +26863,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:48.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:55.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 42,
     "productCode": "CC-042",
     "releaseDate": ""
@@ -27223,8 +26920,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:47.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:54.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 41,
     "productCode": "CC-041",
     "releaseDate": ""
@@ -27280,8 +26977,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:42.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:53.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 36,
     "productCode": "CC-036",
     "releaseDate": ""
@@ -27337,8 +27034,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:41.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:52.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 35,
     "productCode": "CC-035",
     "releaseDate": ""
@@ -27394,8 +27091,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:40.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:51.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 34,
     "productCode": "CC-034",
     "releaseDate": ""
@@ -27451,8 +27148,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:39.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:50.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 33,
     "productCode": "CC-033",
     "releaseDate": ""
@@ -27508,8 +27205,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:38.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:49.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 32,
     "productCode": "CC-032",
     "releaseDate": ""
@@ -27565,8 +27262,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:37.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:48.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 31,
     "productCode": "CC-031",
     "releaseDate": ""
@@ -27622,8 +27319,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:36.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:47.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 30,
     "productCode": "CC-030",
     "releaseDate": ""
@@ -27678,8 +27375,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:35.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:46.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 29,
     "productCode": "CC-029",
     "releaseDate": ""
@@ -27735,8 +27432,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:34.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:45.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 28,
     "productCode": "CC-028",
     "releaseDate": ""
@@ -27792,8 +27489,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:33.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:44.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 27,
     "productCode": "CC-027",
     "releaseDate": ""
@@ -27848,8 +27545,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:32.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:43.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 26,
     "productCode": "CC-026",
     "releaseDate": ""
@@ -27904,8 +27601,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:31.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:42.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 25,
     "productCode": "CC-025",
     "releaseDate": ""
@@ -27960,8 +27657,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:30.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:41.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 24,
     "productCode": "CC-024",
     "releaseDate": ""
@@ -28016,8 +27713,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:29.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:40.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 23,
     "productCode": "CC-023",
     "releaseDate": ""
@@ -28074,8 +27771,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:28.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:39.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 22,
     "productCode": "CC-022",
     "releaseDate": ""
@@ -28132,8 +27829,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:27.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:38.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 21,
     "productCode": "CC-021",
     "releaseDate": ""
@@ -28188,8 +27885,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:26.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:37.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 20,
     "productCode": "CC-020",
     "releaseDate": ""
@@ -28244,8 +27941,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:25.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:36.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 19,
     "productCode": "CC-019",
     "releaseDate": ""
@@ -28300,8 +27997,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:24.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:35.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 18,
     "productCode": "CC-018",
     "releaseDate": ""
@@ -28356,8 +28053,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:23.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:34.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 17,
     "productCode": "CC-017",
     "releaseDate": ""
@@ -28412,8 +28109,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:22.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:33.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 16,
     "productCode": "CC-016",
     "releaseDate": ""
@@ -28468,8 +28165,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:21.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:32.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 15,
     "productCode": "CC-015",
     "releaseDate": ""
@@ -28524,8 +28221,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:20.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:31.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 14,
     "productCode": "CC-014",
     "releaseDate": ""
@@ -28580,8 +28277,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:19.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:30.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 13,
     "productCode": "CC-013",
     "releaseDate": ""
@@ -28636,8 +28333,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:18.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:29.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 12,
     "productCode": "CC-012",
     "releaseDate": ""
@@ -28692,8 +28389,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:17.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:28.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 11,
     "productCode": "CC-011",
     "releaseDate": ""
@@ -28748,8 +28445,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:16.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:27.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 10,
     "productCode": "CC-010",
     "releaseDate": ""
@@ -28804,8 +28501,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:15.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:26.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 9,
     "productCode": "CC-009",
     "releaseDate": ""
@@ -28861,8 +28558,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:13.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:25.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 7,
     "productCode": "CC-007",
     "releaseDate": ""
@@ -28917,8 +28614,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:12.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:24.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 6,
     "productCode": "CC-006",
     "releaseDate": ""
@@ -28973,8 +28670,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:14.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:23.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 8,
     "productCode": "CC-008",
     "releaseDate": ""
@@ -29029,8 +28726,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:11.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:22.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 5,
     "productCode": "CC-005",
     "releaseDate": ""
@@ -29085,8 +28782,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:10.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:21.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 4,
     "productCode": "CC-004",
     "releaseDate": ""
@@ -29141,8 +28838,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:09.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:20.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 3,
     "productCode": "CC-003",
     "releaseDate": ""
@@ -29197,8 +28894,8 @@
       "enabled": false,
       "releaseDate": ""
     },
-    "created_at": "2026-09-29T11:10:08.874+00:00",
-    "updated_at": "2026-09-29T11:17:30.875+00:00",
+    "created_at": "2026-09-29T13:23:19.184+00:00",
+    "updated_at": "2026-09-29T13:30:16.185+00:00",
     "productNo": 2,
     "productCode": "CC-002",
     "releaseDate": ""
