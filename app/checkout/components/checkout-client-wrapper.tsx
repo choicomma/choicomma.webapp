@@ -41,6 +41,22 @@ import {
 export default function CheckoutClientWrapper() {
   const router = useRouter();
   const { cart } = useCart();
+  const [directOrder, setDirectOrder] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedDirect = sessionStorage.getItem("choicomma_direct_order");
+      if (savedDirect) {
+        try {
+          const parsed = JSON.parse(savedDirect);
+          if (parsed && parsed.merchandise) {
+            setDirectOrder(parsed);
+          }
+        } catch (e) {}
+      }
+    }
+  }, []);
+
   const [isTossModalOpen, setIsTossModalOpen] = useState(false);
   const [isDirectPayLoading, setIsDirectPayLoading] = useState(false);
   const [currentLang, setCurrentLang] = useState("ko");
@@ -368,7 +384,10 @@ export default function CheckoutClientWrapper() {
     };
   }, []);
 
-  const totalItemAmount = Number(cart?.cost?.totalAmount?.amount || 0);
+  const orderLines = directOrder ? [directOrder] : (cart?.lines || []);
+  const totalItemAmount = directOrder
+    ? Number(directOrder.cost?.totalAmount?.amount || 0)
+    : Number(cart?.cost?.totalAmount?.amount || 0);
   const freeThreshold = shippingPolicy.freeShippingThreshold !== undefined ? shippingPolicy.freeShippingThreshold : 100000;
   const baseShippingFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 4000;
 
@@ -465,10 +484,11 @@ export default function CheckoutClientWrapper() {
       }
 
       const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-      const orderName = cart?.lines?.[0]?.merchandise?.product?.title
-        ? cart.lines.length > 1
-          ? `${cart.lines[0].merchandise.product.title} 외 ${cart.lines.length - 1}건`
-          : cart.lines[0].merchandise.product.title
+      const firstTitle = orderLines[0]?.merchandise?.product?.title;
+      const orderName = firstTitle
+        ? orderLines.length > 1
+          ? `${firstTitle} 외 ${orderLines.length - 1}건`
+          : firstTitle
         : "초이콤마 오리지널 패션 주문건";
 
       // If coupon was applied, mark this coupon as used and save usage history
@@ -518,13 +538,22 @@ export default function CheckoutClientWrapper() {
               ...formData,
               deliveryMemo: effectiveDeliveryMemo,
             },
-            cart,
+            cart: {
+              lines: orderLines,
+              cost: {
+                totalAmount: {
+                  amount: totalItemAmount.toString(),
+                  currencyCode: "KRW",
+                },
+              },
+            },
             finalTotalAmount,
             earnedPoints,
             pointRate,
             userGrade,
             appliedPoints,
             appliedDiscount,
+            isDirectOrder: !!directOrder,
             selectedCouponId: selectedCouponId && selectedCouponId !== "NONE" ? selectedCouponId : null,
             selectedCouponTitle: foundCoupon?.title || null,
             selectedCouponType: foundCoupon?.type || "FIXED",
@@ -541,8 +570,12 @@ export default function CheckoutClientWrapper() {
         try {
           if (typeof window !== "undefined") {
             try {
-              localStorage.removeItem("choicomma_cart");
-              window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
+              if (directOrder) {
+                sessionStorage.removeItem("choicomma_direct_order");
+              } else {
+                localStorage.removeItem("choicomma_cart");
+                window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
+              }
             } catch (e) {}
           }
           router.push(`/order/success?orderId=${orderId}&amount=0&paymentType=FREE`);
@@ -627,7 +660,7 @@ export default function CheckoutClientWrapper() {
     }
   };
 
-  if (!cart || cart.lines.length === 0) {
+  if (orderLines.length === 0) {
     return (
       <div className="py-24 text-center space-y-6 max-w-md mx-auto">
         <div className="w-20 h-20 bg-neutral-100 dark:bg-neutral-900 rounded-full flex items-center justify-center mx-auto text-neutral-400">
@@ -1022,34 +1055,70 @@ export default function CheckoutClientWrapper() {
         {/* Right Column: Order Summary & Checkout CTA (4-5 cols) */}
         <div className="lg:col-span-5 xl:col-span-4 sticky top-6 space-y-6">
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-6 shadow-xl space-y-6">
-            <h2 className="text-xl font-black text-neutral-900 dark:text-white border-b border-neutral-100 dark:border-neutral-800 pb-4">
-              주문 상품 요약 ({cart.lines.length}개)
-            </h2>
+            <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-4">
+              <h2 className="text-xl font-black text-neutral-900 dark:text-white">
+                주문 상품 요약 ({orderLines.length}개)
+              </h2>
+              {directOrder && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900">
+                  ⚡ 바로구매 주문서
+                </span>
+              )}
+            </div>
 
-            {/* Cart Items List */}
+            {directOrder && cart && cart.lines && cart.lines.length > 0 && (
+              <div className="p-3 bg-neutral-50 dark:bg-neutral-800/60 rounded-xl border border-neutral-200 dark:border-neutral-700/60 text-xs flex items-center justify-between">
+                <span className="text-neutral-600 dark:text-neutral-300">
+                  기존 장바구니 상품({cart.lines.length}개)은 안전하게 보관 중입니다.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sessionStorage.removeItem("choicomma_direct_order");
+                    setDirectOrder(null);
+                  }}
+                  className="text-neutral-900 dark:text-white font-bold underline hover:opacity-75 text-[11px] shrink-0 ml-2"
+                >
+                  장바구니 전체 주문
+                </button>
+              </div>
+            )}
+
+            {/* Order Items List */}
             <div className="space-y-4 max-h-64 overflow-y-auto pr-1">
-              {cart.lines.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 py-2 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
-                  {item.merchandise.product.featuredImage?.url && (
-                    <img
-                      src={item.merchandise.product.featuredImage.url}
-                      alt={item.merchandise.product.title}
-                      className="w-14 h-14 object-cover rounded-xl border border-neutral-200/60 shrink-0"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-extrabold text-neutral-900 dark:text-white truncate">
-                      {translateProductTitle(item.merchandise.product.title, currentLang)}
-                    </p>
-                    <p className="text-[11px] text-neutral-400 font-medium">
-                      수량: {item.quantity}개
+              {orderLines.map((item: any) => {
+                const optString = item.merchandise?.selectedOptions
+                  ?.map((opt: any) => `${opt.name === "Color" ? "색상" : opt.name === "Size" ? "사이즈" : opt.name}: ${opt.value}`)
+                  .join(" / ");
+
+                return (
+                  <div key={item.id} className="flex items-center gap-3 py-2 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+                    {item.merchandise?.product?.featuredImage?.url && (
+                      <img
+                        src={item.merchandise.product.featuredImage.url}
+                        alt={item.merchandise.product.title}
+                        className="w-14 h-14 object-cover rounded-xl border border-neutral-200/60 shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-extrabold text-neutral-900 dark:text-white truncate">
+                        {translateProductTitle(item.merchandise?.product?.title || "", currentLang)}
+                      </p>
+                      {optString ? (
+                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium truncate mt-0.5">
+                          {optString}
+                        </p>
+                      ) : null}
+                      <p className="text-[11px] text-neutral-400 font-medium mt-0.5">
+                        수량: {item.quantity}개
+                      </p>
+                    </div>
+                    <p className="text-xs font-black text-neutral-900 dark:text-white">
+                      {formatPrice(item.cost.totalAmount.amount, item.cost.totalAmount.currencyCode)}
                     </p>
                   </div>
-                  <p className="text-xs font-black text-neutral-900 dark:text-white">
-                    {formatPrice(item.cost.totalAmount.amount, item.cost.totalAmount.currencyCode)}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Coupon Auto-Apply & Selector Section inside Order Summary */}

@@ -18,6 +18,9 @@ import {
   Eye,
   EyeOff,
   User2,
+  ChevronUp,
+  ChevronDown,
+  ZoomIn,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
@@ -239,6 +242,15 @@ export function LiveChatWidget() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentLang, setCurrentLang] = useState("ko");
   const [isTyping, setIsTyping] = useState(false);
+  const [hasBottomBarVisible, setHasBottomBarVisible] = useState(false);
+
+  useEffect(() => {
+    const handleBottomBar = (e: any) => {
+      setHasBottomBarVisible(!!e.detail?.visible);
+    };
+    window.addEventListener("choicomma_bottom_bar_visible", handleBottomBar);
+    return () => window.removeEventListener("choicomma_bottom_bar_visible", handleBottomBar);
+  }, []);
 
   // In-chat login state (비회원/로그아웃 상태용)
   const [chatLoginId, setChatLoginId] = useState("");
@@ -1269,10 +1281,60 @@ export function LiveChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-5 sm:bottom-6 sm:right-6 z-50 font-sans">
-      {/* Floating Toggle Button with Speech Bubble Tooltip */}
+    <div
+      className={`fixed right-5 sm:right-6 z-50 font-sans transition-all duration-300 ease-out ${
+        hasBottomBarVisible ? "bottom-20 sm:bottom-22" : "bottom-6 sm:bottom-6"
+      }`}
+    >
+      {/* Floating Toggle Button with Speech Bubble Tooltip & TOP Button */}
       {!isOpen && (
         <div className="relative flex flex-col items-center">
+          {/* Scroll to Top Button */}
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="mb-2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-neutral-950 text-neutral-800 hover:text-white border border-neutral-300/90 hover:border-neutral-950 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col items-center justify-center cursor-pointer hover:scale-105 active:scale-95 group shrink-0"
+            title="맨 위로 이동 (TOP)"
+            aria-label="맨 위로 이동"
+          >
+            <ChevronUp className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.5] -mb-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            <span className="text-[9px] sm:text-[10px] font-black tracking-wider uppercase font-mono">
+              TOP
+            </span>
+          </button>
+
+          {/* Scroll to Bottom (DOWN) Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window === "undefined") return;
+              const detailSection = document.getElementById("product-detail-container");
+              if (detailSection) {
+                const rect = detailSection.getBoundingClientRect();
+                const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+                // 상세페이지 하단까지만 스크롤 (관련 상품 및 푸터 영역으로 넘어가지 않음)
+                const targetScrollY = currentScroll + rect.bottom - window.innerHeight;
+                window.scrollTo({
+                  top: Math.max(0, targetScrollY),
+                  behavior: "smooth",
+                });
+              } else {
+                window.scrollTo({
+                  top: document.documentElement.scrollHeight,
+                  behavior: "smooth",
+                });
+              }
+            }}
+            className="mb-3.5 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-neutral-950 text-neutral-800 hover:text-white border border-neutral-300/90 hover:border-neutral-950 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col items-center justify-center cursor-pointer hover:scale-105 active:scale-95 group shrink-0"
+            title="맨 아래로 이동 (DOWN)"
+            aria-label="맨 아래로 이동"
+          >
+            <ChevronDown className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.5] -mb-0.5 group-hover:translate-y-0.5 transition-transform" />
+            <span className="text-[9px] sm:text-[10px] font-black tracking-wider uppercase font-mono">
+              DOWN
+            </span>
+          </button>
+
           {/* Speech Bubble above the button */}
           <div className="mb-2 bg-neutral-900 text-white text-xs font-black px-3.5 py-1.5 rounded-full shadow-2xl border border-neutral-700/80 animate-bounce tracking-tight whitespace-nowrap relative select-none pointer-events-none">
             {t.floatingButton}

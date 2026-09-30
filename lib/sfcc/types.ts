@@ -53,6 +53,9 @@ export type SalesforceProduct = {
   isMainFeatured?: boolean;
   bulkDiscount?: { enabled: boolean; rules: { qty: number; rate: number }[] };
   releaseDate?: string;
+  showSizeGuide?: boolean;
+  showFabricInfo?: boolean;
+  sizeMeasurements?: Array<{ name: string; values: Record<string, string> }>;
 };
 
 export type SelectedOptions = {

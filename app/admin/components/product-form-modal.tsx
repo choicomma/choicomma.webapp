@@ -174,6 +174,7 @@ export function ProductFormModal({
   const [label, setLabel] = useState<"" | "BLACK_LABEL" | "PREMIUM" | "ESSENTIAL">("PREMIUM");
   const [fabricComposition, setFabricComposition] = useState("COTTON 100% (프리미엄 콤마 코튼)");
   const [showFabricBadge, setShowFabricBadge] = useState<boolean>(false);
+  const [showFabricInfo, setShowFabricInfo] = useState<boolean>(true);
   const [showSizeGuide, setShowSizeGuide] = useState<boolean>(false);
   const [elasticity, setElasticity] = useState("보통");
   const [sheerness, setSheerness] = useState("없음");
@@ -288,6 +289,7 @@ export function ProductFormModal({
 
       setFabricComposition(initialProduct.fabricComposition || "COTTON 100% (프리미엄 콤마 코튼)");
       setShowFabricBadge(Boolean(initialProduct.showFabricBadge));
+      setShowFabricInfo(initialProduct.showFabricInfo !== undefined ? Boolean(initialProduct.showFabricInfo) : true);
       setShowSizeGuide(Boolean(initialProduct.showSizeGuide));
       setElasticity(initialProduct.elasticity || "보통");
       setSheerness(initialProduct.sheerness || "없음");
@@ -338,6 +340,7 @@ export function ProductFormModal({
       setLabel("PREMIUM");
       setFabricComposition("COTTON 100% (프리미엄 콤마 코튼)");
       setShowFabricBadge(false);
+      setShowFabricInfo(true);
       setShowSizeGuide(false);
       setElasticity("보통");
       setSheerness("없음");
@@ -513,6 +516,7 @@ export function ProductFormModal({
       sizes,
       sizeMeasurements,
       showFabricBadge,
+      showFabricInfo,
       showSizeGuide,
       fabricComposition,
       elasticity,
@@ -1010,20 +1014,55 @@ export function ProductFormModal({
                 {/* 🧵 FABRIC INFORMATION */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-neutral-200 pb-2 flex-wrap gap-2">
-                    <span className="text-xs font-black text-neutral-950 flex items-center gap-1.5 uppercase tracking-wider">
-                      🧵 원단 정보 설정 (Fabric Details)
-                    </span>
-                    <label className="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shadow-2xs hover:border-black transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={showFabricBadge}
-                        onChange={(e) => setShowFabricBadge(e.target.checked)}
-                        className="w-3.5 h-3.5 accent-black rounded cursor-pointer"
-                      />
-                      <span className="text-[11px] font-extrabold text-neutral-900">
-                        🏷️ 상품 카드에 원단 뱃지 노출
+                    <div className="flex items-center gap-3">
+                      {/* 좌측 상단 체크박스: 상세페이지에 표시할지 선택 */}
+                      <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-xl border border-neutral-300 hover:border-neutral-500 transition-all shadow-2xs group">
+                        <input
+                          type="checkbox"
+                          checked={showFabricInfo}
+                          onChange={(e) => setShowFabricInfo(e.target.checked)}
+                          className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
+                        />
+                        <span className="text-xs font-black text-neutral-950">
+                          상세페이지에 표시
+                        </span>
+                        <span
+                          className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${
+                            showFabricInfo ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-400"
+                          }`}
+                        >
+                          {showFabricInfo ? "메뉴 추가됨" : "미표시"}
+                        </span>
+                      </label>
+
+                      <span className="text-xs font-black text-neutral-950 flex items-center gap-1.5 uppercase tracking-wider">
+                        🧵 원단 정보 설정 (Fabric Details)
                       </span>
-                    </label>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {showFabricInfo ? (
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 hidden sm:inline-block">
+                          ✓ 상세페이지 [원단 정보] 메뉴 노출 활성화
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-bold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-md hidden sm:inline-block">
+                          상세페이지 메뉴 미노출
+                        </span>
+                      )}
+
+                      <label className="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shadow-2xs hover:border-black transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={showFabricBadge}
+                          onChange={(e) => setShowFabricBadge(e.target.checked)}
+                          className="w-3.5 h-3.5 accent-black rounded cursor-pointer"
+                        />
+                        <span className="text-[11px] font-extrabold text-neutral-900">
+                          🏷️ 상품 카드에 원단 뱃지 노출
+                        </span>
+                      </label>
+                    </div>
                   </div>
 
                   <div>
@@ -1317,12 +1356,35 @@ export function ProductFormModal({
                 </div>
 
                 {/* 3. SIZE OPTIONS */}
-                <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
-                      <Ruler className="w-4 h-4 text-blue-500" />
-                      <span>사이즈 (Size) 옵션 선택</span>
-                    </label>
+                <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-neutral-200/70">
+                    <div className="flex items-center gap-3">
+                      {/* 좌측 상단 체크박스: 상세페이지에 표시할지 선택 */}
+                      <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-xl border border-neutral-300 hover:border-neutral-500 transition-all shadow-2xs group">
+                        <input
+                          type="checkbox"
+                          checked={showSizeGuide}
+                          onChange={(e) => setShowSizeGuide(e.target.checked)}
+                          className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
+                        />
+                        <span className="text-xs font-black text-neutral-950">
+                          상세페이지에 표시
+                        </span>
+                        <span
+                          className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${
+                            showSizeGuide ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-400"
+                          }`}
+                        >
+                          {showSizeGuide ? "메뉴 추가됨" : "미표시"}
+                        </span>
+                      </label>
+
+                      <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
+                        <Ruler className="w-4 h-4 text-blue-500" />
+                        <span>사이즈 (Size) 옵션 선택</span>
+                      </label>
+                    </div>
+
                     <span className="text-[11px] font-mono font-extrabold text-neutral-500">
                       {sizes.length}개 사이즈 선택됨
                     </span>
@@ -1357,24 +1419,43 @@ export function ProductFormModal({
 
                 {/* 4. SIZE MEASUREMENTS TABLE */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
-                  <div className="flex items-center gap-3">
-                    <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5 cursor-pointer">
-                      <Ruler className="w-4 h-4 text-indigo-500" />
-                      <span>사이즈별 실측 치수 가이드 (Size Chart Measurement Table)</span>
-                    </label>
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-200/70">
+                    <div className="flex items-center gap-3">
+                      {/* 좌측 상단 체크박스 */}
+                      <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-xl border border-neutral-300 hover:border-neutral-500 transition-all shadow-2xs group">
+                        <input
+                          type="checkbox"
+                          checked={showSizeGuide}
+                          onChange={(e) => setShowSizeGuide(e.target.checked)}
+                          className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
+                        />
+                        <span className="text-xs font-black text-neutral-950">
+                          상세페이지에 표시
+                        </span>
+                        <span
+                          className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${
+                            showSizeGuide ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-400"
+                          }`}
+                        >
+                          {showSizeGuide ? "메뉴 추가됨" : "미표시"}
+                        </span>
+                      </label>
 
-                    {/* Inline Checkbox directly beside the title */}
-                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none bg-white px-2.5 py-1 rounded-lg border border-neutral-200 hover:border-neutral-400 transition-colors shadow-2xs">
-                      <input
-                        type="checkbox"
-                        checked={showSizeGuide}
-                        onChange={(e) => setShowSizeGuide(e.target.checked)}
-                        className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
-                      />
-                      <span className={`text-[11px] font-extrabold ${showSizeGuide ? "text-neutral-900" : "text-neutral-400"}`}>
-                        {showSizeGuide ? "상세페이지 노출" : "미노출"}
+                      <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5 cursor-pointer">
+                        <Ruler className="w-4 h-4 text-indigo-500" />
+                        <span>사이즈별 실측 치수 가이드 (Size Chart Measurement Table)</span>
+                      </label>
+                    </div>
+
+                    {showSizeGuide ? (
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        ✓ 상세페이지 [사이즈 가이드] 메뉴 노출 활성화
                       </span>
-                    </label>
+                    ) : (
+                      <span className="text-[11px] font-bold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-md">
+                        상세페이지 메뉴 미노출
+                      </span>
+                    )}
                   </div>
 
                   {/* Add Custom Measurement Option Input */}

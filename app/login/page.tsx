@@ -50,9 +50,11 @@ export default function LoginPage() {
   const [isPhoneChecked, setIsPhoneChecked] = useState(false);
   const [phoneCheckMessage, setPhoneCheckMessage] = useState<{ status: "success" | "error"; text: string } | null>(null);
 
-  // Terms and Marketing Consent States
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [agreeMarketing, setAgreeMarketing] = useState(false);
+  // Terms and Marketing Consent States (기본 선택된 상태로 설정)
+  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [agreeEmail, setAgreeEmail] = useState(true);
+  const [agreeSms, setAgreeSms] = useState(true);
+  const agreeMarketing = agreeEmail || agreeSms;
 
   // Toast auto-dismiss timer (4 seconds)
   useEffect(() => {
@@ -473,24 +475,29 @@ export default function LoginPage() {
         setToastMsg("로그인 ID 중복 확인을 진행해 주세요.");
         return;
       }
-      if (!email.trim()) {
-        setToastMsg("이메일 주소를 입력해 주세요.");
+      if (!password) {
+        setToastMsg("비밀번호를 입력해 주세요.");
         return;
       }
-      if (!isEmailChecked) {
-        setToastMsg("이메일 주소 중복 확인을 진행해 주세요.");
-        return;
-      }
-      if (!phone.trim()) {
-        setToastMsg("휴대폰 번호를 입력해 주세요.");
-        return;
-      }
-      if (!isPhoneChecked) {
-        setToastMsg("휴대폰 번호 중복 확인을 진행해 주세요.");
+      if (password.length < 4) {
+        setToastMsg("비밀번호는 4자 이상으로 입력해 주세요.");
         return;
       }
       if (password !== confirmPassword) {
         setToastMsg("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        return;
+      }
+      if (!email.trim()) {
+        setToastMsg("이메일 주소를 입력해 주세요.");
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        setToastMsg("올바른 이메일 주소 형식(예: user@example.com)을 입력해 주세요.");
+        return;
+      }
+      if (!phone.trim()) {
+        setToastMsg("휴대폰 번호를 입력해 주세요.");
         return;
       }
       if (!agreeTerms) {
@@ -621,6 +628,9 @@ export default function LoginPage() {
         login_id: finalLoginId,
         postcode: cleanPostcode || "",
         detailAddress: cleanDetail || "",
+        agreeMarketingEmail: agreeEmail,
+        agreeMarketingSms: agreeSms,
+        agreeMarketing: agreeEmail || agreeSms,
       };
 
       // 1) Save to local admin_customers
@@ -974,110 +984,121 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                {/* 2. 이메일 (로그인 ID 하단으로 이동) */}
+                {/* 2. 비밀번호 (로그인 ID 아래로 이동) */}
+                <div>
+                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                    비밀번호 <span className="text-neutral-950 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="new-password"
+                      autoComplete="new-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="비밀번호를 입력해주세요"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. 비밀번호 확인 */}
+                <div>
+                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                    비밀번호 확인 <span className="text-neutral-950 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="confirm-password"
+                      autoComplete="new-password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="비밀번호를 한 번 더 입력해주세요"
+                      className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-mono ${
+                        confirmPassword && confirmPassword !== password
+                          ? "border-neutral-400 focus:border-neutral-950"
+                          : confirmPassword && confirmPassword === password
+                            ? "border-neutral-950 bg-neutral-100/50"
+                            : "border-neutral-200 focus:border-neutral-950"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {confirmPassword && confirmPassword !== password && (
+                    <p className="text-[11px] font-bold text-neutral-800 mt-1 flex items-center gap-1">
+                      ✕ 비밀번호가 일치하지 않습니다.
+                    </p>
+                  )}
+                  {confirmPassword && confirmPassword === password && (
+                    <p className="text-[11px] font-bold text-neutral-950 mt-1 flex items-center gap-1">
+                      ✓ 비밀번호가 일치합니다.
+                    </p>
+                  )}
+                </div>
+
+                {/* 4. 이메일 (중복확인 기능 삭제) */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
                       이메일 <span className="text-neutral-950 font-bold">*</span>
                     </label>
                   </div>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-600" />
-                      <input
-                        type="email"
-                        name="email"
-                        autoComplete="email"
-                        required
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          setIsEmailChecked(false);
-                          setEmailCheckMessage(null);
-                        }}
-                        placeholder="이메일 주소를 입력해주세요"
-                        className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold ${
-                          emailCheckMessage?.status === "success"
-                            ? "border-neutral-950 bg-neutral-100/60"
-                            : emailCheckMessage?.status === "error"
-                              ? "border-neutral-400 bg-neutral-50"
-                              : "border-neutral-200 focus:border-neutral-950"
-                        }`}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCheckEmailDuplicate}
-                      className="px-3.5 py-3 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer active:scale-95"
-                    >
-                      중복 확인
-                    </button>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-600" />
+                    <input
+                      type="email"
+                      name="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="이메일 주소를 입력해주세요"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold"
+                    />
                   </div>
-                  {emailCheckMessage && (
-                    <p
-                      className={`text-xs font-extrabold mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${
-                        emailCheckMessage.status === "success"
-                          ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
-                          : "text-rose-700 bg-rose-50 border border-rose-200"
-                      }`}
-                    >
-                      <span>{emailCheckMessage.status === "success" ? "✓" : "✕"}</span>
-                      <span>{emailCheckMessage.text}</span>
-                    </p>
-                  )}
                 </div>
 
+                {/* 5. 휴대폰 번호 (중복확인 기능 삭제) */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
                       휴대폰 번호 <span className="text-neutral-950 font-bold">*</span>
                     </label>
                   </div>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-600" />
-                      <input
-                        type="tel"
-                        name="tel"
-                        autoComplete="tel"
-                        required
-                        value={phone}
-                        onChange={(e) => {
-                          setPhone(e.target.value);
-                          setIsPhoneChecked(false);
-                          setPhoneCheckMessage(null);
-                        }}
-                        placeholder="휴대폰 번호를 입력해주세요"
-                        className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-bold font-mono ${phoneCheckMessage?.status === "success"
-                          ? "border-neutral-950 bg-neutral-100/60"
-                          : phoneCheckMessage?.status === "error"
-                            ? "border-neutral-400 bg-neutral-50"
-                            : "border-neutral-200 focus:border-neutral-950"
-                          }`}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCheckPhoneDuplicate}
-                      className="px-3.5 py-3 bg-neutral-950 hover:bg-black text-white text-xs font-extrabold rounded-xl shrink-0 transition-colors shadow-xs cursor-pointer active:scale-95"
-                    >
-                      중복 확인
-                    </button>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-600" />
+                    <input
+                      type="tel"
+                      name="tel"
+                      autoComplete="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="휴대폰 번호를 입력해주세요"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-bold font-mono"
+                    />
                   </div>
-                  {phoneCheckMessage && (
-                    <p
-                      className={`text-xs font-extrabold mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${
-                        phoneCheckMessage.status === "success"
-                          ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
-                          : "text-rose-700 bg-rose-50 border border-rose-200"
-                      }`}
-                    >
-                      <span>{phoneCheckMessage.status === "success" ? "✓" : "✕"}</span>
-                      <span>{phoneCheckMessage.text}</span>
-                    </p>
-                  )}
                 </div>
 
+                {/* 6. 집 주소 (기본 배송지) */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-neutral-950 uppercase tracking-wider">
@@ -1138,93 +1159,52 @@ export default function LoginPage() {
             )}
 
             {!isSignUp && (
-              <div>
-                <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  로그인 ID
-                </label>
-                <div className="relative">
-                  <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-700" />
-                  <input
-                    type="text"
-                    name="username"
-                    autoComplete="username"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="아이디 또는 이메일을 입력해주세요"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium font-mono"
-                  />
+              <>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                    로그인 ID
+                  </label>
+                  <div className="relative">
+                    <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-700" />
+                    <input
+                      type="text"
+                      name="username"
+                      autoComplete="username"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="아이디 또는 이메일을 입력해주세요"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium font-mono"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
 
-            <div>
-              <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                비밀번호
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name={isSignUp ? "new-password" : "current-password"}
-                  autoComplete={isSignUp ? "new-password" : "current-password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder=""
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            {isSignUp && (
-              <div>
-                <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  비밀번호 확인
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="confirm-password"
-                    autoComplete="new-password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder=""
-                    className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-mono ${confirmPassword && confirmPassword !== password
-                      ? "border-neutral-400 focus:border-neutral-950"
-                      : confirmPassword && confirmPassword === password
-                        ? "border-neutral-950 bg-neutral-100/50"
-                        : "border-neutral-200 focus:border-neutral-950"
-                      }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                    비밀번호
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="current-password"
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder=""
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
-                {confirmPassword && confirmPassword !== password && (
-                  <p className="text-[11px] font-bold text-neutral-800 mt-1 flex items-center gap-1">
-                    ✕ 비밀번호가 일치하지 않습니다.
-                  </p>
-                )}
-                {confirmPassword && confirmPassword === password && (
-                  <p className="text-[11px] font-bold text-neutral-950 mt-1 flex items-center gap-1">
-                    ✓ 비밀번호가 일치합니다.
-                  </p>
-                )}
-              </div>
+              </>
             )}
 
             {isSignUp && (
@@ -1243,19 +1223,51 @@ export default function LoginPage() {
                   </div>
                 </label>
 
-                {/* 2. Marketing Consent (이메일/문자) */}
-                <label className="flex items-start gap-2.5 cursor-pointer select-none group">
-                  <input
-                    type="checkbox"
-                    checked={agreeMarketing}
-                    onChange={(e) => setAgreeMarketing(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
-                  />
-                  <div className="text-xs text-neutral-600 leading-tight">
-                    <span className="font-medium text-neutral-500">[선택]</span>{" "}
-                    <span>이벤트, 신상품 런칭 및 VIP 전용 혜택 이메일/문자 수신에 동의합니다.</span>
+                {/* 2. Marketing Consent (이벤트, 신상품 런칭 및 VIP 전용 혜택 동의) */}
+                <div className="pt-0.5 space-y-1.5">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none group">
+                    <input
+                      type="checkbox"
+                      checked={agreeEmail && agreeSms}
+                      onChange={(e) => {
+                        const next = e.target.checked;
+                        setAgreeEmail(next);
+                        setAgreeSms(next);
+                      }}
+                      className="mt-0.5 w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
+                    />
+                    <div className="text-xs text-neutral-700 leading-tight">
+                      <span className="font-medium text-neutral-500">[선택]</span>{" "}
+                      <span className="font-medium text-neutral-900">이벤트, 신상품 런칭 및 VIP 전용 혜택 동의</span>
+                    </div>
+                  </label>
+
+                  {/* 이메일, 문자 개별 수신 동의 */}
+                  <div className="flex items-center gap-5 pl-6.5 text-xs text-neutral-600">
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none group">
+                      <input
+                        type="checkbox"
+                        checked={agreeEmail}
+                        onChange={(e) => setAgreeEmail(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
+                      />
+                      <span className={agreeEmail ? "font-bold text-neutral-900" : "text-neutral-500 group-hover:text-neutral-800"}>
+                        이메일 수신 동의
+                      </span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none group">
+                      <input
+                        type="checkbox"
+                        checked={agreeSms}
+                        onChange={(e) => setAgreeSms(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
+                      />
+                      <span className={agreeSms ? "font-bold text-neutral-900" : "text-neutral-500 group-hover:text-neutral-800"}>
+                        문자(SMS) 수신 동의
+                      </span>
+                    </label>
                   </div>
-                </label>
+                </div>
               </div>
             )}
 

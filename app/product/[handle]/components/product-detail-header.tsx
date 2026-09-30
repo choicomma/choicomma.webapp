@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Product, ProductVariant } from "@/lib/sfcc/types";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Check, Clock, Ticket } from "lucide-react";
+import { Sparkles, Check, Clock, Ticket, ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/cart/cart-context";
 import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
-import { getAvailableCoupons } from "@/lib/membership/coupons";
+import { getAvailableCoupons, getUserCoupons } from "@/lib/membership/coupons";
+import { getAllProductOptions, getProductDirectColor } from "./product-options-helper";
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -36,6 +39,7 @@ const HEADER_I18N: Record<string, Record<string, string>> = {
     color: "색상:",
     size: "사이즈",
     addToCart: "장바구니 담기",
+    buyNow: "구매하기",
     adding: "담는 중...",
     outOfStock: "품절",
   },
@@ -49,6 +53,7 @@ const HEADER_I18N: Record<string, Record<string, string>> = {
     color: "Color:",
     size: "Size",
     addToCart: "ADD TO CART",
+    buyNow: "BUY NOW",
     adding: "ADDING...",
     outOfStock: "OUT OF STOCK",
   },
@@ -62,6 +67,7 @@ const HEADER_I18N: Record<string, Record<string, string>> = {
     color: "色:",
     size: "サイズ",
     addToCart: "カートに追加",
+    buyNow: "今すぐ購入",
     adding: "追加中...",
     outOfStock: "売り切れ",
   },
@@ -75,6 +81,7 @@ const HEADER_I18N: Record<string, Record<string, string>> = {
     color: "颜色:",
     size: "尺寸",
     addToCart: "加入购物车",
+    buyNow: "立即购买",
     adding: "添加中...",
     outOfStock: "缺货",
   },
@@ -88,6 +95,7 @@ const HEADER_I18N: Record<string, Record<string, string>> = {
     color: "Couleur:",
     size: "Taille",
     addToCart: "AJOUTER AU PANIER",
+    buyNow: "ACHETER",
     adding: "AJOUT...",
     outOfStock: "ÉPUISÉ",
   },
@@ -101,6 +109,7 @@ const HEADER_I18N: Record<string, Record<string, string>> = {
     color: "Farbe:",
     size: "Größe",
     addToCart: "IN DEN WARENKORB",
+    buyNow: "JETZT KAUFEN",
     adding: "WIRD HINZUGEFÜGT...",
     outOfStock: "AUSVERKAUFT",
   },
@@ -114,6 +123,7 @@ const HEADER_I18N: Record<string, Record<string, string>> = {
     color: "Color:",
     size: "Talla",
     addToCart: "AÑADIR AL CARRITO",
+    buyNow: "COMPRAR AHORA",
     adding: "AÑADIENDO...",
     outOfStock: "AGOTADO",
   },
@@ -127,11 +137,13 @@ export function cleanProductTitle(title?: string): string {
 interface ProductDetailHeaderProps {
   product: Product;
   hasVariants?: boolean;
+  onPriceChange?: (prices: { originalPrice: number; discountedPrice: number }) => void;
 }
 
 export function ProductDetailHeader({
   product: initialProduct,
   hasVariants = true,
+  onPriceChange,
 }: ProductDetailHeaderProps) {
   const [currentLang, setCurrentLang] = useState("ko");
 
@@ -150,6 +162,15 @@ export function ProductDetailHeader({
   const [couponDiscountAmount, setCouponDiscountAmount] = useState<number>(0);
   const [couponTitle, setCouponTitle] = useState<string>("");
 
+  // 상세페이지 가격 다단 분할 표시용 상태
+  const [hasRegularTimeSale, setHasRegularTimeSale] = useState<boolean>(false);
+  const [regularTimeSalePrice, setRegularTimeSalePrice] = useState<number>(0);
+  const [hasSecretTimeSale, setHasSecretTimeSale] = useState<boolean>(false);
+  const [secretTimeSalePrice, setSecretTimeSalePrice] = useState<number>(0);
+  const [secretTimeSaleRate, setSecretTimeSaleRate] = useState<number>(0);
+  const [finalAllDiscountPrice, setFinalAllDiscountPrice] = useState<number>(0);
+  const [pointsDiscountAmount, setPointsDiscountAmount] = useState<number>(0);
+
   const isSetProduct =
     product.tags?.includes("SET_SALE") || product.id.startsWith("set-product-");
 
@@ -162,11 +183,14 @@ export function ProductDetailHeader({
 
   const [colors, setColors] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
+  const [optionsColorImages, setOptionsColorImages] = useState<Record<string, string>>({});
+  const [optionsColorHandles, setOptionsColorHandles] = useState<Record<string, string>>({});
   
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
 
+  const router = useRouter();
   const { addCartItem } = useCart();
   const [isAdding, setIsAdding] = useState(false);
 
@@ -232,41 +256,25 @@ export function ProductDetailHeader({
         } catch (e) {}
       }
 
-      // Extract colors and sizes from active product
-      let rawColors: any[] = Array.isArray(activeProd.colors) ? activeProd.colors : [];
-      let rawSizes: any[] = Array.isArray(activeProd.sizes) ? activeProd.sizes : [];
-
-      if (rawSizes.length === 0 && activeProd.options) {
-        const sizeOpt = activeProd.options.find(
-          (o: any) => o.name?.toLowerCase() === "size" || o.name === "사이즈"
-        );
-        if (sizeOpt && Array.isArray(sizeOpt.values)) {
-          rawSizes = sizeOpt.values;
-        }
-      }
-
-      const parsedColors = Array.from(
-        new Set(
-          rawColors
-            .map((c: any) => (typeof c === "object" && c != null ? c.name || c.value || c.id || String(c) : String(c)))
-            .filter(Boolean)
-        )
-      );
-
-      const parsedSizes = Array.from(
-        new Set(
-          rawSizes
-            .map((s: any) => (typeof s === "object" && s != null ? s.name || s.value || s.id || String(s) : String(s)))
-            .filter(Boolean)
-        )
-      );
-
-      const extractedColors = parsedColors;
-      const extractedSizes = parsedSizes.length > 0 ? parsedSizes : ["1", "2", "3", "FREE"];
+      // Extract colors and sizes from active product using sister products
+      const {
+        colors: extractedColors,
+        sizes: extractedSizes,
+        colorImageMap,
+        colorHandleMap,
+      } = getAllProductOptions(activeProd);
 
       setColors(extractedColors);
       setSizes(extractedSizes);
-      setSelectedColor((prev) => (prev && extractedColors.includes(prev) ? prev : (extractedColors[0] || "")));
+      setOptionsColorImages(colorImageMap);
+      setOptionsColorHandles(colorHandleMap || {});
+
+      // 현재 제품의 대표 색상으로 선택 (다른 컬러 제품으로 페이지 이동 시 그 제품의 색상이 기본 선택)
+      const directColor = getProductDirectColor(activeProd);
+      const defaultColor = (directColor && extractedColors.includes(directColor))
+        ? directColor
+        : (extractedColors[0] || "");
+      setSelectedColor(defaultColor);
       setSelectedSize((prev) => (prev && extractedSizes.includes(prev) ? prev : (extractedSizes[0] || "")));
 
       let itemSettings: Record<string, { hours?: number; minutes?: number; discountRate?: number; discountPrice?: string }> = {};
@@ -297,21 +305,48 @@ export function ProductDetailHeader({
       const maxPrice = parseFloat(activeProd.priceRange?.maxVariantPrice?.amount || "0");
       const origPrice = maxPrice > basePrice ? maxPrice : basePrice;
 
-      let itemRate = (activeProd as any).timeSaleDiscountRate || itemSettings[activeProd.id]?.discountRate || savedDiscountNum || 35;
+      // 1. Regular Time Sale Check & Calculation
+      let regRate = (activeProd as any).timeSaleDiscountRate || itemSettings[activeProd.id]?.discountRate || savedDiscountNum || 35;
       if (customDiscountPrice && !isNaN(parseFloat(customDiscountPrice)) && origPrice > 0) {
         const discVal = parseFloat(customDiscountPrice);
         if (discVal < origPrice) {
-          itemRate = Math.round((1 - discVal / origPrice) * 100);
+          regRate = Math.round((1 - discVal / origPrice) * 100);
         }
       }
-      setTimeSaleDiscount(itemRate);
+      setTimeSaleDiscount(regRate);
 
       const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
       const userRole = localStorage.getItem("user_role") || "";
       const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
 
-      // 1. Check Secret Time Sales
+      const globalStatus = localStorage.getItem("secret_timesale_status");
+      const isGlobalOff = globalStatus === "ended";
+      const isProductOff = (activeProd as any).isTimeSale === false;
+
+      const isDirectSelected = savedSelectedIds.includes(activeProd.id) || savedSelectedIds.includes(activeProd.handle) || savedSelectedIds.includes((activeProd as any).productCode);
+      const isSet = activeProd.tags?.includes("SET_SALE") || activeProd.id.startsWith("set-product-");
+      const isCategorySale = activeProd.categoryId === "timesale" || activeProd.tags?.includes("TIMESALE");
+
+      const isRegularSaleActive = (!isGlobalOff && !isProductOff && (isDirectSelected || isSet || isCategorySale || (activeProd as any).isTimeSale === true));
+
+      let regPrice = origPrice;
+      if (isSet) {
+        regPrice = basePrice;
+        const calcTag = activeProd.tags?.find((t) => t.includes("% OFF"));
+        regRate = calcTag ? parseInt(calcTag) || 25 : 25;
+      } else if (isRegularSaleActive) {
+        regPrice = (customDiscountPrice && !isNaN(parseFloat(customDiscountPrice)))
+          ? parseFloat(customDiscountPrice)
+          : Math.round(origPrice * (1 - regRate / 100));
+      }
+
+      setHasRegularTimeSale(isRegularSaleActive);
+      setRegularTimeSalePrice(regPrice);
+
+      // 2. Secret Time Sale Check & Calculation
       let isSecretTargeted = false;
+      let secretRate = 0;
+      let secretPrice = origPrice;
       const secretSalesRaw = localStorage.getItem("admin_secret_timesales");
       if (secretSalesRaw) {
         try {
@@ -338,105 +373,94 @@ export function ProductDetailHeader({
 
             if (isEmailTargeted || isGradeTargeted || isAdmin) {
               isSecretTargeted = true;
-              itemRate = Number(sale.discountRate) || 30;
+              secretRate = Number(sale.discountRate) || 30;
+              secretPrice = Math.round(origPrice * (1 - secretRate / 100));
               break;
             }
           }
         } catch (e) {}
       }
 
-      const globalStatus = localStorage.getItem("secret_timesale_status");
-      const isGlobalOff = globalStatus === "ended";
-      const isProductOff = (activeProd as any).isTimeSale === false;
+      setHasSecretTimeSale(isSecretTargeted);
+      setSecretTimeSaleRate(secretRate);
+      setSecretTimeSalePrice(secretPrice);
 
-      const isDirectSelected = savedSelectedIds.includes(activeProd.id) || savedSelectedIds.includes(activeProd.handle) || savedSelectedIds.includes((activeProd as any).productCode);
-      const isSet = activeProd.tags?.includes("SET_SALE") || activeProd.id.startsWith("set-product-");
-      const isCategorySale = activeProd.categoryId === "timesale" || activeProd.tags?.includes("TIMESALE");
+      const isAnySaleActive = isSecretTargeted || isRegularSaleActive;
+      setIsTimeSaleItem(isAnySaleActive);
 
-      const isSaleActive = isSecretTargeted || (!isGlobalOff && !isProductOff && (isDirectSelected || isSet || isCategorySale || (activeProd as any).isTimeSale === true));
-      setIsTimeSaleItem(isSaleActive);
-
-      if (isSet) {
-        setDiscountedPriceNum(basePrice);
-        const calcTag = activeProd.tags?.find((t) => t.includes("% OFF"));
-        const rate = calcTag ? parseInt(calcTag) || 25 : 25;
-        setOriginalPriceNum(Math.round(basePrice / (1 - rate / 100)));
-      } else if (isSaleActive) {
-        const calcDiscount = (customDiscountPrice && !isNaN(parseFloat(customDiscountPrice)))
-          ? parseFloat(customDiscountPrice)
-          : Math.round(origPrice * (1 - itemRate / 100));
-        setOriginalPriceNum(origPrice);
-        setDiscountedPriceNum(calcDiscount);
-
-        const currencyCode = activeProd.currencyCode || "KRW";
-
-        setProduct({
-          ...activeProd,
-          priceRange: {
-            minVariantPrice: { amount: calcDiscount.toString(), currencyCode },
-            maxVariantPrice: { amount: origPrice.toString(), currencyCode },
-          },
-          variants: (activeProd.variants || []).map((v) => ({
-            ...v,
-            price: { amount: calcDiscount.toString(), currencyCode },
-          })),
-          tags: Array.from(new Set([...(activeProd.tags || []), "TIMESALE"])),
-        });
-      } else {
-        setProduct(activeProd);
-        setOriginalPriceNum(basePrice);
-        setDiscountedPriceNum(basePrice);
+      // 3. Base price for coupons & points calculation
+      let baseForBenefits = origPrice;
+      if (isSecretTargeted) {
+        baseForBenefits = secretPrice;
+      } else if (isRegularSaleActive) {
+        baseForBenefits = regPrice;
       }
 
-      // Customer Coupon Discount check (보유 쿠폰 중 최대 할인 적용)
+      // 4. Coupon Discount Check
+      let maxDisc = 0;
+      let bestTitle = "";
       try {
-        let maxDisc = 0;
-        let bestTitle = "";
-        const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
-        const userName = localStorage.getItem("membership_user_name");
-        const isLogged = isLoggedInFlag || Boolean(userName && userName.trim().length > 0);
-        const allowCouponInTimeSale = (activeProd as any).timeSaleAllowCoupon !== false;
+        const availableCoupons = getUserCoupons(userEmail, userRole).filter(
+          (c) => c.type !== "SHIPPING" && !c.isUsed && c.isActive !== false
+        );
 
-        if (isLogged && (!isSaleActive || allowCouponInTimeSale)) {
-          const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-          const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("user_role") || "GENERAL").toUpperCase();
-          const availableCoupons = getAvailableCoupons(userEmail, userGrade).filter(
-            (c) => c.type !== "SHIPPING" && !c.isUsed && c.isActive !== false
-          );
-
-          if (availableCoupons.length > 0) {
-            const currentBase = isSaleActive
-              ? ((customDiscountPrice && !isNaN(parseFloat(customDiscountPrice))) ? parseFloat(customDiscountPrice) : Math.round(origPrice * (1 - itemRate / 100)))
-              : origPrice;
-
-            for (const c of availableCoupons) {
-              if (c.minOrderAmount && currentBase < c.minOrderAmount) continue;
-              let d = 0;
-              const isPercent = (c.discount && c.discount.includes("%")) || (c.discountAmount > 0 && c.discountAmount <= 99 && (c as any).discountType === "RATE");
-              if (isPercent) {
-                d = Math.round(currentBase * (c.discountAmount / 100));
-              } else {
-                d = c.discountAmount || 0;
-              }
-              if (d > currentBase) d = currentBase;
-              if (d > maxDisc) {
-                maxDisc = d;
-                bestTitle = c.title;
-              }
+        if (availableCoupons.length > 0) {
+          for (const c of availableCoupons) {
+            if (c.minOrderAmount && baseForBenefits < c.minOrderAmount) continue;
+            let d = 0;
+            const isPercent = (c.discount && c.discount.includes("%")) || (c.discountAmount > 0 && c.discountAmount <= 99 && (c as any).discountType === "RATE");
+            if (isPercent) {
+              d = Math.round(baseForBenefits * (c.discountAmount / 100));
+            } else {
+              d = c.discountAmount || 0;
             }
-
-            if (maxDisc > 0) {
-              setOriginalPriceNum(origPrice);
-              setDiscountedPriceNum(Math.max(0, currentBase - maxDisc));
+            if (d > baseForBenefits) d = baseForBenefits;
+            if (d > maxDisc) {
+              maxDisc = d;
+              bestTitle = c.title;
             }
           }
         }
-        setCouponDiscountAmount(maxDisc);
-        setCouponTitle(bestTitle);
-      } catch (e) {
-        setCouponDiscountAmount(0);
-        setCouponTitle("");
-      }
+      } catch (e) {}
+      setCouponDiscountAmount(maxDisc);
+      setCouponTitle(bestTitle);
+
+      const afterCoupon = Math.max(0, baseForBenefits - maxDisc);
+
+      // 5. Points (적립금) Check
+      let pointsD = 0;
+      try {
+        const userPts = parseInt(localStorage.getItem("membership_user_points") || "0");
+        if (userPts > 0) {
+          // 보유 적립금이 있는 경우 사용 가능한 적립금 적용 (최대 혜택)
+          pointsD = Math.min(userPts, Math.max(0, afterCoupon - 1000));
+        } else {
+          // 신규/일반 회원 기본 1% 적립 혜택
+          pointsD = Math.floor(afterCoupon * 0.01);
+        }
+      } catch (e) {}
+      setPointsDiscountAmount(pointsD);
+
+      // 6. Final Combined Price: 세일 + 쿠폰 + 적립금 적용가
+      const finalAllPrice = Math.max(0, afterCoupon - pointsD);
+      setFinalAllDiscountPrice(finalAllPrice);
+
+      setOriginalPriceNum(origPrice);
+      setDiscountedPriceNum(finalAllPrice);
+
+      const currencyCode = activeProd.currencyCode || "KRW";
+      setProduct({
+        ...activeProd,
+        priceRange: {
+          minVariantPrice: { amount: finalAllPrice.toString(), currencyCode },
+          maxVariantPrice: { amount: origPrice.toString(), currencyCode },
+        },
+        variants: (activeProd.variants || []).map((v) => ({
+          ...v,
+          price: { amount: finalAllPrice.toString(), currencyCode },
+        })),
+        tags: Array.from(new Set([...(activeProd.tags || []), ...(isAnySaleActive ? ["TIMESALE"] : [])])),
+      });
     };
 
     updateTimeSaleProduct();
@@ -454,6 +478,41 @@ export function ProductDetailHeader({
       window.removeEventListener("admin_products_updated", updateTimeSaleProduct);
     };
   }, [initialProduct]);
+
+  // Broadcast calculated prices to floating purchase bar and parent wrapper
+  useEffect(() => {
+    onPriceChange?.({
+      originalPrice: originalPriceNum,
+      discountedPrice: discountedPriceNum,
+    });
+    window.dispatchEvent(
+      new CustomEvent("product_price_calculated", {
+        detail: {
+          originalPrice: originalPriceNum,
+          discountedPrice: discountedPriceNum,
+        },
+      })
+    );
+  }, [originalPriceNum, discountedPriceNum, onPriceChange]);
+
+  useEffect(() => {
+    const handleColorSelected = (e: any) => {
+      if (e.detail?.color) {
+        setSelectedColor(e.detail.color);
+      }
+    };
+    const handleSizeSelected = (e: any) => {
+      if (e.detail?.size) {
+        setSelectedSize(e.detail.size);
+      }
+    };
+    window.addEventListener("product_color_selected", handleColorSelected);
+    window.addEventListener("product_size_selected", handleSizeSelected);
+    return () => {
+      window.removeEventListener("product_color_selected", handleColorSelected);
+      window.removeEventListener("product_size_selected", handleSizeSelected);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isTimeSaleItem || isSetProduct) return;
@@ -539,10 +598,53 @@ export function ProductDetailHeader({
     
     setTimeout(() => {
       setIsAdding(false);
+      toast.success("장바구니에 상품을 담았습니다.");
       
       // Trigger cart modal to open (it listens to choicomma_cart_updated)
       window.dispatchEvent(new CustomEvent("choicomma_cart_updated"));
-    }, 500);
+    }, 400);
+  };
+
+  const handleBuyNow = () => {
+    if (!product.availableForSale || isScheduled) return;
+
+    const variantTitle = `${cleanProductTitle(product.title)} ${selectedColor ? `- ${selectedColor}` : ""} ${selectedSize ? `/ ${selectedSize}` : ""}`.trim();
+    const directItem = {
+      id: `direct-${product.id}-${selectedColor}-${selectedSize}-${Date.now()}`,
+      quantity: quantity,
+      cost: {
+        totalAmount: {
+          amount: (discountedPriceNum * quantity).toString(),
+          currencyCode: product.currencyCode || "KRW",
+        },
+      },
+      merchandise: {
+        id: `${product.id}-${selectedColor}-${selectedSize}`,
+        title: variantTitle,
+        selectedOptions: [
+          ...(selectedColor ? [{ name: "Color", value: selectedColor }] : []),
+          ...(selectedSize ? [{ name: "Size", value: selectedSize }] : []),
+        ],
+        product: {
+          id: product.id,
+          handle: product.handle,
+          title: product.title,
+          featuredImage:
+            (selectedColor && (product as any).colorImages?.[selectedColor]
+              ? { url: (product as any).colorImages[selectedColor], altText: product.title }
+              : null) ||
+            product.featuredImage ||
+            (product.images && product.images[0]),
+          images: product.images || [],
+        },
+      },
+    };
+
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("choicomma_direct_order", JSON.stringify(directItem));
+    }
+
+    router.push("/checkout");
   };
 
   const isOutOfStock = !product.availableForSale || isScheduled;
@@ -623,21 +725,68 @@ export function ProductDetailHeader({
           {cleanProductTitle(displayTitle || product.title)}
         </h1>
 
-        {/* Price Section directly below Title */}
-        <div className="flex items-baseline gap-2.5 mt-1.5 mb-1">
-          {originalPriceNum > discountedPriceNum && (
-            <span className="text-sm text-neutral-400 line-through font-normal">
-              {formatPrice(originalPriceNum.toString(), product.currencyCode || "KRW")}
-            </span>
-          )}
-          <span className="text-xl md:text-2xl font-black text-neutral-950 tracking-tight">
-            {formatPrice(discountedPriceNum.toString(), product.currencyCode || "KRW")}
+        {/* 2. 정상가 표시 및 하단 라인 추가 (볼드 해제) */}
+        <div className="flex items-baseline justify-between w-full mt-2.5 mb-1">
+          <span className="text-xs sm:text-sm font-normal text-neutral-500">정상가</span>
+          <span className="text-xl sm:text-2xl font-normal text-neutral-800 tracking-tight font-mono">
+            {formatPrice(originalPriceNum.toString(), product.currencyCode || "KRW")}
           </span>
-          {couponDiscountAmount > 0 && (
-            <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-sm">
-              쿠폰 적용가
-            </span>
+        </div>
+
+        {/* 정상가 하단 구분 라인 */}
+        <div className="w-full border-b border-neutral-200/90 my-2" />
+
+        {/* 3, 4, 5. 할인가 다단 상세 내역 */}
+        <div className="w-full flex flex-col gap-2 py-1">
+          {/* 3. 타임세일 적용가 (타임세일 적용 시) */}
+          {hasRegularTimeSale && (
+            <div className="flex items-center justify-between w-full text-xs sm:text-[13px]">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-neutral-700">타임세일 적용가</span>
+                {timeSaleDiscount > 0 && (
+                  <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80">
+                    {timeSaleDiscount}% OFF
+                  </span>
+                )}
+              </div>
+              <span className="font-bold text-neutral-900 font-mono">
+                {formatPrice(regularTimeSalePrice.toString(), product.currencyCode || "KRW")}
+              </span>
+            </div>
           )}
+
+          {/* 4. 시크릿 타임 세일 적용가 (시크릿 타임 세일 적용 시) */}
+          {hasSecretTimeSale && (
+            <div className="flex items-center justify-between w-full text-xs sm:text-[13px]">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-neutral-700">시크릿 타임 세일 적용가</span>
+                {secretTimeSaleRate > 0 && (
+                  <span className="text-[10px] font-black text-neutral-900 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-300">
+                    VIP {secretTimeSaleRate}%
+                  </span>
+                )}
+              </div>
+              <span className="font-bold text-neutral-900 font-mono">
+                {formatPrice(secretTimeSalePrice.toString(), product.currencyCode || "KRW")}
+              </span>
+            </div>
+          )}
+
+          {/* 5. 세일+쿠폰+적립금 적용가 (적립금까지 포함한 모든 할인가 표시) */}
+          <div className={cn(
+            "flex items-center justify-between w-full text-xs sm:text-[13px]",
+            (hasRegularTimeSale || hasSecretTimeSale) && "pt-2 border-t border-dashed border-neutral-200/90"
+          )}>
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold text-neutral-950">세일+쿠폰+적립금 적용가</span>
+              <span className="text-[10px] font-extrabold text-neutral-700 bg-neutral-100 px-1.5 py-0.5 rounded">
+                최대 혜택가
+              </span>
+            </div>
+            <span className="text-base sm:text-lg font-black text-neutral-950 tracking-tight font-mono">
+              {formatPrice(finalAllDiscountPrice.toString(), product.currencyCode || "KRW")}
+            </span>
+          </div>
         </div>
 
         {product.description && (
@@ -662,7 +811,7 @@ export function ProductDetailHeader({
             {colors.map((color, idx) => {
               const isSelected = selectedColor === color;
               const colorStr = String(color);
-              const customImg = (product as any).colorImages?.[colorStr];
+              const customImg = optionsColorImages[colorStr] || (product as any).colorImages?.[colorStr];
               const fallbackImg = product.images?.[idx]?.url || product.featuredImage?.url || "/product_1.webp";
               const cutImgUrl = customImg || fallbackImg;
 
@@ -671,6 +820,11 @@ export function ProductDetailHeader({
                   key={`color-${colorStr}-${idx}`}
                   type="button"
                   onClick={() => {
+                    const targetHandle = optionsColorHandles[colorStr];
+                    if (targetHandle && targetHandle !== product.handle) {
+                      router.push(`/product/${targetHandle}`);
+                      return;
+                    }
                     setSelectedColor(colorStr);
                     window.dispatchEvent(new CustomEvent("product_color_selected", { detail: { color: colorStr, image: cutImgUrl } }));
                   }}
@@ -743,7 +897,10 @@ export function ProductDetailHeader({
                   key={`size-${sizeStr}-${idx}`}
                   type="button"
                   disabled={isSoldOut}
-                  onClick={() => setSelectedSize(sizeStr)}
+                  onClick={() => {
+                    setSelectedSize(sizeStr);
+                    window.dispatchEvent(new CustomEvent("product_size_selected", { detail: { size: sizeStr } }));
+                  }}
                   className={cn(
                     "min-w-[2.5rem] h-9 px-3 flex items-center justify-center border text-xs font-semibold transition-all uppercase tracking-wider cursor-pointer select-none rounded-sm",
                     isSoldOut
@@ -776,13 +933,15 @@ export function ProductDetailHeader({
         return null;
       })()}
 
-      {/* Bottom Action Row: Quantity + Add To Cart button */}
-      <div className="flex items-center gap-4 mt-8">
-        <div className="flex items-center border border-neutral-900 px-4 py-3 h-[52px] min-w-[120px] justify-between text-neutral-900 bg-white">
+      {/* Bottom Action Row: Quantity + Cart Icon Button (Left) + Buy Now button */}
+      <div id="product-header-action-row" className="flex items-center gap-3 sm:gap-4 mt-8">
+        {/* 수량 조절기 */}
+        <div className="flex items-center border border-neutral-900 px-4 py-3 h-[52px] min-w-[110px] sm:min-w-[120px] justify-between text-neutral-900 bg-white shrink-0">
           <button
             type="button"
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
             className="text-lg leading-none hover:opacity-50 transition-opacity cursor-pointer select-none"
+            aria-label="수량 감소"
           >
             -
           </button>
@@ -791,16 +950,36 @@ export function ProductDetailHeader({
             type="button"
             onClick={() => setQuantity(quantity + 1)}
             className="text-lg leading-none hover:opacity-50 transition-opacity cursor-pointer select-none"
+            aria-label="수량 증가"
           >
             +
           </button>
         </div>
+
+        {/* 장바구니 아이콘 버튼 (구매하기 좌측) */}
         <button
+          type="button"
           onClick={handleAddToCart}
           disabled={isOutOfStock || isAdding}
-          className="flex-1 bg-black hover:bg-neutral-800 text-white font-normal text-[13px] tracking-widest h-[52px] transition-colors uppercase disabled:bg-neutral-300 disabled:text-neutral-500 disabled:opacity-100 cursor-pointer"
+          className="w-[52px] h-[52px] border border-neutral-900 bg-white hover:bg-neutral-100 text-neutral-900 flex items-center justify-center transition-colors cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed group relative"
+          title={t.addToCart}
+          aria-label={t.addToCart}
         >
-          {isScheduled ? `오픈 예정 (${scheduledDateStr} 오픈)` : isOutOfStock ? t.outOfStock : isAdding ? t.adding : t.addToCart}
+          {isAdding ? (
+            <span className="w-4 h-4 border-2 border-neutral-900 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <ShoppingBag className="w-5 h-5 stroke-[1.8] group-hover:scale-110 transition-transform" />
+          )}
+        </button>
+
+        {/* 구매하기 버튼 */}
+        <button
+          type="button"
+          onClick={handleBuyNow}
+          disabled={isOutOfStock}
+          className="flex-1 bg-black hover:bg-neutral-800 text-white font-normal text-[13px] tracking-widest h-[52px] transition-colors uppercase disabled:bg-neutral-300 disabled:text-neutral-500 disabled:opacity-100 cursor-pointer flex items-center justify-center"
+        >
+          {isScheduled ? `오픈 예정 (${scheduledDateStr} 오픈)` : isOutOfStock ? t.outOfStock : t.buyNow}
         </button>
       </div>
 

@@ -26,6 +26,7 @@ import {
 import { getCurrentLanguage } from "@/lib/i18n/translation";
 import { isCurrentUserAdmin } from "@/lib/auth/customer-session";
 import { saveAdminCoupons, getAllUserCoupons, AvailableCoupon } from "@/lib/membership/coupons";
+import { cn } from "@/lib/utils";
 
 export interface ReviewItem {
   id: string;
@@ -52,6 +53,8 @@ export interface ReviewItem {
 interface ProductReviewsProps {
   productId: string;
   productTitle?: string;
+  hideTopBorder?: boolean;
+  className?: string;
 }
 
 const REVIEWS_I18N: Record<string, Record<string, string>> = {
@@ -245,7 +248,12 @@ const REVIEWS_I18N: Record<string, Record<string, string>> = {
 // 기본 구매 후기 (실제 고객이 작성한 후기만 저장 및 표시)
 const getInitialSampleReviews = (): ReviewItem[] => [];
 
-export function ProductReviews({ productId, productTitle = "상품" }: ProductReviewsProps) {
+export function ProductReviews({
+  productId,
+  productTitle = "상품",
+  hideTopBorder = false,
+  className,
+}: ProductReviewsProps) {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [currentLang, setCurrentLang] = useState("ko");
   const [filterType, setFilterType] = useState<"all" | "photo">("all");
@@ -712,7 +720,15 @@ export function ProductReviews({ productId, productTitle = "상품" }: ProductRe
   const t = REVIEWS_I18N[currentLang] || REVIEWS_I18N.ko;
 
   return (
-    <div className="w-full mt-8 pt-8 border-t border-neutral-200">
+    <div
+      className={cn(
+        "w-full",
+        hideTopBorder
+          ? "mt-0 pt-0 border-t-0"
+          : "mt-8 md:mt-0 pt-8 border-t border-neutral-200",
+        className
+      )}
+    >
       {/* 1. Header & Title Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
@@ -723,12 +739,6 @@ export function ProductReviews({ productId, productTitle = "상품" }: ProductRe
             <span className="text-xs font-bold text-neutral-500 font-mono bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200">
               {metrics.totalCount}건
             </span>
-            {isAdmin && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 shadow-2xs">
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-                관리자 모드 (베스트 댓글 및 쿠폰 관리)
-              </span>
-            )}
           </div>
           <p className="text-xs text-neutral-500 mt-1">
             실제 상품을 구매하신 고객님들의 생생하고 솔직한 착용 후기입니다.

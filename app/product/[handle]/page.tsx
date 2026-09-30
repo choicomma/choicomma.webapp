@@ -119,7 +119,7 @@ export default async function ProductPage(props: {
       />
 
       {/* Main PDP Client Wrapper */}
-      <ProductPageClientWrapper initialProduct={product} />
+      <ProductPageClientWrapper key={product.handle || product.id} initialProduct={product} />
 
       <RelatedProducts />
     </PageLayout>

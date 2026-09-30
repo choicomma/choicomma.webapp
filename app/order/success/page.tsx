@@ -256,10 +256,14 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               });
             }
 
-            // 3) 결제 성공 후 장바구니 자동 비우기
+            // 3) 결제 성공 후 장바구니 처리 (바로구매인 경우 일반 장바구니 유지)
             try {
-              localStorage.removeItem("choicomma_cart");
-              window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
+              if (pendingOrder?.isDirectOrder) {
+                sessionStorage.removeItem("choicomma_direct_order");
+              } else {
+                localStorage.removeItem("choicomma_cart");
+                window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
+              }
             } catch (e) {}
 
             // 4) 고객 등급에 따른 적립금 지급 및 포인트 이력 저장 (중복 적립 방지)
