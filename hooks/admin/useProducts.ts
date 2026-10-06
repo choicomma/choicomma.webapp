@@ -124,14 +124,55 @@ export function useProducts({
   const pruneForLocalStorage = (items: any[]) => {
     return items.map((p) => {
       let detailDesc = p.detailDescription;
-      if (typeof detailDesc === "string" && detailDesc.length > 20000 && detailDesc.includes("data:image/")) {
-        detailDesc = detailDesc.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "");
+      if (typeof detailDesc === "string" && (detailDesc.length > 5000 || detailDesc.includes("data:image/"))) {
+        detailDesc = detailDesc.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "/product_1.webp");
       }
+
+      // Truncate huge images array for localStorage fallback
+      let imgs = Array.isArray(p.images) ? p.images : [];
+      let cleanedImgs = imgs.map((img: any) => {
+        const urlStr = typeof img === "string" ? img : img?.url || "";
+        if (typeof urlStr === "string" && urlStr.startsWith("data:image/")) {
+          return typeof img === "string" ? "/product_1.webp" : { ...img, url: "/product_1.webp" };
+        }
+        return img;
+      });
+
+      // Clean huge colorImages base64
+      let cleanedColorImgs: Record<string, string> = {};
+      if (p.colorImages && typeof p.colorImages === "object") {
+        Object.entries(p.colorImages).forEach(([k, v]) => {
+          if (typeof v === "string" && (v as string).startsWith("data:image/")) {
+            cleanedColorImgs[k] = "/product_1.webp";
+          } else {
+            cleanedColorImgs[k] = v as string;
+          }
+        });
+      }
+
       return {
         ...p,
         detailDescription: detailDesc,
+        images: cleanedImgs,
+        featuredImage: (p.featuredImage?.url && p.featuredImage.url.startsWith("data:image/"))
+          ? { ...p.featuredImage, url: "/product_1.webp" }
+          : p.featuredImage,
+        colorImages: cleanedColorImgs,
       };
     });
+  };
+
+  // Helper: Safely save custom products backup in localStorage
+  const saveCustomProductsBackup = (items: any[]) => {
+    if (typeof window === "undefined") return;
+    try {
+      const customItems = items.filter(
+        (p: any) => String(p.id).startsWith("custom-prod-") || String(p.id).startsWith("prod-custom-")
+      );
+      if (customItems.length > 0) {
+        localStorage.setItem("admin_custom_products", JSON.stringify(customItems));
+      }
+    } catch (e) {}
   };
 
   // Client-side hydration sync for productsList (Source of Truth: Central Server API /api/products)
@@ -143,6 +184,24 @@ export function useProducts({
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
             let merged = [...data];
+
+            // Ensure locally cached custom products are not dropped if server sync had a delay
+            if (typeof window !== "undefined") {
+              try {
+                const savedCustomRaw = localStorage.getItem("admin_custom_products");
+                if (savedCustomRaw) {
+                  const savedCustom = JSON.parse(savedCustomRaw);
+                  if (Array.isArray(savedCustom)) {
+                    const serverIdSet = new Set(merged.map((p: any) => String(p.id)));
+                    const missing = savedCustom.filter((cp: any) => cp?.id && !serverIdSet.has(String(cp.id)));
+                    if (missing.length > 0) {
+                      merged = [...missing, ...merged];
+                    }
+                  }
+                }
+              } catch (e) {}
+            }
+
             const hasHero = merged.some((p: any) => p.isHeroFeatured === true);
             if (!hasHero) {
               const defaultHeroes = INITIAL_CHOICOMMA_PRODUCTS.filter((p: any) => p.isHeroFeatured === true);
@@ -159,17 +218,15 @@ export function useProducts({
                 }
               });
             }
+
             setProductsList(merged);
             if (typeof window !== "undefined") {
               try {
-                localStorage.setItem("admin_products", JSON.stringify(merged));
+                const lightweight = pruneForLocalStorage(merged);
+                localStorage.setItem("admin_products", JSON.stringify(lightweight));
+                saveCustomProductsBackup(merged);
               } catch (e) {
-                try {
-                  const lightweight = pruneForLocalStorage(merged);
-                  localStorage.setItem("admin_products", JSON.stringify(lightweight));
-                } catch (e2) {
-                  console.warn("Notice: Skipped full products localStorage write due to size limit");
-                }
+                console.warn("Notice: Skipped localStorage write due to size limit");
               }
             }
             isProductsLoadedRef.current = true;
@@ -180,10 +237,18 @@ export function useProducts({
         console.error("Failed to fetch products from /api/products", err);
       }
 
-      // Fallback
+      // Fallback: Read from existing localStorage first rather than resetting to initial mock!
       if (typeof window !== "undefined") {
         try {
-          localStorage.setItem("admin_products", JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
+          const cached = localStorage.getItem("admin_products");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setProductsList(parsed);
+              isProductsLoadedRef.current = true;
+              return;
+            }
+          }
         } catch (e) {}
         setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
         isProductsLoadedRef.current = true;
@@ -193,32 +258,61 @@ export function useProducts({
     fetchServerProducts();
   }, []);
 
+  // Fast single product save helper (High performance 0.1s save to Server DB)
+  const saveSingleProduct = useCallback(async (product: any, isNew: boolean = false) => {
+    if (typeof window === "undefined") return;
+
+    // 1. Immediately persist single product to Central Server API (Supabase + Disk)
+    try {
+      await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product, isNew }),
+      });
+    } catch (err) {
+      console.error("Failed to persist single product:", err);
+    }
+
+    // 2. Backup to localStorage custom products immediately
+    try {
+      const savedCustomRaw = localStorage.getItem("admin_custom_products");
+      let customList: any[] = savedCustomRaw ? JSON.parse(savedCustomRaw) : [];
+      if (!Array.isArray(customList)) customList = [];
+      const existIdx = customList.findIndex((p: any) => String(p.id) === String(product.id));
+      if (existIdx !== -1) {
+        customList[existIdx] = product;
+      } else {
+        customList.unshift(product);
+      }
+      localStorage.setItem("admin_custom_products", JSON.stringify(customList));
+    } catch (e) {}
+  }, []);
+
   // Helper: Safely save to Central Server API (/api/products) and mirror to localStorage
   const saveProductsToStorage = useCallback((list: any[]) => {
     if (typeof window === "undefined") return;
 
-    // 1. Persist to Central Server API first so all devices see changes immediately (no size limit)
+    // 1. Persist to Central Server API first so all devices see changes immediately
     fetch("/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(list),
     }).catch((err) => console.error("Failed to persist products to /api/products:", err));
 
-    // 2. Mirror to localStorage safely (with quota guard)
+    // 2. Backup custom products immediately
+    saveCustomProductsBackup(list);
+
+    // 3. Mirror to localStorage safely (pruned to fit inside 5MB limit)
     try {
-      localStorage.setItem("admin_products", JSON.stringify(list));
+      const lightweight = pruneForLocalStorage(list);
+      localStorage.setItem("admin_products", JSON.stringify(lightweight));
     } catch (e) {
-      console.warn("Notice: localStorage quota exceeded with full catalog, saving lightweight mirror...");
+      console.warn("Notice: localStorage quota exceeded, saving top 80 products mirror...");
       try {
-        const lightweight = pruneForLocalStorage(list);
-        localStorage.setItem("admin_products", JSON.stringify(lightweight));
+        const minimal = pruneForLocalStorage(list.slice(0, 80));
+        localStorage.setItem("admin_products", JSON.stringify(minimal));
       } catch (err2) {
-        try {
-          const minimal = pruneForLocalStorage(list.slice(0, 80));
-          localStorage.setItem("admin_products", JSON.stringify(minimal));
-        } catch (err3) {
-          console.warn("Skipping localStorage cache for products. Central Server API is authoritative.");
-        }
+        console.warn("Skipping localStorage cache for products. Central Server API is authoritative.");
       }
     }
 
@@ -896,6 +990,7 @@ export function useProducts({
     productSortOrder,
     setProductSortOrder,
     saveProductsToStorage,
+    saveSingleProduct,
     getProductNoNum,
     getProductNo,
     filteredProducts,

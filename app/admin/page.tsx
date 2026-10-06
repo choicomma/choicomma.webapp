@@ -306,6 +306,7 @@ export default function AdminPage() {
     productSortOrder,
     setProductSortOrder,
     saveProductsToStorage,
+    saveSingleProduct,
     getProductNoNum,
     getProductNo,
     filteredProducts,
@@ -668,7 +669,7 @@ export default function AdminPage() {
           <div className="px-3 py-2 text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
             Menu
           </div>
-          {/* 1. 주문 및 배송 관리 */}
+                    {/* 1. 주문 및 배송 관리 */}
           <button
             onClick={() => setActiveTab("orders")}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "orders"
@@ -680,19 +681,7 @@ export default function AdminPage() {
             주문 및 배송 관리
           </button>
 
-          {/* 매출 관리 (주문 및 배송 관리 바로 밑) */}
-          <button
-            onClick={() => setActiveTab("revenue")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "revenue"
-                ? "bg-neutral-100 text-neutral-950 font-extrabold"
-                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
-              }`}
-          >
-            <TrendingUp className="w-4 h-4 text-neutral-900" />
-            매출 관리
-          </button>
-
-          {/* CS 관리 (고객 문의 및 라이브 채팅) */}
+          {/* 2. CS */}
           <button
             onClick={() => setActiveTab("inquiries")}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "inquiries"
@@ -704,19 +693,22 @@ export default function AdminPage() {
             CS
           </button>
 
-          {/* 2. 회원 관리 */}
+          {/* 3. 상품 관리 */}
           <button
-            onClick={() => setActiveTab("customers")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "customers"
+            onClick={() => setActiveTab("products")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "products"
                 ? "bg-neutral-100 text-neutral-950 font-extrabold"
                 : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
               }`}
           >
-            <Users className="w-4 h-4 text-neutral-900" />
-            회원 관리
+            <Package className="w-4 h-4 text-neutral-900" />
+            상품 관리
           </button>
 
-          {/* 방문자 관리 (쿠폰 관리와 위치 교환) */}
+          {/* (선 추가) */}
+          <div className="my-1.5 border-t border-neutral-200/80" />
+
+          {/* 4. 방문자 관리 */}
           <button
             onClick={() => setActiveTab("visitors")}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "visitors"
@@ -728,41 +720,32 @@ export default function AdminPage() {
             방문자 관리
           </button>
 
-          {/* 3. 메인 이미지 관리 */}
+          {/* 5. 매출 관리 */}
           <button
-            onClick={() => setActiveTab("main")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "main"
+            onClick={() => setActiveTab("revenue")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "revenue"
                 ? "bg-neutral-100 text-neutral-950 font-extrabold"
                 : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
               }`}
           >
-            <Layers className="w-4 h-4 text-neutral-900" />
-            메인 이미지 관리
+            <TrendingUp className="w-4 h-4 text-neutral-900" />
+            매출 관리
           </button>
 
-          {/* 4. 재고 및 입고 캘린더 */}
+          {/* 6. 회원 관리 */}
           <button
-            onClick={() => setActiveTab("inbound")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "inbound"
+            onClick={() => setActiveTab("customers")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "customers"
                 ? "bg-neutral-100 text-neutral-950 font-extrabold"
                 : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
               }`}
           >
-            <Calendar className="w-4 h-4 text-neutral-900" />
-            재고 및 입고 캘린더
+            <Users className="w-4 h-4 text-neutral-900" />
+            회원 관리
           </button>
 
-          {/* 5. 상품관리 */}
-          <button
-            onClick={() => setActiveTab("products")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "products"
-                ? "bg-neutral-100 text-neutral-950 font-extrabold"
-                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
-              }`}
-          >
-            <Package className="w-4 h-4 text-neutral-900" />
-            상품 관리
-          </button>
+          {/* (선 추가) */}
+          <div className="my-1.5 border-t border-neutral-200/80" />
 
           {/* 7. 프로모션 */}
           <button
@@ -776,7 +759,7 @@ export default function AdminPage() {
             프로모션
           </button>
 
-          {/* 7-1. 팝업 관리 */}
+          {/* 8. 팝업 관리 */}
           <button
             onClick={() => setActiveTab("popup")}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "popup"
@@ -788,7 +771,7 @@ export default function AdminPage() {
             팝업 관리
           </button>
 
-          {/* 쿠폰 관리 (방문자 관리와 위치 교환) */}
+          {/* 9. 쿠폰 관리 */}
           <button
             onClick={() => setActiveTab("coupons")}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "coupons"
@@ -800,7 +783,34 @@ export default function AdminPage() {
             쿠폰 관리
           </button>
 
-          {/* 9. 해외 판매가 */}
+          {/* (선 추가) */}
+          <div className="my-1.5 border-t border-neutral-200/80" />
+
+          {/* 10. 재고 및 입고 캘린더 */}
+          <button
+            onClick={() => setActiveTab("inbound")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "inbound"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
+          >
+            <Calendar className="w-4 h-4 text-neutral-900" />
+            재고 및 입고 캘린더
+          </button>
+
+          {/* 11. 메인 이미지 관리 */}
+          <button
+            onClick={() => setActiveTab("main")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "main"
+                ? "bg-neutral-100 text-neutral-950 font-extrabold"
+                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+              }`}
+          >
+            <Layers className="w-4 h-4 text-neutral-900" />
+            메인 이미지 관리
+          </button>
+
+          {/* 12. 해외 판매가 */}
           <button
             onClick={() => setActiveTab("global_sales")}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "global_sales"
@@ -811,7 +821,6 @@ export default function AdminPage() {
             <Globe className="w-4 h-4 text-neutral-900" />
             해외 판매가
           </button>
-
 
           <div className="mt-auto pt-4 border-t border-neutral-200 space-y-1.5">
             <Link
@@ -860,7 +869,7 @@ export default function AdminPage() {
             ? "max-w-[1850px]"
             : "max-w-7xl"
         }`}>
-          {/* Mobile Horizontal Tab Navigation */}
+                    {/* Mobile Horizontal Tab Navigation */}
           <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-neutral-200/80 scrollbar-thin">
             <button
               onClick={() => setActiveTab("orders")}
@@ -870,13 +879,6 @@ export default function AdminPage() {
               주문 및 배송
             </button>
             <button
-              onClick={() => setActiveTab("revenue")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "revenue" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-                }`}
-            >
-              매출 관리
-            </button>
-            <button
               onClick={() => setActiveTab("inquiries")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "inquiries"
                   ? "bg-neutral-950 text-white"
@@ -884,14 +886,14 @@ export default function AdminPage() {
                 }`}
             >
               <MessageSquare className="w-3.5 h-3.5 text-neutral-900" />
-              CS 관리
+              CS
             </button>
             <button
-              onClick={() => setActiveTab("customers")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "customers" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+              onClick={() => setActiveTab("products")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "products" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
                 }`}
             >
-              회원
+              상품 관리
             </button>
             <button
               onClick={() => setActiveTab("visitors")}
@@ -901,33 +903,18 @@ export default function AdminPage() {
               방문자 관리
             </button>
             <button
-              onClick={() => setActiveTab("timesale")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-1 ${activeTab === "timesale" ? "bg-amber-500 text-neutral-950 shadow-xs" : "bg-amber-100/70 text-amber-900"
+              onClick={() => setActiveTab("revenue")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "revenue" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
                 }`}
             >
-              <Sparkles className="w-3.5 h-3.5 fill-neutral-950 text-neutral-950" />
-              타임세일
+              매출 관리
             </button>
             <button
-              onClick={() => setActiveTab("main")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "main" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+              onClick={() => setActiveTab("customers")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "customers" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
                 }`}
             >
-              메인
-            </button>
-            <button
-              onClick={() => setActiveTab("inbound")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "inbound" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-                }`}
-            >
-              재고
-            </button>
-            <button
-              onClick={() => setActiveTab("products")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "products" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
-                }`}
-            >
-              상품
+              회원 관리
             </button>
             <button
               onClick={() => setActiveTab("sales")}
@@ -950,7 +937,21 @@ export default function AdminPage() {
             >
               <Ticket className="w-3.5 h-3.5 text-neutral-900" />
               쿠폰 관리
-          </button>
+            </button>
+            <button
+              onClick={() => setActiveTab("inbound")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "inbound" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
+            >
+              재고 및 입고 캘린더
+            </button>
+            <button
+              onClick={() => setActiveTab("main")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all ${activeTab === "main" ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600"
+                }`}
+            >
+              메인 이미지 관리
+            </button>
             <button
               onClick={() => setActiveTab("global_sales")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "global_sales"
@@ -1244,6 +1245,7 @@ export default function AdminPage() {
             triggerToast(`'${savedProduct.title}' 상품 정보가 성공적으로 수정되었습니다.`);
           }
           setProductsList(updatedList);
+          saveSingleProduct(savedProduct, isNew);
           saveProductsToStorage(updatedList);
           setIsAddModalOpen(false);
           setEditingProduct(null);

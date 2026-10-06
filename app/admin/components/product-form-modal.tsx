@@ -231,7 +231,6 @@ export function ProductFormModal({
   const isEdit = mode === "edit";
 
   // Form states
-  const [productNoInput, setProductNoInput] = useState("");
   const [title, setTitle] = useState("");
   const [categories, setCategories] = useState<string[]>(["new"]);
   const [price, setPrice] = useState("");
@@ -326,7 +325,6 @@ export function ProductFormModal({
     if (!isOpen) return;
 
     if (isEdit && initialProduct) {
-      setProductNoInput(initialProduct.productCode || (initialProduct.productNo ? String(initialProduct.productNo) : ""));
       setTitle(initialProduct.title || "");
       const cats = Array.isArray(initialProduct.categoryIds) && initialProduct.categoryIds.length > 0
         ? initialProduct.categoryIds
@@ -451,7 +449,6 @@ export function ProductFormModal({
       }
     } else {
       // Add mode defaults
-      setProductNoInput("");
       setTitle("");
       setCategories(["new"]);
       setPrice("");
@@ -680,29 +677,33 @@ export function ProductFormModal({
     const totalStockCalc = calculateTotalStock(colors, sizes, sizeStock);
     const finalImages = images.length > 0 ? images : ["/product_1.webp"];
 
-    // Product sequence number & code
+    // Product sequence number & code (상품 등록 순서로 순차 자동 부여)
     let finalProdNo: number;
     let finalProductCode: string;
 
-    if (productNoInput.trim()) {
-      const inputStr = productNoInput.trim();
-      const match = inputStr.match(/\d+/);
-      finalProdNo = match ? parseInt(match[0], 10) : (isEdit ? initialProduct.productNo : Date.now());
-      finalProductCode = inputStr.toUpperCase().startsWith("CC-")
-        ? inputStr.toUpperCase()
-        : `CC-${inputStr.padStart(3, "0")}`;
+    if (isEdit && initialProduct?.productNo) {
+      finalProdNo = Number(initialProduct.productNo);
+      finalProductCode = initialProduct.productCode || `CC-${String(finalProdNo).padStart(3, "0")}`;
     } else {
-      if (isEdit) {
-        finalProdNo = initialProduct.productNo;
-        finalProductCode = initialProduct.productCode;
-      } else {
-        const maxNo = productsList.reduce((max, p) => {
-          const num = typeof p.productNo === "number" ? p.productNo : parseInt(p.productNo, 10) || 0;
-          return num > max ? num : max;
-        }, 0);
-        finalProdNo = maxNo + 1;
-        finalProductCode = `CC-${String(finalProdNo).padStart(3, "0")}`;
-      }
+      // 기존 상품 목록 중 최대 번호 추출 후 +1 순차 자동 부여
+      const maxNo = productsList.reduce((max, p) => {
+        let num = 0;
+        if (typeof p.productNo === "number" && p.productNo > 0) {
+          num = p.productNo;
+        } else if (p.productNo && !isNaN(Number(p.productNo))) {
+          num = Number(p.productNo);
+        } else if (p.productCode) {
+          const match = String(p.productCode).match(/\d+/);
+          if (match) num = parseInt(match[0], 10);
+        } else if (p.id) {
+          const match = String(p.id).match(/\d+/);
+          if (match) num = parseInt(match[0], 10);
+        }
+        return num > max && num < 100000 ? num : max;
+      }, 0);
+
+      finalProdNo = maxNo > 0 ? maxNo + 1 : 1;
+      finalProductCode = `CC-${String(finalProdNo).padStart(3, "0")}`;
     }
 
     // Build variants
@@ -730,15 +731,19 @@ export function ProductFormModal({
 
     const parsedRate = parseInt(timeSaleDiscountRate, 10) || 35;
 
+    const generatedId = isEdit ? initialProduct.id : `custom-prod-${Date.now()}`;
+    const baseSlug = title.trim().toLowerCase().replace(/[^a-z0-9가-힣\s-]/g, "").replace(/\s+/g, "-") || "product";
+    const uniqueHandle = isEdit ? (initialProduct.handle || initialProduct.id) : `${baseSlug}-${generatedId}`;
+
     const resultProduct = {
       customTitles: formTitles,
       ...(isEdit ? initialProduct : {}),
-      id: isEdit ? initialProduct.id : `custom-prod-${Date.now()}`,
+      id: generatedId,
       productNo: finalProdNo,
       productCode: finalProductCode,
       createdAt: isEdit ? initialProduct.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      handle: isEdit ? initialProduct.handle : title.toLowerCase().replace(/\s+/g, "-"),
+      handle: uniqueHandle,
       title: title.trim(),
       description: description || "새로운 시그니처 상품입니다.",
       detailDescription: detailDescription || "",
@@ -934,30 +939,16 @@ export function ProductFormModal({
                   <span className="text-[11px] font-bold text-neutral-400">Basic Details & Images</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">
-                      상품 번호 (미입력 시 자동 부여)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="예: 001, CC-001"
-                      value={productNoInput}
-                      onChange={(e) => setProductNoInput(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950 font-mono"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">{formTitles.title} *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="예: 클린 컷 트위드 재킷"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">{formTitles.title} *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="예: 클린 컷 트위드 재킷"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                  />
                 </div>
 
 
@@ -3424,7 +3415,6 @@ export function ProductFormModal({
                     { key: "productImages", label: "제품 이미지 등록 제목", defaultVal: DEFAULT_FORM_TITLES.productImages },
                     { key: "price", label: "판매가 항목 제목", defaultVal: DEFAULT_FORM_TITLES.price },
                     { key: "variantCutImages", label: "옵션별 제품컷 사진 등록 제목", defaultVal: DEFAULT_FORM_TITLES.variantCutImages },
-                    { key: "productNo", label: "상품 번호 항목 제목", defaultVal: DEFAULT_FORM_TITLES.productNo },
                     { key: "title", label: "상품명 항목 제목", defaultVal: DEFAULT_FORM_TITLES.title },
                     { key: "description", label: "간단 설명 항목 제목", defaultVal: DEFAULT_FORM_TITLES.description },
                     { key: "detailImages", label: "상세 사진 등록 항목 제목", defaultVal: DEFAULT_FORM_TITLES.detailImages },

@@ -145,6 +145,23 @@ export async function GET(req: NextRequest) {
           };
         });
 
+        // Ensure locally added products in JSON or cache that are not yet in Supabase are not lost
+        try {
+          const filePath = getProductsFilePath();
+          if (fs.existsSync(filePath)) {
+            const raw = fs.readFileSync(filePath, "utf-8");
+            const localArr = JSON.parse(raw);
+            if (Array.isArray(localArr)) {
+              const dbIdSet = new Set(finalProducts.map((p: any) => String(p.id)));
+              const missingLocal = localArr.filter((lp: any) => lp?.id && !dbIdSet.has(String(lp.id)));
+              if (missingLocal.length > 0) {
+                console.log(`[Products Sync] Merged ${missingLocal.length} local custom products into response.`);
+                finalProducts = [...missingLocal, ...finalProducts];
+              }
+            }
+          }
+        } catch (e) {}
+
         globalForProducts.serverProductsCache = finalProducts;
         return makeResponse(finalProducts, req);
       }
@@ -178,23 +195,149 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// Helper: Format a product cleanly for Supabase DB
+function formatProductForDb(p: any, createdAtIso?: string) {
+  const relDate = p.releaseDate || "";
+  const m = String(p.id).match(/\d+/);
+  const num = p.productNo !== undefined && !isNaN(Number(p.productNo)) ? Number(p.productNo) : (m ? parseInt(m[0], 10) : 0);
+
+  return {
+    id: String(p.id),
+    title: p.title || "",
+    handle: p.handle || String(p.id),
+    categoryId: p.categoryId || "",
+    categoryIds: p.categoryIds || [],
+    description: p.description || "",
+    detailDescription: p.detailDescription || "",
+    currencyCode: p.currencyCode || "KRW",
+    priceRange: p.priceRange || {},
+    featuredImage: p.featuredImage || {},
+    images: p.images || [],
+    variants: p.variants || [],
+    options: p.options || [],
+    tags: [
+      ...(Array.isArray(p.tags) ? p.tags.filter((t: any) => typeof t === "string" && !t.startsWith("release_date:")) : []),
+      ...(relDate ? [`release_date:${relDate}`] : []),
+    ],
+    sizes: p.sizes || [],
+    colors: p.colors || [],
+    stock: p.stock || 100,
+    sizeStock: p.sizeStock || {},
+    colorHexMap: p.colorHexMap || {},
+    productLabel: p.productLabel || "",
+    isMainFeatured: Boolean(p.isMainFeatured),
+    availableForSale: p.availableForSale !== false,
+    isTimeSale: Boolean(p.isTimeSale),
+    bulkDiscount: {
+      ...(p.bulkDiscount || { enabled: false, rules: [] }),
+      releaseDate: relDate,
+      fabricImage: p.fabricImage || p.fabricTextureImage || "",
+      fabricTextureImage: p.fabricTextureImage || p.fabricImage || "",
+      fabricComposition: p.fabricComposition || "",
+      showFabricInfo: Boolean(p.fabricImage || p.fabricTextureImage),
+      showSizeGuide: p.showSizeGuide !== undefined ? p.showSizeGuide : false,
+      sizeGuideImage: p.sizeGuideImage || p.sizeChartImage || "",
+      sizeChartImage: p.sizeChartImage || p.sizeGuideImage || "",
+      sizeMeasurements: p.sizeMeasurements || [],
+    },
+    created_at: createdAtIso || p.createdAt || p.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
 // POST: Save updated products directly to Supabase DB and local disk
 export async function POST(req: NextRequest) {
   try {
-    const products = await req.json();
+    const body = await req.json();
+
+    // -------------------------------------------------------------
+    // CASE A: Single Product Fast Upsert (High performance 0.1s save)
+    // -------------------------------------------------------------
+    const singleProduct = body?.product || (!Array.isArray(body) && body?.id ? body : null);
+    if (singleProduct) {
+      const p = singleProduct;
+      const pId = String(p.id);
+
+      // Unique handle guarantee
+      let safeHandle = (p.handle && String(p.handle).trim()) || pId;
+      if (!safeHandle.includes(pId)) {
+        safeHandle = `${safeHandle}-${pId}`;
+      }
+      p.handle = safeHandle;
+
+      const formattedSingle = formatProductForDb(p);
+
+      // 1. Local disk fallback & Memory cache FIRST (Never lost on refresh)
+      try {
+        const filePath = getProductsFilePath();
+        let existingList: any[] = [];
+        if (fs.existsSync(filePath)) {
+          existingList = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+        }
+        const existingIdx = existingList.findIndex((item: any) => String(item.id) === pId);
+        if (existingIdx !== -1) {
+          existingList[existingIdx] = { ...existingList[existingIdx], ...p };
+        } else {
+          existingList.unshift(p);
+        }
+        fs.writeFileSync(filePath, JSON.stringify(existingList, null, 2), "utf-8");
+        globalForProducts.serverProductsCache = existingList;
+      } catch (fsErr) {
+        console.warn("Local disk update warning:", fsErr);
+      }
+
+      // 2. Supabase DB Upsert
+      if (isSupabaseConfigured) {
+        try {
+          const { error: dbError } = await supabaseServer
+            .from("products")
+            .upsert(formattedSingle, { onConflict: "id" });
+
+          if (dbError) {
+            console.warn("[Single Product Upsert Warning]:", dbError.message);
+            // Fallback retry with id as handle if handle collision occurred
+            if (dbError.message?.includes("products_handle_key")) {
+              formattedSingle.handle = `prod-${pId}`;
+              await supabaseServer.from("products").upsert(formattedSingle, { onConflict: "id" });
+            }
+          }
+        } catch (dbErr: any) {
+          console.warn("[Single Product DB Error]:", dbErr.message);
+        }
+      }
+
+      return NextResponse.json({ success: true, product: p }, {
+        headers: { "Cache-Control": "no-store" },
+      });
+    }
+
+    // -------------------------------------------------------------
+    // CASE B: Full Catalog Array Batch Sync (Re-ordering, bulk save)
+    // -------------------------------------------------------------
+    const products = body;
     if (!Array.isArray(products)) {
       return NextResponse.json(
-        { success: false, message: "올바른 배열 형식이 아닙니다." },
+        { success: false, message: "올바른 배열 또는 상품 형식이 아닙니다." },
         { status: 400 }
       );
     }
 
-    // 1. Primary: Sync to Supabase (Delete omitted products & Upsert active products)
+    // 1. Immediately update Local disk and In-memory cache FIRST
+    // This guarantees that immediate browser refresh gets the exact state without waiting for slow DB roundtrips!
+    globalForProducts.serverProductsCache = products;
+    try {
+      const filePath = getProductsFilePath();
+      fs.writeFileSync(filePath, JSON.stringify(products, null, 2), "utf-8");
+    } catch (fsErr) {
+      // Ignored on read-only environments
+    }
+
+    // 2. Sync to Supabase (Delete omitted products & Upsert active products with unique handle guarantee)
     if (isSupabaseConfigured) {
       try {
         const incomingIdSet = new Set(products.map((p: any) => String(p.id)));
 
-        // 1-1. Detect and delete products from Supabase that are no longer in the products catalog
+        // 2-1. Detect and delete omitted products
         const { data: existingRows } = await supabaseServer
           .from("products")
           .select("id");
@@ -213,55 +356,21 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // 1-2. Upsert active products with ordered timestamps to guarantee frozen sort order
+        // 2-2. Deduplicate handles to strictly prevent "products_handle_key" unique constraint crashes
+        const seenHandles = new Set<string>();
         const baseTime = Date.now();
         const formatted = products.map((p: any, idx: number) => {
-          const relDate = p.releaseDate || "";
-          return {
-            id: p.id,
-            title: p.title || "",
-            handle: p.handle || p.id,
-            categoryId: p.categoryId || "",
-            categoryIds: p.categoryIds || [],
-            description: p.description || "",
-            detailDescription: p.detailDescription || "",
-            currencyCode: p.currencyCode || "KRW",
-            priceRange: p.priceRange || {},
-            featuredImage: p.featuredImage || {},
-            images: p.images || [],
-            variants: p.variants || [],
-            options: p.options || [],
-            tags: [
-              ...(Array.isArray(p.tags) ? p.tags.filter((t: any) => typeof t === "string" && !t.startsWith("release_date:")) : []),
-              ...(relDate ? [`release_date:${relDate}`] : []),
-            ],
-            sizes: p.sizes || [],
-            colors: p.colors || [],
-            stock: p.stock || 100,
-            sizeStock: p.sizeStock || {},
-            colorHexMap: p.colorHexMap || {},
-            productLabel: p.productLabel || "",
-            isMainFeatured: Boolean(p.isMainFeatured),
-            availableForSale: p.availableForSale !== false,
-            isTimeSale: Boolean(p.isTimeSale),
-            bulkDiscount: {
-              ...(p.bulkDiscount || { enabled: false, rules: [] }),
-              releaseDate: relDate,
-              fabricImage: p.fabricImage || p.fabricTextureImage || "",
-              fabricTextureImage: p.fabricTextureImage || p.fabricImage || "",
-              fabricComposition: p.fabricComposition || "",
-              showFabricInfo: Boolean(p.fabricImage || p.fabricTextureImage),
-              showSizeGuide: p.showSizeGuide !== undefined ? p.showSizeGuide : false,
-              sizeGuideImage: p.sizeGuideImage || p.sizeChartImage || "",
-              sizeChartImage: p.sizeChartImage || p.sizeGuideImage || "",
-              sizeMeasurements: p.sizeMeasurements || [],
-            },
-            created_at: new Date(baseTime - idx * 1000).toISOString(),
-            updated_at: new Date().toISOString(),
-          };
+          let h = (p.handle && String(p.handle).trim()) || String(p.id);
+          if (seenHandles.has(h)) {
+            h = `${h}-${String(p.id)}`;
+          }
+          seenHandles.add(h);
+          p.handle = h;
+
+          return formatProductForDb(p, new Date(baseTime - idx * 1000).toISOString());
         });
 
-        // 배치 분할 Upsert (50개 단위 안정적 처리)
+        // 2-3. Batch Upsert (50 chunks) with resilient per-row fallback
         const batchSize = 50;
         for (let i = 0; i < formatted.length; i += batchSize) {
           const chunk = formatted.slice(i, i + batchSize);
@@ -270,23 +379,22 @@ export async function POST(req: NextRequest) {
             .upsert(chunk, { onConflict: "id" });
 
           if (dbError) {
-            console.warn(`Notice: Failed to upsert products chunk (${i}~${i + chunk.length}):`, dbError.message);
+            console.warn(`[Batch Upsert Warning] Chunk (${i}~${i + chunk.length}) failed: ${dbError.message}. Retrying row-by-row...`);
+            // Resilient fallback: upsert item-by-item so newly added items succeed even if older rows have issues
+            for (const item of chunk) {
+              const { error: singleErr } = await supabaseServer
+                .from("products")
+                .upsert(item, { onConflict: "id" });
+              if (singleErr && singleErr.message?.includes("products_handle_key")) {
+                item.handle = `prod-${item.id}`;
+                await supabaseServer.from("products").upsert(item, { onConflict: "id" });
+              }
+            }
           }
         }
       } catch (dbErr: any) {
         console.warn("Supabase products sync error:", dbErr.message);
       }
-    }
-
-    // 2. In-memory cache update
-    globalForProducts.serverProductsCache = products;
-
-    // 3. Local disk fallback (if writable)
-    try {
-      const filePath = getProductsFilePath();
-      fs.writeFileSync(filePath, JSON.stringify(products, null, 2), "utf-8");
-    } catch (fsErr) {
-      // Ignored on Serverless read-only
     }
 
     return NextResponse.json({ success: true, count: products.length }, {
