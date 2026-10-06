@@ -1235,7 +1235,7 @@ export default function AdminPage() {
           setIsAddModalOpen(false);
           setEditingProduct(null);
         }}
-        onSave={(savedProduct, isNew) => {
+        onSave={async (savedProduct, isNew) => {
           let updatedList: any[];
           if (isNew) {
             updatedList = [savedProduct, ...productsList];
@@ -1245,10 +1245,11 @@ export default function AdminPage() {
             triggerToast(`'${savedProduct.title}' 상품 정보가 성공적으로 수정되었습니다.`);
           }
           setProductsList(updatedList);
-          saveSingleProduct(savedProduct, isNew);
-          saveProductsToStorage(updatedList);
           setIsAddModalOpen(false);
           setEditingProduct(null);
+
+          await saveSingleProduct(savedProduct, isNew);
+          saveProductsToStorage(updatedList);
         }}
         triggerToast={triggerToast}
       />

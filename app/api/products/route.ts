@@ -6,8 +6,48 @@ import { supabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function getProductsFilePath() {
+function getRuntimeProductsFilePath() {
+  return path.join(process.cwd(), "data", "products-cache.json");
+}
+
+function getInitialMockFilePath() {
   return path.join(process.cwd(), "lib", "sfcc", "mock", "parsed-products.json");
+}
+
+function readLocalProductsBackup(): any[] {
+  try {
+    const runtimePath = getRuntimeProductsFilePath();
+    if (fs.existsSync(runtimePath)) {
+      const raw = fs.readFileSync(runtimePath, "utf-8");
+      const data = JSON.parse(raw);
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (e) {}
+
+  try {
+    const mockPath = getInitialMockFilePath();
+    if (fs.existsSync(mockPath)) {
+      const raw = fs.readFileSync(mockPath, "utf-8");
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data;
+    }
+  } catch (e) {}
+
+  return [];
+}
+
+function safeAtomicWriteJsonFile(targetPath: string, data: any) {
+  try {
+    const dir = path.dirname(targetPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const tempPath = `${targetPath}.tmp.${Date.now()}`;
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf-8");
+    fs.renameSync(tempPath, targetPath);
+  } catch (err) {
+    console.warn("[Atomic Write Warning]:", err);
+  }
 }
 
 // In-memory cache for ultra-fast response
@@ -61,53 +101,47 @@ export async function GET(req: NextRequest) {
 
       if (!dbError && Array.isArray(dbProducts) && dbProducts.length > 0) {
         let finalProducts = [...dbProducts];
-        try {
-          const filePath = getProductsFilePath();
-          if (fs.existsSync(filePath)) {
-            const raw = fs.readFileSync(filePath, "utf-8");
-            const parsed = JSON.parse(raw);
-            const heroes = parsed.filter((p: any) => p.isHeroFeatured === true || String(p.id).startsWith("hero-slide-"));
-            const standaloneHeroSlides: any[] = [];
-            heroes.forEach((h: any) => {
-              const matched = finalProducts.find((dbp: any) => String(dbp.id) === String(h.id));
-              if (matched) {
-                matched.isHeroFeatured = true;
-                matched.heroCustomImage = h.heroCustomImage;
-              } else {
-                standaloneHeroSlides.push(h);
-              }
-            });
-            if (standaloneHeroSlides.length > 0) {
-              finalProducts = [...standaloneHeroSlides, ...finalProducts];
-            }
-          }
-        } catch (e) {}
 
-        // Ensure releaseDate, fabricImage, fabricComposition, sizeGuide, and availableForSale are cleanly populated
-        let localFabricMap: Record<string, any> = {};
-        try {
-          const filePath = getProductsFilePath();
-          if (fs.existsSync(filePath)) {
-            const raw = fs.readFileSync(filePath, "utf-8");
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-              parsed.forEach((lp: any) => {
-                if (lp.id) {
-                  localFabricMap[String(lp.id)] = {
-                    fabricImage: lp.fabricImage || lp.fabricTextureImage || "",
-                    fabricTextureImage: lp.fabricTextureImage || lp.fabricImage || "",
-                    fabricComposition: lp.fabricComposition || "",
-                    showFabricInfo: lp.showFabricInfo,
-                    showSizeGuide: lp.showSizeGuide,
-                    sizeGuideImage: lp.sizeGuideImage || lp.sizeChartImage || "",
-                    sizeChartImage: lp.sizeChartImage || lp.sizeGuideImage || "",
-                    sizeMeasurements: lp.sizeMeasurements || [],
-                  };
-                }
-              });
+        const localList = readLocalProductsBackup();
+        const localFabricMap: Record<string, any> = {};
+        const localCustomItems: any[] = [];
+
+        localList.forEach((lp: any) => {
+          if (lp?.id) {
+            localFabricMap[String(lp.id)] = {
+              fabricImage: lp.fabricImage || lp.fabricTextureImage || "",
+              fabricTextureImage: lp.fabricTextureImage || lp.fabricImage || "",
+              fabricComposition: lp.fabricComposition || "",
+              showFabricInfo: lp.showFabricInfo,
+              showSizeGuide: lp.showSizeGuide,
+              sizeGuideImage: lp.sizeGuideImage || lp.sizeChartImage || "",
+              sizeChartImage: lp.sizeChartImage || lp.sizeGuideImage || "",
+              sizeMeasurements: lp.sizeMeasurements || [],
+              productNo: lp.productNo,
+              productCode: lp.productCode,
+            };
+
+            if (String(lp.id).startsWith("custom-prod-") || String(lp.id).startsWith("prod-custom-")) {
+              localCustomItems.push(lp);
             }
           }
-        } catch (e) {}
+        });
+
+        // Merge heroes
+        const heroes = localList.filter((p: any) => p.isHeroFeatured === true || String(p.id).startsWith("hero-slide-"));
+        const standaloneHeroSlides: any[] = [];
+        heroes.forEach((h: any) => {
+          const matched = finalProducts.find((dbp: any) => String(dbp.id) === String(h.id));
+          if (matched) {
+            matched.isHeroFeatured = true;
+            matched.heroCustomImage = h.heroCustomImage;
+          } else {
+            standaloneHeroSlides.push(h);
+          }
+        });
+        if (standaloneHeroSlides.length > 0) {
+          finalProducts = [...standaloneHeroSlides, ...finalProducts];
+        }
 
         finalProducts = finalProducts.map((p: any) => {
           const meta = p.bulkDiscount || {};
@@ -119,8 +153,20 @@ export async function GET(req: NextRequest) {
               ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("release_date:"))?.replace("release_date:", "")
               : "") ||
             "";
+
+          const tagPno = Array.isArray(p.tags) ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("pno:"))?.replace("pno:", "") : null;
+          const tagPcode = Array.isArray(p.tags) ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("pcode:"))?.replace("pcode:", "") : null;
+
+          const savedNum = p.productNo !== undefined && p.productNo !== null
+            ? p.productNo
+            : (meta.productNo !== undefined ? meta.productNo : (tagPno ? parseInt(tagPno, 10) : (localFallback.productNo !== undefined ? localFallback.productNo : null)));
+
           const m = String(p.id).match(/\d+/);
-          const num = p.productNo !== undefined && !isNaN(Number(p.productNo)) ? Number(p.productNo) : (m ? parseInt(m[0], 10) : 0);
+          const num = savedNum !== null && !isNaN(Number(savedNum))
+            ? Number(savedNum)
+            : (m && parseInt(m[0], 10) < 100000 ? parseInt(m[0], 10) : 0);
+
+          const code = p.productCode || meta.productCode || tagPcode || localFallback.productCode || (num > 0 ? `CC-${String(num).padStart(3, "0")}` : undefined);
 
           const fabImg = p.fabricImage || meta.fabricImage || localFallback.fabricImage || "";
           const fabTexture = p.fabricTextureImage || meta.fabricTextureImage || fabImg;
@@ -131,7 +177,7 @@ export async function GET(req: NextRequest) {
           return {
             ...p,
             productNo: num,
-            productCode: p.productCode || (num > 0 ? `CC-${String(num).padStart(3, "0")}` : undefined),
+            productCode: code,
             releaseDate: relDate,
             availableForSale: p.availableForSale !== false,
             fabricImage: fabImg,
@@ -145,22 +191,15 @@ export async function GET(req: NextRequest) {
           };
         });
 
-        // Ensure locally added products in JSON or cache that are not yet in Supabase are not lost
-        try {
-          const filePath = getProductsFilePath();
-          if (fs.existsSync(filePath)) {
-            const raw = fs.readFileSync(filePath, "utf-8");
-            const localArr = JSON.parse(raw);
-            if (Array.isArray(localArr)) {
-              const dbIdSet = new Set(finalProducts.map((p: any) => String(p.id)));
-              const missingLocal = localArr.filter((lp: any) => lp?.id && !dbIdSet.has(String(lp.id)));
-              if (missingLocal.length > 0) {
-                console.log(`[Products Sync] Merged ${missingLocal.length} local custom products into response.`);
-                finalProducts = [...missingLocal, ...finalProducts];
-              }
-            }
+        // Ensure locally added products in backup or cache that are not yet in Supabase are not lost
+        if (localCustomItems.length > 0) {
+          const dbIdSet = new Set(finalProducts.map((p: any) => String(p.id)));
+          const missingLocal = localCustomItems.filter((lp: any) => lp?.id && !dbIdSet.has(String(lp.id)));
+          if (missingLocal.length > 0) {
+            console.log(`[Products Sync] Merged ${missingLocal.length} local custom products into response.`);
+            finalProducts = [...missingLocal, ...finalProducts];
           }
-        } catch (e) {}
+        }
 
         globalForProducts.serverProductsCache = finalProducts;
         return makeResponse(finalProducts, req);
@@ -177,12 +216,10 @@ export async function GET(req: NextRequest) {
     }
 
     // 3. Local disk fallback
-    const filePath = getProductsFilePath();
-    if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, "utf-8");
-      const data = JSON.parse(raw);
-      globalForProducts.serverProductsCache = data;
-      return makeResponse(data, req);
+    const fallbackList = readLocalProductsBackup();
+    if (fallbackList.length > 0) {
+      globalForProducts.serverProductsCache = fallbackList;
+      return makeResponse(fallbackList, req);
     }
 
     return makeResponse([], req);
@@ -199,7 +236,8 @@ export async function GET(req: NextRequest) {
 function formatProductForDb(p: any, createdAtIso?: string) {
   const relDate = p.releaseDate || "";
   const m = String(p.id).match(/\d+/);
-  const num = p.productNo !== undefined && !isNaN(Number(p.productNo)) ? Number(p.productNo) : (m ? parseInt(m[0], 10) : 0);
+  const num = p.productNo !== undefined && !isNaN(Number(p.productNo)) ? Number(p.productNo) : (m && parseInt(m[0], 10) < 100000 ? parseInt(m[0], 10) : 0);
+  const code = p.productCode || (num > 0 ? `CC-${String(num).padStart(3, "0")}` : undefined);
 
   return {
     id: String(p.id),
@@ -216,8 +254,10 @@ function formatProductForDb(p: any, createdAtIso?: string) {
     variants: p.variants || [],
     options: p.options || [],
     tags: [
-      ...(Array.isArray(p.tags) ? p.tags.filter((t: any) => typeof t === "string" && !t.startsWith("release_date:")) : []),
+      ...(Array.isArray(p.tags) ? p.tags.filter((t: any) => typeof t === "string" && !t.startsWith("release_date:") && !t.startsWith("pno:") && !t.startsWith("pcode:")) : []),
       ...(relDate ? [`release_date:${relDate}`] : []),
+      ...(num > 0 ? [`pno:${num}`] : []),
+      ...(code ? [`pcode:${code}`] : []),
     ],
     sizes: p.sizes || [],
     colors: p.colors || [],
@@ -230,6 +270,8 @@ function formatProductForDb(p: any, createdAtIso?: string) {
     isTimeSale: Boolean(p.isTimeSale),
     bulkDiscount: {
       ...(p.bulkDiscount || { enabled: false, rules: [] }),
+      productNo: num,
+      productCode: code,
       releaseDate: relDate,
       fabricImage: p.fabricImage || p.fabricTextureImage || "",
       fabricTextureImage: p.fabricTextureImage || p.fabricImage || "",
@@ -257,6 +299,7 @@ export async function POST(req: NextRequest) {
     if (singleProduct) {
       const p = singleProduct;
       const pId = String(p.id);
+      const isNewItem = body?.isNew || !p.created_at;
 
       // Unique handle guarantee
       let safeHandle = (p.handle && String(p.handle).trim()) || pId;
@@ -265,22 +308,20 @@ export async function POST(req: NextRequest) {
       }
       p.handle = safeHandle;
 
-      const formattedSingle = formatProductForDb(p);
+      // Top-order guarantee: If new item, assign top timestamp (now + 10s)
+      const targetCreatedAt = isNewItem ? new Date(Date.now() + 10000).toISOString() : (p.created_at || p.createdAt || new Date().toISOString());
+      const formattedSingle = formatProductForDb(p, targetCreatedAt);
 
       // 1. Local disk fallback & Memory cache FIRST (Never lost on refresh)
       try {
-        const filePath = getProductsFilePath();
-        let existingList: any[] = [];
-        if (fs.existsSync(filePath)) {
-          existingList = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-        }
+        let existingList = readLocalProductsBackup();
         const existingIdx = existingList.findIndex((item: any) => String(item.id) === pId);
         if (existingIdx !== -1) {
-          existingList[existingIdx] = { ...existingList[existingIdx], ...p };
+          existingList[existingIdx] = { ...existingList[existingIdx], ...p, productNo: formattedSingle.bulkDiscount.productNo, productCode: formattedSingle.bulkDiscount.productCode };
         } else {
-          existingList.unshift(p);
+          existingList.unshift({ ...p, productNo: formattedSingle.bulkDiscount.productNo, productCode: formattedSingle.bulkDiscount.productCode });
         }
-        fs.writeFileSync(filePath, JSON.stringify(existingList, null, 2), "utf-8");
+        safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), existingList);
         globalForProducts.serverProductsCache = existingList;
       } catch (fsErr) {
         console.warn("Local disk update warning:", fsErr);
@@ -322,15 +363,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Immediately update Local disk and In-memory cache FIRST
-    // This guarantees that immediate browser refresh gets the exact state without waiting for slow DB roundtrips!
+    // 1. Immediately update Local runtime file and In-memory cache FIRST (Atomic write)
     globalForProducts.serverProductsCache = products;
-    try {
-      const filePath = getProductsFilePath();
-      fs.writeFileSync(filePath, JSON.stringify(products, null, 2), "utf-8");
-    } catch (fsErr) {
-      // Ignored on read-only environments
-    }
+    safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), products);
 
     // 2. Sync to Supabase (Delete omitted products & Upsert active products with unique handle guarantee)
     if (isSupabaseConfigured) {
@@ -380,7 +415,6 @@ export async function POST(req: NextRequest) {
 
           if (dbError) {
             console.warn(`[Batch Upsert Warning] Chunk (${i}~${i + chunk.length}) failed: ${dbError.message}. Retrying row-by-row...`);
-            // Resilient fallback: upsert item-by-item so newly added items succeed even if older rows have issues
             for (const item of chunk) {
               const { error: singleErr } = await supabaseServer
                 .from("products")
@@ -454,16 +488,12 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // 3. Update local JSON file fallback
+    // 3. Update local runtime file fallback (Atomic)
     try {
-      const filePath = getProductsFilePath();
-      if (fs.existsSync(filePath)) {
-        const raw = fs.readFileSync(filePath, "utf-8");
-        const data: any[] = JSON.parse(raw);
-        const deleteSet = new Set(idsToDelete);
-        const updated = data.filter((p: any) => !deleteSet.has(String(p.id)));
-        fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), "utf-8");
-      }
+      const existingList = readLocalProductsBackup();
+      const deleteSet = new Set(idsToDelete);
+      const updated = existingList.filter((p: any) => !deleteSet.has(String(p.id)));
+      safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), updated);
     } catch (fsErr) {}
 
     return NextResponse.json({ success: true, deletedCount: idsToDelete.length });

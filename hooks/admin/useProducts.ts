@@ -321,19 +321,7 @@ export function useProducts({
     }, 0);
   }, []);
 
-  const isInitialLoadFinishedRef = useRef(false);
 
-  // Sync productsList with storage safely only after initial load and when actually updated by admin
-  useEffect(() => {
-    if (!isProductsLoadedRef.current) return;
-    if (!isInitialLoadFinishedRef.current) {
-      isInitialLoadFinishedRef.current = true;
-      return; // Skip immediate redundant re-save on mount
-    }
-    if (productsList.length > 0) {
-      saveProductsToStorage(productsList);
-    }
-  }, [productsList, saveProductsToStorage]);
 
   const getProductNoNum = useCallback((product: any): number => {
     if (product?.productNo !== undefined && !isNaN(Number(product.productNo))) {
