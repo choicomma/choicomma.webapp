@@ -381,11 +381,18 @@ export function useProducts({
       return true;
     });
 
-    if (productSortOrder === "custom") {
-      return filtered;
-    }
-
     return [...filtered].sort((a, b) => {
+      if (productSortOrder === "custom") {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (timeB !== timeA) return timeB - timeA;
+
+        const numA = getProductNoNum(a);
+        const numB = getProductNoNum(b);
+        if (numB !== numA) return numB - numA;
+
+        return 0;
+      }
       if (productSortOrder === "productNoDesc") {
         return getProductNoNum(b) - getProductNoNum(a);
       }
@@ -758,10 +765,20 @@ export function useProducts({
     newOrder: "productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom"
   ) => {
     setProductSortOrder(newOrder);
-    if (newOrder === "custom") return;
 
     setProductsList((prev) => {
       const sorted = [...prev].sort((a, b) => {
+        if (newOrder === "custom") {
+          const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          if (timeB !== timeA) return timeB - timeA;
+
+          const numA = getProductNoNum(a);
+          const numB = getProductNoNum(b);
+          if (numB !== numA) return numB - numA;
+
+          return 0;
+        }
         if (newOrder === "productNoDesc") {
           return getProductNoNum(b) - getProductNoNum(a);
         }
@@ -784,9 +801,22 @@ export function useProducts({
         return 0;
       });
       saveProductsToStorage(sorted);
+      triggerToast(
+        newOrder === "custom"
+          ? "✅ 상품 목록이 '최신 등록순'으로 정렬되었습니다."
+          : newOrder === "productNoDesc"
+          ? "✅ 상품 목록이 '등록번호 역순'으로 정렬되었습니다."
+          : newOrder === "productNoAsc"
+          ? "✅ 상품 목록이 '등록번호 순'으로 정렬되었습니다."
+          : newOrder === "nameAsc"
+          ? "✅ 상품 목록이 '상품명 순'으로 정렬되었습니다."
+          : newOrder === "priceDesc"
+          ? "✅ 상품 목록이 '높은 가격순'으로 정렬되었습니다."
+          : "✅ 상품 목록이 '낮은 가격순'으로 정렬되었습니다."
+      );
       return sorted;
     });
-  }, [getProductNoNum, saveProductsToStorage, setProductSortOrder]);
+  }, [getProductNoNum, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleQuickUpdateReleaseSchedule = useCallback(
     (id: string, availableForSale: boolean, releaseDate?: string) => {

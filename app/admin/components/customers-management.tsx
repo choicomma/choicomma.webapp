@@ -28,8 +28,8 @@ interface CustomersManagementProps {
   setNewCustPhone?: (val: string) => void;
   newCustGrade?: string;
   setNewCustGrade?: (val: string) => void;
-  newCustPoints?: number;
-  setNewCustPoints?: (val: number) => void;
+  newCustPoints?: string | number;
+  setNewCustPoints?: (val: any) => void;
   newCustAddress?: string;
   setNewCustAddress?: (val: string) => void;
   handleAddCustomerSubmit?: (e: React.FormEvent) => void;
@@ -68,7 +68,7 @@ export function CustomersManagement({
   setNewCustPhone = () => {},
   newCustGrade = "BASIC",
   setNewCustGrade = () => {},
-  newCustPoints = 0,
+  newCustPoints = "0",
   setNewCustPoints = () => {},
   newCustAddress = "",
   setNewCustAddress = () => {},
@@ -537,7 +537,7 @@ export function CustomersManagement({
                   <input
                     type="number"
                     value={newCustPoints}
-                    onChange={(e) => setNewCustPoints(parseInt(e.target.value, 10) || 0)}
+                    onChange={(e) => setNewCustPoints(e.target.value)}
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
                     placeholder="0"
                   />

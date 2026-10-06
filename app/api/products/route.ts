@@ -200,6 +200,20 @@ export async function GET(req: NextRequest) {
             finalProducts = [...missingLocal, ...finalProducts];
           }
         }
+        // 4. Authoritative Sequence Ordering:
+        // Respect the canonical sequence defined in localList (data/products-cache.json)
+        if (localList.length > 0) {
+          const orderMap = new Map<string, number>();
+          localList.forEach((item: any, idx: number) => {
+            orderMap.set(String(item.id), idx);
+          });
+
+          finalProducts.sort((a: any, b: any) => {
+            const idxA = orderMap.has(String(a.id)) ? orderMap.get(String(a.id))! : 99999;
+            const idxB = orderMap.has(String(b.id)) ? orderMap.get(String(b.id))! : 99999;
+            return idxA - idxB;
+          });
+        }
 
         globalForProducts.serverProductsCache = finalProducts;
         return makeResponse(finalProducts, req);
