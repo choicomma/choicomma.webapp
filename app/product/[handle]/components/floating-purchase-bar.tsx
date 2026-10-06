@@ -95,7 +95,28 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
   const [syncedPrices, setSyncedPrices] = useState<{
     originalPrice?: number;
     discountedPrice?: number;
+    unitSalePrice?: number;
+    couponDiscountAmount?: number;
+    pointsDiscountAmount?: number;
   } | null>(null);
+
+  const [quantity, setQuantity] = useState<number>(1);
+
+  useEffect(() => {
+    const handleQty = (e: any) => {
+      if (typeof e.detail?.quantity === "number") {
+        setQuantity(e.detail.quantity);
+      }
+    };
+    window.addEventListener("product_quantity_changed", handleQty);
+    return () => window.removeEventListener("product_quantity_changed", handleQty);
+  }, []);
+
+  const handleQuantityChange = (newQty: number) => {
+    const validQty = Math.max(1, newQty);
+    setQuantity(validQty);
+    window.dispatchEvent(new CustomEvent("product_quantity_changed", { detail: { quantity: validQty } }));
+  };
 
   useEffect(() => {
     const handlePriceSync = (e: any) => {
@@ -103,6 +124,9 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
         setSyncedPrices({
           originalPrice: Number(e.detail.originalPrice),
           discountedPrice: Number(e.detail.discountedPrice),
+          unitSalePrice: e.detail.unitSalePrice !== undefined ? Number(e.detail.unitSalePrice) : undefined,
+          couponDiscountAmount: e.detail.couponDiscountAmount !== undefined ? Number(e.detail.couponDiscountAmount) : 0,
+          pointsDiscountAmount: e.detail.pointsDiscountAmount !== undefined ? Number(e.detail.pointsDiscountAmount) : 0,
         });
       }
     };
@@ -273,6 +297,24 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
     localFallbackPrices?.originalPrice ??
     origPrice;
 
+  // 단가 (기본 세일/타임세일/시크릿타임세일 적용된 개당 가격)
+  const effectiveUnitPrice =
+    syncedPrices?.unitSalePrice ??
+    localFallbackPrices?.discountedPrice ??
+    discountedPriceNum;
+
+  const couponDiscountAmount = syncedPrices?.couponDiscountAmount ?? 0;
+  const pointsDiscountAmount = syncedPrices?.pointsDiscountAmount ?? 0;
+
+  // 1) 세일, 타임세일, 시크릿 타임세일은 제품마다(수량만큼) 적용
+  const totalSaleBasePrice = effectiveUnitPrice * quantity;
+  // 2) 쿠폰과 적립금은 1주문당 1번만 사용 가능하므로 제품 1개에만 1회 적용
+  const totalFinalBenefitPrice = Math.max(
+    0,
+    totalSaleBasePrice - couponDiscountAmount - pointsDiscountAmount
+  );
+  const totalOriginalPrice = originalPriceNum * quantity;
+
   // Stock check
   const selectedSister =
     sisterProducts.find(
@@ -316,16 +358,19 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
     window.dispatchEvent(new CustomEvent("product_size_selected", { detail: { size } }));
   };
 
+  const opt1Label = (product as any).optionNames?.color || (product as any).options?.[0]?.name || "색상";
+  const opt2Label = (product as any).optionNames?.size || (product as any).options?.[1]?.name || "사이즈";
+
   // 장바구니 추가
   const handleAddToCart = () => {
     if (parsedColors.length > 0 && !selectedColor) {
       setIsColorOpen(true);
-      toast.error("색상을 선택해 주세요.");
+      toast.error(`${opt1Label}을(를) 선택해 주세요.`);
       return;
     }
     if (extractedSizes.length > 0 && !selectedSize) {
       setIsSizeOpen(true);
-      toast.error("사이즈를 선택해 주세요.");
+      toast.error(`${opt2Label}을(를) 선택해 주세요.`);
       return;
     }
     if (isOutOfStock) {
@@ -344,12 +389,12 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
         ...(selectedSize ? [{ name: "Size", value: selectedSize }] : []),
       ],
       price: {
-        amount: discountedPriceNum.toString(),
+        amount: effectiveUnitPrice.toString(),
         currencyCode: product.currencyCode || "KRW",
       },
     };
 
-    addCartItem(variant, product, 1);
+    addCartItem(variant, product, quantity);
 
     setTimeout(() => {
       setIsAddingToCart(false);
@@ -378,10 +423,10 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
     const variantTitle = `${cleanProductTitle(product.title)} ${selectedColor ? `- ${selectedColor}` : ""} ${selectedSize ? `/ ${selectedSize}` : ""}`.trim();
     const directItem = {
       id: `direct-${product.id}-${selectedColor}-${selectedSize}-${Date.now()}`,
-      quantity: 1,
+      quantity: quantity,
       cost: {
         totalAmount: {
-          amount: discountedPriceNum.toString(),
+          amount: totalFinalBenefitPrice.toString(),
           currencyCode: product.currencyCode || "KRW",
         },
       },
@@ -438,12 +483,17 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
             <div className="flex items-baseline gap-1.5 sm:gap-2 mt-0.5">
               {/* 할인가 (기본 검정/화이트 색상) */}
               <span className="text-xs sm:text-sm font-black text-neutral-950 dark:text-white font-mono">
-                {formatPrice(discountedPriceNum.toString(), product.currencyCode || "KRW")}
+                {formatPrice(totalFinalBenefitPrice.toString(), product.currencyCode || "KRW")}
+                {quantity > 1 && (
+                  <span className="text-[11px] text-neutral-400 font-normal ml-1">
+                    ({quantity}개{couponDiscountAmount > 0 || pointsDiscountAmount > 0 ? "·쿠폰1회" : ""})
+                  </span>
+                )}
               </span>
               {/* 정상가 (우측 빗금친 가격) */}
-              {originalPriceNum > discountedPriceNum && (
+              {totalOriginalPrice > totalFinalBenefitPrice && (
                 <span className="text-[11px] sm:text-xs text-neutral-400 dark:text-neutral-500 line-through font-normal">
-                  {formatPrice(originalPriceNum.toString(), product.currencyCode || "KRW")}
+                  {formatPrice(totalOriginalPrice.toString(), product.currencyCode || "KRW")}
                 </span>
               )}
             </div>
@@ -469,7 +519,7 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
                 )}
                 title="색상 선택"
               >
-                <span className="font-extrabold text-xs">색상</span>
+                <span className="font-extrabold text-xs">{opt1Label}</span>
                 <ChevronUp
                   className={cn(
                     "w-3.5 h-3.5 text-neutral-500 transition-transform duration-200 shrink-0",
@@ -482,8 +532,8 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
               {isColorOpen && (
                 <div className="absolute bottom-full mb-2 left-0 sm:left-auto sm:right-0 bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 rounded-2xl shadow-2xl p-2.5 min-w-[210px] max-h-[320px] overflow-y-auto no-scrollbar z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
                   <div className="text-[10px] font-black uppercase tracking-wider text-neutral-400 px-2 py-1 mb-1 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
-                    <span>전 색상 (COLOR)</span>
-                    <span className="text-[9px] font-medium text-neutral-400 font-mono">{parsedColors.length} COLORS</span>
+                    <span>전 {opt1Label}</span>
+                    <span className="text-[9px] font-medium text-neutral-400 font-mono">{parsedColors.length} {opt1Label.toUpperCase()}</span>
                   </div>
                   <div className="space-y-1">
                     {parsedColors.map((color) => {
@@ -535,9 +585,9 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
                     ? "border-neutral-950 bg-neutral-100 text-neutral-950 ring-1 ring-neutral-950"
                     : "border-neutral-300 hover:border-neutral-900 bg-white text-neutral-800"
                 )}
-                title="사이즈 선택"
+                title={`${opt2Label} 선택`}
               >
-                <span className="font-extrabold text-xs">사이즈</span>
+                <span className="font-extrabold text-xs">{opt2Label}</span>
                 <ChevronUp
                   className={cn(
                     "w-3.5 h-3.5 text-neutral-500 transition-transform duration-200 shrink-0",
@@ -550,8 +600,8 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
               {isSizeOpen && (
                 <div className="absolute bottom-full mb-2 right-0 sm:right-0 sm:left-auto bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 rounded-2xl shadow-2xl p-2.5 min-w-[180px] max-h-[320px] overflow-y-auto no-scrollbar z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
                   <div className="text-[10px] font-black uppercase tracking-wider text-neutral-400 px-2 py-1 mb-1 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
-                    <span>전 사이즈 (SIZE)</span>
-                    <span className="text-[9px] font-medium text-neutral-400 font-mono">{extractedSizes.length} SIZES</span>
+                    <span>전 {opt2Label}</span>
+                    <span className="text-[9px] font-medium text-neutral-400 font-mono">{extractedSizes.length} {opt2Label.toUpperCase()}</span>
                   </div>
                   <div className="space-y-1">
                     {extractedSizes.map((size) => {
@@ -589,7 +639,30 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
             </div>
           )}
 
-          {/* 3. 장바구니 버튼 (아이콘 표시) */}
+          {/* 3. 수량 조절 버튼 */}
+          <div className="flex items-center border border-neutral-300 dark:border-neutral-700 rounded-xl h-10 sm:h-11 px-1.5 sm:px-2 bg-white dark:bg-neutral-900 shadow-2xs shrink-0">
+            <button
+              type="button"
+              onClick={() => handleQuantityChange(quantity - 1)}
+              className="w-5 sm:w-6 h-full flex items-center justify-center text-sm font-bold text-neutral-600 hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer select-none"
+              aria-label="수량 감소"
+            >
+              -
+            </button>
+            <span className="min-w-[18px] sm:min-w-[22px] text-center text-xs font-bold font-mono select-none text-neutral-900 dark:text-white">
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleQuantityChange(quantity + 1)}
+              className="w-5 sm:w-6 h-full flex items-center justify-center text-sm font-bold text-neutral-600 hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer select-none"
+              aria-label="수량 증가"
+            >
+              +
+            </button>
+          </div>
+
+          {/* 4. 장바구니 버튼 (아이콘 표시) */}
           <button
             type="button"
             onClick={handleAddToCart}

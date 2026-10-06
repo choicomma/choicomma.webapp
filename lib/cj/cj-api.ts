@@ -60,24 +60,46 @@ export async function getCjToken(): Promise<string> {
     },
   };
 
-  const res = await fetch(`${getCjApiBaseUrl()}/ReqOneDayToken`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
 
-  const data = await res.json();
-  const token = data?.DATA?.TOKEN_NUM || data?.TOKEN_NUM;
+    const bodyStr = JSON.stringify(payload);
+    const res = await fetch(`${getCjApiBaseUrl()}/ReqOneDayToken`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(bodyStr).toString(),
+        Accept: "application/json",
+      },
+      body: bodyStr,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
 
-  if (token && (data?.RESULT_CD === "S" || data?.RSLT_CD === "00" || Boolean(token))) {
-    setCachedCjToken(token, 24 * 60 * 60 * 1000);
-    return token;
+    const rawText = await res.text();
+    let data: any;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      throw new Error(`CJ 게이트웨이 응답 파싱 실패 (HTTP ${res.status}): CJ 서버에서 비정상적인 응답을 반환했습니다. (${rawText.slice(0, 80)})`);
+    }
+
+    const token = data?.DATA?.TOKEN_NUM || data?.TOKEN_NUM;
+
+    if (token && (data?.RESULT_CD === "S" || data?.RSLT_CD === "00" || Boolean(token))) {
+      setCachedCjToken(token, 24 * 60 * 60 * 1000);
+      return token;
+    }
+
+    const detailMsg = data?.RESULT_DETAIL || data?.RSLT_MSG || JSON.stringify(data);
+    throw new Error(`CJ 인증 토큰 발급 거부: ${detailMsg}`);
+  } catch (err: any) {
+    if (err.name === "AbortError") {
+      throw new Error(`CJ대한통운 게이트웨이 접속 타임아웃 (${getCjApiBaseUrl()}). CJ 방화벽에 서버 IP가 등록되어 있는지 대리점에 확인하세요.`);
+    }
+    throw err;
   }
-
-  throw new Error(`CJ 토큰 발급 실패: ${data?.RESULT_DETAIL || data?.RSLT_MSG || JSON.stringify(data)}`);
 }
 
 /**
@@ -97,14 +119,16 @@ export async function refineCjAddress(token: string, address: string): Promise<C
   };
 
   try {
+    const bodyStr = JSON.stringify(payload);
     const res = await fetch(`${getCjApiBaseUrl()}/ReqAddrRfnSm`, {
       method: "POST",
       headers: {
         "CJ-Gateway-APIKey": token,
         "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(bodyStr).toString(),
         Accept: "application/json",
       },
-      body: JSON.stringify(payload),
+      body: bodyStr,
     });
 
     const data = await res.json();
@@ -149,14 +173,16 @@ export async function requestCjInvoiceNumber(token: string): Promise<string> {
     },
   };
 
+  const bodyStr = JSON.stringify(payload);
   const res = await fetch(`${getCjApiBaseUrl()}/ReqInvcNo`, {
     method: "POST",
     headers: {
       "CJ-Gateway-APIKey": token,
       "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(bodyStr).toString(),
       Accept: "application/json",
     },
-    body: JSON.stringify(payload),
+    body: bodyStr,
   });
 
   const data = await res.json();
@@ -285,14 +311,16 @@ export async function registerCjBooking(
     },
   };
 
+  const bodyStr = JSON.stringify(requestPayload);
   const res = await fetch(`${getCjApiBaseUrl()}/RegBook`, {
     method: "POST",
     headers: {
       "CJ-Gateway-APIKey": token,
       "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(bodyStr).toString(),
       Accept: "application/json",
     },
-    body: JSON.stringify(requestPayload),
+    body: bodyStr,
   });
 
   const responseRaw = await res.json();
@@ -391,14 +419,16 @@ export async function trackCjShipment(trackingNumber: string): Promise<CjTrackin
     },
   };
 
+  const bodyStr = JSON.stringify(payload);
   const res = await fetch(`${getCjApiBaseUrl()}/ReqOneGdsTrc`, {
     method: "POST",
     headers: {
       "CJ-Gateway-APIKey": token,
       "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(bodyStr).toString(),
       Accept: "application/json",
     },
-    body: JSON.stringify(payload),
+    body: bodyStr,
   });
 
   const responseRaw = await res.json();
@@ -490,6 +520,9 @@ export async function registerCjReturnBooking(
   }
 
   const cleanOriginalInvc = (returnData.originalInvoiceNo || "").replace(/[^0-9]/g, "");
+  if (!cleanOriginalInvc) {
+    throw new Error("교환(회수) 접수를 위해서는 원 출고 주문의 10~12자리 운송장 번호가 필수입니다. 송장번호를 먼저 확인해 주세요.");
+  }
 
   const requestPayload = {
     DATA: {
@@ -552,14 +585,16 @@ export async function registerCjReturnBooking(
     },
   };
 
+  const bodyStr = JSON.stringify(requestPayload);
   const res = await fetch(`${getCjApiBaseUrl()}/RegBook`, {
     method: "POST",
     headers: {
       "CJ-Gateway-APIKey": token,
       "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(bodyStr).toString(),
       Accept: "application/json",
     },
-    body: JSON.stringify(requestPayload),
+    body: bodyStr,
   });
 
   const responseRaw = await res.json();

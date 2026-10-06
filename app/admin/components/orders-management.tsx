@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Truck,
+  RefreshCw,
   ShoppingBag,
   Plus,
   Package,
@@ -1051,10 +1052,16 @@ export function OrdersManagement({
 
         alert(`📦 [박스 ${pkgIndex}] 송장번호 (${printItem.trackingNumber})가 성공적으로 발급되었습니다!`);
       } else {
-        alert("송장 발급에 실패했습니다: " + (data?.error || "알 수 없는 오류"));
+        alert(
+          `🚨 [CJ대한통운 박스 ${pkgIndex} 송장 발급 실패]\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `[실패 사유]\n${data?.error || "알 수 없는 오류"}\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `[대처 방법]\nCJ API 키 등록 및 통신 상태를 확인해 주세요.`
+        );
       }
     } catch (err: any) {
-      alert("송장 발급 오류: " + err.message);
+      alert(`🚨 [CJ대한통운 송장 발급 오류]\n\n[실패 사유]\n${err.message}`);
     }
   };
 
@@ -1658,6 +1665,36 @@ export function OrdersManagement({
                             </div>
                           ) : null}
 
+                        {/* 반품수거 건 뱃지 */}
+                        {Boolean(
+                          ship.orderId?.startsWith("REF-") ||
+                          ship.orderId?.includes("반품") ||
+                          ship.shippingMemo?.includes("[반품사유]")
+                        ) && (
+                          <div className="mb-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 shadow-2xs">
+                              <RotateCcw className="w-2.5 h-2.5 text-rose-600" />
+                              <span>반품수거 건</span>
+                            </span>
+                          </div>
+                        )}
+
+                        {/* 교환주문 건 뱃지 (요구사항 3) */}
+                        {Boolean(
+                          ship.isExchangeOrder ||
+                          ship.isExchange ||
+                          ship.orderId?.startsWith("EXC-") ||
+                          ship.orderId?.includes("교환") ||
+                          ship.shippingMemo?.includes("[교환사유]")
+                        ) && (
+                          <div className="mb-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-300 shadow-2xs">
+                              <RefreshCw className="w-2.5 h-2.5 text-purple-600" />
+                              <span>교환주문 건</span>
+                            </span>
+                          </div>
+                        )}
+
                         <p className="font-extrabold text-neutral-950 text-xs font-mono break-all" title={ship.orderId}>
                           {ship.orderId}
                         </p>
@@ -1699,19 +1736,48 @@ export function OrdersManagement({
                             </span>
                           )}
                         </div>
-                        {(ship.shippingMemo || (ship as any).deliveryMemo) && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 max-w-[260px] bg-blue-50/70 border border-blue-200/80 rounded-xl px-2.5 py-1.5 shadow-2xs">
-                            <span className="inline-flex items-center justify-center text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-600 text-white border border-blue-600 whitespace-nowrap shrink-0 leading-tight">
-                              배송요청
-                            </span>
-                            <span 
-                              className="text-xs text-blue-950 font-bold leading-normal truncate max-w-[190px]"
-                              title={ship.shippingMemo || (ship as any).deliveryMemo}
-                            >
-                              {ship.shippingMemo || (ship as any).deliveryMemo}
-                            </span>
-                          </div>
-                        )}
+                        {(ship.shippingMemo || (ship as any).deliveryMemo) && (() => {
+                          const isRef = Boolean(
+                            ship.orderId?.startsWith("REF-") ||
+                            ship.orderId?.includes("반품") ||
+                            ship.shippingMemo?.includes("[반품사유]")
+                          );
+                          const isExc = !isRef && Boolean(
+                            ship.isExchangeOrder ||
+                            ship.isExchange ||
+                            ship.orderId?.startsWith("EXC-") ||
+                            ship.orderId?.includes("교환") ||
+                            ship.shippingMemo?.includes("[교환사유]")
+                          );
+                          const memoText = ship.shippingMemo || (ship as any).deliveryMemo;
+                          return (
+                            <div className={`mt-2 inline-flex items-center gap-1.5 max-w-[260px] rounded-xl px-2.5 py-1.5 shadow-2xs border ${
+                              isRef
+                                ? "bg-rose-50/90 border-rose-200"
+                                : isExc
+                                  ? "bg-purple-50/90 border-purple-200"
+                                  : "bg-blue-50/70 border-blue-200/80"
+                            }`}>
+                              <span className={`inline-flex items-center justify-center text-[10px] font-black px-1.5 py-0.5 rounded whitespace-nowrap shrink-0 leading-tight ${
+                                isRef
+                                  ? "bg-rose-600 text-white border border-rose-600"
+                                  : isExc
+                                    ? "bg-purple-600 text-white border border-purple-600"
+                                    : "bg-blue-600 text-white border border-blue-600"
+                              }`}>
+                                {isRef ? "반품사유" : isExc ? "교환사유" : "배송요청"}
+                              </span>
+                              <span 
+                                className={`text-xs leading-normal truncate max-w-[190px] ${
+                                  isRef ? "text-rose-950 font-black" : isExc ? "text-purple-950 font-black" : "text-blue-950 font-bold"
+                                }`}
+                                title={memoText}
+                              >
+                                {memoText}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td className="py-3 px-3 align-middle w-[210px] relative">
@@ -1977,35 +2043,53 @@ export function OrdersManagement({
                           type="button"
                           onClick={() => handleOpenEditShipment(ship)}
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-2xs hover:shadow-xs group shrink-0 ${
-                            ship.status === "Delivered"
-                              ? "bg-neutral-100 text-neutral-700 border border-neutral-300 hover:bg-neutral-200"
-                              : ship.status === "In Transit"
-                                ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300"
-                                : ship.status === "Partially Shipped"
-                                  ? "bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100"
-                                  : "bg-neutral-50 text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
+                            ship.status === "환불완료" || ship.status === "환불완료 (토스)"
+                              ? "bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-100"
+                              : ship.status === "반품수거접수완료"
+                                ? "bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100"
+                                : ship.status === "교환수거접수완료"
+                                  ? "bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100"
+                                  : ship.status === "Delivered"
+                                    ? "bg-neutral-100 text-neutral-700 border border-neutral-300 hover:bg-neutral-200"
+                                    : ship.status === "In Transit"
+                                      ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300"
+                                      : ship.status === "Partially Shipped"
+                                        ? "bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100"
+                                        : "bg-neutral-50 text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
                             }`}
                           title="클릭하여 운송장 번호 직접 입력 및 배송 상태 변경"
                         >
                           <span
                             className={`w-2 h-2 rounded-full transition-transform group-hover:scale-125 ${
-                              ship.status === "Delivered"
-                                ? "bg-neutral-500"
-                                : ship.status === "In Transit"
-                                  ? "bg-blue-500"
-                                  : ship.status === "Partially Shipped"
-                                    ? "bg-blue-600"
-                                    : "bg-neutral-400"
+                              ship.status === "환불완료" || ship.status === "환불완료 (토스)"
+                                ? "bg-rose-500"
+                                : ship.status === "반품수거접수완료"
+                                  ? "bg-rose-600"
+                                  : ship.status === "교환수거접수완료"
+                                    ? "bg-purple-600"
+                                    : ship.status === "Delivered"
+                                      ? "bg-neutral-500"
+                                      : ship.status === "In Transit"
+                                        ? "bg-blue-500"
+                                        : ship.status === "Partially Shipped"
+                                          ? "bg-blue-600"
+                                          : "bg-neutral-400"
                             }`}
                           />
                           <span>
-                            {ship.status === "Delivered"
-                              ? "배송 완료"
-                              : ship.status === "In Transit"
-                                ? "배송 중"
-                                : ship.status === "Partially Shipped"
-                                  ? "부분배송중"
-                                  : "배송 준비 중"}
+                            {ship.status === "환불완료" || ship.status === "환불완료 (토스)"
+                              ? "환불완료 (토스)"
+                              : ship.status === "반품수거접수완료"
+                                ? "반품수거 접수"
+                                : ship.status === "교환수거접수완료"
+                                  ? "교환수거 접수"
+                                  : ship.status === "Delivered"
+                                    ? "배송 완료"
+                                    : ship.status === "In Transit"
+                                      ? "배송 중"
+                                      : ship.status === "Partially Shipped"
+                                        ? "부분배송중"
+                                        : "배송 준비 중"}
                           </span>
                           <Pencil className="w-2.5 h-2.5 opacity-40 group-hover:opacity-100 transition-opacity ml-0.5 text-current" />
                         </button>

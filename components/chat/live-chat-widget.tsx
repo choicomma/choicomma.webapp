@@ -21,6 +21,12 @@ import {
   ChevronUp,
   ChevronDown,
   ZoomIn,
+  Package,
+  RefreshCw,
+  Truck,
+  RotateCcw,
+  CreditCard,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
@@ -28,6 +34,10 @@ import { DEFAULT_AUTO_RULES, type AutoReplyRule } from "@/app/admin/components/i
 import { supabase } from "@/lib/supabase/client";
 import { splitKoreanAddress } from "@/lib/address";
 import { initCustomerSession } from "@/lib/auth/customer-session";
+import { getProductThumbnail } from "@/lib/products/thumbnail-helper";
+import { ExchangeFormBubble } from "./exchange-form-bubble";
+import { ExchangePayRequestBubble } from "./exchange-pay-request-bubble";
+import { RefundFormBubble } from "./refund-form-bubble";
 
 export interface ChatMessage {
   id: string;
@@ -224,6 +234,229 @@ const CHAT_I18N: Record<string, Record<string, string>> = {
   },
 };
 
+function getCustomerOrdersFromLocal(): any[] {
+  if (typeof window === "undefined") return [];
+  const currentEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+  const currentPhone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
+  const currentName = (localStorage.getItem("membership_user_name") || "").toLowerCase().trim();
+
+  const normalize = (v: any) => String(v || "").toLowerCase().trim();
+
+  let list: any[] = [];
+  const savedShipments = localStorage.getItem("admin_shipments");
+  if (savedShipments) {
+    try {
+      const parsed = JSON.parse(savedShipments);
+      if (Array.isArray(parsed)) list = [...list, ...parsed];
+    } catch (e) {}
+  }
+  const savedOrders = localStorage.getItem("admin_orders");
+  if (savedOrders) {
+    try {
+      const parsed = JSON.parse(savedOrders);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((o: any) => {
+          if (!list.some((s) => s.id === o.id || s.orderId === o.orderNumber)) {
+            list.push({
+              id: o.id || o.orderNumber,
+              orderId: o.orderNumber || o.id,
+              recipient: o.customerName,
+              recipientEmail: o.customerEmail,
+              phone: o.customerPhone,
+              items: Array.isArray(o.items) ? o.items.map((it: any) => `${it.name} (${it.quantity}개)`).join(", ") : (o.items || "주문 상품"),
+              totalAmount: o.totalAmount,
+              status: o.paymentStatus === "PAID" ? (o.shippingStatus || "결제완료") : (o.status || "주문완료"),
+              orderDate: o.created_at || o.orderDate,
+            });
+          }
+        });
+      }
+    } catch (e) {}
+  }
+
+  const filtered = list.filter((s: any) => {
+    if (localStorage.getItem("user_role") === "admin") return true;
+
+    const sEmail = (s.recipientEmail || s.customerEmail || s.email || "").toLowerCase().trim();
+    const sPhone = (s.phone || s.customerPhone || "").replace(/[^0-9]/g, "");
+    const sAltPhone = (s.altPhone || "").replace(/[^0-9]/g, "");
+    const sRecipient = normalize(s.recipient || s.customerName);
+    const sOrderer = normalize(s.ordererName);
+
+    if (currentEmail && sEmail && currentEmail === sEmail) return true;
+    if (currentPhone && currentPhone.length >= 8) {
+      const phoneTail = currentPhone.slice(-8);
+      if (sPhone.endsWith(phoneTail) || sAltPhone.endsWith(phoneTail)) return true;
+    }
+    if (currentName && (sRecipient.includes(currentName) || sOrderer.includes(currentName))) return true;
+    return false;
+  });
+
+  return filtered.map((s: any) => ({
+    id: s.id,
+    orderNumber: s.orderId || s.orderNumber || s.id,
+    items: typeof s.items === "string" ? s.items : (Array.isArray(s.items) ? s.items.map((i: any) => i.name).join(", ") : "주문 상품"),
+    amount: s.totalAmount ? `${Number(s.totalAmount).toLocaleString()}원` : (s.price ? `${Number(s.price).toLocaleString()}원` : ""),
+    status: s.status || "결제완료",
+    orderDate: s.orderDate || s.created_at || "",
+    trackingNumber: s.trackingNumber || "-",
+    image: s.image || s.productImage || s.packages?.[0]?.image || "",
+  }));
+}
+
+function OrderSelectorBubble({
+  onSelectOrder,
+}: {
+  onSelectOrder: (order: any) => void;
+}) {
+  const [orders, setOrders] = useState<any[]>(() => getCustomerOrdersFromLocal());
+  const [selectedOrderNum, setSelectedOrderNum] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (orders.length === 0) {
+      fetch("/api/admin/shipments")
+        .then((res) => res.json())
+        .then((data) => {
+          const list = Array.isArray(data) ? data : (Array.isArray(data?.shipments) ? data.shipments : []);
+          if (list.length > 0) {
+            const currentEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+            const currentPhone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
+            const currentName = (localStorage.getItem("membership_user_name") || "").toLowerCase().trim();
+            const normalize = (v: any) => String(v || "").toLowerCase().trim();
+
+            const filtered = list.filter((s: any) => {
+              if (localStorage.getItem("user_role") === "admin") return true;
+              const sEmail = (s.recipientEmail || s.customerEmail || s.email || "").toLowerCase().trim();
+              const sPhone = (s.phone || s.customerPhone || "").replace(/[^0-9]/g, "");
+              const sAltPhone = (s.altPhone || "").replace(/[^0-9]/g, "");
+              const sRecipient = normalize(s.recipient || s.customerName);
+              const sOrderer = normalize(s.ordererName);
+
+              if (currentEmail && sEmail && currentEmail === sEmail) return true;
+              if (currentPhone && currentPhone.length >= 8) {
+                const phoneTail = currentPhone.slice(-8);
+                if (sPhone.endsWith(phoneTail) || sAltPhone.endsWith(phoneTail)) return true;
+              }
+              if (currentName && (sRecipient.includes(currentName) || sOrderer.includes(currentName))) return true;
+              return false;
+            }).map((s: any) => ({
+              id: s.id,
+              orderNumber: s.orderId || s.orderNumber || s.id,
+              items: typeof s.items === "string" ? s.items : (Array.isArray(s.items) ? s.items.map((i: any) => i.name).join(", ") : "주문 상품"),
+              amount: s.totalAmount ? `${Number(s.totalAmount).toLocaleString()}원` : (s.price ? `${Number(s.price).toLocaleString()}원` : ""),
+              status: s.status || "결제완료",
+              orderDate: s.orderDate || s.created_at || "",
+              trackingNumber: s.trackingNumber || "-",
+              image: s.image || s.productImage || s.packages?.[0]?.image || "",
+            }));
+
+            if (filtered.length > 0) setOrders(filtered);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [orders.length]);
+
+  return (
+    <div className="w-full max-w-[340px] bg-white border border-neutral-200 rounded-2xl p-3.5 shadow-md space-y-3 notranslate" translate="no">
+      <div className="flex items-center gap-2 pb-2 border-b border-neutral-100">
+        <div className="w-7 h-7 rounded-xl bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-900 shrink-0">
+          <Package className="w-4 h-4" />
+        </div>
+        <div>
+          <h4 className="text-xs font-black text-neutral-950">문의하실 주문건을 선택해 주세요</h4>
+          <p className="text-[10px] text-neutral-500 font-medium">선택하신 주문 정보를 상담원에게 즉시 공유합니다.</p>
+        </div>
+      </div>
+
+      {orders.length === 0 ? (
+        <div className="p-4 text-center bg-neutral-50 rounded-2xl border border-neutral-200 text-neutral-500 text-[11px] space-y-1">
+          <p className="font-bold text-neutral-700">확인된 최근 주문 내역이 없습니다.</p>
+          <p className="text-[10px] text-neutral-400">주문번호를 채팅창에 직접 입력해 주시면 확인해 드리겠습니다.</p>
+        </div>
+      ) : (
+        <div className="space-y-2.5 max-h-[290px] overflow-y-auto pr-1">
+          {orders.map((ord) => {
+            const isChosen = selectedOrderNum === ord.orderNumber;
+            const thumb = getProductThumbnail(ord.items, ord.image);
+            return (
+              <div
+                key={ord.id}
+                className={`p-3 rounded-2xl border transition-all space-y-2 ${
+                  isChosen
+                    ? "bg-neutral-950 border-neutral-950 text-white shadow-2xs"
+                    : "bg-white hover:bg-neutral-50/80 border-neutral-200/90 text-neutral-900 shadow-2xs"
+                }`}
+              >
+                {/* Top row: Order Number & Status Badge */}
+                <div className="flex items-center justify-between text-[11px] pb-1.5 border-b border-neutral-100/20">
+                  <span className={`font-mono font-black tracking-tight ${isChosen ? "text-neutral-200" : "text-neutral-900"}`}>
+                    {ord.orderNumber}
+                  </span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                    isChosen
+                      ? "bg-white/20 text-white border border-white/20"
+                      : "bg-neutral-100 text-neutral-700 border border-neutral-200/60"
+                  }`}>
+                    {ord.status}
+                  </span>
+                </div>
+
+                {/* Middle row: Product Thumbnail on Left, Product Details on Right */}
+                <div className="flex items-start gap-3">
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-neutral-100 border border-neutral-200/80 shrink-0">
+                    <img
+                      src={thumb}
+                      alt={ord.items}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className={`text-xs font-bold leading-snug line-clamp-2 ${isChosen ? "text-white" : "text-neutral-900"}`} title={ord.items}>
+                      {ord.items}
+                    </p>
+                    {ord.orderDate && (
+                      <p className={`text-[10px] font-medium ${isChosen ? "text-neutral-400" : "text-neutral-400"}`}>
+                        주문일: {ord.orderDate.slice(0, 10)}
+                      </p>
+                    )}
+                    <p className={`text-xs font-black font-mono ${isChosen ? "text-white" : "text-neutral-950"}`}>
+                      {ord.amount}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bottom Action Button (특별한 기능: Blue CTA) */}
+                <div className={`pt-1.5 border-t ${isChosen ? "border-neutral-800" : "border-neutral-100"}`}>
+                  <button
+                    type="button"
+                    disabled={isChosen}
+                    onClick={() => {
+                      setSelectedOrderNum(ord.orderNumber);
+                      onSelectOrder({ ...ord, image: thumb });
+                    }}
+                    className={`w-full text-xs font-black py-2 px-3 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                      isChosen
+                        ? "bg-neutral-800 text-white cursor-default"
+                        : "bg-blue-600 hover:bg-blue-500 text-white active:scale-98"
+                    }`}
+                  >
+                    {isChosen ? "✓ 선택 완료" : "이 주문 문의하기"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function LiveChatWidget() {
   const router = useRouter();
   const pathname = usePathname();
@@ -260,6 +493,75 @@ export function LiveChatWidget() {
   const [showChatPassword, setShowChatPassword] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const isAtBottomRef = useRef<boolean>(true);
+  const isInitialScrollDoneRef = useRef<boolean>(false);
+  const lastSeenMsgIdRef = useRef<string | null>(null);
+  const [newMsgNotice, setNewMsgNotice] = useState<ChatMessage | null>(null);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTo({
+        top: chatScrollRef.current.scrollHeight,
+        behavior,
+      });
+    } else if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior });
+    }
+    isAtBottomRef.current = true;
+    setNewMsgNotice(null);
+  }, []);
+
+  const handleChatScroll = useCallback(() => {
+    if (!chatScrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatScrollRef.current;
+    const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+    const nearBottom = distanceToBottom < 75;
+
+    isAtBottomRef.current = nearBottom;
+
+    // Requirement 5: "말풍선이 떠 있는 상태로 최근 대화를 확인하면 곧바로 말풍선은 사라지게 할 것."
+    if (nearBottom) {
+      setNewMsgNotice(null);
+    }
+  }, []);
+
+  const getMessageSnippet = useCallback((rawText: string) => {
+    if (!rawText) return "새 메시지가 도착했습니다.";
+    if (rawText.startsWith('{"type":"EXCHANGE_REQUEST"')) {
+      return "🔄 교환 접수 안내 및 신청서";
+    }
+    if (rawText.startsWith('{"type":"EXCHANGE_PAY_REQUEST"')) {
+      return "💳 교환 왕복 배송비(16,000원) 결제 요청";
+    }
+    if (rawText.startsWith('{"type":"EXCHANGE_COMPLETED"')) {
+      return "✓ 교환 접수 및 배송비 결제 완료";
+    }
+    if (rawText.startsWith('{"type":"EXCHANGE_PICKUP_REGISTERED"')) {
+      return "🚚 CJ대한통운 교환 수거접수 완료 안내";
+    }
+    if (rawText.startsWith('{"type":"REFUND_REQUEST"')) {
+      return "↩️ 환불 접수 안내 및 신청서";
+    }
+    if (rawText.startsWith('{"type":"REFUND_SUBMITTED"')) {
+      return "📝 환불 신청 접수 완료";
+    }
+    if (rawText.startsWith('{"type":"REFUND_COMPLETED"')) {
+      return "💳 토스페이먼츠 결제 취소/환불 완료";
+    }
+    if (rawText.startsWith('{"type":"REFUND_PICKUP_REGISTERED"')) {
+      return "🚚 CJ대한통운 반품 수거접수 완료 안내";
+    }
+    if (rawText.startsWith('{"type":"ORDER_SELECT_REQUEST"')) {
+      return "📦 문의하실 주문건 선택 요청";
+    }
+    if (rawText.startsWith('{"type":"ORDER_SELECTED"')) {
+      return "📦 주문건이 선택되었습니다.";
+    }
+    const clean = rawText.replace(/\s+/g, " ").trim();
+    return clean.length > 32 ? clean.slice(0, 32) + "..." : clean;
+  }, []);
+
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const autoReplyTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastResetTimeRef = useRef<number>(0);
@@ -368,7 +670,6 @@ export function LiveChatWidget() {
         setIsLoggedIn(true);
         setIsChatLoggingIn(false);
         setChatPassword("");
-        registerUserSession("active");
         loadMessages();
         toast.success("관리자 계정으로 로그인되었습니다.");
         return;
@@ -496,7 +797,6 @@ export function LiveChatWidget() {
       setIsLoggedIn(true);
       setIsChatLoggingIn(false);
       setChatPassword("");
-      registerUserSession("active");
       loadMessages();
       toast.success(`${matchedCustomer.name || "고객"}님, 로그인되었습니다!`);
     } catch (err) {
@@ -659,7 +959,17 @@ export function LiveChatWidget() {
             return m;
           });
           currentLocal = refreshed;
-          setMessages(refreshed);
+          setMessages((prev) => {
+            if (
+              prev.length === refreshed.length &&
+              prev[prev.length - 1]?.id === refreshed[refreshed.length - 1]?.id &&
+              prev[prev.length - 1]?.text === refreshed[refreshed.length - 1]?.text &&
+              prev[0]?.id === refreshed[0]?.id
+            ) {
+              return prev;
+            }
+            return refreshed;
+          });
           const lastMsg = refreshed[refreshed.length - 1];
           if (lastMsg && (lastMsg.id?.startsWith("admin-close") || lastMsg.text?.includes("상담이 종료되었습니다"))) {
             setIsOpen(false);
@@ -783,6 +1093,14 @@ export function LiveChatWidget() {
               if (typeof window !== "undefined") {
                 localStorage.setItem(chatKey, JSON.stringify(merged));
               }
+              if (
+                prev.length === merged.length &&
+                prev[prev.length - 1]?.id === merged[merged.length - 1]?.id &&
+                prev[prev.length - 1]?.text === merged[merged.length - 1]?.text &&
+                prev[0]?.id === merged[0]?.id
+              ) {
+                return prev;
+              }
               return merged;
             });
           }
@@ -813,10 +1131,18 @@ export function LiveChatWidget() {
       setIsMinimized(false);
     };
 
+    if (typeof window !== "undefined" && localStorage.getItem("open_live_chat_on_load") === "true") {
+      localStorage.removeItem("open_live_chat_on_load");
+      setIsOpen(true);
+    }
+
+    const handleOpenChat = () => setIsOpen(true);
+
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("auth_changed", handleStorageChange);
     window.addEventListener("live_chat_updated", handleStorageChange);
     window.addEventListener("live_chat_ended", handleChatEnded);
+    window.addEventListener("open_live_chat", handleOpenChat);
 
     const handleConfigUpdate = (e: any) => {
       const fallback = e?.detail?.fallback;
@@ -956,6 +1282,7 @@ export function LiveChatWidget() {
       window.removeEventListener("auth_changed", handleStorageChange);
       window.removeEventListener("live_chat_updated", handleStorageChange);
       window.removeEventListener("live_chat_ended", handleChatEnded);
+      window.removeEventListener("open_live_chat", handleOpenChat);
       window.removeEventListener("live_chat_config_updated", handleConfigUpdate);
       supabase.removeChannel(settingsChannel);
       if (bc) bc.close();
@@ -967,7 +1294,6 @@ export function LiveChatWidget() {
     const isAuthed = checkAuth();
     if (!isAuthed) return;
 
-    registerUserSession("active");
     loadMessages();
 
     const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
@@ -1012,16 +1338,75 @@ export function LiveChatWidget() {
     };
   }, [isOpen]);
 
-  // Scroll to bottom on new message or typing indicator
+  // 1. 채팅창 오픈 시 기본 화면: 최신 대화(최하단)로 자동 이동 (요구사항 1)
   useEffect(() => {
     if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      isAtBottomRef.current = true;
+      setNewMsgNotice(null);
       setUnreadCount(0);
+      const timer = setTimeout(() => {
+        scrollToBottom("auto");
+      }, 60);
+      return () => clearTimeout(timer);
+    } else {
+      isInitialScrollDoneRef.current = false;
+      setNewMsgNotice(null);
     }
-  }, [messages, isTyping, isOpen]);
+  }, [isOpen, scrollToBottom]);
+
+  // 2. 메시지 수신 및 스크롤 관리 (요구사항 2, 3, 4, 5)
+  useEffect(() => {
+    if (!isOpen || messages.length === 0) return;
+
+    const latestMsg = messages[messages.length - 1];
+    if (!latestMsg) return;
+
+    // 대화창 열린 후 첫 메시지 렌더링 시 최하단으로 이동
+    if (!isInitialScrollDoneRef.current) {
+      isInitialScrollDoneRef.current = true;
+      lastSeenMsgIdRef.current = latestMsg.id;
+      setTimeout(() => {
+        scrollToBottom("auto");
+      }, 50);
+      return;
+    }
+
+    // 3초 주기 폴링 등으로 동일한 메시지 배열이 갱신된 경우는 스크롤 위치 유지 (화면 고정/당김 방지)
+    if (latestMsg.id === lastSeenMsgIdRef.current) {
+      return;
+    }
+
+    // 실제 신규 메시지가 도착한 경우
+    lastSeenMsgIdRef.current = latestMsg.id;
+
+    if (latestMsg.sender === "user") {
+      // 본인이 보낸 메시지는 항상 최하단으로 즉시 이동
+      scrollToBottom("smooth");
+      setNewMsgNotice(null);
+    } else {
+      // 관리자 또는 봇 응답이 온 경우
+      if (isAtBottomRef.current) {
+        // 이미 최신 대화(하단)에 머무르고 있는 경우 최신 대화로 부드럽게 스크롤
+        scrollToBottom("smooth");
+        setNewMsgNotice(null);
+      } else {
+        // 지난 대화를 확인 중(상단 스크롤 중)인 경우:
+        // 강제 이동을 방지하고 자유로운 스크롤 보장 (요구사항 3)
+        // 하단에 신규 대화 안내 말풍선 표시 (요구사항 4)
+        setNewMsgNotice(latestMsg);
+      }
+    }
+  }, [messages, isOpen, scrollToBottom]);
+
+  // 타이핑 인디케이터 등장 시: 하단에 있을 때만 스크롤
+  useEffect(() => {
+    if (isTyping && isOpen && isAtBottomRef.current) {
+      scrollToBottom("smooth");
+    }
+  }, [isTyping, isOpen, scrollToBottom]);
 
   // LiveChatWidget is always visible for all users and members
-  const handleSendMessage = async (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent, customText?: string) => {
     if (e) e.preventDefault();
 
     // Strict guard: unauthenticated users cannot send messages
@@ -1031,7 +1416,8 @@ export function LiveChatWidget() {
       return;
     }
 
-    if (!inputText.trim() && attachedImages.length === 0) return;
+    const textToSend = customText !== undefined ? customText.trim() : inputText.trim();
+    if (!textToSend && attachedImages.length === 0) return;
 
     const dateNow = new Date();
     const hours = String(dateNow.getHours()).padStart(2, "0");
@@ -1042,8 +1428,8 @@ export function LiveChatWidget() {
       id: `user-msg-${Date.now()}`,
       sender: "user",
       senderName: "User",
-      text: inputText.trim(),
-      images: attachedImages,
+      text: textToSend,
+      images: customText !== undefined ? [] : attachedImages,
       timestamp: timeStr,
       created_at: new Date().toISOString(),
     };
@@ -1056,6 +1442,11 @@ export function LiveChatWidget() {
       }
       return next;
     });
+
+    isAtBottomRef.current = true;
+    setTimeout(() => {
+      scrollToBottom("smooth");
+    }, 20);
 
     const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
     const phone = (typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") || "" : "").trim();
@@ -1100,6 +1491,14 @@ export function LiveChatWidget() {
     }
 
     // Auto simulated response based on Admin Smart Auto-reply settings
+    if (
+      customText?.startsWith('{"type":"ORDER_SELECTED"') ||
+      customText?.startsWith('{"type":"EXCHANGE_COMPLETED"') ||
+      customText?.startsWith('{"type":"REFUND_SUBMITTED"')
+    ) {
+      return;
+    }
+
     let isAutoEnabled = true;
     let autoDelayMs = 1500;
     let autoReplyMessage = getEffectiveWelcomeText() || t.autoReplyText;
@@ -1351,7 +1750,6 @@ export function LiveChatWidget() {
               setIsMinimized(false);
               setUnreadCount(0);
               if (authed) {
-                registerUserSession("active");
                 loadMessages();
               }
             }}
@@ -1360,11 +1758,11 @@ export function LiveChatWidget() {
           >
             <div className="relative flex items-center justify-center">
               <MessageSquare className="w-7 h-7 text-white group-hover:rotate-6 transition-transform" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-neutral-950 animate-pulse" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-neutral-950 animate-pulse" />
             </div>
 
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-rose-600 text-white font-mono text-xs font-black px-2 py-0.5 rounded-full border-2 border-white animate-bounce shadow-md">
+              <span className="absolute -top-1 -right-1 bg-blue-600 text-white font-mono text-xs font-black px-2 py-0.5 rounded-full border-2 border-neutral-950 animate-bounce shadow-md">
                 {unreadCount}
               </span>
             )}
@@ -1382,12 +1780,12 @@ export function LiveChatWidget() {
                 <div className="w-9 h-9 rounded-full bg-neutral-800 text-white font-black text-xs flex items-center justify-center shadow-xs border border-neutral-700">
                   <MessageSquare className="w-4 h-4 text-white" />
                 </div>
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-neutral-950" />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-neutral-950" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
                   <h4 className="text-xs font-extrabold text-white">{t.headerTitle}</h4>
-                  <span className="text-[9px] font-black bg-emerald-500 text-neutral-950 px-1.5 py-0.2 rounded uppercase">
+                  <span className="text-[9px] font-black bg-white/20 text-white px-1.5 py-0.2 rounded uppercase">
                     {t.liveTag}
                   </span>
                 </div>
@@ -1401,7 +1799,7 @@ export function LiveChatWidget() {
               {isLoggedIn && (
                 <button
                   onClick={() => handleResetChat()}
-                  className="text-neutral-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
+                  className="text-neutral-400 hover:text-white p-1.5 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
                   title={t.resetChat || "대화 내용 초기화"}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -1491,7 +1889,7 @@ export function LiveChatWidget() {
                   </div>
 
                   {chatLoginError && (
-                    <p className="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 animate-in fade-in">
+                    <p className="text-[11px] font-bold text-neutral-900 bg-neutral-100 border border-neutral-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 animate-in fade-in">
                       <span>✕</span>
                       <span>{chatLoginError}</span>
                     </p>
@@ -1530,8 +1928,13 @@ export function LiveChatWidget() {
             </div>
           ) : (
             <>
-              {/* Chat Messages Body */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#FAF9F5]/70">
+              {/* Chat Messages Body Wrapper */}
+              <div className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div
+                  ref={chatScrollRef}
+                  onScroll={handleChatScroll}
+                  className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#FAF9F5]/70"
+                >
                 <div className="text-center my-1">
                   <span className="text-[10px] font-bold text-neutral-400 bg-white/80 px-3 py-1 rounded-full border border-neutral-200/60 shadow-2xs">
                     {t.securityNotice}
@@ -1552,6 +1955,16 @@ export function LiveChatWidget() {
                       ? t.nowText
                       : msg.timestamp;
 
+                  let parsedOrder: any = null;
+                  if (
+                    typeof msg.text === "string" &&
+                    (msg.text.startsWith('{"type":"ORDER_') ||
+                     msg.text.startsWith('{"type":"EXCHANGE_') ||
+                     msg.text.startsWith('{"type":"REFUND_'))
+                  ) {
+                    try { parsedOrder = JSON.parse(msg.text); } catch (e) {}
+                  }
+
                   return (
                     <div
                       key={msg.id}
@@ -1561,28 +1974,461 @@ export function LiveChatWidget() {
                         {displayName} • {displayTime}
                       </span>
 
-                      <div
-                        className={`max-w-[82%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs whitespace-pre-wrap ${isUser
-                          ? "bg-neutral-950 text-white rounded-tr-xs font-medium"
-                          : "bg-white text-neutral-900 border border-neutral-200/80 rounded-tl-xs font-medium"
-                          }`}
-                      >
-                        {displayText}
+                      {parsedOrder?.type === "ORDER_SELECT_REQUEST" ? (
+                        <OrderSelectorBubble
+                          onSelectOrder={(ord) => {
+                            const payload = JSON.stringify({
+                              type: "ORDER_SELECTED",
+                              orderId: ord.id,
+                              orderNumber: ord.orderNumber,
+                              items: ord.items,
+                              amount: ord.amount,
+                              status: ord.status,
+                              trackingNumber: ord.trackingNumber || "-",
+                              image: ord.image,
+                            });
+                            handleSendMessage(undefined, payload);
+                          }}
+                        />
+                      ) : parsedOrder?.type === "EXCHANGE_REQUEST" ? (
+                        <ExchangeFormBubble
+                          onCompleteExchange={(exc) => {
+                            const payload = JSON.stringify({
+                              type: "EXCHANGE_COMPLETED",
+                              orderId: exc.orderId,
+                              orderNumber: exc.orderNumber,
+                              items: exc.items,
+                              image: exc.image,
+                              reason: exc.reason,
+                              details: exc.details,
+                              fee: exc.fee,
+                              paymentMethod: exc.paymentMethod,
+                              paymentKey: exc.paymentKey,
+                              completedAt: new Date().toISOString(),
+                            });
+                            handleSendMessage(undefined, payload);
+                            toast.success("교환 접수 및 배송비 결제가 완료되었습니다!");
+                          }}
+                        />
+                      ) : parsedOrder?.type === "EXCHANGE_PAY_REQUEST" ? (
+                        <ExchangePayRequestBubble orderInfo={parsedOrder} />
+                      ) : parsedOrder?.type === "EXCHANGE_COMPLETED" ? (
+                        (() => {
+                          const thumb = getProductThumbnail(parsedOrder.items, parsedOrder.image);
+                          return (
+                            <div className="w-full max-w-[320px] space-y-2.5 text-left bg-neutral-950 text-white p-3.5 rounded-2xl rounded-tr-xs border border-neutral-800 shadow-md notranslate" translate="no">
+                              <div className="flex items-center justify-between pb-1.5 border-b border-neutral-800">
+                                <span className="text-xs font-black text-white flex items-center gap-1.5">
+                                  <RefreshCw className="w-4 h-4 text-blue-500" />
+                                  <span>교환 접수 완료</span>
+                                </span>
+                                <span className="text-[10px] font-mono font-bold bg-neutral-800 text-neutral-300 border border-neutral-700 px-2 py-0.5 rounded-full">
+                                  {parsedOrder.fee > 0 ? "배송비 결제완료" : "무료 교환"}
+                                </span>
+                              </div>
 
-                        {/* Attached Images */}
-                        {Array.isArray(msg.images) && msg.images.length > 0 && (
-                          <div className="grid grid-cols-2 gap-1.5 mt-2 pt-1 border-t border-neutral-200/30">
-                            {msg.images.map((imgUrl, imgIdx) => (
-                              <img
-                                key={imgIdx}
-                                src={imgUrl}
-                                alt={t.imageAlt}
-                                className="w-full aspect-square object-cover rounded-xl border border-neutral-300 bg-neutral-100"
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                              {/* Thumbnail on Left, Product Details on Right */}
+                              <div className="flex items-start gap-3">
+                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 shrink-0">
+                                  <img
+                                    src={thumb}
+                                    alt={parsedOrder.items || "교환 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <div className="text-[11px] font-mono font-bold text-neutral-400 truncate">
+                                    {parsedOrder.orderNumber}
+                                  </div>
+                                  <div className="text-xs font-bold text-white leading-snug line-clamp-2">
+                                    {parsedOrder.items}
+                                  </div>
+                                  <div className="text-xs font-extrabold text-blue-400 font-mono">
+                                    {parsedOrder.fee > 0
+                                      ? `배송비: ${Number(parsedOrder.fee).toLocaleString()}원 (${parsedOrder.paymentMethod || "토스"})`
+                                      : "왕복 배송비: 0원 (무료)"}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Reason & Details */}
+                              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs space-y-1">
+                                <div className="flex items-start gap-1">
+                                  <span className="text-neutral-400">사유:</span>
+                                  <span className="font-extrabold text-white">{parsedOrder.reason}</span>
+                                </div>
+                                {parsedOrder.details && (
+                                  <p className="text-[11px] text-neutral-300 pl-1 border-l-2 border-neutral-700">
+                                    {parsedOrder.details}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="text-[10px] text-neutral-400 font-medium pt-0.5">
+                                📦 CJ대한통운 수거 기사님이 1~2일 내 방문 예정입니다.
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : parsedOrder?.type === "EXCHANGE_PICKUP_REGISTERED" ? (
+                        (() => {
+                          const thumb = getProductThumbnail(parsedOrder.items, parsedOrder.image);
+                          return (
+                            <div className="w-full max-w-[320px] space-y-2.5 text-left bg-neutral-950 text-white p-3.5 rounded-2xl rounded-tr-xs border border-neutral-800 shadow-md notranslate" translate="no">
+                              <div className="flex items-center justify-between pb-1.5 border-b border-neutral-800">
+                                <span className="text-xs font-black text-white flex items-center gap-1.5">
+                                  <Truck className="w-4 h-4 text-blue-500" />
+                                  <span>CJ대한통운 수거접수 완료</span>
+                                </span>
+                                <span className="text-[10px] font-mono font-bold bg-neutral-800 text-neutral-300 border border-neutral-700 px-2 py-0.5 rounded-full">
+                                  교환수거
+                                </span>
+                              </div>
+
+                              <div className="flex items-start gap-3">
+                                <div className="w-14 h-14 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 shrink-0">
+                                  <img
+                                    src={thumb}
+                                    alt={parsedOrder.items || "교환 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-0.5">
+                                  <div className="text-[11px] font-mono font-bold text-neutral-400 truncate">
+                                    {parsedOrder.orderNumber}
+                                  </div>
+                                  <div className="text-xs font-bold text-white leading-snug line-clamp-2">
+                                    {parsedOrder.items}
+                                  </div>
+                                  {parsedOrder.bookingNumber && (
+                                    <div className="text-[10px] font-mono font-bold text-neutral-300">
+                                      CJ예약: {parsedOrder.bookingNumber}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs space-y-1">
+                                <div className="flex items-start gap-1">
+                                  <span className="text-neutral-400">교환사유:</span>
+                                  <span className="font-extrabold text-white">
+                                    {parsedOrder.reason} {parsedOrder.details ? `(${parsedOrder.details})` : ""}
+                                  </span>
+                                </div>
+                                {parsedOrder.address && (
+                                  <div className="text-[10px] text-neutral-400 pt-0.5 border-t border-neutral-800">
+                                    <span className="font-bold">방문수거지: </span>
+                                    <span>{parsedOrder.address}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="text-[10px] text-neutral-400 font-medium pt-0.5">
+                                🚚 CJ대한통운 기사님이 1~2영업일 내에 방문하여 상품을 회수할 예정입니다.
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : parsedOrder?.type === "REFUND_REQUEST" ? (
+                        <RefundFormBubble
+                          onSubmitRefund={(ref) => {
+                            const payload = JSON.stringify({
+                              type: "REFUND_SUBMITTED",
+                              orderId: ref.orderId,
+                              orderNumber: ref.orderNumber,
+                              items: ref.items,
+                              image: ref.image,
+                              amount: ref.amount,
+                              reason: ref.reason,
+                              details: ref.details,
+                              submittedAt: new Date().toISOString(),
+                            });
+                            handleSendMessage(undefined, payload);
+                            toast.success("환불 신청서가 접수되었습니다!");
+                          }}
+                        />
+                      ) : parsedOrder?.type === "REFUND_SUBMITTED" ? (
+                        (() => {
+                          const thumb = getProductThumbnail(parsedOrder.items, parsedOrder.image);
+                          return (
+                            <div className="w-full max-w-[320px] space-y-2.5 text-left bg-neutral-950 text-white p-3.5 rounded-2xl rounded-tr-xs border border-neutral-800 shadow-md notranslate" translate="no">
+                              <div className="flex items-center justify-between pb-1.5 border-b border-neutral-800">
+                                <span className="text-xs font-black text-white flex items-center gap-1.5">
+                                  <RotateCcw className="w-4 h-4 text-blue-500" />
+                                  <span>환불 신청 접수</span>
+                                </span>
+                                <span className="text-[10px] font-mono font-bold bg-neutral-800 text-neutral-300 border border-neutral-700 px-2 py-0.5 rounded-full">
+                                  접수완료
+                                </span>
+                              </div>
+
+                              <div className="flex items-start gap-3">
+                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 shrink-0">
+                                  <img
+                                    src={thumb}
+                                    alt={parsedOrder.items || "환불 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <div className="text-[11px] font-mono font-bold text-neutral-400 truncate">
+                                    {parsedOrder.orderNumber}
+                                  </div>
+                                  <div className="text-xs font-bold text-white leading-snug line-clamp-2">
+                                    {parsedOrder.items}
+                                  </div>
+                                  {parsedOrder.amount && (
+                                    <div className="text-xs font-extrabold text-white font-mono">
+                                      결제금액: {parsedOrder.amount}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs space-y-1">
+                                <div className="flex items-start gap-1">
+                                  <span className="text-neutral-400">환불사유:</span>
+                                  <span className="font-extrabold text-white">{parsedOrder.reason}</span>
+                                </div>
+                                {parsedOrder.details && (
+                                  <p className="text-[11px] text-neutral-300 pl-1 border-l-2 border-neutral-700">
+                                    {parsedOrder.details}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="text-[10px] text-neutral-400 font-medium pt-0.5">
+                                💬 담당자가 확인 후 토스페이먼츠 구매금액 취소를 처리해 드립니다.
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : parsedOrder?.type === "REFUND_COMPLETED" ? (
+                        (() => {
+                          const thumb = getProductThumbnail(parsedOrder.items, parsedOrder.image);
+                          return (
+                            <div className="w-full max-w-[320px] space-y-2.5 text-left bg-neutral-950 text-white p-3.5 rounded-2xl rounded-tr-xs border border-neutral-800 shadow-lg notranslate" translate="no">
+                              <div className="flex items-center justify-between pb-1.5 border-b border-neutral-800">
+                                <div className="flex items-center gap-1.5">
+                                  <CreditCard className="w-4 h-4 text-blue-500" />
+                                  <span className="text-xs font-black text-white">토스 결제 취소 / 환불 완료</span>
+                                </div>
+                                <span className="text-[9px] font-mono font-bold bg-neutral-800 text-neutral-300 border border-neutral-700 px-2 py-0.5 rounded-full">
+                                  PG 승인취소
+                                </span>
+                              </div>
+
+                              <div className="flex items-start gap-3">
+                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 shrink-0">
+                                  <img
+                                    src={thumb}
+                                    alt={parsedOrder.items || "환불 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <div className="text-[11px] font-mono font-bold text-neutral-400 truncate">
+                                    {parsedOrder.orderNumber}
+                                  </div>
+                                  <div className="text-xs font-bold text-white leading-snug line-clamp-2">
+                                    {parsedOrder.items}
+                                  </div>
+                                  <div className="text-sm font-black text-blue-400 font-mono">
+                                    -₩{Number(parsedOrder.refundAmount || 0).toLocaleString()}원 환불
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-[11px] space-y-1">
+                                <div className="flex items-center justify-between text-neutral-400">
+                                  <span>결제수단</span>
+                                  <span className="text-white font-bold">{parsedOrder.paymentMethod || "신용·체크카드 (토스)"}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-neutral-400">
+                                  <span>취소사유</span>
+                                  <span className="text-white font-bold">{parsedOrder.cancelReason || "고객 요청에 의한 환불"}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-neutral-400">
+                                  <span>처리일시</span>
+                                  <span className="text-neutral-300 font-mono text-[10px]">
+                                    {parsedOrder.completedAt ? new Date(parsedOrder.completedAt).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "방금 전"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {(parsedOrder.pointsRestored || parsedOrder.couponRestored) && (
+                                <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-[11px] space-y-1 text-neutral-300">
+                                  {parsedOrder.pointsRestored && (
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-medium text-neutral-400">🪙 사용 적립금 반환</span>
+                                      <span className="font-bold font-mono text-white">+{Number(parsedOrder.pointsRestored).toLocaleString()} P</span>
+                                    </div>
+                                  )}
+                                  {parsedOrder.couponRestored && (
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-medium text-neutral-400">🎟️ 할인 쿠폰 재사용 복원</span>
+                                      <span className="font-bold text-white">[{parsedOrder.couponRestored}] 복원완료</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="text-[10px] text-neutral-400 font-medium pt-0.5 flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                                <span>토스페이먼츠 PG 승인 취소가 완료되었습니다.</span>
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : parsedOrder?.type === "REFUND_PICKUP_REGISTERED" ? (
+                        (() => {
+                          const thumb = getProductThumbnail(parsedOrder.items, parsedOrder.image);
+                          return (
+                            <div className="w-full max-w-[320px] space-y-2.5 text-left bg-neutral-950 text-white p-3.5 rounded-2xl rounded-tr-xs border border-neutral-800 shadow-md notranslate" translate="no">
+                              <div className="flex items-center justify-between pb-1.5 border-b border-neutral-800">
+                                <span className="text-xs font-black text-white flex items-center gap-1.5">
+                                  <Truck className="w-4 h-4 text-blue-500" />
+                                  <span>CJ대한통운 반품 수거접수 완료</span>
+                                </span>
+                                <span className="text-[10px] font-mono font-bold bg-neutral-800 text-neutral-300 border border-neutral-700 px-2 py-0.5 rounded-full">
+                                  반품수거
+                                </span>
+                              </div>
+
+                              <div className="flex items-start gap-3">
+                                <div className="w-14 h-14 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 shrink-0">
+                                  <img
+                                    src={thumb}
+                                    alt={parsedOrder.items || "반품 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-0.5">
+                                  <div className="text-[11px] font-mono font-bold text-neutral-400 truncate">
+                                    {parsedOrder.orderNumber}
+                                  </div>
+                                  <div className="text-xs font-bold text-white leading-snug line-clamp-2">
+                                    {parsedOrder.items}
+                                  </div>
+                                  {parsedOrder.bookingNumber && (
+                                    <div className="text-[10px] font-mono font-bold text-neutral-300">
+                                      CJ예약: {parsedOrder.bookingNumber}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs space-y-1">
+                                <div className="flex items-start gap-1">
+                                  <span className="text-neutral-400">반품사유:</span>
+                                  <span className="font-extrabold text-white">
+                                    {parsedOrder.reason} {parsedOrder.details ? `(${parsedOrder.details})` : ""}
+                                  </span>
+                                </div>
+                                {parsedOrder.address && (
+                                  <div className="text-[10px] text-neutral-400 pt-0.5 border-t border-neutral-800">
+                                    <span className="font-bold">방문수거지: </span>
+                                    <span>{parsedOrder.address}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="text-[10px] text-neutral-400 font-medium pt-0.5">
+                                🚚 CJ대한통운 기사님이 1~2영업일 내에 방문하여 반품 상품을 회수할 예정입니다.
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : parsedOrder?.type === "ORDER_SELECTED" ? (
+                        (() => {
+                          const thumb = getProductThumbnail(parsedOrder.items, parsedOrder.image);
+                          return (
+                            <div className="w-full max-w-[320px] space-y-2.5 text-left bg-neutral-950 text-white p-3.5 rounded-2xl rounded-tr-xs border border-neutral-800 shadow-md notranslate" translate="no">
+                              <div className="flex items-center justify-between pb-1.5 border-b border-neutral-800">
+                                <span className="text-xs font-black text-white flex items-center gap-1.5">
+                                  <Package className="w-4 h-4 text-white" />
+                                  <span>선택한 문의 주문건</span>
+                                </span>
+                                <span className="text-[10px] font-mono font-bold bg-neutral-800 text-neutral-200 px-2 py-0.5 rounded-full">
+                                  {parsedOrder.status || "주문완료"}
+                                </span>
+                              </div>
+
+                              {/* Thumbnail on Left, Product Details on Right */}
+                              <div className="flex items-start gap-3">
+                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 shrink-0">
+                                  <img
+                                    src={thumb}
+                                    alt={parsedOrder.items || "주문 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <div className="text-[11px] font-mono font-bold text-neutral-400 truncate">
+                                    {parsedOrder.orderNumber}
+                                  </div>
+                                  <div className="text-xs font-bold text-white leading-snug line-clamp-2">
+                                    {parsedOrder.items}
+                                  </div>
+                                  {parsedOrder.amount && (
+                                    <div className="text-xs font-extrabold text-white font-mono">
+                                      {parsedOrder.amount}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {parsedOrder.trackingNumber && parsedOrder.trackingNumber !== "-" && (
+                                <div className="text-[11px] text-neutral-400 flex justify-between pt-1.5 border-t border-neutral-800">
+                                  <span>운송장:</span>
+                                  <span className="font-mono font-bold text-white">{parsedOrder.trackingNumber}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <div
+                          className={`max-w-[82%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs whitespace-pre-wrap ${isUser
+                            ? "bg-neutral-950 text-white rounded-tr-xs font-medium"
+                            : "bg-white text-neutral-900 border border-neutral-200/80 rounded-tl-xs font-medium"
+                            }`}
+                        >
+                          {displayText}
+
+                          {/* Attached Images */}
+                          {Array.isArray(msg.images) && msg.images.length > 0 && (
+                            <div className="grid grid-cols-2 gap-1.5 mt-2 pt-1 border-t border-neutral-200/30">
+                              {msg.images.map((imgUrl, imgIdx) => (
+                                <img
+                                  key={imgIdx}
+                                  src={imgUrl}
+                                  alt={t.imageAlt}
+                                  className="w-full aspect-square object-cover rounded-xl border border-neutral-300 bg-neutral-100"
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1591,7 +2437,7 @@ export function LiveChatWidget() {
                 {isTyping && (
                   <div className="flex flex-col items-start space-y-1 animate-in fade-in slide-in-from-bottom-1 duration-200">
                     <span className="text-[10px] font-bold text-neutral-400 px-1 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping" />
                       {t.teamName}
                     </span>
                     <div className="bg-white border border-neutral-200/90 rounded-2xl rounded-tl-xs px-4 py-3 shadow-2xs flex items-center gap-2">
@@ -1607,7 +2453,42 @@ export function LiveChatWidget() {
                   </div>
                 )}
 
-                <div ref={messagesEndRef} />
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Floating New Message Notification Bubble (말풍선 - 요구사항 4 & 5) */}
+                {newMsgNotice && (
+                  <div className="absolute bottom-2.5 left-3 right-3 z-30 flex justify-center pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    <button
+                      type="button"
+                      onClick={() => scrollToBottom("smooth")}
+                      className="pointer-events-auto bg-neutral-950/95 hover:bg-black text-white px-3.5 py-2.5 rounded-2xl shadow-2xl border border-neutral-700/80 flex items-center gap-2.5 max-w-[94%] transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer backdrop-blur-md"
+                      title="최신 대화로 이동하기"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+                      </div>
+
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-black text-blue-300">
+                            {newMsgNotice.sender === "admin" ? (t.teamName || "상담원") : "새 메시지"}
+                          </span>
+                          <span className="text-[9px] text-neutral-400 font-mono">
+                            {newMsgNotice.timestamp}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-bold text-white truncate max-w-[210px] leading-snug">
+                          {getMessageSnippet(newMsgNotice.text)}
+                        </p>
+                      </div>
+
+                      <span className="text-[10px] bg-blue-600 text-white font-black px-2 py-0.5 rounded-full shrink-0 shadow-2xs">
+                        최신 대화 보기 ↓
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Attached Image Preview Row */}
@@ -1618,7 +2499,7 @@ export function LiveChatWidget() {
                       <img src={img} alt={t.previewAlt} className="w-full h-full object-cover" />
                       <button
                         onClick={() => setAttachedImages(attachedImages.filter((_, i) => i !== idx))}
-                        className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5 hover:bg-rose-600 transition-colors"
+                        className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5 hover:bg-neutral-800 transition-colors"
                       >
                         <X className="w-3 h-3" />
                       </button>

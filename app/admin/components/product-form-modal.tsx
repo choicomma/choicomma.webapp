@@ -18,6 +18,18 @@ import {
   Ruler,
   Box,
   Percent,
+  Eye,
+  EyeOff,
+  Smartphone,
+  ChevronDown,
+  ChevronUp,
+  ShoppingBag,
+  Heart,
+  Star,
+  ShieldCheck,
+  Ticket,
+  Menu,
+  Search,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import {
@@ -27,6 +39,70 @@ import {
   SizeMeasurementRow,
 } from "@/lib/admin/constants";
 import { calculateTotalStock, compressImageDataUrl } from "@/lib/admin/helpers";
+import { ProductReviews } from "@/app/product/[handle]/components/product-reviews";
+
+
+export interface FormTitlesConfig {
+  // STEP 1: 기본 상품 정보
+  productImages: string;
+  price: string;
+  variantCutImages: string;
+  productNo: string;
+  title: string;
+  description: string;
+  detailImages: string;
+  previewScreen: string;
+  categories: string;
+  mainFeatured: string;
+  saleStatus: string;
+  scheduledRelease: string;
+
+  // STEP 2: 옵션 및 원단 / 사이즈
+  productLabel: string;
+  fabricInfo: string;
+  fabricComposition: string;
+  fabricImage: string;
+  sizeOptions: string;
+  sizeGuide: string;
+  sizeStock: string;
+
+  // STEP 3: 프로모션 & 특별 할인
+  timeSale: string;
+  bulkDiscount: string;
+
+  // 주문 옵션명
+  option1Name: string;
+  option2Name: string;
+}
+
+export const DEFAULT_FORM_TITLES: FormTitlesConfig = {
+  productImages: "제품 이미지 등록 (최대 10개)",
+  price: "판매가 (KRW)",
+  variantCutImages: "{formTitles.variantCutImages}",
+  productNo: "{formTitles.productNo}",
+  title: "상품명",
+  description: "{formTitles.description} (상단 제목 밑 노출)",
+  detailImages: "{formTitles.detailImages}",
+  previewScreen: "상세페이지 미리보기 화면",
+  categories: "{formTitles.categories}",
+  mainFeatured: "메인 전시 여부 (메인 슬라이더/추천 노출)",
+  saleStatus: "상품 판매 상태 (즉시 구매 On/Off)",
+  scheduledRelease: "판매 시작 시간 지정 (예약 오픈)",
+
+  productLabel: "{formTitles.productLabel}",
+  fabricInfo: "{formTitles.fabricInfo}",
+  fabricComposition: "{formTitles.fabricComposition}",
+  fabricImage: "{formTitles.fabricImage}",
+  sizeOptions: "{formTitles.sizeOptions}",
+  sizeGuide: "{formTitles.sizeGuide}",
+  sizeStock: "{formTitles.sizeStock}",
+
+  timeSale: "{formTitles.timeSale}",
+  bulkDiscount: "대량 구매 구간별 할인 규칙 (수량 할인)",
+
+  option1Name: "Color",
+  option2Name: "Size",
+};
 
 function StockInputItem({
   size,
@@ -170,6 +246,27 @@ export function ProductFormModal({
   const [releaseDate, setReleaseDate] = useState("");
   const [isMainFeatured, setIsMainFeatured] = useState(true);
 
+  // Form titles & option names modal
+  const [formTitles, setFormTitles] = useState<FormTitlesConfig>(DEFAULT_FORM_TITLES);
+  const [tempTitles, setTempTitles] = useState<FormTitlesConfig>(DEFAULT_FORM_TITLES);
+  const [activeTitleTab, setActiveTitleTab] = useState<"step1" | "step2" | "step3">("step1");
+  const [isOptionNameModalOpen, setIsOptionNameModalOpen] = useState<boolean>(false);
+  const [option1Name, setOption1Name] = useState<string>("Color");
+  const [option2Name, setOption2Name] = useState<string>("Size");
+
+  // Right Column Preview States (실제 배율 상세페이지 미리보기 패널)
+  const [showPreviewPanel, setShowPreviewPanel] = useState<boolean>(true);
+  const [previewMobileTab, setPreviewMobileTab] = useState<"form" | "preview">("form");
+  const [previewSelectedColor, setPreviewSelectedColor] = useState<string>("");
+  const [previewSelectedSize, setPreviewSelectedSize] = useState<string>("");
+  const [previewActiveImageIdx, setPreviewActiveImageIdx] = useState<number>(0);
+  const [previewDeviceScale, setPreviewDeviceScale] = useState<"100" | "90" | "80">("100");
+  const [previewActiveTab, setPreviewActiveTab] = useState<string>("details");
+
+  // Recent Fabrics History & Detail Img Url Input
+  const [recentFabrics, setRecentFabrics] = useState<string[]>([]);
+  const [detailImgUrlInput, setDetailImgUrlInput] = useState<string>("");
+
   // Label & Fabric
   const [label, setLabel] = useState<"" | "BLACK_LABEL" | "PREMIUM" | "ESSENTIAL">("PREMIUM");
   const [fabricComposition, setFabricComposition] = useState("COTTON 100% (프리미엄 콤마 코튼)");
@@ -236,13 +333,32 @@ export function ProductFormModal({
       const pr = initialProduct.priceRange?.minVariantPrice?.amount || initialProduct.price?.amount || "0";
       setPrice(String(pr));
       setDescription(initialProduct.description || "");
-      setDetailDescription(initialProduct.detailDescription || "");
+            let loadedTitles = { ...DEFAULT_FORM_TITLES };
+      try {
+        const savedGlobal = localStorage.getItem("admin_form_titles");
+        if (savedGlobal) {
+          loadedTitles = { ...loadedTitles, ...JSON.parse(savedGlobal) };
+        }
+      } catch (e) {}
+
+      if (initialProduct.customTitles) {
+        loadedTitles = { ...loadedTitles, ...initialProduct.customTitles };
+      }
+      const op1 = initialProduct.options?.[0]?.name || initialProduct.optionNames?.color || loadedTitles.option1Name || "Color";
+      const op2 = initialProduct.options?.[1]?.name || initialProduct.optionNames?.size || loadedTitles.option2Name || "Size";
+      loadedTitles.option1Name = op1;
+      loadedTitles.option2Name = op2;
+      setFormTitles(loadedTitles);
+      setTempTitles(loadedTitles);
+      setOption1Name(op1);
+      setOption2Name(op2);
+      setDetailDescription(initialProduct.detailDescription || initialProduct.descriptionHtml || initialProduct.detailedInfo || "");
       const initImgs = Array.isArray(initialProduct.images) && initialProduct.images.length > 0
         ? initialProduct.images.map((img: any) => (typeof img === "string" ? img : img.url))
-        : (initialProduct.featuredImage?.url ? [initialProduct.featuredImage.url] : ["/product_1.webp"]);
+        : (initialProduct.featuredImage?.url ? [initialProduct.featuredImage.url] : []);
       setImages(initImgs);
       setImageUrl(initImgs[0] || "");
-      setUrlInput("");
+
       setStock(initialProduct.stock !== undefined ? Number(initialProduct.stock) : 50);
       setAvailableForSale(initialProduct.availableForSale !== false);
       setIsScheduledRelease(Boolean(initialProduct.releaseDate));
@@ -330,6 +446,21 @@ export function ProductFormModal({
       setImageUrl("");
       setImages([]);
       setUrlInput("");
+      let loadedTitles = { ...DEFAULT_FORM_TITLES };
+      try {
+        const savedGlobal = localStorage.getItem("admin_form_titles");
+        if (savedGlobal) {
+          loadedTitles = { ...loadedTitles, ...JSON.parse(savedGlobal) };
+        }
+      } catch (e) {}
+      setFormTitles(loadedTitles);
+      setTempTitles(loadedTitles);
+      setOption1Name(loadedTitles.option1Name || "Color");
+      setOption2Name(loadedTitles.option2Name || "Size");
+      setDetailDescription("");
+      setImageUrl("");
+      setImages([]);
+      setUrlInput("");
       setStock(50);
       setAvailableForSale(true);
       setIsScheduledRelease(false);
@@ -382,7 +513,7 @@ export function ProductFormModal({
       const reader = new FileReader();
       reader.onload = async (evt) => {
         const rawResult = evt.target?.result as string;
-        const compressed = await compressImageDataUrl(rawResult, 1600, 0.8);
+        const compressed = await compressImageDataUrl(rawResult, 1920, 0.92);
         setImageUrl(compressed);
         if (!images.includes(compressed)) {
           setImages([compressed, ...images]);
@@ -411,7 +542,7 @@ export function ProductFormModal({
         reader.onload = async (evt) => {
           const raw = evt.target?.result as string;
           if (raw) {
-            const compressed = await compressImageDataUrl(raw, 800, 0.7);
+            const compressed = await compressImageDataUrl(raw, 1920, 0.92);
             resolve(compressed);
           } else {
             resolve("");
@@ -427,6 +558,82 @@ export function ProductFormModal({
       setImageUrl(newUrls[0]);
     }
     triggerToast(`${newUrls.length}개의 이미지가 추가되었습니다.`);
+  };
+
+  // Helper to extract image srcs from detailDescription HTML or plain text
+  const extractImagesFromHtml = (html: string): string[] => {
+    if (!html) return [];
+    const srcs: string[] = [];
+    const regex = /<img[^>]+src=["']([^"']+)["']/gi;
+    let match;
+    while ((match = regex.exec(html)) !== null) {
+      if (match[1]) srcs.push(match[1]);
+    }
+    if (srcs.length === 0) {
+      const trimmed = html.trim();
+      if (
+        trimmed.startsWith("data:image/") ||
+        /^https?:\/\/[^\s]+?\.(jpg|jpeg|png|webp|gif|avif)($|\?)/i.test(trimmed) ||
+        /^\/[^\s]+?\.(jpg|jpeg|png|webp|gif|avif)($|\?)/i.test(trimmed)
+      ) {
+        srcs.push(trimmed);
+      }
+    }
+    return srcs;
+  };
+
+  // Remove specific image from detailDescription
+  const removeImageFromDetailDescription = (imgSrc: string) => {
+    if (!detailDescription) return;
+    const parts = detailDescription.split("\n");
+    const filtered = parts.filter((line) => !line.includes(imgSrc));
+    let updated = filtered.join("\n").trim();
+    if (updated === detailDescription.trim()) {
+      updated = detailDescription.replaceAll(imgSrc, "").trim();
+    }
+    setDetailDescription(updated);
+    triggerToast("상세 사진이 삭제되었습니다.");
+  };
+
+  // Upload handler for high-resolution detail images
+  const handleDetailImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newImgTags: string[] = [];
+    for (const file of Array.from(files)) {
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+          const raw = evt.target?.result as string;
+          if (raw) {
+            const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+            resolve(compressed);
+          } else {
+            resolve("");
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+      if (dataUrl) {
+        newImgTags.push(`<p><img src="${dataUrl}" alt="상세 사진" class="w-full h-auto rounded-xl my-2 block" /></p>`);
+      }
+    }
+    if (newImgTags.length > 0) {
+      setDetailDescription((prev) => (prev ? `${prev}\n${newImgTags.join("\n")}` : newImgTags.join("\n")));
+      triggerToast(`${newImgTags.length}개의 상세 사진이 고해상도로 추가되었습니다.`);
+    }
+    e.target.value = "";
+  };
+
+  // Add detail image via URL
+  const handleAddDetailImageUrl = () => {
+    if (!detailImgUrlInput.trim()) return;
+    const url = detailImgUrlInput.trim();
+    const imgTag = `<p><img src="${url}" alt="상세 사진" class="w-full h-auto rounded-xl my-2 block" /></p>`;
+    setDetailDescription((prev) => (prev ? `${prev}\n${imgTag}` : imgTag));
+    setDetailImgUrlInput("");
+    triggerToast("상세 사진 URL이 추가되었습니다.");
   };
 
   // Submit Handler
@@ -491,6 +698,7 @@ export function ProductFormModal({
     const parsedRate = parseInt(timeSaleDiscountRate, 10) || 35;
 
     const resultProduct = {
+      customTitles: formTitles,
       ...(isEdit ? initialProduct : {}),
       id: isEdit ? initialProduct.id : `custom-prod-${Date.now()}`,
       productNo: finalProdNo,
@@ -501,7 +709,7 @@ export function ProductFormModal({
       title: title.trim(),
       description: description || "새로운 시그니처 상품입니다.",
       detailDescription: detailDescription || "",
-      descriptionHtml: `<p>${description}</p>`,
+      descriptionHtml: detailDescription || (description ? `<p>${description}</p>` : ""),
       categoryId: categories[0] || "outer",
       categoryIds: categories,
       stock: totalStockCalc,
@@ -562,11 +770,17 @@ export function ProductFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white border border-neutral-200 rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 lg:p-6 animate-in fade-in duration-200">
+      <div
+        className={`bg-white border border-neutral-200 rounded-3xl w-full flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 transition-all ${
+          showPreviewPanel
+            ? "max-w-[1440px] xl:max-w-[1560px] 2xl:max-w-[1680px] max-h-[95vh] h-[95vh]"
+            : "max-w-4xl max-h-[90vh]"
+        }`}
+      >
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4 bg-white sticky top-0 shrink-0 z-10">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between border-b border-neutral-200 px-5 sm:px-6 py-3.5 bg-white sticky top-0 shrink-0 z-10">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <span
               className={`text-[11px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${
                 isEdit ? "bg-amber-500 text-neutral-950" : "bg-neutral-950 text-white"
@@ -583,18 +797,92 @@ export function ProductFormModal({
                 "상품 등록"
               )}
             </h3>
+
+            {/* 옵션명 수정 버튼 */}
+            <button
+              type="button"
+              onClick={() => {
+                setTempTitles({ ...formTitles });
+                setActiveTitleTab("step1");
+                setIsOptionNameModalOpen(true);
+              }}
+              className="ml-1 sm:ml-2 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-neutral-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:border-neutral-400"
+              title="상품 등록 및 상품 수정에 포함된 각 항목의 제목(옵션명)들을 수정합니다"
+            >
+              <Sliders className="w-3.5 h-3.5 text-neutral-700" />
+              <span>옵션명 수정</span>
+              <span className="text-[10px] text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-md font-bold">
+                제목 수정
+              </span>
+            </button>
+
+            {/* 우측 실제 배율 미리보기 ON/OFF 토글 버튼 */}
+            <button
+              type="button"
+              onClick={() => setShowPreviewPanel((prev) => !prev)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                showPreviewPanel
+                  ? "bg-neutral-950 text-white border border-neutral-950"
+                  : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300"
+              }`}
+              title="우측 상세페이지 실제 배율 미리보기 패널을 켜거나 끕니다"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">실제 배율 미리보기</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded font-extrabold ${
+                  showPreviewPanel ? "bg-white text-neutral-950" : "bg-neutral-300 text-neutral-800"
+                }`}
+              >
+                {showPreviewPanel ? "ON" : "OFF"}
+              </span>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-950 text-sm p-1 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
-          >
-            ✕
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Mobile View Switcher (Visible only on < lg when preview is ON) */}
+            {showPreviewPanel && (
+              <div className="flex lg:hidden items-center bg-neutral-100 p-0.5 rounded-xl border border-neutral-200">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMobileTab("form")}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                    previewMobileTab === "form" ? "bg-white text-neutral-950 shadow-2xs" : "text-neutral-500"
+                  }`}
+                >
+                  폼 작성
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMobileTab("preview")}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                    previewMobileTab === "preview" ? "bg-white text-neutral-950 shadow-2xs" : "text-neutral-500"
+                  }`}
+                >
+                  📱 미리보기
+                </button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-neutral-400 hover:text-neutral-950 text-sm p-1.5 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
-        {/* Single Continuous Form Container */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 bg-[#FAF9F5]">
+        {/* Modal Body: Left Column (Form) + Right Column (Actual Scale Detail Page Preview) */}
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden bg-[#FAF9F5]">
+          {/* Left Column: Form & Menu Container */}
+          <form
+            onSubmit={handleSubmit}
+            className={`flex-1 min-w-0 overflow-y-auto p-5 sm:p-6 md:p-8 space-y-8 bg-[#FAF9F5] ${
+              !showPreviewPanel || previewMobileTab === "form" ? "block" : "hidden lg:block"
+            }`}
+          >
               {/* SECTION 1: BASIC PRODUCT INFORMATION */}
               <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
@@ -621,7 +909,7 @@ export function ProductFormModal({
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-neutral-700 mb-1">상품명 *</label>
+                    <label className="block text-xs font-bold text-neutral-700 mb-1">{formTitles.title} *</label>
                     <input
                       type="text"
                       required
@@ -647,7 +935,7 @@ export function ProductFormModal({
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-neutral-700">
-                      제품 이미지 등록 (최대 10개) *
+                      {formTitles.productImages} *
                     </label>
                     <span className="text-[11px] font-mono font-extrabold text-neutral-500">
                       {images.length} / 10개 등록됨
@@ -766,7 +1054,7 @@ export function ProductFormModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">판매가 (KRW) *</label>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">{formTitles.price} *</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -786,18 +1074,108 @@ export function ProductFormModal({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1 flex items-center justify-between">
-                    <span>제품 상세 사진 (하단 아코디언 '제품 상세 사진' 메뉴 노출)</span>
-                    <span className="text-[11px] font-extrabold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">하단 드롭다운 연동</span>
+                <div className="space-y-3 bg-neutral-50/70 border border-neutral-200/80 rounded-2xl p-4 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                      <ImageIcon className="w-4 h-4 text-neutral-700" />
+                      <span>{formTitles.detailImages}</span>
+                    </label>
+                    <span className="text-[11px] font-extrabold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200">
+                      상세페이지 하단 연동
+                    </span>
+                  </div>
+
+                  {/* Thumbnail List of registered detail images */}
+                  {extractImagesFromHtml(detailDescription).length > 0 && (
+                    <div className="space-y-1.5 bg-white p-3 rounded-xl border border-neutral-200/80">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-neutral-700">
+                        <span>등록된 상세 사진 ({extractImagesFromHtml(detailDescription).length}개)</span>
+                        <span className="text-[10px] text-neutral-400">마우스 호버 시 삭제</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {extractImagesFromHtml(detailDescription).map((src, idx) => (
+                          <div
+                            key={`${src.slice(0, 30)}-${idx}`}
+                            className="relative w-16 h-20 rounded-xl overflow-hidden border-2 border-neutral-200 bg-neutral-50 group shadow-2xs shrink-0"
+                          >
+                            <img src={src} alt={`상세컷 ${idx + 1}`} className="w-full h-full object-cover" />
+                            <span className="absolute top-1 left-1 text-[8px] font-bold bg-black/60 text-white px-1 py-0.2 rounded">
+                              #{idx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeImageFromDetailDescription(src)}
+                              className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white cursor-pointer"
+                              title="상세 사진 삭제"
+                            >
+                              <Trash2 className="w-4 h-4 text-rose-400 hover:text-rose-200" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dropzone for High-Res Detail Images */}
+                  <label className="flex flex-col items-center justify-center aspect-[16/9] max-h-[96px] w-full border-2 border-dashed border-neutral-300 hover:border-black bg-white hover:bg-neutral-50 rounded-2xl cursor-pointer transition-all p-3 text-center group">
+                    <div className="w-7 h-7 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center mb-1 shadow-xs group-hover:scale-110 transition-transform">
+                      <Upload className="w-3.5 h-3.5 text-neutral-700" />
+                    </div>
+                    <span className="text-xs font-bold text-neutral-800">
+                      클릭하여 상세페이지 사진 추가 (복수 선택 가능, 고해상도 유지)
+                    </span>
+                    <span className="text-[10px] text-neutral-400 mt-0.5">
+                      1920px 고해상도 화질 보존 / 세로 롱배너 깨짐 없이 최적화
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleDetailImageUpload(e)}
+                      className="hidden"
+                    />
                   </label>
-                  <textarea
-                    rows={3}
-                    placeholder="상세 페이지 하단 '제품 상세 사진' 아코디언 메뉴에 표시될 상세 사진/HTML 코드를 입력하세요."
-                    value={detailDescription}
-                    onChange={(e) => setDetailDescription(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950 leading-relaxed"
-                  />
+
+                  {/* URL Input for Detail Images */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={detailImgUrlInput}
+                      onChange={(e) => setDetailImgUrlInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddDetailImageUrl();
+                        }
+                      }}
+                      className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      placeholder="상세 사진 URL 직접 입력 (https://... 또는 /images/...)"
+                    />
+                    <button
+                      type="button"
+                      disabled={!detailImgUrlInput.trim()}
+                      onClick={handleAddDetailImageUrl}
+                      className="px-3.5 py-2 bg-neutral-900 hover:bg-black text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0 disabled:opacity-40"
+                    >
+                      + URL 추가
+                    </button>
+                  </div>
+
+                  {/* Direct HTML / Code View Toggle */}
+                  <details className="text-xs">
+                    <summary className="text-[11px] font-bold text-neutral-500 hover:text-neutral-800 cursor-pointer select-none py-1">
+                      상세 HTML / 텍스트 직접 편집 (고급)
+                    </summary>
+                    <div className="pt-2">
+                      <textarea
+                        rows={3}
+                        placeholder="상세 페이지 하단 '제품 상세 사진' 아코디언 메뉴에 표시될 상세 사진/HTML 코드를 입력하세요."
+                        value={detailDescription}
+                        onChange={(e) => setDetailDescription(e.target.value)}
+                        className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950 leading-relaxed"
+                      />
+                    </div>
+                  </details>
                 </div>
 
                 <div>
@@ -1165,7 +1543,7 @@ export function ProductFormModal({
                               reader.onload = async (evt) => {
                                 const raw = evt.target?.result as string;
                                 if (raw) {
-                                  const compressed = await compressImageDataUrl(raw, 1200, 0.8);
+                                  const compressed = await compressImageDataUrl(raw, 1920, 0.92);
                                   setFabricImage(compressed);
                                 }
                               };
@@ -1231,7 +1609,7 @@ export function ProductFormModal({
                                   reader.onload = async (evt) => {
                                     const raw = evt.target?.result as string;
                                     if (raw) {
-                                      const compressed = await compressImageDataUrl(raw, 800, 0.8);
+                                      const compressed = await compressImageDataUrl(raw, 1920, 0.92);
                                       setCustomColorImg(compressed);
                                     }
                                   };
@@ -1320,7 +1698,7 @@ export function ProductFormModal({
                                       reader.onload = async (evt) => {
                                         const raw = evt.target?.result as string;
                                         if (raw) {
-                                          const compressed = await compressImageDataUrl(raw, 800, 0.8);
+                                          const compressed = await compressImageDataUrl(raw, 1920, 0.92);
                                           setColorImages((prev) => ({ ...prev, [color]: compressed }));
                                         }
                                       };
@@ -2021,7 +2399,7 @@ export function ProductFormModal({
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
                       <Percent className="w-4 h-4 text-emerald-600" />
-                      <span>수량별 대량 구매 자동 할인 (Bulk Purchase Discount)</span>
+                      <span>{formTitles.bulkDiscount}</span>
                     </label>
                     <button
                       type="button"
@@ -2103,7 +2481,984 @@ export function ProductFormModal({
             </button>
           </div>
         </form>
+
+        {/* Right Column: Complete Mobile Detail Page Preview (실제 상세페이지와 100% 동일한 구조) */}
+        {showPreviewPanel && (() => {
+          // 1. 등록된 제품정보 연동
+          const displayTitle = title.trim();
+          const cleanTitle = displayTitle
+            ? displayTitle.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL|ESSENTIAL)\]?/gi, "").trim()
+            : "";
+
+          // Pricing calculations
+          const rawPriceNum = price.trim()
+            ? (parseInt(String(price).replace(/[^0-9]/g, ""), 10) || 0)
+            : null;
+
+          const timeSaleRateNum = parseInt(timeSaleDiscountRate, 10) || 0;
+          const isSaleEffective = isTimeSale && timeSaleRateNum > 0 && rawPriceNum !== null && rawPriceNum > 0;
+          const regularTimeSalePrice = isSaleEffective
+            ? Math.round((rawPriceNum || 0) * (1 - timeSaleRateNum / 100))
+            : (rawPriceNum || 0);
+
+          const effectivePrice = isSaleEffective ? regularTimeSalePrice : (rawPriceNum || 0);
+
+          // Images resolution
+          const candidateImages: string[] = images.length > 0
+            ? images
+            : (imageUrl.trim() ? [imageUrl.trim()] : []);
+
+          // Colors & cuts resolution
+          const effectiveColors: string[] = colors;
+          const activeColor = previewSelectedColor && effectiveColors.includes(previewSelectedColor)
+            ? previewSelectedColor
+            : (effectiveColors[0] || "");
+
+          const mergedColorImages: Record<string, string> = { ...colorImages };
+          const activeColorCut = activeColor && mergedColorImages[activeColor] ? mergedColorImages[activeColor] : "";
+
+          const heroImage =
+            activeColorCut ||
+            candidateImages[previewActiveImageIdx] ||
+            candidateImages[0] ||
+            "";
+
+          // Sizes resolution
+          const effectiveSizes: string[] = sizes;
+          const activeSize = previewSelectedSize && effectiveSizes.includes(previewSelectedSize)
+            ? previewSelectedSize
+            : (effectiveSizes[0] || "");
+
+          // Descriptions
+          const displayDescription = description.trim();
+          const displayDetailDescription = detailDescription.trim();
+          const displayFabricComposition = fabricComposition.trim();
+          const displayFabricImage = fabricImage.trim();
+          const displayLabel = label;
+
+          // Tabs for mobile accordions sliding menu
+          const mobileTabs = [
+            { id: "reviews", label: "고객 후기", tooltip: "✨ 베스트댓글 선정 시, 최대 50,000원" },
+            { id: "details", label: "제품 상세 사진" },
+            ...(showFabricInfo ? [{ id: "fabric", label: "원단 정보" }] : []),
+            ...(showSizeGuide ? [{ id: "guide", label: "사이즈 가이드" }] : []),
+            { id: "care", label: "배송 및 반품" },
+          ];
+
+          return (
+            <aside
+              className={`w-full lg:w-[440px] xl:w-[480px] 2xl:w-[500px] shrink-0 border-t lg:border-t-0 lg:border-l border-neutral-200 bg-neutral-100 flex flex-col overflow-hidden ${
+                previewMobileTab === "form" ? "hidden lg:flex" : "flex"
+              }`}
+            >
+              {/* Preview Column Top Toolbar */}
+              <div className="px-4 py-3 bg-white border-b border-neutral-200 flex items-center justify-between shrink-0 shadow-2xs z-10">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-neutral-800" />
+                  <span className="text-xs font-black text-neutral-900">{formTitles.previewScreen}</span>
+                  <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block" />
+                    모바일 1:1 배율
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {/* Zoom/Scale Switcher */}
+                  <div className="flex items-center bg-neutral-100 p-0.5 rounded-lg border border-neutral-200 text-[10px] font-bold">
+                    {(["100", "90", "80"] as const).map((sc) => (
+                      <button
+                        key={sc}
+                        type="button"
+                        onClick={() => setPreviewDeviceScale(sc)}
+                        className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                          previewDeviceScale === sc
+                            ? "bg-white text-neutral-950 shadow-2xs font-black"
+                            : "text-neutral-500 hover:text-neutral-800"
+                        }`}
+                        title={`화면 배율 ${sc}%`}
+                      >
+                        {sc}%
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Close Preview Panel */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPreviewPanel(false)}
+                    className="p-1 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors cursor-pointer"
+                    title="미리보기 화면 닫기"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable Device Canvas Area */}
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 flex justify-center items-start bg-neutral-100/90 no-scrollbar">
+                <div
+                  className="w-[390px] shrink-0 transition-transform duration-200 origin-top mb-10"
+                  style={{
+                    transform:
+                      previewDeviceScale === "90"
+                        ? "scale(0.9)"
+                        : previewDeviceScale === "80"
+                        ? "scale(0.8)"
+                        : "scale(1)",
+                  }}
+                >
+                  {/* Smartphone Frame (실제 모바일 뷰포트 높이) */}
+                  <div className="rounded-[44px] border-[8px] border-neutral-950 bg-white shadow-2xl overflow-hidden flex flex-col h-[844px] max-h-[85vh] relative">
+                    {/* Top Speaker / Dynamic Island */}
+                    <div className="pt-2 pb-1 bg-white flex justify-center items-center shrink-0 select-none">
+                      <div className="w-24 h-4.5 bg-neutral-950 rounded-full flex items-center justify-end pr-2.5">
+                        <div className="w-2 h-2 rounded-full bg-neutral-800" />
+                      </div>
+                    </div>
+
+                    {/* Phone Status Bar */}
+                    <div className="px-6 py-1 flex items-center justify-between text-[11px] font-bold text-neutral-900 bg-white shrink-0 select-none">
+                      <span>9:41</span>
+                      <div className="flex items-center gap-1.5 text-[10px] font-extrabold">
+                        <span>5G</span>
+                        <span className="w-5 h-2.5 border border-neutral-900 rounded-sm p-0.5 flex items-center">
+                          <span className="w-3 h-full bg-neutral-900 rounded-2xs" />
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Mobile Store Navigation Header (실제 쇼핑몰 글로벌 헤더와 100% 동일) */}
+                    <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between bg-white shrink-0 sticky top-0 z-30">
+                      <div className="flex items-center gap-2.5 text-neutral-800">
+                        <button type="button" className="p-1 cursor-default" onClick={(e) => e.preventDefault()}>
+                          <Menu className="w-4 h-4" />
+                        </button>
+                        <span className="font-serif tracking-[0.2em] text-sm font-black text-neutral-950">CHOICOMMA</span>
+                      </div>
+                      <div className="flex items-center gap-2.5 text-neutral-700">
+                        <button type="button" className="p-1 cursor-default" onClick={(e) => e.preventDefault()}>
+                          <Search className="w-3.5 h-3.5" />
+                        </button>
+                        <button type="button" className="p-1 relative cursor-default" onClick={(e) => e.preventDefault()}>
+                          <ShoppingBag className="w-4 h-4" />
+                          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-neutral-950 text-white text-[8px] font-bold flex items-center justify-center">0</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Scrollable Mobile Detail Page Body (실제 상세페이지 컴포넌트 구조와 100% 일치) */}
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-10 bg-white">
+                      {/* 1. Mobile Gallery Slider (실제 MobileGallerySlider와 동일한 380px 높이 & object-contain) */}
+                      <div className="relative w-full h-[380px] bg-neutral-50 overflow-hidden select-none">
+                        {heroImage ? (
+                          <img
+                            src={heroImage}
+                            alt="상품 대표 이미지"
+                            className="w-full h-full object-contain object-center transition-all duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-neutral-100/60 flex items-center justify-center text-neutral-300" />
+                        )}
+
+                        {/* Multiple Images Counter Badge */}
+                        {candidateImages.length > 1 && (
+                          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+                            <span className="px-2.5 py-0.5 text-xs font-mono font-bold bg-white/90 border border-neutral-200 rounded-full shadow-2xs text-neutral-800">
+                              {previewActiveImageIdx + 1}/{candidateImages.length}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Multiple Images Thumbnail Dots */}
+                      {candidateImages.length > 1 && (
+                        <div className="flex items-center justify-center gap-1.5 py-2 border-b border-neutral-100 bg-neutral-50/50">
+                          {candidateImages.map((img, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setPreviewActiveImageIdx(idx);
+                                setPreviewSelectedColor("");
+                              }}
+                              className={`w-2 h-2 rounded-full transition-all cursor-pointer ${
+                                !activeColorCut && previewActiveImageIdx === idx
+                                  ? "w-5 bg-neutral-950"
+                                  : "bg-neutral-300 hover:bg-neutral-400"
+                              }`}
+                              title={`${idx + 1}번 사진`}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 2. Product Detail Header Block (실제 ProductDetailHeader와 100% 동일한 구조) */}
+                      <div className="p-4 flex flex-col gap-4 w-full font-sans text-neutral-900">
+                        <div className="flex flex-col items-start gap-1">
+                          {/* Badges Row above Product Title (실제 설정된 뱃지만 노출) */}
+                          {(displayLabel || isSaleEffective || isScheduledRelease || availableForSale === false) && (
+                            <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                              {/* Product Label Badge */}
+                              {displayLabel && (
+                                <span
+                                  className={`text-[11px] font-black px-2.5 py-1 uppercase tracking-wider rounded-sm shrink-0 whitespace-nowrap ${
+                                    displayLabel === "BLACK_LABEL"
+                                      ? "bg-black text-white"
+                                      : displayLabel === "PREMIUM"
+                                      ? "bg-neutral-600 text-white"
+                                      : "bg-neutral-200 text-neutral-800"
+                                  }`}
+                                >
+                                  {displayLabel.replace("_", " ")}
+                                </span>
+                              )}
+
+                              {/* Fabric Badge */}
+                              {showFabricBadge && displayFabricComposition && (
+                                <span className="text-[11px] font-bold px-2.5 py-1 uppercase tracking-wider rounded-sm bg-white text-black border border-black shadow-2xs shrink-0 whitespace-nowrap">
+                                  {displayFabricComposition.replace(/^ORIGIN:\s*/i, "").trim()}
+                                </span>
+                              )}
+
+                              {/* TimeSale Badge */}
+                              {isSaleEffective && (
+                                <span className="text-[11px] font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-950 text-white flex items-center gap-1 shadow-2xs shrink-0 whitespace-nowrap">
+                                  <Sparkles className="w-3.5 h-3.5 text-white fill-white" />
+                                  TIME SALE {timeSaleRateNum}% OFF
+                                </span>
+                              )}
+
+                              {/* Scheduled or Availability Badge */}
+                              {isScheduledRelease ? (
+                                <span className="text-[11px] font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5 text-neutral-950" />
+                                  <span>{releaseDate ? `${new Date(releaseDate).getMonth() + 1}월 ${new Date(releaseDate).getDate()}일 오픈 예정` : "오픈 예정"}</span>
+                                </span>
+                              ) : availableForSale === false ? (
+                                <span className="text-[11px] font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
+                                  품절
+                                </span>
+                              ) : null}
+                            </div>
+                          )}
+
+                          {/* 1. Product Title (실제 h1 스타일 적용) */}
+                          <h1 className="text-2xl font-normal tracking-tight uppercase leading-snug">
+                            {cleanTitle || <span className="text-neutral-300 font-light">상품명</span>}
+                          </h1>
+
+                          {/* 2. 정상가 표시 및 하단 라인 (실제 쇼핑몰과 100% 동일) */}
+                          <div className="flex items-baseline justify-between w-full mt-2.5 mb-1">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-xs font-normal text-neutral-500 whitespace-nowrap">정상가</span>
+                            </div>
+                            <div className="flex items-baseline gap-2 shrink-0 whitespace-nowrap">
+                              <span className="text-xl font-normal text-neutral-800 tracking-tight font-mono whitespace-nowrap">
+                                {rawPriceNum !== null && rawPriceNum > 0 ? (
+                                  `${rawPriceNum.toLocaleString("ko-KR")}원`
+                                ) : (
+                                  <span className="text-neutral-300">0원</span>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* 정상가 하단 구분 라인 */}
+                          <div className="w-full border-b border-neutral-200/90 my-2" />
+
+                          {/* 3. 타임세일 적용가 (타임세일 적용 시) */}
+                          {isSaleEffective && (
+                            <div className="w-full flex flex-col gap-2 py-1">
+                              <div className="flex items-center justify-between w-full text-xs">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-neutral-700 whitespace-nowrap">타임세일 적용가</span>
+                                  <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 whitespace-nowrap">
+                                    {timeSaleRateNum}% OFF
+                                  </span>
+                                </div>
+                                <span className="font-bold text-neutral-900 font-mono whitespace-nowrap">
+                                  {regularTimeSalePrice.toLocaleString("ko-KR")}원
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 간단 설명 */}
+                          {displayDescription && (
+                            <p className="text-xs text-neutral-600 leading-relaxed mt-1">
+                              {displayDescription}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* 4. Color / Product Cut Option Thumbnails (실제 쇼핑몰 스탠드얼론 컷 스타일) */}
+                        {effectiveColors.length > 0 && (
+                          <div className="flex flex-col items-start gap-2 mt-2">
+                            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-neutral-900">
+                              <span>{option1Name}</span>
+                            </div>
+                            <div className="flex flex-wrap items-center justify-start gap-3">
+                              {effectiveColors.map((color, idx) => {
+                                const isSelected = activeColor === color;
+                                const colorStr = String(color);
+                                const customImg = mergedColorImages[colorStr];
+                                const fallbackImg = candidateImages[idx] || candidateImages[0] || "/product_1.webp";
+                                const cutImgUrl = customImg || fallbackImg;
+
+                                return (
+                                  <button
+                                    key={`color-${colorStr}-${idx}`}
+                                    type="button"
+                                    onClick={() => setPreviewSelectedColor(colorStr)}
+                                    className="flex flex-col items-center gap-1.5 cursor-pointer group focus:outline-none select-none"
+                                    title={colorStr}
+                                  >
+                                    <span
+                                      className={`text-[11px] uppercase tracking-wider text-center max-w-[60px] truncate transition-colors ${
+                                        isSelected ? "font-black text-neutral-950" : "font-bold text-neutral-600 group-hover:text-neutral-900"
+                                      }`}
+                                    >
+                                      {colorStr}
+                                    </span>
+                                    <div
+                                      className={`relative w-14 h-14 rounded-xl overflow-hidden transition-all p-0.5 bg-white shrink-0 ${
+                                        isSelected ? "ring-2 ring-neutral-950 shadow-sm" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
+                                      }`}
+                                    >
+                                      <div className="w-full h-full rounded-[10px] overflow-hidden bg-neutral-100 relative">
+                                        <img src={cutImgUrl} alt={colorStr} className="w-full h-full object-cover" />
+                                        {isSelected && (
+                                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                            <Check className="w-4 h-4 text-white stroke-[3] drop-shadow-sm" />
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 5. Size Options (실제 쇼핑몰과 100% 동일한 직사각형 rounded-sm 칩 스타일) */}
+                        {effectiveSizes.length > 0 && (
+                          <div className="flex flex-col gap-2 mt-2">
+                            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-neutral-900">
+                              <span>{option2Name}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {effectiveSizes.map((sz) => {
+                                const sizeStr = String(sz);
+                                const isSelected = activeSize === sizeStr;
+
+                                return (
+                                  <button
+                                    key={sizeStr}
+                                    type="button"
+                                    onClick={() => setPreviewSelectedSize(sizeStr)}
+                                    className={`min-w-[2.5rem] h-9 px-3 flex items-center justify-center border text-xs font-semibold transition-all uppercase tracking-wider cursor-pointer select-none rounded-sm ${
+                                      isSelected
+                                        ? "border-neutral-950 text-neutral-950 border-[1.5px] font-extrabold bg-neutral-100 shadow-2xs"
+                                        : "border-neutral-300 text-neutral-700 hover:border-neutral-950 bg-white"
+                                    }`}
+                                  >
+                                    {sizeStr}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 6. 총 상품 금액 (실제 쇼핑몰과 100% 동일) */}
+                        <div className="flex items-end justify-between w-full pt-5 pb-3 border-t border-neutral-200 mt-4">
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-extrabold text-neutral-900 tracking-tight">총 상품 금액</span>
+                              <span className="text-[11px] text-neutral-500 font-semibold bg-neutral-100 px-1.5 py-0.5 rounded">
+                                총 1개
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-black text-neutral-950 tracking-tight font-mono">
+                              {effectivePrice > 0 ? (
+                                `${effectivePrice.toLocaleString("ko-KR")}원`
+                              ) : (
+                                <span className="text-neutral-300">0원</span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 7. Bottom Action Row: 수량 조절기 + 장바구니 아이콘 버튼 + 구매하기 버튼 (실제 쇼핑몰과 100% 동일) */}
+                        <div id="product-header-action-row" className="flex items-center gap-3 mt-1">
+                          {/* 수량 조절기 */}
+                          <div className="flex items-center border border-neutral-900 px-3.5 py-2.5 h-[48px] min-w-[100px] justify-between text-neutral-900 bg-white shrink-0">
+                            <button type="button" onClick={(e) => e.preventDefault()} className="text-base leading-none cursor-default select-none">
+                              -
+                            </button>
+                            <span className="text-xs font-medium select-none">1</span>
+                            <button type="button" onClick={(e) => e.preventDefault()} className="text-base leading-none cursor-default select-none">
+                              +
+                            </button>
+                          </div>
+
+                          {/* 장바구니 아이콘 버튼 */}
+                          <button
+                            type="button"
+                            onClick={(e) => e.preventDefault()}
+                            className="w-[48px] h-[48px] border border-neutral-900 bg-white hover:bg-neutral-100 text-neutral-900 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                            title="장바구니 담기"
+                          >
+                            <ShoppingBag className="w-5 h-5 stroke-[1.8]" />
+                          </button>
+
+                          {/* 구매하기 버튼 */}
+                          <button
+                            type="button"
+                            onClick={(e) => e.preventDefault()}
+                            disabled={availableForSale === false}
+                            className="flex-1 bg-black hover:bg-neutral-800 text-white font-normal text-xs tracking-widest h-[48px] transition-colors uppercase disabled:bg-neutral-300 disabled:text-neutral-500 cursor-pointer flex items-center justify-center"
+                          >
+                            {isScheduledRelease ? "오픈 예정" : availableForSale === false ? "품절" : "BUY NOW"}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 3. Mobile Sliding Tabs Menu (ProductDetailAccordions 모바일 가로 탭 바 동일 구현) */}
+                      <div className="mt-6 border-t border-neutral-200">
+                        {/* Horizontal Sliding Tab Bar with reviews tooltip */}
+                        <div className="w-full border-b border-neutral-200 bg-white sticky top-0 z-20 overflow-x-auto no-scrollbar scrollbar-none px-2 pt-7 pb-1">
+                          <div className="flex items-center gap-1 whitespace-nowrap">
+                            {mobileTabs.map((tab) => {
+                              const isActive = previewActiveTab === tab.id;
+                              return (
+                                <button
+                                  key={tab.id}
+                                  type="button"
+                                  onClick={() => setPreviewActiveTab(tab.id)}
+                                  className={`relative px-3 py-2 text-xs font-bold transition-all rounded-lg cursor-pointer whitespace-nowrap select-none ${
+                                    isActive
+                                      ? "text-neutral-950 font-black bg-neutral-100"
+                                      : "text-neutral-400 hover:text-neutral-900"
+                                  }`}
+                                >
+                                  {/* 말풍선 뱃지 (고객후기 탭 위) */}
+                                  {tab.id === "reviews" && (
+                                    <div className="absolute -top-6 left-0 z-30 pointer-events-none select-none">
+                                      <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-neutral-900 text-white text-[9px] font-bold rounded shadow-xs whitespace-nowrap">
+                                        <span className="text-amber-400 text-[10px]">✨</span>
+                                        최대 50,000원 혜택
+                                      </div>
+                                    </div>
+                                  )}
+                                  <span>{tab.label}</span>
+                                  {isActive && (
+                                    <span className="absolute bottom-0 inset-x-2 h-0.5 bg-neutral-950 rounded-full" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Active Tab Content Display Area */}
+                        <div className="p-4 bg-white min-h-[220px]">
+                          {/* TAB 0: 고객 후기 (Reviews - 실제 등록된 리뷰만 노출) */}
+                          {previewActiveTab === "reviews" && (
+                            <div className="space-y-4 animate-in fade-in duration-150">
+                              <ProductReviews
+                                productId={initialProduct?.id || "preview"}
+                                productTitle={cleanTitle || "상품"}
+                                hideTopBorder={true}
+                              />
+                            </div>
+                          )}
+
+                          {/* TAB 1: 제품 상세 사진 (Product Detail Photos) */}
+                          {previewActiveTab === "details" && (() => {
+                            const isBareDetail =
+                              displayDetailDescription.trim().startsWith("data:image/") ||
+                              /^https?:\/\/[^\s]+?\.(jpg|jpeg|png|webp|gif|avif)($|\?)/i.test(displayDetailDescription.trim()) ||
+                              /^\/[^\s]+?\.(jpg|jpeg|png|webp|gif|avif)($|\?)/i.test(displayDetailDescription.trim());
+                            const finalPreviewHtml = isBareDetail
+                              ? `<img src="${displayDetailDescription.trim()}" alt="상세 사진" class="w-full h-auto rounded-2xl my-3 block object-contain" />`
+                              : displayDetailDescription;
+
+                            return (
+                              <div className="space-y-4 animate-in fade-in duration-150">
+                                {displayDetailDescription ? (
+                                  <div
+                                    className="text-xs text-neutral-800 leading-relaxed [&_img]:w-full [&_img]:h-auto [&_img]:block [&_img]:object-contain [&_img]:rounded-2xl [&_img]:my-3 space-y-3"
+                                    dangerouslySetInnerHTML={{ __html: finalPreviewHtml }}
+                                  />
+                                ) : (
+                                  <div className="py-8" />
+                                )}
+                              </div>
+                            );
+                          })()}
+
+                          {/* TAB 2: 원단 정보 (Fabric Details) */}
+                          {previewActiveTab === "fabric" && (
+                            <div className="space-y-3.5 animate-in fade-in duration-150">
+                              {showFabricInfo ? (
+                                <>
+                                  {displayFabricComposition && (
+                                    <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-200/80">
+                                      <span className="text-[10px] font-bold text-neutral-400 block mb-0.5">
+                                        {formTitles.fabricComposition}
+                                      </span>
+                                      <p className="font-black text-xs text-neutral-950">
+                                        {displayFabricComposition}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div className="bg-neutral-50 p-2 rounded-xl border border-neutral-200/60">
+                                      <span className="text-neutral-400 block text-[10px]">신축성</span>
+                                      <span className="font-bold text-neutral-900">{elasticity}</span>
+                                    </div>
+                                    <div className="bg-neutral-50 p-2 rounded-xl border border-neutral-200/60">
+                                      <span className="text-neutral-400 block text-[10px]">비침</span>
+                                      <span className="font-bold text-neutral-900">{sheerness}</span>
+                                    </div>
+                                    <div className="bg-neutral-50 p-2 rounded-xl border border-neutral-200/60">
+                                      <span className="text-neutral-400 block text-[10px]">두께감</span>
+                                      <span className="font-bold text-neutral-900">{thickness}</span>
+                                    </div>
+                                    <div className="bg-neutral-50 p-2 rounded-xl border border-neutral-200/60">
+                                      <span className="text-neutral-400 block text-[10px]">안감</span>
+                                      <span className="font-bold text-neutral-900">{lining}</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="text-[11px] text-neutral-500 bg-neutral-50 p-2.5 rounded-xl border border-neutral-200/60 leading-relaxed">
+                                    • 권장 세탁 방법: 드라이클리닝 권장 / 찬물 미온수 단독 손세탁 (건조기 사용 금지)
+                                  </div>
+
+                                  {displayFabricImage && (
+                                    <div className="pt-1">
+                                      <span className="text-[10px] font-bold text-neutral-400 block mb-1.5">
+                                        🔍 {formTitles.fabricImage}
+                                      </span>
+                                      <div className="rounded-2xl overflow-hidden border border-neutral-200 aspect-[16/9] max-h-36">
+                                        <img
+                                          src={displayFabricImage}
+                                          alt="원단 실물 텍스처"
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              ) : null}
+                            </div>
+                          )}
+
+                          {/* TAB 3: 사이즈 가이드 (Size Guide) */}
+                          {previewActiveTab === "guide" && (
+                            <div className="space-y-3 animate-in fade-in duration-150">
+                              {showSizeGuide ? (
+                                effectiveSizes.length > 0 ? (
+                                  <>
+                                    <div className="overflow-x-auto rounded-xl border border-neutral-200">
+                                      <table className="w-full text-center text-[10px]">
+                                        <thead>
+                                          <tr className="bg-neutral-100 border-b border-neutral-200 font-bold text-neutral-700">
+                                            <th className="py-2 px-2.5 text-left">부위명 (cm)</th>
+                                            {effectiveSizes.map((s) => (
+                                              <th key={s} className="py-2 px-2 font-black">{s}</th>
+                                            ))}
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-neutral-100 font-mono">
+                                          {sizeMeasurements.map((m, idx) => (
+                                            <tr key={idx}>
+                                              <td className="py-2 px-2.5 text-left font-sans font-bold text-neutral-800">{m.name}</td>
+                                              {effectiveSizes.map((s) => (
+                                                <td key={s} className="py-2 px-2 text-neutral-700">
+                                                  {m.values[s] || "-"}
+                                                </td>
+                                              ))}
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                    <div className="text-[10px] text-neutral-400 space-y-0.5 leading-relaxed pt-1">
+                                      <p>- 측정수치는 cm를 나타냅니다.</p>
+                                      <p>- 측정 위치에 따라 1~1.5cm 정도의 차이가 생길 수 있습니다.</p>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="py-8" />
+                                )
+                              ) : null}
+                            </div>
+                          )}
+
+                          {/* TAB 4: 배송 및 반품 (Shipping & Returns) */}
+                          {previewActiveTab === "care" && (
+                            <div className="space-y-3 text-xs text-neutral-600 leading-relaxed animate-in fade-in duration-150">
+                              <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/80 space-y-1.5">
+                                <span className="font-black text-neutral-900 block text-xs">배송 안내</span>
+                                <p className="text-[11px] text-neutral-500 leading-normal">
+                                  • 평일 오후 2시 이전 결제 완료 건은 당일 출고됩니다 (CJ대한통운).<br />
+                                  • 기본 배송료는 3,000원이며, 100,000원 이상 구매 시 무료 배송됩니다.
+                                </p>
+                              </div>
+                              <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200/80 space-y-1.5">
+                                <span className="font-black text-neutral-900 block text-xs">교환 및 반품 안내</span>
+                                <p className="text-[11px] text-neutral-500 leading-normal">
+                                  • 상품 수령 후 7일 이내에 고객센터 또는 마이페이지를 통해 접수 가능합니다.<br />
+                                  • 착용 흔적, 향수/화장품 오염, 택 훼손 시 반품이 불가합니다.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 4. Mobile Store Footer (실제 쇼핑몰 푸터) */}
+                      <div className="px-4 py-8 border-t border-neutral-200 bg-neutral-100 text-[10px] text-neutral-400 space-y-1.5 select-none text-center mt-6">
+                        <span className="font-serif tracking-widest text-xs font-black text-neutral-800 block">CHOICOMMA</span>
+                        <p>고객센터: 1588-0000 | 월-금 10:00 - 17:00</p>
+                        <p>© CHOICOMMA ALL RIGHTS RESERVED.</p>
+                      </div>
+                    </div>
+
+                    {/* Phone Home Indicator Bar */}
+                    <div className="py-1.5 flex justify-center pointer-events-none bg-white border-t border-neutral-100">
+                      <div className="w-32 h-1 bg-neutral-400 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          );
+        })()}
       </div>
     </div>
+
+    {/* 옵션명 수정 (상품 등록 및 수정 항목 제목 수정 팝업 모달) */}
+    {isOptionNameModalOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+        <div
+          className="bg-white rounded-3xl shadow-2xl border border-neutral-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 bg-neutral-50/80 shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-neutral-900 text-white flex items-center justify-center shadow-xs">
+                <Sliders className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-neutral-900">옵션명(항목 제목) 수정</h4>
+                <p className="text-[11px] text-neutral-500 font-medium">상품 등록 및 수정 화면에 포함된 모든 섹션과 항목의 제목들을 수정합니다</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsOptionNameModalOpen(false)}
+              className="p-1.5 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-200/50 rounded-xl transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Sub Navigation Tabs */}
+          <div className="flex items-center gap-2 px-6 pt-3 pb-2 border-b border-neutral-100 bg-white shrink-0">
+            {[
+              { id: "step1", label: "STEP 1: 기본 정보" },
+              { id: "step2", label: "STEP 2: 옵션 & 원단 / 사이즈" },
+              { id: "step3", label: "STEP 3: 프로모션 & 할인" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTitleTab(tab.id as any)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                  activeTitleTab === tab.id
+                    ? "bg-neutral-900 text-white shadow-xs"
+                    : "bg-neutral-100 text-neutral-500 hover:text-neutral-900"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Form Fields */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {activeTitleTab === "step1" && (
+              <div className="space-y-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[
+                    { key: "productImages", label: "제품 이미지 등록 제목", defaultVal: DEFAULT_FORM_TITLES.productImages },
+                    { key: "price", label: "판매가 항목 제목", defaultVal: DEFAULT_FORM_TITLES.price },
+                    { key: "variantCutImages", label: "옵션별 제품컷 사진 등록 제목", defaultVal: DEFAULT_FORM_TITLES.variantCutImages },
+                    { key: "productNo", label: "상품 번호 항목 제목", defaultVal: DEFAULT_FORM_TITLES.productNo },
+                    { key: "title", label: "상품명 항목 제목", defaultVal: DEFAULT_FORM_TITLES.title },
+                    { key: "description", label: "간단 설명 항목 제목", defaultVal: DEFAULT_FORM_TITLES.description },
+                    { key: "detailImages", label: "상세 사진 등록 항목 제목", defaultVal: DEFAULT_FORM_TITLES.detailImages },
+                    { key: "previewScreen", label: "상세페이지 미리보기 화면 제목", defaultVal: DEFAULT_FORM_TITLES.previewScreen },
+                    { key: "categories", label: "카테고리 선택 항목 제목", defaultVal: DEFAULT_FORM_TITLES.categories },
+                    { key: "mainFeatured", label: "메인 전시 여부 항목 제목", defaultVal: DEFAULT_FORM_TITLES.mainFeatured },
+                    { key: "saleStatus", label: "판매 상태 항목 제목", defaultVal: DEFAULT_FORM_TITLES.saleStatus },
+                    { key: "scheduledRelease", label: "판매 시작 시간 항목 제목", defaultVal: DEFAULT_FORM_TITLES.scheduledRelease },
+                  ].map((item) => (
+                    <div
+                      key={item.key}
+                      className="bg-neutral-50 border border-neutral-200 rounded-2xl p-3 space-y-1.5 focus-within:bg-white focus-within:border-neutral-900 transition-all shadow-2xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-neutral-800 flex items-center gap-1.5">
+                          <span>{item.label}</span>
+                          {tempTitles[item.key as keyof FormTitlesConfig] !== item.defaultVal && (
+                            <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded-md">수정됨</span>
+                          )}
+                        </label>
+                        {tempTitles[item.key as keyof FormTitlesConfig] !== item.defaultVal && (
+                          <button
+                            type="button"
+                            onClick={() => setTempTitles((prev) => ({ ...prev, [item.key]: item.defaultVal }))}
+                            className="text-[10px] font-bold text-neutral-500 hover:text-neutral-900 hover:underline cursor-pointer"
+                          >
+                            기본값
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={tempTitles[item.key as keyof FormTitlesConfig] || ""}
+                        onChange={(e) => setTempTitles((prev) => ({ ...prev, [item.key]: e.target.value }))}
+                        placeholder={item.defaultVal}
+                        className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-1.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTitleTab === "step2" && (
+              <div className="space-y-4">
+                <div className="bg-sky-50/70 border border-sky-200/80 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-sky-700" />
+                    <span className="text-xs font-black text-sky-950">주문 옵션명 (쇼핑몰 및 관리자 공통)</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* 1차 옵션명 */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-neutral-800 flex items-center gap-1.5">
+                        <span className="w-4 h-4 rounded-full bg-neutral-900 text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                        1차 옵션명 (기본: Color)
+                      </label>
+                      <input
+                        type="text"
+                        value={tempTitles.option1Name}
+                        onChange={(e) => setTempTitles((prev) => ({ ...prev, option1Name: e.target.value }))}
+                        placeholder="Color"
+                        className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                      <div className="flex items-center gap-1 pt-0.5">
+                        <span className="text-[9px] text-neutral-400">빠른선택:</span>
+                        {["Color", "색상", "컬러", "종류", "타입"].map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setTempTitles((prev) => ({ ...prev, option1Name: p }))}
+                            className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold cursor-pointer ${
+                              tempTitles.option1Name === p
+                                ? "bg-neutral-900 text-white border-neutral-900"
+                                : "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 2차 옵션명 */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-neutral-800 flex items-center gap-1.5">
+                        <span className="w-4 h-4 rounded-full bg-neutral-900 text-white text-[10px] flex items-center justify-center font-bold">2</span>
+                        2차 옵션명 (기본: Size)
+                      </label>
+                      <input
+                        type="text"
+                        value={tempTitles.option2Name}
+                        onChange={(e) => setTempTitles((prev) => ({ ...prev, option2Name: e.target.value }))}
+                        placeholder="Size"
+                        className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                      <div className="flex items-center gap-1 pt-0.5">
+                        <span className="text-[9px] text-neutral-400">빠른선택:</span>
+                        {["Size", "사이즈", "규격", "길이", "크기"].map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setTempTitles((prev) => ({ ...prev, option2Name: p }))}
+                            className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold cursor-pointer ${
+                              tempTitles.option2Name === p
+                                ? "bg-neutral-900 text-white border-neutral-900"
+                                : "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[
+                    { key: "productLabel", label: "상품 라벨 제목", defaultVal: DEFAULT_FORM_TITLES.productLabel },
+                    { key: "fabricInfo", label: "원단 정보 설정 제목", defaultVal: DEFAULT_FORM_TITLES.fabricInfo },
+                    { key: "fabricComposition", label: "소재 구성 제목", defaultVal: DEFAULT_FORM_TITLES.fabricComposition },
+                    { key: "fabricImage", label: "원단 이미지 항목 제목", defaultVal: DEFAULT_FORM_TITLES.fabricImage },
+                    { key: "sizeOptions", label: "사이즈 옵션 선택 제목", defaultVal: DEFAULT_FORM_TITLES.sizeOptions },
+                    { key: "sizeGuide", label: "사이즈 실측 가이드 제목", defaultVal: DEFAULT_FORM_TITLES.sizeGuide },
+                    { key: "sizeStock", label: "재고 수량 항목 제목", defaultVal: DEFAULT_FORM_TITLES.sizeStock },
+                  ].map((item) => (
+                    <div
+                      key={item.key}
+                      className="bg-neutral-50 border border-neutral-200 rounded-2xl p-3 space-y-1.5 focus-within:bg-white focus-within:border-neutral-900 transition-all shadow-2xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-neutral-800 flex items-center gap-1.5">
+                          <span>{item.label}</span>
+                          {tempTitles[item.key as keyof FormTitlesConfig] !== item.defaultVal && (
+                            <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded-md">수정됨</span>
+                          )}
+                        </label>
+                        {tempTitles[item.key as keyof FormTitlesConfig] !== item.defaultVal && (
+                          <button
+                            type="button"
+                            onClick={() => setTempTitles((prev) => ({ ...prev, [item.key]: item.defaultVal }))}
+                            className="text-[10px] font-bold text-neutral-500 hover:text-neutral-900 hover:underline cursor-pointer"
+                          >
+                            기본값
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={tempTitles[item.key as keyof FormTitlesConfig] || ""}
+                        onChange={(e) => setTempTitles((prev) => ({ ...prev, [item.key]: e.target.value }))}
+                        placeholder={item.defaultVal}
+                        className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-1.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTitleTab === "step3" && (
+              <div className="space-y-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[
+                    { key: "timeSale", label: "타임세일 설정 제목", defaultVal: DEFAULT_FORM_TITLES.timeSale },
+                    { key: "bulkDiscount", label: "대량 구매 수량 할인 제목", defaultVal: DEFAULT_FORM_TITLES.bulkDiscount },
+                  ].map((item) => (
+                    <div
+                      key={item.key}
+                      className="bg-neutral-50 border border-neutral-200 rounded-2xl p-3 space-y-1.5 focus-within:bg-white focus-within:border-neutral-900 transition-all shadow-2xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-neutral-800 flex items-center gap-1.5">
+                          <span>{item.label}</span>
+                          {tempTitles[item.key as keyof FormTitlesConfig] !== item.defaultVal && (
+                            <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded-md">수정됨</span>
+                          )}
+                        </label>
+                        {tempTitles[item.key as keyof FormTitlesConfig] !== item.defaultVal && (
+                          <button
+                            type="button"
+                            onClick={() => setTempTitles((prev) => ({ ...prev, [item.key]: item.defaultVal }))}
+                            className="text-[10px] font-bold text-neutral-500 hover:text-neutral-900 hover:underline cursor-pointer"
+                          >
+                            기본값
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={tempTitles[item.key as keyof FormTitlesConfig] || ""}
+                        onChange={(e) => setTempTitles((prev) => ({ ...prev, [item.key]: e.target.value }))}
+                        placeholder={item.defaultVal}
+                        className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-1.5 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-3.5 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("모든 항목의 제목을 기본 명칭으로 초기화하시겠습니까?")) {
+                  setTempTitles({ ...DEFAULT_FORM_TITLES });
+                }
+              }}
+              className="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200/80 transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">전체 기본값 초기화</span>
+              <span className="sm:hidden">초기화</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsOptionNameModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-neutral-600 hover:text-neutral-950 hover:bg-neutral-200/60 transition-colors cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const final1 = tempTitles.option1Name.trim() || "Color";
+                  const final2 = tempTitles.option2Name.trim() || "Size";
+                  const finalTitles = {
+                    ...tempTitles,
+                    option1Name: final1,
+                    option2Name: final2,
+                  };
+                  setFormTitles(finalTitles);
+                  setOption1Name(final1);
+                  setOption2Name(final2);
+                  try {
+                    localStorage.setItem("admin_form_titles", JSON.stringify(finalTitles));
+                  } catch (e) {}
+                  setIsOptionNameModalOpen(false);
+                  triggerToast("상품 등록 및 수정 항목 제목(옵션명)들이 성공적으로 적용되었습니다.");
+                }}
+                className="px-5 py-2 rounded-xl text-xs font-extrabold bg-neutral-950 hover:bg-black text-white shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>제목 변경사항 저장 및 적용</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
   );
 }

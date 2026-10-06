@@ -37,6 +37,8 @@ import {
   KeyRound,
   Eye,
   EyeOff,
+  Menu,
+  X,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -68,6 +70,7 @@ function MembershipContent() {
       : "dashboard"
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Update tab when URL param changes
   useEffect(() => {
@@ -1085,7 +1088,210 @@ function MembershipContent() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full min-w-0 px-4 md:px-6 lg:px-10 py-8">
+      <main className="flex-1 w-full min-w-0 px-4 md:px-6 lg:px-10 py-6 md:py-8">
+        {/* Mobile Header Bar with Logo and Right-aligned Hamburger Menu (md:hidden) */}
+        <div className="flex md:hidden items-center justify-between pb-4 mb-4 border-b border-neutral-200/80">
+          <Link href="/" className="flex items-center gap-1.5">
+            <span className="font-extrabold text-xl tracking-tighter text-black">choicomma</span>
+            <span className="text-[10px] tracking-widest text-neutral-400 font-bold uppercase mt-0.5">MY PAGE</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="마이페이지 메뉴 열기"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shadow-xs cursor-pointer"
+          >
+            <Menu className="w-4 h-4 text-white" />
+            <span className="text-xs font-bold">메뉴</span>
+          </button>
+        </div>
+
+        {/* Mobile Slide-over Menu Drawer */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-50 md:hidden animate-in fade-in duration-200">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            {/* Drawer Panel */}
+            <div className="fixed inset-y-0 right-0 max-w-xs w-full bg-[#FAF9F5] shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
+              {/* Drawer Header */}
+              <div className="p-5 border-b border-neutral-200 bg-white">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-extrabold text-base tracking-tight text-neutral-950">마이페이지 메뉴</span>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-1.5 rounded-xl hover:bg-neutral-100 text-neutral-500 hover:text-black transition-colors cursor-pointer"
+                    aria-label="메뉴 닫기"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* User Info inside Drawer */}
+                <div className="flex items-center gap-3 p-3 bg-neutral-100/90 rounded-2xl border border-neutral-200/80">
+                  <Avatar className="w-10 h-10 border border-neutral-300 shrink-0">
+                    <AvatarFallback className="bg-neutral-950 text-white font-extrabold text-xs">
+                      MY
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-extrabold text-neutral-950 truncate">{userName} 님</p>
+                      <span className="text-[10px] font-black px-1.5 py-0.5 rounded font-mono bg-neutral-950 text-white">
+                        {userGrade}
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-500 truncate">{userEmail}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation Links inside Drawer */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-1">
+                <button
+                  onClick={() => {
+                    setActiveTab("dashboard");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === "dashboard"
+                      ? "bg-neutral-950 text-white shadow-sm"
+                      : "text-neutral-700 hover:bg-neutral-200/70"
+                  }`}
+                >
+                  <Home className="h-4 w-4 shrink-0" />
+                  <span>대시보드 홈</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveTab("orders");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === "orders"
+                      ? "bg-neutral-950 text-white shadow-sm"
+                      : "text-neutral-700 hover:bg-neutral-200/70"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Package className="h-4 w-4 shrink-0" />
+                    <span>주문내역 / 배송조회</span>
+                  </div>
+                  <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-full ${
+                    activeTab === "orders" ? "bg-white text-neutral-950" : "bg-neutral-200 text-neutral-700"
+                  }`}>
+                    {userOrders.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveTab("coupons");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === "coupons"
+                      ? "bg-neutral-950 text-white shadow-sm"
+                      : "text-neutral-700 hover:bg-neutral-200/70"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Ticket className="h-4 w-4 shrink-0" />
+                    <span>사용가능 쿠폰함</span>
+                  </div>
+                  <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-full ${
+                    activeTab === "coupons" ? "bg-white text-neutral-950" : "bg-neutral-200 text-neutral-700"
+                  }`}>
+                    {couponsList.filter((c) => !c.isUsed).length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveTab("points");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === "points"
+                      ? "bg-neutral-950 text-white shadow-sm"
+                      : "text-neutral-700 hover:bg-neutral-200/70"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Gift className="h-4 w-4 shrink-0" />
+                    <span>보유 적립금 내역</span>
+                  </div>
+                  <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-full ${
+                    activeTab === "points" ? "bg-white text-neutral-950" : "bg-neutral-200 text-neutral-700"
+                  }`}>
+                    {userPoints.toLocaleString()} P
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveTab("profile");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === "profile"
+                      ? "bg-neutral-950 text-white shadow-sm"
+                      : "text-neutral-700 hover:bg-neutral-200/70"
+                  }`}
+                >
+                  <User2 className="h-4 w-4 shrink-0" />
+                  <span>회원 정보 관리</span>
+                </button>
+
+                <div className="pt-3 pb-2">
+                  <Separator className="bg-neutral-200" />
+                </div>
+
+                <Link
+                  href="/shop/timesale"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/70 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-4 w-4 text-amber-600" />
+                    <span>시크릿 타임세일 바로가기</span>
+                  </div>
+                  <span className="text-[10px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded">
+                    HOT
+                  </span>
+                </Link>
+
+                <Link
+                  href="/"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-bold text-neutral-600 hover:bg-neutral-200/70 transition-all"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>쇼핑몰 홈으로 이동</span>
+                </Link>
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="p-4 border-t border-neutral-200 bg-white">
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>로그아웃</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header bar */}
         <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-neutral-200">
           <div>
@@ -1102,8 +1308,8 @@ function MembershipContent() {
             </p>
           </div>
 
-          {/* Clean Quick Summary (No Card Borders) */}
-          <div className="flex items-center gap-4 text-xs">
+          {/* Clean Quick Summary (No Card Borders on Desktop) */}
+          <div className="hidden sm:flex items-center gap-4 text-xs">
             <button
               onClick={() => setActiveTab("coupons")}
               className="flex items-center gap-1.5 text-neutral-600 hover:text-neutral-950 transition-colors cursor-pointer"
@@ -1141,183 +1347,126 @@ function MembershipContent() {
 
         {/* Tab 1: DASHBOARD */}
         {activeTab === "dashboard" && (
-          <div className="space-y-8 animate-in fade-in duration-300">
-            {/* Quick 3-Card Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+            {/* Quick 3-Card Overview - 1 row on both mobile & desktop */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               <div
                 onClick={() => setActiveTab("orders")}
-                className="bg-white border border-neutral-200/80 hover:border-neutral-950 rounded-3xl p-6 shadow-xs transition-all cursor-pointer hover:shadow-md space-y-2"
+                className="bg-white border border-neutral-200/80 hover:border-neutral-950 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-xs transition-all cursor-pointer hover:shadow-md space-y-1 sm:space-y-2 flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-500">
-                  <span>최근 주문 / 배송</span>
-                  <Package className="w-4 h-4 text-neutral-900" />
+                <div className="flex items-center justify-between text-[11px] sm:text-xs font-bold text-neutral-500 gap-1">
+                  <span className="truncate">최근 주문/배송</span>
+                  <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-900 shrink-0" />
                 </div>
-                <p className="text-2xl font-black text-neutral-950">{userOrders.length} 건</p>
-                <p className="text-xs text-neutral-400">CJ대한통운 배송 실시간 추적 가능</p>
+                <p className="text-base sm:text-2xl font-black text-neutral-950 font-mono tracking-tight my-0.5 sm:my-1">
+                  {userOrders.length}<span className="text-xs sm:text-base font-bold ml-0.5">건</span>
+                </p>
+                <p className="text-[10px] sm:text-xs text-neutral-400 truncate">CJ대한통운 실시간 추적</p>
               </div>
 
               <div
                 onClick={() => setActiveTab("coupons")}
-                className="bg-white border border-neutral-200/80 hover:border-neutral-950 rounded-3xl p-6 shadow-xs transition-all cursor-pointer hover:shadow-md space-y-2"
+                className="bg-white border border-neutral-200/80 hover:border-neutral-950 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-xs transition-all cursor-pointer hover:shadow-md space-y-1 sm:space-y-2 flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-500">
-                  <span>사용 가능 쿠폰</span>
-                  <Ticket className="w-4 h-4 text-neutral-900" />
+                <div className="flex items-center justify-between text-[11px] sm:text-xs font-bold text-neutral-500 gap-1">
+                  <span className="truncate">사용가능 쿠폰</span>
+                  <Ticket className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-900 shrink-0" />
                 </div>
-                <p className="text-2xl font-black text-neutral-950">
-                  {couponsList.filter((c) => !c.isUsed).length} 장
+                <p className="text-base sm:text-2xl font-black text-neutral-950 font-mono tracking-tight my-0.5 sm:my-1">
+                  {couponsList.filter((c) => !c.isUsed).length}<span className="text-xs sm:text-base font-bold ml-0.5">장</span>
                 </p>
-                <p className="text-xs text-neutral-400">결제 시 쿠폰 코드 즉시 적용</p>
+                <p className="text-[10px] sm:text-xs text-neutral-400 truncate">주문 결제 시 즉시 할인</p>
               </div>
 
               <div
                 onClick={() => setActiveTab("points")}
-                className="bg-white border border-neutral-200/80 hover:border-neutral-950 rounded-3xl p-6 shadow-xs transition-all cursor-pointer hover:shadow-md space-y-2"
+                className="bg-white border border-neutral-200/80 hover:border-neutral-950 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-xs transition-all cursor-pointer hover:shadow-md space-y-1 sm:space-y-2 flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-500">
-                  <span>보유 적립금 (Point)</span>
-                  <Gift className="w-4 h-4 text-neutral-900" />
+                <div className="flex items-center justify-between text-[11px] sm:text-xs font-bold text-neutral-500 gap-1">
+                  <span className="truncate">보유 적립금</span>
+                  <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-900 shrink-0" />
                 </div>
-                <p className="text-2xl font-black text-neutral-950">
-                  {userPoints.toLocaleString()} P
+                <p className="text-base sm:text-2xl font-black text-neutral-950 font-mono tracking-tight truncate my-0.5 sm:my-1">
+                  {userPoints.toLocaleString()}<span className="text-xs sm:text-base font-bold ml-0.5">P</span>
                 </p>
-                <p className="text-xs text-neutral-400">주문서 작성 시 100원 단위 사용</p>
+                <p className="text-[10px] sm:text-xs text-neutral-400 truncate">100원 단위 현금 사용</p>
               </div>
             </div>
 
             {/* Membership Popup Banner (Fixed directly above Secret Time Sale) */}
             <MembershipPopupBanner />
 
-            {/* Secret Time Sale Section in Dashboard Home */}
+            {/* Secret Time Sale Section in Dashboard Home - Banner Only, Links to /shop/timesale */}
             {applicableSecretSales.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {applicableSecretSales.map((sale) => {
                   const timer = getRemainingTime(sale);
-                  const saleProducts = (sale.productIds && sale.productIds.length > 0)
-                    ? allAvailableProducts.filter((p) => sale.productIds.includes(p.id))
-                    : allAvailableProducts.slice(0, 3);
-
                   return (
-                    <div
+                    <Link
                       key={sale.id}
-                      className="bg-transparent space-y-6"
+                      href="/shop/timesale"
+                      className="group relative overflow-hidden rounded-3xl bg-neutral-950 text-white p-5 sm:p-7 border border-neutral-800 hover:border-amber-400/80 transition-all duration-300 hover:shadow-xl block cursor-pointer"
                     >
-                      {/* Sale Header */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200/80">
-                        <div className="space-y-2">
+                      {/* Background luxury gradient glow */}
+                      <div className="absolute -right-8 -top-8 w-48 h-48 bg-amber-500/15 rounded-full blur-3xl pointer-events-none group-hover:bg-amber-500/25 transition-all duration-500" />
+                      <div className="absolute right-10 bottom-0 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                        {/* Left Column: Badges & Titles */}
+                        <div className="space-y-2.5 max-w-xl">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-300/80">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-400/40">
                               SECRET PRIVATE SALE
                             </span>
-                            <span className="text-[10px] font-extrabold text-emerald-600 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                            <span className="text-[10px] font-extrabold text-emerald-400 flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                               실시간 단독 특가 진행중
                             </span>
-                          </div>
-                          <h3 className="text-xl sm:text-2xl font-black text-neutral-950 tracking-tight">
-                            {sale.title}
-                          </h3>
-                          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-50/90 border border-amber-200/80 text-xs sm:text-[13px] font-bold text-neutral-900 shadow-2xs">
-                            <span className="text-amber-600 text-xs font-black">✦</span>
-                            <span>
-                              <strong className="font-extrabold text-neutral-950 underline decoration-amber-400 decoration-2 underline-offset-2">
-                                {userName} 회원님
-                              </strong>
-                              만을 위해 극비리로 오픈된 단독 시크릿 특가전 상품입니다.
+                            <span className="text-[10px] font-bold text-neutral-400">
+                              {userGrade} 전용
                             </span>
                           </div>
-                        </div>
 
-                        {timer && (
-                          <div className="flex items-center gap-2.5 bg-white text-neutral-950 px-4 py-2.5 rounded-2xl border border-neutral-200/80 shadow-xs shrink-0 self-start sm:self-center">
-                            <Clock className="w-4 h-4 text-amber-500 animate-spin [animation-duration:8s]" />
-                            <div className="text-left">
-                              <span className="text-[10px] font-bold text-neutral-500 block leading-none">남은 세일 시간</span>
-                              <span className="text-base font-black font-mono tracking-wider text-neutral-950">
-                                {timer.text}
-                              </span>
-                            </div>
+                          <div className="flex items-baseline gap-3 flex-wrap">
+                            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight group-hover:text-amber-300 transition-colors">
+                              {sale.title}
+                            </h3>
+                            <span className="text-sm sm:text-base font-black text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-lg border border-amber-400/20 font-mono">
+                              최대 {sale.discountRate}% OFF
+                            </span>
                           </div>
-                        )}
-                      </div>
 
-                      {/* Designated Products Grid */}
-                      {saleProducts.length === 0 ? (
-                        <div className="p-8 text-center bg-white rounded-2xl border border-neutral-200/80 text-xs font-bold text-neutral-500 shadow-xs">
-                          지정된 세일 상품을 준비 중입니다.
+                          <p className="text-xs text-neutral-300 font-medium leading-relaxed">
+                            <strong className="text-amber-300 font-bold">{userName} 회원님</strong>만을 위해 오픈된 비공개 단독 게릴라 특가전입니다. 클릭하여 전용 세일 상품 리스트를 확인하세요.
+                          </p>
                         </div>
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                          {saleProducts.map((prod) => {
-                            const originalPrice = parseFloat(prod.priceRange?.minVariantPrice?.amount || prod.price || "0");
-                            const discountedPrice = Math.round(originalPrice * (1 - sale.discountRate / 100));
 
-                            return (
-                              <div
-                                key={prod.id}
-                                className="group bg-white text-neutral-950 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col justify-between border border-neutral-200/80 hover:border-neutral-950"
-                              >
-                                <div>
-                                  {/* Product Image */}
-                                  <div className="relative aspect-square w-full overflow-hidden bg-neutral-100">
-                                    <img
-                                      src={prod.featuredImage?.url || prod.images?.[0]?.url || prod.image || "/placeholder.png"}
-                                      alt={prod.title}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                    <div className="absolute top-2.5 left-2.5 bg-neutral-950 text-amber-400 text-[10px] font-black px-2 py-0.5 rounded-md shadow-md border border-neutral-800">
-                                      {sale.discountRate}% OFF
-                                    </div>
-                                  </div>
-
-                                  {/* Product Info */}
-                                  <div className="p-4 space-y-2">
-                                    <h5 className="font-extrabold text-sm text-neutral-950 line-clamp-1 group-hover:text-black">
-                                      {prod.title}
-                                    </h5>
-
-                                    <div className="space-y-0.5">
-                                      <p className="text-[11px] text-neutral-400 line-through font-mono">
-                                        {formatPrice(originalPrice)}
-                                      </p>
-                                      <p className="text-base font-black text-neutral-950 font-mono flex items-center gap-1.5">
-                                        <span>{formatPrice(discountedPrice)}</span>
-                                        <span className="text-xs font-extrabold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">
-                                          {sale.discountRate}%
-                                        </span>
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="p-4 pt-0 grid grid-cols-2 gap-2">
-                                  <Link
-                                    href={`/product/${prod.handle || prod.id}`}
-                                    className="py-2.5 px-3 rounded-xl border border-neutral-300 hover:border-neutral-950 text-neutral-900 text-xs font-bold text-center transition-colors"
-                                  >
-                                    상세보기
-                                  </Link>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleAddProductToCart(prod, discountedPrice)}
-                                    className="py-2.5 px-3 rounded-xl bg-neutral-950 hover:bg-black text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
-                                  >
-                                    <ShoppingBag className="w-3.5 h-3.5" />
-                                    담기
-                                  </button>
-                                </div>
+                        {/* Right Column: Timer & CTA Button */}
+                        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-3 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-neutral-800/80">
+                          {timer && (
+                            <div className="flex items-center gap-2 bg-neutral-900/90 text-white px-3.5 py-2 rounded-2xl border border-neutral-800 shadow-inner">
+                              <Clock className="w-4 h-4 text-amber-400 animate-spin [animation-duration:8s]" />
+                              <div className="text-left">
+                                <span className="text-[9px] font-bold text-neutral-400 block leading-none">남은 세일 시간</span>
+                                <span className="text-xs sm:text-sm font-black font-mono tracking-wider text-amber-400">
+                                  {timer.text}
+                                </span>
                               </div>
-                            );
-                          })}
+                            </div>
+                          )}
+
+                          <div className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-amber-400 text-neutral-950 font-extrabold text-xs shadow-md group-hover:bg-amber-300 group-hover:translate-x-0.5 transition-all">
+                            <span>타임세일 상품 보러가기</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    </Link>
                   );
                 })}
               </div>
             ) : (
-              /* When no secret sale currently active: Clean transparent card */
+              /* When no secret sale currently active: Clean banner linking to time sale page */
               <div className="relative bg-transparent border border-neutral-200/80 rounded-3xl p-6 sm:p-7 transition-all duration-300 overflow-hidden text-neutral-950">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
                   <div className="flex items-start sm:items-center gap-4">
@@ -1342,8 +1491,15 @@ function MembershipContent() {
                     </div>
                   </div>
 
-                  {isAdmin && (
-                    <div className="self-end sm:self-center shrink-0">
+                  <div className="self-end sm:self-center shrink-0 flex items-center gap-2">
+                    <Link
+                      href="/shop/timesale"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold transition-all border border-neutral-300"
+                    >
+                      <span>타임세일 메뉴 보기</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                    {isAdmin && (
                       <Link
                         href="/admin"
                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold transition-all border border-neutral-900 cursor-pointer"
@@ -1351,8 +1507,8 @@ function MembershipContent() {
                         <span>⚙️ 관리자에서 타임세일 개설</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             )}

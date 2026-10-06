@@ -847,6 +847,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
     let successCount = 0;
     let newPrintData = [];
     let currentList = [...shipmentsList];
+    const failureReasons: string[] = [];
 
     try {
       const origin = window.location.origin;
@@ -889,7 +890,9 @@ export function useShipments(triggerToast: (msg: string) => void) {
                   };
                   newPrintData.push(printItem);
                 } else {
-                  console.error(`송장 발급 실패 [${targetOrder.id} 박스 ${pIndex}]:`, data?.error || data);
+                  const errMsg = data?.error || JSON.stringify(data);
+                  console.error(`송장 발급 실패 [${targetOrder.id} 박스 ${pIndex}]:`, errMsg);
+                  failureReasons.push(`[${targetOrder.orderId} 박스 ${pIndex}] ${errMsg}`);
                 }
               }
             }
@@ -947,11 +950,14 @@ export function useShipments(triggerToast: (msg: string) => void) {
               
               triggerToast(`발급 진행 중... (${successCount}/${targetOrders.length})`);
             } else {
-              console.error(`송장 발급 실패 [${targetOrder.id}]:`, data?.error || data);
+              const errMsg = data?.error || JSON.stringify(data);
+              console.error(`송장 발급 실패 [${targetOrder.id}]:`, errMsg);
+              failureReasons.push(`[${targetOrder.orderId}] ${errMsg}`);
             }
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error(`네트워크 오류 [${targetOrder.id}]:`, err);
+          failureReasons.push(`[${targetOrder.orderId}] 통신 오류: ${err?.message || "네트워크 실패"}`);
         }
       }
       
@@ -977,7 +983,17 @@ export function useShipments(triggerToast: (msg: string) => void) {
           setCjPrintData(newPrintData);
         }
       } else {
-        alert("성공적으로 발급된 송장이 없습니다.");
+        const uniqueReasons = Array.from(new Set(failureReasons)).slice(0, 3).join("\n• ");
+        alert(
+          `🚨 [CJ대한통운 송장 발급 실패]\n\n` +
+          `가짜 데이터 생성을 방지하기 위해 실제 송장번호 발급이 성공하지 않은 건은 등록되지 않습니다.\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `[실패 사유]\n• ${uniqueReasons || "CJ대한통운 API 서버 응답 없음"}\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `[대처 방법]\n` +
+          `1. CJ API 설정(.env.local의 CJ_API_KEY, CJ_CUST_ID, CJ_BIZ_REG_NUM)을 확인하세요.\n` +
+          `2. 배송지 주소/연락처 오류 여부 또는 CJ 서버 연결 상태를 확인하세요.`
+        );
       }
 
     } catch (err: any) {

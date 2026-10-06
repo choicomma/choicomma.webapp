@@ -26,6 +26,35 @@ html, body, button, input, select, textarea {
   font-family: var(--font-pretendard), "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", sans-serif !important;
 }
 
+/* ── Universal Korean Word-Break & Vertical Text Array Prevention (글씨 세로 배열 현상 원천 방지) ── */
+html, body, div, span, p, h1, h2, h3, h4, h5, h6, a, button, label, input, textarea, th, td, li {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* ── Desktop Responsive Fluid Typography (모바일 전환 직전까지 화면 축소 시 글씨 크기 무조건 비례 축소) ── */
+@media (min-width: 768px) and (max-width: 1440px) {
+  html {
+    /* 1440px(16px / 100%)에서 768px(10.5px / 65.6%)까지 화면 너비 축소에 맞춰 무조건 선형 비례 축소 */
+    font-size: clamp(10.5px, calc(4.2px + 0.82vw), 16px) !important;
+  }
+
+  /* 고정 px 단위(text-[...px]) 클래스도 화면 축소 시 동일하게 비례 축소 */
+  .text-\[9px\] { font-size: clamp(6.5px, 0.65vw, 9px) !important; }
+  .text-\[10px\] { font-size: clamp(7px, 0.72vw, 10px) !important; }
+  .text-\[10\.5px\] { font-size: clamp(7.5px, 0.76vw, 10.5px) !important; }
+  .text-\[11px\] { font-size: clamp(8px, 0.80vw, 11px) !important; }
+  .text-\[12px\] { font-size: clamp(8.5px, 0.87vw, 12px) !important; }
+  .text-\[13px\] { font-size: clamp(9px, 0.94vw, 13px) !important; }
+}
+
+@media (max-width: 767px) {
+  /* 768px 미만 모바일 버전으로 전환된 후에는 모바일 기본 폰트 크기(15px)로 가독성 보장 */
+  html {
+    font-size: 15px;
+  }
+}
+
 body {
   @apply bg-background text-foreground;
 }

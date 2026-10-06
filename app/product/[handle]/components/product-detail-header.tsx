@@ -168,6 +168,7 @@ export function ProductDetailHeader({
   const [hasSecretTimeSale, setHasSecretTimeSale] = useState<boolean>(false);
   const [secretTimeSalePrice, setSecretTimeSalePrice] = useState<number>(0);
   const [secretTimeSaleRate, setSecretTimeSaleRate] = useState<number>(0);
+  const [unitSalePrice, setUnitSalePrice] = useState<number>(0);
   const [finalAllDiscountPrice, setFinalAllDiscountPrice] = useState<number>(0);
   const [pointsDiscountAmount, setPointsDiscountAmount] = useState<number>(0);
 
@@ -441,11 +442,12 @@ export function ProductDetailHeader({
       } catch (e) {}
       setPointsDiscountAmount(pointsD);
 
-      // 6. Final Combined Price: 세일 + 쿠폰 + 적립금 적용가
+      // 6. Final Combined Price: 세일 + 쿠폰 + 적립금 적용가 (1개 기준)
       const finalAllPrice = Math.max(0, afterCoupon - pointsD);
       setFinalAllDiscountPrice(finalAllPrice);
 
       setOriginalPriceNum(origPrice);
+      setUnitSalePrice(baseForBenefits);
       setDiscountedPriceNum(finalAllPrice);
 
       const currencyCode = activeProd.currencyCode || "KRW";
@@ -490,10 +492,13 @@ export function ProductDetailHeader({
         detail: {
           originalPrice: originalPriceNum,
           discountedPrice: discountedPriceNum,
+          unitSalePrice: unitSalePrice || originalPriceNum,
+          couponDiscountAmount: couponDiscountAmount,
+          pointsDiscountAmount: pointsDiscountAmount,
         },
       })
     );
-  }, [originalPriceNum, discountedPriceNum, onPriceChange]);
+  }, [originalPriceNum, discountedPriceNum, unitSalePrice, couponDiscountAmount, pointsDiscountAmount, onPriceChange]);
 
   useEffect(() => {
     const handleColorSelected = (e: any) => {
@@ -506,13 +511,26 @@ export function ProductDetailHeader({
         setSelectedSize(e.detail.size);
       }
     };
+    const handleQtySelected = (e: any) => {
+      if (typeof e.detail?.quantity === "number") {
+        setQuantity(e.detail.quantity);
+      }
+    };
     window.addEventListener("product_color_selected", handleColorSelected);
     window.addEventListener("product_size_selected", handleSizeSelected);
+    window.addEventListener("product_quantity_changed", handleQtySelected);
     return () => {
       window.removeEventListener("product_color_selected", handleColorSelected);
       window.removeEventListener("product_size_selected", handleSizeSelected);
+      window.removeEventListener("product_quantity_changed", handleQtySelected);
     };
   }, []);
+
+  const handleQuantityChange = (newQty: number) => {
+    const validQty = Math.max(1, newQty);
+    setQuantity(validQty);
+    window.dispatchEvent(new CustomEvent("product_quantity_changed", { detail: { quantity: validQty } }));
+  };
 
   useEffect(() => {
     if (!isTimeSaleItem || isSetProduct) return;
@@ -579,6 +597,17 @@ export function ProductDetailHeader({
       })
     : "";
 
+  // 수량에 따른 최종 가격 계산:
+  // 1) 세일(타임세일/시크릿타임세일 포함)은 제품마다(수량만큼) 적용!
+  // 2) 쿠폰과 적립금은 1주문당 1번만 사용 가능하므로 제품 1개에만 1회 적용 (추가 제품에는 미적용)!
+  const effectiveUnitPrice = unitSalePrice > 0 ? unitSalePrice : (discountedPriceNum || originalPriceNum);
+  const totalOriginalPrice = originalPriceNum * quantity;
+  const totalSaleBasePrice = effectiveUnitPrice * quantity;
+  const totalFinalBenefitPrice = Math.max(
+    0,
+    totalSaleBasePrice - couponDiscountAmount - pointsDiscountAmount
+  );
+
   const handleAddToCart = () => {
     if (!product.availableForSale || isScheduled) return;
     setIsAdding(true);
@@ -588,7 +617,7 @@ export function ProductDetailHeader({
       title: `${cleanProductTitle(product.title)} ${selectedColor ? `- ${selectedColor}` : ""} ${selectedSize ? `/ ${selectedSize}` : ""}`.trim(),
       availableForSale: true,
       selectedOptions: [],
-      price: { amount: discountedPriceNum.toString(), currencyCode: product.currencyCode || "KRW" }
+      price: { amount: effectiveUnitPrice.toString(), currencyCode: product.currencyCode || "KRW" }
     };
 
     if (selectedColor) variant.selectedOptions.push({ name: "Color", value: selectedColor });
@@ -614,7 +643,7 @@ export function ProductDetailHeader({
       quantity: quantity,
       cost: {
         totalAmount: {
-          amount: (discountedPriceNum * quantity).toString(),
+          amount: totalFinalBenefitPrice.toString(),
           currencyCode: product.currencyCode || "KRW",
         },
       },
@@ -727,10 +756,22 @@ export function ProductDetailHeader({
 
         {/* 2. 정상가 표시 및 하단 라인 추가 (볼드 해제) */}
         <div className="flex items-baseline justify-between w-full mt-2.5 mb-1">
-          <span className="text-xs sm:text-sm font-normal text-neutral-500">정상가</span>
-          <span className="text-xl sm:text-2xl font-normal text-neutral-800 tracking-tight font-mono">
-            {formatPrice(originalPriceNum.toString(), product.currencyCode || "KRW")}
-          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xs sm:text-sm font-normal text-neutral-500 whitespace-nowrap">정상가</span>
+            {quantity > 1 && (
+              <span className="text-[11px] text-neutral-400 font-medium whitespace-nowrap">({quantity}개)</span>
+            )}
+          </div>
+          <div className="flex items-baseline gap-2 shrink-0 whitespace-nowrap">
+            {quantity > 1 && (
+              <span className="text-xs text-neutral-400 font-normal whitespace-nowrap">
+                (개당 {formatPrice(originalPriceNum.toString(), product.currencyCode || "KRW")})
+              </span>
+            )}
+            <span className="text-xl sm:text-2xl font-normal text-neutral-800 tracking-tight font-mono whitespace-nowrap">
+              {formatPrice((originalPriceNum * quantity).toString(), product.currencyCode || "KRW")}
+            </span>
+          </div>
         </div>
 
         {/* 정상가 하단 구분 라인 */}
@@ -742,16 +783,26 @@ export function ProductDetailHeader({
           {hasRegularTimeSale && (
             <div className="flex items-center justify-between w-full text-xs sm:text-[13px]">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-neutral-700">타임세일 적용가</span>
+                <span className="font-bold text-neutral-700 whitespace-nowrap">타임세일 적용가</span>
+                {quantity > 1 && (
+                  <span className="text-[11px] text-neutral-500 font-medium whitespace-nowrap">({quantity}개)</span>
+                )}
                 {timeSaleDiscount > 0 && (
-                  <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80">
+                  <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 whitespace-nowrap">
                     {timeSaleDiscount}% OFF
                   </span>
                 )}
               </div>
-              <span className="font-bold text-neutral-900 font-mono">
-                {formatPrice(regularTimeSalePrice.toString(), product.currencyCode || "KRW")}
-              </span>
+              <div className="flex items-baseline gap-1.5 shrink-0 whitespace-nowrap">
+                {quantity > 1 && (
+                  <span className="text-[11px] text-neutral-400 font-normal whitespace-nowrap">
+                    (개당 {formatPrice(regularTimeSalePrice.toString(), product.currencyCode || "KRW")})
+                  </span>
+                )}
+                <span className="font-bold text-neutral-900 font-mono whitespace-nowrap">
+                  {formatPrice((regularTimeSalePrice * quantity).toString(), product.currencyCode || "KRW")}
+                </span>
+              </div>
             </div>
           )}
 
@@ -759,16 +810,26 @@ export function ProductDetailHeader({
           {hasSecretTimeSale && (
             <div className="flex items-center justify-between w-full text-xs sm:text-[13px]">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-neutral-700">시크릿 타임 세일 적용가</span>
+                <span className="font-bold text-neutral-700 whitespace-nowrap">시크릿 타임 세일 적용가</span>
+                {quantity > 1 && (
+                  <span className="text-[11px] text-neutral-500 font-medium whitespace-nowrap">({quantity}개)</span>
+                )}
                 {secretTimeSaleRate > 0 && (
-                  <span className="text-[10px] font-black text-neutral-900 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-300">
+                  <span className="text-[10px] font-black text-neutral-900 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-300 whitespace-nowrap">
                     VIP {secretTimeSaleRate}%
                   </span>
                 )}
               </div>
-              <span className="font-bold text-neutral-900 font-mono">
-                {formatPrice(secretTimeSalePrice.toString(), product.currencyCode || "KRW")}
-              </span>
+              <div className="flex items-baseline gap-1.5 shrink-0 whitespace-nowrap">
+                {quantity > 1 && (
+                  <span className="text-[11px] text-neutral-400 font-normal whitespace-nowrap">
+                    (개당 {formatPrice(secretTimeSalePrice.toString(), product.currencyCode || "KRW")})
+                  </span>
+                )}
+                <span className="font-bold text-neutral-900 font-mono whitespace-nowrap">
+                  {formatPrice((secretTimeSalePrice * quantity).toString(), product.currencyCode || "KRW")}
+                </span>
+              </div>
             </div>
           )}
 
@@ -777,19 +838,29 @@ export function ProductDetailHeader({
             "flex items-center justify-between w-full text-xs sm:text-[13px]",
             (hasRegularTimeSale || hasSecretTimeSale) && "pt-2 border-t border-dashed border-neutral-200/90"
           )}>
-            <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-neutral-950">세일+쿠폰+적립금 적용가</span>
-              <span className="text-[10px] font-extrabold text-neutral-700 bg-neutral-100 px-1.5 py-0.5 rounded">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-extrabold text-neutral-950 whitespace-nowrap">세일+쿠폰+적립금 적용가</span>
+              {quantity > 1 && (
+                <span className="text-[11px] text-neutral-600 font-medium whitespace-nowrap">({quantity}개)</span>
+              )}
+              <span className="text-[10px] font-extrabold text-neutral-700 bg-neutral-100 px-1.5 py-0.5 rounded whitespace-nowrap">
                 최대 혜택가
               </span>
+              {quantity > 1 && (couponDiscountAmount > 0 || pointsDiscountAmount > 0) && (
+                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 whitespace-nowrap">
+                  쿠폰·적립금 1회 적용
+                </span>
+              )}
             </div>
-            <span className="text-base sm:text-lg font-black text-neutral-950 tracking-tight font-mono">
-              {formatPrice(finalAllDiscountPrice.toString(), product.currencyCode || "KRW")}
-            </span>
+            <div className="flex items-baseline gap-1.5 shrink-0 whitespace-nowrap">
+              <span className="text-base sm:text-lg font-black text-neutral-950 tracking-tight font-mono whitespace-nowrap">
+                {formatPrice(totalFinalBenefitPrice.toString(), product.currencyCode || "KRW")}
+              </span>
+            </div>
           </div>
         </div>
 
-        {product.description && (
+        {product.description && (product as any).showDescription !== false && (
           typeof product.description === "string" && (product.description.includes("<img") || product.description.includes("<p>")) ? (
             <div
               className="text-xs text-neutral-600 leading-relaxed mt-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:my-2"
@@ -872,7 +943,7 @@ export function ProductDetailHeader({
       {sizes.length > 0 && (
         <div className="flex flex-col gap-2 mt-2">
           <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-neutral-900">
-            <span>{t.size}</span>
+            <span>{(product as any).optionNames?.size || (product as any).options?.[1]?.name || t.size}</span>
             {(() => {
               const comboKey = selectedColor ? `${selectedColor}-${selectedSize}` : selectedSize;
               const stockMap = (product as any).sizeStock || {};
@@ -933,13 +1004,41 @@ export function ProductDetailHeader({
         return null;
       })()}
 
+      {/* 총 상품 금액 (수량 변경 시 실시간 합산 반영) */}
+      <div className="flex items-end justify-between w-full pt-5 pb-3 border-t border-neutral-200 mt-6">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs sm:text-sm font-extrabold text-neutral-900 tracking-tight">총 상품 금액</span>
+            <span className="text-[11px] text-neutral-500 font-semibold bg-neutral-100 px-1.5 py-0.5 rounded">
+              총 {quantity}개
+            </span>
+          </div>
+          {quantity > 1 && (
+            <span className="text-[11px] text-neutral-400">
+              세일 개당 {formatPrice(effectiveUnitPrice.toString(), product.currencyCode || "KRW")}
+              {(couponDiscountAmount > 0 || pointsDiscountAmount > 0) && " (쿠폰·적립금 1회 적용)"}
+            </span>
+          )}
+        </div>
+        <div className="flex items-baseline gap-2">
+          {totalOriginalPrice > totalFinalBenefitPrice && (
+            <span className="text-xs sm:text-sm text-neutral-400 line-through font-normal font-mono">
+              {formatPrice(totalOriginalPrice.toString(), product.currencyCode || "KRW")}
+            </span>
+          )}
+          <span className="text-2xl sm:text-3xl font-black text-neutral-950 tracking-tight font-mono">
+            {formatPrice(totalFinalBenefitPrice.toString(), product.currencyCode || "KRW")}
+          </span>
+        </div>
+      </div>
+
       {/* Bottom Action Row: Quantity + Cart Icon Button (Left) + Buy Now button */}
-      <div id="product-header-action-row" className="flex items-center gap-3 sm:gap-4 mt-8">
+      <div id="product-header-action-row" className="flex items-center gap-3 sm:gap-4 mt-2">
         {/* 수량 조절기 */}
         <div className="flex items-center border border-neutral-900 px-4 py-3 h-[52px] min-w-[110px] sm:min-w-[120px] justify-between text-neutral-900 bg-white shrink-0">
           <button
             type="button"
-            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            onClick={() => handleQuantityChange(quantity - 1)}
             className="text-lg leading-none hover:opacity-50 transition-opacity cursor-pointer select-none"
             aria-label="수량 감소"
           >
@@ -948,7 +1047,7 @@ export function ProductDetailHeader({
           <span className="text-sm font-medium select-none">{quantity}</span>
           <button
             type="button"
-            onClick={() => setQuantity(quantity + 1)}
+            onClick={() => handleQuantityChange(quantity + 1)}
             className="text-lg leading-none hover:opacity-50 transition-opacity cursor-pointer select-none"
             aria-label="수량 증가"
           >

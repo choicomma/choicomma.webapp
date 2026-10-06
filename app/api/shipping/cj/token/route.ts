@@ -32,13 +32,15 @@ export async function POST(req: Request) {
       },
     };
 
+    const bodyStr = JSON.stringify(requestPayload);
     const res = await fetch(`${getCjApiBaseUrl()}/ReqOneDayToken`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(bodyStr).toString(),
         Accept: "application/json",
       },
-      body: JSON.stringify(requestPayload),
+      body: bodyStr,
     });
 
     const data = await res.json();

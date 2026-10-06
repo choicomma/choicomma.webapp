@@ -463,3 +463,63 @@ export function resetCouponUsageHistory(): void {
   saveCouponUsageHistory([]);
 }
 
+/**
+ * 주문 취소/환불 시 해당 주문에서 사용되었던 쿠폰을 다시 사용할 수 있도록 완전 복원합니다.
+ */
+export function restoreCouponByOrder(
+  orderId: string,
+  specificCouponId?: string
+): { restored: boolean; couponTitle?: string; discountAmount?: number } {
+  if (typeof window === "undefined") return { restored: false };
+
+  const history = getCouponUsageHistory();
+  const matched = history.filter(
+    (r) => r.orderId === orderId || (specificCouponId && r.couponId === specificCouponId)
+  );
+
+  let restoredAny = false;
+  let restoredTitle = "";
+  let restoredDiscount = 0;
+
+  if (matched.length > 0) {
+    const remaining = history.filter(
+      (r) => r.orderId !== orderId && (!specificCouponId || r.couponId !== specificCouponId)
+    );
+    saveCouponUsageHistory(remaining);
+
+    try {
+      const usedRaw = localStorage.getItem("used_coupon_codes") || "[]";
+      let usedCodes: string[] = [];
+      try {
+        usedCodes = JSON.parse(usedRaw);
+      } catch (e) {}
+
+      const idsToRemove = matched.map((m) => m.couponId);
+      usedCodes = usedCodes.filter((c) => !idsToRemove.includes(c));
+      localStorage.setItem("used_coupon_codes", JSON.stringify(usedCodes));
+      window.dispatchEvent(new CustomEvent("coupons_updated"));
+      window.dispatchEvent(new CustomEvent("storage", { detail: { key: "used_coupon_codes" } }));
+      restoredAny = true;
+      restoredTitle = matched[0]?.couponTitle || "할인 쿠폰";
+      restoredDiscount = matched[0]?.discountAmount || 0;
+    } catch (e) {}
+  } else if (specificCouponId) {
+    try {
+      const usedRaw = localStorage.getItem("used_coupon_codes") || "[]";
+      let usedCodes: string[] = [];
+      try {
+        usedCodes = JSON.parse(usedRaw);
+      } catch (e) {}
+      if (usedCodes.includes(specificCouponId)) {
+        usedCodes = usedCodes.filter((c) => c !== specificCouponId);
+        localStorage.setItem("used_coupon_codes", JSON.stringify(usedCodes));
+        window.dispatchEvent(new CustomEvent("coupons_updated"));
+        window.dispatchEvent(new CustomEvent("storage", { detail: { key: "used_coupon_codes" } }));
+        restoredAny = true;
+      }
+    } catch (e) {}
+  }
+
+  return { restored: restoredAny, couponTitle: restoredTitle, discountAmount: restoredDiscount };
+}
+

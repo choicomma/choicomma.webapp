@@ -268,12 +268,7 @@ export const ProductCard = ({ product }: { product: Product }) => {
             {(product as any).productLabel.replace("_", " ")}
           </span>
         )}
-        {/* Black-outlined Badge for Fabric Composition (체크박스 활성화된 경우만 노출) */}
-        {(product as any).showFabricBadge && Boolean((product as any).fabricComposition || (product as any).fabric || (product as any).fabricMaterial) && (
-          <span className="text-[11px] sm:text-xs font-bold px-2.5 py-1 uppercase tracking-wider rounded-sm bg-white text-black border border-black shadow-xs shrink-0 whitespace-nowrap">
-            {String((product as any).fabricComposition || (product as any).fabric || (product as any).fabricMaterial).replace(/^ORIGIN:\s*/i, "").trim()}
-          </span>
-        )}
+
         {secretSaleInfo ? (
           <span className="text-[11px] sm:text-xs px-2.5 py-1 font-black uppercase tracking-wider rounded-sm bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 flex items-center gap-1 border border-amber-400 shadow-xs shrink-0 whitespace-nowrap">
             <Sparkles className="w-3.5 h-3.5 fill-neutral-950 text-neutral-950 shrink-0 animate-spin-slow" />

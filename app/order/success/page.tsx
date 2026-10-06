@@ -8,29 +8,41 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { supabase } from "@/lib/supabase/client";
 import { recordCouponUsage } from "@/lib/membership/coupons";
 
-function OrderSuccessParamsHandler({ onParamsLoaded }: { onParamsLoaded: (p: { paymentKey: string | null; orderId: string | null; amount: string | null }) => void }) {
+interface SuccessParams {
+  paymentKey: string | null;
+  orderId: string | null;
+  amount: string | null;
+  type: string | null;
+  refOrder: string | null;
+}
+
+function OrderSuccessParamsHandler({ onParamsLoaded }: { onParamsLoaded: (p: SuccessParams) => void }) {
   const searchParams = useSearchParams();
   useEffect(() => {
     onParamsLoaded({
       paymentKey: searchParams.get("paymentKey"),
       orderId: searchParams.get("orderId"),
       amount: searchParams.get("amount"),
+      type: searchParams.get("type"),
+      refOrder: searchParams.get("refOrder"),
     });
   }, [searchParams, onParamsLoaded]);
   return null;
 }
 
-function OrderSuccessContentInner({ params }: { params: { paymentKey: string | null; orderId: string | null; amount: string | null } | null }) {
+function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) {
   const router = useRouter();
 
   const paymentKey = params?.paymentKey || null;
   const orderId = params?.orderId || null;
   const amount = params?.amount || null;
+  const isExchange = Boolean(orderId?.startsWith("EXC-") || params?.type === "EXCHANGE");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [paymentData, setPaymentData] = useState<any>(null);
+  const [exchangeInfo, setExchangeInfo] = useState<any>(null);
   const [earnedPointsInfo, setEarnedPointsInfo] = useState<{
     earnedPoints: number;
     pointRate: number;
@@ -78,6 +90,97 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
 
       setIsSuccess(true);
 
+      // 교환 결제 건인 경우 전용 처리 (채팅방 교환완료 메시지 등록 및 전용 화면 노출)
+      if (isExchange) {
+        let exchangeIntent: any = null;
+        if (typeof window !== "undefined") {
+          try {
+            const raw = sessionStorage.getItem(`pending_exchange_${orderId}`);
+            if (raw) exchangeIntent = JSON.parse(raw);
+          } catch {}
+          if (!exchangeIntent) {
+            try {
+              const raw = localStorage.getItem("choicomma_last_exchange_intent");
+              if (raw) exchangeIntent = JSON.parse(raw);
+            } catch {}
+          }
+        }
+
+        const excData = {
+          type: "EXCHANGE_COMPLETED",
+          orderId: exchangeIntent?.orderNumber || params?.refOrder || "교환주문",
+          orderNumber: exchangeIntent?.orderNumber || params?.refOrder || "교환주문",
+          items: exchangeIntent?.items || "교환 요청 상품",
+          image: exchangeIntent?.image || "",
+          reason: exchangeIntent?.reason || "교환 왕복 배송비",
+          details: exchangeIntent?.details || "",
+          fee: Number(amount) || 16000,
+          paymentMethod: paymentResultData?.method || "신용·체크카드 (토스)",
+          paymentKey: paymentKey || "",
+          completedAt: new Date().toISOString(),
+        };
+        setExchangeInfo(excData);
+
+        // 고객 라이브 채팅방 및 관리자 실시간 동기화
+        if (typeof window !== "undefined") {
+          const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+          const phone = (localStorage.getItem("membership_user_phone") || "").trim();
+          const rawId = email || phone || "guest";
+          const chatKey = `site_live_chat_messages_${rawId}`;
+
+          const newMsg = {
+            id: `user-msg-exc-${Date.now()}`,
+            sender: "user" as const,
+            senderName: "User",
+            text: JSON.stringify(excData),
+            timestamp: `${new Date().getHours().toString().padStart(2, "0")}:${new Date().getMinutes().toString().padStart(2, "0")}`,
+            created_at: new Date().toISOString(),
+          };
+
+          const savedChat = localStorage.getItem(chatKey);
+          let chatList: any[] = [];
+          if (savedChat) {
+            try { chatList = JSON.parse(savedChat); } catch {}
+          }
+          if (!chatList.some((m) => m.text?.includes(orderId) || (paymentKey && m.text?.includes(paymentKey)))) {
+            chatList.push(newMsg);
+            localStorage.setItem(chatKey, JSON.stringify(chatList));
+          }
+
+          if ("BroadcastChannel" in window) {
+            try {
+              const bc = new BroadcastChannel("choicomma_live_chat_sync");
+              bc.postMessage({
+                type: "USER_MESSAGE",
+                sessionId: rawId,
+                message: newMsg,
+              });
+              bc.close();
+            } catch {}
+          }
+
+          window.dispatchEvent(new CustomEvent("live_chat_updated"));
+
+          // Supabase chat_messages에 교환 완료 카드 등록
+          if (rawId && rawId !== "guest") {
+            supabase
+              .from("chat_messages")
+              .insert([
+                {
+                  id: newMsg.id,
+                  sessionId: rawId,
+                  sender: "user",
+                  text: newMsg.text,
+                },
+              ])
+              .then(() => {});
+          }
+        }
+
+        setIsLoading(false);
+        return;
+      }
+
           // Save live order into localStorage for Admin live order tracking
           if (typeof window !== "undefined") {
             const savedOrders = localStorage.getItem("admin_orders");
@@ -119,12 +222,22 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
                   ? (pendingOrder?.formData?.customDeliveryMemo?.trim() || "직접 입력")
                   : (pendingOrder?.formData?.deliveryMemo || ""),
               items: pendingOrder?.cart?.lines?.map((l: any) => `${l.merchandise?.product?.title || l.title || "상품"} (${l.quantity}개)`).join(", ") || "초이콤마 오리지널 패션 컬렉션",
+              image:
+                pendingOrder?.cart?.lines?.[0]?.merchandise?.product?.featuredImage?.url ||
+                pendingOrder?.cart?.lines?.[0]?.merchandise?.image?.url ||
+                pendingOrder?.cart?.lines?.[0]?.image ||
+                "",
               quantity: pendingOrder?.cart?.totalQuantity || 1,
               date: new Date().toISOString().slice(0, 10),
               totalAmount: isZeroPayment ? 0 : Number(amount),
               shippingFee: pendingOrder?.shippingFee || 0,
               discountAmount: pendingOrder?.appliedDiscount || 0,
               pointsUsed: Number(pendingOrder?.appliedPoints || 0),
+              pointsEarned: pendingOrder?.earnedPoints !== undefined 
+                ? Number(pendingOrder.earnedPoints) 
+                : Math.floor((isZeroPayment ? 0 : Number(amount)) * 0.01),
+              couponId: pendingOrder?.selectedCouponId || "",
+              couponTitle: pendingOrder?.selectedCouponTitle || "",
               status: isZeroPayment ? "결제완료 (전액적립금)" : "결제완료 (토스)",
               method: finalMethod,
             };
@@ -152,7 +265,15 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
               address: newOrder.address,
               detailAddress: newOrder.detailAddress,
               items: newOrder.items,
+              image: newOrder.image,
               quantity: newOrder.quantity,
+              totalAmount: newOrder.totalAmount,
+              shippingFee: newOrder.shippingFee,
+              discountAmount: newOrder.discountAmount,
+              pointsUsed: newOrder.pointsUsed,
+              pointsEarned: newOrder.pointsEarned,
+              couponId: newOrder.couponId,
+              couponTitle: newOrder.couponTitle,
               carrier: "CJ대한통운",
               trackingNumber: "-",
               status: "Pending",
@@ -437,6 +558,80 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
     );
   }
 
+  if (isExchange) {
+    return (
+      <div className="min-h-[75vh] flex flex-col items-center justify-center p-6">
+        <div className="bg-white border border-neutral-200/80 rounded-3xl p-8 shadow-xl max-w-md w-full text-center space-y-6 animate-in fade-in zoom-in duration-300">
+          <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-600 mx-auto flex items-center justify-center shadow-inner">
+            <RefreshCw className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
+              ✨ EXCHANGE PAYMENT CONFIRMED
+            </span>
+            <h1 className="text-2xl font-black text-neutral-950 pt-2">교환 접수 및 배송비 결제 완료</h1>
+            <p className="text-xs text-neutral-500">
+              교환 왕복 배송비(16,000원) 토스페이먼츠 안전 결제가 완료되었습니다.
+            </p>
+          </div>
+
+          <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-4 text-left space-y-2 font-mono text-xs text-neutral-700">
+            <div className="flex justify-between border-b border-neutral-200 pb-2">
+              <span className="text-neutral-400 font-sans font-bold">교환 접수 번호</span>
+              <span className="font-bold text-neutral-900">{orderId}</span>
+            </div>
+            <div className="flex justify-between border-b border-neutral-200 pb-2 pt-1">
+              <span className="text-neutral-400 font-sans font-bold">교환 대상 주문</span>
+              <span className="font-bold text-neutral-900 font-sans">{exchangeInfo?.orderNumber || params?.refOrder || "교환 접수 건"}</span>
+            </div>
+            {exchangeInfo?.reason && (
+              <div className="flex justify-between border-b border-neutral-200 pb-2 pt-1">
+                <span className="text-neutral-400 font-sans font-bold">교환 사유</span>
+                <span className="font-bold text-neutral-900 font-sans">{exchangeInfo.reason}</span>
+              </div>
+            )}
+            <div className="flex justify-between border-b border-neutral-200 pb-2 pt-1">
+              <span className="text-neutral-400 font-sans font-bold">결제 금액</span>
+              <span className="font-black text-blue-600 text-sm font-sans">
+                {amount !== null && amount !== undefined ? `${Number(amount).toLocaleString()}원` : "16,000원"}
+              </span>
+            </div>
+            <div className="flex justify-between pt-1">
+              <span className="text-neutral-400 font-sans font-bold">결제 수단</span>
+              <span className="font-bold text-neutral-900 font-sans">
+                {paymentData?.method || "신용·체크카드 (토스)"}
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("open_live_chat_on_load", "true");
+                }
+                router.push("/");
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-2xl transition-all shadow-md text-xs flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+              1:1 라이브 상담창에서 확인하기
+            </button>
+            <Link
+              href="/"
+              className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold py-3 rounded-2xl transition-all text-xs flex items-center justify-center gap-1.5"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              쇼핑 계속하기
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[75vh] flex flex-col items-center justify-center p-6">
       <div className="bg-white border border-neutral-200/80 rounded-3xl p-8 shadow-xl max-w-md w-full text-center space-y-6 animate-in fade-in zoom-in duration-300">
@@ -501,7 +696,7 @@ function OrderSuccessContentInner({ params }: { params: { paymentKey: string | n
 }
 
 export default function OrderSuccessPage() {
-  const [params, setParams] = useState<{ paymentKey: string | null; orderId: string | null; amount: string | null } | null>(null);
+  const [params, setParams] = useState<SuccessParams | null>(null);
 
   return (
     <>

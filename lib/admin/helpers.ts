@@ -30,8 +30,8 @@ export const calculateTotalStock = (
 
 export const compressImageDataUrl = (
   dataUrl: string,
-  maxDimension = 1920,
-  quality = 0.8
+  maxWidth = 1920,
+  quality = 0.92
 ): Promise<string> => {
   return new Promise((resolve) => {
     if (
@@ -47,23 +47,52 @@ export const compressImageDataUrl = (
     img.onload = () => {
       let width = img.width;
       let height = img.height;
-      if (width > maxDimension || height > maxDimension) {
-        if (width > height) {
-          height = Math.round((height * maxDimension) / width);
-          width = maxDimension;
-        } else {
-          width = Math.round((width * maxDimension) / height);
-          height = maxDimension;
-        }
+
+      // 1. 가로 너비(width) 기준으로만 리사이즈 (상세페이지 긴 세로 컷의 가로 해상도가 뭉개지지 않도록 보호)
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
       }
+
+      // 브라우저 캔버스 하드웨어 최대 제한(16384px) 초과 방지
+      const maxCanvasHeight = 12000;
+      if (height > maxCanvasHeight) {
+        width = Math.round((width * maxCanvasHeight) / height);
+        height = maxCanvasHeight;
+      }
+
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext("2d");
-      ctx?.drawImage(img, 0, 0, width, height);
+      if (!ctx) {
+        resolve(dataUrl);
+        return;
+      }
+
+      // 고해상도 리샘플링 스무딩 설정
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      // 투명 배경 PNG가 검은색으로 깨지는 현상 방지: 흰색 배경 먼저 채우기
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // WebP 지원 시 고품질 WebP, 미지원 시 고품질 JPEG 출력
+      try {
+        const webpResult = canvas.toDataURL("image/webp", quality);
+        if (webpResult.startsWith("data:image/webp")) {
+          resolve(webpResult);
+          return;
+        }
+      } catch (e) {}
+
       resolve(canvas.toDataURL("image/jpeg", quality));
     };
     img.onerror = () => resolve(dataUrl);
     img.src = dataUrl;
   });
 };
+

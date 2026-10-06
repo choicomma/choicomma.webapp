@@ -28,18 +28,60 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       } catch (e) {}
     }
 
-    // A. Fetch active sessions from Supabase
+    // A. Fetch active sessions and messages from Supabase
     let dbMappedSessions: any[] = [];
     try {
-      const { data: dbSessions, error } = await supabase
-        .from("chat_sessions")
-        .select("*")
-        .neq("status", "closed")
-        .order("updated_at", { ascending: false });
+      const [{ data: dbSessions, error: sessionErr }, { data: dbMsgRows }] = await Promise.all([
+        supabase
+          .from("chat_sessions")
+          .select("*")
+          .neq("status", "closed")
+          .order("updated_at", { ascending: false }),
+        supabase
+          .from("chat_messages")
+          .select("sessionId"),
+      ]);
 
-      if (!error && Array.isArray(dbSessions)) {
+      const dbMsgSessionIds = new Set<string>();
+      if (Array.isArray(dbMsgRows)) {
+        dbMsgRows.forEach((r: any) => {
+          if (r?.sessionId) {
+            dbMsgSessionIds.add(String(r.sessionId).toLowerCase().trim());
+          }
+        });
+      }
+
+      const hasConversation = (sessionId: string, sessionEmail?: string) => {
+        const sid = (sessionId || "").toLowerCase().trim();
+        const sEmail = (sessionEmail || "").toLowerCase().trim();
+        if (!sid) return false;
+        if (sid === "vip@choicomma.com") {
+          return false;
+        }
+        if (dbMsgSessionIds.has(sid) || (sEmail && dbMsgSessionIds.has(sEmail))) {
+          return true;
+        }
+        if (typeof window !== "undefined") {
+          const checkKeys = [`site_live_chat_messages_${sid}`];
+          if (sEmail && sEmail !== sid) checkKeys.push(`site_live_chat_messages_${sEmail}`);
+          for (const k of checkKeys) {
+            const saved = localStorage.getItem(k);
+            if (saved) {
+              try {
+                const msgs = JSON.parse(saved);
+                if (Array.isArray(msgs) && msgs.some((m: any) => m && (m.sender === "user" || (m.id && m.id !== "msg-welcome-1")))) {
+                  return true;
+                }
+              } catch (e) {}
+            }
+          }
+        }
+        return false;
+      };
+
+      if (!sessionErr && Array.isArray(dbSessions)) {
         dbMappedSessions = dbSessions
-          .filter((s: any) => s?.id && s.id !== "vip@choicomma.com")
+          .filter((s: any) => hasConversation(s?.id, s?.customerEmail))
           .map((s: any) => {
             const rawEmail = (s.customerEmail || s.id || "").toLowerCase().trim();
             const rawPhone = s.customerPhone || "";
@@ -74,41 +116,41 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
             };
           });
       }
+
+      // B. Merge with localStorage sessions that actually have messages
+      const sessionsMap = new Map<string, any>();
+      dbMappedSessions.forEach((s) => sessionsMap.set(s.id.toLowerCase(), s));
+
+      const savedLocal = localStorage.getItem("admin_chat_sessions");
+      if (savedLocal) {
+        try {
+          const parsed = JSON.parse(savedLocal);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((s: any) => {
+              if (s?.id && hasConversation(s.id, s.email)) {
+                if (!sessionsMap.has(s.id.toLowerCase())) {
+                  sessionsMap.set(s.id.toLowerCase(), s);
+                }
+              }
+            });
+          }
+        } catch (e) {}
+      }
+
+      const finalList = Array.from(sessionsMap.values());
+      setChatSessionsList(finalList);
+      localStorage.setItem("admin_chat_sessions", JSON.stringify(finalList));
+
+      // Update activeSessionId
+      setActiveSessionId((prev) => {
+        if (!prev || !finalList.some((s) => s.id === prev)) {
+          return finalList.length > 0 ? finalList[0].id : "";
+        }
+        return prev;
+      });
     } catch (sbErr) {
       console.warn("Notice: Failed to fetch chat_sessions from Supabase:", sbErr);
     }
-
-    // B. Merge with localStorage sessions
-    const sessionsMap = new Map<string, any>();
-    dbMappedSessions.forEach((s) => sessionsMap.set(s.id.toLowerCase(), s));
-
-    const savedLocal = localStorage.getItem("admin_chat_sessions");
-    if (savedLocal) {
-      try {
-        const parsed = JSON.parse(savedLocal);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((s: any) => {
-            if (s?.id && s.id !== "vip@choicomma.com") {
-              if (!sessionsMap.has(s.id.toLowerCase())) {
-                sessionsMap.set(s.id.toLowerCase(), s);
-              }
-            }
-          });
-        }
-      } catch (e) {}
-    }
-
-    const finalList = Array.from(sessionsMap.values());
-    setChatSessionsList(finalList);
-    localStorage.setItem("admin_chat_sessions", JSON.stringify(finalList));
-
-    // Update activeSessionId
-    setActiveSessionId((prev) => {
-      if (!prev || !finalList.some((s) => s.id === prev)) {
-        return finalList.length > 0 ? finalList[0].id : "";
-      }
-      return prev;
-    });
   }, []);
 
   // 2. Load Chat Messages for Active Session (Supabase + localStorage merge)

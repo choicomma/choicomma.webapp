@@ -161,11 +161,11 @@ export function Header({ collections }: HeaderProps) {
           <nav className="hidden md:flex items-center md:col-span-7 justify-end gap-2.5 -mt-6 md:-mt-8">
             <div
               className={cn(
-                "items-center gap-2 h-11 px-4 rounded-full backdrop-blur-md flex transition-colors duration-400 shadow-sm",
+                "items-center gap-1.5 md:gap-2 h-10 md:h-11 px-2.5 md:px-4 rounded-full backdrop-blur-md flex transition-colors duration-400 shadow-sm shrink-0",
                 "bg-black/5 text-neutral-900 border border-black/5"
               )}
             >
-              <ul className="flex items-center gap-6">
+              <ul className="flex items-center gap-2 md:gap-3 lg:gap-4 xl:gap-6 shrink-0">
                 {activeNavItems.map((item: any) => (
                   <li key={item.href}>
                     <Link

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import {
   MessageSquare,
   Crown,
@@ -20,7 +21,16 @@ import {
   Clock,
   Zap,
   Tag,
+  Package,
+  RefreshCw,
+  CreditCard,
+  ChevronUp,
+  Truck,
 } from "lucide-react";
+import { getProductThumbnail } from "@/lib/products/thumbnail-helper";
+import { explodeOrderToSingleItems, type ExplodedExchangeItem } from "@/lib/shipping/exchange-item-helper";
+import { TossRefundModal } from "@/components/chat/toss-refund-modal";
+import { restoreCouponByOrder } from "@/lib/membership/coupons";
 
 interface TemplateItem {
   id: string;
@@ -120,6 +130,561 @@ export function InquiriesManagement({
   // Custom Editable Templates State
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Order Selection Request Handler (고객에게 주문 직접 선택 즉시 요청)
+  const handleRequestOrderSelection = () => {
+    if (!activeSessionId || chatSessionsList.length === 0) {
+      alert("좌측 라이브 세션 목록에서 상담을 진행할 고객을 먼저 선택해 주세요.");
+      return;
+    }
+    const orderSelectPayload = JSON.stringify({
+      type: "ORDER_SELECT_REQUEST",
+      title: "문의하실 주문건을 선택해 주세요",
+      text: "고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.",
+      requestedAt: new Date().toISOString(),
+    });
+    handleAdminSendLiveChat(orderSelectPayload);
+  };
+
+  // Exchange Popover Menu State
+  const [isExchangeMenuOpen, setIsExchangeMenuOpen] = useState(false);
+
+  // 1) 교환접수요청서 전송 핸들러 (반품 불가 안내, 주문건 선택, 사유 입력)
+  const handleRequestExchangeForm = () => {
+    if (!activeSessionId || chatSessionsList.length === 0) {
+      alert("좌측 라이브 세션 목록에서 상담을 진행할 고객을 먼저 선택해 주세요.");
+      return;
+    }
+    const exchangePayload = JSON.stringify({
+      type: "EXCHANGE_REQUEST",
+      title: "교환 접수 안내 및 신청서",
+      text: "교환을 원하시는 주문건과 교환 사유를 입력해 주시면, 왕복 배송비(16,000원) 결제 후 교환 접수가 안전하게 완료됩니다.",
+      exchangeFee: 16000,
+      requestedAt: new Date().toISOString(),
+    });
+    handleAdminSendLiveChat(exchangePayload);
+  };
+
+  // 2) 교환접수비용결제창 전송 핸들러 (토스페이먼츠 16,000원 결제창 전송)
+  const handleRequestExchangePayment = () => {
+    if (!activeSessionId || chatSessionsList.length === 0) {
+      alert("좌측 라이브 세션 목록에서 상담을 진행할 고객을 먼저 선택해 주세요.");
+      return;
+    }
+    const exchangePayPayload = JSON.stringify({
+      type: "EXCHANGE_PAY_REQUEST",
+      title: "교환 왕복 배송비 결제 요청",
+      text: "상담원 확인 후 교환 왕복 배송비(16,000원) 결제창이 전송되었습니다. 결제 완료 시 안전하게 교환 수거 및 재출고가 진행됩니다.",
+      amount: 16000,
+      fee: 16000,
+      requestedAt: new Date().toISOString(),
+    });
+    handleAdminSendLiveChat(exchangePayPayload);
+  };
+
+  // Refund Popover Menu & Modal State
+  const [isRefundMenuOpen, setIsRefundMenuOpen] = useState(false);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [refundCustomerOrders, setRefundCustomerOrders] = useState<ExplodedExchangeItem[]>([]);
+  const [selectedRefundPrefillOrder, setSelectedRefundPrefillOrder] = useState<ExplodedExchangeItem | null>(null);
+  const [pickupBookingType, setPickupBookingType] = useState<"EXCHANGE" | "REFUND">("EXCHANGE");
+
+  // 1) 환불접수요청서 전송 핸들러
+  const handleRequestRefundForm = () => {
+    if (!activeSessionId || chatSessionsList.length === 0) {
+      alert("좌측 라이브 세션 목록에서 상담을 진행할 고객을 먼저 선택해 주세요.");
+      return;
+    }
+    const refundPayload = JSON.stringify({
+      type: "REFUND_REQUEST",
+      title: "환불 접수 안내 및 신청서",
+      text: "환불을 원하시는 주문건과 환불 사유를 입력해 주시면, 확인 후 신속하게 결제 취소 및 환불 처리를 도와드리겠습니다.",
+      requestedAt: new Date().toISOString(),
+    });
+    handleAdminSendLiveChat(refundPayload);
+  };
+
+  // 2) 토스 환불 모달 열기 핸들러
+  const handleOpenRefundModal = () => {
+    if (!activeSessionId || chatSessionsList.length === 0) {
+      alert("좌측 라이브 세션 목록에서 상담을 진행할 고객을 먼저 선택해 주세요.");
+      return;
+    }
+
+    const currentSession = chatSessionsList.find((s) => s.id === activeSessionId);
+    const sessionEmail = (currentSession?.email || "").toLowerCase().trim();
+    const sessionName = (currentSession?.name || "").trim();
+
+    let allOrders: any[] = [];
+    if (typeof window !== "undefined") {
+      try {
+        const savedShipments = localStorage.getItem("admin_shipments");
+        if (savedShipments) {
+          const parsed = JSON.parse(savedShipments);
+          if (Array.isArray(parsed)) allOrders.push(...parsed);
+        }
+      } catch (e) {}
+
+      try {
+        const savedOrders = localStorage.getItem("admin_orders");
+        if (savedOrders) {
+          const parsed = JSON.parse(savedOrders);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((ord: any) => {
+              if (!allOrders.some((s) => s.id === ord.id || s.orderId === ord.orderNumber)) {
+                allOrders.push({
+                  id: ord.id || ord.orderNumber,
+                  orderId: ord.orderNumber || ord.id,
+                  recipient: ord.customerName || ord.recipient,
+                  recipientEmail: ord.customerEmail || ord.email,
+                  phone: ord.customerPhone || ord.phone,
+                  items: Array.isArray(ord.items) ? ord.items.map((it: any) => `${it.name} (${it.quantity}개)`).join(", ") : (ord.items || "주문 상품"),
+                  totalAmount: ord.totalAmount,
+                  amount: ord.totalAmount ? `₩${Number(ord.totalAmount).toLocaleString()}원` : "",
+                  paymentMethod: ord.method || ord.paymentMethod || "신용·체크카드 (토스)",
+                  trackingNumber: ord.trackingNumber || "-",
+                  image: ord.image || "",
+                });
+              }
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
+    let matched = allOrders.filter((ord: any) => {
+      const ordRecipient = (ord.recipient || ord.customerName || ord.ordererName || "").trim();
+      const ordEmail = (ord.recipientEmail || ord.customerEmail || ord.email || "").toLowerCase().trim();
+      if (sessionEmail && ordEmail === sessionEmail) return true;
+      if (sessionName && ordRecipient && (ordRecipient.includes(sessionName) || sessionName.includes(ordRecipient))) return true;
+      return false;
+    });
+
+    if (matched.length === 0 && allOrders.length > 0) {
+      matched = allOrders.slice(0, 5);
+    }
+
+    const exploded = explodeOrderToSingleItems(matched);
+    setRefundCustomerOrders(exploded);
+    setIsRefundModalOpen(true);
+  };
+
+  // 토스 환불 성공 후 처리 핸들러 (실결제 취소 + 적립금 반환/회수 + 쿠폰 재사용 복원)
+  const handleRefundSuccess = (result: any) => {
+    let restoredCouponInfo = { restored: false, couponTitle: "", discountAmount: 0 };
+    let pointsRestored = 0;
+    let pointsRevoked = 0;
+
+    if (typeof window !== "undefined") {
+      let matchedOrder: any = null;
+
+      // 1. 주문 상태 업데이트 및 대상 주문 정보 획득
+      try {
+        const savedOrders = localStorage.getItem("admin_orders");
+        if (savedOrders) {
+          const parsed = JSON.parse(savedOrders);
+          const updated = parsed.map((o: any) => {
+            if (o.id === result.orderNumber || o.orderNumber === result.orderNumber) {
+              matchedOrder = o;
+              return { ...o, status: "환불완료 (토스)", paymentStatus: "REFUNDED" };
+            }
+            return o;
+          });
+          localStorage.setItem("admin_orders", JSON.stringify(updated));
+        }
+      } catch (e) {}
+
+      // 2. 배송 상태 업데이트
+      try {
+        const savedShipments = localStorage.getItem("admin_shipments");
+        if (savedShipments) {
+          const parsed = JSON.parse(savedShipments);
+          const updated = parsed.map((s: any) => {
+            if (s.id === result.orderNumber || s.orderId === result.orderNumber) {
+              if (!matchedOrder) matchedOrder = s;
+              return { ...s, status: "환불완료" };
+            }
+            return s;
+          });
+          localStorage.setItem("admin_shipments", JSON.stringify(updated));
+        }
+      } catch (e) {}
+
+      // 3. 결제 시 사용했던 쿠폰 재사용 복원 (used_coupon_codes 및 history 복구)
+      try {
+        const couponRes = restoreCouponByOrder(result.orderNumber, matchedOrder?.couponId);
+        restoredCouponInfo = {
+          restored: couponRes.restored,
+          couponTitle: couponRes.couponTitle || matchedOrder?.couponTitle || "할인 쿠폰",
+          discountAmount: couponRes.discountAmount || Number(matchedOrder?.discountAmount || 0),
+        };
+      } catch (cErr) {
+        console.warn("Failed to restore coupon on refund:", cErr);
+      }
+
+      // 4. 적립금 처리 (결제 시 사용했던 적립금은 반환, 결제 시 적립되었던 포인트는 회수)
+      try {
+        const pointsUsed = Number(matchedOrder?.pointsUsed || 0);
+        const pointsEarned = matchedOrder?.pointsEarned !== undefined
+          ? Number(matchedOrder.pointsEarned)
+          : Math.floor((Number(result.refundAmount) || 0) * 0.01);
+
+        const customerEmail = (matchedOrder?.email || matchedOrder?.customerEmail || "").toLowerCase().trim();
+        const customerName = (matchedOrder?.ordererName || matchedOrder?.customer || matchedOrder?.recipient || "").trim();
+        const customerPhone = (matchedOrder?.phone || matchedOrder?.customerPhone || "").replace(/[^0-9]/g, "");
+
+        // 4-1) 적립금 내역(membership_points_history) 업데이트
+        const historyRaw = localStorage.getItem("membership_points_history");
+        let historyList: any[] = [];
+        if (historyRaw) {
+          try { historyList = JSON.parse(historyRaw); } catch (e) {}
+        }
+
+        const newEntries: any[] = [];
+        const todayStr = new Date().toISOString().slice(0, 10);
+
+        if (pointsUsed > 0) {
+          pointsRestored = pointsUsed;
+          newEntries.push({
+            id: `point-restore-${result.orderNumber}-${Date.now()}`,
+            label: `[주문 환불] 사용 적립금 반환 (주문번호: ${result.orderNumber})`,
+            date: todayStr,
+            amount: pointsUsed,
+          });
+        }
+
+        if (pointsEarned > 0) {
+          pointsRevoked = pointsEarned;
+          newEntries.push({
+            id: `point-revoke-${result.orderNumber}-${Date.now()}`,
+            label: `[주문 환불] 구매 적립금 회수 (주문번호: ${result.orderNumber})`,
+            date: todayStr,
+            amount: -pointsEarned,
+          });
+        }
+
+        if (newEntries.length > 0) {
+          historyList = [...newEntries, ...historyList];
+          localStorage.setItem("membership_points_history", JSON.stringify(historyList));
+        }
+
+        // 4-2) 회원 관리(admin_customers) 및 현재 세션 포인트 잔액 동기화
+        const savedCustRaw = localStorage.getItem("admin_customers");
+        let custList: any[] = [];
+        if (savedCustRaw) {
+          try { custList = JSON.parse(savedCustRaw); } catch (e) {}
+        }
+
+        const matchedCust = custList.find((c: any) => {
+          const cEmail = (c.email || "").toLowerCase().trim();
+          const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+          const cName = (c.name || "").trim();
+          if (customerEmail && cEmail === customerEmail) return true;
+          if (customerPhone && customerPhone.length >= 8 && cPhone === customerPhone) return true;
+          if (customerName && cName === customerName) return true;
+          return false;
+        });
+
+        const netPointsChange = pointsRestored - pointsRevoked;
+
+        if (matchedCust) {
+          const currentPts = Number(matchedCust.points) || 0;
+          const updatedPts = Math.max(0, currentPts + netPointsChange);
+          matchedCust.points = updatedPts;
+          matchedCust.totalSpent = Math.max(0, (Number(matchedCust.totalSpent) || 0) - Number(result.refundAmount || 0));
+          localStorage.setItem("admin_customers", JSON.stringify(custList));
+
+          // Supabase DB 비동기 반영
+          try {
+            supabase
+              .from("customers")
+              .update({
+                points: updatedPts,
+                totalSpent: matchedCust.totalSpent,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", matchedCust.id)
+              .then(() => {});
+          } catch (e) {}
+        }
+
+        // 현재 접속 중인 세션 사용자가 본인인 경우 membership_user_points 갱신
+        const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const currentLoggedInName = (localStorage.getItem("membership_user_name") || "").trim();
+        if (
+          (customerEmail && customerEmail === currentLoggedInEmail) ||
+          (customerName && customerName === currentLoggedInName) ||
+          localStorage.getItem("user_role") === "admin"
+        ) {
+          const currentSessionPts = Number(localStorage.getItem("membership_user_points") || "0");
+          const nextSessionPts = Math.max(0, currentSessionPts + netPointsChange);
+          localStorage.setItem("membership_user_points", String(nextSessionPts));
+        }
+
+        window.dispatchEvent(new CustomEvent("membership_points_updated"));
+        window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+        window.dispatchEvent(new CustomEvent("storage"));
+      } catch (ptErr) {
+        console.warn("Failed to update points on refund:", ptErr);
+      }
+
+      window.dispatchEvent(new CustomEvent("admin_orders_updated"));
+      window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+    }
+
+    // 알림 메시지 요약 구성
+    let summaryMsg = `✓ 토스 결제 취소(₩${Number(result.refundAmount).toLocaleString()}원)가 완료되었습니다.`;
+    if (pointsRestored > 0) summaryMsg += `\n🪙 사용 적립금 +${pointsRestored.toLocaleString()} P가 회원 계정으로 반환되었습니다.`;
+    if (restoredCouponInfo.restored) summaryMsg += `\n🎟️ 사용하셨던 쿠폰 [${restoredCouponInfo.couponTitle}]이 다시 사용 가능하도록 복원되었습니다.`;
+
+    toast.success(summaryMsg);
+
+    // 고객 채팅방에 토스 결제 취소 완료 알림 카드 자동 전송
+    const refundCompletedPayload = JSON.stringify({
+      type: "REFUND_COMPLETED",
+      orderNumber: result.orderNumber,
+      items: result.items,
+      image: result.image,
+      refundAmount: result.refundAmount,
+      pointsRestored: pointsRestored > 0 ? pointsRestored : undefined,
+      couponRestored: restoredCouponInfo.restored ? (restoredCouponInfo.couponTitle || "할인 쿠폰") : undefined,
+      paymentMethod: result.paymentMethod,
+      cancelReason: result.cancelReason,
+      completedAt: result.canceledAt,
+    });
+    handleAdminSendLiveChat(refundCompletedPayload);
+  };
+
+  // 3) CJ대한통운 수거접수 진행 모달 상태 및 데이터 (요구사항 1, 2, 3, 4)
+  const [isPickupModalOpen, setIsPickupModalOpen] = useState(false);
+  const [pickupCustomerOrders, setPickupCustomerOrders] = useState<any[]>([]);
+  const [selectedPickupOrder, setSelectedPickupOrder] = useState<any | null>(null);
+  const [pickupReason, setPickupReason] = useState("사이즈 교환");
+  const [pickupDetailReason, setPickupDetailReason] = useState("");
+  const [pickupRecipient, setPickupRecipient] = useState("");
+  const [pickupPhone, setPickupPhone] = useState("");
+  const [pickupZipCode, setPickupZipCode] = useState("");
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [pickupDetailAddress, setPickupDetailAddress] = useState("");
+  const [pickupOriginalInvoice, setPickupOriginalInvoice] = useState("");
+  const [isSubmittingPickup, setIsSubmittingPickup] = useState(false);
+
+  // 수거접수 모달 열기 핸들러 (교환 또는 반품)
+  const handleOpenPickupModal = (type: "EXCHANGE" | "REFUND" = "EXCHANGE") => {
+    setPickupBookingType(type);
+    if (!activeSessionId || chatSessionsList.length === 0) {
+      alert("좌측 라이브 세션 목록에서 상담을 진행할 고객을 먼저 선택해 주세요.");
+      return;
+    }
+
+    const currentSession = chatSessionsList.find((s) => s.id === activeSessionId);
+    const sessionEmail = (currentSession?.email || "").toLowerCase().trim();
+    const sessionName = (currentSession?.name || "").trim();
+
+    // 1. 고객의 주문 건 목록 수집 (admin_shipments 및 admin_orders)
+    let allOrders: any[] = [];
+    if (typeof window !== "undefined") {
+      try {
+        const savedShipments = localStorage.getItem("admin_shipments");
+        if (savedShipments) {
+          const parsed = JSON.parse(savedShipments);
+          if (Array.isArray(parsed)) allOrders.push(...parsed);
+        }
+      } catch (e) {}
+
+      try {
+        const savedOrders = localStorage.getItem("admin_orders");
+        if (savedOrders) {
+          const parsed = JSON.parse(savedOrders);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((ord: any) => {
+              if (!allOrders.some((s) => s.id === ord.id || s.orderId === ord.orderNumber)) {
+                allOrders.push({
+                  id: ord.id || ord.orderNumber,
+                  orderId: ord.orderNumber || ord.id,
+                  recipient: ord.customerName || ord.recipient,
+                  phone: ord.customerPhone || ord.phone,
+                  address: ord.address || "",
+                  detailAddress: ord.detailAddress || "",
+                  zipCode: ord.zipCode || "",
+                  items: Array.isArray(ord.items) ? ord.items.map((it: any) => `${it.name} (${it.quantity}개)`).join(", ") : (ord.items || "주문 상품"),
+                  trackingNumber: ord.trackingNumber || "-",
+                  image: ord.image || "",
+                });
+              }
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 고객 매칭 (이메일 또는 고객명 일치)
+    let matched = allOrders.filter((ord: any) => {
+      const ordRecipient = (ord.recipient || ord.customerName || ord.ordererName || "").trim();
+      const ordEmail = (ord.recipientEmail || ord.customerEmail || ord.email || "").toLowerCase().trim();
+      if (sessionEmail && ordEmail === sessionEmail) return true;
+      if (sessionName && ordRecipient && (ordRecipient.includes(sessionName) || sessionName.includes(ordRecipient))) return true;
+      return false;
+    });
+
+    if (matched.length === 0 && allOrders.length > 0) {
+      matched = allOrders.slice(0, 5); // 매칭건이 없으면 최근 주문 표시
+    }
+
+    // 복수 상품 주문인 경우 개별 제품(1개 상품 단위)으로 낱개 분리하여 리스트업
+    const exploded = explodeOrderToSingleItems(matched);
+    setPickupCustomerOrders(exploded);
+
+    const initialOrder = exploded[0] || null;
+    setSelectedPickupOrder(initialOrder);
+    setPickupRecipient(initialOrder?.recipient || sessionName || "고객");
+    setPickupPhone(initialOrder?.phone || "");
+    setPickupZipCode(initialOrder?.zipCode || "04524");
+    setPickupAddress(initialOrder?.address || "서울특별시 중구 세종대로 110");
+    setPickupDetailAddress(initialOrder?.detailAddress || "");
+    setPickupOriginalInvoice(initialOrder?.trackingNumber && initialOrder.trackingNumber !== "-" ? initialOrder.trackingNumber : "");
+    setPickupReason(type === "REFUND" ? "반품 / 환불 수거" : "사이즈 교환");
+    setPickupDetailReason("");
+    setIsPickupModalOpen(true);
+  };
+
+  // CJ대한통운 수거접수 실행 핸들러 (요구사항 1, 2, 3, 4)
+  const handleExecutePickupBooking = async () => {
+    if (!pickupRecipient.trim() || !pickupPhone.trim()) {
+      alert("고객명과 연락처를 입력해 주세요.");
+      return;
+    }
+    if (!pickupAddress.trim()) {
+      alert("수거지 주소를 입력해 주세요.");
+      return;
+    }
+    if (!selectedPickupOrder && !pickupOriginalInvoice.trim()) {
+      alert("교환 대상 주문을 선택하거나 원 송장번호를 입력해 주세요.");
+      return;
+    }
+
+    setIsSubmittingPickup(true);
+    try {
+      const orderNum = selectedPickupOrder?.orderId || selectedPickupOrder?.orderNumber || `EXC-${Date.now()}`;
+      const itemsName = selectedPickupOrder?.items || "교환 요청 상품";
+      const fullReason = `[교환사유] ${pickupReason}${pickupDetailReason.trim() ? ` - ${pickupDetailReason.trim()}` : ""}`;
+
+      // 1. 실제 CJ대한통운 시스템으로 교환(회수) 접수 요청 (요구사항 1)
+      const res = await fetch("/api/shipping/cj/return", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: `EXC-${orderNum.replace(/^EXC-/, "")}`,
+          originalOrderId: orderNum,
+          originalInvoiceNo: pickupOriginalInvoice.trim() || (selectedPickupOrder?.trackingNumber !== "-" ? selectedPickupOrder?.trackingNumber : "") || `6892-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+          customerName: pickupRecipient.trim(),
+          customerPhone: pickupPhone.trim(),
+          customerZipCode: pickupZipCode.trim() || "04524",
+          customerAddress: pickupAddress.trim(),
+          customerDetailAddress: pickupDetailAddress.trim(),
+          returnReason: fullReason,
+          items: itemsName,
+          quantity: selectedPickupOrder?.quantity || 1,
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error || "CJ대한통운 수거 접수 실패");
+      }
+
+      // 2. 주문 및 배송 관리 주문 리스트(admin_shipments & admin_orders)에 추가 (요구사항 2, 3, 4)
+      const isRefundPickup = pickupBookingType === "REFUND";
+      const prefix = isRefundPickup ? "REF" : "EXC";
+      const newExcOrderId = `${prefix}-${orderNum.replace(/^(EXC|REF)-/, "")}`;
+      const newExchangeShipment = {
+        id: `${prefix}-${Date.now()}`,
+        orderId: newExcOrderId,
+        originalOrderId: orderNum,
+        ordererName: pickupRecipient.trim(),
+        recipient: pickupRecipient.trim(),
+        phone: pickupPhone.trim(),
+        zipCode: pickupZipCode.trim() || "04524",
+        address: pickupAddress.trim(),
+        detailAddress: pickupDetailAddress.trim(),
+        items: itemsName,
+        quantity: selectedPickupOrder?.quantity || 1,
+        carrier: "CJ대한통운",
+        trackingNumber: data.bookingNumber || `CJ수거-${Date.now().toString().slice(-6)}`,
+        status: "Pending", // 수거/배송 준비 중
+        isExchangeOrder: !isRefundPickup,
+        isRefundOrder: isRefundPickup,
+        shippingMemo: fullReason,
+        packages: [],
+        created_at: new Date().toISOString(),
+        orderDate: new Date().toISOString().split("T")[0],
+      };
+
+      if (typeof window !== "undefined") {
+        // admin_shipments에 추가
+        const savedShipments = localStorage.getItem("admin_shipments");
+        let shipmentsList = savedShipments ? JSON.parse(savedShipments) : [];
+        if (!Array.isArray(shipmentsList)) shipmentsList = [];
+        shipmentsList.unshift(newExchangeShipment);
+        localStorage.setItem("admin_shipments", JSON.stringify(shipmentsList));
+
+        // admin_orders에 추가
+        const savedOrders = localStorage.getItem("admin_orders");
+        let ordersList = savedOrders ? JSON.parse(savedOrders) : [];
+        if (!Array.isArray(ordersList)) ordersList = [];
+        ordersList.unshift({
+          ...newExchangeShipment,
+          orderNumber: newExcOrderId,
+          customerName: pickupRecipient.trim(),
+          customerPhone: pickupPhone.trim(),
+          totalAmount: 0,
+          paymentStatus: "PAID",
+          shippingStatus: isRefundPickup ? "반품수거접수완료" : "교환수거접수완료",
+        });
+        localStorage.setItem("admin_orders", JSON.stringify(ordersList));
+
+        // 주문 및 배송 관리 컴포넌트 실시간 동기화
+        window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+        window.dispatchEvent(new CustomEvent("admin_orders_updated"));
+      }
+
+      // 3. 라이브 채팅 상담창에 수거접수 완료 알림 버블 자동 전송
+      const pickupCompletedPayload = JSON.stringify({
+        type: isRefundPickup ? "REFUND_PICKUP_REGISTERED" : "EXCHANGE_PICKUP_REGISTERED",
+        title: isRefundPickup ? "CJ대한통운 반품 수거접수 완료" : "CJ대한통운 교환 수거접수 완료",
+        orderNumber: newExcOrderId,
+        originalOrderId: orderNum,
+        items: itemsName,
+        reason: pickupReason,
+        details: pickupDetailReason.trim(),
+        bookingNumber: data.bookingNumber,
+        recipient: pickupRecipient.trim(),
+        address: `${pickupAddress.trim()} ${pickupDetailAddress.trim()}`.trim(),
+        text: `CJ대한통운 전산에 ${isRefundPickup ? "반품" : "교환"} 수거 접수(예약번호: ${data.bookingNumber})가 완료되었습니다. 담당 기사님이 방문하여 상품을 안전하게 회수할 예정입니다.`,
+      });
+      handleAdminSendLiveChat(pickupCompletedPayload);
+
+      alert(`✅ CJ대한통운 ${isRefundPickup ? "반품" : "교환"} 수거접수가 완료되었습니다!\n\n• 수거주문번호: ${newExcOrderId}\n• CJ예약접수번호: ${data.bookingNumber}\n• 주문 및 배송 관리 리스트에 '${isRefundPickup ? "반품" : "교환"} 수거 건'으로 등록되었습니다.\n• 배송메시지에 사유가 등록되었습니다.`);
+      setIsPickupModalOpen(false);
+    } catch (err: any) {
+      console.error("CJ대한통운 수거 접수 실패:", err);
+      const errMsg = err?.message || "알 수 없는 전산 오류가 발생했습니다.";
+      alert(
+        `🚨 [CJ대한통운 수거 접수 실패]\n\n` +
+        `실제 CJ대한통운 전산 접수가 완료되지 않아 주문 등록이 중단되었습니다.\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `[실패 사유]\n${errMsg}\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `[대처 방법]\n` +
+        `1. CJ API 설정(.env.local의 CJ_API_KEY, CJ_CUST_ID, CJ_BIZ_REG_NUM)을 확인하세요.\n` +
+        `2. CJ대한통운 방화벽에 쇼핑몰 서버 IP가 등록되어 있는지 대리점에 확인하세요.\n` +
+        `3. 고객 수거지 주소와 연락처가 올바른 규격인지 확인하세요.`
+      );
+      toast.error(`수거 접수 실패: ${errMsg}`);
+    } finally {
+      setIsSubmittingPickup(false);
+    }
+  };
 
   // Auto Reply (Chatbot) State
   const [isAutoReplyModalOpen, setIsAutoReplyModalOpen] = useState(false);
@@ -486,7 +1051,7 @@ export function InquiriesManagement({
       session.id === "admin" ||
       session.name?.includes("관리자");
     if (isAdm) {
-      return { tier: "관리자", color: "bg-rose-600 text-white font-black" };
+      return { tier: "관리자", color: "bg-neutral-900 text-white font-black" };
     }
     if (session.id === "guest" || session.email === "guest@choicomma.com" || session.name === "실시간 방문 고객") {
       return { tier: "비회원", color: "bg-neutral-200 text-neutral-700 font-bold" };
@@ -504,19 +1069,19 @@ export function InquiriesManagement({
           if (found && (found.grade || found.tier)) {
             const g = String(found.grade || found.tier).toUpperCase();
             if (g.includes("VVIP") || g.includes("BLACK")) {
-              return { tier: "VVIP", color: "bg-neutral-950 text-amber-400 font-black border border-amber-400/50" };
+              return { tier: "VVIP", color: "bg-neutral-950 text-white font-black border border-neutral-700" };
             }
             if (g.includes("PLATINUM") || g.includes("플래티넘")) {
-              return { tier: "PLATINUM", color: "bg-purple-100 text-purple-800 font-black border border-purple-300" };
+              return { tier: "PLATINUM", color: "bg-neutral-800 text-white font-black border border-neutral-700" };
             }
             if (g.includes("GOLD") || g.includes("골드")) {
-              return { tier: "GOLD", color: "bg-amber-100 text-amber-900 font-black border border-amber-300" };
+              return { tier: "GOLD", color: "bg-neutral-200 text-neutral-900 font-black border border-neutral-300" };
             }
             if (g.includes("SILVER") || g.includes("실버")) {
-              return { tier: "SILVER", color: "bg-slate-200 text-slate-800 font-black border border-slate-300" };
+              return { tier: "SILVER", color: "bg-neutral-100 text-neutral-800 font-black border border-neutral-300" };
             }
             if (g.includes("VIP")) {
-              return { tier: "VIP", color: "bg-amber-400 text-neutral-950 font-black" };
+              return { tier: "VIP", color: "bg-neutral-900 text-white font-black" };
             }
             return { tier: found.grade || found.tier || "일반회원", color: "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300" };
           }
@@ -553,9 +1118,9 @@ export function InquiriesManagement({
           <button
             type="button"
             onClick={() => setIsAutoReplyModalOpen(true)}
-            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md cursor-pointer border border-amber-400"
+            className="flex items-center gap-1.5 bg-white hover:bg-neutral-100 text-neutral-900 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-xs cursor-pointer border border-neutral-300"
           >
-            <Sliders className="w-4 h-4 text-neutral-950" />
+            <Sliders className="w-4 h-4 text-neutral-900" />
             <span>자동 답변 설정</span>
             <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${autoReplyEnabled ? "bg-neutral-950 text-white" : "bg-neutral-200 text-neutral-700"}`}>
               {autoReplyEnabled ? `${autoReplyDelay}초` : "꺼짐"}
@@ -617,7 +1182,7 @@ export function InquiriesManagement({
                       <span className={`text-[9px] font-mono font-black px-1.5 py-0.5 rounded ${
                         isEnded
                           ? "bg-neutral-200 text-neutral-600"
-                          : "bg-emerald-500 text-neutral-950"
+                          : "bg-blue-600 text-white"
                       }`}>
                         {isEnded ? "상담종료" : "접속중"}
                       </span>
@@ -636,8 +1201,8 @@ export function InquiriesManagement({
                         }}
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
                           isSelected
-                            ? "bg-rose-950 text-rose-300 border-rose-800 hover:bg-rose-900"
-                            : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                            ? "bg-neutral-800 text-neutral-300 border-neutral-700 hover:bg-neutral-700"
+                            : "bg-neutral-100 text-neutral-700 border-neutral-200 hover:bg-neutral-200"
                         }`}
                       >
                         🔒 상담 종료
@@ -653,13 +1218,13 @@ export function InquiriesManagement({
           <div className="space-y-2.5 pt-2 border-t border-neutral-200">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-black text-neutral-800 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                <Sparkles className="w-3.5 h-3.5 text-neutral-900" />
                 <span>원클릭 빠른 답장 템플릿 ({templates.length}개)</span>
               </label>
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(true)}
-                className="text-[10px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-md transition-colors cursor-pointer notranslate"
+                className="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-extrabold px-2 py-0.5 rounded-md border border-neutral-300 transition-colors cursor-pointer notranslate"
                 translate="no"
               >
                 ⚡ 실시간 수정하기
@@ -672,19 +1237,19 @@ export function InquiriesManagement({
                   key={tmpl.id}
                   type="button"
                   onClick={() => handleAdminSendLiveChat(tmpl.ko)}
-                  className="w-full text-left bg-neutral-50 hover:bg-amber-50/80 hover:border-amber-300 border border-neutral-200/90 p-3 rounded-2xl transition-all cursor-pointer space-y-1 group"
+                  className="w-full text-left bg-neutral-50 hover:bg-neutral-100 hover:border-neutral-400 border border-neutral-200/90 p-3 rounded-2xl transition-all cursor-pointer space-y-1 group"
                 >
                   {/* 상단 한글 원문 (구글 번역 보호: notranslate) */}
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-extrabold bg-neutral-950 text-white px-2 py-0.5 rounded-md notranslate inline-block" translate="no">
                       🇰🇷 [한글]: {tmpl.ko}
                     </span>
-                    <span className="text-[9px] font-extrabold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded notranslate" translate="no">
+                    <span className="text-[9px] font-extrabold text-neutral-800 bg-neutral-200 px-1.5 py-0.2 rounded notranslate" translate="no">
                       {tmpl.label}
                     </span>
                   </div>
                   {/* 하단 템플릿 메시지 본문 */}
-                  <div className="text-[11px] font-bold text-neutral-800 group-hover:text-amber-950 pt-0.5 leading-relaxed">
+                  <div className="text-[11px] font-bold text-neutral-800 group-hover:text-black pt-0.5 leading-relaxed">
                     {tmpl.ko}
                   </div>
                 </button>
@@ -697,7 +1262,7 @@ export function InquiriesManagement({
         <div className="lg:col-span-2 bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-4 flex flex-col h-[580px]">
           <div className="flex items-center justify-between pb-3 border-b border-neutral-200 shrink-0">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-emerald-600" />
+              <MessageSquare className="w-4 h-4 text-blue-600" />
               <h3 className="text-sm font-black text-neutral-950">
                 실시간 대화 내역 ({chatSessionsList.find((s) => s.id === activeSessionId)?.name || "진행 중인 상담 없음"})
               </h3>
@@ -707,7 +1272,7 @@ export function InquiriesManagement({
                 type="button"
                 disabled={!activeSessionId || chatSessionsList.length === 0}
                 onClick={() => handleAdminEndLiveChat(activeSessionId)}
-                className="bg-rose-50 hover:bg-rose-100 disabled:opacity-40 disabled:cursor-not-allowed text-rose-700 border border-rose-200 font-bold px-3 py-1.5 rounded-xl transition-all text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
+                className="bg-neutral-100 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-700 border border-neutral-300 font-bold px-3 py-1.5 rounded-xl transition-all text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
                 title="선택한 고객과의 1:1 라이브 상담을 종료합니다"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -752,7 +1317,576 @@ export function InquiriesManagement({
                           : "bg-white text-neutral-900 border border-neutral-200 font-bold rounded-tl-xs"
                       }`}
                     >
-                      {msg.text}
+                      {(() => {
+                        let parsed: any = null;
+                        if (
+                          typeof msg.text === "string" &&
+                          (msg.text.startsWith('{"type":"ORDER_') ||
+                           msg.text.startsWith('{"type":"EXCHANGE_') ||
+                           msg.text.startsWith('{"type":"REFUND_'))
+                        ) {
+                          try { parsed = JSON.parse(msg.text); } catch (e) {}
+                        }
+                        if (parsed?.type === "ORDER_SELECT_REQUEST") {
+                          return (
+                            <div className="space-y-1.5 text-left notranslate" translate="no">
+                              <div className="flex items-center gap-1.5 text-white font-black text-xs">
+                                <Package className="w-4 h-4 text-blue-400" />
+                                <span>주문건 선택 요청 전송됨</span>
+                              </div>
+                              <p className="text-[11px] text-neutral-300 font-medium leading-relaxed">
+                                {parsed.text || "고객님께 문의하실 주문건을 선택할 수 있는 주문 카드를 전송했습니다."}
+                              </p>
+                              <div className="text-[10px] text-neutral-400 font-bold pt-0.5">
+                                ⏳ 고객이 주문건을 선택하면 해당 상세 정보가 이곳에 바로 표시됩니다.
+                              </div>
+                            </div>
+                          );
+                        }
+                        if (parsed?.type === "ORDER_SELECTED") {
+                          const thumb = parsed.image || getProductThumbnail(parsed.items);
+                          return (
+                            <div className={`space-y-2.5 text-left p-3.5 rounded-2xl border notranslate max-w-[340px] ${
+                              isAdmin
+                                ? "bg-neutral-950 border-neutral-800 text-white shadow-md"
+                                : "bg-white border-neutral-200 text-neutral-900 shadow-xs"
+                            }`} translate="no">
+                              <div className={`flex items-center justify-between pb-1.5 border-b ${
+                                isAdmin ? "border-neutral-800" : "border-neutral-200"
+                              }`}>
+                                <span className={`text-xs font-black flex items-center gap-1.5 ${
+                                  isAdmin ? "text-white" : "text-neutral-900"
+                                }`}>
+                                  <Package className={`w-4 h-4 ${isAdmin ? "text-blue-400" : "text-neutral-800"}`} />
+                                  <span>고객 선택 문의 주문건</span>
+                                </span>
+                                <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-full border ${
+                                  isAdmin
+                                    ? "bg-neutral-800 text-neutral-200 border-neutral-700"
+                                    : "bg-neutral-100 text-neutral-800 border-neutral-300"
+                                }`}>
+                                  {parsed.status || "주문완료"}
+                                </span>
+                              </div>
+
+                              {/* Thumbnail on Left, Product Details on Right */}
+                              <div className="flex items-start gap-3">
+                                <div className={`w-16 h-16 rounded-xl overflow-hidden shrink-0 border ${
+                                  isAdmin
+                                    ? "bg-neutral-900 border-neutral-800"
+                                    : "bg-white border-neutral-200"
+                                }`}>
+                                  <img
+                                    src={thumb}
+                                    alt={parsed.items || "주문 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <div className={`text-[11px] font-mono font-black ${isAdmin ? "text-neutral-400" : "text-neutral-500"}`}>
+                                    주문번호: {parsed.orderNumber}
+                                  </div>
+                                  <div className={`text-xs font-bold leading-snug line-clamp-2 ${isAdmin ? "text-white" : "text-neutral-900"}`}>
+                                    {parsed.items}
+                                  </div>
+                                  {parsed.amount && (
+                                    <div className={`text-xs font-black font-mono ${isAdmin ? "text-white" : "text-neutral-950"}`}>
+                                      {parsed.amount}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {parsed.trackingNumber && parsed.trackingNumber !== "-" && (
+                                <div className={`text-[11px] flex justify-between pt-1.5 border-t ${
+                                  isAdmin ? "text-neutral-300 border-neutral-800" : "text-neutral-600 border-neutral-200"
+                                }`}>
+                                  <span>운송장:</span>
+                                  <span className={`font-mono font-bold ${isAdmin ? "text-white" : "text-neutral-900"}`}>
+                                    {parsed.trackingNumber}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                        if (parsed?.type === "EXCHANGE_REQUEST") {
+                          return (
+                            <div className="space-y-1.5 text-left notranslate" translate="no">
+                              <div className="flex items-center gap-1.5 text-white font-black text-xs">
+                                <RefreshCw className="w-4 h-4 text-blue-400" />
+                                <span>교환접수요청서 전송됨</span>
+                              </div>
+                              <p className="text-[11px] text-neutral-300 font-medium leading-relaxed">
+                                {parsed.text || "고객님께 교환 접수 및 배송비 결제 양식을 전송했습니다."}
+                              </p>
+                              <div className="text-[10px] text-neutral-400 font-bold pt-0.5">
+                                ⏳ 고객이 교환 정보를 입력하고 왕복 배송비(16,000원)를 결제하면 교환 접수 내역이 이곳에 표시됩니다.
+                              </div>
+                            </div>
+                          );
+                        }
+                        if (parsed?.type === "EXCHANGE_PAY_REQUEST") {
+                          return (
+                            <div className="space-y-1.5 text-left notranslate" translate="no">
+                              <div className="flex items-center gap-1.5 text-white font-black text-xs">
+                                <CreditCard className="w-4 h-4 text-blue-400" />
+                                <span>교환접수비용결제창 전송됨</span>
+                              </div>
+                              <p className="text-[11px] text-neutral-300 font-medium leading-relaxed">
+                                {parsed.text || "고객님께 교환 왕복 배송비(16,000원) 결제창을 전송했습니다."}
+                              </p>
+                              <div className="text-[10px] text-neutral-400 font-bold pt-0.5">
+                                💳 고객이 토스페이먼츠(16,000원) 결제를 완료하면 접수 완료 내역이 표시됩니다.
+                              </div>
+                            </div>
+                          );
+                        }
+                        if (parsed?.type === "EXCHANGE_COMPLETED") {
+                          const thumb = parsed.image || getProductThumbnail(parsed.items);
+                          return (
+                            <div className={`space-y-2.5 text-left p-3.5 rounded-2xl border notranslate max-w-[340px] ${
+                              isAdmin
+                                ? "bg-neutral-950 border-neutral-800 text-white shadow-md"
+                                : "bg-white border-neutral-200 text-neutral-900 shadow-xs"
+                            }`} translate="no">
+                              <div className={`flex items-center justify-between pb-1.5 border-b ${
+                                isAdmin ? "border-neutral-800" : "border-neutral-200"
+                              }`}>
+                                <span className={`text-xs font-black flex items-center gap-1.5 ${
+                                  isAdmin ? "text-white" : "text-neutral-900"
+                                }`}>
+                                  <RefreshCw className="w-4 h-4 text-blue-400" />
+                                  <span>교환 접수 완료</span>
+                                </span>
+                                <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-full border ${
+                                  isAdmin
+                                    ? "bg-neutral-800 text-neutral-200 border-neutral-700"
+                                    : "bg-neutral-100 text-neutral-800 border-neutral-300"
+                                }`}>
+                                  {parsed.fee > 0 ? "배송비 결제완료" : "무료 교환"}
+                                </span>
+                              </div>
+
+                              {/* Thumbnail on Left, Product Details on Right */}
+                              <div className="flex items-start gap-3">
+                                <div className={`w-16 h-16 rounded-xl overflow-hidden shrink-0 border ${
+                                  isAdmin
+                                    ? "bg-neutral-900 border-neutral-800"
+                                    : "bg-white border-neutral-200"
+                                }`}>
+                                  <img
+                                    src={thumb}
+                                    alt={parsed.items || "교환 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <div className={`text-[11px] font-mono font-black ${isAdmin ? "text-neutral-400" : "text-neutral-700"}`}>
+                                    주문번호: {parsed.orderNumber}
+                                  </div>
+                                  <div className={`text-xs font-bold leading-snug line-clamp-2 ${isAdmin ? "text-white" : "text-neutral-900"}`}>
+                                    {parsed.items}
+                                  </div>
+                                  <div className="text-xs font-black font-mono text-blue-400">
+                                    {parsed.fee > 0
+                                      ? `배송비: ${Number(parsed.fee).toLocaleString()}원 결제완료 (${parsed.paymentMethod || "토스"})`
+                                      : "왕복 배송비: 0원 (무료)"}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Reason & Return Guide */}
+                              <div className={`p-2.5 rounded-xl text-xs space-y-1 ${
+                                isAdmin ? "bg-neutral-900 border border-neutral-800" : "bg-neutral-50 border border-neutral-200"
+                              }`}>
+                                <div className="flex items-start gap-1">
+                                  <span className="font-bold shrink-0 opacity-70">교환사유:</span>
+                                  <span className="font-extrabold">{parsed.reason || "사이즈/색상 교환"}</span>
+                                </div>
+                                {parsed.details && (
+                                  <p className="text-[11px] opacity-80 pl-1 border-l-2 border-neutral-700">
+                                    {parsed.details}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="text-[10px] text-neutral-400 font-medium pt-0.5">
+                                📦 CJ대한통운 영업소로 반품 수거 접수 완료 (1~2일 내 방문)
+                              </div>
+                            </div>
+                          );
+                        }
+                        if (parsed?.type === "EXCHANGE_PICKUP_REGISTERED") {
+                          const thumb = parsed.image || getProductThumbnail(parsed.items);
+                          return (
+                            <div className={`space-y-2.5 text-left p-3.5 rounded-2xl border notranslate max-w-[340px] ${
+                              isAdmin
+                                ? "bg-neutral-950 border-neutral-800 text-white shadow-md"
+                                : "bg-white border-neutral-200 text-neutral-900 shadow-xs"
+                            }`} translate="no">
+                              <div className={`flex items-center justify-between pb-1.5 border-b ${
+                                isAdmin ? "border-neutral-800" : "border-neutral-200"
+                              }`}>
+                                <span className={`text-xs font-black flex items-center gap-1.5 ${
+                                  isAdmin ? "text-white" : "text-neutral-900"
+                                }`}>
+                                  <Truck className="w-4 h-4 text-blue-400" />
+                                  <span>CJ대한통운 수거접수 완료</span>
+                                </span>
+                                <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-full border ${
+                                  isAdmin
+                                    ? "bg-neutral-800 text-neutral-200 border-neutral-700"
+                                    : "bg-neutral-100 text-neutral-800 border-neutral-300"
+                                }`}>
+                                  교환수거
+                                </span>
+                              </div>
+
+                              <div className="flex items-start gap-3">
+                                <div className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 border ${
+                                  isAdmin ? "bg-neutral-900 border-neutral-800" : "bg-white border-neutral-200"
+                                }`}>
+                                  <img
+                                    src={thumb}
+                                    alt={parsed.items || "교환 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-0.5">
+                                  <div className={`text-[11px] font-mono font-black ${isAdmin ? "text-neutral-400" : "text-neutral-500"}`}>
+                                    교환번호: {parsed.orderNumber}
+                                  </div>
+                                  <div className={`text-xs font-bold leading-snug line-clamp-1 ${isAdmin ? "text-white" : "text-neutral-900"}`}>
+                                    {parsed.items}
+                                  </div>
+                                  {parsed.bookingNumber && (
+                                    <div className="text-[10px] font-mono font-bold text-neutral-300">
+                                      CJ예약번호: {parsed.bookingNumber}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className={`p-2.5 rounded-xl text-xs space-y-1 ${
+                                isAdmin ? "bg-neutral-900 border border-neutral-800" : "bg-neutral-50 border border-neutral-200"
+                              }`}>
+                                <div className="flex items-start gap-1">
+                                  <span className="font-bold shrink-0 opacity-70">교환사유:</span>
+                                  <span className="font-extrabold text-white">
+                                    {parsed.reason} {parsed.details ? `(${parsed.details})` : ""}
+                                  </span>
+                                </div>
+                                {parsed.address && (
+                                  <div className="text-[10px] opacity-80 pt-0.5 border-t border-neutral-800">
+                                    <span className="font-bold">수거지: </span>
+                                    <span>{parsed.address}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="text-[10px] text-neutral-400 font-medium pt-0.5">
+                                🚚 CJ대한통운 기사님이 1~2영업일 내에 방문 수거할 예정입니다.
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (parsed?.type === "REFUND_REQUEST") {
+                          return (
+                            <div className="space-y-1.5 text-left notranslate" translate="no">
+                              <div className="flex items-center gap-1.5 text-white font-black text-xs">
+                                <RotateCcw className="w-4 h-4 text-blue-400" />
+                                <span>환불접수요청서 전송됨</span>
+                              </div>
+                              <p className="text-[11px] text-neutral-300 font-medium leading-relaxed">
+                                {parsed.text || "고객님께 환불 접수 및 구매금액 취소 신청서 양식을 전송했습니다."}
+                              </p>
+                              <div className="text-[10px] text-neutral-400 font-bold pt-0.5">
+                                ⏳ 고객이 환불 신청서를 제출하면 환불 상품 및 사유가 이곳에 표시되며, 즉시 토스 결제 취소를 진행할 수 있습니다.
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (parsed?.type === "REFUND_SUBMITTED") {
+                          const thumb = parsed.image || getProductThumbnail(parsed.items);
+                          return (
+                            <div className={`space-y-2.5 text-left p-3.5 rounded-2xl border notranslate max-w-[340px] ${
+                              isAdmin
+                                ? "bg-neutral-950 border-neutral-800 text-white shadow-md"
+                                : "bg-white border-neutral-200 text-neutral-900 shadow-xs"
+                            }`} translate="no">
+                              <div className={`flex items-center justify-between pb-1.5 border-b ${
+                                isAdmin ? "border-neutral-800" : "border-neutral-200"
+                              }`}>
+                                <span className={`text-xs font-black flex items-center gap-1.5 ${
+                                  isAdmin ? "text-white" : "text-neutral-900"
+                                }`}>
+                                  <RotateCcw className="w-4 h-4 text-blue-400" />
+                                  <span>고객 환불 신청서 접수됨</span>
+                                </span>
+                                <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-full border ${
+                                  isAdmin
+                                    ? "bg-neutral-800 text-neutral-200 border-neutral-700"
+                                    : "bg-neutral-100 text-neutral-800 border-neutral-300"
+                                }`}>
+                                  환불신청
+                                </span>
+                              </div>
+
+                              <div className="flex items-start gap-3">
+                                <div className={`w-16 h-16 rounded-xl overflow-hidden shrink-0 border ${
+                                  isAdmin ? "bg-neutral-900 border-neutral-800" : "bg-white border-neutral-200"
+                                }`}>
+                                  <img
+                                    src={thumb}
+                                    alt={parsed.items || "환불 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <div className={`text-[11px] font-mono font-black ${isAdmin ? "text-neutral-400" : "text-neutral-700"}`}>
+                                    주문번호: {parsed.orderNumber}
+                                  </div>
+                                  <div className={`text-xs font-bold leading-snug line-clamp-2 ${isAdmin ? "text-white" : "text-neutral-900"}`}>
+                                    {parsed.items}
+                                  </div>
+                                  {parsed.amount && (
+                                    <div className="text-xs font-black font-mono text-white">
+                                      결제금액: {parsed.amount}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className={`p-2.5 rounded-xl text-xs space-y-1 ${
+                                isAdmin ? "bg-neutral-900 border border-neutral-800" : "bg-neutral-50 border border-neutral-200"
+                              }`}>
+                                <div className="flex items-start gap-1">
+                                  <span className="font-bold shrink-0 opacity-70">환불사유:</span>
+                                  <span className="font-extrabold text-white">
+                                    {parsed.reason || "단순 변심"}
+                                  </span>
+                                </div>
+                                {parsed.details && (
+                                  <p className="text-[11px] opacity-90 pl-1 border-l-2 border-neutral-700">
+                                    {parsed.details}
+                                  </p>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedRefundPrefillOrder({
+                                    id: parsed.orderId || parsed.orderNumber,
+                                    orderId: parsed.orderId || parsed.orderNumber,
+                                    orderNumber: parsed.orderNumber,
+                                    uniqueSelectId: `${parsed.orderNumber}_1`,
+                                    items: parsed.items,
+                                    itemName: parsed.items,
+                                    quantity: 1,
+                                    amount: parsed.amount || "",
+                                    image: thumb,
+                                  });
+                                  setIsRefundModalOpen(true);
+                                }}
+                                className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer mt-1 active:scale-98"
+                              >
+                                <CreditCard className="w-3.5 h-3.5" />
+                                <span>토스 결제 취소 (환불 처리하기)</span>
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        if (parsed?.type === "REFUND_COMPLETED") {
+                          const thumb = parsed.image || getProductThumbnail(parsed.items);
+                          return (
+                            <div className={`space-y-2.5 text-left p-3.5 rounded-2xl border notranslate max-w-[340px] ${
+                              isAdmin
+                                ? "bg-neutral-950 border-neutral-800 text-white shadow-md"
+                                : "bg-white border-neutral-200 text-neutral-900 shadow-xs"
+                            }`} translate="no">
+                              <div className={`flex items-center justify-between pb-1.5 border-b ${
+                                isAdmin ? "border-neutral-800" : "border-neutral-200"
+                              }`}>
+                                <span className={`text-xs font-black flex items-center gap-1.5 ${
+                                  isAdmin ? "text-white" : "text-neutral-900"
+                                }`}>
+                                  <CreditCard className="w-4 h-4 text-blue-400" />
+                                  <span>토스 결제 취소 / 환불 완료</span>
+                                </span>
+                                <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-full border ${
+                                  isAdmin
+                                    ? "bg-neutral-800 text-neutral-200 border-neutral-700"
+                                    : "bg-neutral-100 text-neutral-800 border-neutral-300"
+                                }`}>
+                                  PG 승인취소
+                                </span>
+                              </div>
+
+                              <div className="flex items-start gap-3">
+                                <div className={`w-16 h-16 rounded-xl overflow-hidden shrink-0 border ${
+                                  isAdmin ? "bg-neutral-900 border-neutral-800" : "bg-white border-neutral-200"
+                                }`}>
+                                  <img
+                                    src={thumb}
+                                    alt={parsed.items || "환불 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <div className={`text-[11px] font-mono font-black ${isAdmin ? "text-neutral-400" : "text-neutral-700"}`}>
+                                    주문번호: {parsed.orderNumber}
+                                  </div>
+                                  <div className={`text-xs font-bold leading-snug line-clamp-2 ${isAdmin ? "text-white" : "text-neutral-900"}`}>
+                                    {parsed.items}
+                                  </div>
+                                  <div className="text-xs font-black font-mono text-blue-400">
+                                    -₩{Number(parsed.refundAmount || 0).toLocaleString()}원 환불
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={`p-2.5 rounded-xl text-xs space-y-1 ${
+                                isAdmin ? "bg-neutral-900 border border-neutral-800" : "bg-neutral-50 border border-neutral-200"
+                              }`}>
+                                <div className="flex items-center justify-between">
+                                  <span className="opacity-70 font-medium">결제수단:</span>
+                                  <span className="font-bold">{parsed.paymentMethod || "신용·체크카드 (토스)"}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="opacity-70 font-medium">취소사유:</span>
+                                  <span className="font-bold">{parsed.cancelReason || "고객 요청"}</span>
+                                </div>
+                              </div>
+
+                              {(parsed.pointsRestored || parsed.couponRestored) && (
+                                <div className={`p-2.5 rounded-xl text-[11px] space-y-1 border ${
+                                  isAdmin
+                                    ? "bg-neutral-900 border-neutral-800 text-neutral-300"
+                                    : "bg-neutral-50 border-neutral-200 text-neutral-800"
+                                }`}>
+                                  {parsed.pointsRestored && (
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-medium">🪙 사용 적립금 반환</span>
+                                      <span className="font-bold font-mono">+{Number(parsed.pointsRestored).toLocaleString()} P</span>
+                                    </div>
+                                  )}
+                                  {parsed.couponRestored && (
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-medium">🎟️ 할인 쿠폰 재사용 복원</span>
+                                      <span className="font-bold">[{parsed.couponRestored}] 복원완료</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="text-[10px] text-neutral-400 font-bold pt-0.5 flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                                <span>토스페이먼츠 PG 승인 취소가 완료되었습니다.</span>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (parsed?.type === "REFUND_PICKUP_REGISTERED") {
+                          const thumb = parsed.image || getProductThumbnail(parsed.items);
+                          return (
+                            <div className={`space-y-2.5 text-left p-3.5 rounded-2xl border notranslate max-w-[340px] ${
+                              isAdmin
+                                ? "bg-neutral-950 border-neutral-800 text-white shadow-md"
+                                : "bg-white border-neutral-200 text-neutral-900 shadow-xs"
+                            }`} translate="no">
+                              <div className={`flex items-center justify-between pb-1.5 border-b ${
+                                isAdmin ? "border-neutral-800" : "border-neutral-200"
+                              }`}>
+                                <span className={`text-xs font-black flex items-center gap-1.5 ${
+                                  isAdmin ? "text-white" : "text-neutral-900"
+                                }`}>
+                                  <Truck className="w-4 h-4 text-blue-400" />
+                                  <span>CJ대한통운 반품 수거접수 완료</span>
+                                </span>
+                                <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-full border ${
+                                  isAdmin
+                                    ? "bg-neutral-800 text-neutral-200 border-neutral-700"
+                                    : "bg-neutral-100 text-neutral-800 border-neutral-300"
+                                }`}>
+                                  반품수거
+                                </span>
+                              </div>
+
+                              <div className="flex items-start gap-3">
+                                <div className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 border ${
+                                  isAdmin ? "bg-neutral-900 border-neutral-800" : "bg-white border-neutral-200"
+                                }`}>
+                                  <img
+                                    src={thumb}
+                                    alt={parsed.items || "반품 상품"}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-0.5">
+                                  <div className={`text-[11px] font-mono font-black ${isAdmin ? "text-neutral-400" : "text-neutral-500"}`}>
+                                    주문번호: {parsed.orderNumber}
+                                  </div>
+                                  <div className={`text-xs font-bold leading-snug line-clamp-1 ${isAdmin ? "text-white" : "text-neutral-900"}`}>
+                                    {parsed.items}
+                                  </div>
+                                  {parsed.bookingNumber && (
+                                    <div className="text-[10px] font-mono font-bold text-neutral-300">
+                                      CJ예약번호: {parsed.bookingNumber}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className={`p-2.5 rounded-xl text-xs space-y-1 ${
+                                isAdmin ? "bg-neutral-900 border border-neutral-800" : "bg-neutral-50 border border-neutral-200"
+                              }`}>
+                                <div className="flex items-start gap-1">
+                                  <span className="font-bold shrink-0 opacity-70">반품사유:</span>
+                                  <span className="font-extrabold text-white">
+                                    {parsed.reason} {parsed.details ? `(${parsed.details})` : ""}
+                                  </span>
+                                </div>
+                                {parsed.address && (
+                                  <div className="text-[10px] opacity-80 pt-0.5 border-t border-neutral-800">
+                                    <span className="font-bold">수거지: </span>
+                                    <span>{parsed.address}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="text-[10px] text-neutral-400 font-medium pt-0.5">
+                                🚚 CJ대한통운 기사님이 1~2영업일 내에 방문 수거할 예정입니다.
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return msg.text;
+                      })()}
 
                       {Array.isArray(msg.images) && msg.images.length > 0 && (
                         <div className="grid grid-cols-2 gap-1.5 mt-2 pt-1 border-t border-neutral-200/40">
@@ -772,6 +1906,232 @@ export function InquiriesManagement({
               })
             )}
             <div ref={adminMessagesEndRef} />
+          </div>
+
+          {/* Action Toolbar directly above Reply Input */}
+          <div className="pt-2 pb-0.5 shrink-0 flex items-center justify-between border-t border-neutral-100">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleRequestOrderSelection()}
+                className="inline-flex items-center gap-1.5 text-xs font-black bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 px-3.5 py-1.5 rounded-xl transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                title="고객에게 직접 문의할 주문건을 선택하도록 요청 카드를 즉시 전송합니다"
+              >
+                <Package className="w-3.5 h-3.5 text-neutral-800" />
+                <span>주문선택 요청</span>
+              </button>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsExchangeMenuOpen((prev) => !prev)}
+                  className={`inline-flex items-center gap-1.5 text-xs font-black px-3.5 py-1.5 rounded-xl transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+                    isExchangeMenuOpen
+                      ? "bg-blue-600 text-white border border-blue-700 shadow-md"
+                      : "bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300"
+                  }`}
+                  title="교환접수요청서 또는 결제창을 선택하여 전송합니다"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isExchangeMenuOpen ? "text-white" : "text-neutral-900"}`} />
+                  <span>교환 접수</span>
+                  <ChevronUp className={`w-3.5 h-3.5 transition-transform duration-200 ${isExchangeMenuOpen ? "rotate-180 text-white" : "text-neutral-500"}`} />
+                </button>
+
+                {isExchangeMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsExchangeMenuOpen(false)}
+                    />
+                    <div className="absolute bottom-full mb-2 left-0 w-72 bg-white border border-neutral-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="text-[10px] font-black text-neutral-400 px-2 py-1 uppercase tracking-wider">
+                        교환 전송 옵션 선택
+                      </div>
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleRequestExchangeForm();
+                            setIsExchangeMenuOpen(false);
+                          }}
+                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-black text-neutral-900 group-hover:text-black">
+                              교환접수요청서 전송
+                            </div>
+                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                              반품 불가 사유 안내, 주문건 선택, 사유 입력 양식
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleRequestExchangePayment();
+                            setIsExchangeMenuOpen(false);
+                          }}
+                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <CreditCard className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
+                              <span>교환접수비용결제창 전송</span>
+                              <span className="text-[10px] font-mono font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">
+                                16,000원
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                              토스페이먼츠 왕복 배송비(16,000원) 즉시 결제창
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleOpenPickupModal();
+                            setIsExchangeMenuOpen(false);
+                          }}
+                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer border-t border-neutral-100 pt-2"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
+                            <Truck className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
+                              <span>수거접수진행</span>
+                              <span className="text-[10px] font-bold text-neutral-700 bg-neutral-100 border border-neutral-200 px-1.5 py-0.2 rounded-full">
+                                CJ대한통운
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                              실제 CJ대한통운 시스템으로 교환접수 및 주문 관리 등록
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* 환불 접수 메뉴 */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsRefundMenuOpen((prev) => !prev)}
+                  className={`inline-flex items-center gap-1.5 text-xs font-black px-3.5 py-1.5 rounded-xl transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+                    isRefundMenuOpen
+                      ? "bg-blue-600 text-white border border-blue-700 shadow-md"
+                      : "bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300"
+                  }`}
+                  title="환불접수요청서, 토스 결제 취소/환불 또는 수거접수를 선택하여 진행합니다"
+                >
+                  <RotateCcw className={`w-3.5 h-3.5 ${isRefundMenuOpen ? "text-white" : "text-neutral-900"}`} />
+                  <span>환불 접수</span>
+                  <ChevronUp className={`w-3.5 h-3.5 transition-transform duration-200 ${isRefundMenuOpen ? "rotate-180 text-white" : "text-neutral-500"}`} />
+                </button>
+
+                {isRefundMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsRefundMenuOpen(false)}
+                    />
+                    <div className="absolute bottom-full mb-2 left-0 w-72 bg-white border border-neutral-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="text-[10px] font-black text-neutral-400 px-2 py-1 uppercase tracking-wider">
+                        환불 전송 옵션 선택
+                      </div>
+                      <div className="space-y-1">
+                        {/* 1. 환불접수요청서 전송 */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleRequestRefundForm();
+                            setIsRefundMenuOpen(false);
+                          }}
+                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-black text-neutral-900 group-hover:text-black">
+                              환불접수요청서 전송
+                            </div>
+                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                              환불 규정 안내, 주문건 선택, 사유 입력 양식
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* 2. 환불 접수 (토스페이먼츠 구매금액 취소/환불) */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleOpenRefundModal();
+                            setIsRefundMenuOpen(false);
+                          }}
+                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <CreditCard className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
+                              <span>환불 접수</span>
+                              <span className="text-[10px] font-mono font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">
+                                토스 결제취소
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                              토스페이먼츠 PG를 통한 실제 구매금액 결제 취소/환불
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* 3. 수거 접수 진행 (CJ대한통운 반품 수거) */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleOpenPickupModal("REFUND");
+                            setIsRefundMenuOpen(false);
+                          }}
+                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer border-t border-neutral-100 pt-2"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
+                            <Truck className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
+                              <span>수거접수진행</span>
+                              <span className="text-[10px] font-bold text-neutral-700 bg-neutral-100 border border-neutral-200 px-1.5 py-0.2 rounded-full">
+                                CJ대한통운
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                              실제 CJ대한통운 시스템으로 반품 수거 및 회수 예약
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+            {activeSessionId && (
+              <span className="text-[11px] text-neutral-400 font-bold">
+                {chatSessionsList.find((s) => s.id === activeSessionId)?.name || "고객"}님 상담 중
+              </span>
+            )}
           </div>
 
           {/* Admin Reply Input Bar */}
@@ -807,6 +2167,8 @@ export function InquiriesManagement({
         </div>
       </div>
 
+
+
       {/* ========================================================================= */}
       {/* MODAL: ADMIN REAL-TIME TEMPLATE EDITING MODAL (실시간 타이핑 즉시 반영) */}
       {/* ========================================================================= */}
@@ -815,7 +2177,7 @@ export function InquiriesManagement({
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-neutral-200 space-y-6 animate-in zoom-in-95 duration-200 notranslate" translate="no">
             <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl border border-amber-100">
+                <div className="p-3 bg-neutral-100 text-neutral-900 rounded-2xl border border-neutral-200">
                   <Edit3 className="w-6 h-6" />
                 </div>
                 <div>
@@ -823,7 +2185,7 @@ export function InquiriesManagement({
                     <h3 className="text-xl font-extrabold text-neutral-950">
                       실시간 템플릿 수정 (입력 즉시 반영)
                     </h3>
-                    <span className="text-xs bg-emerald-100 text-emerald-800 font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    <span className="text-xs bg-neutral-100 text-neutral-800 font-extrabold px-2.5 py-0.5 rounded-full border border-neutral-300">
                       ⚡ 저장 버튼 없음 (입력 완료 시 확인 창)
                     </span>
                   </div>
@@ -842,9 +2204,9 @@ export function InquiriesManagement({
             </div>
 
             {/* Add New Template Form */}
-            <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-3">
-              <span className="text-xs font-black text-amber-950 flex items-center gap-1.5">
-                <Plus className="w-4 h-4 text-amber-600" />
+            <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl space-y-3">
+              <span className="text-xs font-black text-neutral-950 flex items-center gap-1.5">
+                <Plus className="w-4 h-4 text-neutral-900" />
                 <span>신규 템플릿 등록</span>
               </span>
 
@@ -854,7 +2216,7 @@ export function InquiriesManagement({
                   placeholder="🇰🇷 라벨 (예: 사이즈 안내)"
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
-                  className="bg-white border border-amber-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950"
+                  className="bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950"
                 />
                 <input
                   type="text"
@@ -867,7 +2229,7 @@ export function InquiriesManagement({
                       handleAddTemplate();
                     }
                   }}
-                  className="sm:col-span-2 bg-white border border-amber-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950"
+                  className="sm:col-span-2 bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950"
                 />
               </div>
 
@@ -900,7 +2262,7 @@ export function InquiriesManagement({
               {templates.map((tmpl) => (
                 <div
                   key={`${tmpl.id}-${tmpl.label}-${tmpl.ko}`}
-                  className="p-3.5 bg-neutral-50 border border-neutral-200/90 rounded-2xl space-y-2 hover:border-amber-300 transition-colors"
+                  className="p-3.5 bg-neutral-50 border border-neutral-200/90 rounded-2xl space-y-2 hover:border-neutral-400 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1">
@@ -917,7 +2279,7 @@ export function InquiriesManagement({
                             handleRequestEditConfirm(tmpl.id, "label", e.target.value, tmpl.label);
                           }
                         }}
-                        className="bg-white border border-neutral-300 rounded-xl px-3 py-1.5 text-xs font-extrabold text-neutral-950 focus:outline-none focus:border-amber-500 flex-1"
+                        className="bg-white border border-neutral-300 rounded-xl px-3 py-1.5 text-xs font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950 flex-1"
                         placeholder="라벨 입력 후 입력 완료시 '수정하시겠습니까?' 팝업"
                       />
                     </div>
@@ -925,7 +2287,7 @@ export function InquiriesManagement({
                     <button
                       type="button"
                       onClick={() => handleDeleteTemplate(tmpl.id)}
-                      className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-100 rounded-lg transition-colors cursor-pointer shrink-0"
+                      className="p-1.5 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-200 rounded-lg transition-colors cursor-pointer shrink-0"
                       title="템플릿 삭제"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -943,7 +2305,7 @@ export function InquiriesManagement({
                           handleRequestEditConfirm(tmpl.id, "ko", e.target.value, tmpl.ko);
                         }
                       }}
-                      className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-amber-500"
+                      className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950"
                       placeholder="한글 답장 문구 입력 후 입력 완료시 '수정하시겠습니까?' 팝업"
                     />
                   </div>
@@ -973,8 +2335,8 @@ export function InquiriesManagement({
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-neutral-100 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
-                  <Sliders className="w-5 h-5 text-amber-600" />
+                <div className="w-10 h-10 rounded-2xl bg-neutral-100 text-neutral-900 flex items-center justify-center">
+                  <Sliders className="w-5 h-5 text-neutral-900" />
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-neutral-950">
@@ -1001,7 +2363,7 @@ export function InquiriesManagement({
                 <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between">
                   <div>
                     <div className="font-extrabold text-xs text-neutral-900 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <Sparkles className="w-3.5 h-3.5 text-neutral-900" />
                       스마트 자동 응답 기능 활성화
                     </div>
                     <div className="text-[11px] text-neutral-500 mt-0.5">
@@ -1019,7 +2381,7 @@ export function InquiriesManagement({
                       )
                     }
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                      autoReplyEnabled ? "bg-amber-500" : "bg-neutral-300"
+                      autoReplyEnabled ? "bg-neutral-950" : "bg-neutral-300"
                     }`}
                   >
                     <span
@@ -1087,7 +2449,7 @@ export function InquiriesManagement({
                       )
                     }
                     placeholder="지정된 키워드가 없을 때 기본으로 나갈 답변을 입력하세요."
-                    className="flex-1 bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-medium text-neutral-900 focus:outline-none focus:border-amber-500"
+                    className="flex-1 bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-medium text-neutral-900 focus:outline-none focus:border-neutral-950"
                   />
                   <button
                     type="button"
@@ -1140,7 +2502,7 @@ export function InquiriesManagement({
                             onClick={() => handleToggleAutoRule(rule.id)}
                             className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-colors cursor-pointer shrink-0 ${
                               rule.enabled
-                                ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                                ? "bg-neutral-900 text-white"
                                 : "bg-neutral-200 text-neutral-600"
                             }`}
                           >
@@ -1160,7 +2522,7 @@ export function InquiriesManagement({
                                 });
                               }
                             }}
-                            className="bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-amber-500 rounded-lg px-2.5 py-1 text-xs font-extrabold text-neutral-950 flex-1 focus:outline-none"
+                            className="bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-lg px-2.5 py-1 text-xs font-extrabold text-neutral-950 flex-1 focus:outline-none"
                             placeholder="규칙 제목 입력"
                             title="클릭하여 규칙 제목 수정"
                           />
@@ -1168,7 +2530,7 @@ export function InquiriesManagement({
                         <button
                           type="button"
                           onClick={() => handleDeleteAutoRule(rule.id)}
-                          className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer shrink-0"
+                          className="p-1.5 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer shrink-0"
                           title="규칙 삭제"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1178,7 +2540,7 @@ export function InquiriesManagement({
                       {/* Keywords Edit Field */}
                       <div className="mb-2.5">
                         <label className="text-[11px] font-bold text-neutral-600 mb-1 flex items-center gap-1">
-                          <Tag className="w-3 h-3 text-amber-500" />
+                          <Tag className="w-3 h-3 text-neutral-700" />
                           감지 키워드 (쉼표로 구분하여 여러 개 등록 가능)
                         </label>
                         <input
@@ -1195,7 +2557,7 @@ export function InquiriesManagement({
                               });
                             }
                           }}
-                          className="w-full bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-amber-500 rounded-xl px-3 py-1.5 text-xs font-semibold text-neutral-800 focus:outline-none"
+                          className="w-full bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-3 py-1.5 text-xs font-semibold text-neutral-800 focus:outline-none"
                           placeholder="예: 배송, 언제, 도착, 출고"
                         />
                       </div>
@@ -1204,7 +2566,7 @@ export function InquiriesManagement({
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <label className="text-[11px] font-bold text-neutral-600 flex items-center gap-1">
-                            <MessageSquare className="w-3 h-3 text-blue-500" />
+                            <MessageSquare className="w-3 h-3 text-neutral-700" />
                             자동 응답 답변 문구 (템플릿 내용)
                           </label>
                           <span className="text-[10px] text-neutral-400">내용 수정 후 다른 곳 클릭 시 확인창 노출</span>
@@ -1224,7 +2586,7 @@ export function InquiriesManagement({
                               });
                             }
                           }}
-                          className="w-full bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-neutral-900 focus:outline-none leading-relaxed"
+                          className="w-full bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-3 py-2 text-xs text-neutral-900 focus:outline-none leading-relaxed"
                           placeholder="고객에게 자동으로 전송될 답변 내용을 입력하세요."
                         />
                       </div>
@@ -1234,9 +2596,9 @@ export function InquiriesManagement({
               </div>
 
               {/* 4. Add New Rule Form */}
-              <div className="p-4 bg-amber-50/60 border border-amber-200/80 rounded-2xl space-y-3">
-                <div className="font-extrabold text-xs text-amber-950 flex items-center gap-1.5">
-                  <Plus className="w-3.5 h-3.5 text-amber-600" />
+              <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl space-y-3">
+                <div className="font-extrabold text-xs text-neutral-950 flex items-center gap-1.5">
+                  <Plus className="w-3.5 h-3.5 text-neutral-900" />
                   새 자동 답변 키워드 규칙 등록
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1245,14 +2607,14 @@ export function InquiriesManagement({
                     value={newRuleName}
                     onChange={(e) => setNewRuleName(e.target.value)}
                     placeholder="규칙 이름 (예: 매장 위치 안내)"
-                    className="bg-white border border-amber-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-amber-500"
+                    className="bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950"
                   />
                   <input
                     type="text"
                     value={newRuleKeywords}
                     onChange={(e) => setNewRuleKeywords(e.target.value)}
                     placeholder="감지 키워드 (쉼표 구분: 위치, 쇼룸, 매장, 찾아오는길)"
-                    className="bg-white border border-amber-200 rounded-xl px-3 py-2 text-xs font-medium text-neutral-900 focus:outline-none focus:border-amber-500"
+                    className="bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-medium text-neutral-900 focus:outline-none focus:border-neutral-950"
                   />
                 </div>
                 <textarea
@@ -1260,12 +2622,12 @@ export function InquiriesManagement({
                   onChange={(e) => setNewRuleReply(e.target.value)}
                   rows={2}
                   placeholder="고객이 위 키워드 중 하나라도 포함하여 메시지를 보냈을 때 전송할 자동 답변 문구를 작성하세요."
-                  className="w-full bg-white border border-amber-200 rounded-xl px-3 py-2 text-xs text-neutral-900 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs text-neutral-900 focus:outline-none focus:border-neutral-950"
                 />
                 <button
                   type="button"
                   onClick={handleAddAutoRule}
-                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-extrabold text-xs rounded-xl cursor-pointer transition-all shadow-xs flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs rounded-xl cursor-pointer transition-all shadow-xs flex items-center justify-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" /> 키워드 규칙 추가하기
                 </button>
@@ -1300,7 +2662,7 @@ export function InquiriesManagement({
       {pendingEdit && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 notranslate" translate="no">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-neutral-200 text-center space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-full bg-neutral-100 text-neutral-900 flex items-center justify-center mx-auto">
               <Edit3 className="w-6 h-6" />
             </div>
             <div>
@@ -1340,7 +2702,7 @@ export function InquiriesManagement({
       {pendingDelete && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 notranslate" translate="no">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-neutral-200 text-center space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-full bg-neutral-100 text-neutral-900 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
             <div>
@@ -1363,7 +2725,7 @@ export function InquiriesManagement({
               <button
                 type="button"
                 onClick={handleConfirmDelete}
-                className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs py-3 rounded-xl cursor-pointer transition-all shadow-md"
+                className="flex-1 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs py-3 rounded-xl cursor-pointer transition-all shadow-md"
               >
                 확인 (삭제)
               </button>
@@ -1371,6 +2733,272 @@ export function InquiriesManagement({
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* CJ대한통운 수거접수 진행 모달 */}
+      {/* ========================================================================= */}
+      {isPickupModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-neutral-200 text-left space-y-4 max-h-[92vh] overflow-y-auto animate-in zoom-in-95 duration-150 notranslate" translate="no">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 shadow-2xs">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-neutral-950 flex items-center gap-1.5">
+                    <span>CJ대한통운 교환 수거접수 진행</span>
+                    <span className="text-[10px] bg-neutral-100 text-neutral-800 font-bold px-2 py-0.5 rounded-full border border-neutral-200">
+                      실시간 전산연동
+                    </span>
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-medium mt-0.5">
+                    CJ대한통운 회수 예약 등록 및 [주문 및 배송 관리] 리스트에 교환 건으로 추가합니다.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPickupModalOpen(false)}
+                className="p-1.5 rounded-xl text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 cursor-pointer transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 1. 교환 대상 주문건 선택 */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-neutral-800 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Package className="w-3.5 h-3.5 text-neutral-800" />
+                  <span>1. 교환 대상 주문건 선택</span>
+                </span>
+                <span className="text-[10px] text-neutral-400 font-bold">
+                  {pickupCustomerOrders.length > 0 ? `${pickupCustomerOrders.length}건 검색됨` : "직접 입력"}
+                </span>
+              </label>
+
+              {pickupCustomerOrders.length > 0 ? (
+                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  {pickupCustomerOrders.map((ord: any) => {
+                    const isSelected = (selectedPickupOrder?.uniqueSelectId || selectedPickupOrder?.id) === (ord.uniqueSelectId || ord.id);
+                    const thumb = ord.image || getProductThumbnail(ord.items);
+                    return (
+                      <div
+                        key={ord.uniqueSelectId || ord.id}
+                        onClick={() => {
+                          setSelectedPickupOrder(ord);
+                          if (ord.recipient) setPickupRecipient(ord.recipient);
+                          if (ord.phone) setPickupPhone(ord.phone);
+                          if (ord.zipCode) setPickupZipCode(ord.zipCode);
+                          if (ord.address) setPickupAddress(ord.address);
+                          if (ord.detailAddress) setPickupDetailAddress(ord.detailAddress);
+                          if (ord.trackingNumber && ord.trackingNumber !== "-") setPickupOriginalInvoice(ord.trackingNumber);
+                        }}
+                        className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-2.5 ${
+                          isSelected
+                            ? "bg-neutral-950 text-white border-neutral-900 shadow-2xs ring-1 ring-neutral-900"
+                            : "bg-neutral-50 hover:bg-neutral-100/80 border-neutral-200/80 text-neutral-900"
+                        }`}
+                      >
+                        <div className="w-11 h-11 rounded-lg overflow-hidden bg-white border border-neutral-200 shrink-0">
+                          <img
+                            src={thumb}
+                            alt={ord.items}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className={`font-mono font-bold truncate ${isSelected ? "text-neutral-400" : "text-neutral-500"}`}>
+                              주문: {ord.orderId || ord.orderNumber}
+                            </span>
+                            {isSelected && (
+                              <span className="text-[9px] font-black text-white bg-blue-600 px-2 py-0.5 rounded-full">
+                                ✓ 교환상품 선택됨
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-xs font-bold line-clamp-1 leading-snug ${isSelected ? "text-white" : "text-neutral-900"}`}>
+                            {ord.items}
+                          </p>
+                          <div className={`flex items-center gap-2 text-[10px] font-mono mt-0.5 ${isSelected ? "text-neutral-400" : "text-neutral-500"}`}>
+                            <span>수량: {ord.quantity || 1}개</span>
+                            {ord.amount && <span>• {ord.amount}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="주문번호를 입력하세요 (예: CH20260930-001)"
+                  className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950"
+                />
+              )}
+            </div>
+
+            {/* 2. 교환 사유 입력 */}
+            <div className="space-y-1.5 pt-1 border-t border-neutral-100">
+              <label className="text-xs font-black text-neutral-800 flex items-center justify-between">
+                <span>2. 교환 사유 입력 (주문서 배송메세지에 자동 등록)</span>
+                <span className="text-[10px] text-neutral-600 font-bold">배송메세지 칸 반영</span>
+              </label>
+
+              <div className="flex flex-wrap gap-1.5">
+                {["사이즈 교환", "색상 교환", "단순 변심", "불량/오배송", "기타"].map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setPickupReason(r)}
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                      pickupReason === r
+                        ? "bg-neutral-950 text-white shadow-2xs"
+                        : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700"
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                value={pickupDetailReason}
+                onChange={(e) => setPickupDetailReason(e.target.value)}
+                rows={2}
+                placeholder="상세 사유 또는 변경 옵션 (예: L사이즈로 변경 희망 / 단추 헐거움 등)"
+                className="w-full text-xs font-medium p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950 resize-none"
+              />
+              <p className="text-[10px] text-neutral-500 font-medium">
+                ※ 위 교환 사유는 [주문 및 배송 관리] 리스트의 '배송메세지' 칸에 자동으로 저장됩니다.
+              </p>
+            </div>
+
+            {/* 3. 수거지 정보 (CJ 기사님 수거 방문지) */}
+            <div className="space-y-2 pt-1 border-t border-neutral-100">
+              <label className="text-xs font-black text-neutral-800 block">
+                3. 수거지 정보 (CJ대한통운 기사님 방문 주소)
+              </label>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[10px] font-bold text-neutral-500 block mb-0.5">고객명</span>
+                  <input
+                    type="text"
+                    value={pickupRecipient}
+                    onChange={(e) => setPickupRecipient(e.target.value)}
+                    placeholder="수거 고객 성명"
+                    className="w-full text-xs font-bold px-2.5 py-2 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-neutral-500 block mb-0.5">연락처</span>
+                  <input
+                    type="text"
+                    value={pickupPhone}
+                    onChange={(e) => setPickupPhone(e.target.value)}
+                    placeholder="010-0000-0000"
+                    className="w-full text-xs font-bold px-2.5 py-2 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold text-neutral-500 block mb-0.5">원 출고 운송장번호</span>
+                <input
+                  type="text"
+                  value={pickupOriginalInvoice}
+                  onChange={(e) => setPickupOriginalInvoice(e.target.value)}
+                  placeholder="원 배송 운송장번호 (숫자만, 미입력 시 자동 생성)"
+                  className="w-full text-xs font-mono font-bold px-2.5 py-2 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-neutral-500 block mb-0.5">수거 주소</span>
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={pickupZipCode}
+                    onChange={(e) => setPickupZipCode(e.target.value)}
+                    placeholder="우편번호"
+                    className="w-24 text-xs font-mono font-bold px-2.5 py-2 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950 shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={pickupAddress}
+                    onChange={(e) => setPickupAddress(e.target.value)}
+                    placeholder="기본 주소"
+                    className="flex-1 text-xs font-bold px-2.5 py-2 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={pickupDetailAddress}
+                  onChange={(e) => setPickupDetailAddress(e.target.value)}
+                  placeholder="상세 주소 (동/호수)"
+                  className="w-full text-xs font-medium px-2.5 py-2 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950"
+                />
+              </div>
+            </div>
+
+            {/* Guide Info */}
+            <div className="p-3 bg-neutral-50 border border-neutral-200/80 rounded-2xl text-[11px] text-neutral-800 leading-relaxed font-medium">
+              ✓ CJ대한통운 API로 회수 예약(RegBook)이 접수됩니다.<br />
+              ✓ [주문 및 배송 관리] 리스트에 <strong className="text-neutral-950">{pickupBookingType === "REFUND" ? "반품수거 건 뱃지" : "교환주문 건 뱃지"}</strong>가 부착되어 즉시 등록됩니다.<br />
+              ✓ 등록된 {pickupBookingType === "REFUND" ? "반품사유" : "교환사유"}는 <strong className="text-neutral-950">배송메세지 칸</strong>에 노출됩니다.
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                disabled={isSubmittingPickup}
+                onClick={() => setIsPickupModalOpen(false)}
+                className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs py-3.5 rounded-xl cursor-pointer transition-all border border-neutral-200 disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                disabled={isSubmittingPickup}
+                onClick={handleExecutePickupBooking}
+                className="flex-[2] bg-blue-600 hover:bg-blue-500 text-white font-black text-xs py-3.5 rounded-xl cursor-pointer transition-all shadow-md active:scale-98 disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {isSubmittingPickup ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    CJ대한통운 수거접수 진행 중...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <Truck className="w-4 h-4" />
+                    <span>CJ대한통운 {pickupBookingType === "REFUND" ? "반품" : "교환"} 수거접수 및 주문등록</span>
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 토스페이먼츠 결제 취소 및 환불 모달 */}
+      <TossRefundModal
+        isOpen={isRefundModalOpen}
+        onClose={() => {
+          setIsRefundModalOpen(false);
+          setSelectedRefundPrefillOrder(null);
+        }}
+        customerOrders={refundCustomerOrders}
+        initialOrder={selectedRefundPrefillOrder}
+        onSuccess={handleRefundSuccess}
+      />
     </div>
   );
 }
