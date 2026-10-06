@@ -32,13 +32,69 @@ export function useProducts({
   const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
 
   const isProductsLoadedRef = useRef(false);
-  const [productsList, setProductsList] = useState<any[]>(INITIAL_CHOICOMMA_PRODUCTS);
+  const [productsList, setProductsList] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("admin_products");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return INITIAL_CHOICOMMA_PRODUCTS;
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
   const [selectedCategoryForProducts, setSelectedCategoryForProducts] = useState("");
-  const [productSortOrder, setProductSortOrder] = useState<
+  const [productSortOrder, setProductSortOrderState] = useState<
     "productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom"
-  >("productNoDesc");
+  >(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("admin_product_sort_order");
+        if (
+          saved &&
+          ["productNoDesc", "productNoAsc", "nameAsc", "priceDesc", "priceAsc", "custom"].includes(saved)
+        ) {
+          return saved as any;
+        }
+      } catch (e) {}
+    }
+    return "custom";
+  });
+
+  const setProductSortOrder = useCallback((
+    newOrder: "productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom"
+  ) => {
+    setProductSortOrderState(newOrder);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("admin_product_sort_order", newOrder);
+      } catch (e) {}
+    }
+  }, []);
+
+  // Sync sort order and local storage on client mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem("admin_product_sort_order");
+      if (
+        saved &&
+        ["productNoDesc", "productNoAsc", "nameAsc", "priceDesc", "priceAsc", "custom"].includes(saved)
+      ) {
+        setProductSortOrderState(saved as any);
+      }
+      const cached = localStorage.getItem("admin_products");
+      if (cached && !isProductsLoadedRef.current) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setProductsList(parsed);
+        }
+      }
+    } catch (e) {}
+  }, []);
 
   // One-time legacy local storage cleanup on admin mount
   useEffect(() => {
@@ -63,6 +119,20 @@ export function useProducts({
       }
     } catch {}
   }, []);
+
+  // Helper: Prune huge base64 strings so catalog safely fits inside browser's 5MB localStorage
+  const pruneForLocalStorage = (items: any[]) => {
+    return items.map((p) => {
+      let detailDesc = p.detailDescription;
+      if (typeof detailDesc === "string" && detailDesc.length > 20000 && detailDesc.includes("data:image/")) {
+        detailDesc = detailDesc.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "");
+      }
+      return {
+        ...p,
+        detailDescription: detailDesc,
+      };
+    });
+  };
 
   // Client-side hydration sync for productsList (Source of Truth: Central Server API /api/products)
   useEffect(() => {
@@ -94,7 +164,12 @@ export function useProducts({
               try {
                 localStorage.setItem("admin_products", JSON.stringify(merged));
               } catch (e) {
-                console.warn("Notice: Skipped full products localStorage write due to size limit");
+                try {
+                  const lightweight = pruneForLocalStorage(merged);
+                  localStorage.setItem("admin_products", JSON.stringify(lightweight));
+                } catch (e2) {
+                  console.warn("Notice: Skipped full products localStorage write due to size limit");
+                }
               }
             }
             isProductsLoadedRef.current = true;
@@ -121,35 +196,47 @@ export function useProducts({
   // Helper: Safely save to Central Server API (/api/products) and mirror to localStorage
   const saveProductsToStorage = useCallback((list: any[]) => {
     if (typeof window === "undefined") return;
+
+    // 1. Persist to Central Server API first so all devices see changes immediately (no size limit)
+    fetch("/api/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(list),
+    }).catch((err) => console.error("Failed to persist products to /api/products:", err));
+
+    // 2. Mirror to localStorage safely (with quota guard)
     try {
       localStorage.setItem("admin_products", JSON.stringify(list));
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("admin_products_updated"));
-      }, 0);
-
-      // Persist to Central Server API so ALL devices (PC, Mobile, Live web) immediately see the change
-      fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(list),
-      }).catch((err) => console.error("Failed to persist products to /api/products:", err));
     } catch (e) {
-      console.warn("QuotaExceededError in localStorage, attempting cleanup save...", e);
+      console.warn("Notice: localStorage quota exceeded with full catalog, saving lightweight mirror...");
       try {
-        localStorage.removeItem("admin_products");
-        localStorage.setItem("admin_products", JSON.stringify(list));
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent("admin_products_updated"));
-        }, 0);
-      } catch (err) {
-        console.error("Failed to save products to localStorage even after cleanup:", err);
+        const lightweight = pruneForLocalStorage(list);
+        localStorage.setItem("admin_products", JSON.stringify(lightweight));
+      } catch (err2) {
+        try {
+          const minimal = pruneForLocalStorage(list.slice(0, 80));
+          localStorage.setItem("admin_products", JSON.stringify(minimal));
+        } catch (err3) {
+          console.warn("Skipping localStorage cache for products. Central Server API is authoritative.");
+        }
       }
     }
+
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("admin_products_updated"));
+    }, 0);
   }, []);
 
-  // Sync productsList with localStorage safely only after initial load
+  const isInitialLoadFinishedRef = useRef(false);
+
+  // Sync productsList with storage safely only after initial load and when actually updated by admin
   useEffect(() => {
-    if (isProductsLoadedRef.current && productsList.length > 0) {
+    if (!isProductsLoadedRef.current) return;
+    if (!isInitialLoadFinishedRef.current) {
+      isInitialLoadFinishedRef.current = true;
+      return; // Skip immediate redundant re-save on mount
+    }
+    if (productsList.length > 0) {
       saveProductsToStorage(productsList);
     }
   }, [productsList, saveProductsToStorage]);
@@ -173,7 +260,7 @@ export function useProducts({
   }, [getProductNoNum]);
 
   const filteredProducts = useMemo(() => {
-    return productsList.filter((p) => {
+    const filtered = productsList.filter((p) => {
       // Ignore main banner slides from product catalog
       if (p.categoryId === "main_banner" || String(p.id).startsWith("hero-slide-")) {
         return false;
@@ -210,7 +297,13 @@ export function useProducts({
       }
 
       return true;
-    }).sort((a, b) => {
+    });
+
+    if (productSortOrder === "custom") {
+      return filtered;
+    }
+
+    return [...filtered].sort((a, b) => {
       if (productSortOrder === "productNoDesc") {
         return getProductNoNum(b) - getProductNoNum(a);
       }
@@ -493,7 +586,7 @@ export function useProducts({
       }
       return updated;
     });
-  }, [saveProductsToStorage, triggerToast]);
+  }, [saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleClearAllProducts = useCallback(() => {
     const totalCount = actualProductsCount;
@@ -528,21 +621,56 @@ export function useProducts({
   }, [saveProductsToStorage, triggerToast]);
 
   const handleMoveProduct = useCallback((id: string, direction: "up" | "down") => {
-    const idx = productsList.findIndex((p) => String(p.id) === String(id));
-    if (idx === -1) return;
-    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= productsList.length) return;
-
-    const newList = [...productsList];
-    const temp = newList[idx];
-    newList[idx] = newList[targetIdx];
-    newList[targetIdx] = temp;
-
-    setProductsList(newList);
-    saveProductsToStorage(newList);
     setProductSortOrder("custom");
-    triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
-  }, [productsList, saveProductsToStorage, triggerToast]);
+    setProductsList((prev) => {
+      const idx = prev.findIndex((p) => String(p.id) === String(id));
+      if (idx === -1) return prev;
+      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= prev.length) return prev;
+
+      const newList = [...prev];
+      const temp = newList[idx];
+      newList[idx] = newList[targetIdx];
+      newList[targetIdx] = temp;
+
+      saveProductsToStorage(newList);
+      triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
+      return newList;
+    });
+  }, [saveProductsToStorage, setProductSortOrder, triggerToast]);
+
+  const handleMoveProductToTop = useCallback((id: string) => {
+    setProductSortOrder("custom");
+    setProductsList((prev) => {
+      const idx = prev.findIndex((p) => String(p.id) === String(id));
+      if (idx === -1) return prev;
+      if (idx === 0) {
+        triggerToast(`'${prev[0].title}' 상품은 이미 최상단에 위치해 있습니다.`);
+        return prev;
+      }
+      const updated = [...prev];
+      const [movedItem] = updated.splice(idx, 1);
+      updated.unshift(movedItem);
+      saveProductsToStorage(updated);
+      triggerToast(`⬆️ '${movedItem.title}' 상품이 목록 최상단으로 이동되었습니다.`);
+      return updated;
+    });
+  }, [saveProductsToStorage, setProductSortOrder, triggerToast]);
+
+  const handleBulkMoveToTop = useCallback((targetIds: string[]) => {
+    if (!targetIds || targetIds.length === 0) return;
+    setProductSortOrder("custom");
+    setProductsList((prev) => {
+      const idSet = new Set(targetIds.map(String));
+      const selected = prev.filter((p) => idSet.has(String(p.id)));
+      const unselected = prev.filter((p) => !idSet.has(String(p.id)));
+      if (selected.length === 0) return prev;
+      const updated = [...selected, ...unselected];
+      saveProductsToStorage(updated);
+      triggerToast(`⬆️ 선택한 ${selected.length}개 상품이 목록 최상단으로 일괄 이동되었습니다.`);
+      return updated;
+    });
+  }, [saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleSortOrderChange = useCallback((
     newOrder: "productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom"
@@ -576,7 +704,7 @@ export function useProducts({
       saveProductsToStorage(sorted);
       return sorted;
     });
-  }, [getProductNoNum, saveProductsToStorage]);
+  }, [getProductNoNum, saveProductsToStorage, setProductSortOrder]);
 
   const handleQuickUpdateReleaseSchedule = useCallback(
     (id: string, availableForSale: boolean, releaseDate?: string) => {
@@ -786,6 +914,8 @@ export function useProducts({
     handleRestoreDefaultProducts,
     handleBulkAddProducts,
     handleMoveProduct,
+    handleMoveProductToTop,
+    handleBulkMoveToTop,
     handleSortOrderChange,
     handleQuickUpdateReleaseSchedule,
     handleQuickUpdateCategory,

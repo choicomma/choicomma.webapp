@@ -132,7 +132,7 @@ export async function GET(req: NextRequest) {
         .select("*")
         .order("orderId", { ascending: false });
 
-      if (!dbError && Array.isArray(dbShipments) && dbShipments.length > 0) {
+      if (!dbError && Array.isArray(dbShipments)) {
         const sorted = sortShipmentsByNumber(dbShipments.map(hydrateShipmentMergeData));
         globalForShipments.serverShipmentsCache = sorted;
         return formatResponse(sorted);
@@ -152,17 +152,19 @@ export async function GET(req: NextRequest) {
     // 3. Fallback: Local JSON file
     const filePath = getShipmentsFilePath();
     if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, "utf-8");
-      const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) {
-        const sorted = sortShipmentsByNumber(data.map(hydrateShipmentMergeData));
-        globalForShipments.serverShipmentsCache = sorted;
-        return formatResponse(sorted);
-      }
+      try {
+        const raw = fs.readFileSync(filePath, "utf-8");
+        const data = JSON.parse(raw);
+        if (Array.isArray(data)) {
+          const sorted = sortShipmentsByNumber(data.map(hydrateShipmentMergeData));
+          globalForShipments.serverShipmentsCache = sorted;
+          return formatResponse(sorted);
+        }
+      } catch {}
     }
 
     // 4. Default Fallback
-    const sorted = sortShipmentsByNumber(initialShipments);
+    const sorted = sortShipmentsByNumber(initialShipments || []);
     globalForShipments.serverShipmentsCache = sorted;
     return formatResponse(sorted);
   } catch (error: any) {
@@ -282,6 +284,9 @@ export async function POST(req: NextRequest) {
               await supabaseServer.from("shipments").delete().in("id", toDelete);
             }
           }
+        } else {
+          // If incoming is empty ([]), delete all rows from Supabase table
+          await supabaseServer.from("shipments").delete().neq("id", "___NEVER_MATCH___");
         }
       } catch (dbErr: any) {
         console.warn("Supabase upsert exception:", dbErr.message);

@@ -16,7 +16,7 @@ const ACCORDION_I18N: Record<string, Record<string, string>> = {
     reviewsTooltip: "베스트댓글 선정 시, 최대 50,000원",
     designerDesc: "제품 상세 사진",
     fabricInfo: "원단 정보",
-    fabricComp: "소재 구성 (FABRIC)",
+    fabricComp: "소재",
     elasticity: "신축성",
     sheerness: "비침",
     thickness: "두께감",
@@ -230,9 +230,17 @@ export function ProductDetailAccordions({
     (product as any).showSizeGuide === true ||
     (product as any).showSizeGuide === "true";
 
-  const hasFabricInfo =
-    (product as any).showFabricInfo !== false &&
-    (product as any).showFabricInfo !== "false";
+  const fabricImg = String(
+    (product as any).fabricImage ||
+    (product as any).fabricTextureImage ||
+    (product as any).fabricImageUrl ||
+    (product as any).fabric_image ||
+    (product as any).bulkDiscount?.fabricImage ||
+    ""
+  ).trim();
+
+  // 원단 이미지가 등록되어 있을 때만 원단 정보 탭 노출 (이미지 없을 시 탭 자체 미노출)
+  const hasFabricInfo = Boolean(fabricImg);
 
   // 모바일 버전에서는 고객후기를 제일 앞으로 추가
   const tabs = [
@@ -853,58 +861,44 @@ export function ProductDetailAccordions({
               )}
 
               {/* 원단 정보 (Fabric Details) */}
-              {tab.id === "fabric" && (
-                <div className="flex flex-col gap-4 py-4 px-4 border border-neutral-200/80 bg-neutral-50/50 rounded-2xl">
-                  <div className="flex items-center justify-between border-b border-neutral-200/60 pb-2.5">
-                    <span className="font-extrabold text-neutral-900 text-xs uppercase tracking-wider">{t.fabricComp}</span>
-                    <span className="font-bold text-neutral-950 text-xs">
-                      {(product as any).fabricComposition || "COTTON 100% (프리미엄 콤마 코튼)"}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-xs">
-                    <div className="p-3 bg-white border border-neutral-200 rounded-xl flex flex-col items-center gap-1 shadow-2xs">
-                      <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{t.elasticity}</span>
-                      <span className="font-extrabold text-neutral-900">{(product as any).elasticity || "보통"}</span>
-                    </div>
-                    <div className="p-3 bg-white border border-neutral-200 rounded-xl flex flex-col items-center gap-1 shadow-2xs">
-                      <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{t.sheerness}</span>
-                      <span className="font-extrabold text-neutral-900">{(product as any).sheerness || "없음"}</span>
-                    </div>
-                    <div className="p-3 bg-white border border-neutral-200 rounded-xl flex flex-col items-center gap-1 shadow-2xs">
-                      <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{t.thickness}</span>
-                      <span className="font-extrabold text-neutral-900">{(product as any).thickness || "적당함"}</span>
-                    </div>
-                    <div className="p-3 bg-white border border-neutral-200 rounded-xl flex flex-col items-center gap-1 shadow-2xs">
-                      <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{t.lining}</span>
-                      <span className="font-extrabold text-neutral-900">{(product as any).lining || "없음"}</span>
-                    </div>
-                  </div>
-                  <div className="text-[11px] text-neutral-500 pt-1 leading-relaxed border-t border-neutral-200/60 mt-1">
-                    <p>{t.laundryGuide}</p>
-                  </div>
+              {tab.id === "fabric" && (() => {
+                const displayFabricComp = String(
+                  (product as any).fabricComposition ||
+                  (product as any).bulkDiscount?.fabricComposition ||
+                  "COTTON 100% (프리미엄 코튼)"
+                ).replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼");
 
-                  {/* Fabric Texture Image Preview */}
-                  {((product as any).fabricImage || (product as any).fabricTextureImage) && (
-                    <div
-                      className="w-full mt-2 rounded-2xl overflow-hidden border border-neutral-200 bg-white p-3 shadow-2xs group relative"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="block text-[11px] font-black text-neutral-900 uppercase tracking-wider">
-                          {t.fabricZoom}
+                return (
+                  <div className="flex flex-col gap-4 py-4 px-4 border border-neutral-200/80 bg-neutral-50/50 rounded-2xl">
+                    {(displayFabricComp || t.fabricComp) && (
+                      <div className="flex items-center justify-between border-b border-neutral-200/60 pb-2.5">
+                        <span className="font-extrabold text-neutral-900 text-xs uppercase tracking-wider">{t.fabricComp}</span>
+                        <span className="font-bold text-neutral-950 text-xs">
+                          {displayFabricComp}
                         </span>
                       </div>
-                      <img
-                        src={(product as any).fabricImage || (product as any).fabricTextureImage}
-                        alt="원단 텍스처 이미지"
-                        className={cn(
-                          "w-full h-auto object-cover rounded-xl border border-neutral-100 transition-all duration-300",
-                          isDetailImageEnlarged ? "max-h-[550px] scale-[1.03]" : "max-h-[350px]"
-                        )}
-                      />
+                    )}
+
+                    {/* 관리자페이지에서 업로드한 원단 이미지 단독 노출 (카드 디자인에 꽉 차게) */}
+                    {fabricImg && (
+                      <div className="w-full rounded-xl overflow-hidden border border-neutral-200/90 bg-neutral-100 shadow-2xs group relative">
+                        <img
+                          src={fabricImg}
+                          alt={displayFabricComp || `${product.title} 원단 정보 이미지`}
+                          className={cn(
+                            "w-full h-auto block object-cover transition-all duration-300",
+                            isDetailImageEnlarged ? "max-h-[950px] scale-[1.02]" : "max-h-[850px]"
+                          )}
+                        />
+                      </div>
+                    )}
+
+                    <div className="text-[11px] text-neutral-500 pt-1 leading-relaxed border-t border-neutral-200/60 mt-1">
+                      <p>{t.laundryGuide}</p>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                );
+              })()}
 
               {/* 사이즈 가이드 (Size Guide) */}
               {tab.id === "guide" && (

@@ -54,7 +54,7 @@ export function normalizeName(name?: string): string {
 export function formatTimeDifference(date1: string, date2: string): string {
   const t1 = new Date(date1).getTime();
   const t2 = new Date(date2).getTime();
-  if (isNaN(t1) || isNaN(t2)) return "48시간 이내 주문";
+  if (isNaN(t1) || isNaN(t2)) return "1주일 이내 주문";
 
   const diffMs = Math.abs(t2 - t1);
   const diffMinutes = Math.round(diffMs / (60 * 1000));
@@ -63,6 +63,11 @@ export function formatTimeDifference(date1: string, date2: string): string {
   }
   const hours = Math.floor(diffMinutes / 60);
   const minutes = diffMinutes % 60;
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    const remHours = hours % 24;
+    return remHours === 0 ? `${days}일 간격 결제` : `${days}일 ${remHours}시간 간격 결제`;
+  }
   if (minutes === 0) {
     return `${hours}시간 간격 결제`;
   }
@@ -70,7 +75,7 @@ export function formatTimeDifference(date1: string, date2: string): string {
 }
 
 /**
- * 48시간 이내 동일 고객/주소지 합배송 가능 대상 감지 유틸리티
+ * 1주일(7일) 이내 동일 고객/주소지 합배송 가능 대상 감지 유틸리티
  */
 export function detectBundleCandidates(
   shipments: any[],
@@ -121,7 +126,7 @@ export function detectBundleCandidates(
 
   const bundleGroups: BundleGroup[] = [];
 
-  // 3. 그룹별 48시간 이내 결제 건 분석 및 묶음 그룹 생성
+  // 3. 그룹별 1주일(7일) 이내 결제 건 분석 및 묶음 그룹 생성
   map.forEach((items, key) => {
     if (items.length < 2) return;
 
@@ -132,8 +137,8 @@ export function detectBundleCandidates(
       return timeA - timeB;
     });
 
-    // 48시간(48 * 60 * 60 * 1000 ms) 윈도우 검사
-    const windowMs = 48 * 60 * 60 * 1000;
+    // 1주일(7일: 7 * 24 * 60 * 60 * 1000 ms) 윈도우 검사
+    const windowMs = 7 * 24 * 60 * 60 * 1000;
     const matchedClusters: any[][] = [];
     let currentCluster: any[] = [sorted[0]];
 
@@ -146,9 +151,9 @@ export function detectBundleCandidates(
 
       // 날짜 파싱이 유효하지 않은 경우(0인 경우)도 고려: 같은 날짜 문자열이면 매칭 허용
       const diffMs = Math.abs(tCurr - tPrev);
-      const isWithin48h = isNaN(diffMs) || diffMs === 0 || diffMs <= windowMs;
+      const isWithinWindow = isNaN(diffMs) || diffMs === 0 || diffMs <= windowMs;
 
-      if (isWithin48h) {
+      if (isWithinWindow) {
         currentCluster.push(curr);
       } else {
         if (currentCluster.length >= 2) {

@@ -38,6 +38,25 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
                   found.images = [rep];
                 }
               }
+
+              // Local storage fallback for recently updated fabricImage/fabricComposition if server is still propagating
+              if (typeof window !== "undefined") {
+                try {
+                  const saved = localStorage.getItem("admin_products");
+                  if (saved) {
+                    const parsed = JSON.parse(saved);
+                    const localFound = parsed.find(
+                      (p: any) => p.id === initialProduct.id || p.handle === initialProduct.handle
+                    );
+                    if (localFound) {
+                      found.fabricImage = found.fabricImage || localFound.fabricImage || localFound.fabricTextureImage || "";
+                      found.fabricTextureImage = found.fabricTextureImage || localFound.fabricTextureImage || found.fabricImage;
+                      found.fabricComposition = found.fabricComposition || localFound.fabricComposition;
+                    }
+                  }
+                } catch (e) {}
+              }
+
               setProduct(found);
               return;
             }
@@ -156,7 +175,11 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
           style={topSpacing.leftMargin !== undefined ? { marginTop: `${topSpacing.leftMargin}px` } : undefined}
           className="hidden md:block w-full min-w-0 overflow-visible"
         >
-          <ProductDetailAccordions product={product} isMobile={false} />
+          <ProductDetailAccordions
+            key={`desktop-${product.handle || product.id}-${(product as any).fabricImage ? "fabric" : "nofabric"}-${(product as any).updatedAt || (product as any).updated_at || ""}`}
+            product={product}
+            isMobile={false}
+          />
         </div>
       </div>
 
@@ -173,7 +196,11 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
         
         {/* Mobile Detail Menu: Placed under Add to Cart button (Customer reviews is tab #0 on mobile) */}
         <div className="md:hidden w-full mt-8">
-          <ProductDetailAccordions key={product.handle || product.id} product={product} isMobile={true} />
+          <ProductDetailAccordions
+            key={`mobile-${product.handle || product.id}-${(product as any).fabricImage ? "fabric" : "nofabric"}-${(product as any).updatedAt || (product as any).updated_at || ""}`}
+            product={product}
+            isMobile={true}
+          />
         </div>
 
         {/* Desktop Reviews Section: Sticky on scroll with synced top line height */}

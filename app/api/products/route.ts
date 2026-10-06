@@ -83,23 +83,65 @@ export async function GET(req: NextRequest) {
           }
         } catch (e) {}
 
-        // Ensure releaseDate and availableForSale are cleanly populated
+        // Ensure releaseDate, fabricImage, fabricComposition, sizeGuide, and availableForSale are cleanly populated
+        let localFabricMap: Record<string, any> = {};
+        try {
+          const filePath = getProductsFilePath();
+          if (fs.existsSync(filePath)) {
+            const raw = fs.readFileSync(filePath, "utf-8");
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((lp: any) => {
+                if (lp.id) {
+                  localFabricMap[String(lp.id)] = {
+                    fabricImage: lp.fabricImage || lp.fabricTextureImage || "",
+                    fabricTextureImage: lp.fabricTextureImage || lp.fabricImage || "",
+                    fabricComposition: lp.fabricComposition || "",
+                    showFabricInfo: lp.showFabricInfo,
+                    showSizeGuide: lp.showSizeGuide,
+                    sizeGuideImage: lp.sizeGuideImage || lp.sizeChartImage || "",
+                    sizeChartImage: lp.sizeChartImage || lp.sizeGuideImage || "",
+                    sizeMeasurements: lp.sizeMeasurements || [],
+                  };
+                }
+              });
+            }
+          }
+        } catch (e) {}
+
         finalProducts = finalProducts.map((p: any) => {
+          const meta = p.bulkDiscount || {};
+          const localFallback = localFabricMap[String(p.id)] || {};
           const relDate =
             p.releaseDate ||
-            p.bulkDiscount?.releaseDate ||
+            meta.releaseDate ||
             (Array.isArray(p.tags)
               ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("release_date:"))?.replace("release_date:", "")
               : "") ||
             "";
           const m = String(p.id).match(/\d+/);
           const num = p.productNo !== undefined && !isNaN(Number(p.productNo)) ? Number(p.productNo) : (m ? parseInt(m[0], 10) : 0);
+
+          const fabImg = p.fabricImage || meta.fabricImage || localFallback.fabricImage || "";
+          const fabTexture = p.fabricTextureImage || meta.fabricTextureImage || fabImg;
+          const rawComp = p.fabricComposition || meta.fabricComposition || localFallback.fabricComposition || "COTTON 100% (프리미엄 코튼)";
+          const fabComp = String(rawComp).replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼");
+          const showFab = Boolean(fabImg);
+
           return {
             ...p,
             productNo: num,
             productCode: p.productCode || (num > 0 ? `CC-${String(num).padStart(3, "0")}` : undefined),
             releaseDate: relDate,
             availableForSale: p.availableForSale !== false,
+            fabricImage: fabImg,
+            fabricTextureImage: fabTexture,
+            fabricComposition: fabComp,
+            showFabricInfo: showFab,
+            showSizeGuide: p.showSizeGuide !== undefined ? p.showSizeGuide : (meta.showSizeGuide !== undefined ? meta.showSizeGuide : localFallback.showSizeGuide),
+            sizeGuideImage: p.sizeGuideImage || meta.sizeGuideImage || localFallback.sizeGuideImage || "",
+            sizeChartImage: p.sizeChartImage || meta.sizeChartImage || localFallback.sizeChartImage || "",
+            sizeMeasurements: p.sizeMeasurements || meta.sizeMeasurements || localFallback.sizeMeasurements || [],
           };
         });
 
@@ -205,6 +247,14 @@ export async function POST(req: NextRequest) {
             bulkDiscount: {
               ...(p.bulkDiscount || { enabled: false, rules: [] }),
               releaseDate: relDate,
+              fabricImage: p.fabricImage || p.fabricTextureImage || "",
+              fabricTextureImage: p.fabricTextureImage || p.fabricImage || "",
+              fabricComposition: p.fabricComposition || "",
+              showFabricInfo: Boolean(p.fabricImage || p.fabricTextureImage),
+              showSizeGuide: p.showSizeGuide !== undefined ? p.showSizeGuide : false,
+              sizeGuideImage: p.sizeGuideImage || p.sizeChartImage || "",
+              sizeChartImage: p.sizeChartImage || p.sizeGuideImage || "",
+              sizeMeasurements: p.sizeMeasurements || [],
             },
             created_at: new Date(baseTime - idx * 1000).toISOString(),
             updated_at: new Date().toISOString(),

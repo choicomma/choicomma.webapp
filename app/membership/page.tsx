@@ -39,6 +39,7 @@ import {
   EyeOff,
   Menu,
   X,
+  Ruler,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
 import { supabase } from "@/lib/supabase/client";
 import { getAllUserCoupons, getUserCoupons, isLegacyCoupon, syncAdminCouponsFromSupabase } from "@/lib/membership/coupons";
 import { MembershipPopupBanner } from "@/components/membership/membership-popup-banner";
+import { SizeRecommendationTab } from "./components/size-recommendation-tab";
 
 function MembershipContent() {
   const { cart, updateCartItem, addCartItem, openCart, clearCart } = useCart();
@@ -63,9 +65,9 @@ function MembershipContent() {
   const initialTab = (searchParams.get("tab") as any) || "dashboard";
 
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "orders" | "coupons" | "points" | "profile"
+    "dashboard" | "orders" | "coupons" | "points" | "profile" | "size"
   >(
-    ["dashboard", "orders", "coupons", "points", "profile"].includes(initialTab)
+    ["dashboard", "orders", "coupons", "points", "profile", "size"].includes(initialTab)
       ? initialTab
       : "dashboard"
   );
@@ -75,7 +77,7 @@ function MembershipContent() {
   // Update tab when URL param changes
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["dashboard", "orders", "coupons", "points", "profile"].includes(tabParam)) {
+    if (tabParam && ["dashboard", "orders", "coupons", "points", "profile", "size"].includes(tabParam)) {
       setActiveTab(tabParam as any);
     }
   }, [searchParams]);
@@ -1073,6 +1075,25 @@ function MembershipContent() {
             </button>
 
             <button
+              onClick={() => setActiveTab("size")}
+              className={`w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-xs xl:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "size"
+                  ? "bg-neutral-950 text-white shadow-sm"
+                  : "text-neutral-600 hover:bg-neutral-100/80 hover:text-black"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Ruler className="h-4 w-4 shrink-0 text-amber-500" />
+                <span>사이즈 추천</span>
+              </div>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                activeTab === "size" ? "bg-white text-neutral-950" : "bg-amber-100/80 text-amber-900"
+              }`}>
+                맞춤핏
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("profile")}
               className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs xl:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "profile"
@@ -1234,6 +1255,28 @@ function MembershipContent() {
 
                 <button
                   onClick={() => {
+                    setActiveTab("size");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === "size"
+                      ? "bg-neutral-950 text-white shadow-sm"
+                      : "text-neutral-700 hover:bg-neutral-200/70"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Ruler className="h-4 w-4 shrink-0 text-amber-500" />
+                    <span>맞춤 사이즈 추천</span>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    activeTab === "size" ? "bg-white text-neutral-950" : "bg-amber-100 text-amber-900"
+                  }`}>
+                    AI 추천
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
                     setActiveTab("profile");
                     setIsMobileMenuOpen(false);
                   }}
@@ -1390,6 +1433,35 @@ function MembershipContent() {
                   {userPoints.toLocaleString()}<span className="text-xs sm:text-base font-bold ml-0.5">P</span>
                 </p>
                 <p className="text-[10px] sm:text-xs text-neutral-400 truncate">100원 단위 현금 사용</p>
+              </div>
+            </div>
+
+            {/* Quick Banner: 맞춤 사이즈 추천 바로가기 */}
+            <div
+              onClick={() => setActiveTab("size")}
+              className="bg-gradient-to-r from-neutral-900 via-neutral-950 to-neutral-900 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-neutral-800 shadow-sm transition-all hover:border-amber-400/70 hover:shadow-md cursor-pointer flex items-center justify-between gap-4 group"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 text-amber-300 flex items-center justify-center shrink-0 border border-white/10 group-hover:scale-105 transition-transform">
+                  <Ruler className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs sm:text-sm font-extrabold text-white tracking-tight">
+                      나만의 맞춤 사이즈 추천
+                    </span>
+                    <span className="text-[10px] font-black uppercase text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-400/40">
+                      AI 핏 어드바이저
+                    </span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-neutral-400 mt-0.5">
+                    키, 몸무게, 가슴·허리둘레를 등록하고 모든 상품에서 딱 맞는 추천 사이즈를 확인해 보세요.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-bold text-amber-400 shrink-0 group-hover:translate-x-1 transition-transform">
+                <span>설정하기</span>
+                <ChevronRight className="w-4 h-4" />
               </div>
             </div>
 
@@ -2232,6 +2304,11 @@ function MembershipContent() {
               </div>
             </Card>
           </div>
+        )}
+
+        {/* Tab 6: SIZE RECOMMENDATION (맞춤 사이즈 추천 관리) */}
+        {activeTab === "size" && (
+          <SizeRecommendationTab userName={userName} userEmail={userEmail} />
         )}
       </main>
 

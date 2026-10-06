@@ -243,7 +243,7 @@ export function OrdersManagement({
     );
   }, [selectedOrderSheetShipment, customersList]);
 
-  // ── 📦 동일 고객/주소지 48시간 이내 합배송 자동 감지 ─────────────────────────
+  // ── 📦 동일 고객/주소지 1주일(7일) 이내 합배송 자동 감지 ─────────────────────────
   const bundleGroups = useMemo(() => {
     return detectBundleCandidates(shipmentsList, customersList);
   }, [shipmentsList, customersList]);
@@ -263,6 +263,7 @@ export function OrdersManagement({
     });
     return map;
   }, [bundleGroups]);
+
 
   // 합배송 대상 주문 모아보기 전용 필터 상태
   const [isBundleFilterActive, setIsBundleFilterActive] = useState(false);
@@ -1408,7 +1409,7 @@ export function OrdersManagement({
         </div>
       </div>
 
-      {/* 📦 48시간 이내 동일 고객/주소지 합배송 자동 감지 안내 배너 */}
+      {/* 📦 1주일(7일) 이내 동일 고객/주소지 합배송 자동 감지 안내 배너 */}
       {bundleGroups.length > 0 && (
         <div className="bg-gradient-to-r from-blue-50 via-indigo-50/70 to-blue-50 border border-blue-200/90 rounded-2xl p-4 shadow-sm transition-all animate-in fade-in duration-300">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1426,7 +1427,7 @@ export function OrdersManagement({
                   </h2>
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100/90 border border-amber-300 px-2 py-0.5 rounded-md">
                     <Sparkles className="w-3 h-3 text-amber-600" />
-                    48시간 이내 복수 결제 감지
+                    1주일 이내 복수 결제 감지
                   </span>
                 </div>
                 <p className="text-xs text-blue-800/80 mt-1">
@@ -1657,7 +1658,7 @@ export function OrdersManagement({
                                   handleOpenBundleModal(bundleGroup);
                                 }}
                                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 hover:border-blue-400 cursor-pointer shadow-2xs transition-all animate-pulse"
-                                title="클릭하여 48시간 이내 동일 주소지 주문들을 1박스로 합배송"
+                                title="클릭하여 1주일(7일) 이내 동일 주소지 주문들을 1박스로 합배송"
                               >
                                 <Boxes className="w-3 h-3 text-blue-600" />
                                 <span>📦 주문 1개로 합치기 ({bundleGroup.shipmentIds.length}건)</span>
@@ -3494,6 +3495,8 @@ export function OrdersManagement({
           </div>
         </div>
       )}
+
+
       {/* ADD SHIPMENT MODAL (택배사 접수 표준 양식 맞춤) */}
       {isAddShipmentModalOpen && (
         <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">

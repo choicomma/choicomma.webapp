@@ -20,6 +20,7 @@ import {
   Plus,
   Minus,
   Search,
+  ArrowUp,
   ArrowUpRight,
   ArrowDownRight,
   TrendingUp,
@@ -148,6 +149,17 @@ export default function AdminPage() {
       window.removeEventListener("coupons_updated", updateCount);
       window.removeEventListener("storage", updateCount);
     };
+  }, []);
+
+  // Scroll to Top Floating Button State
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 250);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // VIP Customer Inquiry State
@@ -312,6 +324,8 @@ export default function AdminPage() {
     handleRestoreDefaultProducts,
     handleBulkAddProducts,
     handleMoveProduct,
+    handleMoveProductToTop,
+    handleBulkMoveToTop,
     handleSortOrderChange,
     handleQuickUpdateReleaseSchedule,
     handleQuickUpdateCategory,
@@ -664,9 +678,6 @@ export default function AdminPage() {
           >
             <ShoppingBag className="w-4 h-4 text-neutral-900" />
             주문 및 배송 관리
-            <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              {shipmentsList.length}건
-            </span>
           </button>
 
           {/* 매출 관리 (주문 및 배송 관리 바로 밑) */}
@@ -703,9 +714,6 @@ export default function AdminPage() {
           >
             <Users className="w-4 h-4 text-neutral-900" />
             회원 관리
-            <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              {customersList.length.toLocaleString()}명
-            </span>
           </button>
 
           {/* 방문자 관리 (쿠폰 관리와 위치 교환) */}
@@ -754,9 +762,6 @@ export default function AdminPage() {
           >
             <Package className="w-4 h-4 text-neutral-900" />
             상품 관리
-            <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              {actualProductsCount}
-            </span>
           </button>
 
           {/* 7. 프로모션 */}
@@ -793,9 +798,6 @@ export default function AdminPage() {
           >
             <Ticket className="w-4 h-4 text-neutral-900" />
             쿠폰 관리
-            <span suppressHydrationWarning className="ml-auto text-xs font-bold text-neutral-700">
-              {adminCouponsCount}개
-            </span>
           </button>
 
           {/* 9. 해외 판매가 */}
@@ -853,7 +855,7 @@ export default function AdminPage() {
         </aside>
 
         {/* Main Content Area */}
-        <main className={`flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto mx-auto w-full ${
+        <main className={`flex-1 p-4 md:p-6 lg:p-8 mx-auto w-full ${
           activeTab === "products" || activeTab === "orders" || activeTab === "inbound" || activeTab === "revenue" || activeTab === "global_sales" || activeTab === "visitors"
             ? "max-w-[1850px]"
             : "max-w-7xl"
@@ -948,7 +950,7 @@ export default function AdminPage() {
             >
               <Ticket className="w-3.5 h-3.5 text-neutral-900" />
               쿠폰 관리
-            </button>
+          </button>
             <button
               onClick={() => setActiveTab("global_sales")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "global_sales"
@@ -983,6 +985,8 @@ export default function AdminPage() {
               setIsAddModalOpen={setIsAddModalOpen}
               handleBulkAddProducts={handleBulkAddProducts}
               handleMoveProduct={handleMoveProduct}
+              handleMoveProductToTop={handleMoveProductToTop}
+              handleBulkMoveToTop={handleBulkMoveToTop}
               handleBulkDeleteProducts={handleBulkDeleteProducts}
               handleBulkUpdateMainFeatured={handleBulkUpdateMainFeatured}
               handleBulkUpdateStock={handleBulkUpdateStock}
@@ -1261,6 +1265,17 @@ export default function AdminPage() {
 
 
       
-    </div>
+          {/* FLOATING TOP SCROLL BUTTON */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 right-6 z-50 p-3 rounded-full bg-neutral-950 text-white shadow-2xl hover:bg-neutral-800 transition-all cursor-pointer flex items-center justify-center border border-neutral-700 animate-in fade-in zoom-in-75 duration-200 group"
+          title="페이지 최상단으로 이동 (TOP)"
+        >
+          <ArrowUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
+        </button>
+      )}
+</div>
   );
 }

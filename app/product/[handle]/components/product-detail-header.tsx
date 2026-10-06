@@ -12,6 +12,7 @@ import { useCart } from "@/components/cart/cart-context";
 import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 import { getAvailableCoupons, getUserCoupons } from "@/lib/membership/coupons";
 import { getAllProductOptions, getProductDirectColor } from "./product-options-helper";
+import { ProductSizeRecommendationWidget } from "@/components/product/product-size-recommendation-widget";
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -196,7 +197,6 @@ export function ProductDetailHeader({
   const [isAdding, setIsAdding] = useState(false);
 
   const [displayTitle, setDisplayTitle] = useState(cleanProductTitle(product.title));
-  const [displayDesc, setDisplayDesc] = useState(product.description || "");
 
   useEffect(() => {
     const lang = getCurrentLanguage();
@@ -205,20 +205,13 @@ export function ProductDetailHeader({
       const cleanOriginal = cleanProductTitle(product.title);
       if (targetLang === "ko") {
         setDisplayTitle(cleanOriginal);
-        setDisplayDesc(product.description || "");
         return;
       }
       setDisplayTitle(cleanProductTitle(translateProductTitle(cleanOriginal, targetLang)));
-      setDisplayDesc(translateProductDescription(product.description || "", targetLang));
 
       fetchAsyncTranslation(cleanOriginal, targetLang, "title").then((res) => {
         if (res) setDisplayTitle(cleanProductTitle(res));
       });
-      if (product.description) {
-        fetchAsyncTranslation(product.description, targetLang, "ui").then((res) => {
-          if (res) setDisplayDesc(res);
-        });
-      }
     };
 
     updateTranslations(lang);
@@ -235,7 +228,7 @@ export function ProductDetailHeader({
       window.removeEventListener("language_changed", handleLangChange);
       window.removeEventListener("language-changed", handleLangChange);
     };
-  }, [product.title, product.description]);
+  }, [product.title]);
 
   useEffect(() => {
     const updateTimeSaleProduct = () => {
@@ -860,18 +853,6 @@ export function ProductDetailHeader({
           </div>
         </div>
 
-        {product.description && (product as any).showDescription !== false && (
-          typeof product.description === "string" && (product.description.includes("<img") || product.description.includes("<p>")) ? (
-            <div
-              className="text-xs text-neutral-600 leading-relaxed mt-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:my-2"
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
-          ) : (
-            <p className="text-xs text-neutral-600 leading-relaxed mt-1">
-              {product.description}
-            </p>
-          )
-        )}
       </div>
 
       {/* 1. Color / Product Cut Option Thumbnails */}
@@ -1031,6 +1012,17 @@ export function ProductDetailHeader({
           </span>
         </div>
       </div>
+
+      {/* 맞춤 사이즈 추천 위젯 (구매 버튼 위쪽) */}
+      <ProductSizeRecommendationWidget
+        product={product}
+        selectedSize={selectedSize}
+        onSelectSize={(newSize) => {
+          setSelectedSize(newSize);
+          window.dispatchEvent(new CustomEvent("product_size_selected", { detail: { size: newSize } }));
+        }}
+        className="my-3"
+      />
 
       {/* Bottom Action Row: Quantity + Cart Icon Button (Left) + Buy Now button */}
       <div id="product-header-action-row" className="flex items-center gap-3 sm:gap-4 mt-2">

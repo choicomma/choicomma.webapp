@@ -154,7 +154,8 @@ export function useShipments(triggerToast: (msg: string) => void) {
               const deletedRaw = localStorage.getItem("admin_deleted_shipment_ids");
               if (deletedRaw) deletedIdSet = new Set(JSON.parse(deletedRaw));
             } catch {}
-            const sanitized = sanitizeShipmentsList(parsed).filter((s: any) => !deletedIdSet.has(s.id));
+            const sanitized = sanitizeShipmentsList(parsed)
+              .filter((s: any) => !deletedIdSet.has(s.id) && !s.id?.startsWith("TRK-2026-") && !s.id?.includes("REAL-1789534984986"));
             lastSyncedJsonRef.current = serializeShipmentsForSync(sanitized);
             setShipmentsList(sanitized);
           }
@@ -169,7 +170,15 @@ export function useShipments(triggerToast: (msg: string) => void) {
         });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0 && isMounted) {
+          if (Array.isArray(data) && isMounted) {
+            if (data.length === 0) {
+              lastSyncedJsonRef.current = "";
+              if (typeof window !== "undefined") {
+                localStorage.setItem("admin_shipments", JSON.stringify([]));
+              }
+              setShipmentsList([]);
+              return;
+            }
             let deletedIdSet = new Set<string>();
             if (typeof window !== "undefined") {
               try {
@@ -219,13 +228,13 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
                 const finalStatus = localItem.status !== "Pending" ? localItem.status : serverItem.status;
 
-                // 3) 합배송 상태 보존 병합
-                const isMergedParent = Boolean(serverItem.isMergedParent || localItem.isMergedParent);
-                const isMergedChild = Boolean(serverItem.isMergedChild || localItem.isMergedChild);
-                const mergedIntoId = serverItem.mergedIntoId || localItem.mergedIntoId;
-                const mergedIntoOrderId = serverItem.mergedIntoOrderId || localItem.mergedIntoOrderId;
-                const bundledShipmentIds = serverItem.bundledShipmentIds || localItem.bundledShipmentIds;
-                const bundledOrderNumbers = serverItem.bundledOrderNumbers || localItem.bundledOrderNumbers;
+                // 3) 합배송 상태는 서버 최신 데이터를 우선 반영하여 stale 로컬 캐시로 인한 영구 잠김 방지
+                const isMergedParent = Boolean(serverItem.isMergedParent);
+                const isMergedChild = Boolean(serverItem.isMergedChild);
+                const mergedIntoId = isMergedChild ? (serverItem.mergedIntoId ?? localItem.mergedIntoId) : null;
+                const mergedIntoOrderId = isMergedChild ? (serverItem.mergedIntoOrderId ?? localItem.mergedIntoOrderId) : null;
+                const bundledShipmentIds = isMergedParent ? (serverItem.bundledShipmentIds ?? localItem.bundledShipmentIds) : [];
+                const bundledOrderNumbers = isMergedParent ? (serverItem.bundledOrderNumbers ?? localItem.bundledOrderNumbers) : [];
 
                 return {
                   ...localItem,

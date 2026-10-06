@@ -136,6 +136,21 @@ export async function getProduct(handle: string) {
         (product as any).currencyCode = product.priceRange?.minVariantPrice?.currencyCode || "KRW";
       }
 
+      // Ensure fabricImage and fabricComposition are properly bound from meta
+      const meta = (product as any).bulkDiscount || {};
+      const fabImg = (product as any).fabricImage || (product as any).fabricTextureImage || meta.fabricImage || meta.fabricTextureImage || "";
+      if (fabImg) {
+        (product as any).fabricImage = fabImg;
+        (product as any).fabricTextureImage = (product as any).fabricTextureImage || fabImg;
+        (product as any).showFabricInfo = true;
+      }
+      if ((product as any).fabricComposition) {
+        (product as any).fabricComposition = String((product as any).fabricComposition).replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼");
+      }
+      if (!(product as any).fabricComposition && meta.fabricComposition) {
+        (product as any).fabricComposition = String(meta.fabricComposition).replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼");
+      }
+
       if (!product.variants || !Array.isArray(product.variants) || product.variants.length === 0) {
         const pPrice = product.priceRange?.minVariantPrice?.amount || "0";
         const pCurr = product.priceRange?.minVariantPrice?.currencyCode || "KRW";

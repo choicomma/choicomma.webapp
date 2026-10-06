@@ -54,6 +54,7 @@ export type SalesforceProduct = {
   bulkDiscount?: { enabled: boolean; rules: { qty: number; rate: number }[] };
   releaseDate?: string;
   showSizeGuide?: boolean;
+  sizeGuideImage?: string;
   showFabricInfo?: boolean;
   sizeMeasurements?: Array<{ name: string; values: Record<string, string> }>;
 };

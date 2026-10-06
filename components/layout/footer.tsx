@@ -11,9 +11,9 @@ export function Footer() {
       </div>
 
       {/* Under Logo Section: Business Info & Email Subscription (Left aligned) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-4 mb-12 md:mb-16 opacity-80 border-t border-white/10 pt-8 text-left">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 mb-10 md:mb-14 border-t border-white/15 pt-8 text-left text-xs sm:text-[13px] leading-relaxed text-neutral-300 tracking-normal">
         {/* Left: Business Info 1 */}
-        <div className="flex flex-col gap-1.5 text-left">
+        <div className="flex flex-col gap-2 text-left font-normal">
           <span>상호명: 주식회사 초이콤마</span>
           <span>대표자: 최고은</span>
           <span>사업자등록번호: 710-88-03854</span>
@@ -21,22 +21,22 @@ export function Footer() {
         </div>
 
         {/* Center: Business Info 2 */}
-        <div className="flex flex-col gap-1.5 text-left">
+        <div className="flex flex-col gap-2 text-left font-normal">
           <span>사업장주소: 서울 강남구 개포로22길 12 510 BD / 6F</span>
           <span>연락처: 02 579 1171</span>
           <span>대표자 이메일: info@choicomma.co.kr</span>
         </div>
 
         {/* Right: Email Subscription */}
-        <div className="flex justify-start items-start text-left">
-          <div className="flex items-center border-b border-white/50 pb-1 w-full md:w-64">
+        <div className="flex justify-start items-start text-left pt-1">
+          <div className="flex items-center border-b border-white/60 pb-1.5 w-full md:w-64">
             <input
               type="email"
-              placeholder="EMAIL"
+              placeholder="EMAIL SUBSCRIPTION"
               suppressHydrationWarning
-              className="bg-transparent outline-none border-none w-full text-[10px] placeholder:text-white uppercase tracking-widest text-left"
+              className="bg-transparent outline-none border-none w-full text-xs placeholder:text-neutral-400 uppercase tracking-wider text-left text-white"
             />
-            <button aria-label="Subscribe" className="hover:opacity-70 transition-opacity">
+            <button aria-label="Subscribe" className="hover:opacity-70 transition-opacity text-sm font-bold text-white pl-2 cursor-pointer">
               &rarr;
             </button>
           </div>
@@ -44,10 +44,10 @@ export function Footer() {
       </div>
 
       {/* Bottom Section (Legal Links placed at the bottom alongside copyright) */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 opacity-80 text-[8px] md:text-[10px] pt-4 border-t border-white/10 text-left">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-[10px] sm:text-[11px] text-neutral-400 pt-5 border-t border-white/10 text-left">
         <div className="flex flex-wrap items-center gap-4 md:gap-8">
-          <span className="text-left">CHOICOMMA {new Date().getFullYear()}© — ALL RIGHTS RESERVED</span>
-          <div className="flex gap-4 text-[9px] md:text-[10px]">
+          <span className="text-left font-normal">CHOICOMMA {new Date().getFullYear()}© — ALL RIGHTS RESERVED</span>
+          <div className="flex gap-4 text-[10px] sm:text-[11px]">
             <FooterLegalLinks />
           </div>
         </div>

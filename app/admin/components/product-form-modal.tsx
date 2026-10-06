@@ -78,7 +78,7 @@ export interface FormTitlesConfig {
 export const DEFAULT_FORM_TITLES: FormTitlesConfig = {
   productImages: "제품 이미지 등록 (최대 10개)",
   price: "판매가 (KRW)",
-  variantCutImages: "{formTitles.variantCutImages}",
+  variantCutImages: "컬러등록",
   productNo: "{formTitles.productNo}",
   title: "상품명",
   description: "{formTitles.description} (상단 제목 밑 노출)",
@@ -269,7 +269,7 @@ export function ProductFormModal({
 
   // Label & Fabric
   const [label, setLabel] = useState<"" | "BLACK_LABEL" | "PREMIUM" | "ESSENTIAL">("PREMIUM");
-  const [fabricComposition, setFabricComposition] = useState("COTTON 100% (프리미엄 콤마 코튼)");
+  const [fabricComposition, setFabricComposition] = useState("COTTON 100% (프리미엄 코튼)");
   const [showFabricBadge, setShowFabricBadge] = useState<boolean>(false);
   const [showFabricInfo, setShowFabricInfo] = useState<boolean>(true);
   const [showSizeGuide, setShowSizeGuide] = useState<boolean>(false);
@@ -291,6 +291,8 @@ export function ProductFormModal({
   const [sizeMeasurements, setSizeMeasurements] = useState<SizeMeasurementRow[]>(DEFAULT_SIZE_MEASUREMENTS);
   const [newMeasurementName, setNewMeasurementName] = useState("");
   const [sizeStock, setSizeStock] = useState<Record<string, number>>({ "1": 10, "2": 10, "3": 10 });
+  const [sizeGuideImage, setSizeGuideImage] = useState<string>("");
+  const [sizeGuideImgUrlInput, setSizeGuideImgUrlInput] = useState<string>("");
 
   // Bulk discount
   const [bulkEnabled, setBulkEnabled] = useState(false);
@@ -403,15 +405,27 @@ export function ProductFormModal({
       setBulkEnabled(Boolean(initialProduct.bulkDiscount?.enabled));
       setBulkRules(initialProduct.bulkDiscount?.rules || [{ qty: 2, rate: 5 }]);
 
-      setFabricComposition(initialProduct.fabricComposition || "COTTON 100% (프리미엄 콤마 코튼)");
+      const initFabricImg =
+        initialProduct.fabricImage ||
+        initialProduct.fabricTextureImage ||
+        initialProduct.fabricImageUrl ||
+        initialProduct.bulkDiscount?.fabricImage ||
+        "";
+      const rawComp =
+        initialProduct.fabricComposition ||
+        initialProduct.bulkDiscount?.fabricComposition ||
+        "COTTON 100% (프리미엄 코튼)";
+      setFabricComposition(rawComp.replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼"));
       setShowFabricBadge(Boolean(initialProduct.showFabricBadge));
-      setShowFabricInfo(initialProduct.showFabricInfo !== undefined ? Boolean(initialProduct.showFabricInfo) : true);
+      setShowFabricInfo(Boolean(initFabricImg));
       setShowSizeGuide(Boolean(initialProduct.showSizeGuide));
+      setSizeGuideImage(initialProduct.sizeGuideImage || (initialProduct as any).sizeChartImage || "");
+      setSizeGuideImgUrlInput("");
       setElasticity(initialProduct.elasticity || "보통");
       setSheerness(initialProduct.sheerness || "없음");
       setThickness(initialProduct.thickness || "적당함");
       setLining(initialProduct.lining || "없음");
-      setFabricImage(initialProduct.fabricImage || "");
+      setFabricImage(initFabricImg);
 
       setIsTimeSale(Boolean(initialProduct.isTimeSale));
       setTimeSaleDiscountRate(String(initialProduct.timeSaleDiscountRate || 35));
@@ -469,10 +483,12 @@ export function ProductFormModal({
       setTimeSaleAllowCoupon(true);
       setTimeSaleAllowPoints(true);
       setLabel("PREMIUM");
-      setFabricComposition("COTTON 100% (프리미엄 콤마 코튼)");
+      setFabricComposition("COTTON 100% (프리미엄 코튼)");
       setShowFabricBadge(false);
       setShowFabricInfo(true);
       setShowSizeGuide(false);
+      setSizeGuideImage("");
+      setSizeGuideImgUrlInput("");
       setElasticity("보통");
       setSheerness("없음");
       setThickness("적당함");
@@ -626,15 +642,32 @@ export function ProductFormModal({
     e.target.value = "";
   };
 
-  // Add detail image via URL
-  const handleAddDetailImageUrl = () => {
-    if (!detailImgUrlInput.trim()) return;
-    const url = detailImgUrlInput.trim();
-    const imgTag = `<p><img src="${url}" alt="상세 사진" class="w-full h-auto rounded-xl my-2 block" /></p>`;
-    setDetailDescription((prev) => (prev ? `${prev}\n${imgTag}` : imgTag));
-    setDetailImgUrlInput("");
-    triggerToast("상세 사진 URL이 추가되었습니다.");
+  // Handle Add Color Option (제품컷 이미지 필수)
+  const handleAddColorOption = () => {
+    const trimmed = customColor.trim().toUpperCase();
+    if (!trimmed) {
+      alert("옵션/컬러명을 입력해주세요.");
+      triggerToast("옵션/컬러명을 입력해주세요.");
+      return;
+    }
+    if (!customColorImg) {
+      alert("제품을 등록해주세요");
+      triggerToast("제품을 등록해주세요");
+      return;
+    }
+    if (colors.includes(trimmed)) {
+      alert("이미 등록된 컬러입니다.");
+      triggerToast("이미 등록된 컬러입니다.");
+      return;
+    }
+
+    setColors([...colors, trimmed]);
+    setColorImages((prev) => ({ ...prev, [trimmed]: customColorImg }));
+    setCustomColor("");
+    setCustomColorImg("");
+    triggerToast(`'${trimmed}' 컬러가 등록되었습니다.`);
   };
+
 
   // Submit Handler
   const handleSubmit = (e: React.FormEvent) => {
@@ -723,18 +756,24 @@ export function ProductFormModal({
       colorImages,
       sizes,
       sizeMeasurements,
+      sizeGuideImage: sizeGuideImage ? sizeGuideImage.trim() : undefined,
       showFabricBadge,
-      showFabricInfo,
+      showFabricInfo: Boolean(fabricImage && fabricImage.trim() !== ""),
       showSizeGuide,
-      fabricComposition,
+      fabricComposition: (fabricComposition || "").replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼"),
       elasticity,
       sheerness,
       thickness,
       lining,
-      fabricImage,
+      fabricImage: fabricImage.trim(),
+      fabricTextureImage: fabricImage.trim(),
       bulkDiscount: {
         enabled: bulkEnabled,
         rules: bulkRules,
+        fabricImage: fabricImage.trim(),
+        fabricTextureImage: fabricImage.trim(),
+        fabricComposition: (fabricComposition || "").replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼"),
+        showFabricInfo: Boolean(fabricImage && fabricImage.trim() !== ""),
       },
       options: [
         { id: "color", name: "Color", values: colors },
@@ -921,16 +960,6 @@ export function ProductFormModal({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">상품 간단 설명 (상단 제목 밑 노출)</label>
-                  <textarea
-                    rows={2}
-                    placeholder="상품 상단 제목 밑에 표시될 한 줄 간단 설명을 입력하세요."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950 leading-relaxed"
-                  />
-                </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
@@ -1028,29 +1057,6 @@ export function ProductFormModal({
                     </label>
                   )}
 
-                  {/* URL Input */}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
-                      className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      placeholder="/product_1.webp 또는 이미지 URL 직접 입력"
-                    />
-                    <button
-                      type="button"
-                      disabled={images.length >= 10 || !urlInput.trim()}
-                      onClick={() => {
-                        if (urlInput.trim() && images.length < 10) {
-                          setImages([...images, urlInput.trim()]);
-                          setUrlInput("");
-                        }
-                      }}
-                      className="px-3.5 py-2 bg-neutral-950 hover:bg-black text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0 disabled:opacity-40"
-                    >
-                      + 이미지 추가
-                    </button>
-                  </div>
                 </div>
 
                 <div>
@@ -1136,30 +1142,6 @@ export function ProductFormModal({
                     />
                   </label>
 
-                  {/* URL Input for Detail Images */}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={detailImgUrlInput}
-                      onChange={(e) => setDetailImgUrlInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddDetailImageUrl();
-                        }
-                      }}
-                      className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-mono text-neutral-950 focus:outline-none focus:border-neutral-950"
-                      placeholder="상세 사진 URL 직접 입력 (https://... 또는 /images/...)"
-                    />
-                    <button
-                      type="button"
-                      disabled={!detailImgUrlInput.trim()}
-                      onClick={handleAddDetailImageUrl}
-                      className="px-3.5 py-2 bg-neutral-900 hover:bg-black text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0 disabled:opacity-40"
-                    >
-                      + URL 추가
-                    </button>
-                  </div>
 
                   {/* Direct HTML / Code View Toggle */}
                   <details className="text-xs">
@@ -1217,117 +1199,398 @@ export function ProductFormModal({
                   </div>
                 </div>
 
+
+
+                {/* 3. 판매 시작 시간 지정 (예약 오픈) - 독립된 깔끔한 카드 */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1.5">메인 전시 여부 (메인 슬라이더/추천 노출)</label>
-                  <button
-                    type="button"
-                    onClick={() => setIsMainFeatured((prev) => !prev)}
-                    className={`w-full flex items-center justify-between p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer select-none ${isMainFeatured
-                      ? "bg-amber-500/15 border-amber-400 text-neutral-950 shadow-2xs font-black"
-                      : "bg-neutral-50 border-neutral-200 text-neutral-600 hover:border-neutral-300"
-                      }`}
+                  <label className="block text-xs font-bold text-neutral-800 mb-2">
+                    {formTitles.scheduledRelease || "판매 시작 시간 지정 (예약 오픈)"}
+                  </label>
+                  <div
+                    className={`rounded-2xl border transition-all select-none p-4 ${
+                      isScheduledRelease
+                        ? "bg-neutral-50/80 border-neutral-300 shadow-2xs"
+                        : "bg-white border-neutral-200 hover:border-neutral-300"
+                    }`}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all shrink-0 ${isMainFeatured
-                          ? "bg-neutral-950 border-neutral-950 text-white"
-                          : "border-neutral-300 bg-white"
-                          }`}
-                      >
-                        {isMainFeatured && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                      </div>
-                      <div className="text-left">
-                        <span className="block font-black text-xs">🌟 쇼핑몰 메인 화면에 상품 전시</span>
-                        <span className="block text-[10px] font-semibold text-neutral-500">체크 시 메인 홈 대표 영역에 노출됩니다.</span>
-                      </div>
-                    </div>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${isMainFeatured ? "bg-amber-500 text-neutral-950 border-amber-400" : "bg-neutral-200 text-neutral-600 border-neutral-300"
-                      }`}>
-                      {isMainFeatured ? "전시 중" : "미전시"}
-                    </span>
-                  </button>
-                </div>
-
-                {/* 상품 구매 가능 상태 ON/OFF 및 판매 시작 일시 지정 (예약 오픈) */}
-                <div className="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/80">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                        <span className="text-xs font-black text-neutral-950">상품 구매 가능 상태 (ON/OFF)</span>
-                      </div>
-                      <p className="text-[11px] text-neutral-500">
-                        OFF 설정 시 고객이 해당 상품을 장바구니에 담거나 구매할 수 없습니다.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setAvailableForSale(!availableForSale)}
-                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider transition-all cursor-pointer shadow-2xs ${availableForSale
-                          ? "bg-emerald-600 text-white hover:bg-emerald-700 ring-2 ring-emerald-500/20"
-                          : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300 ring-1 ring-neutral-300"
-                        }`}
+                    {/* 상단 클릭 행 (토글 컨트롤) */}
+                    <div
+                      onClick={() => {
+                        const next = !isScheduledRelease;
+                        setIsScheduledRelease(next);
+                        if (next && !releaseDate) {
+                          const d = new Date();
+                          d.setDate(d.getDate() + 1);
+                          d.setHours(10, 0, 0, 0);
+                          const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                          setReleaseDate(iso);
+                        }
+                      }}
+                      className="flex items-center justify-between cursor-pointer"
                     >
-                      <span className={`w-2 h-2 rounded-full ${availableForSale ? "bg-white animate-ping" : "bg-neutral-400"}`} />
-                      <span>{availableForSale ? "ON (구매 가능)" : "OFF (구매 불가)"}</span>
-                    </button>
-                  </div>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all shrink-0 ${
+                            isScheduledRelease
+                              ? "bg-neutral-950 border-neutral-950 text-white"
+                              : "border-neutral-300 bg-white"
+                          }`}
+                        >
+                          {isScheduledRelease && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </div>
+                        <div className="text-left">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="block font-black text-xs text-neutral-950">
+                              ⏰ 판매 시작 시간 예약 (오픈 예정 기능)
+                            </span>
+                            <span className="text-[10px] text-neutral-600 font-extrabold bg-white border border-neutral-200 px-2 py-0.5 rounded-full shadow-2xs">
+                              지정 시간 도달 시 자동 구매 오픈
+                            </span>
+                          </div>
+                          <span className="block text-[11px] font-medium text-neutral-500 mt-0.5">
+                            지정 시간 전까지 '오픈 예정'으로 전시되며, 설정한 시간에 자동으로 구매가 열립니다.
+                          </span>
+                        </div>
+                      </div>
 
-                  {/* 시간 지정 판매 오픈 (예약 오픈) */}
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={isScheduledRelease}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setIsScheduledRelease(checked);
-                          if (checked && !releaseDate) {
-                            const d = new Date();
-                            d.setDate(d.getDate() + 1);
-                            d.setHours(10, 0, 0, 0);
-                            const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-                            setReleaseDate(iso);
-                          }
-                        }}
-                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 cursor-pointer accent-neutral-950"
-                      />
-                      <span className="text-xs font-black text-neutral-900">
-                        판매 시작 시간 지정 (예약 오픈)
+                      <span
+                        className={`text-[11px] font-black px-2.5 py-1 rounded-full border transition-all shrink-0 ${
+                          isScheduledRelease
+                            ? "bg-amber-500 text-neutral-950 border-amber-400 font-black shadow-2xs"
+                            : "bg-neutral-100 text-neutral-500 border-neutral-200 font-bold"
+                        }`}
+                      >
+                        {isScheduledRelease ? "예약 설정 중" : "상시 판매 (미설정)"}
                       </span>
-                      <span className="text-[10px] text-amber-700 font-extrabold bg-amber-100/80 px-2 py-0.5 rounded-full">
-                        지정 시간 도달 시 자동 구매 오픈
-                      </span>
-                    </label>
+                    </div>
 
-                    {isScheduledRelease && (
-                      <div className="pl-6 space-y-2 pt-1 animate-in fade-in duration-200">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                          <input
-                            type="datetime-local"
-                            value={releaseDate}
-                            onChange={(e) => setReleaseDate(e.target.value)}
-                            className="bg-white border border-neutral-300 rounded-xl px-3.5 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs font-mono"
-                          />
-                          {releaseDate && (
-                            <span className="text-xs font-bold text-neutral-900">
-                              {new Date(releaseDate).getTime() > Date.now() ? (
-                                <span className="text-amber-800 flex items-center gap-1 font-bold">
-                                  ⏰ {new Date(releaseDate).toLocaleString("ko-KR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}에 구매가 자동 오픈됩니다.
+                    {/* 활성화 시 부드럽게 나타나는 프리미엄 일시 선택 커스텀 UI */}
+                    {isScheduledRelease && (() => {
+                      const d = releaseDate ? new Date(releaseDate) : new Date();
+                      const validDate = isNaN(d.getTime()) ? new Date() : d;
+
+                      const currentYear = validDate.getFullYear();
+                      const currentMonth = validDate.getMonth() + 1; // 1 ~ 12
+                      const currentDay = validDate.getDate(); // 1 ~ 31
+                      const currentHours24 = validDate.getHours(); // 0 ~ 23
+                      const currentMinutes = validDate.getMinutes(); // 0 ~ 59
+
+                      const isPM = currentHours24 >= 12;
+                      const ampm: "오전" | "오후" = isPM ? "오후" : "오전";
+                      const displayHour12 = currentHours24 === 0 ? 12 : currentHours24 > 12 ? currentHours24 - 12 : currentHours24;
+
+                      const pad = (n: number) => String(n).padStart(2, "0");
+
+                      const handleUpdate = (updates: {
+                        year?: number;
+                        month?: number;
+                        day?: number;
+                        ampm?: "오전" | "오후";
+                        hour12?: number;
+                        minutes?: number;
+                      }) => {
+                        const y = updates.year ?? currentYear;
+                        const m = updates.month ?? currentMonth;
+                        let dVal = updates.day ?? currentDay;
+                        const targetAmpm = updates.ampm ?? ampm;
+                        const targetHour12 = updates.hour12 ?? displayHour12;
+                        const min = updates.minutes ?? currentMinutes;
+
+                        let h24 = targetHour12;
+                        if (targetAmpm === "오후" && targetHour12 < 12) {
+                          h24 = targetHour12 + 12;
+                        } else if (targetAmpm === "오전" && targetHour12 === 12) {
+                          h24 = 0;
+                        }
+
+                        const lastDayOfMonth = new Date(y, m, 0).getDate();
+                        if (dVal > lastDayOfMonth) dVal = lastDayOfMonth;
+
+                        const newIso = `${y}-${pad(m)}-${pad(dVal)}T${pad(h24)}:${pad(min)}`;
+                        setReleaseDate(newIso);
+                      };
+
+                      const handlePreset = (offsetDays: number, hour24: number, min: number = 0) => {
+                        const target = new Date();
+                        target.setDate(target.getDate() + offsetDays);
+                        target.setHours(hour24, min, 0, 0);
+                        const newIso = `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())}T${pad(target.getHours())}:${pad(target.getMinutes())}`;
+                        setReleaseDate(newIso);
+                      };
+
+                      const now = Date.now();
+                      const diffMs = validDate.getTime() - now;
+                      const isFuture = diffMs > 0;
+
+                      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                      let countdownText = "";
+                      if (isFuture) {
+                        if (diffDays > 0) {
+                          countdownText = `D-${diffDays} (${diffDays}일 ${diffHours}시간 뒤)`;
+                        } else if (diffHours > 0) {
+                          countdownText = `${diffHours}시간 ${diffMinutes}분 뒤 오픈`;
+                        } else {
+                          countdownText = `${Math.max(1, diffMinutes)}분 뒤 오픈 예정`;
+                        }
+                      }
+
+                      const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
+                      const dayOfWeek = weekDays[validDate.getDay()];
+                      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+                      return (
+                        <div className="mt-3.5 pt-3.5 border-t border-neutral-200/80 space-y-3.5 animate-in fade-in duration-200">
+                          {/* 1. 실시간 일정 요약 카드 (블랙 & 앰버 테마) */}
+                          <div className="bg-neutral-950 text-white rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-neutral-800">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10">
+                                <Calendar className="w-5 h-5 text-amber-400" />
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-neutral-400 font-bold block uppercase tracking-wider">
+                                  예약 오픈 지정 일시
+                                </span>
+                                <span className="text-sm font-black text-white tracking-tight">
+                                  {currentYear}년 {currentMonth}월 {currentDay}일 ({dayOfWeek}) {ampm} {displayHour12}시 {pad(currentMinutes)}분
+                                </span>
+                              </div>
+                            </div>
+                            <div className="self-start sm:self-center">
+                              {isFuture ? (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-black bg-amber-500 text-neutral-950 px-3 py-1.5 rounded-full shadow-2xs">
+                                  <span className="w-2 h-2 rounded-full bg-neutral-950 inline-block animate-ping"></span>
+                                  {countdownText}
                                 </span>
                               ) : (
-                                <span className="text-emerald-700 font-bold">
-                                  ✓ 설정된 시간이 이미 지나 현재 즉시 구매 가능한 상태입니다.
+                                <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-neutral-800 text-emerald-400 px-3 py-1.5 rounded-full border border-neutral-700">
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  시간 경과 (현재 구매 가능 상태)
                                 </span>
                               )}
+                            </div>
+                          </div>
+
+                          {/* 2. 빠른 간편 프리셋 버튼들 */}
+                          <div className="bg-neutral-50/90 rounded-2xl p-3.5 border border-neutral-200/80 space-y-2">
+                            <span className="text-[11px] font-bold text-neutral-600 flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                              자주 쓰는 오픈 일정 빠른 선택
                             </span>
-                          )}
+                            <div className="flex flex-wrap gap-2">
+                              {(() => {
+                                const getPreset = (title: string, days: number, h: number, timeStr: string) => {
+                                  const target = new Date();
+                                  target.setDate(target.getDate() + days);
+                                  const dayName = weekDays[target.getDay()];
+                                  return {
+                                    label: `${title}(${dayName}) ${timeStr}`,
+                                    days,
+                                    h,
+                                  };
+                                };
+
+                                const presets = [
+                                  getPreset("오늘", 0, 20, "저녁 8시"),
+                                  getPreset("내일", 1, 10, "오전 10시"),
+                                  getPreset("내일", 1, 20, "저녁 8시"),
+                                  getPreset("3일 뒤", 3, 10, "오전 10시"),
+                                  getPreset("1주일 뒤", 7, 10, "오전 10시"),
+                                ];
+
+                                return presets.map((preset) => (
+                                  <button
+                                    key={preset.label}
+                                    type="button"
+                                    onClick={() => handlePreset(preset.days, preset.h)}
+                                    className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-white hover:bg-neutral-950 hover:text-white border border-neutral-200 hover:border-neutral-950 text-neutral-800 transition-all cursor-pointer shadow-2xs"
+                                  >
+                                    {preset.label}
+                                  </button>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+
+                          {/* 3. 모던 커스텀 셀렉트 패널 (날짜 + 시간) */}
+                          <div className="bg-white rounded-2xl p-4 border border-neutral-200 shadow-2xs space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* 좌측: 날짜 선택 */}
+                              <div className="space-y-2">
+                                {(() => {
+                                  const todayDate = new Date();
+                                  const isSelectedToday =
+                                    todayDate.getFullYear() === currentYear &&
+                                    todayDate.getMonth() + 1 === currentMonth &&
+                                    todayDate.getDate() === currentDay;
+
+                                  return (
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-xs font-black text-neutral-900 flex items-center gap-1.5">
+                                        <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                                        <span>날짜 지정</span>
+                                        {isSelectedToday && (
+                                          <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
+                                            오늘
+                                          </span>
+                                        )}
+                                      </label>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const now = new Date();
+                                          handleUpdate({
+                                            year: now.getFullYear(),
+                                            month: now.getMonth() + 1,
+                                            day: now.getDate(),
+                                          });
+                                        }}
+                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-neutral-600 hover:text-neutral-950 bg-neutral-100 hover:bg-neutral-200/90 border border-neutral-200 px-2 py-0.5 rounded-md transition-all cursor-pointer shadow-2xs"
+                                        title="오늘 날짜로 즉시 설정"
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                                        <span>오늘 ({todayDate.getMonth() + 1}월 {todayDate.getDate()}일)</span>
+                                      </button>
+                                    </div>
+                                  );
+                                })()}
+                                <div className="grid grid-cols-3 gap-2">
+                                  {/* 년도 */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">연도</span>
+                                    <select
+                                      value={currentYear}
+                                      onChange={(e) => handleUpdate({ year: parseInt(e.target.value, 10) })}
+                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer"
+                                    >
+                                      {[2026, 2027, 2028].map((y) => (
+                                        <option key={y} value={y}>{y}년</option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* 월 */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">월</span>
+                                    <select
+                                      value={currentMonth}
+                                      onChange={(e) => handleUpdate({ month: parseInt(e.target.value, 10) })}
+                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer"
+                                    >
+                                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                                        <option key={m} value={m}>{m}월</option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* 일 (요일 및 오늘 표시 포함) */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">일 (요일)</span>
+                                    <select
+                                      value={currentDay}
+                                      onChange={(e) => handleUpdate({ day: parseInt(e.target.value, 10) })}
+                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer"
+                                    >
+                                      {(() => {
+                                        const now = new Date();
+                                        return Array.from({ length: daysInMonth }, (_, i) => {
+                                          const dayNum = i + 1;
+                                          const targetDate = new Date(currentYear, currentMonth - 1, dayNum);
+                                          const dayName = weekDays[targetDate.getDay()];
+                                          const isTodayDay =
+                                            now.getFullYear() === currentYear &&
+                                            now.getMonth() + 1 === currentMonth &&
+                                            now.getDate() === dayNum;
+
+                                          return (
+                                            <option key={dayNum} value={dayNum}>
+                                              {dayNum}일 ({dayName}){isTodayDay ? " • 오늘" : ""}
+                                            </option>
+                                          );
+                                        });
+                                      })()}
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* 우측: 시간 선택 */}
+                              <div className="space-y-2">
+                                <label className="text-xs font-black text-neutral-900 flex items-center gap-1.5">
+                                  <Clock className="w-3.5 h-3.5 text-amber-500" />
+                                  시간 지정
+                                </label>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {/* 오전/오후 세그먼트 */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">구분</span>
+                                    <div className="h-10 bg-neutral-100 p-1 rounded-xl flex items-center gap-1 border border-neutral-200/80">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdate({ ampm: "오전" })}
+                                        className={`flex-1 h-full rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                          ampm === "오전"
+                                            ? "bg-neutral-950 text-white shadow-2xs font-black"
+                                            : "text-neutral-500 hover:text-neutral-900"
+                                        }`}
+                                      >
+                                        오전
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdate({ ampm: "오후" })}
+                                        className={`flex-1 h-full rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                          ampm === "오후"
+                                            ? "bg-neutral-950 text-white shadow-2xs font-black"
+                                            : "text-neutral-500 hover:text-neutral-900"
+                                        }`}
+                                      >
+                                        오후
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* 시 */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">시 (Hour)</span>
+                                    <select
+                                      value={displayHour12}
+                                      onChange={(e) => handleUpdate({ hour12: parseInt(e.target.value, 10) })}
+                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer font-mono"
+                                    >
+                                      {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                                        <option key={h} value={h}>{h}시</option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* 분 */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">분 (Minute)</span>
+                                    <select
+                                      value={currentMinutes}
+                                      onChange={(e) => handleUpdate({ minutes: parseInt(e.target.value, 10) })}
+                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer font-mono"
+                                    >
+                                      {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 59].map((m) => (
+                                        <option key={m} value={m}>{pad(m)}분</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 부가 안내 문구 */}
+                            <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500 leading-relaxed font-medium">
+                              <span>* 설정된 오픈 일시 도달 전에는 상품 상세에 "오픈 예정" 배지가 노출되며 장바구니/구매 버튼이 비활성화됩니다.</span>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-[11px] text-neutral-500 leading-relaxed">
-                          * 지정한 시간이 도래하기 전에는 쇼핑몰 상품 상세 및 목록에서 "오픈 예정"으로 표시되며 장바구니 담기 및 결제가 불가능합니다. 지정한 시간이 되면 자동으로 구매 가능 상태로 즉시 전환됩니다.
-                        </p>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -1392,120 +1655,29 @@ export function ProductFormModal({
                 {/* 🧵 FABRIC INFORMATION */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-neutral-200 pb-2 flex-wrap gap-2">
-                    <div className="flex items-center gap-3">
-                      {/* 좌측 상단 체크박스: 상세페이지에 표시할지 선택 */}
-                      <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-xl border border-neutral-300 hover:border-neutral-500 transition-all shadow-2xs group">
-                        <input
-                          type="checkbox"
-                          checked={showFabricInfo}
-                          onChange={(e) => setShowFabricInfo(e.target.checked)}
-                          className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
-                        />
-                        <span className="text-xs font-black text-neutral-950">
-                          상세페이지에 표시
-                        </span>
-                        <span
-                          className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${
-                            showFabricInfo ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-400"
-                          }`}
-                        >
-                          {showFabricInfo ? "메뉴 추가됨" : "미표시"}
-                        </span>
-                      </label>
-
+                    <div className="flex items-center gap-2.5">
                       <span className="text-xs font-black text-neutral-950 flex items-center gap-1.5 uppercase tracking-wider">
                         🧵 원단 정보 설정 (Fabric Details)
                       </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {showFabricInfo ? (
-                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 hidden sm:inline-block">
-                          ✓ 상세페이지 [원단 정보] 메뉴 노출 활성화
-                        </span>
-                      ) : (
-                        <span className="text-[11px] font-bold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-md hidden sm:inline-block">
-                          상세페이지 메뉴 미노출
-                        </span>
-                      )}
-
-                      <label className="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shadow-2xs hover:border-black transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={showFabricBadge}
-                          onChange={(e) => setShowFabricBadge(e.target.checked)}
-                          className="w-3.5 h-3.5 accent-black rounded cursor-pointer"
-                        />
-                        <span className="text-[11px] font-extrabold text-neutral-900">
-                          🏷️ 상품 카드에 원단 뱃지 노출
-                        </span>
-                      </label>
+                      <span
+                        className={`text-[10px] font-black px-2 py-0.5 rounded-md transition-colors ${
+                          fabricImage.trim() ? "bg-neutral-950 text-white" : "bg-neutral-200 text-neutral-500"
+                        }`}
+                      >
+                        {fabricImage.trim() ? "상세페이지 노출 활성화됨" : "원단 이미지 미등록 시 자동 숨김"}
+                      </span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-neutral-700 mb-1">소재 구성 (FABRIC)</label>
+                    <label className="block text-[11px] font-bold text-neutral-700 mb-1">소재 (FABRIC)</label>
                     <input
                       type="text"
                       value={fabricComposition}
                       onChange={(e) => setFabricComposition(e.target.value)}
-                      placeholder="예: COTTON 100% (프리미엄 콤마 코튼)"
+                      placeholder="예: COTTON 100% (프리미엄 코튼)"
                       className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
                     />
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                    <div>
-                      <label className="block text-[10px] font-bold text-neutral-600 mb-1">신축성</label>
-                      <select
-                        value={elasticity}
-                        onChange={(e) => setElasticity(e.target.value)}
-                        className="w-full bg-white border border-neutral-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-neutral-950"
-                      >
-                        <option value="보통">보통</option>
-                        <option value="없음">없음</option>
-                        <option value="좋음">좋음</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-neutral-600 mb-1">비침</label>
-                      <select
-                        value={sheerness}
-                        onChange={(e) => setSheerness(e.target.value)}
-                        className="w-full bg-white border border-neutral-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-neutral-950"
-                      >
-                        <option value="없음">없음</option>
-                        <option value="약간">약간</option>
-                        <option value="있음">있음</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-neutral-600 mb-1">두께감</label>
-                      <select
-                        value={thickness}
-                        onChange={(e) => setThickness(e.target.value)}
-                        className="w-full bg-white border border-neutral-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-neutral-950"
-                      >
-                        <option value="적당함">적당함</option>
-                        <option value="얇음">얇음</option>
-                        <option value="두꺼움">두꺼움</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-neutral-600 mb-1">안감</label>
-                      <select
-                        value={lining}
-                        onChange={(e) => setLining(e.target.value)}
-                        className="w-full bg-white border border-neutral-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-neutral-950"
-                      >
-                        <option value="없음">없음</option>
-                        <option value="있음">있음</option>
-                        <option value="기모">기모</option>
-                      </select>
-                    </div>
                   </div>
 
                   {/* Fabric Texture Image Upload Box */}
@@ -1554,121 +1726,90 @@ export function ProductFormModal({
                         />
                       </label>
                     )}
-                    <input
-                      type="text"
-                      value={fabricImage}
-                      onChange={(e) => setFabricImage(e.target.value)}
-                      placeholder="또는 원단 이미지 URL 입력"
-                      className="w-full mt-1.5 bg-white border border-neutral-200 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-neutral-800 focus:outline-none focus:border-neutral-950"
-                    />
+
                   </div>
                 </div>
 
-                {/* 2. OPTION / PRODUCT CUTS (제품컷 사진 등록) */}
+                {/* 2. OPTION / PRODUCT CUTS (컬러등록) */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
                       <ImageIcon className="w-4 h-4 text-purple-600" />
-                      <span>옵션별 제품컷 사진 등록 (컬러 / 모델 착용 제품컷)</span>
+                      <span>{formTitles.variantCutImages && formTitles.variantCutImages !== "{formTitles.variantCutImages}" ? formTitles.variantCutImages : "컬러등록"}</span>
                     </label>
                     <span className="text-[11px] font-mono font-extrabold text-neutral-500">
-                      {colors.length}개 제품컷 옵션 등록됨
+                      {colors.length}개 컬러 등록됨
                     </span>
                   </div>
 
                   <p className="text-[11px] text-neutral-500 leading-relaxed">
-                    💡 단순 텍스트/색상칩 대신, 각 옵션별 <strong>실제 제품컷 사진</strong>을 등록하세요. 상세페이지에서 고객이 제품컷 사진을 보고 클릭하여 직관적으로 구매할 수 있습니다.
+                    💡 각 옵션별 <strong>실제 제품컷 사진을 필수로 등록</strong>해야 컬러를 추가할 수 있습니다.
                   </p>
 
-                  {/* Add New Variant Option with Product Cut */}
-                  <div className="bg-white border border-neutral-200 rounded-2xl p-3.5 space-y-3 shadow-2xs">
-                    <div className="flex flex-col sm:flex-row items-center gap-3">
-                      <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
-                        {customColorImg ? (
-                          <div className="relative w-12 h-12 rounded-xl overflow-hidden border-2 border-neutral-900 bg-neutral-100 shrink-0">
-                            <img src={customColorImg} alt="제품컷 미리보기" className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => setCustomColorImg("")}
-                              className="absolute top-0.5 right-0.5 bg-rose-600 text-white rounded-full p-0.5"
-                            >
-                              <X className="w-2.5 h-2.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <label className="w-12 h-12 rounded-xl border-2 border-dashed border-neutral-300 hover:border-black flex flex-col items-center justify-center cursor-pointer bg-neutral-50 hover:bg-neutral-100 transition-colors shrink-0">
-                            <Upload className="w-4 h-4 text-neutral-500" />
-                            <span className="text-[8px] font-bold text-neutral-500 mt-0.5">제품컷</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  const reader = new FileReader();
-                                  reader.onload = async (evt) => {
-                                    const raw = evt.target?.result as string;
-                                    if (raw) {
-                                      const compressed = await compressImageDataUrl(raw, 1920, 0.92);
-                                      setCustomColorImg(compressed);
-                                    }
-                                  };
-                                  reader.readAsDataURL(file);
-                                }
-                              }}
-                              className="hidden"
-                            />
-                          </label>
-                        )}
-                        <input
-                          type="text"
-                          placeholder="또는 이미지 URL 직접 입력"
-                          value={customColorImg}
-                          onChange={(e) => setCustomColorImg(e.target.value)}
-                          className="flex-1 sm:w-48 bg-neutral-50 border border-neutral-200 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-neutral-800 focus:outline-none focus:border-neutral-950"
-                        />
-                      </div>
+                  {/* Add New Color Option with Product Cut */}
+                  <div className="bg-white border border-neutral-200 rounded-2xl p-3.5 shadow-2xs">
+                    <div className="flex items-center gap-2.5">
+                      {/* 옵션/컬러명 입력창 (왼쪽) */}
+                      <input
+                        type="text"
+                        placeholder="옵션/컬러명 입력 (예: 블랙, 크림, 올리브)"
+                        value={customColor}
+                        onChange={(e) => setCustomColor(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddColorOption();
+                          }
+                        }}
+                        className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 font-bold"
+                      />
 
-                      <div className="flex items-center gap-2 w-full flex-1">
-                        <input
-                          type="text"
-                          placeholder="옵션/컬러명 입력 (예: 블랙, 크림, 올리브)"
-                          value={customColor}
-                          onChange={(e) => setCustomColor(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              const trimmed = customColor.trim().toUpperCase();
-                              if (trimmed && !colors.includes(trimmed)) {
-                                setColors([...colors, trimmed]);
-                                if (customColorImg) {
-                                  setColorImages((prev) => ({ ...prev, [trimmed]: customColorImg }));
-                                }
-                                setCustomColor("");
-                                setCustomColorImg("");
+                      {/* 제품컷 이미지 업로드 버튼 (오른쪽) */}
+                      {customColorImg ? (
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden border-2 border-neutral-900 bg-neutral-100 shrink-0">
+                          <img src={customColorImg} alt="제품컷 미리보기" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setCustomColorImg("")}
+                            className="absolute top-0.5 right-0.5 bg-rose-600 text-white rounded-full p-0.5 cursor-pointer"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="h-10 px-3 rounded-xl border border-dashed border-neutral-300 hover:border-black flex items-center gap-1.5 cursor-pointer bg-neutral-50 hover:bg-neutral-100 transition-colors shrink-0">
+                          <Upload className="w-3.5 h-3.5 text-neutral-500" />
+                          <span className="text-xs font-bold text-neutral-600">제품컷 업로드 (필수)</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = async (evt) => {
+                                  const raw = evt.target?.result as string;
+                                  if (raw) {
+                                    const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+                                    setCustomColorImg(compressed);
+                                  }
+                                };
+                                reader.readAsDataURL(file);
                               }
-                            }
-                          }}
-                          className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 font-bold"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const trimmed = customColor.trim().toUpperCase();
-                            if (trimmed && !colors.includes(trimmed)) {
-                              setColors([...colors, trimmed]);
-                              if (customColorImg) {
-                                setColorImages((prev) => ({ ...prev, [trimmed]: customColorImg }));
-                              }
-                              setCustomColor("");
-                              setCustomColorImg("");
-                            }
-                          }}
-                          className="px-4 py-2 bg-neutral-950 hover:bg-black text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0"
-                        >
-                          + 제품컷 추가
-                        </button>
-                      </div>
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+
+                      {/* + 컬러 추가 버튼 */}
+                      <button
+                        type="button"
+                        onClick={handleAddColorOption}
+                        className="px-4 py-2.5 bg-neutral-950 hover:bg-black text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0"
+                      >
+                        + 컬러 추가
+                      </button>
                     </div>
                   </div>
 
@@ -1736,36 +1877,40 @@ export function ProductFormModal({
                 {/* 3. SIZE OPTIONS */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-neutral-200/70">
-                    <div className="flex items-center gap-3">
-                      {/* 좌측 상단 체크박스: 상세페이지에 표시할지 선택 */}
-                      <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-xl border border-neutral-300 hover:border-neutral-500 transition-all shadow-2xs group">
-                        <input
-                          type="checkbox"
-                          checked={showSizeGuide}
-                          onChange={(e) => setShowSizeGuide(e.target.checked)}
-                          className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
-                        />
-                        <span className="text-xs font-black text-neutral-950">
-                          상세페이지에 표시
+                    {/* 좌측: 타이틀 및 선택 개수 안내 */}
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-blue-100/80 border border-blue-200 flex items-center justify-center shrink-0">
+                        <Ruler className="w-3.5 h-3.5 text-blue-600" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-extrabold text-neutral-900">
+                          사이즈 (Size) 옵션 선택
+                        </label>
+                        <span className="text-[10px] font-mono font-extrabold text-neutral-500 bg-white border border-neutral-200 px-2 py-0.5 rounded-full shadow-2xs">
+                          {sizes.length}개 선택됨
                         </span>
-                        <span
-                          className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${
-                            showSizeGuide ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-400"
-                          }`}
-                        >
-                          {showSizeGuide ? "메뉴 추가됨" : "미표시"}
-                        </span>
-                      </label>
-
-                      <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
-                        <Ruler className="w-4 h-4 text-blue-500" />
-                        <span>사이즈 (Size) 옵션 선택</span>
-                      </label>
+                      </div>
                     </div>
 
-                    <span className="text-[11px] font-mono font-extrabold text-neutral-500">
-                      {sizes.length}개 사이즈 선택됨
-                    </span>
+                    {/* 우측: 상세페이지에 표시 체크박스 */}
+                    <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-xl border border-neutral-300 hover:border-neutral-500 transition-all shadow-2xs group">
+                      <input
+                        type="checkbox"
+                        checked={showSizeGuide}
+                        onChange={(e) => setShowSizeGuide(e.target.checked)}
+                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
+                      />
+                      <span className="text-xs font-black text-neutral-950">
+                        상세페이지에 표시
+                      </span>
+                      <span
+                        className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${
+                          showSizeGuide ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-400"
+                        }`}
+                      >
+                        {showSizeGuide ? "ON" : "OFF"}
+                      </span>
+                    </label>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {["1", "2", "3", "FREE"].map((sz) => {
@@ -1796,44 +1941,132 @@ export function ProductFormModal({
                 </div>
 
                 {/* 4. SIZE MEASUREMENTS TABLE */}
-                <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
-                  <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-200/70">
-                    <div className="flex items-center gap-3">
-                      {/* 좌측 상단 체크박스 */}
-                      <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-xl border border-neutral-300 hover:border-neutral-500 transition-all shadow-2xs group">
-                        <input
-                          type="checkbox"
-                          checked={showSizeGuide}
-                          onChange={(e) => setShowSizeGuide(e.target.checked)}
-                          className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
-                        />
-                        <span className="text-xs font-black text-neutral-950">
-                          상세페이지에 표시
-                        </span>
-                        <span
-                          className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${
-                            showSizeGuide ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-400"
-                          }`}
-                        >
-                          {showSizeGuide ? "메뉴 추가됨" : "미표시"}
-                        </span>
-                      </label>
-
-                      <label className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5 cursor-pointer">
-                        <Ruler className="w-4 h-4 text-indigo-500" />
-                        <span>사이즈별 실측 치수 가이드 (Size Chart Measurement Table)</span>
+                <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-neutral-200/70">
+                    {/* 좌측: 타이틀 */}
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-100/80 border border-indigo-200 flex items-center justify-center shrink-0">
+                        <Ruler className="w-3.5 h-3.5 text-indigo-600" />
+                      </div>
+                      <label className="text-xs font-extrabold text-neutral-900 cursor-pointer">
+                        사이즈별 실측 치수 가이드 (Size Chart Measurement Table)
                       </label>
                     </div>
 
-                    {showSizeGuide ? (
-                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                        ✓ 상세페이지 [사이즈 가이드] 메뉴 노출 활성화
+                    {/* 우측: 상세페이지에 표시 체크박스 */}
+                    <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-xl border border-neutral-300 hover:border-neutral-500 transition-all shadow-2xs group">
+                      <input
+                        type="checkbox"
+                        checked={showSizeGuide}
+                        onChange={(e) => setShowSizeGuide(e.target.checked)}
+                        className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
+                      />
+                      <span className="text-xs font-black text-neutral-950">
+                        상세페이지에 표시
                       </span>
+                      <span
+                        className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${
+                          showSizeGuide ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-400"
+                        }`}
+                      >
+                        {showSizeGuide ? "ON" : "OFF"}
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* 📐 사이즈 실측 안내 이미지 업로드 영역 */}
+                  <div className="bg-white border border-neutral-200/90 rounded-xl p-3.5 space-y-2.5 shadow-2xs">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-neutral-900 flex items-center gap-1.5">
+                          <ImageIcon className="w-3.5 h-3.5 text-indigo-500" />
+                          사이즈 실측 치수 가이드 이미지 (Size Guide Image)
+                        </span>
+                        <span className="text-[10px] font-bold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-md">
+                          선택 사항
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-neutral-400 font-medium">
+                        * 상세페이지 사이즈 차트(표) 상단에 대표 이미지로 노출됩니다.
+                      </span>
+                    </div>
+
+                    {sizeGuideImage ? (
+                      <div className="relative w-full rounded-xl overflow-hidden border-2 border-neutral-200 bg-neutral-50 group shadow-2xs">
+                        <img
+                          src={sizeGuideImage}
+                          alt="사이즈 가이드 이미지"
+                          className="w-full h-auto max-h-[220px] object-contain block mx-auto py-2"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                          <label className="bg-white hover:bg-neutral-100 text-neutral-900 font-bold text-xs px-3 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-sm">
+                            <Upload className="w-3.5 h-3.5" /> 이미지 변경
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = async (evt) => {
+                                    const raw = evt.target?.result as string;
+                                    if (raw) {
+                                      const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+                                      setSizeGuideImage(compressed);
+                                      triggerToast("사이즈 가이드 이미지가 변경되었습니다.");
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSizeGuideImage("");
+                              triggerToast("사이즈 가이드 이미지가 삭제되었습니다.");
+                            }}
+                            className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
+                          >
+                            <X className="w-3.5 h-3.5" /> 이미지 삭제
+                          </button>
+                        </div>
+                      </div>
                     ) : (
-                      <span className="text-[11px] font-bold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-md">
-                        상세페이지 메뉴 미노출
-                      </span>
+                      <label className="flex flex-col items-center justify-center aspect-[16/9] max-h-[100px] w-full border-2 border-dashed border-neutral-300 hover:border-black bg-neutral-50/60 hover:bg-neutral-100/60 rounded-xl cursor-pointer transition-all p-3 text-center group">
+                        <Upload className="w-4 h-4 text-neutral-500 mb-1 group-hover:scale-110 transition-transform" />
+                        <span className="text-xs font-bold text-neutral-800">
+                          클릭하여 사이즈 실측 안내 / 피팅 가이드 이미지 업로드
+                        </span>
+                        <span className="text-[10px] text-neutral-400 mt-0.5">
+                          JPG, PNG, WEBP (고해상도 유지 / 상세페이지 사이즈 차트 표 위에 노출)
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = async (evt) => {
+                                const raw = evt.target?.result as string;
+                                if (raw) {
+                                  const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+                                  setSizeGuideImage(compressed);
+                                  triggerToast("사이즈 가이드 이미지가 등록되었습니다.");
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
                     )}
+
+
                   </div>
 
                   {/* Add Custom Measurement Option Input */}
@@ -2540,7 +2773,7 @@ export function ProductFormModal({
           const mobileTabs = [
             { id: "reviews", label: "고객 후기", tooltip: "✨ 베스트댓글 선정 시, 최대 50,000원" },
             { id: "details", label: "제품 상세 사진" },
-            ...(showFabricInfo ? [{ id: "fabric", label: "원단 정보" }] : []),
+            ...(displayFabricImage ? [{ id: "fabric", label: "원단 정보" }] : []),
             ...(showSizeGuide ? [{ id: "guide", label: "사이즈 가이드" }] : []),
             { id: "care", label: "배송 및 반품" },
           ];
@@ -3004,12 +3237,12 @@ export function ProductFormModal({
                           {/* TAB 2: 원단 정보 (Fabric Details) */}
                           {previewActiveTab === "fabric" && (
                             <div className="space-y-3.5 animate-in fade-in duration-150">
-                              {showFabricInfo ? (
+                              {showFabricInfo && displayFabricImage ? (
                                 <>
                                   {displayFabricComposition && (
                                     <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-200/80">
                                       <span className="text-[10px] font-bold text-neutral-400 block mb-0.5">
-                                        {formTitles.fabricComposition}
+                                        소재
                                       </span>
                                       <p className="font-black text-xs text-neutral-950">
                                         {displayFabricComposition}
@@ -3017,43 +3250,19 @@ export function ProductFormModal({
                                     </div>
                                   )}
 
-                                  <div className="grid grid-cols-2 gap-2 text-xs">
-                                    <div className="bg-neutral-50 p-2 rounded-xl border border-neutral-200/60">
-                                      <span className="text-neutral-400 block text-[10px]">신축성</span>
-                                      <span className="font-bold text-neutral-900">{elasticity}</span>
+                                  {displayFabricImage && (
+                                    <div className="rounded-xl overflow-hidden border border-neutral-200/90 bg-neutral-100 shadow-2xs">
+                                      <img
+                                        src={displayFabricImage}
+                                        alt="원단 실물 텍스처"
+                                        className="w-full h-auto block object-cover max-h-80"
+                                      />
                                     </div>
-                                    <div className="bg-neutral-50 p-2 rounded-xl border border-neutral-200/60">
-                                      <span className="text-neutral-400 block text-[10px]">비침</span>
-                                      <span className="font-bold text-neutral-900">{sheerness}</span>
-                                    </div>
-                                    <div className="bg-neutral-50 p-2 rounded-xl border border-neutral-200/60">
-                                      <span className="text-neutral-400 block text-[10px]">두께감</span>
-                                      <span className="font-bold text-neutral-900">{thickness}</span>
-                                    </div>
-                                    <div className="bg-neutral-50 p-2 rounded-xl border border-neutral-200/60">
-                                      <span className="text-neutral-400 block text-[10px]">안감</span>
-                                      <span className="font-bold text-neutral-900">{lining}</span>
-                                    </div>
-                                  </div>
+                                  )}
 
                                   <div className="text-[11px] text-neutral-500 bg-neutral-50 p-2.5 rounded-xl border border-neutral-200/60 leading-relaxed">
                                     • 권장 세탁 방법: 드라이클리닝 권장 / 찬물 미온수 단독 손세탁 (건조기 사용 금지)
                                   </div>
-
-                                  {displayFabricImage && (
-                                    <div className="pt-1">
-                                      <span className="text-[10px] font-bold text-neutral-400 block mb-1.5">
-                                        🔍 {formTitles.fabricImage}
-                                      </span>
-                                      <div className="rounded-2xl overflow-hidden border border-neutral-200 aspect-[16/9] max-h-36">
-                                        <img
-                                          src={displayFabricImage}
-                                          alt="원단 실물 텍스처"
-                                          className="w-full h-full object-cover"
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
                                 </>
                               ) : null}
                             </div>
@@ -3063,9 +3272,21 @@ export function ProductFormModal({
                           {previewActiveTab === "guide" && (
                             <div className="space-y-3 animate-in fade-in duration-150">
                               {showSizeGuide ? (
-                                effectiveSizes.length > 0 ? (
-                                  <>
-                                    <div className="overflow-x-auto rounded-xl border border-neutral-200">
+                                <>
+                                  {/* 사이즈 실측 안내 이미지 (사이즈 차트 표 상단 노출) */}
+                                  {sizeGuideImage && (
+                                    <div className="rounded-xl overflow-hidden border border-neutral-200 bg-white p-2 shadow-2xs">
+                                      <img
+                                        src={sizeGuideImage}
+                                        alt="사이즈 가이드 실측 이미지"
+                                        className="w-full h-auto block object-contain max-h-60 mx-auto"
+                                      />
+                                    </div>
+                                  )}
+
+                                  {effectiveSizes.length > 0 ? (
+                                    <>
+                                      <div className="overflow-x-auto rounded-xl border border-neutral-200">
                                       <table className="w-full text-center text-[10px]">
                                         <thead>
                                           <tr className="bg-neutral-100 border-b border-neutral-200 font-bold text-neutral-700">
@@ -3096,8 +3317,9 @@ export function ProductFormModal({
                                   </>
                                 ) : (
                                   <div className="py-8" />
-                                )
-                              ) : null}
+                                )}
+                              </>
+                            ) : null}
                             </div>
                           )}
 

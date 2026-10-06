@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import {
   Package,
@@ -23,10 +23,12 @@ import {
   GripVertical,
   Box,
   Sparkles,
+  Star,
   EyeOff,
   Layers,
   Clock,
   Check,
+  ArrowUpToLine,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import * as XLSX from "xlsx";
@@ -90,6 +92,8 @@ interface ProductsManagementProps {
   handleBulkUpdateStock?: (targetIds: string[], stockQty: number) => void;
   toggleProductPurchasable?: (id: string) => void;
   handleReorderProducts?: (fromId: string, toId: string, showToast?: boolean) => void;
+  handleMoveProductToTop?: (id: string) => void;
+  handleBulkMoveToTop?: (targetIds: string[]) => void;
   handleQuickUpdateCategory?: (id: string, newCategory: string) => void;
   handleQuickUpdatePrice?: (id: string, newPrice: number | string) => boolean | void;
   handleQuickUpdateStock?: (id: string, newTotalStock: number, newSizeStock?: Record<string, number>) => boolean | void;
@@ -638,6 +642,8 @@ export function ProductsManagement({
   handleBulkUpdateStock,
   toggleProductPurchasable,
   handleReorderProducts,
+  handleMoveProductToTop,
+  handleBulkMoveToTop,
   handleQuickUpdateCategory,
   handleQuickUpdatePrice,
   handleQuickUpdateStock,
@@ -658,13 +664,30 @@ export function ProductsManagement({
   // Bulk Selection State
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
+  // Top Metric Cards Filter State ("all" | "active" | "main_featured" | "sold_out")
+  const [selectedMetricFilter, setSelectedMetricFilter] = useState<"all" | "active" | "main_featured" | "sold_out">("all");
+
+  const displayedProducts = useMemo(() => {
+    let list = filteredProducts;
+
+    if (selectedMetricFilter === "active") {
+      list = list.filter((p) => getProductStock(p) > 0);
+    } else if (selectedMetricFilter === "main_featured") {
+      list = list.filter((p) => Boolean(p.isMainFeatured));
+    } else if (selectedMetricFilter === "sold_out") {
+      list = list.filter((p) => getProductStock(p) === 0);
+    }
+
+    return list;
+  }, [filteredProducts, selectedMetricFilter, getProductStock]);
+
   const isAllSelected =
-    filteredProducts.length > 0 &&
-    filteredProducts.every((p) => selectedProductIds.includes(String(p.id)));
+    displayedProducts.length > 0 &&
+    displayedProducts.every((p) => selectedProductIds.includes(String(p.id)));
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      const allIds = filteredProducts.map((p) => String(p.id));
+      const allIds = displayedProducts.map((p) => String(p.id));
       setSelectedProductIds(allIds);
     } else {
       setSelectedProductIds([]);
@@ -774,6 +797,20 @@ export function ProductsManagement({
         if (handleQuickUpdateStock) {
           handleQuickUpdateStock(String(id), 50);
         }
+      });
+    }
+    setIsBulkActionMenuOpen(false);
+    setSelectedProductIds([]);
+  };
+
+  // Bulk Move to Top Handler
+  const handleExecuteBulkMoveToTop = () => {
+    if (selectedProductIds.length === 0) return;
+    if (handleBulkMoveToTop) {
+      handleBulkMoveToTop(selectedProductIds);
+    } else if (handleReorderProducts && displayedProducts[0]) {
+      selectedProductIds.forEach((id) => {
+        handleReorderProducts(id, String(displayedProducts[0].id), false);
       });
     }
     setIsBulkActionMenuOpen(false);
@@ -992,7 +1029,8 @@ export function ProductsManagement({
           const labelRaw = String(getVal(["상품 라벨", "label", "productLabel"])).trim().toUpperCase();
           const label = ["BLACK_LABEL", "PREMIUM", "ESSENTIAL"].includes(labelRaw) ? labelRaw : "PREMIUM";
 
-          const fabricComposition = String(getVal(["소재 성분", "소재", "fabricComposition"])).trim() || "COTTON 100% (프리미엄 콤마 코튼)";
+          const rawFabricComp = String(getVal(["소재 성분", "소재", "fabricComposition"])).trim() || "COTTON 100% (프리미엄 코튼)";
+          const fabricComposition = rawFabricComp.replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼");
           const elasticity = String(getVal(["신축성", "elasticity"])).trim() || "보통";
           const sheerness = String(getVal(["비침", "sheerness"])).trim() || "없음";
           const thickness = String(getVal(["두께감", "두께", "thickness"])).trim() || "적당함";
@@ -1093,7 +1131,7 @@ export function ProductsManagement({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -1127,55 +1165,137 @@ export function ProductsManagement({
         </div>
       </div>
 
-      {/* Product Stock Metric Summary Cards */}
+      {/* Product Stock Metric Summary Cards (Interactive Filters) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>전체 등록 상품</span>
-            <Package className="w-4 h-4 text-neutral-900" />
+        {/* 1. 전체 등록 상품 */}
+        <div
+          onClick={() => setSelectedMetricFilter("all")}
+          className={`border rounded-2xl p-5 transition-all cursor-pointer select-none group relative ${
+            selectedMetricFilter === "all"
+              ? "bg-neutral-900 text-white border-neutral-900 shadow-md ring-2 ring-neutral-950/20"
+              : "bg-white border-neutral-200/80 hover:border-neutral-400 hover:shadow-md text-neutral-900 shadow-sm"
+          }`}
+          title="클릭 시 전체 상품 목록 표시"
+        >
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+            <span className={selectedMetricFilter === "all" ? "text-neutral-300" : "text-neutral-500"}>
+              전체 등록 상품
+            </span>
+            <div className={`p-1.5 rounded-lg ${selectedMetricFilter === "all" ? "bg-white/10 text-white" : "bg-neutral-100 text-neutral-900"}`}>
+              <Package className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+          <p className="text-2xl font-extrabold mt-2">
             {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")).length.toLocaleString()} 개
           </p>
-          <p className="text-xs text-neutral-500 mt-1">스토어 전체 등록 아이템</p>
+          <div className="flex items-center justify-between mt-1">
+            <p className={`text-xs ${selectedMetricFilter === "all" ? "text-neutral-400" : "text-neutral-500"}`}>
+              스토어 전체 등록 아이템
+            </p>
+            {selectedMetricFilter === "all" && (
+              <span className="text-[10px] font-black bg-white/20 text-white px-2 py-0.5 rounded-full">
+                ✓ 전체 보는 중
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>정상 판매 중 (재고 여유)</span>
-            <CheckCircle2 className="w-4 h-4 text-neutral-900" />
+        {/* 2. 정상 판매 중 (재고 보유) */}
+        <div
+          onClick={() => setSelectedMetricFilter(selectedMetricFilter === "active" ? "all" : "active")}
+          className={`border rounded-2xl p-5 transition-all cursor-pointer select-none group relative ${
+            selectedMetricFilter === "active"
+              ? "bg-emerald-50 border-emerald-600 shadow-md ring-2 ring-emerald-600/30 text-neutral-950"
+              : "bg-white border-neutral-200/80 hover:border-emerald-300 hover:shadow-md text-neutral-900 shadow-sm"
+          }`}
+          title="클릭 시 재고가 있는 정상 판매 중 상품만 필터링"
+        >
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+            <span className={selectedMetricFilter === "active" ? "text-emerald-800 font-extrabold" : "text-neutral-500"}>
+              정상 판매 중 (재고 여유)
+            </span>
+            <div className={`p-1.5 rounded-lg ${selectedMetricFilter === "active" ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-600"}`}>
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && getProductStock(p) > 10).length.toLocaleString()} 개
+          <p className="text-2xl font-extrabold mt-2 text-neutral-950">
+            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && getProductStock(p) > 0).length.toLocaleString()} 개
           </p>
-          <p className="text-xs text-neutral-600 font-bold mt-1">재고 10개 초과 보유 중</p>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-xs text-neutral-600 font-bold">재고 보유 중 (판매 가능)</p>
+            {selectedMetricFilter === "active" && (
+              <span className="text-[10px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow-2xs">
+                ✓ 선택됨
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>재고 소진 임박</span>
-            <TrendingUp className="w-4 h-4 text-neutral-900" />
+        {/* 3. 메인 진열 제품 (Main Featured) */}
+        <div
+          onClick={() => setSelectedMetricFilter(selectedMetricFilter === "main_featured" ? "all" : "main_featured")}
+          className={`border rounded-2xl p-5 transition-all cursor-pointer select-none group relative ${
+            selectedMetricFilter === "main_featured"
+              ? "bg-amber-50 border-amber-500 shadow-md ring-2 ring-amber-500/30 text-neutral-950"
+              : "bg-white border-neutral-200/80 hover:border-amber-300 hover:shadow-md text-neutral-900 shadow-sm"
+          }`}
+          title="클릭 시 메인 화면에 진열 처리된 제품만 필터링"
+        >
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+            <span className={selectedMetricFilter === "main_featured" ? "text-amber-900 font-extrabold" : "text-neutral-500"}>
+              메인 진열 제품
+            </span>
+            <div className={`p-1.5 rounded-lg ${selectedMetricFilter === "main_featured" ? "bg-amber-500 text-neutral-950" : "bg-amber-50 text-amber-600"}`}>
+              <Sparkles className="w-4 h-4 fill-amber-500" />
+            </div>
           </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && getProductStock(p) > 0 && getProductStock(p) <= 10).length.toLocaleString()} 개
+          <p className="text-2xl font-extrabold mt-2 text-neutral-950">
+            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && Boolean(p.isMainFeatured)).length.toLocaleString()} 개
           </p>
-          <p className="text-xs text-neutral-600 font-bold mt-1">재고 1~10개 남음 (보충 필요)</p>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-xs text-neutral-600 font-bold">메인 홈 화면에 노출 중</p>
+            {selectedMetricFilter === "main_featured" && (
+              <span className="text-[10px] font-black bg-amber-500 text-neutral-950 px-2 py-0.5 rounded-full shadow-2xs">
+                ✓ 선택됨
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>품절 (Out of Stock)</span>
-            <X className="w-4 h-4 text-neutral-900" />
+        {/* 4. 품절 (Out of Stock) */}
+        <div
+          onClick={() => setSelectedMetricFilter(selectedMetricFilter === "sold_out" ? "all" : "sold_out")}
+          className={`border rounded-2xl p-5 transition-all cursor-pointer select-none group relative ${
+            selectedMetricFilter === "sold_out"
+              ? "bg-rose-50 border-rose-500 shadow-md ring-2 ring-rose-500/30 text-neutral-950"
+              : "bg-white border-neutral-200/80 hover:border-rose-300 hover:shadow-md text-neutral-900 shadow-sm"
+          }`}
+          title="클릭 시 재고가 0개인 품절 상품만 필터링"
+        >
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+            <span className={selectedMetricFilter === "sold_out" ? "text-rose-800 font-extrabold" : "text-neutral-500"}>
+              품절 (Out of Stock)
+            </span>
+            <div className={`p-1.5 rounded-lg ${selectedMetricFilter === "sold_out" ? "bg-rose-600 text-white" : "bg-rose-50 text-rose-600"}`}>
+              <X className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+          <p className="text-2xl font-extrabold mt-2 text-neutral-950">
             {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && getProductStock(p) === 0).length.toLocaleString()} 개
           </p>
-          <p className="text-xs text-neutral-600 font-bold mt-1">재고 0개 (입고 수량 추가 필요)</p>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-xs text-neutral-600 font-bold">재고 0개 (입고 수량 추가 필요)</p>
+            {selectedMetricFilter === "sold_out" && (
+              <span className="text-[10px] font-black bg-rose-600 text-white px-2 py-0.5 rounded-full shadow-2xs">
+                ✓ 선택됨
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Filters & Search & Sort */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-sm">
+      <div className="sticky top-16 z-30 flex flex-col sm:flex-row gap-4 justify-between bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-neutral-200/90 shadow-md transition-all">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-neutral-400" />
           <input
@@ -1188,6 +1308,27 @@ export function ProductsManagement({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {/* Card Filter Active Badge */}
+          {selectedMetricFilter !== "all" && (
+            <div className="inline-flex items-center gap-1.5 bg-neutral-950 text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-2xs animate-in fade-in">
+              <span>
+                {selectedMetricFilter === "active" && "🟢 정상 판매 중"}
+                {selectedMetricFilter === "main_featured" && "🌟 메인 진열 제품"}
+                {selectedMetricFilter === "sold_out" && "🔴 품절 상품"}
+              </span>
+              <span className="text-neutral-400 font-normal">
+                ({displayedProducts.length}개)
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedMetricFilter("all")}
+                className="hover:bg-neutral-800 p-0.5 rounded-full text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                title="전체 상품 보기로 초기화"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-neutral-500" />
             <select
@@ -1263,6 +1404,15 @@ export function ProductsManagement({
                       <span>메인화면 진열 해제</span>
                     </button>
 
+                    <button
+                      type="button"
+                      onClick={handleExecuteBulkMoveToTop}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <ArrowUpToLine className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>선택 상품 최상단으로 올리기</span>
+                    </button>
+
                     <div className="my-1 border-t border-neutral-100" />
 
                     <button
@@ -1328,18 +1478,18 @@ export function ProductsManagement({
                 <th className="py-3 px-2.5 text-center whitespace-nowrap min-w-[130px] font-bold text-neutral-800">
                   시간 설정
                 </th>
-                <th className="py-3 px-4 text-center whitespace-nowrap min-w-[110px]">관리</th>
+                <th className="py-3 px-4 text-center whitespace-nowrap min-w-[145px]">관리</th>
               </tr>
             </thead>
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
-              {filteredProducts.length === 0 ? (
+              {displayedProducts.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="py-12 text-center text-neutral-500 text-xs">
                     검색 조건에 해당 상품이 없습니다.
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map((p, index) => {
+                displayedProducts.map((p, index) => {
                   const prodNo = getProductNo(p);
                   const isSelected = selectedProductIds.includes(String(p.id));
                   const isDragging = draggedProductId === String(p.id);
@@ -1551,6 +1701,20 @@ export function ProductsManagement({
                       </td>
                       <td className="py-2 px-4 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (handleMoveProductToTop) {
+                                handleMoveProductToTop(String(p.id));
+                              } else if (handleReorderProducts && displayedProducts[0]) {
+                                handleReorderProducts(String(p.id), String(displayedProducts[0].id), true);
+                              }
+                            }}
+                            className="p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer border border-indigo-200 shadow-2xs group/topbtn"
+                            title="이 상품을 최상단으로 올리기 (1순위 배치)"
+                          >
+                            <ArrowUpToLine className="w-3.5 h-3.5 transition-transform group-hover/topbtn:-translate-y-0.5" />
+                          </button>
                           <button
                             onClick={() => handleOpenEditModal(p)}
                             className="p-1.5 text-amber-900 hover:text-amber-950 hover:bg-amber-100 rounded-md transition-colors cursor-pointer border border-amber-200 shadow-2xs"
