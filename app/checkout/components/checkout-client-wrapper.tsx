@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -23,7 +23,7 @@ import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
 import { generateNextOrderId } from "@/lib/shipping/order-id";
 import { splitKoreanAddress } from "@/lib/address";
-import { useEffect } from "react";
+
 import { supabase } from "@/lib/supabase/client";
 import {
   normalizeUserGrade,
@@ -199,6 +199,8 @@ export default function CheckoutClientWrapper() {
   const [selectedCouponId, setSelectedCouponId] = useState<string>("");
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [couponMessage, setCouponMessage] = useState<string | null>(null);
+  const [isUserManualCoupon, setIsUserManualCoupon] = useState<boolean>(false);
+  const userSelectedCouponRef = useRef<string | null>(null);
 
   // 주문서 진입 시 보유 쿠폰을 자동으로 불러와 최고 할인 혜택 쿠폰을 기본 '자동 적용'
   useEffect(() => {
@@ -218,6 +220,30 @@ export default function CheckoutClientWrapper() {
       const grade = userGrade || "GENERAL";
       const list = getAvailableCoupons(email, grade);
       setAvailableCoupons(list);
+
+      // 사용자가 직접 쿠폰을 선택(또는 '사용 안 함')한 이력이 있다면 해당 선택을 최우선 유지
+      if (userSelectedCouponRef.current !== null) {
+        if (userSelectedCouponRef.current === "NONE") {
+          setSelectedCouponId("NONE");
+          setAppliedDiscount(0);
+          setCouponMessage("쿠폰 적용이 해제되었습니다. (미적용)");
+          return;
+        }
+
+        const manualFound = list.find((c) => c.id === userSelectedCouponRef.current);
+        if (manualFound) {
+          setSelectedCouponId(manualFound.id);
+          setAppliedDiscount(manualFound.discountAmount);
+          setCouponMessage(`🎟️ ${manualFound.title}이 선택 적용되었습니다! (-${manualFound.discountAmount.toLocaleString()}원)`);
+          return;
+        } else {
+          setSelectedCouponId("NONE");
+          setAppliedDiscount(0);
+          setCouponMessage("선택하신 쿠폰을 사용할 수 없어 적용 해제되었습니다.");
+          userSelectedCouponRef.current = "NONE";
+          return;
+        }
+      }
 
       if (list.length > 0) {
         // 할인 금액이 가장 큰 쿠폰을 우선 정렬하여 최우선 쿠폰 자동 선택
@@ -245,11 +271,25 @@ export default function CheckoutClientWrapper() {
   }, [formData.ordererEmail, userGrade]);
 
   const handleSelectCoupon = (couponId: string) => {
+    // 사용자의 명시적인 선택(또는 사용 안 함)을 기록하여 비동기 동기화 시 덮어쓰기 방지
+    userSelectedCouponRef.current = couponId;
+    setIsUserManualCoupon(true);
     setSelectedCouponId(couponId);
 
     if (couponId === "NONE") {
       setAppliedDiscount(0);
-      setCouponMessage("쿠폰 적용이 취소되었습니다.");
+      setCouponMessage("쿠폰 적용이 해제되었습니다. (미적용)");
+
+      // 쿠폰 해제 시 기존 입력된 적립금이 있다면 상품 금액 내에서 적립금 사용 가능하도록 재계산
+      const parsedPoints = parseInt(usedPointsInput) || 0;
+      if (parsedPoints > 0) {
+        const maxUsable = totalItemAmount;
+        const finalUse = Math.min(parsedPoints, Math.min(availablePoints, maxUsable));
+        if (finalUse > 0) {
+          setAppliedPoints(finalUse);
+          setPointsMessage(`🎉 ${finalUse.toLocaleString()}P 적립금이 적용되었습니다.`);
+        }
+      }
       return;
     }
 
@@ -257,6 +297,17 @@ export default function CheckoutClientWrapper() {
     if (found) {
       setAppliedDiscount(found.discountAmount);
       setCouponMessage(`🎉 ${found.title}이 선택 적용되었습니다! (-${found.discountAmount.toLocaleString()}원)`);
+
+      // 쿠폰 할인 적용으로 적립금 사용 한도가 줄어드는 경우 적립금 자동 조정
+      const maxUsable = Math.max(0, totalItemAmount - found.discountAmount);
+      if (appliedPoints > maxUsable) {
+        setAppliedPoints(maxUsable);
+        if (maxUsable === 0) {
+          setPointsMessage("쿠폰 할인 적용으로 상품 결제 대상 금액이 0원이 되어 적립금이 0P로 조정되었습니다.");
+        } else {
+          setPointsMessage(`쿠폰 할인으로 인해 적립금 사용액이 ${maxUsable.toLocaleString()}P로 자동 조정되었습니다.`);
+        }
+      }
     }
   };
 
@@ -429,6 +480,11 @@ export default function CheckoutClientWrapper() {
     }
     // 적립금은 상품 금액(쿠폰 할인 차감 후)에 대해 최대 사용 가능 (배송비는 별도 부과)
     const maxUsable = Math.max(0, totalItemAmount - appliedDiscount);
+    if (maxUsable <= 0) {
+      setAppliedPoints(0);
+      setPointsMessage("쿠폰 할인으로 상품 결제 대상 금액이 0원이 되어 적립금을 사용할 수 없습니다. (쿠폰 적용 해제 시 적립금 사용 가능)");
+      return;
+    }
     const finalUse = Math.min(amount, maxUsable);
     setAppliedPoints(finalUse);
     setPointsMessage(`🎉 ${finalUse.toLocaleString()}P 적립금이 적용되었습니다.`);
@@ -1127,12 +1183,16 @@ export default function CheckoutClientWrapper() {
                 <span className="flex items-center gap-1.5">
                   <Ticket className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
                   쿠폰 할인
-                  {appliedDiscount > 0 && (
+                  {appliedDiscount > 0 ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                       <Sparkles className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                      자동 적용
+                      {isUserManualCoupon ? "쿠폰 적용 중" : "자동 적용"}
                     </span>
-                  )}
+                  ) : selectedCouponId === "NONE" ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                      사용 안 함
+                    </span>
+                  ) : null}
                 </span>
                 <span className="text-[11px] text-neutral-500 font-bold">
                   보유 쿠폰: <strong className="text-neutral-900 dark:text-white">{availableCoupons.length}장</strong>
@@ -1143,21 +1203,23 @@ export default function CheckoutClientWrapper() {
               <div className="space-y-2">
                 <div className="relative">
                   <select
-                    value={selectedCouponId}
+                    value={selectedCouponId || "NONE"}
                     onChange={(e) => handleSelectCoupon(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 text-xs appearance-none pr-8 cursor-pointer text-neutral-900 dark:text-white"
                   >
                     {availableCoupons.length > 0 ? (
-                      availableCoupons.map((coupon, idx) => (
-                        <option key={coupon.id} value={coupon.id}>
-                          {idx === 0 ? "✨ [자동 적용] " : "🎟️ "}
-                          {coupon.title} (-{coupon.discountAmount.toLocaleString()}원)
-                        </option>
-                      ))
+                      <>
+                        {availableCoupons.map((coupon, idx) => (
+                          <option key={coupon.id} value={coupon.id}>
+                            {idx === 0 && !isUserManualCoupon ? "✨ [자동 적용] " : "🎟️ "}
+                            {coupon.title} (-{coupon.discountAmount.toLocaleString()}원)
+                          </option>
+                        ))}
+                        <option value="NONE">❌ 쿠폰 사용 안 함 (적용 해제)</option>
+                      </>
                     ) : (
                       <option value="NONE">사용 가능한 보유 쿠폰 없음</option>
                     )}
-                    <option value="NONE">❌ 쿠폰 적용 안 함 (0원)</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-neutral-400">
                     <ChevronRight className="w-3.5 h-3.5 rotate-90" />
@@ -1167,13 +1229,22 @@ export default function CheckoutClientWrapper() {
 
               {couponMessage && (
                 <div
-                  className={`p-2.5 rounded-xl text-[11px] font-bold ${
+                  className={`p-2.5 rounded-xl text-[11px] font-bold flex items-center justify-between ${
                     appliedDiscount > 0
                       ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                      : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
+                      : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700"
                   }`}
                 >
-                  {couponMessage}
+                  <span className="truncate">{couponMessage}</span>
+                  {appliedDiscount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCoupon("NONE")}
+                      className="ml-2 text-[10px] text-neutral-500 hover:text-neutral-900 dark:hover:text-white underline cursor-pointer shrink-0 font-extrabold"
+                    >
+                      적용 해제
+                    </button>
+                  )}
                 </div>
               )}
             </div>

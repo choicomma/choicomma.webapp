@@ -636,7 +636,7 @@ export function ProductDetailHeader({
       quantity: quantity,
       cost: {
         totalAmount: {
-          amount: totalFinalBenefitPrice.toString(),
+          amount: totalSaleBasePrice.toString(),
           currencyCode: product.currencyCode || "KRW",
         },
       },
@@ -989,16 +989,23 @@ export function ProductDetailHeader({
       <div className="flex items-end justify-between w-full pt-5 pb-3 border-t border-neutral-200 mt-6">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs sm:text-sm font-extrabold text-neutral-900 tracking-tight">총 상품 금액</span>
+            <span className="text-xs sm:text-sm font-extrabold text-neutral-900 tracking-tight">
+              {couponDiscountAmount > 0 || pointsDiscountAmount > 0 ? "최대 혜택 적용가" : "총 상품 금액"}
+            </span>
             <span className="text-[11px] text-neutral-500 font-semibold bg-neutral-100 px-1.5 py-0.5 rounded">
               총 {quantity}개
             </span>
           </div>
-          {quantity > 1 && (
-            <span className="text-[11px] text-neutral-400">
-              세일 개당 {formatPrice(effectiveUnitPrice.toString(), product.currencyCode || "KRW")}
-              {(couponDiscountAmount > 0 || pointsDiscountAmount > 0) && " (쿠폰·적립금 1회 적용)"}
+          {(couponDiscountAmount > 0 || pointsDiscountAmount > 0) ? (
+            <span className="text-[11px] text-neutral-500">
+              상품 금액 {formatPrice(totalSaleBasePrice.toString(), product.currencyCode || "KRW")} (주문서에서 쿠폰 자동 적용)
             </span>
+          ) : (
+            quantity > 1 && (
+              <span className="text-[11px] text-neutral-400">
+                세일 개당 {formatPrice(effectiveUnitPrice.toString(), product.currencyCode || "KRW")}
+              </span>
+            )
           )}
         </div>
         <div className="flex items-baseline gap-2">

@@ -426,7 +426,7 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
       quantity: quantity,
       cost: {
         totalAmount: {
-          amount: totalFinalBenefitPrice.toString(),
+          amount: totalSaleBasePrice.toString(),
           currencyCode: product.currencyCode || "KRW",
         },
       },
