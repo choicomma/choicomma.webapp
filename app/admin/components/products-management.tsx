@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   Package,
@@ -19,6 +19,10 @@ import {
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   RotateCcw,
   GripVertical,
   Box,
@@ -68,6 +72,7 @@ interface ProductsManagementProps {
   getProductStock: (product: any) => number;
   getProductNo: (product: any) => string | number;
   handleClearAllProducts: () => void;
+  handleRestoreDefaultProducts?: () => void;
   handleOpenEditModal: (product: any) => void;
   handleDeleteProduct: (id: string, title: string) => void;
   toggleStock: (id: string) => void;
@@ -618,6 +623,7 @@ export function ProductsManagement({
   getProductStock,
   getProductNo,
   handleClearAllProducts,
+  handleRestoreDefaultProducts,
   handleOpenEditModal,
   handleDeleteProduct,
   toggleStock,
@@ -681,16 +687,58 @@ export function ProductsManagement({
     return list;
   }, [filteredProducts, selectedMetricFilter, getProductStock]);
 
-  const isAllSelected =
-    displayedProducts.length > 0 &&
-    displayedProducts.every((p) => selectedProductIds.includes(String(p.id)));
+  // Pagination State (Default: 10 per page as requested by user)
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      const allIds = displayedProducts.map((p) => String(p.id));
-      setSelectedProductIds(allIds);
+  const totalItems = displayedProducts.length;
+  const totalPages = pageSize === -1 ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
+
+  // Reset page to 1 when filter/search/metric/sort/pageSize changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategoryFilter, selectedMetricFilter, productSortOrder, pageSize]);
+
+  // Keep currentPage inside valid range
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const paginatedProducts = useMemo(() => {
+    if (pageSize === -1) return displayedProducts;
+    const start = (currentPage - 1) * pageSize;
+    return displayedProducts.slice(start, start + pageSize);
+  }, [displayedProducts, currentPage, pageSize]);
+
+  // Smart Page Numbers with ellipsis
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages: (number | string)[] = [];
+    if (currentPage <= 4) {
+      pages.push(1, 2, 3, 4, 5, "...", totalPages);
+    } else if (currentPage >= totalPages - 3) {
+      pages.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
     } else {
-      setSelectedProductIds([]);
+      pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages);
+    }
+    return pages;
+  }, [totalPages, currentPage]);
+
+  const isCurrentPageAllSelected =
+    paginatedProducts.length > 0 &&
+    paginatedProducts.every((p) => selectedProductIds.includes(String(p.id)));
+
+  const handleSelectAllCurrentPage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const pageIds = paginatedProducts.map((p) => String(p.id));
+    if (e.target.checked) {
+      setSelectedProductIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+    } else {
+      const pageIdSet = new Set(pageIds);
+      setSelectedProductIds((prev) => prev.filter((id) => !pageIdSet.has(id)));
     }
   };
 
@@ -1141,6 +1189,17 @@ export function ProductsManagement({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+          {handleRestoreDefaultProducts && (
+            <button
+              type="button"
+              onClick={handleRestoreDefaultProducts}
+              className="flex items-center gap-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold px-3.5 py-2.5 rounded-xl transition-all border border-neutral-300 text-xs cursor-pointer shadow-2xs hover:text-neutral-950"
+              title="임시 등록/수정 내역을 정리하고 원본 엑셀 카탈로그 417개로 완전 초기화합니다."
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-neutral-500" />
+              원본 카탈로그 초기화 (417개)
+            </button>
+          )}
           <button
             onClick={() => {
               setNewTitle?.("");
@@ -1352,12 +1411,27 @@ export function ProductsManagement({
               onChange={(e) => setProductSortOrder(e.target.value as any)}
               className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 cursor-pointer"
             >
-              <option value="custom">최신 등록순 / 지정 순서 (기본)</option>
-              <option value="productNoDesc">등록번호 역순 (높은 번호순)</option>
+              <option value="productNoDesc">최신 등록순 (기본)</option>
+              <option value="custom">사용자 지정 순서 (드래그 앤 드롭)</option>
               <option value="productNoAsc">등록번호 순 (낮은 번호순)</option>
               <option value="nameAsc">상품명순 (가나다)</option>
               <option value="priceDesc">높은 가격순</option>
               <option value="priceAsc">낮은 가격순</option>
+            </select>
+          </div>
+
+          {/* 노출 개수 조절 (10개씩 기본 / 50개씩 / 100개씩 / 전체 보기) */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-bold text-neutral-400">보기:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 cursor-pointer shadow-2xs"
+            >
+              <option value={10}>10개씩 보기 (기본)</option>
+              <option value={50}>50개씩 보기</option>
+              <option value={100}>100개씩 보기</option>
+              <option value={-1}>전체 보기</option>
             </select>
           </div>
 
@@ -1463,10 +1537,10 @@ export function ProductsManagement({
                 <th className="py-3 px-2 w-8 text-center whitespace-nowrap">
                   <input
                     type="checkbox"
-                    checked={isAllSelected}
-                    onChange={handleSelectAll}
+                    checked={isCurrentPageAllSelected}
+                    onChange={handleSelectAllCurrentPage}
                     className="w-3.5 h-3.5 cursor-pointer rounded border-neutral-300 accent-neutral-950 focus:ring-0"
-                    title="전체 선택 / 해제"
+                    title="현재 페이지 전체 선택 / 해제"
                   />
                 </th>
                 <th className="py-3 px-3 font-sans font-black text-neutral-950 whitespace-nowrap">상품번호</th>
@@ -1489,7 +1563,7 @@ export function ProductsManagement({
                   </td>
                 </tr>
               ) : (
-                displayedProducts.map((p, index) => {
+                paginatedProducts.map((p, index) => {
                   const prodNo = getProductNo(p);
                   const isSelected = selectedProductIds.includes(String(p.id));
                   const isDragging = draggedProductId === String(p.id);
@@ -1723,7 +1797,7 @@ export function ProductsManagement({
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <Link
-                            href={`/product/${p.handle}`}
+                            href={`/product/${encodeURIComponent(p.handle || p.id)}`}
                             target="_blank"
                             className="p-1.5 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 rounded-md transition-colors border border-neutral-200 shadow-2xs"
                             title="쇼핑몰 상품 페이지 미리보기"
@@ -1746,6 +1820,93 @@ export function ProductsManagement({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        {pageSize !== -1 && totalItems > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 bg-neutral-50/70 border-t border-neutral-200/80">
+            <div className="text-xs text-neutral-500 font-medium">
+              총 <span className="font-bold text-neutral-900">{totalItems.toLocaleString()}</span>개 상품 중{" "}
+              <span className="font-bold text-neutral-900">
+                {Math.min(totalItems, (currentPage - 1) * pageSize + 1)}
+              </span>
+              ~
+              <span className="font-bold text-neutral-900">
+                {Math.min(totalItems, currentPage * pageSize)}
+              </span>
+              번째 표시 (페이지 <span className="font-bold text-neutral-900">{currentPage}</span> / {totalPages})
+            </div>
+
+            <div className="flex items-center gap-1">
+              {/* First Page Button */}
+              <button
+                type="button"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-100 disabled:opacity-30 disabled:pointer-events-none text-neutral-700 transition-colors shadow-2xs cursor-pointer"
+                title="첫 페이지로 이동"
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </button>
+
+              {/* Prev Page Button */}
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-100 disabled:opacity-30 disabled:pointer-events-none text-neutral-700 transition-colors shadow-2xs cursor-pointer"
+                title="이전 페이지"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1 mx-1">
+                {pageNumbers.map((p, idx) =>
+                  p === "..." ? (
+                    <span key={`dots-${idx}`} className="px-1.5 text-neutral-400 text-xs font-bold select-none">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setCurrentPage(p as number)}
+                      className={`min-w-[32px] h-8 px-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        currentPage === p
+                          ? "bg-neutral-950 text-white shadow-xs"
+                          : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+              </div>
+
+              {/* Next Page Button */}
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-100 disabled:opacity-30 disabled:pointer-events-none text-neutral-700 transition-colors shadow-2xs cursor-pointer"
+                title="다음 페이지"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Last Page Button */}
+              <button
+                type="button"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-100 disabled:opacity-30 disabled:pointer-events-none text-neutral-700 transition-colors shadow-2xs cursor-pointer"
+                title="마지막 페이지로 이동"
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Excel Upload Preview Modal */}

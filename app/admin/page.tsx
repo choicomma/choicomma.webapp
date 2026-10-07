@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useInquiries } from "@/hooks/admin/useInquiries";
 import { useRevenue } from "@/hooks/admin/useRevenue";
@@ -110,7 +110,76 @@ const categoriesList = [
 const initialSetSales: any[] = [];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "inbound" | "timesale" | "sales" | "popup" | "visitors" | "revenue" | "main" | "customers" | "coupons" | "inquiries" | "settings" | "global_sales">("orders");
+  const [activeTab, setActiveTabState] = useState<
+    | "overview"
+    | "products"
+    | "orders"
+    | "inbound"
+    | "timesale"
+    | "sales"
+    | "popup"
+    | "visitors"
+    | "revenue"
+    | "main"
+    | "customers"
+    | "coupons"
+    | "inquiries"
+    | "settings"
+    | "global_sales"
+  >(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabFromUrl = urlParams.get("tab");
+        const validTabs = [
+          "overview", "products", "orders", "inbound", "timesale",
+          "sales", "popup", "visitors", "revenue", "main",
+          "customers", "coupons", "inquiries", "settings", "global_sales"
+        ];
+        if (tabFromUrl && validTabs.includes(tabFromUrl)) {
+          return tabFromUrl as any;
+        }
+
+        const savedTab = localStorage.getItem("admin_active_tab");
+        if (savedTab && validTabs.includes(savedTab)) {
+          return savedTab as any;
+        }
+      } catch (e) {}
+    }
+    return "orders";
+  });
+
+  const setActiveTab = useCallback((newTab: any) => {
+    setActiveTabState(newTab);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("admin_active_tab", newTab);
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", newTab);
+        window.history.replaceState({}, "", url.toString());
+      } catch (e) {}
+    }
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabFromUrl = urlParams.get("tab");
+        const validTabs = [
+          "overview", "products", "orders", "inbound", "timesale",
+          "sales", "popup", "visitors", "revenue", "main",
+          "customers", "coupons", "inquiries", "settings", "global_sales"
+        ];
+        if (tabFromUrl && validTabs.includes(tabFromUrl)) {
+          setActiveTabState(tabFromUrl as any);
+        }
+      } catch (e) {}
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // Admin Coupons Count State
   const [adminCouponsCount, setAdminCouponsCount] = useState<number>(() => {
@@ -979,6 +1048,7 @@ export default function AdminPage() {
               getProductStock={getProductStock}
               getProductNo={getProductNo}
               handleClearAllProducts={handleClearAllProducts}
+              handleRestoreDefaultProducts={handleRestoreDefaultProducts}
               handleOpenEditModal={handleOpenEditModal}
               handleDeleteProduct={handleDeleteProduct}
               toggleStock={toggleStock}
@@ -1265,14 +1335,14 @@ export default function AdminPage() {
             updatedList = [savedProduct, ...productsList];
             triggerToast(`신규 상품 '${savedProduct.title}'이 성공적으로 등록되었습니다.`);
           } else {
-            updatedList = productsList.map((p) => String(p.id) === String(savedProduct.id) ? savedProduct : p);
+            updatedList = productsList.map((p) => String(p.id) === String(savedProduct.id) ? { ...p, ...savedProduct } : p);
             triggerToast(`'${savedProduct.title}' 상품 정보가 성공적으로 수정되었습니다.`);
           }
           setProductsList(updatedList);
           setIsAddModalOpen(false);
           setEditingProduct(null);
 
-          await saveSingleProduct(savedProduct, isNew);
+          saveSingleProduct(savedProduct, isNew);
           saveProductsToStorage(updatedList);
         }}
         triggerToast={triggerToast}

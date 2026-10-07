@@ -38,7 +38,9 @@ export function useProducts({
         const cached = localStorage.getItem("admin_products");
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed) && parsed.length >= 200) {
+            return parsed;
+          }
         }
       } catch (e) {}
     }
@@ -61,7 +63,7 @@ export function useProducts({
         }
       } catch (e) {}
     }
-    return "custom";
+    return "productNoDesc";
   });
 
   const setProductSortOrder = useCallback((
@@ -85,13 +87,6 @@ export function useProducts({
         ["productNoDesc", "productNoAsc", "nameAsc", "priceDesc", "priceAsc", "custom"].includes(saved)
       ) {
         setProductSortOrderState(saved as any);
-      }
-      const cached = localStorage.getItem("admin_products");
-      if (cached && !isProductsLoadedRef.current) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setProductsList(parsed);
-        }
       }
     } catch (e) {}
   }, []);
@@ -171,6 +166,8 @@ export function useProducts({
       );
       if (customItems.length > 0) {
         localStorage.setItem("admin_custom_products", JSON.stringify(customItems));
+      } else {
+        localStorage.removeItem("admin_custom_products");
       }
     } catch (e) {}
   };
@@ -184,23 +181,6 @@ export function useProducts({
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
             let merged = [...data];
-
-            // Ensure locally cached custom products are not dropped if server sync had a delay
-            if (typeof window !== "undefined") {
-              try {
-                const savedCustomRaw = localStorage.getItem("admin_custom_products");
-                if (savedCustomRaw) {
-                  const savedCustom = JSON.parse(savedCustomRaw);
-                  if (Array.isArray(savedCustom)) {
-                    const serverIdSet = new Set(merged.map((p: any) => String(p.id)));
-                    const missing = savedCustom.filter((cp: any) => cp?.id && !serverIdSet.has(String(cp.id)));
-                    if (missing.length > 0) {
-                      merged = [...missing, ...merged];
-                    }
-                  }
-                }
-              } catch (e) {}
-            }
 
             const hasHero = merged.some((p: any) => p.isHeroFeatured === true);
             if (!hasHero) {
@@ -307,13 +287,10 @@ export function useProducts({
       const lightweight = pruneForLocalStorage(list);
       localStorage.setItem("admin_products", JSON.stringify(lightweight));
     } catch (e) {
-      console.warn("Notice: localStorage quota exceeded, saving top 80 products mirror...");
+      // If 5MB quota exceeded, do NOT save truncated 80 items. Remove it to prevent count flicker.
       try {
-        const minimal = pruneForLocalStorage(list.slice(0, 80));
-        localStorage.setItem("admin_products", JSON.stringify(minimal));
-      } catch (err2) {
-        console.warn("Skipping localStorage cache for products. Central Server API is authoritative.");
-      }
+        localStorage.removeItem("admin_products");
+      } catch (err2) {}
     }
 
     setTimeout(() => {
@@ -382,22 +359,25 @@ export function useProducts({
     });
 
     return [...filtered].sort((a, b) => {
-      if (productSortOrder === "custom") {
-        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
-        if (timeB !== timeA) return timeB - timeA;
-
+      if (productSortOrder === "productNoDesc") {
+        // 최신 등록순 (1순위: 등록번호 높은 순, 2순위: 등록일시 최신순)
         const numA = getProductNoNum(a);
         const numB = getProductNoNum(b);
         if (numB !== numA) return numB - numA;
 
+        const timeA = (a.created_at || a.createdAt) ? new Date(a.created_at || a.createdAt).getTime() : 0;
+        const timeB = (b.created_at || b.createdAt) ? new Date(b.created_at || b.createdAt).getTime() : 0;
+        return timeB - timeA;
+      }
+      if (productSortOrder === "custom") {
+        // 사용자 지정 순서 (배열 순서 그대로 보존)
         return 0;
       }
-      if (productSortOrder === "productNoDesc") {
-        return getProductNoNum(b) - getProductNoNum(a);
-      }
       if (productSortOrder === "productNoAsc") {
-        return getProductNoNum(a) - getProductNoNum(b);
+        const numA = getProductNoNum(a);
+        const numB = getProductNoNum(b);
+        if (numA !== numB) return numA - numB;
+        return 0;
       }
       if (productSortOrder === "nameAsc") {
         return (a.title || "").localeCompare(b.title || "");
@@ -694,9 +674,21 @@ export function useProducts({
   }, [actualProductsCount, saveProductsToStorage, triggerToast]);
 
   const handleRestoreDefaultProducts = useCallback(() => {
+    const isConfirmed = window.confirm(
+      "정말로 모든 상품 데이터를 '초이콤마 정식 원본 카탈로그 (417개)'로 완전 초기화하시겠습니까?\n임시 등록/수정 내역이 정리되고 원본 상품 417개로 복원됩니다."
+    );
+    if (!isConfirmed) return;
+
     setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
     saveProductsToStorage(INITIAL_CHOICOMMA_PRODUCTS);
-    triggerToast("✨ 초이콤마 대표 시그니처 상품 10종이 모두 성공적으로 복원되었습니다!");
+    if (typeof window !== "undefined") {
+      try {
+        const lightweight = pruneForLocalStorage(INITIAL_CHOICOMMA_PRODUCTS);
+        localStorage.setItem("admin_products", JSON.stringify(lightweight));
+        localStorage.removeItem("admin_custom_products");
+      } catch (e) {}
+    }
+    triggerToast("✨ 전체 상품 리스트가 정식 원본 카탈로그(417개)로 완벽하게 초기화되었습니다!");
   }, [INITIAL_CHOICOMMA_PRODUCTS, saveProductsToStorage, triggerToast]);
 
   const handleBulkAddProducts = useCallback((newProducts: any[]) => {
@@ -769,8 +761,8 @@ export function useProducts({
     setProductsList((prev) => {
       const sorted = [...prev].sort((a, b) => {
         if (newOrder === "custom") {
-          const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
-          const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          const timeA = (a.created_at || a.createdAt) ? new Date(a.created_at || a.createdAt).getTime() : 0;
+          const timeB = (b.created_at || b.createdAt) ? new Date(b.created_at || b.createdAt).getTime() : 0;
           if (timeB !== timeA) return timeB - timeA;
 
           const numA = getProductNoNum(a);

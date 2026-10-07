@@ -174,7 +174,7 @@ export function ProductDetailHeader({
   const [pointsDiscountAmount, setPointsDiscountAmount] = useState<number>(0);
 
   const isSetProduct =
-    product.tags?.includes("SET_SALE") || product.id.startsWith("set-product-");
+    product?.tags?.includes("SET_SALE") || String(product?.id || "").startsWith("set-product-");
 
   const [remainingTime, setRemainingTime] = useState<{
     days: string;

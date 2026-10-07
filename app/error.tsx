@@ -12,6 +12,18 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error("App Error Boundary caught:", error);
+    if (
+      error?.message?.includes("Loading chunk") ||
+      error?.message?.includes("ChunkLoadError") ||
+      error?.name === "ChunkLoadError"
+    ) {
+      const lastReload = sessionStorage.getItem("last_chunk_error_reload");
+      const now = Date.now();
+      if (!lastReload || now - Number(lastReload) > 5000) {
+        sessionStorage.setItem("last_chunk_error_reload", String(now));
+        window.location.reload();
+      }
+    }
   }, [error]);
 
   return (
@@ -25,7 +37,21 @@ export default function Error({
           {error.message}
         </p>
       )}
-      <Button size="lg" className="mt-4 bg-black text-white hover:bg-neutral-800 rounded-xl" onClick={() => reset()}>
+      <Button
+        size="lg"
+        className="mt-4 bg-black text-white hover:bg-neutral-800 rounded-xl cursor-pointer"
+        onClick={() => {
+          if (
+            error?.message?.includes("Loading chunk") ||
+            error?.message?.includes("ChunkLoadError") ||
+            error?.name === "ChunkLoadError"
+          ) {
+            window.location.reload();
+          } else {
+            reset();
+          }
+        }}
+      >
         다시 시도하기 (Try Again)
       </Button>
     </div>

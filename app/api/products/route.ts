@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { TAGS } from "@/lib/constants";
 import fs from "fs";
 import path from "path";
 import { supabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
@@ -174,8 +176,14 @@ export async function GET(req: NextRequest) {
           const fabComp = String(rawComp).replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼");
           const showFab = Boolean(fabImg);
 
+          const effectivePrice = p.price || (p.priceRange?.minVariantPrice ? {
+            amount: String(p.priceRange.minVariantPrice.amount || "0"),
+            currencyCode: p.priceRange.minVariantPrice.currencyCode || "KRW",
+          } : { amount: "0", currencyCode: "KRW" });
+
           return {
             ...p,
+            price: effectivePrice,
             productNo: num,
             productCode: code,
             releaseDate: relDate,
@@ -191,15 +199,7 @@ export async function GET(req: NextRequest) {
           };
         });
 
-        // Ensure locally added products in backup or cache that are not yet in Supabase are not lost
-        if (localCustomItems.length > 0) {
-          const dbIdSet = new Set(finalProducts.map((p: any) => String(p.id)));
-          const missingLocal = localCustomItems.filter((lp: any) => lp?.id && !dbIdSet.has(String(lp.id)));
-          if (missingLocal.length > 0) {
-            console.log(`[Products Sync] Merged ${missingLocal.length} local custom products into response.`);
-            finalProducts = [...missingLocal, ...finalProducts];
-          }
-        }
+
         // 4. Authoritative Sequence Ordering:
         // Respect the canonical sequence defined in localList (data/products-cache.json)
         if (localList.length > 0) {
@@ -312,7 +312,10 @@ export async function POST(req: NextRequest) {
     const singleProduct = body?.product || (!Array.isArray(body) && body?.id ? body : null);
     if (singleProduct) {
       const p = singleProduct;
-      const pId = String(p.id);
+      const pId = String(p.id || "");
+      if (!pId || pId === "undefined" || pId === "null") {
+        return NextResponse.json({ success: false, error: "Invalid product id" }, { status: 400 });
+      }
       const isNewItem = body?.isNew || !p.created_at;
 
       // Unique handle guarantee
@@ -360,6 +363,15 @@ export async function POST(req: NextRequest) {
           console.warn("[Single Product DB Error]:", dbErr.message);
         }
       }
+
+      try {
+        revalidateTag(TAGS.products);
+        revalidatePath("/", "layout");
+        if (p.handle) {
+          revalidatePath(`/product/${p.handle}`, "page");
+          revalidatePath(`/product/${encodeURIComponent(p.handle)}`, "page");
+        }
+      } catch (revErr) {}
 
       return NextResponse.json({ success: true, product: p }, {
         headers: { "Cache-Control": "no-store" },
@@ -444,6 +456,12 @@ export async function POST(req: NextRequest) {
         console.warn("Supabase products sync error:", dbErr.message);
       }
     }
+
+    try {
+      revalidateTag(TAGS.products);
+      revalidatePath("/", "layout");
+      revalidatePath("/product/[handle]", "page");
+    } catch (revErr) {}
 
     return NextResponse.json({ success: true, count: products.length }, {
       headers: {

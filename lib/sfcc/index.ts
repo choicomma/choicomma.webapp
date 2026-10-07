@@ -33,6 +33,24 @@ import { Cart, CartItem, Product } from "./types";
 import { getCardType, maskCardNumber } from "./utils";
 import { mockProducts } from "./mock/products";
 import { mockCollections } from "./mock/collections";
+import fs from "fs";
+import path from "path";
+
+function getAllServerProducts(): Product[] {
+  try {
+    const cachePath = path.join(process.cwd(), "data", "products-cache.json");
+    if (fs.existsSync(cachePath)) {
+      const raw = fs.readFileSync(cachePath, "utf-8");
+      const list = JSON.parse(raw);
+      if (Array.isArray(list) && list.length > 0) {
+        return list;
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+  return mockProducts as any[];
+}
 
 const FORCE_MOCK_DATA = false;
 const USE_MOCK_DATA =
@@ -101,23 +119,33 @@ export async function getCollection(id: string) {
 }
 
 export async function getProduct(handle: string) {
-  "use cache";
-  cacheTag(TAGS.products);
-  cacheLife("days");
-
   try {
     if (USE_MOCK_DATA) {
       let decoded = handle;
       try {
         decoded = decodeURIComponent(handle);
       } catch (e) {}
-      const product = mockProducts.find(
+      const allList = getAllServerProducts();
+      let product = allList.find(
         (p) =>
           p.handle === handle ||
           p.handle === decoded ||
+          (p.handle && decodeURIComponent(p.handle) === decoded) ||
           p.id === handle ||
-          p.id === decoded
+          p.id === decoded ||
+          (p.title && p.title.toLowerCase().replace(/\s+/g, "-") === decoded.toLowerCase())
       );
+
+      if (!product && allList !== (mockProducts as any[])) {
+        product = mockProducts.find(
+          (p) =>
+            p.handle === handle ||
+            p.handle === decoded ||
+            (p.handle && decodeURIComponent(p.handle) === decoded) ||
+            p.id === handle ||
+            p.id === decoded
+        );
+      }
 
       if (!product) {
         return null;
@@ -134,6 +162,12 @@ export async function getProduct(handle: string) {
       }
       if (!product.currencyCode) {
         (product as any).currencyCode = product.priceRange?.minVariantPrice?.currencyCode || "KRW";
+      }
+      if (!(product as any).price && product.priceRange?.minVariantPrice) {
+        (product as any).price = {
+          amount: String(product.priceRange.minVariantPrice.amount || "0"),
+          currencyCode: product.priceRange.minVariantPrice.currencyCode || "KRW",
+        };
       }
 
       // Ensure fabricImage and fabricComposition are properly bound from meta
@@ -184,7 +218,8 @@ export async function getCollectionProducts({
 }) {
   try {
     if (USE_MOCK_DATA) {
-      const catalogProducts = mockProducts.filter(
+      const allList = getAllServerProducts();
+      const catalogProducts = allList.filter(
         (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
       );
 
@@ -201,10 +236,10 @@ export async function getCollectionProducts({
       }
 
       if (collectionHandle === "top-seller" || collectionHandle === "main") {
-        return mockProducts.filter((p) => (p as any).isMainFeatured === true);
+        return allList.filter((p) => (p as any).isMainFeatured === true);
       }
 
-      const categoryProducts = mockProducts.filter(
+      const categoryProducts = allList.filter(
         (p) => p.categoryId === collectionHandle || ((p as any).categoryIds && (p as any).categoryIds.includes(collectionHandle))
       );
 

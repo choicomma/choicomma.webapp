@@ -731,9 +731,9 @@ export function ProductFormModal({
 
     const parsedRate = parseInt(timeSaleDiscountRate, 10) || 35;
 
-    const generatedId = isEdit ? initialProduct.id : `custom-prod-${Date.now()}`;
+    const generatedId = (isEdit && initialProduct?.id) ? String(initialProduct.id) : `custom-prod-${Date.now()}`;
     const baseSlug = title.trim().toLowerCase().replace(/[^a-z0-9가-힣\s-]/g, "").replace(/\s+/g, "-") || "product";
-    const uniqueHandle = isEdit ? (initialProduct.handle || initialProduct.id) : `${baseSlug}-${generatedId}`;
+    const uniqueHandle = (isEdit && initialProduct?.handle) ? String(initialProduct.handle) : `${baseSlug}-${generatedId}`;
 
     const resultProduct = {
       customTitles: formTitles,
@@ -741,8 +741,10 @@ export function ProductFormModal({
       id: generatedId,
       productNo: finalProdNo,
       productCode: finalProductCode,
-      createdAt: isEdit ? initialProduct.createdAt : new Date().toISOString(),
+      createdAt: isEdit ? (initialProduct.createdAt || initialProduct.created_at || new Date().toISOString()) : new Date().toISOString(),
+      created_at: isEdit ? (initialProduct.created_at || initialProduct.createdAt || new Date().toISOString()) : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       handle: uniqueHandle,
       title: title.trim(),
       description: description || "새로운 시그니처 상품입니다.",

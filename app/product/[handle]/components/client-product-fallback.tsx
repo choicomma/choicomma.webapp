@@ -27,48 +27,77 @@ export function ClientProductFallback({ handle }: { handle: string }) {
       decoded = decodeURIComponent(handle);
     } catch (e) {}
 
-    const saved = localStorage.getItem("admin_products");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        const found = parsed.find((p: any) => {
-          if (!p) return false;
-          const pHandleDecoded = p.handle ? decodeURIComponent(p.handle) : "";
-          const pTitleSlug = p.title ? p.title.toLowerCase().replace(/\s+/g, "-") : "";
-          return (
-            p.handle === handle ||
-            p.handle === decoded ||
-            pHandleDecoded === decoded ||
-            p.id === handle ||
-            p.id === decoded ||
-            pTitleSlug === decoded.toLowerCase()
-          );
-        });
-
-        if (found) {
-          setProduct(found);
-          setLoading(false);
-          return;
-        }
-      } catch (e) {}
-    }
-
-    const mockFound = mockProducts.find((p: any) => {
+    // Matcher helper
+    const matchesProduct = (p: any) => {
       if (!p) return false;
       const pHandleDecoded = p.handle ? decodeURIComponent(p.handle) : "";
+      const pTitleSlug = p.title ? p.title.toLowerCase().replace(/\s+/g, "-") : "";
       return (
         p.handle === handle ||
         p.handle === decoded ||
         pHandleDecoded === decoded ||
         p.id === handle ||
-        p.id === decoded
+        p.id === decoded ||
+        pTitleSlug === decoded.toLowerCase()
       );
-    });
+    };
 
-    if (mockFound) {
-      setProduct(mockFound);
-    }
-    setLoading(false);
+    // 1. Instant check in localStorage (admin_custom_products & admin_products)
+    try {
+      const customSaved = localStorage.getItem("admin_custom_products");
+      if (customSaved) {
+        const parsedCustom = JSON.parse(customSaved);
+        if (Array.isArray(parsedCustom)) {
+          const found = parsedCustom.find(matchesProduct);
+          if (found) {
+            setProduct(found);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      const saved = localStorage.getItem("admin_products");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const found = parsed.find(matchesProduct);
+          if (found) {
+            setProduct(found);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+    } catch (e) {}
+
+    // 2. Fetch from /api/products to support newly created custom products
+    fetch("/api/products?fresh=1")
+      .then((res) => res.json())
+      .then((list) => {
+        if (Array.isArray(list)) {
+          const found = list.find(matchesProduct);
+          if (found) {
+            setProduct(found);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // 3. Fallback to mockProducts
+        const mockFound = mockProducts.find(matchesProduct);
+        if (mockFound) {
+          setProduct(mockFound);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        const mockFound = mockProducts.find(matchesProduct);
+        if (mockFound) {
+          setProduct(mockFound);
+        }
+        setLoading(false);
+      });
   }, [handle]);
 
   // 고객후기 상단 선과 드롭다운(아코디언) 상단 선 높이(Y 위치)를 완벽하게 동기화
