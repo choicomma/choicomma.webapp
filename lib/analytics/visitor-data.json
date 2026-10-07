@@ -1,6 +1,26 @@
 {
   "logs": [
     {
+      "id": "LOG-1791379129762-559",
+      "timestamp": "2026-10-07 22:18:49",
+      "isoDate": "2026-10-07T13:18:49.762Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/login",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1790671870295_aosss7h",
+      "sessionId": "s_1791379128636_kfanb",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
       "id": "LOG-1791374418015-257",
       "timestamp": "2026-10-07 21:00:18",
       "isoDate": "2026-10-07T12:00:18.014Z",
@@ -7404,5 +7424,5 @@
     "localhost",
     "172.30.1.74"
   ],
-  "updatedAt": "2026-10-07T12:00:18.014Z"
+  "updatedAt": "2026-10-07T13:18:49.762Z"
 }

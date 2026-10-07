@@ -46,6 +46,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { validateCustomerSession, clearCustomerSession } from "@/lib/auth/customer-session";
+import { validatePasswordComplexity } from "@/lib/auth/password";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -768,8 +769,9 @@ function MembershipContent() {
       setPasswordChangeError("새 비밀번호를 입력해 주세요.");
       return;
     }
-    if (newPwd.length < 6) {
-      setPasswordChangeError("새 비밀번호는 최소 6자 이상으로 입력해 주세요.");
+    const newPwdCheck = validatePasswordComplexity(newPwd);
+    if (!newPwdCheck.isValid) {
+      setPasswordChangeError("새 비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상으로 입력해 주세요.");
       return;
     }
     if (newPwd !== confPwd) {
@@ -2148,7 +2150,10 @@ function MembershipContent() {
 
                     {/* New Password */}
                     <div>
-                      <label className="block text-[11px] font-bold text-neutral-700 mb-1">새 비밀번호</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] font-bold text-neutral-700">새 비밀번호</label>
+                        <span className="text-[10px] text-neutral-400">영문+숫자+특수문자 8자 이상</span>
+                      </div>
                       <div className="relative">
                         <Lock className="w-3.5 h-3.5 absolute left-3 top-2.5 text-neutral-400" />
                         <input
@@ -2159,11 +2164,11 @@ function MembershipContent() {
                             setNewPassword(e.target.value);
                             setPasswordChangeError("");
                           }}
-                          placeholder="새 비밀번호 (6자 이상)"
+                          placeholder="새 비밀번호 (영문, 숫자, 특수문자 포함 8자 이상)"
                           className={`w-full bg-white border rounded-xl pl-8 pr-8 py-1.5 text-xs font-mono text-neutral-900 focus:outline-none transition-colors ${
-                            newPassword && newPassword.length < 6
+                            newPassword && !validatePasswordComplexity(newPassword).isValid
                               ? "border-neutral-400 focus:border-neutral-950"
-                              : newPassword && newPassword.length >= 6
+                              : newPassword && validatePasswordComplexity(newPassword).isValid
                               ? "border-neutral-950 bg-neutral-100/50"
                               : "border-neutral-200 focus:border-neutral-950"
                           }`}
@@ -2177,29 +2182,40 @@ function MembershipContent() {
                           {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         </button>
                       </div>
-                      {newPassword && newPassword.length < 6 && (
+                      {newPassword && !validatePasswordComplexity(newPassword).isValid && (
                         <p className="text-[11px] font-bold text-neutral-800 mt-1 flex items-center gap-1 animate-in fade-in">
-                          <span className="text-rose-600 font-extrabold">✕</span>
-                          <span>비밀번호는 최소 6자 이상이어야 합니다.</span>
+                          <span className="text-amber-600 font-extrabold">✕</span>
+                          <span>
+                            {newPassword.length < 8
+                              ? `8자 이상 입력해 주세요. (현재 ${newPassword.length}자)`
+                              : !validatePasswordComplexity(newPassword).hasLetter
+                                ? "영문(문자)을 포함해 주세요."
+                                : !validatePasswordComplexity(newPassword).hasNumber
+                                  ? "숫자를 포함해 주세요."
+                                  : "특수문자를 1개 이상 포함해 주세요."}
+                          </span>
                         </p>
                       )}
-                      {newPassword && newPassword.length >= 6 && currentPassword && newPassword === currentPassword && (
+                      {newPassword && validatePasswordComplexity(newPassword).isValid && currentPassword && newPassword === currentPassword && (
                         <p className="text-[11px] font-bold text-neutral-800 mt-1 flex items-center gap-1 animate-in fade-in">
                           <span className="text-amber-600 font-extrabold">✕</span>
                           <span>현재 비밀번호와 동일합니다. 다른 비밀번호를 입력해 주세요.</span>
                         </p>
                       )}
-                      {newPassword && newPassword.length >= 6 && (!currentPassword || newPassword !== currentPassword) && (
+                      {newPassword && validatePasswordComplexity(newPassword).isValid && (!currentPassword || newPassword !== currentPassword) && (
                         <p className="text-[11px] font-bold text-neutral-950 mt-1 flex items-center gap-1 animate-in fade-in">
                           <span className="text-emerald-600 font-extrabold">✓</span>
-                          <span>사용 가능한 새 비밀번호입니다.</span>
+                          <span>사용 가능한 안전한 새 비밀번호입니다.</span>
                         </p>
                       )}
                     </div>
 
                     {/* Confirm New Password */}
                     <div>
-                      <label className="block text-[11px] font-bold text-neutral-700 mb-1">새 비밀번호 확인</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] font-bold text-neutral-700">새 비밀번호 확인</label>
+                        <span className="text-[10px] text-neutral-400">동일한 비밀번호 재입력</span>
+                      </div>
                       <div className="relative">
                         <Lock className="w-3.5 h-3.5 absolute left-3 top-2.5 text-neutral-400" />
                         <input
@@ -2228,13 +2244,16 @@ function MembershipContent() {
                           {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         </button>
                       </div>
-                      {confirmPassword && confirmPassword !== newPassword && (
+                      {confirmPassword.length === 0 ? (
+                        <p className="text-[10px] text-neutral-400 mt-1 pl-0.5">
+                          새 비밀번호를 동일하게 한 번 더 입력해 주세요.
+                        </p>
+                      ) : confirmPassword !== newPassword ? (
                         <p className="text-[11px] font-bold text-neutral-800 mt-1 flex items-center gap-1 animate-in fade-in">
                           <span className="text-rose-600 font-extrabold">✕</span>
                           <span>비밀번호가 일치하지 않습니다.</span>
                         </p>
-                      )}
-                      {confirmPassword && confirmPassword === newPassword && (
+                      ) : (
                         <p className="text-[11px] font-bold text-neutral-950 mt-1 flex items-center gap-1 animate-in fade-in">
                           <span className="text-emerald-600 font-extrabold">✓</span>
                           <span>비밀번호가 일치합니다.</span>

@@ -22,6 +22,7 @@ import {
 import { LogoSvg } from "@/components/layout/header/logo-svg";
 import { supabase } from "@/lib/supabase/client";
 import { initCustomerSession } from "@/lib/auth/customer-session";
+import { validatePasswordComplexity } from "@/lib/auth/password";
 import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
 import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
 
@@ -402,6 +403,11 @@ export default function LoginPage() {
       setResetErrorMsg("새 비밀번호를 입력해 주세요.");
       return;
     }
+    const resetPwdCheck = validatePasswordComplexity(resetNewPassword);
+    if (!resetPwdCheck.isValid) {
+      setResetErrorMsg("비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.");
+      return;
+    }
     if (resetNewPassword !== resetConfirmPassword) {
       setResetErrorMsg("새 비밀번호 확인이 일치하지 않습니다.");
       return;
@@ -479,8 +485,9 @@ export default function LoginPage() {
         setToastMsg("비밀번호를 입력해 주세요.");
         return;
       }
-      if (password.length < 4) {
-        setToastMsg("비밀번호는 4자 이상으로 입력해 주세요.");
+      const pwdCheck = validatePasswordComplexity(password);
+      if (!pwdCheck.isValid) {
+        setToastMsg("비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상으로 입력해 주세요.");
         return;
       }
       if (password !== confirmPassword) {
@@ -986,9 +993,14 @@ export default function LoginPage() {
 
                 {/* 2. 비밀번호 (로그인 ID 아래로 이동) */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                    비밀번호 <span className="text-neutral-950 font-bold">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                      비밀번호 <span className="text-neutral-950 font-bold">*</span>
+                    </label>
+                    <span className="text-[11px] font-medium text-neutral-400">
+                      영문+숫자+특수문자 포함 8자 이상
+                    </span>
+                  </div>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                     <input
@@ -998,8 +1010,14 @@ export default function LoginPage() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="비밀번호를 입력해주세요"
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-mono"
+                      placeholder="영문, 숫자, 특수문자 포함 8자 이상"
+                      className={`w-full bg-neutral-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:bg-white transition-colors font-mono ${
+                        password && !validatePasswordComplexity(password).isValid
+                          ? "border-neutral-300 focus:border-neutral-950"
+                          : password && validatePasswordComplexity(password).isValid
+                            ? "border-neutral-950 bg-neutral-100/30"
+                            : "border-neutral-200 focus:border-neutral-950"
+                      }`}
                     />
                     <button
                       type="button"
@@ -1009,13 +1027,42 @@ export default function LoginPage() {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  {/* 비밀번호 실시간 상태 안내 */}
+                  {password.length === 0 ? (
+                    <p className="text-[11px] text-neutral-400 mt-1 pl-1">
+                      영문, 숫자, 특수문자를 조합하여 8자 이상 입력해 주세요.
+                    </p>
+                  ) : !validatePasswordComplexity(password).isValid ? (
+                    <p className="text-[11px] font-bold text-amber-700 mt-1 pl-1 flex items-center gap-1 animate-in fade-in">
+                      <span>✕</span>
+                      <span>
+                        {password.length < 8
+                          ? `8자 이상 입력해 주세요. (현재 ${password.length}자)`
+                          : !validatePasswordComplexity(password).hasLetter
+                            ? "영문(문자)을 포함해 주세요."
+                            : !validatePasswordComplexity(password).hasNumber
+                              ? "숫자를 포함해 주세요."
+                              : "특수문자를 1개 이상 포함해 주세요."}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="text-[11px] font-bold text-neutral-950 mt-1 pl-1 flex items-center gap-1 animate-in fade-in">
+                      <span>✓</span>
+                      <span>안전한 비밀번호입니다. (영문+숫자+특수문자 8자 이상 충족)</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* 3. 비밀번호 확인 */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                    비밀번호 확인 <span className="text-neutral-950 font-bold">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                      비밀번호 확인 <span className="text-neutral-950 font-bold">*</span>
+                    </label>
+                    <span className="text-[11px] font-medium text-neutral-400">
+                      동일한 비밀번호 재입력
+                    </span>
+                  </div>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                     <input
@@ -1042,14 +1089,25 @@ export default function LoginPage() {
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  {confirmPassword && confirmPassword !== password && (
-                    <p className="text-[11px] font-bold text-neutral-800 mt-1 flex items-center gap-1">
-                      ✕ 비밀번호가 일치하지 않습니다.
+                  {/* 비밀번호 확인 실시간 상태 안내 */}
+                  {confirmPassword.length === 0 ? (
+                    <p className="text-[11px] text-neutral-400 mt-1 pl-1">
+                      설정한 비밀번호와 동일하게 한 번 더 입력해 주세요.
                     </p>
-                  )}
-                  {confirmPassword && confirmPassword === password && (
-                    <p className="text-[11px] font-bold text-neutral-950 mt-1 flex items-center gap-1">
-                      ✓ 비밀번호가 일치합니다.
+                  ) : !password ? (
+                    <p className="text-[11px] font-bold text-amber-700 mt-1 pl-1 flex items-center gap-1 animate-in fade-in">
+                      <span>✕</span>
+                      <span>비밀번호를 먼저 입력해 주세요.</span>
+                    </p>
+                  ) : confirmPassword !== password ? (
+                    <p className="text-[11px] font-bold text-amber-700 mt-1 pl-1 flex items-center gap-1 animate-in fade-in">
+                      <span>✕</span>
+                      <span>비밀번호가 일치하지 않습니다. 다시 확인해 주세요.</span>
+                    </p>
+                  ) : (
+                    <p className="text-[11px] font-bold text-neutral-950 mt-1 pl-1 flex items-center gap-1 animate-in fade-in">
+                      <span>✓</span>
+                      <span>비밀번호가 일치합니다.</span>
                     </p>
                   )}
                 </div>
@@ -1355,9 +1413,14 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  새 비밀번호
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                    새 비밀번호
+                  </label>
+                  <span className="text-[10px] text-neutral-400">
+                    영문+숫자+특수문자 8자 이상
+                  </span>
+                </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                   <input
@@ -1368,16 +1431,24 @@ export default function LoginPage() {
                       setResetNewPassword(e.target.value);
                       setResetErrorMsg("");
                     }}
-                    placeholder="새 비밀번호 입력"
+                    placeholder="영문, 숫자, 특수문자 포함 8자 이상"
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
                   />
                 </div>
+                <p className="text-[10px] text-neutral-400 mt-1 pl-1">
+                  영문, 숫자, 특수문자를 포함하여 8자 이상 입력해 주세요.
+                </p>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  새 비밀번호 확인
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                    새 비밀번호 확인
+                  </label>
+                  <span className="text-[10px] text-neutral-400">
+                    동일한 비밀번호 재입력
+                  </span>
+                </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                   <input
@@ -1392,6 +1463,21 @@ export default function LoginPage() {
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
                   />
                 </div>
+                {resetConfirmPassword.length === 0 ? (
+                  <p className="text-[10px] text-neutral-400 mt-1 pl-1">
+                    위에서 입력한 새 비밀번호를 한 번 더 입력해 주세요.
+                  </p>
+                ) : resetConfirmPassword !== resetNewPassword ? (
+                  <p className="text-[10px] font-bold text-amber-700 mt-1 pl-1 flex items-center gap-1 animate-in fade-in">
+                    <span>✕</span>
+                    <span>비밀번호가 일치하지 않습니다.</span>
+                  </p>
+                ) : (
+                  <p className="text-[10px] font-bold text-neutral-950 mt-1 pl-1 flex items-center gap-1 animate-in fade-in">
+                    <span>✓</span>
+                    <span>비밀번호가 일치합니다.</span>
+                  </p>
+                )}
               </div>
 
               {resetErrorMsg && (

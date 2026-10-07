@@ -25,6 +25,7 @@ import {
   RefreshCw,
   CreditCard,
   ChevronUp,
+  ChevronDown,
   Truck,
 } from "lucide-react";
 import { getProductThumbnail } from "@/lib/products/thumbnail-helper";
@@ -741,16 +742,141 @@ export function InquiriesManagement({
   // Confirmation Alert Dialog State
   const [confirmDialog, setConfirmDialog] = useState<string | null>(null);
 
-  // Auto-scroll to bottom of conversation
+  // Auto-scroll to bottom of conversation & scroll preservation when reading history
   const adminMessagesEndRef = React.useRef<HTMLDivElement>(null);
   const chatContainerRef = React.useRef<HTMLDivElement>(null);
+  const isAtBottomRef = React.useRef<boolean>(true);
+  const prevSessionIdRef = React.useRef<string>(activeSessionId);
+  const lastSeenMsgIdRef = React.useRef<string | null>(null);
+  const [newMsgNotice, setNewMsgNotice] = useState<any | null>(null);
+  const [showScrollBottomBtn, setShowScrollBottomBtn] = useState<boolean>(false);
 
-  React.useLayoutEffect(() => {
-    // Instant scroll directly to bottom without jumpy animation
+  const scrollToBottom = React.useCallback((behavior: ScrollBehavior = "smooth") => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      if (behavior === "auto") {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      } else {
+        chatContainerRef.current.scrollTo({
+          top: chatContainerRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      }
     }
-  }, [activeSessionMessages, activeSessionId]);
+    isAtBottomRef.current = true;
+    setShowScrollBottomBtn(false);
+    setNewMsgNotice(null);
+  }, []);
+
+  const handleChatScroll = React.useCallback(() => {
+    if (!chatContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+    const isBottom = distanceToBottom < 75;
+
+    isAtBottomRef.current = isBottom;
+    setShowScrollBottomBtn(!isBottom);
+
+    if (isBottom) {
+      setNewMsgNotice(null);
+    }
+  }, []);
+
+  // 1. 세션 전환 시: 새 세션의 최하단으로 즉시 스크롤
+  useEffect(() => {
+    if (prevSessionIdRef.current !== activeSessionId) {
+      prevSessionIdRef.current = activeSessionId;
+      isAtBottomRef.current = true;
+      setShowScrollBottomBtn(false);
+      setNewMsgNotice(null);
+      lastSeenMsgIdRef.current = null;
+      const timer = setTimeout(() => {
+        scrollToBottom("auto");
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSessionId, scrollToBottom]);
+
+  // 2. 메시지 수신 및 스크롤 관리 (과거 대화 확인 중 상단 스크롤 시 자동 하단 이동 방지)
+  useEffect(() => {
+    if (!activeSessionMessages || activeSessionMessages.length === 0) return;
+
+    const latestMsg = activeSessionMessages[activeSessionMessages.length - 1];
+    if (!latestMsg) return;
+
+    // 세션 첫 로딩 시 최하단으로 이동
+    if (!lastSeenMsgIdRef.current) {
+      lastSeenMsgIdRef.current = latestMsg.id;
+      scrollToBottom("auto");
+      return;
+    }
+
+    // 폴링 등으로 동일한 메시지 배열이 갱신된 경우는 스크롤 위치 유지 (화면 강제 당김 방지)
+    if (latestMsg.id === lastSeenMsgIdRef.current) {
+      return;
+    }
+
+    lastSeenMsgIdRef.current = latestMsg.id;
+
+    if (latestMsg.sender === "admin") {
+      // 관리자 본인이 보낸 메시지는 항상 최하단으로 즉시 이동
+      scrollToBottom("smooth");
+      setNewMsgNotice(null);
+    } else {
+      // 고객 신규 메시지가 도착한 경우
+      if (isAtBottomRef.current) {
+        // 이미 최하단에 머무르고 있는 경우 최신 대화로 부드럽게 스크롤
+        scrollToBottom("smooth");
+        setNewMsgNotice(null);
+      } else {
+        // 과거 대화를 스크롤하여 확인 중인 경우:
+        // 강제 이동을 방지하고 자유로운 스크롤 유지, 하단에 신규 메시지 말풍선 버튼 표시
+        setNewMsgNotice(latestMsg);
+      }
+    }
+  }, [activeSessionMessages, scrollToBottom]);
+
+  const onSendLiveChat = React.useCallback((text?: string) => {
+    handleAdminSendLiveChat(text);
+    isAtBottomRef.current = true;
+    setTimeout(() => {
+      scrollToBottom("smooth");
+    }, 50);
+  }, [handleAdminSendLiveChat, scrollToBottom]);
+
+  const getMessageSnippet = React.useCallback((rawText: string) => {
+    if (!rawText) return "새 메시지가 도착했습니다.";
+    if (rawText.startsWith('{"type":"EXCHANGE_REQUEST"')) {
+      return "🔄 교환 접수 안내 및 신청서";
+    }
+    if (rawText.startsWith('{"type":"EXCHANGE_PAY_REQUEST"')) {
+      return "💳 교환 왕복 배송비(16,000원) 결제 요청";
+    }
+    if (rawText.startsWith('{"type":"EXCHANGE_COMPLETED"')) {
+      return "✓ 교환 접수 및 배송비 결제 완료";
+    }
+    if (rawText.startsWith('{"type":"EXCHANGE_PICKUP_REGISTERED"')) {
+      return "🚚 CJ대한통운 교환 수거접수 완료 안내";
+    }
+    if (rawText.startsWith('{"type":"REFUND_REQUEST"')) {
+      return "↩️ 환불 접수 안내 및 신청서";
+    }
+    if (rawText.startsWith('{"type":"REFUND_SUBMITTED"')) {
+      return "📝 환불 신청 접수 완료";
+    }
+    if (rawText.startsWith('{"type":"REFUND_COMPLETED"')) {
+      return "💳 토스페이먼츠 결제 취소/환불 완료";
+    }
+    if (rawText.startsWith('{"type":"REFUND_PICKUP_REGISTERED"')) {
+      return "🚚 CJ대한통운 반품 수거접수 완료 안내";
+    }
+    if (rawText.startsWith('{"type":"ORDER_SELECT_REQUEST"')) {
+      return "📦 문의하실 주문건 선택 요청";
+    }
+    if (rawText.startsWith('{"type":"ORDER_SELECTED"')) {
+      return "📦 주문건이 선택되었습니다.";
+    }
+    return rawText;
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -1241,7 +1367,7 @@ export function InquiriesManagement({
                 <button
                   key={tmpl.id}
                   type="button"
-                  onClick={() => handleAdminSendLiveChat(tmpl.ko)}
+                  onClick={() => onSendLiveChat(tmpl.ko)}
                   className="w-full text-left bg-neutral-50 hover:bg-neutral-100 hover:border-neutral-400 border border-neutral-200/90 p-3 rounded-2xl transition-all cursor-pointer space-y-1 group"
                 >
                   {/* 상단 한글 원문 (구글 번역 보호: notranslate) */}
@@ -1297,7 +1423,12 @@ export function InquiriesManagement({
           </div>
 
           {/* Conversation Bubbles Container */}
-          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF9F5]/70 rounded-2xl border border-neutral-200/60">
+          <div className="relative flex-1 flex flex-col min-h-0">
+            <div
+              ref={chatContainerRef}
+              onScroll={handleChatScroll}
+              className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF9F5]/70 rounded-2xl border border-neutral-200/60"
+            >
             {activeSessionMessages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-neutral-400">
                 <MessageSquare className="w-10 h-10 text-neutral-300 mb-2 stroke-[1.5]" />
@@ -1913,6 +2044,40 @@ export function InquiriesManagement({
             <div ref={adminMessagesEndRef} />
           </div>
 
+          {/* Floating New Message Notification Bubble (과거 대화 확인 중 신규 메시지 도착 시) */}
+          {newMsgNotice && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-bottom-2 duration-200 max-w-[90%]">
+              <button
+                type="button"
+                onClick={() => scrollToBottom("smooth")}
+                className="bg-neutral-950/95 hover:bg-black text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-xl border border-neutral-800 flex items-center gap-2.5 cursor-pointer transition-all hover:scale-105 active:scale-95 backdrop-blur-md"
+                title="최신 대화로 이동"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="text-[11px] font-extrabold text-blue-300 shrink-0">새 메시지</span>
+                <span className="truncate max-w-[200px] sm:max-w-[280px] text-white">
+                  {getMessageSnippet(newMsgNotice.text)}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 stroke-[3] shrink-0 animate-bounce" />
+              </button>
+            </div>
+          )}
+
+          {/* Scroll to Bottom Button (하단에서 벗어났을 때 최하단 이동 원클릭 버튼) */}
+          {!newMsgNotice && showScrollBottomBtn && (
+            <div className="absolute bottom-3 right-4 z-20 animate-in fade-in duration-150">
+              <button
+                type="button"
+                onClick={() => scrollToBottom("smooth")}
+                className="bg-white/95 hover:bg-neutral-100 text-neutral-800 hover:text-black w-8 h-8 rounded-full shadow-md border border-neutral-300 flex items-center justify-center cursor-pointer transition-all hover:scale-110 active:scale-95 group"
+                title="최신 대화(하단)로 이동"
+              >
+                <ChevronDown className="w-4 h-4 stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
+              </button>
+            </div>
+          )}
+        </div>
+
           {/* Action Toolbar directly above Reply Input */}
           <div className="pt-2 pb-0.5 shrink-0 flex items-center justify-between border-t border-neutral-100">
             <div className="flex items-center gap-2">
@@ -2149,7 +2314,7 @@ export function InquiriesManagement({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  handleAdminSendLiveChat();
+                  onSendLiveChat();
                 }
               }}
               placeholder={
@@ -2161,7 +2326,7 @@ export function InquiriesManagement({
             />
             <button
               type="button"
-              onClick={() => handleAdminSendLiveChat()}
+              onClick={() => onSendLiveChat()}
               disabled={!adminLiveInput.trim() || !activeSessionId || chatSessionsList.length === 0}
               className="bg-neutral-950 hover:bg-black text-white px-5 py-3 rounded-xl font-black text-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-md flex items-center gap-1.5"
             >

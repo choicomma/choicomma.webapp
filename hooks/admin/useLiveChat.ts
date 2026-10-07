@@ -138,7 +138,20 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       }
 
       const finalList = Array.from(sessionsMap.values());
-      setChatSessionsList(finalList);
+      setChatSessionsList((prev) => {
+        if (
+          prev.length === finalList.length &&
+          prev.every(
+            (s, idx) =>
+              s?.id === finalList[idx]?.id &&
+              s?.status === finalList[idx]?.status &&
+              s?.tier === finalList[idx]?.tier
+          )
+        ) {
+          return prev;
+        }
+        return finalList;
+      });
       localStorage.setItem("admin_chat_sessions", JSON.stringify(finalList));
 
       // Update activeSessionId
@@ -236,6 +249,17 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       const finalList = Array.from(mergedMap.values());
       if (typeof window !== "undefined") {
         localStorage.setItem(sessionKey, JSON.stringify(finalList));
+      }
+      if (
+        prev.length === finalList.length &&
+        prev.every(
+          (msg, idx) =>
+            msg?.id === finalList[idx]?.id &&
+            msg?.text === finalList[idx]?.text &&
+            msg?.sender === finalList[idx]?.sender
+        )
+      ) {
+        return prev;
       }
       return finalList;
     });
