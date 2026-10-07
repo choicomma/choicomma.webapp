@@ -1626,9 +1626,6 @@ export function ProductsManagement({
                             [클릭하여 수정]
                           </span>
                         </p>
-                        {p.description && (
-                          <p className="text-[11px] text-neutral-500 truncate max-w-sm mt-0.5">{p.description}</p>
-                        )}
                       </td>
                       {/* Category Quick Change Dropdown */}
                       <td className="py-2 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
@@ -1978,7 +1975,6 @@ export function ProductsManagement({
                           </td>
                           <td className="py-2.5 px-3 max-w-xs">
                             <p className="font-bold text-neutral-900 truncate">{item.title}</p>
-                            <p className="text-[10px] text-neutral-400 truncate">{item.description}</p>
                           </td>
                           <td className="py-2.5 px-3">
                             <span className="bg-neutral-100 border border-neutral-200 text-neutral-800 px-2 py-0.5 rounded font-bold uppercase text-[10px]">
