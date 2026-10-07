@@ -457,7 +457,8 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
                 const prevSpent = Number(cust.totalSpent) || 0;
                 const newSpent = prevSpent + (isZeroPayment ? 0 : Number(amount));
                 cust.totalSpent = newSpent;
-                cust.points = (Number(cust.points) || 0) + effectiveEarnedPoints;
+                // 세션 최신 보유 적립금과 일치시키거나, 기존 포인트에서 사용 적립금 차감 + 획득 적립금 가산
+                cust.points = updatedUserPoints;
 
                 // 구매금액 누적에 따른 자동 승급 (2000만: VVIP, 1000만: PLATINUM, 300만: GOLD, 100만: SILVER)
                 if (newSpent >= 20000000 && cust.grade !== "VVIP") {
@@ -489,7 +490,7 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
                     .then(({ data: sbCusts }) => {
                       if (sbCusts && sbCusts.length > 0) {
                         const dbCust = sbCusts[0];
-                        const updatedDbPoints = (Number(dbCust.points) || 0) + effectiveEarnedPoints;
+                        const updatedDbPoints = updatedUserPoints;
                         const updatedDbSpent = (Number(dbCust.totalSpent) || 0) + (isZeroPayment ? 0 : Number(amount));
                         supabase
                           .from("customers")

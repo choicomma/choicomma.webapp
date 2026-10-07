@@ -35,7 +35,7 @@ const DEFAULT_CUSTOMERS = [
     detailAddress: "한울하임 106동 202호",
     grade: "GENERAL",
     totalSpent: 0,
-    points: 0,
+    points: 50000,
     couponsCount: 0,
     joinedDate: "2026-09-28",
     status: "Active",
@@ -169,7 +169,6 @@ export function getCachedCustomers(): any[] {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const cleaned = deduplicateCustomers([
-          ...DEFAULT_CUSTOMERS,
           ...parsed.map((c: any) => {
             if (!c || isSuperAdmin(c)) return c;
             const parsedAddr = splitKoreanAddress(
@@ -184,6 +183,7 @@ export function getCachedCustomers(): any[] {
               detailAddress: parsedAddr.detailAddress,
             };
           }),
+          ...DEFAULT_CUSTOMERS,
         ]);
         try {
           localStorage.setItem("admin_customers", JSON.stringify(cleaned));
@@ -423,6 +423,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
   const [editCustPointsDelta, setEditCustPointsDelta] = useState("0");
   const [editCustPointAction, setEditCustPointAction] = useState<"add" | "sub">("add");
   const [editCustPointAmount, setEditCustPointAmount] = useState("");
+  const [editCustPointReason, setEditCustPointReason] = useState("");
   const [editCustStatus, setEditCustStatus] = useState("Active");
 
   // Customer Handlers
@@ -437,6 +438,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       return;
     }
 
+    const initPoints = parseInt(newCustPoints) || 0;
     const newCust = {
       id: `CUST-${1000 + customersList.length + 1}`,
       name: newCustName.trim(),
@@ -445,7 +447,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       address: newCustAddress.trim() || "-",
       grade: newCustGrade,
       totalSpent: 0,
-      points: parseInt(newCustPoints) || 0,
+      points: initPoints,
       couponsCount: 0,
       joinedDate: new Date().toISOString().split("T")[0],
       status: newCustStatus,
@@ -455,6 +457,29 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     setCustomersList(updated);
     if (typeof window !== "undefined") {
       localStorage.setItem("admin_customers", JSON.stringify(updated));
+
+      if (initPoints > 0) {
+        try {
+          const historyRaw = localStorage.getItem("membership_points_history");
+          let historyList: any[] = [];
+          if (historyRaw) {
+            try { historyList = JSON.parse(historyRaw); } catch (err) {}
+          }
+          historyList = [
+            {
+              id: `admin-points-${newCust.id}-${Date.now()}`,
+              label: `[관리자 지급] 신규 회원 가입 축하 적립금`,
+              date: new Date().toISOString().slice(0, 10),
+              amount: initPoints,
+              customerId: newCust.id,
+              customerEmail: newCust.email,
+            },
+            ...historyList,
+          ];
+          localStorage.setItem("membership_points_history", JSON.stringify(historyList));
+          window.dispatchEvent(new CustomEvent("membership_points_updated"));
+        } catch (e) {}
+      }
     }
 
     // Supabase DB 비동기 저장 (Server API & Client SDK)
@@ -485,6 +510,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     setEditCustPointsDelta("0");
     setEditCustPointAction("add");
     setEditCustPointAmount("");
+    setEditCustPointReason("");
     setEditCustStatus(customer.status || "Active");
   };
 
@@ -527,8 +553,52 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     setCustomersList(updatedList);
     if (typeof window !== "undefined") {
       localStorage.setItem("admin_customers", JSON.stringify(updatedList));
+
+      // 적립 / 사용 상세 내역(membership_points_history)에 관리자 지급/차감 이력 추가
+      try {
+        const historyRaw = localStorage.getItem("membership_points_history");
+        let historyList: any[] = [];
+        if (historyRaw) {
+          try { historyList = JSON.parse(historyRaw); } catch (e) {}
+        }
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const reasonText = (editCustPointReason || "").trim();
+        const defaultLabel = action === "add" ? "특별 적립금 지급" : "적립금 차감";
+        const entryLabel = reasonText
+          ? `[관리자 ${action === "add" ? "지급" : "차감"}] ${reasonText}`
+          : `[관리자 ${action === "add" ? "지급" : "차감"}] ${defaultLabel}`;
+
+        const newEntry = {
+          id: `admin-points-${editingCustomer.id || "cust"}-${Date.now()}`,
+          label: entryLabel,
+          date: todayStr,
+          amount: delta,
+          customerId: editingCustomer.id,
+          customerEmail: editingCustomer.email,
+          customerName: editingCustomer.name,
+        };
+        historyList = [newEntry, ...historyList];
+        localStorage.setItem("membership_points_history", JSON.stringify(historyList));
+      } catch (hErr) {
+        console.warn("Failed to record admin points history:", hErr);
+      }
+
+      // 현재 세션 사용자와 일치하거나 관리자 세션 동기화
+      const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+      const currentLoggedInName = (localStorage.getItem("membership_user_name") || "").trim();
+      const custEmail = (editingCustomer.email || "").toLowerCase().trim();
+      const custName = (editingCustomer.name || "").trim();
+      if (
+        (custEmail && custEmail === currentLoggedInEmail) ||
+        (custName && custName === currentLoggedInName) ||
+        localStorage.getItem("user_role") === "admin"
+      ) {
+        localStorage.setItem("membership_user_points", String(newPoints));
+      }
+
       window.dispatchEvent(new CustomEvent("storage"));
       window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+      window.dispatchEvent(new CustomEvent("membership_points_updated"));
     }
 
     // Supabase DB 비동기 수정
@@ -544,6 +614,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       });
 
     setEditCustPointAmount("");
+    setEditCustPointReason("");
     triggerToast(
       `${editingCustomer.name}님에게 적립금 ₩${amount.toLocaleString()}원이 ${
         action === "add" ? "지급" : "차감"
@@ -580,6 +651,49 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     setCustomersList(updatedList);
     if (typeof window !== "undefined") {
       localStorage.setItem("admin_customers", JSON.stringify(updatedList));
+
+      // 적립 / 사용 상세 내역(membership_points_history)에 관리자 지급/차감 이력 추가
+      if (delta !== 0) {
+        try {
+          const historyRaw = localStorage.getItem("membership_points_history");
+          let historyList: any[] = [];
+          if (historyRaw) {
+            try { historyList = JSON.parse(historyRaw); } catch (e) {}
+          }
+          const todayStr = new Date().toISOString().slice(0, 10);
+          const reasonText = (editCustPointReason || "").trim();
+          const defaultLabel = delta > 0 ? "특별 적립금 지급" : "적립금 차감";
+          const entryLabel = reasonText
+            ? `[관리자 ${delta > 0 ? "지급" : "차감"}] ${reasonText}`
+            : `[관리자 ${delta > 0 ? "지급" : "차감"}] ${defaultLabel}`;
+
+          const newEntry = {
+            id: `admin-points-${editingCustomer.id || "cust"}-${Date.now()}`,
+            label: entryLabel,
+            date: todayStr,
+            amount: delta,
+            customerId: editingCustomer.id,
+            customerEmail: editingCustomer.email,
+            customerName: editingCustomer.name,
+          };
+          historyList = [newEntry, ...historyList];
+          localStorage.setItem("membership_points_history", JSON.stringify(historyList));
+        } catch (hErr) {}
+
+        const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const currentLoggedInName = (localStorage.getItem("membership_user_name") || "").trim();
+        const custEmail = (editingCustomer.email || "").toLowerCase().trim();
+        const custName = (editingCustomer.name || "").trim();
+        if (
+          (custEmail && custEmail === currentLoggedInEmail) ||
+          (custName && custName === currentLoggedInName) ||
+          localStorage.getItem("user_role") === "admin"
+        ) {
+          localStorage.setItem("membership_user_points", String(calculatedPoints));
+        }
+        window.dispatchEvent(new CustomEvent("membership_points_updated"));
+      }
+
       window.dispatchEvent(new CustomEvent("storage"));
       window.dispatchEvent(new CustomEvent("admin_customers_updated"));
     }
@@ -596,6 +710,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     });
 
     setEditingCustomer(null);
+    setEditCustPointReason("");
     triggerToast(`회원 '${editingCustomer.name}'님의 정보가 반영되었습니다.`);
   };
 
@@ -776,6 +891,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     editCustPointsDelta, setEditCustPointsDelta,
     editCustPointAction, setEditCustPointAction,
     editCustPointAmount, setEditCustPointAmount,
+    editCustPointReason, setEditCustPointReason,
     editCustStatus, setEditCustStatus,
     handleAddCustomerSubmit,
     handleOpenEditCustomer,

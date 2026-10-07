@@ -520,6 +520,7 @@ export default function AdminPage() {
     editCustPointsDelta, setEditCustPointsDelta,
     editCustPointAction, setEditCustPointAction,
     editCustPointAmount, setEditCustPointAmount,
+    editCustPointReason, setEditCustPointReason,
     editCustStatus, setEditCustStatus,
     handleAddCustomerSubmit,
     handleOpenEditCustomer,
@@ -1146,6 +1147,8 @@ export default function AdminPage() {
               setEditCustGrade={setEditCustGrade}
               editCustPointAmount={editCustPointAmount}
               setEditCustPointAmount={setEditCustPointAmount}
+              editCustPointReason={editCustPointReason}
+              setEditCustPointReason={setEditCustPointReason}
               editCustAddress={editCustAddress}
               setEditCustAddress={setEditCustAddress}
               handleApplyCustomerPoints={handleApplyCustomerPoints}

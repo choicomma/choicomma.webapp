@@ -324,7 +324,22 @@ export function InquiriesManagement({
 
       // 4. 적립금 처리 (결제 시 사용했던 적립금은 반환, 결제 시 적립되었던 포인트는 회수)
       try {
-        const pointsUsed = Number(matchedOrder?.pointsUsed || 0);
+        let pointsUsed = Number(matchedOrder?.pointsUsed || 0);
+
+        // 4-0) membership_points_history에서 해당 주문의 사용 적립금 내역 교차 검증
+        const historyRaw = localStorage.getItem("membership_points_history");
+        let historyList: any[] = [];
+        if (historyRaw) {
+          try { historyList = JSON.parse(historyRaw); } catch (e) {}
+        }
+
+        const pointUseEntry = historyList.find(
+          (h: any) => h.id === `point-use-${result.orderNumber}` || (h.label && h.label.includes(result.orderNumber) && h.amount < 0)
+        );
+        if (pointUseEntry && Math.abs(Number(pointUseEntry.amount)) > pointsUsed) {
+          pointsUsed = Math.abs(Number(pointUseEntry.amount));
+        }
+
         const pointsEarned = matchedOrder?.pointsEarned !== undefined
           ? Number(matchedOrder.pointsEarned)
           : Math.floor((Number(result.refundAmount) || 0) * 0.01);
@@ -334,12 +349,6 @@ export function InquiriesManagement({
         const customerPhone = (matchedOrder?.phone || matchedOrder?.customerPhone || "").replace(/[^0-9]/g, "");
 
         // 4-1) 적립금 내역(membership_points_history) 업데이트
-        const historyRaw = localStorage.getItem("membership_points_history");
-        let historyList: any[] = [];
-        if (historyRaw) {
-          try { historyList = JSON.parse(historyRaw); } catch (e) {}
-        }
-
         const newEntries: any[] = [];
         const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -368,7 +377,7 @@ export function InquiriesManagement({
           localStorage.setItem("membership_points_history", JSON.stringify(historyList));
         }
 
-        // 4-2) 회원 관리(admin_customers) 및 현재 세션 포인트 잔액 동기화
+        // 4-2) 회원 관리(admin_customers) 및 세션 포인트 잔액 동기화
         const savedCustRaw = localStorage.getItem("admin_customers");
         let custList: any[] = [];
         if (savedCustRaw) {
@@ -387,9 +396,15 @@ export function InquiriesManagement({
 
         const netPointsChange = pointsRestored - pointsRevoked;
 
+        // 기준 잔여 적립금 파악 (현재 고객 세션 적립금과 회원 DB 적립금 중 유효 잔여 포인트 기준)
+        const currentSessionPts = Number(localStorage.getItem("membership_user_points") || "0");
+        const custDbPts = matchedCust && matchedCust.points !== undefined ? Number(matchedCust.points) : 0;
+        
+        // basePoints: 세션에 남아있는 잔여 포인트가 있으면 우선 적용, 없으면 회원 DB 잔여 포인트
+        const basePoints = currentSessionPts > 0 ? currentSessionPts : custDbPts;
+        const updatedPts = Math.max(0, basePoints + netPointsChange);
+
         if (matchedCust) {
-          const currentPts = Number(matchedCust.points) || 0;
-          const updatedPts = Math.max(0, currentPts + netPointsChange);
           matchedCust.points = updatedPts;
           matchedCust.totalSpent = Math.max(0, (Number(matchedCust.totalSpent) || 0) - Number(result.refundAmount || 0));
           localStorage.setItem("admin_customers", JSON.stringify(custList));
@@ -408,18 +423,8 @@ export function InquiriesManagement({
           } catch (e) {}
         }
 
-        // 현재 접속 중인 세션 사용자가 본인인 경우 membership_user_points 갱신
-        const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-        const currentLoggedInName = (localStorage.getItem("membership_user_name") || "").trim();
-        if (
-          (customerEmail && customerEmail === currentLoggedInEmail) ||
-          (customerName && customerName === currentLoggedInName) ||
-          localStorage.getItem("user_role") === "admin"
-        ) {
-          const currentSessionPts = Number(localStorage.getItem("membership_user_points") || "0");
-          const nextSessionPts = Math.max(0, currentSessionPts + netPointsChange);
-          localStorage.setItem("membership_user_points", String(nextSessionPts));
-        }
+        // 회원 로컬 세션 포인트(membership_user_points)에 기존 잔여 + 환불 가산 포인트를 즉시 저장
+        localStorage.setItem("membership_user_points", String(updatedPts));
 
         window.dispatchEvent(new CustomEvent("membership_points_updated"));
         window.dispatchEvent(new CustomEvent("admin_customers_updated"));
