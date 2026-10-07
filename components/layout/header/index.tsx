@@ -50,6 +50,10 @@ export function Header({ collections }: HeaderProps) {
   const [hasSecretTimeSale, setHasSecretTimeSale] = useState(false);
 
   useEffect(() => {
+    if (pathname === "/login" || pathname === "/admin" || pathname === "/membership") {
+      return;
+    }
+
     const checkAuth = () => {
       if (typeof window !== "undefined") {
         validateCustomerSession();
@@ -103,15 +107,22 @@ export function Header({ collections }: HeaderProps) {
     };
 
     checkAuth();
-    window.addEventListener("storage", checkAuth);
-    window.addEventListener("auth_changed", checkAuth);
-    window.addEventListener("secret_timesales_updated", checkAuth);
-    return () => {
-      window.removeEventListener("storage", checkAuth);
-      window.removeEventListener("auth_changed", checkAuth);
-      window.removeEventListener("secret_timesales_updated", checkAuth);
+
+    // Event listener callback: defer execution with setTimeout(..., 0)
+    // to prevent updating Header state synchronously while another component (e.g. AdminPage) is rendering
+    const handleAuthEvent = () => {
+      setTimeout(checkAuth, 0);
     };
-  }, []);
+
+    window.addEventListener("storage", handleAuthEvent);
+    window.addEventListener("auth_changed", handleAuthEvent);
+    window.addEventListener("secret_timesales_updated", handleAuthEvent);
+    return () => {
+      window.removeEventListener("storage", handleAuthEvent);
+      window.removeEventListener("auth_changed", handleAuthEvent);
+      window.removeEventListener("secret_timesales_updated", handleAuthEvent);
+    };
+  }, [pathname]);
 
   if (pathname === "/login" || pathname === "/admin" || pathname === "/membership") {
     return null;

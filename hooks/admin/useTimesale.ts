@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import React from "react";
 import { supabase } from "@/lib/supabase/client";
 
@@ -87,7 +87,13 @@ export function useTimesale(triggerToast: (msg: string) => void) {
     };
   }, []);
 
+  const isFirstMountRef = useRef(true);
   useEffect(() => {
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+
     if (typeof window !== "undefined") {
       localStorage.setItem("admin_secret_timesales", JSON.stringify(secretSalesList));
       window.dispatchEvent(new CustomEvent("secret_timesales_updated"));

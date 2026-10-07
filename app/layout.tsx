@@ -28,6 +28,11 @@ export const metadata: Metadata = {
   title: "choicomma",
   description: "choicomma official store",
   generator: "v0.app",
+  verification: {
+    other: {
+      "naver-site-verification": "d3e238722a634e1c3e11af118a0ccd78f6614446",
+    },
+  },
 };
 
 import { LiveChatWidget } from "@/components/chat/live-chat-widget";
@@ -45,6 +50,7 @@ export default async function RootLayout({
   return (
     <html lang="ko" className={`${pretendard.variable} ${pretendard.className}`} suppressHydrationWarning>
       <head>
+        <meta name="naver-site-verification" content="d3e238722a634e1c3e11af118a0ccd78f6614446" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

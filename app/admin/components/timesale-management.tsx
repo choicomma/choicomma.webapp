@@ -155,14 +155,13 @@ export function TimesaleManagement({
   const handleDeleteSecretSale = async (id: string) => {
     if (!window.confirm("정말로 해당 시크릿 타임세일 프로모션을 삭제하시겠습니까?")) return;
     if (setSecretSalesList) {
-      setSecretSalesList((prev) => {
-        const next = prev.filter((item) => item.id !== id);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("admin_secret_timesales", JSON.stringify(next));
-          window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
-        }
-        return next;
-      });
+      setSecretSalesList((prev) => prev.filter((item) => item.id !== id));
+      if (typeof window !== "undefined") {
+        const currentList = secretSalesList || [];
+        const next = currentList.filter((item: any) => item.id !== id);
+        localStorage.setItem("admin_secret_timesales", JSON.stringify(next));
+        window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
+      }
       triggerToast("시크릿 타임세일이 삭제되었습니다.");
     }
     try {

@@ -58,6 +58,10 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
   };
 
   useEffect(() => {
+    if (pathname === "/login" || pathname === "/admin" || pathname === "/membership") {
+      return;
+    }
+
     const checkAuth = () => {
       if (typeof window !== "undefined") {
         validateCustomerSession();
@@ -77,13 +81,16 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
     };
 
     checkAuth();
-    window.addEventListener("storage", checkAuth);
-    window.addEventListener("auth_changed", checkAuth);
-    return () => {
-      window.removeEventListener("storage", checkAuth);
-      window.removeEventListener("auth_changed", checkAuth);
+    const handleAuthEvent = () => {
+      setTimeout(checkAuth, 0);
     };
-  }, []);
+    window.addEventListener("storage", handleAuthEvent);
+    window.addEventListener("auth_changed", handleAuthEvent);
+    return () => {
+      window.removeEventListener("storage", handleAuthEvent);
+      window.removeEventListener("auth_changed", handleAuthEvent);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     const handleResize = () => {

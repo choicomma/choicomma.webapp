@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Star,
   Camera,
@@ -266,15 +267,31 @@ export function ProductReviews({
   // Modal State
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [selectedPhotoModal, setSelectedPhotoModal] = useState<string | null>(null);
+  const [couponModalReview, setCouponModalReview] = useState<ReviewItem | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Admin Best Comment Thank You Coupon Modal State
-  const [couponModalReview, setCouponModalReview] = useState<ReviewItem | null>(null);
   const [targetCustomerEmail, setTargetCustomerEmail] = useState("");
   const [targetCustomerName, setTargetCustomerName] = useState("");
   const [targetCustomerPhone, setTargetCustomerPhone] = useState("");
   const [targetCustomerGrade, setTargetCustomerGrade] = useState("GOLD");
   const [couponDiscountAmount, setCouponDiscountAmount] = useState<number>(10000);
   const [couponValidDays, setCouponValidDays] = useState<number>(30);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isWriteModalOpen || Boolean(selectedPhotoModal) || Boolean(couponModalReview)) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isWriteModalOpen, selectedPhotoModal, couponModalReview]);
 
   // Form State
   const [formRating, setFormRating] = useState<number>(5);
@@ -1044,394 +1061,406 @@ export function ProductReviews({
       </div>
 
       {/* 5. Write Review Modal */}
-      {isWriteModalOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setIsWriteModalOpen(false)}
-        >
+      {isMounted &&
+        typeof document !== "undefined" &&
+        isWriteModalOpen &&
+        createPortal(
           <div
-            className="bg-white rounded-3xl border border-neutral-200 shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+            onClick={() => setIsWriteModalOpen(false)}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-neutral-100">
-              <div>
-                <h3 className="text-base font-black text-neutral-950">{t.modalTitle}</h3>
-                <p className="text-xs text-neutral-500 mt-0.5">{t.modalSubtitle}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsWriteModalOpen(false)}
-                className="p-1.5 rounded-xl text-neutral-400 hover:text-neutral-950 hover:bg-neutral-100 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Form Body */}
-            <form onSubmit={handleSubmitReview} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
-              {/* Star Rating Selection */}
-              <div className="space-y-1.5 text-center py-2 bg-neutral-50 rounded-2xl border border-neutral-200/80">
-                <span className="text-xs font-bold text-neutral-700 block">{t.ratingLabel}</span>
-                <div className="flex items-center justify-center gap-1.5 text-2xl cursor-pointer">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setFormRating(star)}
-                      className={`transition-all hover:scale-115 p-1 ${
-                        star <= formRating ? "text-amber-400" : "text-neutral-300"
-                      }`}
-                    >
-                      ★
-                    </button>
-                  ))}
+            <div
+              className="bg-white rounded-3xl border border-neutral-200 shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-150 my-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-5 border-b border-neutral-100">
+                <div>
+                  <h3 className="text-base font-black text-neutral-950">{t.modalTitle}</h3>
+                  <p className="text-xs text-neutral-500 mt-0.5">{t.modalSubtitle}</p>
                 </div>
-                <span className="text-xs font-black text-neutral-950 font-mono">
-                  {formRating}점 만점
-                </span>
-              </div>
-
-              {/* Author & Option Inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-extrabold text-neutral-700">{t.nameLabel}</label>
-                  <input
-                    type="text"
-                    value={formAuthor}
-                    onChange={(e) => setFormAuthor(e.target.value)}
-                    placeholder={t.namePlaceholder}
-                    className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-extrabold text-neutral-700">{t.optionLabel}</label>
-                  <input
-                    type="text"
-                    value={formOption}
-                    onChange={(e) => setFormOption(e.target.value)}
-                    placeholder={t.optionPlaceholder}
-                    className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950 font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* Fit & Color Assessment */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                <div className="space-y-1">
-                  <label className="text-xs font-extrabold text-neutral-700">{t.fitLabel}</label>
-                  <select
-                    value={formSizeFit}
-                    onChange={(e) => setFormSizeFit(e.target.value as any)}
-                    className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950 bg-white"
-                  >
-                    <option value="정사이즈">{t.fitTrue}</option>
-                    <option value="조금 큼">{t.fitLarge}</option>
-                    <option value="조금 작음">{t.fitSmall}</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-extrabold text-neutral-700">{t.colorLabel}</label>
-                  <select
-                    value={formColorMatch}
-                    onChange={(e) => setFormColorMatch(e.target.value as any)}
-                    className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950 bg-white"
-                  >
-                    <option value="화면과 동일">{t.colorSame}</option>
-                    <option value="화면보다 밝음">{t.colorBright}</option>
-                    <option value="화면보다 어두움">{t.colorDark}</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Review Title */}
-              <div className="space-y-1">
-                <label className="text-xs font-extrabold text-neutral-700">{t.titleLabel}</label>
-                <input
-                  type="text"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder={t.titlePlaceholder}
-                  className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950 font-bold"
-                />
-              </div>
-
-              {/* Review Content */}
-              <div className="space-y-1">
-                <label className="text-xs font-extrabold text-neutral-700">{t.contentLabel}</label>
-                <textarea
-                  rows={4}
-                  value={formContent}
-                  onChange={(e) => setFormContent(e.target.value)}
-                  placeholder={t.contentPlaceholder}
-                  className="w-full p-3 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950 resize-none text-neutral-900 leading-relaxed"
-                />
-              </div>
-
-              {/* Photo Upload Section */}
-              <div className="space-y-2">
-                <label className="text-xs font-extrabold text-neutral-700 flex items-center justify-between">
-                  <span>{t.photoLabel}</span>
-                  <span className="text-[11px] font-mono text-neutral-400">최대 3장</span>
-                </label>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  {formPhotos.map((photoUrl, idx) => (
-                    <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-neutral-200">
-                      <img src={photoUrl} alt="Upload preview" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => setFormPhotos((prev) => prev.filter((_, i) => i !== idx))}
-                        className="absolute top-1 right-1 p-0.5 bg-black/70 text-white rounded-full hover:bg-black cursor-pointer"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-
-                  {formPhotos.length < 3 && (
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-16 h-16 rounded-xl border border-dashed border-neutral-300 hover:border-neutral-900 flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-950 transition-colors cursor-pointer bg-neutral-50"
-                    >
-                      <Camera className="w-4 h-4 mb-0.5" />
-                      <span className="text-[10px] font-bold">사진 추가</span>
-                    </button>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handlePhotoUpload}
-                  />
-                </div>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
                 <button
                   type="button"
                   onClick={() => setIsWriteModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-xl text-neutral-400 hover:text-neutral-950 hover:bg-neutral-100 transition-colors cursor-pointer"
                 >
-                  {t.cancel}
-                </button>
-                <button
-                  type="submit"
-                  disabled={!formContent.trim()}
-                  className="px-5 py-2.5 bg-neutral-950 hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-400 text-white rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm"
-                >
-                  {t.submit}
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* 6. Photo Enlargement Lightbox Modal */}
-      {selectedPhotoModal && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setSelectedPhotoModal(null)}
-        >
-          <div className="relative max-w-2xl max-h-[90vh] rounded-2xl overflow-hidden shadow-2xl">
-            <button
-              type="button"
-              onClick={() => setSelectedPhotoModal(null)}
-              className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black text-white rounded-full transition-colors cursor-pointer z-10"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <img
-              src={selectedPhotoModal}
-              alt="Enlarged review photo"
-              className="max-h-[85vh] w-auto object-contain rounded-2xl"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* 7. 관리자 전용: 고객 정보 및 '베스트 댓글 감사 쿠폰' 발급 모달 */}
-      {couponModalReview && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setCouponModalReview(null)}
-        >
-          <div
-            className="bg-white rounded-3xl border border-neutral-200 shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-neutral-100 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/40">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-amber-400/20 border border-amber-300 flex items-center justify-center text-amber-700 shadow-2xs">
-                  <Gift className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="text-sm sm:text-base font-black text-neutral-950">
-                      베스트 댓글 감사 쿠폰 지급
-                    </h3>
-                    <span className="text-[10px] font-black text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
-                      ADMIN
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-neutral-500 mt-0.5">
-                    선정된 베스트 댓글 작성 고객님께 특별 쿠폰을 발급합니다.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCouponModalReview(null)}
-                className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Modal Body Form */}
-            <form onSubmit={handleIssueThankYouCoupon} className="p-5 space-y-4 text-xs">
-              {/* 고객 상세 정보 카드 */}
-              <div className="bg-neutral-50/90 border border-neutral-200 rounded-2xl p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black text-neutral-500 uppercase tracking-wider flex items-center gap-1">
-                    <User className="w-3.5 h-3.5 text-neutral-400" /> 작성 고객 정보
-                  </span>
-                  <span className="text-[10px] font-bold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-300">
-                    회원 등급: {targetCustomerGrade}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-white p-2 rounded-xl border border-neutral-200/80">
-                    <span className="text-[10px] text-neutral-400 block font-medium">고객명 / 닉네임</span>
-                    <span className="font-extrabold text-neutral-900">{targetCustomerName}</span>
-                  </div>
-                  <div className="bg-white p-2 rounded-xl border border-neutral-200/80">
-                    <span className="text-[10px] text-neutral-400 block font-medium">연락처</span>
-                    <span className="font-extrabold text-neutral-900 font-mono text-[11px]">
-                      {targetCustomerPhone || "010-****-****"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* 이메일 입력 (쿠폰이 발급될 계정) */}
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-neutral-700 flex items-center gap-1">
-                    <Mail className="w-3 h-3 text-neutral-500" />
-                    쿠폰 발급 대상 이메일
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={targetCustomerEmail}
-                    onChange={(e) => setTargetCustomerEmail(e.target.value)}
-                    placeholder="customer@choicomma.com"
-                    className="w-full px-3 py-2 bg-white border border-neutral-300 rounded-xl text-xs font-mono font-medium text-neutral-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                  />
-                  <p className="text-[10px] text-neutral-400">
-                    * 해당 이메일 회원의 마이페이지 쿠폰함 및 결제창에 실시간 연동됩니다.
-                  </p>
-                </div>
-
-                {/* 후기 내용 미리보기 */}
-                <div className="pt-2 border-t border-neutral-200/70 text-[11px]">
-                  <span className="text-neutral-400 block text-[10px] font-medium mb-0.5">선정된 후기 내용:</span>
-                  <div className="bg-white/80 p-2 rounded-lg border border-neutral-200/60 text-neutral-700 line-clamp-2 italic">
-                    "{couponModalReview.content}"
-                  </div>
-                </div>
-              </div>
-
-              {/* 쿠폰 발급 설정 카드 */}
-              <div className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-3.5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black text-amber-900 uppercase tracking-wider flex items-center gap-1">
-                    <Ticket className="w-3.5 h-3.5 text-amber-700" /> 쿠폰 혜택 설정
-                  </span>
-                  <span className="text-[10px] font-extrabold text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded-full border border-amber-300">
-                    전용 쿠폰
-                  </span>
-                </div>
-
-                {/* 쿠폰명 */}
-                <div className="bg-white p-2.5 rounded-xl border border-amber-200 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-neutral-400 block font-medium">쿠폰명</span>
-                    <span className="font-black text-neutral-950 text-xs">베스트 댓글 감사 쿠폰</span>
-                  </div>
-                  <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                    BEST REVIEW
-                  </span>
-                </div>
-
-                {/* 할인 금액 선택 버튼 */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-neutral-800 block">
-                    할인 금액 선택
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[10000, 30000, 50000].map((amt) => (
+              {/* Modal Form Body */}
+              <form onSubmit={handleSubmitReview} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+                {/* Star Rating Selection */}
+                <div className="space-y-1.5 text-center py-2 bg-neutral-50 rounded-2xl border border-neutral-200/80">
+                  <span className="text-xs font-bold text-neutral-700 block">{t.ratingLabel}</span>
+                  <div className="flex items-center justify-center gap-1.5 text-2xl cursor-pointer">
+                    {[1, 2, 3, 4, 5].map((star) => (
                       <button
-                        key={amt}
+                        key={star}
                         type="button"
-                        onClick={() => setCouponDiscountAmount(amt)}
-                        className={`py-2.5 px-1 rounded-xl text-xs font-black transition-all cursor-pointer border text-center ${
-                          couponDiscountAmount === amt
-                            ? "bg-amber-500 text-white border-amber-600 shadow-2xs scale-102"
-                            : "bg-white text-neutral-700 border-neutral-200 hover:border-amber-300 hover:bg-amber-50/50"
+                        onClick={() => setFormRating(star)}
+                        className={`transition-all hover:scale-115 p-1 ${
+                          star <= formRating ? "text-amber-400" : "text-neutral-300"
                         }`}
                       >
-                        {amt.toLocaleString()}원
+                        ★
                       </button>
                     ))}
                   </div>
-                </div>
-
-                {/* 유효기간 */}
-                <div>
-                  <span className="text-[11px] font-bold text-neutral-800 block mb-1">
-                    유효기간
+                  <span className="text-xs font-black text-neutral-950 font-mono">
+                    {formRating}점 만점
                   </span>
-                  <select
-                    value={couponValidDays}
-                    onChange={(e) => setCouponValidDays(Number(e.target.value))}
-                    className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-amber-500 cursor-pointer shadow-2xs"
-                  >
-                    <option value={7}>발급일로부터 7일</option>
-                    <option value={14}>발급일로부터 14일</option>
-                    <option value={30}>발급일로부터 30일</option>
-                    <option value={60}>발급일로부터 60일</option>
-                  </select>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
+                {/* Author & Option Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-extrabold text-neutral-700">{t.nameLabel}</label>
+                    <input
+                      type="text"
+                      value={formAuthor}
+                      onChange={(e) => setFormAuthor(e.target.value)}
+                      placeholder={t.namePlaceholder}
+                      className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-extrabold text-neutral-700">{t.optionLabel}</label>
+                    <input
+                      type="text"
+                      value={formOption}
+                      onChange={(e) => setFormOption(e.target.value)}
+                      placeholder={t.optionPlaceholder}
+                      className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950 font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Fit & Color Assessment */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-xs font-extrabold text-neutral-700">{t.fitLabel}</label>
+                    <select
+                      value={formSizeFit}
+                      onChange={(e) => setFormSizeFit(e.target.value as any)}
+                      className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950 bg-white"
+                    >
+                      <option value="정사이즈">{t.fitTrue}</option>
+                      <option value="조금 큼">{t.fitLarge}</option>
+                      <option value="조금 작음">{t.fitSmall}</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-extrabold text-neutral-700">{t.colorLabel}</label>
+                    <select
+                      value={formColorMatch}
+                      onChange={(e) => setFormColorMatch(e.target.value as any)}
+                      className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950 bg-white"
+                    >
+                      <option value="화면과 동일">{t.colorSame}</option>
+                      <option value="화면보다 밝음">{t.colorBright}</option>
+                      <option value="화면보다 어두움">{t.colorDark}</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Review Title */}
+                <div className="space-y-1">
+                  <label className="text-xs font-extrabold text-neutral-700">{t.titleLabel}</label>
+                  <input
+                    type="text"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    placeholder={t.titlePlaceholder}
+                    className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950 font-bold"
+                  />
+                </div>
+
+                {/* Review Content */}
+                <div className="space-y-1">
+                  <label className="text-xs font-extrabold text-neutral-700">{t.contentLabel}</label>
+                  <textarea
+                    rows={4}
+                    value={formContent}
+                    onChange={(e) => setFormContent(e.target.value)}
+                    placeholder={t.contentPlaceholder}
+                    className="w-full p-3 text-xs border border-neutral-300 rounded-xl focus:outline-none focus:border-neutral-950 resize-none text-neutral-900 leading-relaxed"
+                  />
+                </div>
+
+                {/* Photo Upload Section */}
+                <div className="space-y-2">
+                  <label className="text-xs font-extrabold text-neutral-700 flex items-center justify-between">
+                    <span>{t.photoLabel}</span>
+                    <span className="text-[11px] font-mono text-neutral-400">최대 3장</span>
+                  </label>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {formPhotos.map((photoUrl, idx) => (
+                      <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-neutral-200">
+                        <img src={photoUrl} alt="Upload preview" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setFormPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                          className="absolute top-1 right-1 p-0.5 bg-black/70 text-white rounded-full hover:bg-black cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {formPhotos.length < 3 && (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-16 h-16 rounded-xl border border-dashed border-neutral-300 hover:border-neutral-900 flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-950 transition-colors cursor-pointer bg-neutral-50"
+                      >
+                        <Camera className="w-4 h-4 mb-0.5" />
+                        <span className="text-[10px] font-bold">사진 추가</span>
+                      </button>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handlePhotoUpload}
+                    />
+                  </div>
+                </div>
+
+                {/* Submit Buttons */}
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsWriteModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
+                  >
+                    {t.cancel}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!formContent.trim()}
+                    className="px-5 py-2.5 bg-neutral-950 hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-400 text-white rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm"
+                  >
+                    {t.submit}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* 6. Photo Enlargement Lightbox Modal */}
+      {isMounted &&
+        typeof document !== "undefined" &&
+        selectedPhotoModal &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+            onClick={() => setSelectedPhotoModal(null)}
+          >
+            <div className="relative max-w-2xl max-h-[90vh] rounded-2xl overflow-hidden shadow-2xl">
+              <button
+                type="button"
+                onClick={() => setSelectedPhotoModal(null)}
+                className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black text-white rounded-full transition-colors cursor-pointer z-10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <img
+                src={selectedPhotoModal}
+                alt="Enlarged review photo"
+                className="max-h-[85vh] w-auto object-contain rounded-2xl"
+              />
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* 7. 관리자 전용: 고객 정보 및 '베스트 댓글 감사 쿠폰' 발급 모달 */}
+      {isMounted &&
+        typeof document !== "undefined" &&
+        couponModalReview &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+            onClick={() => setCouponModalReview(null)}
+          >
+            <div
+              className="bg-white rounded-3xl border border-neutral-200 shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-150 my-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-5 border-b border-neutral-100 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/40">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-amber-400/20 border border-amber-300 flex items-center justify-center text-amber-700 shadow-2xs">
+                    <Gift className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-sm sm:text-base font-black text-neutral-950">
+                        베스트 댓글 감사 쿠폰 지급
+                      </h3>
+                      <span className="text-[10px] font-black text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+                        ADMIN
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-neutral-500 mt-0.5">
+                      선정된 베스트 댓글 작성 고객님께 특별 쿠폰을 발급합니다.
+                    </p>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => setCouponModalReview(null)}
-                  className="px-4 py-2.5 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
+                  className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer"
                 >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black transition-all cursor-pointer shadow-md hover:scale-102"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>'베스트 댓글 감사 쿠폰' 즉시 발급</span>
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+
+              {/* Modal Body Form */}
+              <form onSubmit={handleIssueThankYouCoupon} className="p-5 space-y-4 text-xs">
+                {/* 고객 상세 정보 카드 */}
+                <div className="bg-neutral-50/90 border border-neutral-200 rounded-2xl p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-neutral-500 uppercase tracking-wider flex items-center gap-1">
+                      <User className="w-3.5 h-3.5 text-neutral-400" /> 작성 고객 정보
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-300">
+                      회원 등급: {targetCustomerGrade}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-white p-2 rounded-xl border border-neutral-200/80">
+                      <span className="text-[10px] text-neutral-400 block font-medium">고객명 / 닉네임</span>
+                      <span className="font-extrabold text-neutral-900">{targetCustomerName}</span>
+                    </div>
+                    <div className="bg-white p-2 rounded-xl border border-neutral-200/80">
+                      <span className="text-[10px] text-neutral-400 block font-medium">연락처</span>
+                      <span className="font-extrabold text-neutral-900 font-mono text-[11px]">
+                        {targetCustomerPhone || "010-****-****"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 이메일 입력 (쿠폰이 발급될 계정) */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-neutral-700 flex items-center gap-1">
+                      <Mail className="w-3 h-3 text-neutral-500" />
+                      쿠폰 발급 대상 이메일
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={targetCustomerEmail}
+                      onChange={(e) => setTargetCustomerEmail(e.target.value)}
+                      placeholder="customer@choicomma.com"
+                      className="w-full px-3 py-2 bg-white border border-neutral-300 rounded-xl text-xs font-mono font-medium text-neutral-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                    />
+                    <p className="text-[10px] text-neutral-400">
+                      * 해당 이메일 회원의 마이페이지 쿠폰함 및 결제창에 실시간 연동됩니다.
+                    </p>
+                  </div>
+
+                  {/* 후기 내용 미리보기 */}
+                  <div className="pt-2 border-t border-neutral-200/70 text-[11px]">
+                    <span className="text-neutral-400 block text-[10px] font-medium mb-0.5">선정된 후기 내용:</span>
+                    <div className="bg-white/80 p-2 rounded-lg border border-neutral-200/60 text-neutral-700 line-clamp-2 italic">
+                      "{couponModalReview.content}"
+                    </div>
+                  </div>
+                </div>
+
+                {/* 쿠폰 발급 설정 카드 */}
+                <div className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-3.5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-amber-900 uppercase tracking-wider flex items-center gap-1">
+                      <Ticket className="w-3.5 h-3.5 text-amber-700" /> 쿠폰 혜택 설정
+                    </span>
+                    <span className="text-[10px] font-extrabold text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded-full border border-amber-300">
+                      전용 쿠폰
+                    </span>
+                  </div>
+
+                  {/* 쿠폰명 */}
+                  <div className="bg-white p-2.5 rounded-xl border border-amber-200 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-neutral-400 block font-medium">쿠폰명</span>
+                      <span className="font-black text-neutral-950 text-xs">베스트 댓글 감사 쿠폰</span>
+                    </div>
+                    <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      BEST REVIEW
+                    </span>
+                  </div>
+
+                  {/* 할인 금액 선택 버튼 */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-neutral-800 block">
+                      할인 금액 선택
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[10000, 30000, 50000].map((amt) => (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => setCouponDiscountAmount(amt)}
+                          className={`py-2.5 px-1 rounded-xl text-xs font-black transition-all cursor-pointer border text-center ${
+                            couponDiscountAmount === amt
+                              ? "bg-amber-500 text-white border-amber-600 shadow-2xs scale-102"
+                              : "bg-white text-neutral-700 border-neutral-200 hover:border-amber-300 hover:bg-amber-50/50"
+                          }`}
+                        >
+                          {amt.toLocaleString()}원
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 유효기간 */}
+                  <div>
+                    <span className="text-[11px] font-bold text-neutral-800 block mb-1">
+                      유효기간
+                    </span>
+                    <select
+                      value={couponValidDays}
+                      onChange={(e) => setCouponValidDays(Number(e.target.value))}
+                      className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-amber-500 cursor-pointer shadow-2xs"
+                    >
+                      <option value={7}>발급일로부터 7일</option>
+                      <option value={14}>발급일로부터 14일</option>
+                      <option value={30}>발급일로부터 30일</option>
+                      <option value={60}>발급일로부터 60일</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
+                  <button
+                    type="button"
+                    onClick={() => setCouponModalReview(null)}
+                    className="px-4 py-2.5 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black transition-all cursor-pointer shadow-md hover:scale-102"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>'베스트 댓글 감사 쿠폰' 즉시 발급</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
