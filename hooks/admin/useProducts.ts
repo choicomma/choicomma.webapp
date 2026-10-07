@@ -63,7 +63,7 @@ export function useProducts({
         }
       } catch (e) {}
     }
-    return "productNoDesc";
+    return "custom";
   });
 
   const setProductSortOrder = useCallback((
@@ -643,10 +643,45 @@ export function useProducts({
   const handleReorderProducts = useCallback((fromId: string, toId: string, showToast: boolean = true) => {
     setProductSortOrder("custom");
     setProductsList((prev) => {
-      const fromIdx = prev.findIndex((p) => String(p.id) === String(fromId));
-      const toIdx = prev.findIndex((p) => String(p.id) === String(toId));
+      // 1. 현재 정렬 순서가 custom이 아니었던 경우 현재 정렬된 순서를 기본 순서로 동기화
+      let baseList = [...prev];
+      if (productSortOrder !== "custom") {
+        baseList = [...prev].sort((a, b) => {
+          if (productSortOrder === "productNoDesc") {
+            const numA = getProductNoNum(a);
+            const numB = getProductNoNum(b);
+            if (numB !== numA) return numB - numA;
+            const timeA = (a.created_at || a.createdAt) ? new Date(a.created_at || a.createdAt).getTime() : 0;
+            const timeB = (b.created_at || b.createdAt) ? new Date(b.created_at || b.createdAt).getTime() : 0;
+            return timeB - timeA;
+          }
+          if (productSortOrder === "productNoAsc") {
+            const numA = getProductNoNum(a);
+            const numB = getProductNoNum(b);
+            if (numA !== numB) return numA - numB;
+            return 0;
+          }
+          if (productSortOrder === "nameAsc") {
+            return (a.title || "").localeCompare(b.title || "");
+          }
+          if (productSortOrder === "priceDesc") {
+            const pA = parseFloat(a.priceRange?.minVariantPrice?.amount || a.price?.amount || "0");
+            const pB = parseFloat(b.priceRange?.minVariantPrice?.amount || b.price?.amount || "0");
+            return pB - pA;
+          }
+          if (productSortOrder === "priceAsc") {
+            const pA = parseFloat(a.priceRange?.minVariantPrice?.amount || a.price?.amount || "0");
+            const pB = parseFloat(b.priceRange?.minVariantPrice?.amount || b.price?.amount || "0");
+            return pA - pB;
+          }
+          return 0;
+        });
+      }
+
+      const fromIdx = baseList.findIndex((p) => String(p.id) === String(fromId));
+      const toIdx = baseList.findIndex((p) => String(p.id) === String(toId));
       if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return prev;
-      const updated = [...prev];
+      const updated = [...baseList];
       const [movedItem] = updated.splice(fromIdx, 1);
       updated.splice(toIdx, 0, movedItem);
       saveProductsToStorage(updated);
@@ -655,7 +690,7 @@ export function useProducts({
       }
       return updated;
     });
-  }, [saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [getProductNoNum, productSortOrder, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleClearAllProducts = useCallback(() => {
     const totalCount = actualProductsCount;
@@ -757,20 +792,13 @@ export function useProducts({
     newOrder: "productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom"
   ) => {
     setProductSortOrder(newOrder);
+    if (newOrder === "custom") {
+      triggerToast("✅ 사용자 지정 순서(드래그 앤 드롭) 모드로 변경되었습니다.");
+      return;
+    }
 
     setProductsList((prev) => {
       const sorted = [...prev].sort((a, b) => {
-        if (newOrder === "custom") {
-          const timeA = (a.created_at || a.createdAt) ? new Date(a.created_at || a.createdAt).getTime() : 0;
-          const timeB = (b.created_at || b.createdAt) ? new Date(b.created_at || b.createdAt).getTime() : 0;
-          if (timeB !== timeA) return timeB - timeA;
-
-          const numA = getProductNoNum(a);
-          const numB = getProductNoNum(b);
-          if (numB !== numA) return numB - numA;
-
-          return 0;
-        }
         if (newOrder === "productNoDesc") {
           return getProductNoNum(b) - getProductNoNum(a);
         }
@@ -794,10 +822,8 @@ export function useProducts({
       });
       saveProductsToStorage(sorted);
       triggerToast(
-        newOrder === "custom"
+        newOrder === "productNoDesc"
           ? "✅ 상품 목록이 '최신 등록순'으로 정렬되었습니다."
-          : newOrder === "productNoDesc"
-          ? "✅ 상품 목록이 '등록번호 역순'으로 정렬되었습니다."
           : newOrder === "productNoAsc"
           ? "✅ 상품 목록이 '등록번호 순'으로 정렬되었습니다."
           : newOrder === "nameAsc"

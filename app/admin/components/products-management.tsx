@@ -694,10 +694,10 @@ export function ProductsManagement({
   const totalItems = displayedProducts.length;
   const totalPages = pageSize === -1 ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
 
-  // Reset page to 1 when filter/search/metric/sort/pageSize changes
+  // Reset page to 1 when filter/search/metric/pageSize changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategoryFilter, selectedMetricFilter, productSortOrder, pageSize]);
+  }, [searchQuery, selectedCategoryFilter, selectedMetricFilter, pageSize]);
 
   // Keep currentPage inside valid range
   useEffect(() => {
@@ -868,11 +868,12 @@ export function ProductsManagement({
   // Drag & Drop Reordering State & Handlers
   const [draggedProductId, setDraggedProductId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const isDraggingRef = useRef(false);
+  const dragStartTimeRef = useRef(0);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
-    if (productSortOrder !== "custom") {
-      setProductSortOrder("custom");
-    }
+    isDraggingRef.current = true;
+    dragStartTimeRef.current = Date.now();
     setDraggedProductId(id);
     e.dataTransfer.effectAllowed = "move";
     try {
@@ -904,11 +905,17 @@ export function ProductsManagement({
     }
     setDraggedProductId(null);
     setDropTargetId(null);
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 150);
   };
 
   const handleDragEnd = () => {
     setDraggedProductId(null);
     setDropTargetId(null);
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 150);
   };
 
   // Calculate maximum existing productNo integer
@@ -1411,8 +1418,8 @@ export function ProductsManagement({
               onChange={(e) => setProductSortOrder(e.target.value as any)}
               className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 cursor-pointer"
             >
-              <option value="productNoDesc">최신 등록순 (기본)</option>
               <option value="custom">사용자 지정 순서 (드래그 앤 드롭)</option>
+              <option value="productNoDesc">최신 등록순</option>
               <option value="productNoAsc">등록번호 순 (낮은 번호순)</option>
               <option value="nameAsc">상품명순 (가나다)</option>
               <option value="priceDesc">높은 가격순</option>
@@ -1571,14 +1578,19 @@ export function ProductsManagement({
 
                   return (
                     <tr
-                      key={`${p.id}-${index}`}
+                      key={String(p.id)}
                       draggable={true}
                       onDragStart={(e) => handleDragStart(e, String(p.id))}
                       onDragOver={(e) => handleDragOver(e, String(p.id))}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, String(p.id))}
                       onDragEnd={handleDragEnd}
-                      onClick={() => handleOpenEditModal(p)}
+                      onClick={() => {
+                        if (isDraggingRef.current || Date.now() - dragStartTimeRef.current < 200) {
+                          return;
+                        }
+                        handleOpenEditModal(p);
+                      }}
                       className={`hover:bg-amber-50/60 transition-all duration-150 cursor-pointer group ${
                         isSelected ? "bg-amber-50/80" : ""
                       } ${
@@ -1595,8 +1607,8 @@ export function ProductsManagement({
                         title="마우스로 드래그하여 상품 순서를 위/아래로 이동할 수 있습니다."
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-center p-1 rounded hover:bg-neutral-200/50">
-                          <GripVertical className="w-4 h-4 text-neutral-400 group-hover:text-amber-800 transition-colors" />
+                        <div className="flex items-center justify-center p-1 rounded hover:bg-neutral-200/50 pointer-events-none">
+                          <GripVertical className="w-4 h-4 text-neutral-400 group-hover:text-amber-800 transition-colors pointer-events-none" />
                         </div>
                       </td>
                       <td className="py-2 px-2 w-8 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
