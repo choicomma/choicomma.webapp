@@ -6,6 +6,7 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { QuickOptionModal } from "./quick-option-modal";
 import { Clock } from "lucide-react";
+import { getAvailableCoupons } from "@/lib/membership/coupons";
 import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 
 // Returns badge config by productLabel value
@@ -181,17 +182,85 @@ export function FeaturedProductLabel({
     };
   }, [product]);
 
+  const [couponDiscount, setCouponDiscount] = useState<number>(0);
+  const [pointsDiscount, setPointsDiscount] = useState<number>(0);
+
   const basePrice = parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
   const maxPrice = parseFloat(product.priceRange?.maxVariantPrice?.amount || "0");
   const origPriceNum = maxPrice > basePrice ? maxPrice : basePrice;
 
-  let finalPriceNum = basePrice;
-  let strikethroughPriceNum: number | null = null;
+  useEffect(() => {
+    const updateBenefitDiscount = () => {
+      if (typeof window === "undefined") return;
+      try {
+        const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const grade = (localStorage.getItem("user_grade") || localStorage.getItem("user_role") || "GENERAL").toUpperCase();
+        const availableCoupons = getAvailableCoupons(email, grade);
+        const eligibleCoupons = availableCoupons.filter((c) => c.type !== "SHIPPING" && !c.isUsed && c.isActive !== false);
 
-  if (timeSaleDiscount !== null && timeSaleDiscount > 0) {
-    strikethroughPriceNum = origPriceNum;
-    finalPriceNum = Math.round(origPriceNum * (1 - timeSaleDiscount / 100));
-  }
+        const currentTargetPrice = (timeSaleDiscount !== null && timeSaleDiscount > 0)
+          ? Math.round(origPriceNum * (1 - timeSaleDiscount / 100))
+          : origPriceNum;
+
+        let maxDiscount = 0;
+        if (eligibleCoupons.length > 0) {
+          for (const coupon of eligibleCoupons) {
+            if (coupon.minOrderAmount && currentTargetPrice < coupon.minOrderAmount) continue;
+            let d = 0;
+            const isPercent =
+              (coupon.discount && coupon.discount.includes("%")) ||
+              (coupon.discountAmount > 0 && coupon.discountAmount <= 99 && (coupon as any).discountType === "RATE");
+            if (isPercent) {
+              d = Math.round(currentTargetPrice * (coupon.discountAmount / 100));
+            } else {
+              d = coupon.discountAmount || 0;
+            }
+            if (d > currentTargetPrice) d = currentTargetPrice;
+            if (d > maxDiscount) maxDiscount = d;
+          }
+        }
+
+        const afterCoupon = Math.max(0, currentTargetPrice - maxDiscount);
+        let pointsD = 0;
+        try {
+          const userPts = parseInt(localStorage.getItem("membership_user_points") || "0");
+          if (userPts > 0) {
+            pointsD = Math.min(userPts, afterCoupon);
+          } else {
+            pointsD = Math.floor(afterCoupon * 0.01);
+          }
+        } catch (e) {}
+
+        setCouponDiscount(maxDiscount);
+        setPointsDiscount(pointsD);
+      } catch (e) {
+        setCouponDiscount(0);
+        setPointsDiscount(0);
+      }
+    };
+
+    updateBenefitDiscount();
+    window.addEventListener("storage", updateBenefitDiscount);
+    window.addEventListener("auth_changed", updateBenefitDiscount);
+    window.addEventListener("coupons_updated", updateBenefitDiscount);
+    window.addEventListener("membership_points_updated", updateBenefitDiscount);
+    window.addEventListener("admin_products_updated", updateBenefitDiscount);
+    return () => {
+      window.removeEventListener("storage", updateBenefitDiscount);
+      window.removeEventListener("auth_changed", updateBenefitDiscount);
+      window.removeEventListener("coupons_updated", updateBenefitDiscount);
+      window.removeEventListener("membership_points_updated", updateBenefitDiscount);
+      window.removeEventListener("admin_products_updated", updateBenefitDiscount);
+    };
+  }, [product, timeSaleDiscount, origPriceNum]);
+
+  const timeSalePrice = (timeSaleDiscount !== null && timeSaleDiscount > 0)
+    ? Math.round(origPriceNum * (1 - timeSaleDiscount / 100))
+    : origPriceNum;
+  const baseForBenefits = (timeSaleDiscount !== null && timeSaleDiscount > 0) ? timeSalePrice : origPriceNum;
+  const afterCoupon = Math.max(0, baseForBenefits - couponDiscount);
+  const finalPriceNum = Math.max(0, afterCoupon - pointsDiscount);
+  const strikethroughPriceNum = finalPriceNum < origPriceNum ? origPriceNum : null;
 
   if (principal) {
     return (

@@ -280,10 +280,11 @@ export default function CheckoutClientWrapper() {
       setAppliedDiscount(0);
       setCouponMessage("쿠폰 적용이 해제되었습니다. (미적용)");
 
-      // 쿠폰 해제 시 기존 입력된 적립금이 있다면 상품 금액 내에서 적립금 사용 가능하도록 재계산
+      // 쿠폰 해제 시 기존 입력된 적립금이 있다면 배송비 포함 주문 금액 내에서 적립금 사용 가능하도록 재계산
       const parsedPoints = parseInt(usedPointsInput) || 0;
       if (parsedPoints > 0) {
-        const maxUsable = totalItemAmount;
+        const totalOrderAmount = totalItemAmount + shippingFee;
+        const maxUsable = totalOrderAmount;
         const finalUse = Math.min(parsedPoints, Math.min(availablePoints, maxUsable));
         if (finalUse > 0) {
           setAppliedPoints(finalUse);
@@ -298,12 +299,13 @@ export default function CheckoutClientWrapper() {
       setAppliedDiscount(found.discountAmount);
       setCouponMessage(`🎉 ${found.title}이 선택 적용되었습니다! (-${found.discountAmount.toLocaleString()}원)`);
 
-      // 쿠폰 할인 적용으로 적립금 사용 한도가 줄어드는 경우 적립금 자동 조정
-      const maxUsable = Math.max(0, totalItemAmount - found.discountAmount);
+      // 쿠폰 할인 적용 시 적립금 사용 한도 조정 (배송비 포함 총 결제금액 기준)
+      const totalOrderAmount = totalItemAmount + shippingFee;
+      const maxUsable = Math.max(0, totalOrderAmount - found.discountAmount);
       if (appliedPoints > maxUsable) {
         setAppliedPoints(maxUsable);
         if (maxUsable === 0) {
-          setPointsMessage("쿠폰 할인 적용으로 상품 결제 대상 금액이 0원이 되어 적립금이 0P로 조정되었습니다.");
+          setPointsMessage("쿠폰 할인 적용으로 결제 대상 금액이 0원이 되어 적립금이 0P로 조정되었습니다.");
         } else {
           setPointsMessage(`쿠폰 할인으로 인해 적립금 사용액이 ${maxUsable.toLocaleString()}P로 자동 조정되었습니다.`);
         }
@@ -478,21 +480,40 @@ export default function CheckoutClientWrapper() {
       setPointsMessage(`❌ 보유 적립금(${availablePoints.toLocaleString()}P) 초과 사용은 불가능합니다.`);
       return;
     }
-    // 적립금은 상품 금액(쿠폰 할인 차감 후)에 대해 최대 사용 가능 (배송비는 별도 부과)
-    const maxUsable = Math.max(0, totalItemAmount - appliedDiscount);
+
+    const totalOrderAmount = totalItemAmount + shippingFee;
+    let effectiveDiscount = appliedDiscount;
+
+    // 만약 입력한 적립금이 (주문총액 - 쿠폰할인)보다 크다면, 적립금 전액/우선 사용을 위해 쿠폰 자동 해제
+    if (amount > totalOrderAmount - effectiveDiscount && effectiveDiscount > 0) {
+      effectiveDiscount = 0;
+      setAppliedDiscount(0);
+      setSelectedCouponId("NONE");
+      userSelectedCouponRef.current = "NONE";
+      setIsUserManualCoupon(true);
+      setCouponMessage("적립금 사용 확대로 쿠폰 적용이 해제되었습니다. (쿠폰은 보관됩니다)");
+    }
+
+    // 적립금은 배송비를 포함한 결제 대상 금액 전체에 대해 제한 없이 사용 가능 (20,000원 제한 해제)
+    const maxUsable = Math.max(0, totalOrderAmount - effectiveDiscount);
     if (maxUsable <= 0) {
       setAppliedPoints(0);
-      setPointsMessage("쿠폰 할인으로 상품 결제 대상 금액이 0원이 되어 적립금을 사용할 수 없습니다. (쿠폰 적용 해제 시 적립금 사용 가능)");
+      setPointsMessage("결제 대상 금액이 0원이 되어 적립금을 사용할 수 없습니다.");
       return;
     }
-    const finalUse = Math.min(amount, maxUsable);
+
+    const finalUse = Math.min(amount, Math.min(availablePoints, maxUsable));
     setAppliedPoints(finalUse);
     setPointsMessage(`🎉 ${finalUse.toLocaleString()}P 적립금이 적용되었습니다.`);
   };
 
   const handleUseAllPoints = () => {
-    const maxUsable = Math.max(0, totalItemAmount - appliedDiscount);
-    const finalUse = Math.min(availablePoints, maxUsable);
+    const totalOrderAmount = totalItemAmount + shippingFee;
+    // 쿠폰이 적용되어 있다면 쿠폰 할인 후 남은 실 결제 금액(배송비 포함 0원 결제)을 채우고,
+    // 쿠폰이 없다면 주문 총액 전체 또는 보유 적립금 전액을 적용
+    const remainingWithCoupon = Math.max(0, totalOrderAmount - appliedDiscount);
+    const targetAmount = appliedDiscount > 0 ? remainingWithCoupon : totalOrderAmount;
+    const finalUse = Math.min(availablePoints, targetAmount);
     setUsedPointsInput(String(finalUse));
     handleApplyPoints(finalUse);
   };

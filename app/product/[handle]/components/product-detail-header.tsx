@@ -427,7 +427,7 @@ export function ProductDetailHeader({
         const userPts = parseInt(localStorage.getItem("membership_user_points") || "0");
         if (userPts > 0) {
           // 보유 적립금이 있는 경우 사용 가능한 적립금 적용 (최대 혜택)
-          pointsD = Math.min(userPts, Math.max(0, afterCoupon - 1000));
+          pointsD = Math.min(userPts, afterCoupon);
         } else {
           // 신규/일반 회원 기본 1% 적립 혜택
           pointsD = Math.floor(afterCoupon * 0.01);
@@ -463,14 +463,18 @@ export function ProductDetailHeader({
     window.addEventListener("storage", updateTimeSaleProduct);
     window.addEventListener("auth_changed", updateTimeSaleProduct);
     window.addEventListener("coupons_updated", updateTimeSaleProduct);
+    window.addEventListener("membership_points_updated", updateTimeSaleProduct);
     window.addEventListener("secret_timesales_updated", updateTimeSaleProduct);
     window.addEventListener("admin_products_updated", updateTimeSaleProduct);
+    window.addEventListener("admin_customers_updated", updateTimeSaleProduct);
     return () => {
       window.removeEventListener("storage", updateTimeSaleProduct);
       window.removeEventListener("auth_changed", updateTimeSaleProduct);
       window.removeEventListener("coupons_updated", updateTimeSaleProduct);
+      window.removeEventListener("membership_points_updated", updateTimeSaleProduct);
       window.removeEventListener("secret_timesales_updated", updateTimeSaleProduct);
       window.removeEventListener("admin_products_updated", updateTimeSaleProduct);
+      window.removeEventListener("admin_customers_updated", updateTimeSaleProduct);
     };
   }, [initialProduct]);
 

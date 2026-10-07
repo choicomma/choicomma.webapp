@@ -20,6 +20,7 @@ export const ProductCard = ({ product }: { product: Product }) => {
   const [secretSaleInfo, setSecretSaleInfo] = React.useState<{ discount: number; title?: string } | null>(null);
   const [bestCouponDiscount, setBestCouponDiscount] = React.useState<number>(0);
   const [bestCouponTitle, setBestCouponTitle] = React.useState<string>("");
+  const [bestPointsDiscount, setBestPointsDiscount] = React.useState<number>(0);
 
   React.useEffect(() => {
     setCurrentLang(getCurrentLanguage());
@@ -129,31 +130,19 @@ export const ProductCard = ({ product }: { product: Product }) => {
   const maxPrice = parseFloat(product.priceRange?.maxVariantPrice?.amount || (product as any).price || "0");
   const origPriceNum = maxPrice > basePrice ? maxPrice : basePrice;
 
-  // Calculate Best Available Coupon for this Customer
+  // Calculate Best Available Coupon & Points for this Customer (상세페이지 세일+쿠폰+적립금 적용가와 동일 로직)
   React.useEffect(() => {
     const updateCouponStatus = () => {
       if (typeof window === "undefined") return;
       try {
-        const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
-        const userName = localStorage.getItem("membership_user_name");
-        const isLogged = isLoggedInFlag || Boolean(userName && userName.trim().length > 0);
-
-        if (!isLogged) {
-          setBestCouponDiscount(0);
-          setBestCouponTitle("");
-          return;
-        }
-
         // Check if Time Sale is active for this product
         const isTimeSaleActive = timeSaleDiscount !== null && timeSaleDiscount > 0;
         const allowCouponInTimeSale = (product as any).timeSaleAllowCoupon !== false;
 
-        // 타임세일 중인데 해당 상품의 타임세일 설정에서 쿠폰 적용이 비활성화된 경우 제외
-        if (isTimeSaleActive && !allowCouponInTimeSale) {
-          setBestCouponDiscount(0);
-          setBestCouponTitle("");
-          return;
-        }
+        // 쿠폰 할인 계산 기준 금액 (타임세일 적용 시 타임세일가, 아닐 시 정상가)
+        const currentTargetPrice = isTimeSaleActive
+          ? Math.round(origPriceNum * (1 - (timeSaleDiscount || 0) / 100))
+          : origPriceNum;
 
         const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
         const grade = (localStorage.getItem("user_grade") || localStorage.getItem("user_role") || "GENERAL").toUpperCase();
@@ -164,52 +153,58 @@ export const ProductCard = ({ product }: { product: Product }) => {
           (c) => c.type !== "SHIPPING" && !c.isUsed && c.isActive !== false
         );
 
-        if (eligibleCoupons.length === 0) {
-          setBestCouponDiscount(0);
-          setBestCouponTitle("");
-          return;
-        }
-
-        // 쿠폰 할인 계산 기준 금액 (타임세일 적용 시 타임세일가, 아닐 시 정상가)
-        const currentTargetPrice = isTimeSaleActive
-          ? Math.round(origPriceNum * (1 - (timeSaleDiscount || 0) / 100))
-          : origPriceNum;
-
         let maxDiscount = 0;
         let bestTitle = "";
 
-        // 보유 쿠폰 중 가장 할인 금액이 큰 쿠폰 1개 자동 선택
-        for (const coupon of eligibleCoupons) {
-          if (coupon.minOrderAmount && currentTargetPrice < coupon.minOrderAmount) {
-            continue;
-          }
+        // 타임세일 중인데 쿠폰 적용이 비활성화된 경우가 아니면 쿠폰 할인 적용
+        if (!(isTimeSaleActive && !allowCouponInTimeSale) && eligibleCoupons.length > 0) {
+          for (const coupon of eligibleCoupons) {
+            if (coupon.minOrderAmount && currentTargetPrice < coupon.minOrderAmount) {
+              continue;
+            }
 
-          let discountVal = 0;
-          const isPercent =
-            (coupon.discount && coupon.discount.includes("%")) ||
-            (coupon.discountAmount > 0 && coupon.discountAmount <= 99 && (coupon as any).discountType === "RATE");
+            let discountVal = 0;
+            const isPercent =
+              (coupon.discount && coupon.discount.includes("%")) ||
+              (coupon.discountAmount > 0 && coupon.discountAmount <= 99 && (coupon as any).discountType === "RATE");
 
-          if (isPercent) {
-            discountVal = Math.round(currentTargetPrice * (coupon.discountAmount / 100));
-          } else {
-            discountVal = coupon.discountAmount || 0;
-          }
+            if (isPercent) {
+              discountVal = Math.round(currentTargetPrice * (coupon.discountAmount / 100));
+            } else {
+              discountVal = coupon.discountAmount || 0;
+            }
 
-          if (discountVal > currentTargetPrice) {
-            discountVal = currentTargetPrice;
-          }
+            if (discountVal > currentTargetPrice) {
+              discountVal = currentTargetPrice;
+            }
 
-          if (discountVal > maxDiscount) {
-            maxDiscount = discountVal;
-            bestTitle = coupon.title;
+            if (discountVal > maxDiscount) {
+              maxDiscount = discountVal;
+              bestTitle = coupon.title;
+            }
           }
         }
 
+        const afterCoupon = Math.max(0, currentTargetPrice - maxDiscount);
+
+        // 적립금 (Points) 계산: 상세페이지 세일+쿠폰+적립금 적용가와 동일하게 산출
+        let pointsD = 0;
+        try {
+          const userPts = parseInt(localStorage.getItem("membership_user_points") || "0");
+          if (userPts > 0) {
+            pointsD = Math.min(userPts, afterCoupon);
+          } else {
+            pointsD = Math.floor(afterCoupon * 0.01);
+          }
+        } catch (e) {}
+
         setBestCouponDiscount(maxDiscount);
         setBestCouponTitle(bestTitle);
+        setBestPointsDiscount(pointsD);
       } catch (e) {
         setBestCouponDiscount(0);
         setBestCouponTitle("");
+        setBestPointsDiscount(0);
       }
     };
 
@@ -217,14 +212,18 @@ export const ProductCard = ({ product }: { product: Product }) => {
     window.addEventListener("storage", updateCouponStatus);
     window.addEventListener("auth_changed", updateCouponStatus);
     window.addEventListener("coupons_updated", updateCouponStatus);
+    window.addEventListener("membership_points_updated", updateCouponStatus);
     window.addEventListener("secret_timesales_updated", updateCouponStatus);
     window.addEventListener("admin_products_updated", updateCouponStatus);
+    window.addEventListener("admin_customers_updated", updateCouponStatus);
     return () => {
       window.removeEventListener("storage", updateCouponStatus);
       window.removeEventListener("auth_changed", updateCouponStatus);
       window.removeEventListener("coupons_updated", updateCouponStatus);
+      window.removeEventListener("membership_points_updated", updateCouponStatus);
       window.removeEventListener("secret_timesales_updated", updateCouponStatus);
       window.removeEventListener("admin_products_updated", updateCouponStatus);
+      window.removeEventListener("admin_customers_updated", updateCouponStatus);
     };
   }, [product, timeSaleDiscount, origPriceNum]);
 
@@ -233,18 +232,11 @@ export const ProductCard = ({ product }: { product: Product }) => {
     ? Math.round(origPriceNum * (1 - (timeSaleDiscount || 0) / 100))
     : origPriceNum;
 
-  let finalPriceNum = isTimeSaleActive ? timeSalePrice : origPriceNum;
-  let strikethroughPriceNum: number | null = null;
-
-  if (isTimeSaleActive) {
-    strikethroughPriceNum = origPriceNum;
-    if (bestCouponDiscount > 0) {
-      finalPriceNum = Math.max(0, timeSalePrice - bestCouponDiscount);
-    }
-  } else if (bestCouponDiscount > 0) {
-    strikethroughPriceNum = origPriceNum;
-    finalPriceNum = Math.max(0, origPriceNum - bestCouponDiscount);
-  }
+  // 상세페이지의 '세일+쿠폰+적립금 적용가'와 100% 동일하게 산출
+  const baseForBenefits = isTimeSaleActive ? timeSalePrice : origPriceNum;
+  const afterCoupon = Math.max(0, baseForBenefits - bestCouponDiscount);
+  const finalPriceNum = Math.max(0, afterCoupon - bestPointsDiscount);
+  const strikethroughPriceNum = finalPriceNum < origPriceNum ? origPriceNum : null;
 
   const currCode = product.currencyCode || product.priceRange?.minVariantPrice?.currencyCode || "KRW";
 
