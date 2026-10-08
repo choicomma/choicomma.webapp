@@ -1345,6 +1345,21 @@ export default function AdminPage() {
           setIsAddModalOpen(false);
           setEditingProduct(null);
 
+          // Synchronize secret_timesale_item_settings if exists in localStorage
+          if (typeof window !== "undefined" && savedProduct.id) {
+            try {
+              const itemSettingsRaw = localStorage.getItem("secret_timesale_item_settings");
+              if (itemSettingsRaw) {
+                const itemSettings = JSON.parse(itemSettingsRaw);
+                const pId = String(savedProduct.id);
+                if (itemSettings[pId]) {
+                  itemSettings[pId].discountRate = savedProduct.timeSaleDiscountRate;
+                  localStorage.setItem("secret_timesale_item_settings", JSON.stringify(itemSettings));
+                }
+              }
+            } catch (e) {}
+          }
+
           saveSingleProduct(savedProduct, isNew);
           saveProductsToStorage(updatedList);
         }}

@@ -231,8 +231,8 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
 
     const itemSetting = timeSaleSettings.itemSettings[prodId] || timeSaleSettings.itemSettings[handle] || timeSaleSettings.itemSettings[pCode];
 
-    if (itemSetting?.discountRate) return parseInt(String(itemSetting.discountRate));
     if (product.timeSaleDiscountRate) return parseInt(String(product.timeSaleDiscountRate));
+    if (itemSetting?.discountRate) return parseInt(String(itemSetting.discountRate));
     if (product.discountRate) return parseInt(String(product.discountRate));
 
     return timeSaleSettings.globalDiscount || 35;

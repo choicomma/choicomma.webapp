@@ -89,22 +89,61 @@ export const ProductCard = ({ product }: { product: Product }) => {
           return;
         }
 
+        let currentProd = product;
+        const savedProds = localStorage.getItem("admin_products");
+        if (savedProds) {
+          try {
+            const parsed = JSON.parse(savedProds);
+            const found = parsed.find((p: any) => String(p.id) === String(product.id) || (product.handle && p.handle === product.handle));
+            if (found) currentProd = found;
+          } catch (e) {}
+        }
+
         let isSelected = false;
         const savedIds = localStorage.getItem("secret_timesale_product_ids");
         if (savedIds !== null) {
           try {
             const parsedIds: any[] = JSON.parse(savedIds);
-            isSelected = parsedIds.some((id: any) => String(id) === String(product.id));
+            isSelected = parsedIds.some((id: any) => String(id) === String(currentProd.id) || (currentProd.handle && String(id) === String(currentProd.handle)));
           } catch (e) {}
         } else {
-          isSelected = (product as any).isTimeSale === true || product.categoryId === "timesale" || product.tags?.includes("TIMESALE");
+          isSelected = (currentProd as any).isTimeSale === true || currentProd.categoryId === "timesale" || currentProd.tags?.includes("TIMESALE");
         }
 
-        if (isSelected || (product as any).isTimeSale === true) {
-          let discount = (product as any).timeSaleDiscountRate || (product as any).discountRate || 35;
-          const savedDisc = localStorage.getItem("secret_timesale_discount");
-          if (savedDisc && !isNaN(parseInt(savedDisc))) {
-            discount = parseInt(savedDisc);
+        const isTimeSale =
+          isSelected ||
+          (currentProd as any).isTimeSale === true ||
+          currentProd.categoryId === "timesale" ||
+          currentProd.tags?.includes("TIMESALE");
+
+        if (isTimeSale) {
+          let itemDiscount: number | null = null;
+          const itemSettingsSaved = localStorage.getItem("secret_timesale_item_settings");
+          if (itemSettingsSaved) {
+            try {
+              const parsedSettings = JSON.parse(itemSettingsSaved);
+              const pId = String(currentProd.id || "");
+              const pHandle = String(currentProd.handle || "");
+              if (parsedSettings[pId]?.discountRate) {
+                itemDiscount = parseInt(parsedSettings[pId].discountRate);
+              } else if (parsedSettings[pHandle]?.discountRate) {
+                itemDiscount = parseInt(parsedSettings[pHandle].discountRate);
+              }
+            } catch (e) {}
+          }
+
+          let discount =
+            (currentProd as any).timeSaleDiscountRate ||
+            itemDiscount ||
+            (currentProd as any).discountRate;
+
+          if (!discount) {
+            const savedDisc = localStorage.getItem("secret_timesale_discount");
+            if (savedDisc && !isNaN(parseInt(savedDisc))) {
+              discount = parseInt(savedDisc);
+            } else {
+              discount = 35;
+            }
           }
           setTimeSaleDiscount(discount);
         } else {

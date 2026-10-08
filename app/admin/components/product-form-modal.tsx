@@ -426,7 +426,11 @@ export function ProductFormModal({
       setFabricImage(initFabricImg);
 
       setIsTimeSale(Boolean(initialProduct.isTimeSale));
-      setTimeSaleDiscountRate(String(initialProduct.timeSaleDiscountRate || 35));
+      setTimeSaleDiscountRate(
+        initialProduct.timeSaleDiscountRate !== undefined && initialProduct.timeSaleDiscountRate !== null
+          ? String(initialProduct.timeSaleDiscountRate)
+          : String(initialProduct.discountRate || 35)
+      );
       setTimeSaleAllowCoupon(initialProduct.timeSaleAllowCoupon !== false);
       setTimeSaleAllowPoints(initialProduct.timeSaleAllowPoints !== false);
       if (initialProduct.timeSaleStartDate) {

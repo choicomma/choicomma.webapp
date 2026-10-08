@@ -143,9 +143,9 @@ export function FeaturedProductLabel({
 
         if (isTimeSale) {
           let discount =
-            itemDiscount ||
             (product as any).timeSaleDiscountRate ||
             (linked as any)?.timeSaleDiscountRate ||
+            itemDiscount ||
             (product as any).discountRate ||
             (linked as any)?.discountRate;
 
