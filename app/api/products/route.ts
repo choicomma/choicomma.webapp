@@ -279,7 +279,7 @@ function formatProductForDb(p: any, createdAtIso?: string) {
     ],
     sizes: p.sizes || [],
     colors: p.colors || [],
-    stock: p.stock || 100,
+    stock: p.stock !== undefined && p.stock !== null && !isNaN(Number(p.stock)) ? Number(p.stock) : 0,
     sizeStock: p.sizeStock || {},
     colorHexMap: p.colorHexMap || {},
     productLabel: p.productLabel || "",

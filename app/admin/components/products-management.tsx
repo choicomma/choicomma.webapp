@@ -984,6 +984,152 @@ export function ProductsManagement({
     return maxNo;
   };
 
+  // Download Currently Registered Products as Excel (.xlsx) with Option-Level Details
+  const handleDownloadCurrentProducts = () => {
+    try {
+      const exportableProducts = productsList.filter(
+        (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+      );
+
+      if (exportableProducts.length === 0) {
+        alert("다운로드할 등록 상품이 없습니다.");
+        return;
+      }
+
+      // 1. Sheet 1: 등록상품목록 (1 row per product)
+      const masterData = exportableProducts.map((p, idx) => {
+        const pno = p.productNo !== undefined && p.productNo !== null ? p.productNo : (idx + 1);
+        const pcode = p.productCode || (pno ? `CC-${String(pno).padStart(3, "0")}` : "");
+        const priceNum = Number(p.price?.amount || p.priceRange?.minVariantPrice?.amount || 0);
+        const stockNum = p.stock !== undefined ? Number(p.stock) : getProductStock(p);
+        const colorsStr = Array.isArray(p.colors) && p.colors.length > 0 ? p.colors.join(", ") : "ONE COLOR";
+        const sizesStr = Array.isArray(p.sizes) && p.sizes.length > 0 ? p.sizes.join(", ") : "FREE";
+
+        let optionStockStr = "";
+        if (p.sizeStock && typeof p.sizeStock === "object") {
+          optionStockStr = Object.entries(p.sizeStock)
+            .map(([combo, qty]) => `${combo}: ${qty}개`)
+            .join(" | ");
+        }
+
+        return {
+          "번호": idx + 1,
+          "상품번호": pno,
+          "자체상품코드": pcode,
+          "상품명": p.title || "",
+          "카테고리": p.categoryId || (Array.isArray(p.categoryIds) ? p.categoryIds.join(", ") : "outer"),
+          "판매상태": p.availableForSale === false ? "품절" : "판매중",
+          "판매가(원)": priceNum,
+          "총 재고수량": stockNum,
+          "색상": colorsStr,
+          "사이즈": sizesStr,
+          "옵션별 재고상세": optionStockStr,
+          "상품 라벨": p.productLabel || "PREMIUM",
+          "대표 이미지 URL": p.featuredImage?.url || (Array.isArray(p.images) && p.images[0]?.url) || "",
+          "소재 성분": p.fabricComposition || "",
+          "신축성": p.elasticity || "보통",
+          "비침": p.sheerness || "없음",
+          "두께감": p.thickness || "적당함",
+          "안감": p.lining || "없음",
+          "타임세일 여부": p.isTimeSale ? "Y" : "N",
+          "타임세일 할인가": p.timeSaleDiscountPrice || "",
+          "타임세일 할인율": p.timeSaleDiscountRate ? `${p.timeSaleDiscountRate}%` : "",
+          "메인진열": p.isMainFeatured !== false ? "Y" : "N",
+          "상품 간단설명": p.description || "",
+          "등록일시": p.created_at || p.createdAt || "",
+        };
+      });
+
+      // 2. Sheet 2: 옵션별_상세재고 (1 row per variant combination)
+      const variantRows: any[] = [];
+      exportableProducts.forEach((p, pIdx) => {
+        const pno = p.productNo !== undefined && p.productNo !== null ? p.productNo : (pIdx + 1);
+        const pcode = p.productCode || (pno ? `CC-${String(pno).padStart(3, "0")}` : "");
+        const priceNum = Number(p.price?.amount || p.priceRange?.minVariantPrice?.amount || 0);
+        const pAvail = p.availableForSale === false ? "품절" : "판매중";
+
+        const colors = Array.isArray(p.colors) && p.colors.length > 0 ? p.colors : ["ONE COLOR"];
+        const sizes = Array.isArray(p.sizes) && p.sizes.length > 0 ? p.sizes : ["FREE"];
+
+        colors.forEach((c: string) => {
+          sizes.forEach((s: string) => {
+            const comboKey = `${c}-${s}`;
+            const optStock = p.sizeStock && p.sizeStock[comboKey] !== undefined
+              ? Number(p.sizeStock[comboKey])
+              : (p.sizeStock && p.sizeStock[s] !== undefined ? Number(p.sizeStock[s]) : 0);
+
+            variantRows.push({
+              "상품번호": pno,
+              "자체상품코드": pcode,
+              "상품명": p.title || "",
+              "색상": c,
+              "사이즈": s,
+              "옵션 재고수량": optStock,
+              "판매상태": pAvail,
+              "판매가(원)": priceNum,
+              "카테고리": p.categoryId || "outer",
+            });
+          });
+        });
+      });
+
+      const workbook = XLSX.utils.book_new();
+
+      const wsMaster = XLSX.utils.json_to_sheet(masterData);
+      wsMaster["!cols"] = [
+        { wch: 6 },
+        { wch: 10 },
+        { wch: 14 },
+        { wch: 40 },
+        { wch: 12 },
+        { wch: 10 },
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 25 },
+        { wch: 25 },
+        { wch: 45 },
+        { wch: 14 },
+        { wch: 45 },
+        { wch: 30 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 10 },
+        { wch: 40 },
+        { wch: 24 },
+      ];
+      XLSX.utils.book_append_sheet(workbook, wsMaster, "등록상품목록");
+
+      if (variantRows.length > 0) {
+        const wsVariants = XLSX.utils.json_to_sheet(variantRows);
+        wsVariants["!cols"] = [
+          { wch: 10 },
+          { wch: 14 },
+          { wch: 40 },
+          { wch: 18 },
+          { wch: 18 },
+          { wch: 14 },
+          { wch: 10 },
+          { wch: 14 },
+          { wch: 12 },
+        ];
+        XLSX.utils.book_append_sheet(workbook, wsVariants, "옵션별_상세재고");
+      }
+
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`;
+      const fileName = `choicomma_registered_products_${dateStr}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+    } catch (err: any) {
+      console.error("Excel download error:", err);
+      alert("상품 목록 엑셀 다운로드 중 오류가 발생했습니다: " + err.message);
+    }
+  };
+
   // Download Sample Excel Template matching full manual registration fields
   const handleDownloadExcelTemplate = () => {
     const templateData = [
@@ -1100,10 +1246,23 @@ export function ProductsManagement({
           const title = String(getVal(["상품명", "title", "name", "상품 이름"])).trim();
           if (!title) return;
 
-          const categoryIdRaw = String(getVal(["카테고리", "category", "categoryId"])).trim().toLowerCase() || "outer";
-          const categoryId = ["timesale", "outer", "top", "bottom", "bag", "shoes", "accessory"].includes(categoryIdRaw)
-            ? categoryIdRaw
-            : "outer";
+          const categoryIdRaw = String(getVal(["카테고리", "category", "categoryId"])).trim();
+          const normalizeCat = (raw: string): string => {
+            const lower = raw.toLowerCase().trim();
+            if (lower.includes("아우터") || lower.includes("outer") || lower.includes("코트") || lower.includes("자켓") || lower.includes("패딩") || lower.includes("점퍼") || lower.includes("가디건")) return "outer";
+            if (lower.includes("상의") || lower.includes("top") || lower.includes("셔츠") || lower.includes("티셔츠") || lower.includes("블라우스") || lower.includes("니트") || lower.includes("맨투맨") || lower.includes("후드")) return "top";
+            if (lower.includes("하의") || lower.includes("bottom") || lower.includes("팬츠") || lower.includes("바지") || lower.includes("스커트") || lower.includes("슬랙스") || lower.includes("청바지") || lower.includes("데님")) return "bottom";
+            if (lower.includes("가방") || lower.includes("bag") || lower.includes("백")) return "bag";
+            if (lower.includes("신발") || lower.includes("shoes") || lower.includes("슈즈") || lower.includes("부츠") || lower.includes("스니커즈") || lower.includes("구두") || lower.includes("로퍼")) return "shoes";
+            if (lower.includes("악세사리") || lower.includes("액세서리") || lower.includes("accessory") || lower.includes("acc") || lower.includes("주얼리") || lower.includes("모자") || lower.includes("머플러") || lower.includes("벨트")) return "accessory";
+            if (lower.includes("타임세일") || lower.includes("timesale") || lower.includes("세일")) return "timesale";
+            return "outer";
+          };
+
+          const rawCats = categoryIdRaw ? categoryIdRaw.split(/[,/|]/).map((c) => c.trim()).filter(Boolean) : [];
+          const parsedCats = Array.from(new Set(rawCats.map(normalizeCat)));
+          const categoryId = parsedCats[0] || (categoryIdRaw ? normalizeCat(categoryIdRaw) : "outer");
+          const categoryIds = parsedCats.length > 0 ? parsedCats : [categoryId];
 
           const priceRaw = getVal(["판매가", "price", "amount", "가격"]);
           const priceNum = typeof priceRaw === "number" ? priceRaw : parseInt(String(priceRaw).replace(/[^0-9]/g, ""), 10) || 0;
@@ -1165,15 +1324,24 @@ export function ProductsManagement({
             });
           });
 
+          const baseSlug = title
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9가-힣\s-]/g, "")
+            .replace(/\s+/g, "-")
+            .replace(/-+/g, "-")
+            .replace(/^-+|-+$/g, "") || "product";
+          const safeHandle = `${baseSlug}-${prodId}`;
+
           parsedItems.push({
             id: prodId,
             productNo: currentNo,
             productCode: `CC-${String(currentNo).padStart(3, "0")}`,
             createdAt: new Date().toISOString(),
-            handle: title.toLowerCase().replace(/\s+/g, "-"),
+            handle: safeHandle,
             title,
             categoryId,
-            categoryIds: [categoryId],
+            categoryIds,
             description: description || `${title} 신규 등록 상품`,
             detailDescription: detailDescription || description || `${title} 상세설명`,
             descriptionHtml: `<p>${description || title}</p>`,
@@ -1247,17 +1415,15 @@ export function ProductsManagement({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
-          {handleRestoreDefaultProducts && (
-            <button
-              type="button"
-              onClick={handleRestoreDefaultProducts}
-              className="flex items-center gap-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold px-3.5 py-2.5 rounded-xl transition-all border border-neutral-300 text-xs cursor-pointer shadow-2xs hover:text-neutral-950"
-              title="임시 등록/수정 내역을 정리하고 원본 엑셀 카탈로그 417개로 완전 초기화합니다."
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-neutral-500" />
-              원본 카탈로그 초기화 (417개)
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleDownloadCurrentProducts}
+            className="flex items-center gap-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold px-3.5 py-2.5 rounded-xl transition-all border border-neutral-300 text-xs cursor-pointer shadow-2xs hover:text-neutral-950"
+            title="현재 등록된 상품 목록 및 옵션별 재고 데이터를 엑셀(.xlsx) 파일로 다운로드합니다."
+          >
+            <Download className="w-3.5 h-3.5 text-neutral-700" />
+            현재 제품 다운로드 ({productsList.filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")).length}개)
+          </button>
 
           {/* 엑셀 파일 선택 Hidden Input */}
           <input
