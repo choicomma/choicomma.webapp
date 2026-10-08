@@ -241,7 +241,7 @@ export function ProductListContent({
         setProducts(finalProducts);
       } else {
         const updatedProducts = categoryFilteredProducts.map((p: any) => {
-          if (savedSelectedIds.includes(p.id)) {
+          if (savedSelectedIds.includes(p.id) || p.isTimeSale === true || (Array.isArray(p.tags) && p.tags.includes("TIMESALE"))) {
             const itemRate = p.timeSaleDiscountRate || itemSettings[p.id]?.discountRate || savedDiscountNum || 35;
             const minP = parseFloat(p.priceRange?.minVariantPrice?.amount || "0");
             const maxP = parseFloat(p.priceRange?.maxVariantPrice?.amount || "0");

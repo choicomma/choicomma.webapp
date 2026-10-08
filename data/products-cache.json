@@ -156,22 +156,27 @@
       "NEW",
       "BLACK_LABEL",
       "pno:463",
-      "pcode:CC-463"
+      "pcode:CC-463",
+      "TIMESALE",
+      "tsrate:25"
     ],
-    "isTimeSale": false,
+    "isTimeSale": true,
     "releaseDate": "",
     "bulkDiscount": {
       "enabled": false,
       "rules": [],
       "productNo": 463,
       "productCode": "CC-463",
-      "releaseDate": ""
+      "releaseDate": "",
+      "timeSaleDiscountRate": 25,
+      "isTimeSale": true
     },
     "fabricComposition": "SILK 100%",
     "elasticity": "보통",
     "sheerness": "없음",
     "thickness": "적당함",
-    "lining": "없음"
+    "lining": "없음",
+    "timeSaleDiscountRate": 25
   },
   {
     "id": "excel-product-468",
@@ -366,22 +371,27 @@
       "NEW",
       "BLACK_LABEL",
       "pno:468",
-      "pcode:CC-468"
+      "pcode:CC-468",
+      "TIMESALE",
+      "tsrate:25"
     ],
-    "isTimeSale": false,
+    "isTimeSale": true,
     "releaseDate": "",
     "bulkDiscount": {
       "enabled": false,
       "rules": [],
       "productNo": 468,
       "productCode": "CC-468",
-      "releaseDate": ""
+      "releaseDate": "",
+      "timeSaleDiscountRate": 25,
+      "isTimeSale": true
     },
     "fabricComposition": "SILK 100%",
     "elasticity": "보통",
     "sheerness": "없음",
     "thickness": "적당함",
-    "lining": "없음"
+    "lining": "없음",
+    "timeSaleDiscountRate": 25
   },
   {
     "id": "excel-product-461",
@@ -3362,22 +3372,27 @@
       "NEW",
       "BLACK_LABEL",
       "pno:464",
-      "pcode:CC-464"
+      "pcode:CC-464",
+      "TIMESALE",
+      "tsrate:25"
     ],
-    "isTimeSale": false,
+    "isTimeSale": true,
     "releaseDate": "",
     "bulkDiscount": {
       "enabled": false,
       "rules": [],
       "productNo": 464,
       "productCode": "CC-464",
-      "releaseDate": ""
+      "releaseDate": "",
+      "timeSaleDiscountRate": 25,
+      "isTimeSale": true
     },
     "fabricComposition": "CASHMERE 100%",
     "elasticity": "보통",
     "sheerness": "없음",
     "thickness": "적당함",
-    "lining": "없음"
+    "lining": "없음",
+    "timeSaleDiscountRate": 25
   },
   {
     "id": "excel-product-465",
@@ -3517,22 +3532,27 @@
       "NEW",
       "BLACK_LABEL",
       "pno:465",
-      "pcode:CC-465"
+      "pcode:CC-465",
+      "TIMESALE",
+      "tsrate:25"
     ],
-    "isTimeSale": false,
+    "isTimeSale": true,
     "releaseDate": "",
     "bulkDiscount": {
       "enabled": false,
       "rules": [],
       "productNo": 465,
       "productCode": "CC-465",
-      "releaseDate": ""
+      "releaseDate": "",
+      "timeSaleDiscountRate": 25,
+      "isTimeSale": true
     },
     "fabricComposition": "CASHMERE 100%",
     "elasticity": "보통",
     "sheerness": "없음",
     "thickness": "적당함",
-    "lining": "없음"
+    "lining": "없음",
+    "timeSaleDiscountRate": 25
   },
   {
     "id": "excel-product-275",

@@ -43,7 +43,23 @@ function getAllServerProducts(): Product[] {
       const raw = fs.readFileSync(cachePath, "utf-8");
       const list = JSON.parse(raw);
       if (Array.isArray(list)) {
-        return list;
+        return list.map((p: any) => {
+          const meta = p.bulkDiscount || {};
+          const tagRate = Array.isArray(p.tags)
+            ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
+            : null;
+          const rate = p.timeSaleDiscountRate !== undefined
+            ? Number(p.timeSaleDiscountRate)
+            : (meta.timeSaleDiscountRate !== undefined
+              ? Number(meta.timeSaleDiscountRate)
+              : (tagRate && !isNaN(Number(tagRate)) ? Number(tagRate) : undefined));
+          const isTs = Boolean(p.isTimeSale || meta.isTimeSale || (Array.isArray(p.tags) && p.tags.includes("TIMESALE")));
+          return {
+            ...p,
+            timeSaleDiscountRate: rate,
+            isTimeSale: isTs,
+          };
+        });
       }
     }
   } catch (e) {

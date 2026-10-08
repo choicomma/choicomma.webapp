@@ -125,6 +125,8 @@ export async function GET(req: NextRequest) {
               sizeMeasurements: lp.sizeMeasurements || [],
               productNo: lp.productNo,
               productCode: lp.productCode,
+              timeSaleDiscountRate: lp.timeSaleDiscountRate,
+              isTimeSale: lp.isTimeSale,
             };
 
             if (String(lp.id).startsWith("custom-prod-") || String(lp.id).startsWith("prod-custom-")) {
@@ -162,6 +164,9 @@ export async function GET(req: NextRequest) {
 
           const tagPno = Array.isArray(p.tags) ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("pno:"))?.replace("pno:", "") : null;
           const tagPcode = Array.isArray(p.tags) ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("pcode:"))?.replace("pcode:", "") : null;
+          const tagRate = Array.isArray(p.tags)
+            ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
+            : null;
 
           const savedNum = p.productNo !== undefined && p.productNo !== null
             ? p.productNo
@@ -185,6 +190,17 @@ export async function GET(req: NextRequest) {
             currencyCode: p.priceRange.minVariantPrice.currencyCode || "KRW",
           } : { amount: "0", currencyCode: "KRW" });
 
+          const parsedTsRate =
+            p.timeSaleDiscountRate !== undefined && p.timeSaleDiscountRate !== null && !isNaN(Number(p.timeSaleDiscountRate))
+              ? Number(p.timeSaleDiscountRate)
+              : (meta.timeSaleDiscountRate !== undefined && meta.timeSaleDiscountRate !== null && !isNaN(Number(meta.timeSaleDiscountRate))
+                ? Number(meta.timeSaleDiscountRate)
+                : (tagRate && !isNaN(Number(tagRate))
+                  ? Number(tagRate)
+                  : (localFallback.timeSaleDiscountRate !== undefined ? Number(localFallback.timeSaleDiscountRate) : undefined)));
+
+          const isTs = Boolean(p.isTimeSale || meta.isTimeSale || localFallback.isTimeSale || (Array.isArray(p.tags) && p.tags.includes("TIMESALE")));
+
           return {
             ...p,
             price: effectivePrice,
@@ -192,6 +208,13 @@ export async function GET(req: NextRequest) {
             productCode: code,
             releaseDate: relDate,
             availableForSale: p.availableForSale !== false,
+            isTimeSale: isTs,
+            timeSaleDiscountRate: parsedTsRate,
+            timeSaleAllowCoupon: p.timeSaleAllowCoupon !== undefined ? p.timeSaleAllowCoupon : (meta.timeSaleAllowCoupon !== undefined ? meta.timeSaleAllowCoupon : true),
+            timeSaleAllowPoints: p.timeSaleAllowPoints !== undefined ? p.timeSaleAllowPoints : (meta.timeSaleAllowPoints !== undefined ? meta.timeSaleAllowPoints : true),
+            timeSaleStartDate: p.timeSaleStartDate || meta.timeSaleStartDate || "",
+            timeSaleEndDate: p.timeSaleEndDate || meta.timeSaleEndDate || "",
+            timeSaleDiscountPrice: p.timeSaleDiscountPrice || meta.timeSaleDiscountPrice || "",
             fabricImage: fabImg,
             fabricTextureImage: fabTexture,
             fabricComposition: fabComp,
@@ -256,6 +279,9 @@ function formatProductForDb(p: any, createdAtIso?: string) {
   const m = String(p.id).match(/\d+/);
   const num = p.productNo !== undefined && !isNaN(Number(p.productNo)) ? Number(p.productNo) : (m && parseInt(m[0], 10) < 100000 ? parseInt(m[0], 10) : 0);
   const code = p.productCode || (num > 0 ? `CC-${String(num).padStart(3, "0")}` : undefined);
+  const tsRate = p.timeSaleDiscountRate !== undefined && p.timeSaleDiscountRate !== null && !isNaN(Number(p.timeSaleDiscountRate))
+    ? Number(p.timeSaleDiscountRate)
+    : undefined;
 
   return {
     id: String(p.id),
@@ -272,10 +298,12 @@ function formatProductForDb(p: any, createdAtIso?: string) {
     variants: p.variants || [],
     options: p.options || [],
     tags: [
-      ...(Array.isArray(p.tags) ? p.tags.filter((t: any) => typeof t === "string" && !t.startsWith("release_date:") && !t.startsWith("pno:") && !t.startsWith("pcode:")) : []),
+      ...(Array.isArray(p.tags) ? p.tags.filter((t: any) => typeof t === "string" && !t.startsWith("release_date:") && !t.startsWith("pno:") && !t.startsWith("pcode:") && !t.startsWith("tsrate:") && t !== "TIMESALE") : []),
       ...(relDate ? [`release_date:${relDate}`] : []),
       ...(num > 0 ? [`pno:${num}`] : []),
       ...(code ? [`pcode:${code}`] : []),
+      ...(tsRate !== undefined ? [`tsrate:${tsRate}`] : []),
+      ...(p.isTimeSale ? ["TIMESALE"] : []),
     ],
     sizes: p.sizes || [],
     colors: p.colors || [],
@@ -291,6 +319,12 @@ function formatProductForDb(p: any, createdAtIso?: string) {
       productNo: num,
       productCode: code,
       releaseDate: relDate,
+      timeSaleDiscountRate: tsRate,
+      timeSaleAllowCoupon: p.timeSaleAllowCoupon !== undefined ? p.timeSaleAllowCoupon : true,
+      timeSaleAllowPoints: p.timeSaleAllowPoints !== undefined ? p.timeSaleAllowPoints : true,
+      timeSaleStartDate: p.timeSaleStartDate || "",
+      timeSaleEndDate: p.timeSaleEndDate || "",
+      timeSaleDiscountPrice: p.timeSaleDiscountPrice || "",
       fabricImage: p.fabricImage || p.fabricTextureImage || "",
       fabricTextureImage: p.fabricTextureImage || p.fabricImage || "",
       fabricComposition: p.fabricComposition || "",
@@ -337,10 +371,18 @@ export async function POST(req: NextRequest) {
       try {
         let existingList = readLocalProductsBackup();
         const existingIdx = existingList.findIndex((item: any) => String(item.id) === pId);
+        const itemToSave = {
+          ...(existingIdx !== -1 ? existingList[existingIdx] : {}),
+          ...p,
+          productNo: formattedSingle.bulkDiscount.productNo,
+          productCode: formattedSingle.bulkDiscount.productCode,
+          timeSaleDiscountRate: formattedSingle.bulkDiscount.timeSaleDiscountRate,
+          isTimeSale: Boolean(p.isTimeSale),
+        };
         if (existingIdx !== -1) {
-          existingList[existingIdx] = { ...existingList[existingIdx], ...p, productNo: formattedSingle.bulkDiscount.productNo, productCode: formattedSingle.bulkDiscount.productCode };
+          existingList[existingIdx] = itemToSave;
         } else {
-          existingList.unshift({ ...p, productNo: formattedSingle.bulkDiscount.productNo, productCode: formattedSingle.bulkDiscount.productCode });
+          existingList.unshift(itemToSave);
         }
         safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), existingList);
         globalForProducts.serverProductsCache = existingList;
