@@ -365,10 +365,21 @@ export function ProductListContent({
         </div>
       ) : (
         <div className="col-span-full py-20 text-center flex flex-col items-center justify-center border border-dashed border-neutral-300 rounded-3xl bg-neutral-50/50 my-4">
-          <p className="text-sm font-bold text-neutral-800">
-            &quot;{query}&quot; 검색 결과와 일치하는 상품이 없습니다.
-          </p>
-          <p className="text-xs text-neutral-500 mt-1">다른 검색어로 다시 시도해 주세요.</p>
+          {query.trim() ? (
+            <>
+              <p className="text-sm font-bold text-neutral-800">
+                &quot;{query}&quot; 검색 결과와 일치하는 상품이 없습니다.
+              </p>
+              <p className="text-xs text-neutral-500 mt-1">다른 검색어로 다시 시도해 주세요.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-bold text-neutral-800">
+                등록된 상품이 없습니다.
+              </p>
+              <p className="text-xs text-neutral-500 mt-1">새로운 컬렉션 상품이 곧 업데이트될 예정입니다.</p>
+            </>
+          )}
         </div>
       )}
     </>

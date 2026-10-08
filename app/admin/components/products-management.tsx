@@ -692,6 +692,7 @@ export function ProductsManagement({
 }: ProductsManagementProps) {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [excelPreviewItems, setExcelPreviewItems] = useState<any[]>([]);
+  const excelInputRef = useRef<HTMLInputElement | null>(null);
 
   // Active Stock Popover Product ID
   const [activeStockPopoverId, setActiveStockPopoverId] = useState<string | null>(null);
@@ -806,7 +807,8 @@ export function ProductsManagement({
         `정말로 선택한 ${selectedProductIds.length}개의 상품을 완전히 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.`
       );
       if (!isConfirmed) return;
-      selectedProductIds.forEach((id) => handleDeleteProduct(id, ""));
+      const idsToDelete = [...selectedProductIds];
+      idsToDelete.forEach((id) => handleDeleteProduct(id, ""));
       setSelectedProductIds([]);
     }
     setIsBulkActionMenuOpen(false);
@@ -906,6 +908,7 @@ export function ProductsManagement({
         handleReorderProducts(id, String(displayedProducts[0].id), false);
       });
     }
+    setCurrentPage(1);
     setIsBulkActionMenuOpen(false);
     setSelectedProductIds([]);
   };
@@ -1255,6 +1258,36 @@ export function ProductsManagement({
               원본 카탈로그 초기화 (417개)
             </button>
           )}
+
+          {/* 엑셀 파일 선택 Hidden Input */}
+          <input
+            ref={excelInputRef}
+            type="file"
+            accept=".xlsx, .xls, .csv"
+            onChange={handleExcelFileChange}
+            className="hidden"
+          />
+
+          <button
+            type="button"
+            onClick={handleDownloadExcelTemplate}
+            className="flex items-center gap-1.5 bg-neutral-50 hover:bg-neutral-100 text-neutral-700 font-bold px-3 py-2.5 rounded-xl transition-all border border-neutral-300 text-xs cursor-pointer shadow-2xs hover:text-neutral-950"
+            title="상품 일괄 등록을 위한 엑셀 양식(.xlsx) 템플릿을 다운로드합니다."
+          >
+            <Download className="w-3.5 h-3.5 text-neutral-500" />
+            엑셀 양식 다운로드
+          </button>
+
+          <button
+            type="button"
+            onClick={() => excelInputRef.current?.click()}
+            className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold px-3.5 py-2.5 rounded-xl transition-all border border-emerald-300 text-xs cursor-pointer shadow-2xs hover:border-emerald-400"
+            title="엑셀(.xlsx) 파일로 여러 상품을 한 번에 등록합니다."
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            엑셀 대량 등록
+          </button>
+
           <button
             onClick={() => {
               setNewTitle?.("");
@@ -1841,8 +1874,10 @@ export function ProductsManagement({
                             onClick={() => {
                               if (handleMoveProductToTop) {
                                 handleMoveProductToTop(String(p.id));
+                                setCurrentPage(1);
                               } else if (handleReorderProducts && displayedProducts[0]) {
                                 handleReorderProducts(String(p.id), String(displayedProducts[0].id), true);
+                                setCurrentPage(1);
                               }
                             }}
                             className="p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer border border-indigo-200 shadow-2xs group/topbtn"

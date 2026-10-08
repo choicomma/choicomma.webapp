@@ -1195,7 +1195,41 @@ export function ProductFormModal({
                   </div>
                 </div>
 
-
+                {/* 구매 가능 상태 토글 (ON / OFF) */}
+                <div>
+                  <label className="block text-xs font-bold text-neutral-800 mb-2">
+                    구매 가능 상태 (판매 허용 여부)
+                  </label>
+                  <div className="flex items-center gap-2 p-3 bg-neutral-50 rounded-2xl border border-neutral-200">
+                    <button
+                      type="button"
+                      onClick={() => setAvailableForSale(true)}
+                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+                        availableForSale
+                          ? "bg-neutral-950 text-white border-neutral-950 shadow-xs"
+                          : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${availableForSale ? "bg-emerald-400" : "bg-neutral-400"}`} />
+                      <span>ON (구매 가능 / 정상 판매)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAvailableForSale(false)}
+                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+                        !availableForSale
+                          ? "bg-neutral-950 text-white border-neutral-950 shadow-xs"
+                          : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${!availableForSale ? "bg-rose-400" : "bg-neutral-400"}`} />
+                      <span>OFF (구매 불가 / 판매 중지)</span>
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-neutral-400 mt-1 pl-1">
+                    * OFF 설정 시 고객 화면에서 장바구니 및 바로구매가 차단됩니다.
+                  </p>
+                </div>
 
                 {/* 3. 판매 시작 시간 지정 (예약 오픈) - 독립된 깔끔한 카드 */}
                 <div>

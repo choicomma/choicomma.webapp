@@ -400,40 +400,53 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
 
       {/* SECTION 2: Responsive Paginated Grid (Matching Shop Page Exactly: 1 Column on Mobile, 3 Columns on PC) */}
       <section className="w-full bg-white">
-        <div className="grid grid-cols-1 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
-          {allProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((product, idx) => (
-            <ProductCard key={`${product.id || idx}-${currentPage}`} product={product} />
-          ))}
-        </div>
+        {allProducts.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
+              {allProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((product, idx) => (
+                <ProductCard key={`${product.id || idx}-${currentPage}`} product={product} />
+              ))}
+            </div>
 
-        {/* Pagination Controls (Matching Shop Page Layout: < Prev  X / Y  Next >) */}
-        {allProducts.length > pageSize && (
-          <div className="flex justify-center items-center py-12 gap-4 border-t border-neutral-200/80 mt-4 mb-16">
-            <button
-              type="button"
-              onClick={() => {
-                setCurrentPage((p) => Math.max(1, p - 1));
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              disabled={currentPage === 1}
-              className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
-            >
-              &lt; Prev
-            </button>
-            <span className="text-xs text-neutral-900 font-medium font-mono">
-              {currentPage} / {Math.ceil(allProducts.length / pageSize)}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setCurrentPage((p) => Math.min(Math.ceil(allProducts.length / pageSize), p + 1));
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              disabled={currentPage >= Math.ceil(allProducts.length / pageSize)}
-              className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
-            >
-              Next &gt;
-            </button>
+            {/* Pagination Controls (Matching Shop Page Layout: < Prev  X / Y  Next >) */}
+            {allProducts.length > pageSize && (
+              <div className="flex justify-center items-center py-12 gap-4 border-t border-neutral-200/80 mt-4 mb-16">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentPage((p) => Math.max(1, p - 1));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={currentPage === 1}
+                  className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  &lt; Prev
+                </button>
+                <span className="text-xs text-neutral-900 font-medium font-mono">
+                  {currentPage} / {Math.ceil(allProducts.length / pageSize)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentPage((p) => Math.min(Math.ceil(allProducts.length / pageSize), p + 1));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={currentPage >= Math.ceil(allProducts.length / pageSize)}
+                  className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  Next &gt;
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="py-24 text-center flex flex-col items-center justify-center border-t border-neutral-200 px-4">
+            <p className="text-sm font-bold text-neutral-800">
+              현재 준비 중인 컬렉션입니다.
+            </p>
+            <p className="text-xs text-neutral-400 mt-1">
+              초이콤마의 새로운 시그니처 아이템이 곧 업데이트됩니다.
+            </p>
           </div>
         )}
       </section>

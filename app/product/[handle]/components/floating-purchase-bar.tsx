@@ -330,7 +330,18 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
       : activeStockMap[selectedSize] !== undefined
       ? activeStockMap[selectedSize]
       : null;
-  const isOutOfStock = curStock === 0 || !product.availableForSale;
+  const isScheduled = Boolean(
+    product.releaseDate && new Date(product.releaseDate).getTime() > Date.now()
+  );
+  const scheduledDateStr = isScheduled
+    ? new Date(product.releaseDate!).toLocaleString("ko-KR", {
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+  const isOutOfStock = curStock === 0 || !product.availableForSale || isScheduled;
 
   const handleColorChange = (color: string) => {
     setIsColorOpen(false);
@@ -373,6 +384,10 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
       toast.error(`${opt2Label}을(를) 선택해 주세요.`);
       return;
     }
+    if (isScheduled) {
+      toast.error(`오픈 예정 상품입니다. (${scheduledDateStr} 오픈)`);
+      return;
+    }
     if (isOutOfStock) {
       toast.error("선택하신 옵션은 품절되었습니다.");
       return;
@@ -413,6 +428,10 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
     if (extractedSizes.length > 0 && !selectedSize) {
       setIsSizeOpen(true);
       toast.error("사이즈를 선택해 주세요.");
+      return;
+    }
+    if (isScheduled) {
+      toast.error(`오픈 예정 상품입니다. (${scheduledDateStr} 오픈)`);
       return;
     }
     if (isOutOfStock) {
@@ -684,10 +703,10 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
             onClick={handleBuyNow}
             disabled={isOutOfStock}
             className="flex-[1.4] sm:flex-initial min-w-[85px] sm:min-w-0 h-10 sm:h-11 px-3 sm:px-6 rounded-xl bg-neutral-950 hover:bg-black text-white text-xs sm:text-sm font-black flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-98 shrink-0 whitespace-nowrap disabled:bg-neutral-300 disabled:cursor-not-allowed"
-            title="주문서로 바로 이동"
+            title={isScheduled ? `오픈 예정 (${scheduledDateStr} 오픈)` : isOutOfStock ? "품절된 상품입니다." : "주문서로 바로 이동"}
           >
-            <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-            <span>구매하기</span>
+            {!isScheduled && <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />}
+            <span>{isScheduled ? `오픈 예정 (${scheduledDateStr} 오픈)` : isOutOfStock ? "품절" : "구매하기"}</span>
           </button>
         </div>
       </div>

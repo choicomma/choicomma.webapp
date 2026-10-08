@@ -415,19 +415,25 @@ export function useProducts({
   const categoryProducts = useMemo(() => {
     if (!selectedCategoryForProducts) return [];
     if (selectedCategoryForProducts === "timesale") {
-      return getRegisteredSetProducts(productsList);
+      return productsList.filter(
+        (p) =>
+          p.categoryId === "timesale" ||
+          (Array.isArray(p.categoryIds) && p.categoryIds.includes("timesale")) ||
+          p.isTimeSale === true ||
+          adminTimeSaleProductIds.includes(String(p.id)) ||
+          (p.timeSaleDiscountRate !== undefined && Number(p.timeSaleDiscountRate) > 0)
+      );
     }
     return productsList.filter((p) => p.categoryId === selectedCategoryForProducts);
-  }, [selectedCategoryForProducts, productsList]);
+  }, [selectedCategoryForProducts, productsList, adminTimeSaleProductIds]);
 
   const actualProductsCount = useMemo(() => {
     return productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")).length;
   }, [productsList]);
 
   const getProductStock = useCallback((product: any) => {
-    if (product.stock !== undefined) return Number(product.stock);
-    const hash = String(product.id || "").split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return (hash % 75) + 15;
+    if (product?.stock !== undefined && product?.stock !== null) return Number(product.stock);
+    return 0;
   }, []);
 
   const toggleStock = useCallback((id: string) => {
@@ -662,21 +668,19 @@ export function useProducts({
 
   const handleReorderProducts = useCallback((fromId: string, toId: string, showToast: boolean = true) => {
     setProductSortOrder("custom");
-    setProductsList((prev) => {
-      const baseList = getSortedBaseList(prev, productSortOrder);
-      const fromIdx = baseList.findIndex((p) => String(p.id) === String(fromId));
-      const toIdx = baseList.findIndex((p) => String(p.id) === String(toId));
-      if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return prev;
-      const updated = [...baseList];
-      const [movedItem] = updated.splice(fromIdx, 1);
-      updated.splice(toIdx, 0, movedItem);
-      saveProductsToStorage(updated);
-      if (showToast) {
-        triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
-      }
-      return updated;
-    });
-  }, [getSortedBaseList, productSortOrder, saveProductsToStorage, setProductSortOrder, triggerToast]);
+    const baseList = getSortedBaseList(productsList, productSortOrder);
+    const fromIdx = baseList.findIndex((p) => String(p.id) === String(fromId));
+    const toIdx = baseList.findIndex((p) => String(p.id) === String(toId));
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+    const updated = [...baseList];
+    const [movedItem] = updated.splice(fromIdx, 1);
+    updated.splice(toIdx, 0, movedItem);
+    setProductsList(updated);
+    saveProductsToStorage(updated);
+    if (showToast) {
+      triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
+    }
+  }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleClearAllProducts = useCallback(() => {
     const totalCount = actualProductsCount;
@@ -714,68 +718,81 @@ export function useProducts({
 
   const handleBulkAddProducts = useCallback((newProducts: any[]) => {
     if (!newProducts || newProducts.length === 0) return;
-    setProductsList((prev) => {
-      const updatedList = [...newProducts, ...prev];
-      saveProductsToStorage(updatedList);
-      return updatedList;
-    });
+    const updatedList = [...newProducts, ...productsList];
+    setProductsList(updatedList);
+    saveProductsToStorage(updatedList);
     triggerToast(`📊 엑셀 일괄 업로드 완료! ${newProducts.length}개의 신규 상품이 성공적으로 등록되었습니다.`);
-  }, [saveProductsToStorage, triggerToast]);
+  }, [productsList, saveProductsToStorage, triggerToast]);
 
   const handleMoveProduct = useCallback((id: string, direction: "up" | "down") => {
     setProductSortOrder("custom");
-    setProductsList((prev) => {
-      const baseList = getSortedBaseList(prev, productSortOrder);
-      const idx = baseList.findIndex((p) => String(p.id) === String(id));
-      if (idx === -1) return prev;
-      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (targetIdx < 0 || targetIdx >= baseList.length) return prev;
+    const baseList = getSortedBaseList(productsList, productSortOrder);
+    const currentFiltered = filteredProducts;
+    const filteredIdx = currentFiltered.findIndex((p) => String(p.id) === String(id));
 
-      const newList = [...baseList];
-      const temp = newList[idx];
-      newList[idx] = newList[targetIdx];
-      newList[targetIdx] = temp;
+    if (filteredIdx !== -1) {
+      const targetFilteredIdx = direction === "up" ? filteredIdx - 1 : filteredIdx + 1;
+      if (targetFilteredIdx >= 0 && targetFilteredIdx < currentFiltered.length) {
+        const neighbor = currentFiltered[targetFilteredIdx];
+        const fromIdx = baseList.findIndex((p) => String(p.id) === String(id));
+        const toIdx = baseList.findIndex((p) => String(p.id) === String(neighbor.id));
+        if (fromIdx !== -1 && toIdx !== -1) {
+          const updated = [...baseList];
+          const [movedItem] = updated.splice(fromIdx, 1);
+          updated.splice(toIdx, 0, movedItem);
+          setProductsList(updated);
+          saveProductsToStorage(updated);
+          triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
+          return;
+        }
+      }
+    }
 
-      saveProductsToStorage(newList);
-      triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
-      return newList;
-    });
-  }, [getSortedBaseList, productSortOrder, saveProductsToStorage, setProductSortOrder, triggerToast]);
+    const idx = baseList.findIndex((p) => String(p.id) === String(id));
+    if (idx === -1) return;
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= baseList.length) return;
+
+    const newList = [...baseList];
+    const temp = newList[idx];
+    newList[idx] = newList[targetIdx];
+    newList[targetIdx] = temp;
+
+    setProductsList(newList);
+    saveProductsToStorage(newList);
+    triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
+  }, [filteredProducts, getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleMoveProductToTop = useCallback((id: string) => {
     setProductSortOrder("custom");
-    setProductsList((prev) => {
-      const baseList = getSortedBaseList(prev, productSortOrder);
-      const idx = baseList.findIndex((p) => String(p.id) === String(id));
-      if (idx === -1) return prev;
-      if (idx === 0) {
-        triggerToast(`'${baseList[0].title}' 상품은 이미 최상단에 위치해 있습니다.`);
-        return prev;
-      }
-      const updated = [...baseList];
-      const [movedItem] = updated.splice(idx, 1);
-      updated.unshift(movedItem);
-      saveProductsToStorage(updated);
-      triggerToast(`⬆️ '${movedItem.title}' 상품이 목록 최상단으로 이동되었습니다.`);
-      return updated;
-    });
-  }, [getSortedBaseList, productSortOrder, saveProductsToStorage, setProductSortOrder, triggerToast]);
+    const baseList = getSortedBaseList(productsList, productSortOrder);
+    const idx = baseList.findIndex((p) => String(p.id) === String(id));
+    if (idx === -1) return;
+    if (idx === 0) {
+      triggerToast(`'${baseList[0].title}' 상품은 이미 최상단에 위치해 있습니다.`);
+      return;
+    }
+    const updated = [...baseList];
+    const [movedItem] = updated.splice(idx, 1);
+    updated.unshift(movedItem);
+    setProductsList(updated);
+    saveProductsToStorage(updated);
+    triggerToast(`⬆️ '${movedItem.title}' 상품이 목록 최상단으로 이동되었습니다.`);
+  }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleBulkMoveToTop = useCallback((targetIds: string[]) => {
     if (!targetIds || targetIds.length === 0) return;
     setProductSortOrder("custom");
-    setProductsList((prev) => {
-      const baseList = getSortedBaseList(prev, productSortOrder);
-      const idSet = new Set(targetIds.map(String));
-      const selected = baseList.filter((p) => idSet.has(String(p.id)));
-      const unselected = baseList.filter((p) => !idSet.has(String(p.id)));
-      if (selected.length === 0) return prev;
-      const updated = [...selected, ...unselected];
-      saveProductsToStorage(updated);
-      triggerToast(`⬆️ 선택한 ${selected.length}개 상품이 목록 최상단으로 일괄 이동되었습니다.`);
-      return updated;
-    });
-  }, [getSortedBaseList, productSortOrder, saveProductsToStorage, setProductSortOrder, triggerToast]);
+    const baseList = getSortedBaseList(productsList, productSortOrder);
+    const idSet = new Set(targetIds.map(String));
+    const selected = baseList.filter((p) => idSet.has(String(p.id)));
+    const unselected = baseList.filter((p) => !idSet.has(String(p.id)));
+    if (selected.length === 0) return;
+    const updated = [...selected, ...unselected];
+    setProductsList(updated);
+    saveProductsToStorage(updated);
+    triggerToast(`⬆️ 선택한 ${selected.length}개 상품이 목록 최상단으로 일괄 이동되었습니다.`);
+  }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleSortOrderChange = useCallback((
     newOrder: "productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom"
