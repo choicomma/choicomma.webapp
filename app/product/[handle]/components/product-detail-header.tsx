@@ -295,9 +295,23 @@ export function ProductDetailHeader({
       }
 
       const customDiscountPrice = (activeProd as any).timeSaleDiscountPrice || itemSettings[activeProd.id]?.discountPrice;
-      const basePrice = parseFloat(activeProd.priceRange?.minVariantPrice?.amount || "0");
-      const maxPrice = parseFloat(activeProd.priceRange?.maxVariantPrice?.amount || "0");
-      const origPrice = maxPrice > basePrice ? maxPrice : basePrice;
+      const parseSafeAmount = (val: any): number => {
+        if (val === null || val === undefined) return 0;
+        if (typeof val === "number") return isNaN(val) ? 0 : val;
+        if (typeof val === "object") {
+          const inner = val.amount ?? val.value ?? "0";
+          const parsed = parseFloat(String(inner).replace(/[^0-9.]/g, ""));
+          return isNaN(parsed) ? 0 : parsed;
+        }
+        const parsed = parseFloat(String(val).replace(/[^0-9.]/g, ""));
+        return isNaN(parsed) ? 0 : parsed;
+      };
+
+      const rawMin = activeProd.priceRange?.minVariantPrice?.amount ?? (activeProd as any).price ?? activeProd.variants?.[0]?.price;
+      const rawMax = activeProd.priceRange?.maxVariantPrice?.amount ?? (activeProd as any).price ?? activeProd.variants?.[0]?.price;
+      const basePrice = parseSafeAmount(rawMin);
+      const maxPrice = parseSafeAmount(rawMax);
+      const origPrice = maxPrice > basePrice ? maxPrice : (basePrice > 0 ? basePrice : 0);
 
       // 1. Regular Time Sale Check & Calculation
       let regRate = (activeProd as any).timeSaleDiscountRate || itemSettings[activeProd.id]?.discountRate || savedDiscountNum || 35;

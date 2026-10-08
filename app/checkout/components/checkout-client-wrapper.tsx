@@ -35,6 +35,7 @@ import {
   DEFAULT_AVAILABLE_COUPONS,
   getAvailableCoupons,
   recordCouponUsage,
+  restoreCouponByOrder,
   syncAdminCouponsFromSupabase,
 } from "@/lib/membership/coupons";
 
@@ -542,13 +543,18 @@ export default function CheckoutClientWrapper() {
       return;
     }
 
+    const previousAvailablePoints = availablePoints;
+    let orderId = "";
+    const foundCoupon = (selectedCouponId && selectedCouponId !== "NONE")
+      ? availableCoupons.find((c) => c.id === selectedCouponId)
+      : null;
+
     try {
       setIsDirectPayLoading(true);
 
       const tossPayments = await loadTossPayments(clientKey);
 
       // 주문서번호 생성 규칙: CH + 날짜(YYYYMMDD) + '-' + 주문순서(001, 002...)
-      let orderId = "";
       try {
         const nextIdRes = await fetch("/api/orders/next-id", { cache: "no-store" });
         if (nextIdRes.ok) {
@@ -567,11 +573,6 @@ export default function CheckoutClientWrapper() {
           ? `${firstTitle} 외 ${orderLines.length - 1}건`
           : firstTitle
         : "초이콤마 오리지널 패션 주문건";
-
-      // If coupon was applied, mark this coupon as used and save usage history
-      const foundCoupon = (selectedCouponId && selectedCouponId !== "NONE")
-        ? availableCoupons.find((c) => c.id === selectedCouponId)
-        : null;
 
       if (selectedCouponId && selectedCouponId !== "NONE" && appliedDiscount > 0) {
         recordCouponUsage({
@@ -720,18 +721,31 @@ export default function CheckoutClientWrapper() {
         });
       }
     } catch (err: any) {
+      // 결제 취소 또는 오류 발생 시 차감되었던 적립금 및 쿠폰 안전하게 원복
+      if (appliedPoints > 0) {
+        localStorage.setItem("membership_user_points", String(previousAvailablePoints));
+        setAvailablePoints(previousAvailablePoints);
+        window.dispatchEvent(new CustomEvent("membership_points_updated"));
+      }
+      if (selectedCouponId && selectedCouponId !== "NONE" && appliedDiscount > 0) {
+        restoreCouponByOrder(orderId, foundCoupon?.id || selectedCouponId);
+      }
+      try {
+        sessionStorage.removeItem(`pending_order_${orderId}`);
+      } catch (e) {}
+
       // Ignore user cancellation (closing the payment popup/window)
       if (
         err?.code === "PAY_PROCESS_CANCELED" ||
         err?.code === "USER_CANCEL" ||
         err?.message?.includes("취소")
       ) {
-        console.log("사용자가 결제창을 취소하거나 닫았습니다.");
+        console.log("사용자가 결제창을 취소하거나 닫았습니다. 적용된 적립금 및 쿠폰이 안전하게 원복되었습니다.");
         return;
       }
       console.error("Direct Payment Request Failed Full Error:", err);
       const detailMsg = err?.message || (typeof err === "object" ? JSON.stringify(err) : String(err));
-      alert(`결제창 호출 중 오류가 발생했습니다.\n\n[오류 내용]\n${detailMsg}\n\n(오류 코드: ${err?.code || "알 수 없음"})`);
+      alert(`결제창 호출 중 오류가 발생했습니다.\n\n[오류 내용]\n${detailMsg}\n\n(오류 코드: ${err?.code || "알 수 없음"})\n\n사용하려던 적립금과 쿠폰은 원래대로 안전하게 복구되었습니다.`);
     } finally {
       setIsDirectPayLoading(false);
     }

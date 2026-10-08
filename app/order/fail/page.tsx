@@ -4,19 +4,45 @@ import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { XCircle, ShoppingBag } from "lucide-react";
 import Link from "next/link";
+import { restoreCouponByOrder } from "@/lib/membership/coupons";
 
-function OrderFailParamsHandler({ onParamsLoaded }: { onParamsLoaded: (p: { code: string | null; message: string | null }) => void }) {
+function OrderFailParamsHandler({ onParamsLoaded }: { onParamsLoaded: (p: { code: string | null; message: string | null; orderId: string | null }) => void }) {
   const searchParams = useSearchParams();
   useEffect(() => {
+    const code = searchParams.get("code");
+    const message = searchParams.get("message");
+    const orderId = searchParams.get("orderId");
+
+    // 결제 실패/취소 리다이렉트 시 보류 주문에서 차감되었던 적립금 및 쿠폰 자동 원복
+    if (orderId && typeof window !== "undefined") {
+      try {
+        const rawPending = sessionStorage.getItem(`pending_order_${orderId}`);
+        if (rawPending) {
+          const pending = JSON.parse(rawPending);
+          if (pending?.appliedPoints > 0) {
+            const currentPoints = parseInt(localStorage.getItem("membership_user_points") || "0", 10);
+            const restoredPoints = currentPoints + Number(pending.appliedPoints);
+            localStorage.setItem("membership_user_points", String(restoredPoints));
+            window.dispatchEvent(new CustomEvent("membership_points_updated"));
+          }
+          if (pending?.selectedCouponId) {
+            restoreCouponByOrder(orderId, pending.selectedCouponId);
+          }
+          sessionStorage.removeItem(`pending_order_${orderId}`);
+        }
+      } catch (e) {}
+    }
+
     onParamsLoaded({
-      code: searchParams.get("code"),
-      message: searchParams.get("message"),
+      code,
+      message,
+      orderId,
     });
   }, [searchParams, onParamsLoaded]);
   return null;
 }
 
-function OrderFailContentInner({ params }: { params: { code: string | null; message: string | null } | null }) {
+function OrderFailContentInner({ params }: { params: { code: string | null; message: string | null; orderId?: string | null } | null }) {
   const code = params?.code || null;
   const message = params?.message || null;
 

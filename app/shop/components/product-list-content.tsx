@@ -85,17 +85,26 @@ export function ProductListContent({
         collectionHandle &&
         collectionHandle !== "all" &&
         collectionHandle !== "choice" &&
-        collectionHandle !== "timesale" &&
-        collectionHandle !== "new" &&
-        collectionHandle !== "special"
+        collectionHandle !== "timesale"
       ) {
-        categoryFilteredProducts = activeSourceProducts.filter((p: any) => {
-          if (!p.categoryId) return true;
-          return (
-            p.categoryId.toLowerCase() === collectionHandle.toLowerCase() ||
-            p.tags?.some((t: string) => t.toLowerCase() === collectionHandle.toLowerCase())
-          );
-        });
+        if (collectionHandle === "new") {
+          const newItems = activeSourceProducts.filter((p: any) => {
+            const hasNewTag = Array.isArray(p.tags) && p.tags.some((t: string) => t.toUpperCase() === "NEW" || t === "신상품");
+            const hasNewCat = (p.categoryId || "").toLowerCase() === "new" || (Array.isArray(p.categoryIds) && p.categoryIds.some((c: any) => String(c).toLowerCase() === "new"));
+            return hasNewTag || hasNewCat || p.isNew === true;
+          });
+          // 신상품 태그/카테고리가 명시된 상품이 있을 경우 해당 상품 표시, 없을 경우 전체 상품 목록 유지
+          categoryFilteredProducts = newItems.length > 0 ? newItems : activeSourceProducts;
+        } else {
+          const target = collectionHandle.toLowerCase();
+          categoryFilteredProducts = activeSourceProducts.filter((p: any) => {
+            const pCat = (p.categoryId || "").toLowerCase();
+            const pCats = Array.isArray(p.categoryIds) ? p.categoryIds.map((c: any) => String(c).toLowerCase()) : [];
+            const matchesCat = pCat === target || pCats.includes(target);
+            const matchesTag = Array.isArray(p.tags) && p.tags.some((t: string) => t.toLowerCase() === target);
+            return matchesCat || matchesTag;
+          });
+        }
       }
 
       const registeredSetProducts = getRegisteredSetProducts(categoryFilteredProducts);
@@ -192,7 +201,7 @@ export function ProductListContent({
           };
         });
 
-      if (collectionHandle === "choice" || collectionHandle === "timesale" || collectionHandle === "new" || collectionHandle === "special") {
+      if (collectionHandle === "choice" || collectionHandle === "timesale") {
         // Find products that are categorized as timesale or specified in time sale settings
         const timeSaleCategoryItems = categoryFilteredProducts.filter(
           (p: any) =>

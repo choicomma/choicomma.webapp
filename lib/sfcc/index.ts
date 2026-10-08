@@ -105,11 +105,45 @@ export async function getCollection(id: string) {
 
   try {
     if (USE_MOCK_DATA) {
-      return (
-        mockCollections
-          .filter((c) => c.handle !== storeCatalog.rootCategoryId)
-          .find((c) => c.handle === id) ?? null
-      );
+      const lower = id.toLowerCase();
+      if (lower === "all" || lower === "shop") {
+        return {
+          handle: "all",
+          title: "ALL",
+          description: "전체 상품 컬렉션",
+          seo: { title: "ALL", description: "전체 상품 컬렉션" },
+          parentCategoryTree: [],
+          updatedAt: "",
+          path: "/shop/all",
+        };
+      }
+      if (lower === "new") {
+        return {
+          handle: "new",
+          title: "NEW",
+          description: "신상품 컬렉션",
+          seo: { title: "NEW", description: "신상품 컬렉션" },
+          parentCategoryTree: [],
+          updatedAt: "",
+          path: "/shop/new",
+        };
+      }
+
+      const found = mockCollections
+        .filter((c) => c.handle !== storeCatalog.rootCategoryId)
+        .find((c) => c.handle.toLowerCase() === lower);
+
+      if (found) return found;
+
+      return {
+        handle: id,
+        title: id.toUpperCase(),
+        description: `${id.toUpperCase()} 컬렉션`,
+        seo: { title: id.toUpperCase(), description: `${id.toUpperCase()} 컬렉션` },
+        parentCategoryTree: [],
+        updatedAt: "",
+        path: `/shop/${id}`,
+      };
     }
 
     return (await getSFCCCollection(id)) ?? null;

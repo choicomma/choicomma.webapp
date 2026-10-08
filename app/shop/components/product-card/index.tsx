@@ -126,9 +126,23 @@ export const ProductCard = ({ product }: { product: Product }) => {
     };
   }, [product]);
 
-  const basePrice = parseFloat(product.priceRange?.minVariantPrice?.amount || (product as any).price || "0");
-  const maxPrice = parseFloat(product.priceRange?.maxVariantPrice?.amount || (product as any).price || "0");
-  const origPriceNum = maxPrice > basePrice ? maxPrice : basePrice;
+  const parseSafeAmount = (val: any): number => {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === "number") return isNaN(val) ? 0 : val;
+    if (typeof val === "object") {
+      const inner = val.amount ?? val.value ?? "0";
+      const parsed = parseFloat(String(inner).replace(/[^0-9.]/g, ""));
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    const parsed = parseFloat(String(val).replace(/[^0-9.]/g, ""));
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  const rawMin = product.priceRange?.minVariantPrice?.amount ?? (product as any).price;
+  const rawMax = product.priceRange?.maxVariantPrice?.amount ?? (product as any).price;
+  const basePrice = parseSafeAmount(rawMin);
+  const maxPrice = parseSafeAmount(rawMax);
+  const origPriceNum = maxPrice > basePrice ? maxPrice : (basePrice > 0 ? basePrice : 0);
 
   // Calculate Best Available Coupon & Points for this Customer (상세페이지 세일+쿠폰+적립금 적용가와 동일 로직)
   React.useEffect(() => {

@@ -14,6 +14,48 @@ export const mockCollections: Collection[] = [
     path: "/search",
   },
   {
+    handle: "all",
+    title: "ALL",
+    description: "All Products Collection",
+    seo: {
+      title: "ALL",
+      description: "All Products Collection",
+    },
+    parentCategoryTree: [
+      {
+        id: "joyco-root",
+        name: "Joyco root catalog",
+      },
+      {
+        id: "all",
+        name: "ALL",
+      },
+    ],
+    updatedAt: "",
+    path: "/shop/all",
+  },
+  {
+    handle: "new",
+    title: "NEW",
+    description: "New Arrivals Collection",
+    seo: {
+      title: "NEW",
+      description: "New Arrivals Collection",
+    },
+    parentCategoryTree: [
+      {
+        id: "joyco-root",
+        name: "Joyco root catalog",
+      },
+      {
+        id: "new",
+        name: "NEW",
+      },
+    ],
+    updatedAt: "",
+    path: "/shop/new",
+  },
+  {
     handle: "timesale",
     title: "TIMESALE",
     description: "Choicomma Time Sale Collection",

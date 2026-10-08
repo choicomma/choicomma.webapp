@@ -9,14 +9,15 @@ export async function generateMetadata(props: {
   const params = await props.params;
   const collection = await getCollection(params.collection);
 
-  if (!collection) return notFound();
+  const title = collection?.seo?.title || collection?.title || params.collection.toUpperCase();
+  const description =
+    collection?.seo?.description ||
+    collection?.description ||
+    `${title} products`;
 
   return {
-    title: `choicomma | ${collection.seo?.title || collection.title}`,
-    description:
-      collection.seo?.description ||
-      collection.description ||
-      `${collection.title} products`,
+    title: `choicomma | ${title}`,
+    description,
   };
 }
 
