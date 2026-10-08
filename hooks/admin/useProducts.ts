@@ -38,7 +38,7 @@ export function useProducts({
         const cached = localStorage.getItem("admin_products");
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length >= 200) {
+          if (Array.isArray(parsed)) {
             return parsed;
           }
         }
@@ -179,7 +179,18 @@ export function useProducts({
         const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
+            if (data.length === 0) {
+              setProductsList([]);
+              if (typeof window !== "undefined") {
+                try {
+                  localStorage.setItem("admin_products", "[]");
+                  localStorage.removeItem("admin_custom_products");
+                } catch (e) {}
+              }
+              isProductsLoadedRef.current = true;
+              return;
+            }
             let merged = [...data];
 
             const hasHero = merged.some((p: any) => p.isHeroFeatured === true);

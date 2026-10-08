@@ -22,7 +22,7 @@ function readLocalProductsBackup(): any[] {
     if (fs.existsSync(runtimePath)) {
       const raw = fs.readFileSync(runtimePath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     }
   } catch (e) {}
 
@@ -101,7 +101,11 @@ export async function GET(req: NextRequest) {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (!dbError && Array.isArray(dbProducts) && dbProducts.length > 0) {
+      if (!dbError && Array.isArray(dbProducts)) {
+        if (dbProducts.length === 0) {
+          globalForProducts.serverProductsCache = [];
+          return makeResponse([], req);
+        }
         let finalProducts = [...dbProducts];
 
         const localList = readLocalProductsBackup();
@@ -231,7 +235,7 @@ export async function GET(req: NextRequest) {
 
     // 3. Local disk fallback
     const fallbackList = readLocalProductsBackup();
-    if (fallbackList.length > 0) {
+    if (Array.isArray(fallbackList)) {
       globalForProducts.serverProductsCache = fallbackList;
       return makeResponse(fallbackList, req);
     }

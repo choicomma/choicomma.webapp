@@ -42,7 +42,7 @@ function getAllServerProducts(): Product[] {
     if (fs.existsSync(cachePath)) {
       const raw = fs.readFileSync(cachePath, "utf-8");
       const list = JSON.parse(raw);
-      if (Array.isArray(list) && list.length > 0) {
+      if (Array.isArray(list)) {
         return list;
       }
     }

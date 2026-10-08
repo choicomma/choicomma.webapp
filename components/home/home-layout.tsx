@@ -247,7 +247,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
         const res = await fetch("/api/products");
         if (res.ok) {
           const serverData = await res.json();
-          if (Array.isArray(serverData) && serverData.length > 0) {
+          if (Array.isArray(serverData)) {
             parsed = serverData;
             if (typeof window !== "undefined") {
               try {
