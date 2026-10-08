@@ -964,6 +964,257 @@
     ]
   },
   {
+    "id": "excel-product-468",
+    "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+    "handle": "product-468",
+    "categoryId": "top",
+    "categoryIds": [
+      "top"
+    ],
+    "description": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/08922bea77e5f.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7c285ecacc052.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p>",
+    "currencyCode": "KRW",
+    "priceRange": {
+      "maxVariantPrice": {
+        "amount": "490000",
+        "currencyCode": "KRW"
+      },
+      "minVariantPrice": {
+        "amount": "490000",
+        "currencyCode": "KRW"
+      }
+    },
+    "featuredImage": {
+      "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+      "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
+    },
+    "images": [
+      {
+        "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
+      }
+    ],
+    "variants": [
+      {
+        "id": "excel-product-468-B타입-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 1(44-55)"
+        },
+        "price": {
+          "amount": "490000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "B타입"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-468-B타입-2(66-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 2(66-88)"
+        },
+        "price": {
+          "amount": "490000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 2(66-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "B타입"
+          },
+          {
+            "name": "Size",
+            "value": "2(66-88)"
+          }
+        ],
+        "availableForSale": true
+      }
+    ],
+    "options": [
+      {
+        "id": "color",
+        "name": "Color",
+        "values": [
+          "B타입"
+        ]
+      },
+      {
+        "id": "size",
+        "name": "Size",
+        "values": [
+          "1(44-55)",
+          "2(66-88)"
+        ]
+      }
+    ],
+    "tags": [
+      "NEW",
+      "BLACK_LABEL",
+      "pno:468",
+      "pcode:CC-468"
+    ],
+    "sizes": [
+      "1(44-55)",
+      "2(66-88)"
+    ],
+    "colors": [
+      "B타입"
+    ],
+    "stock": 50,
+    "sizeStock": {
+      "B타입-1(44-55)": 25,
+      "B타입-2(66-88)": 25
+    },
+    "colorHexMap": {
+      "RED": "#DC2626",
+      "BLUE": "#2563EB",
+      "NAVY": "#000080",
+      "PINK": "#EC4899",
+      "BEIGE": "#F5F5DC",
+      "BLACK": "#000000",
+      "BROWN": "#8B4513",
+      "CREAM": "#FDFBF7",
+      "GREEN": "#16A34A",
+      "KHAKI": "#708090",
+      "WHITE": "#FFFFFF",
+      "모카": "#8B5A2B",
+      "블랙": "#000000",
+      "차콜": "#36454F",
+      "A타입": "#1C1C1C",
+      "B타입": "#2B2B2B",
+      "CHARCOAL": "#36454F",
+      "베이지": "#F5F5DC",
+      "오트밀": "#D8C7B5",
+      "아이보리": "#FFFFF0",
+      "쿨그레이": "#8E9CA3",
+      "멜란지 모카": "#8B5A2B",
+      "멜란지 차콜": "#36454F",
+      "멜란지 쿨그레이": "#8E9CA3"
+    },
+    "productLabel": "BLACK_LABEL",
+    "isMainFeatured": false,
+    "availableForSale": true,
+    "isTimeSale": false,
+    "bulkDiscount": {
+      "rules": [],
+      "enabled": false,
+      "productNo": 468,
+      "fabricImage": "",
+      "productCode": "CC-468",
+      "releaseDate": "",
+      "showSizeGuide": true,
+      "showFabricInfo": false,
+      "sizeChartImage": "",
+      "sizeGuideImage": "",
+      "sizeMeasurements": [
+        {
+          "name": "어깨단면(드랍숄더)",
+          "values": {
+            "1": "50",
+            "2": "54",
+            "3": "54",
+            "FREE": "56"
+          }
+        },
+        {
+          "name": "가슴단면",
+          "values": {
+            "1": "48",
+            "2": "52",
+            "3": "60.5",
+            "FREE": "62.5"
+          }
+        },
+        {
+          "name": "팔길이",
+          "values": {
+            "1": "53",
+            "2": "53",
+            "3": "61",
+            "FREE": "61.5"
+          }
+        },
+        {
+          "name": "총장",
+          "values": {
+            "1": "62",
+            "2": "63",
+            "3": "62/66.5",
+            "FREE": "63/67.5"
+          }
+        }
+      ],
+      "fabricComposition": "COTTON 100% (프리미엄 코튼)",
+      "fabricTextureImage": ""
+    },
+    "created_at": "2026-10-08T11:59:10.356Z",
+    "updated_at": "2026-10-08T11:59:10.356Z",
+    "price": {
+      "amount": "490000",
+      "currencyCode": "KRW"
+    },
+    "productNo": 468,
+    "productCode": "CC-468",
+    "releaseDate": "",
+    "fabricImage": "",
+    "fabricTextureImage": "",
+    "fabricComposition": "COTTON 100% (프리미엄 코튼)",
+    "showFabricInfo": false,
+    "showSizeGuide": true,
+    "sizeGuideImage": "",
+    "sizeChartImage": "",
+    "sizeMeasurements": [
+      {
+        "name": "어깨단면(드랍숄더)",
+        "values": {
+          "1": "50",
+          "2": "54",
+          "3": "54",
+          "FREE": "56"
+        }
+      },
+      {
+        "name": "가슴단면",
+        "values": {
+          "1": "48",
+          "2": "52",
+          "3": "60.5",
+          "FREE": "62.5"
+        }
+      },
+      {
+        "name": "팔길이",
+        "values": {
+          "1": "53",
+          "2": "53",
+          "3": "61",
+          "FREE": "61.5"
+        }
+      },
+      {
+        "name": "총장",
+        "values": {
+          "1": "62",
+          "2": "63",
+          "3": "62/66.5",
+          "FREE": "63/67.5"
+        }
+      }
+    ]
+  },
+  {
     "id": "excel-product-465",
     "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
     "handle": "product-465",
@@ -2305,6 +2556,1006 @@
     },
     "productNo": 458,
     "productCode": "CC-458",
+    "releaseDate": "",
+    "fabricImage": "",
+    "fabricTextureImage": "",
+    "fabricComposition": "COTTON 100% (프리미엄 코튼)",
+    "showFabricInfo": false,
+    "showSizeGuide": false,
+    "sizeGuideImage": "",
+    "sizeChartImage": "",
+    "sizeMeasurements": []
+  },
+  {
+    "id": "excel-product-466",
+    "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매",
+    "handle": "product-466",
+    "categoryId": "top",
+    "categoryIds": [
+      "top"
+    ],
+    "description": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매",
+    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/302df895f725e.png\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/e5cb62a32df01.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/fd55efad9fd49.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/d660d33173dfc.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/3516c5048436f.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/d2e95e4b80b9e.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/d3c4eb2c7ef26.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/558aebe8464ae.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/62533c2a71e3b.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p>",
+    "currencyCode": "KRW",
+    "priceRange": {
+      "maxVariantPrice": {
+        "amount": "930000",
+        "currencyCode": "KRW"
+      },
+      "minVariantPrice": {
+        "amount": "930000",
+        "currencyCode": "KRW"
+      }
+    },
+    "featuredImage": {
+      "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+      "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매"
+    },
+    "images": [
+      {
+        "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매"
+      }
+    ],
+    "variants": [
+      {
+        "id": "excel-product-466-아이보리-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 아이보리 / 1(44-55)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 아이보리 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "아이보리"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-아이보리-2(66)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 아이보리 / 2(66)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 아이보리 / 2(66)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "아이보리"
+          },
+          {
+            "name": "Size",
+            "value": "2(66)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-아이보리-3(77-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 아이보리 / 3(77-88)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 아이보리 / 3(77-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "아이보리"
+          },
+          {
+            "name": "Size",
+            "value": "3(77-88)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-멜란지쿨그레이-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지쿨그레이 / 1(44-55)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지쿨그레이 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지쿨그레이"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-멜란지쿨그레이-2(66)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지쿨그레이 / 2(66)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지쿨그레이 / 2(66)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지쿨그레이"
+          },
+          {
+            "name": "Size",
+            "value": "2(66)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-멜란지쿨그레이-3(77-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지쿨그레이 / 3(77-88)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지쿨그레이 / 3(77-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지쿨그레이"
+          },
+          {
+            "name": "Size",
+            "value": "3(77-88)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-멜란지모카-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지모카 / 1(44-55)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지모카 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지모카"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-멜란지모카-2(66)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지모카 / 2(66)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지모카 / 2(66)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지모카"
+          },
+          {
+            "name": "Size",
+            "value": "2(66)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-멜란지모카-3(77-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지모카 / 3(77-88)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지모카 / 3(77-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지모카"
+          },
+          {
+            "name": "Size",
+            "value": "3(77-88)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-멜란지차콜-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지차콜 / 1(44-55)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지차콜 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지차콜"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-멜란지차콜-2(66)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지차콜 / 2(66)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지차콜 / 2(66)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지차콜"
+          },
+          {
+            "name": "Size",
+            "value": "2(66)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-멜란지차콜-3(77-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지차콜 / 3(77-88)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 멜란지차콜 / 3(77-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지차콜"
+          },
+          {
+            "name": "Size",
+            "value": "3(77-88)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-블랙-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 블랙 / 1(44-55)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 블랙 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "블랙"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-블랙-2(66)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 블랙 / 2(66)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 블랙 / 2(66)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "블랙"
+          },
+          {
+            "name": "Size",
+            "value": "2(66)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-466-블랙-3(77-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/32c16d3d6b7f49a0.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 블랙 / 3(77-88)"
+        },
+        "price": {
+          "amount": "930000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매 - 블랙 / 3(77-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "블랙"
+          },
+          {
+            "name": "Size",
+            "value": "3(77-88)"
+          }
+        ],
+        "availableForSale": true
+      }
+    ],
+    "options": [
+      {
+        "id": "color",
+        "name": "Color",
+        "values": [
+          "아이보리",
+          "멜란지쿨그레이",
+          "멜란지모카",
+          "멜란지차콜",
+          "블랙"
+        ]
+      },
+      {
+        "id": "size",
+        "name": "Size",
+        "values": [
+          "1(44-55)",
+          "2(66)",
+          "3(77-88)"
+        ]
+      }
+    ],
+    "tags": [
+      "NEW",
+      "BLACK_LABEL",
+      "SET",
+      "pno:466",
+      "pcode:CC-466"
+    ],
+    "sizes": [
+      "1(44-55)",
+      "2(66)",
+      "3(77-88)"
+    ],
+    "colors": [
+      "아이보리",
+      "멜란지쿨그레이",
+      "멜란지모카",
+      "멜란지차콜",
+      "블랙"
+    ],
+    "stock": 123,
+    "sizeStock": {
+      "아이보리-1(44-55)": 10,
+      "아이보리-2(66)": 10,
+      "아이보리-3(77-88)": 10,
+      "멜란지쿨그레이-1(44-55)": 10,
+      "멜란지쿨그레이-2(66)": 10,
+      "멜란지쿨그레이-3(77-88)": 10,
+      "멜란지모카-1(44-55)": 10,
+      "멜란지모카-2(66)": 10,
+      "멜란지모카-3(77-88)": 10,
+      "멜란지차콜-1(44-55)": 10,
+      "멜란지차콜-2(66)": 10,
+      "멜란지차콜-3(77-88)": 10,
+      "블랙-1(44-55)": 10,
+      "블랙-2(66)": 10,
+      "블랙-3(77-88)": 10
+    },
+    "colorHexMap": {
+      "RED": "#DC2626",
+      "BLUE": "#2563EB",
+      "NAVY": "#000080",
+      "PINK": "#EC4899",
+      "BEIGE": "#F5F5DC",
+      "BLACK": "#000000",
+      "BROWN": "#8B4513",
+      "CREAM": "#FDFBF7",
+      "GREEN": "#16A34A",
+      "KHAKI": "#708090",
+      "WHITE": "#FFFFFF",
+      "모카": "#8B5A2B",
+      "블랙": "#000000",
+      "차콜": "#36454F",
+      "A타입": "#1C1C1C",
+      "B타입": "#2B2B2B",
+      "CHARCOAL": "#36454F",
+      "베이지": "#F5F5DC",
+      "오트밀": "#D8C7B5",
+      "아이보리": "#FFFFF0",
+      "쿨그레이": "#8E9CA3",
+      "멜란지 모카": "#8B5A2B",
+      "멜란지 차콜": "#36454F",
+      "멜란지 쿨그레이": "#8E9CA3"
+    },
+    "productLabel": "BLACK_LABEL",
+    "isMainFeatured": false,
+    "availableForSale": true,
+    "isTimeSale": false,
+    "bulkDiscount": {
+      "rules": [],
+      "enabled": false,
+      "productNo": 466,
+      "fabricImage": "",
+      "productCode": "CC-466",
+      "releaseDate": "",
+      "showSizeGuide": false,
+      "showFabricInfo": false,
+      "sizeChartImage": "",
+      "sizeGuideImage": "",
+      "sizeMeasurements": [],
+      "fabricComposition": "COTTON 100% (프리미엄 코튼)",
+      "fabricTextureImage": ""
+    },
+    "created_at": "2026-10-08T11:59:10.357Z",
+    "updated_at": "2026-10-08T11:59:10.357Z",
+    "price": {
+      "amount": "930000",
+      "currencyCode": "KRW"
+    },
+    "productNo": 466,
+    "productCode": "CC-466",
+    "releaseDate": "",
+    "fabricImage": "",
+    "fabricTextureImage": "",
+    "fabricComposition": "COTTON 100% (프리미엄 코튼)",
+    "showFabricInfo": false,
+    "showSizeGuide": false,
+    "sizeGuideImage": "",
+    "sizeChartImage": "",
+    "sizeMeasurements": []
+  },
+  {
+    "id": "excel-product-467",
+    "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매",
+    "handle": "product-467",
+    "categoryId": "top",
+    "categoryIds": [
+      "top"
+    ],
+    "description": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매",
+    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/302df895f725e.png\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/e5cb62a32df01.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/fd55efad9fd49.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/d660d33173dfc.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/3516c5048436f.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/d2e95e4b80b9e.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/d3c4eb2c7ef26.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/558aebe8464ae.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/62533c2a71e3b.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매\"></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p>",
+    "currencyCode": "KRW",
+    "priceRange": {
+      "maxVariantPrice": {
+        "amount": "1550000",
+        "currencyCode": "KRW"
+      },
+      "minVariantPrice": {
+        "amount": "1550000",
+        "currencyCode": "KRW"
+      }
+    },
+    "featuredImage": {
+      "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+      "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매"
+    },
+    "images": [
+      {
+        "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매"
+      }
+    ],
+    "variants": [
+      {
+        "id": "excel-product-467-아이보리-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 아이보리 / 1(44-55)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 아이보리 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "아이보리"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-아이보리-2(66)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 아이보리 / 2(66)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 아이보리 / 2(66)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "아이보리"
+          },
+          {
+            "name": "Size",
+            "value": "2(66)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-아이보리-3(77-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 아이보리 / 3(77-88)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 아이보리 / 3(77-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "아이보리"
+          },
+          {
+            "name": "Size",
+            "value": "3(77-88)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-멜란지쿨그레이-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지쿨그레이 / 1(44-55)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지쿨그레이 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지쿨그레이"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-멜란지쿨그레이-2(66)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지쿨그레이 / 2(66)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지쿨그레이 / 2(66)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지쿨그레이"
+          },
+          {
+            "name": "Size",
+            "value": "2(66)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-멜란지쿨그레이-3(77-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지쿨그레이 / 3(77-88)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지쿨그레이 / 3(77-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지쿨그레이"
+          },
+          {
+            "name": "Size",
+            "value": "3(77-88)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-멜란지모카-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지모카 / 1(44-55)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지모카 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지모카"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-멜란지모카-2(66)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지모카 / 2(66)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지모카 / 2(66)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지모카"
+          },
+          {
+            "name": "Size",
+            "value": "2(66)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-멜란지모카-3(77-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지모카 / 3(77-88)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지모카 / 3(77-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지모카"
+          },
+          {
+            "name": "Size",
+            "value": "3(77-88)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-멜란지차콜-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지차콜 / 1(44-55)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지차콜 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지차콜"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-멜란지차콜-2(66)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지차콜 / 2(66)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지차콜 / 2(66)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지차콜"
+          },
+          {
+            "name": "Size",
+            "value": "2(66)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-멜란지차콜-3(77-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지차콜 / 3(77-88)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 멜란지차콜 / 3(77-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "멜란지차콜"
+          },
+          {
+            "name": "Size",
+            "value": "3(77-88)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-블랙-1(44-55)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 블랙 / 1(44-55)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 블랙 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "블랙"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-블랙-2(66)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 블랙 / 2(66)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 블랙 / 2(66)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "블랙"
+          },
+          {
+            "name": "Size",
+            "value": "2(66)"
+          }
+        ],
+        "availableForSale": true
+      },
+      {
+        "id": "excel-product-467-블랙-3(77-88)",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260928/075b2d505cfe456e.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 블랙 / 3(77-88)"
+        },
+        "price": {
+          "amount": "1550000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매 - 블랙 / 3(77-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "블랙"
+          },
+          {
+            "name": "Size",
+            "value": "3(77-88)"
+          }
+        ],
+        "availableForSale": true
+      }
+    ],
+    "options": [
+      {
+        "id": "color",
+        "name": "Color",
+        "values": [
+          "아이보리",
+          "멜란지쿨그레이",
+          "멜란지모카",
+          "멜란지차콜",
+          "블랙"
+        ]
+      },
+      {
+        "id": "size",
+        "name": "Size",
+        "values": [
+          "1(44-55)",
+          "2(66)",
+          "3(77-88)"
+        ]
+      }
+    ],
+    "tags": [
+      "NEW",
+      "BLACK_LABEL",
+      "SET",
+      "pno:467",
+      "pcode:CC-467"
+    ],
+    "sizes": [
+      "1(44-55)",
+      "2(66)",
+      "3(77-88)"
+    ],
+    "colors": [
+      "아이보리",
+      "멜란지쿨그레이",
+      "멜란지모카",
+      "멜란지차콜",
+      "블랙"
+    ],
+    "stock": 88,
+    "sizeStock": {
+      "아이보리-1(44-55)": 10,
+      "아이보리-2(66)": 10,
+      "아이보리-3(77-88)": 10,
+      "멜란지쿨그레이-1(44-55)": 10,
+      "멜란지쿨그레이-2(66)": 10,
+      "멜란지쿨그레이-3(77-88)": 10,
+      "멜란지모카-1(44-55)": 10,
+      "멜란지모카-2(66)": 10,
+      "멜란지모카-3(77-88)": 10,
+      "멜란지차콜-1(44-55)": 10,
+      "멜란지차콜-2(66)": 10,
+      "멜란지차콜-3(77-88)": 10,
+      "블랙-1(44-55)": 10,
+      "블랙-2(66)": 10,
+      "블랙-3(77-88)": 10
+    },
+    "colorHexMap": {
+      "RED": "#DC2626",
+      "BLUE": "#2563EB",
+      "NAVY": "#000080",
+      "PINK": "#EC4899",
+      "BEIGE": "#F5F5DC",
+      "BLACK": "#000000",
+      "BROWN": "#8B4513",
+      "CREAM": "#FDFBF7",
+      "GREEN": "#16A34A",
+      "KHAKI": "#708090",
+      "WHITE": "#FFFFFF",
+      "모카": "#8B5A2B",
+      "블랙": "#000000",
+      "차콜": "#36454F",
+      "A타입": "#1C1C1C",
+      "B타입": "#2B2B2B",
+      "CHARCOAL": "#36454F",
+      "베이지": "#F5F5DC",
+      "오트밀": "#D8C7B5",
+      "아이보리": "#FFFFF0",
+      "쿨그레이": "#8E9CA3",
+      "멜란지 모카": "#8B5A2B",
+      "멜란지 차콜": "#36454F",
+      "멜란지 쿨그레이": "#8E9CA3"
+    },
+    "productLabel": "BLACK_LABEL",
+    "isMainFeatured": false,
+    "availableForSale": true,
+    "isTimeSale": false,
+    "bulkDiscount": {
+      "rules": [],
+      "enabled": false,
+      "productNo": 467,
+      "fabricImage": "",
+      "productCode": "CC-467",
+      "releaseDate": "",
+      "showSizeGuide": false,
+      "showFabricInfo": false,
+      "sizeChartImage": "",
+      "sizeGuideImage": "",
+      "sizeMeasurements": [],
+      "fabricComposition": "COTTON 100% (프리미엄 코튼)",
+      "fabricTextureImage": ""
+    },
+    "created_at": "2026-10-08T11:59:10.357Z",
+    "updated_at": "2026-10-08T11:59:10.357Z",
+    "price": {
+      "amount": "1550000",
+      "currencyCode": "KRW"
+    },
+    "productNo": 467,
+    "productCode": "CC-467",
     "releaseDate": "",
     "fabricImage": "",
     "fabricTextureImage": "",

@@ -79,25 +79,25 @@ export const DEFAULT_FORM_TITLES: FormTitlesConfig = {
   productImages: "제품 이미지 등록 (최대 10개)",
   price: "판매가 (KRW)",
   variantCutImages: "컬러등록",
-  productNo: "{formTitles.productNo}",
+  productNo: "상품번호",
   title: "상품명",
-  description: "{formTitles.description} (상단 제목 밑 노출)",
-  detailImages: "{formTitles.detailImages}",
+  description: "상품 간단설명 (상단 제목 밑 노출)",
+  detailImages: "추가 상세 이미지",
   previewScreen: "상세페이지 미리보기 화면",
-  categories: "{formTitles.categories}",
+  categories: "카테고리 선택",
   mainFeatured: "메인 전시 여부 (메인 슬라이더/추천 노출)",
   saleStatus: "상품 판매 상태 (즉시 구매 On/Off)",
   scheduledRelease: "판매 시작 시간 지정 (예약 오픈)",
 
-  productLabel: "{formTitles.productLabel}",
-  fabricInfo: "{formTitles.fabricInfo}",
-  fabricComposition: "{formTitles.fabricComposition}",
-  fabricImage: "{formTitles.fabricImage}",
-  sizeOptions: "{formTitles.sizeOptions}",
-  sizeGuide: "{formTitles.sizeGuide}",
-  sizeStock: "{formTitles.sizeStock}",
+  productLabel: "상품 라벨",
+  fabricInfo: "소재 및 원단 정보",
+  fabricComposition: "혼용률 성분",
+  fabricImage: "원단 확대 이미지",
+  sizeOptions: "사이즈 옵션",
+  sizeGuide: "실측 사이즈 가이드",
+  sizeStock: "사이즈별 재고 수량",
 
-  timeSale: "{formTitles.timeSale}",
+  timeSale: "타임세일 프로모션",
   bulkDiscount: "대량 구매 구간별 할인 규칙 (수량 할인)",
 
   option1Name: "Color",
@@ -450,7 +450,7 @@ export function ProductFormModal({
     } else {
       // Add mode defaults
       setTitle("");
-      setCategories(["new"]);
+      setCategories(["outer"]);
       setPrice("");
       setDescription("");
       setDetailDescription("");
@@ -807,9 +807,12 @@ export function ProductFormModal({
       isTimeSale,
       timeSaleDiscountRate: parsedRate,
       timeSaleAllowCoupon: isTimeSale ? timeSaleAllowCoupon : true,
-      timeSaleAllowPoints: isTimeSale ? timeSaleAllowPoints : true,
-      timeSaleStartDate: isTimeSale ? `2026-${timeSaleStartMonth.padStart(2, "0")}-${timeSaleStartDay.padStart(2, "0")}T${timeSaleStartAmpm === "오후" ? String((parseInt(timeSaleStartHour) % 12) + 12).padStart(2, "0") : String(parseInt(timeSaleStartHour) % 12).padStart(2, "0")}:${timeSaleStartMinute.padStart(2, "0")}:00` : undefined,
-      timeSaleEndDate: isTimeSale ? `2026-${timeSaleEndMonth.padStart(2, "0")}-${timeSaleEndDay.padStart(2, "0")}T${timeSaleEndAmpm === "오후" ? String((parseInt(timeSaleEndHour) % 12) + 12).padStart(2, "0") : String(parseInt(timeSaleEndHour) % 12).padStart(2, "0")}:${timeSaleEndMinute.padStart(2, "0")}:00` : undefined,
+      timeSaleStartDate: isTimeSale
+        ? `${new Date().getFullYear()}-${(timeSaleStartMonth || "1").padStart(2, "0")}-${(timeSaleStartDay || "1").padStart(2, "0")}T${timeSaleStartAmpm === "오후" ? String(((parseInt(timeSaleStartHour, 10) || 12) % 12) + 12).padStart(2, "0") : String((parseInt(timeSaleStartHour, 10) || 12) % 12).padStart(2, "0")}:${(timeSaleStartMinute || "0").padStart(2, "0")}:00`
+        : undefined,
+      timeSaleEndDate: isTimeSale
+        ? `${new Date().getFullYear()}-${(timeSaleEndMonth || "1").padStart(2, "0")}-${(timeSaleEndDay || "1").padStart(2, "0")}T${timeSaleEndAmpm === "오후" ? String(((parseInt(timeSaleEndHour, 10) || 12) % 12) + 12).padStart(2, "0") : String((parseInt(timeSaleEndHour, 10) || 12) % 12).padStart(2, "0")}:${(timeSaleEndMinute || "0").padStart(2, "0")}:00`
+        : undefined,
     };
 
     onSave(resultProduct, !isEdit);

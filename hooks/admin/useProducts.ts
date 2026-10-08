@@ -318,6 +318,45 @@ export function useProducts({
     return `CC-${String(num).padStart(3, "0")}`;
   }, [getProductNoNum]);
 
+  const getSortedBaseList = useCallback(
+    (list: any[], order: string) => {
+      if (order === "custom") return [...list];
+      return [...list].sort((a, b) => {
+        if (order === "productNoDesc") {
+          // 최신 등록순 (1순위: 등록번호 높은 순, 2순위: 등록일시 최신순)
+          const numA = getProductNoNum(a);
+          const numB = getProductNoNum(b);
+          if (numB !== numA) return numB - numA;
+
+          const timeA = (a.created_at || a.createdAt) ? new Date(a.created_at || a.createdAt).getTime() : 0;
+          const timeB = (b.created_at || b.createdAt) ? new Date(b.created_at || b.createdAt).getTime() : 0;
+          return timeB - timeA;
+        }
+        if (order === "productNoAsc") {
+          const numA = getProductNoNum(a);
+          const numB = getProductNoNum(b);
+          if (numA !== numB) return numA - numB;
+          return 0;
+        }
+        if (order === "nameAsc") {
+          return (a.title || "").localeCompare(b.title || "");
+        }
+        if (order === "priceDesc") {
+          const pA = parseFloat(a.priceRange?.minVariantPrice?.amount || a.price?.amount || "0");
+          const pB = parseFloat(b.priceRange?.minVariantPrice?.amount || b.price?.amount || "0");
+          return pB - pA;
+        }
+        if (order === "priceAsc") {
+          const pA = parseFloat(a.priceRange?.minVariantPrice?.amount || a.price?.amount || "0");
+          const pB = parseFloat(b.priceRange?.minVariantPrice?.amount || b.price?.amount || "0");
+          return pA - pB;
+        }
+        return 0;
+      });
+    },
+    [getProductNoNum]
+  );
+
   const filteredProducts = useMemo(() => {
     const filtered = productsList.filter((p) => {
       // Ignore main banner slides from product catalog
@@ -325,14 +364,15 @@ export function useProducts({
         return false;
       }
 
-      // 1. Search Query Filter
+      // 1. Search Query Filter (Checks DB code, dynamically formatted CC-code, product number, title, and description)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const code = (p.productCode || "").toLowerCase();
+        const dynamicCode = getProductNo(p).toLowerCase();
         const no = String(p.productNo || "");
         const title = (p.title || "").toLowerCase();
         const desc = (p.description || "").toLowerCase();
-        if (!code.includes(q) && !no.includes(q) && !title.includes(q) && !desc.includes(q)) {
+        if (!code.includes(q) && !dynamicCode.includes(q) && !no.includes(q) && !title.includes(q) && !desc.includes(q)) {
           return false;
         }
       }
@@ -358,43 +398,8 @@ export function useProducts({
       return true;
     });
 
-    return [...filtered].sort((a, b) => {
-      if (productSortOrder === "productNoDesc") {
-        // 최신 등록순 (1순위: 등록번호 높은 순, 2순위: 등록일시 최신순)
-        const numA = getProductNoNum(a);
-        const numB = getProductNoNum(b);
-        if (numB !== numA) return numB - numA;
-
-        const timeA = (a.created_at || a.createdAt) ? new Date(a.created_at || a.createdAt).getTime() : 0;
-        const timeB = (b.created_at || b.createdAt) ? new Date(b.created_at || b.createdAt).getTime() : 0;
-        return timeB - timeA;
-      }
-      if (productSortOrder === "custom") {
-        // 사용자 지정 순서 (배열 순서 그대로 보존)
-        return 0;
-      }
-      if (productSortOrder === "productNoAsc") {
-        const numA = getProductNoNum(a);
-        const numB = getProductNoNum(b);
-        if (numA !== numB) return numA - numB;
-        return 0;
-      }
-      if (productSortOrder === "nameAsc") {
-        return (a.title || "").localeCompare(b.title || "");
-      }
-      if (productSortOrder === "priceDesc") {
-        const pA = parseFloat(a.priceRange?.minVariantPrice?.amount || a.price?.amount || "0");
-        const pB = parseFloat(b.priceRange?.minVariantPrice?.amount || b.price?.amount || "0");
-        return pB - pA;
-      }
-      if (productSortOrder === "priceAsc") {
-        const pA = parseFloat(a.priceRange?.minVariantPrice?.amount || a.price?.amount || "0");
-        const pB = parseFloat(b.priceRange?.minVariantPrice?.amount || b.price?.amount || "0");
-        return pA - pB;
-      }
-      return 0;
-    });
-  }, [productsList, searchQuery, selectedCategoryFilter, productSortOrder, adminTimeSaleProductIds, getProductNoNum]);
+    return getSortedBaseList(filtered, productSortOrder);
+  }, [productsList, searchQuery, selectedCategoryFilter, productSortOrder, adminTimeSaleProductIds, getProductNo, getSortedBaseList]);
 
   const categoryProducts = useMemo(() => {
     if (!selectedCategoryForProducts) return [];
@@ -409,7 +414,6 @@ export function useProducts({
   }, [productsList]);
 
   const getProductStock = useCallback((product: any) => {
-    if (product.availableForSale === false) return 0;
     if (product.stock !== undefined) return Number(product.stock);
     const hash = String(product.id || "").split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return (hash % 75) + 15;
@@ -472,14 +476,19 @@ export function useProducts({
       return p;
     });
 
+    const updatedTarget = updated.find((p) => String(p.id) === String(id));
+
     setProductsList(updated);
     saveProductsToStorage(updated);
+    if (updatedTarget) {
+      saveSingleProduct(updatedTarget, false);
+    }
     triggerToast(
       nextAvailable
         ? `'${targetProduct.title}' 상품이 [구매 가능(ON)]으로 설정되었습니다.`
         : `'${targetProduct.title}' 상품이 [구매 불가(OFF)]로 설정되었습니다.`
     );
-  }, [productsList, saveProductsToStorage, triggerToast]);
+  }, [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]);
 
   const toggleMainFeatured = useCallback((id: string) => {
     const targetProduct = productsList.find((p) => p.id === id);
@@ -601,7 +610,7 @@ export function useProducts({
         return {
           ...p,
           stock: stockQty,
-          availableForSale: !isSoldOut,
+          availableForSale: isSoldOut ? false : (p.availableForSale !== false),
           sizeStock: updatedSizeStock,
           stockMap: updatedStockMap,
         };
@@ -643,41 +652,7 @@ export function useProducts({
   const handleReorderProducts = useCallback((fromId: string, toId: string, showToast: boolean = true) => {
     setProductSortOrder("custom");
     setProductsList((prev) => {
-      // 1. 현재 정렬 순서가 custom이 아니었던 경우 현재 정렬된 순서를 기본 순서로 동기화
-      let baseList = [...prev];
-      if (productSortOrder !== "custom") {
-        baseList = [...prev].sort((a, b) => {
-          if (productSortOrder === "productNoDesc") {
-            const numA = getProductNoNum(a);
-            const numB = getProductNoNum(b);
-            if (numB !== numA) return numB - numA;
-            const timeA = (a.created_at || a.createdAt) ? new Date(a.created_at || a.createdAt).getTime() : 0;
-            const timeB = (b.created_at || b.createdAt) ? new Date(b.created_at || b.createdAt).getTime() : 0;
-            return timeB - timeA;
-          }
-          if (productSortOrder === "productNoAsc") {
-            const numA = getProductNoNum(a);
-            const numB = getProductNoNum(b);
-            if (numA !== numB) return numA - numB;
-            return 0;
-          }
-          if (productSortOrder === "nameAsc") {
-            return (a.title || "").localeCompare(b.title || "");
-          }
-          if (productSortOrder === "priceDesc") {
-            const pA = parseFloat(a.priceRange?.minVariantPrice?.amount || a.price?.amount || "0");
-            const pB = parseFloat(b.priceRange?.minVariantPrice?.amount || b.price?.amount || "0");
-            return pB - pA;
-          }
-          if (productSortOrder === "priceAsc") {
-            const pA = parseFloat(a.priceRange?.minVariantPrice?.amount || a.price?.amount || "0");
-            const pB = parseFloat(b.priceRange?.minVariantPrice?.amount || b.price?.amount || "0");
-            return pA - pB;
-          }
-          return 0;
-        });
-      }
-
+      const baseList = getSortedBaseList(prev, productSortOrder);
       const fromIdx = baseList.findIndex((p) => String(p.id) === String(fromId));
       const toIdx = baseList.findIndex((p) => String(p.id) === String(toId));
       if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return prev;
@@ -690,7 +665,7 @@ export function useProducts({
       }
       return updated;
     });
-  }, [getProductNoNum, productSortOrder, saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [getSortedBaseList, productSortOrder, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleClearAllProducts = useCallback(() => {
     const totalCount = actualProductsCount;
@@ -739,12 +714,13 @@ export function useProducts({
   const handleMoveProduct = useCallback((id: string, direction: "up" | "down") => {
     setProductSortOrder("custom");
     setProductsList((prev) => {
-      const idx = prev.findIndex((p) => String(p.id) === String(id));
+      const baseList = getSortedBaseList(prev, productSortOrder);
+      const idx = baseList.findIndex((p) => String(p.id) === String(id));
       if (idx === -1) return prev;
       const targetIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (targetIdx < 0 || targetIdx >= prev.length) return prev;
+      if (targetIdx < 0 || targetIdx >= baseList.length) return prev;
 
-      const newList = [...prev];
+      const newList = [...baseList];
       const temp = newList[idx];
       newList[idx] = newList[targetIdx];
       newList[targetIdx] = temp;
@@ -753,88 +729,61 @@ export function useProducts({
       triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
       return newList;
     });
-  }, [saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [getSortedBaseList, productSortOrder, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleMoveProductToTop = useCallback((id: string) => {
     setProductSortOrder("custom");
     setProductsList((prev) => {
-      const idx = prev.findIndex((p) => String(p.id) === String(id));
+      const baseList = getSortedBaseList(prev, productSortOrder);
+      const idx = baseList.findIndex((p) => String(p.id) === String(id));
       if (idx === -1) return prev;
       if (idx === 0) {
-        triggerToast(`'${prev[0].title}' 상품은 이미 최상단에 위치해 있습니다.`);
+        triggerToast(`'${baseList[0].title}' 상품은 이미 최상단에 위치해 있습니다.`);
         return prev;
       }
-      const updated = [...prev];
+      const updated = [...baseList];
       const [movedItem] = updated.splice(idx, 1);
       updated.unshift(movedItem);
       saveProductsToStorage(updated);
       triggerToast(`⬆️ '${movedItem.title}' 상품이 목록 최상단으로 이동되었습니다.`);
       return updated;
     });
-  }, [saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [getSortedBaseList, productSortOrder, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleBulkMoveToTop = useCallback((targetIds: string[]) => {
     if (!targetIds || targetIds.length === 0) return;
     setProductSortOrder("custom");
     setProductsList((prev) => {
+      const baseList = getSortedBaseList(prev, productSortOrder);
       const idSet = new Set(targetIds.map(String));
-      const selected = prev.filter((p) => idSet.has(String(p.id)));
-      const unselected = prev.filter((p) => !idSet.has(String(p.id)));
+      const selected = baseList.filter((p) => idSet.has(String(p.id)));
+      const unselected = baseList.filter((p) => !idSet.has(String(p.id)));
       if (selected.length === 0) return prev;
       const updated = [...selected, ...unselected];
       saveProductsToStorage(updated);
       triggerToast(`⬆️ 선택한 ${selected.length}개 상품이 목록 최상단으로 일괄 이동되었습니다.`);
       return updated;
     });
-  }, [saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [getSortedBaseList, productSortOrder, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleSortOrderChange = useCallback((
     newOrder: "productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom"
   ) => {
     setProductSortOrder(newOrder);
-    if (newOrder === "custom") {
-      triggerToast("✅ 사용자 지정 순서(드래그 앤 드롭) 모드로 변경되었습니다.");
-      return;
-    }
-
-    setProductsList((prev) => {
-      const sorted = [...prev].sort((a, b) => {
-        if (newOrder === "productNoDesc") {
-          return getProductNoNum(b) - getProductNoNum(a);
-        }
-        if (newOrder === "productNoAsc") {
-          return getProductNoNum(a) - getProductNoNum(b);
-        }
-        if (newOrder === "nameAsc") {
-          return (a.title || "").localeCompare(b.title || "");
-        }
-        if (newOrder === "priceDesc") {
-          const pA = parseFloat(a.priceRange?.minVariantPrice?.amount || a.price?.amount || "0");
-          const pB = parseFloat(b.priceRange?.minVariantPrice?.amount || b.price?.amount || "0");
-          return pB - pA;
-        }
-        if (newOrder === "priceAsc") {
-          const pA = parseFloat(a.priceRange?.minVariantPrice?.amount || a.price?.amount || "0");
-          const pB = parseFloat(b.priceRange?.minVariantPrice?.amount || b.price?.amount || "0");
-          return pA - pB;
-        }
-        return 0;
-      });
-      saveProductsToStorage(sorted);
-      triggerToast(
-        newOrder === "productNoDesc"
-          ? "✅ 상품 목록이 '최신 등록순'으로 정렬되었습니다."
-          : newOrder === "productNoAsc"
-          ? "✅ 상품 목록이 '등록번호 순'으로 정렬되었습니다."
-          : newOrder === "nameAsc"
-          ? "✅ 상품 목록이 '상품명 순'으로 정렬되었습니다."
-          : newOrder === "priceDesc"
-          ? "✅ 상품 목록이 '높은 가격순'으로 정렬되었습니다."
-          : "✅ 상품 목록이 '낮은 가격순'으로 정렬되었습니다."
-      );
-      return sorted;
-    });
-  }, [getProductNoNum, saveProductsToStorage, setProductSortOrder, triggerToast]);
+    triggerToast(
+      newOrder === "custom"
+        ? "✅ 사용자 지정 순서(드래그 앤 드롭) 모드로 변경되었습니다."
+        : newOrder === "productNoDesc"
+        ? "✅ 상품 목록이 '최신 등록순'으로 정렬되었습니다."
+        : newOrder === "productNoAsc"
+        ? "✅ 상품 목록이 '등록번호 순'으로 정렬되었습니다."
+        : newOrder === "nameAsc"
+        ? "✅ 상품 목록이 '상품명 순'으로 정렬되었습니다."
+        : newOrder === "priceDesc"
+        ? "✅ 상품 목록이 '높은 가격순'으로 정렬되었습니다."
+        : "✅ 상품 목록이 '낮은 가격순'으로 정렬되었습니다."
+    );
+  }, [setProductSortOrder, triggerToast]);
 
   const handleQuickUpdateReleaseSchedule = useCallback(
     (id: string, availableForSale: boolean, releaseDate?: string) => {
@@ -855,8 +804,13 @@ export function useProducts({
         return p;
       });
 
+      const updatedTarget = updatedList.find((p) => String(p.id) === String(id));
+
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
+      if (updatedTarget) {
+        saveSingleProduct(updatedTarget, false);
+      }
 
       if (releaseDate && new Date(releaseDate).getTime() > Date.now()) {
         triggerToast(
@@ -873,7 +827,7 @@ export function useProducts({
         triggerToast(`✓ '${targetProduct.title}' 상품이 [구매 가능(ON / 상시판매)]으로 설정되었습니다.`);
       }
     },
-    [productsList, saveProductsToStorage, triggerToast]
+    [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]
   );
 
   const handleQuickUpdateCategory = useCallback(
@@ -907,8 +861,12 @@ export function useProducts({
         handleUpdateProductTimeSetting?.(String(id), h, m, undefined, rateNum);
       }
 
+      const updatedTarget = updatedList.find((p) => String(p.id) === String(id));
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
+      if (updatedTarget) {
+        saveSingleProduct(updatedTarget, false);
+      }
       triggerToast(`카테고리가 [${newCategory.toUpperCase()}] (으)로 즉시 변경되었습니다.`);
     },
     [
@@ -920,6 +878,7 @@ export function useProducts({
       setAdminTimeSaleProductIds,
       handleUpdateProductTimeSetting,
       saveProductsToStorage,
+      saveSingleProduct,
       triggerToast,
     ]
   );
@@ -958,12 +917,16 @@ export function useProducts({
         }
         return p;
       });
+      const updatedTarget = updatedList.find((p) => String(p.id) === String(id));
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
+      if (updatedTarget) {
+        saveSingleProduct(updatedTarget, false);
+      }
       triggerToast(`판매가가 ${newFormatted}원으로 변경되었습니다.`);
       return true;
     },
-    [productsList, saveProductsToStorage, triggerToast]
+    [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]
   );
 
   const handleQuickUpdateStock = useCallback(
@@ -971,7 +934,9 @@ export function useProducts({
       const targetProduct = productsList.find((p) => String(p.id) === String(id));
       if (!targetProduct) return;
 
-      const isAvailable = newTotalStock > 0;
+      // If stock becomes 0, it is out of stock (availableForSale: false).
+      // If stock > 0, PRESERVE the product's explicit availableForSale state so 구매불가 is never unlocked by stock changes!
+      const isAvailable = newTotalStock > 0 ? (targetProduct.availableForSale !== false) : false;
 
       const updatedList = productsList.map((p) => {
         if (String(p.id) === String(id)) {
@@ -987,9 +952,9 @@ export function useProducts({
                     const colOpt = v.selectedOptions.find((o: any) => o.name === "Color")?.value;
                     const szOpt = v.selectedOptions.find((o: any) => o.name === "Size")?.value;
                     if (colOpt && szOpt && newSizeStock[`${colOpt}-${szOpt}`] !== undefined) {
-                      variantAvailable = Number(newSizeStock[`${colOpt}-${szOpt}`]) > 0;
+                      variantAvailable = isAvailable && Number(newSizeStock[`${colOpt}-${szOpt}`]) > 0;
                     } else if (szOpt && newSizeStock[szOpt] !== undefined) {
-                      variantAvailable = Number(newSizeStock[szOpt]) > 0;
+                      variantAvailable = isAvailable && Number(newSizeStock[szOpt]) > 0;
                     }
                   }
                   return {
@@ -1003,15 +968,20 @@ export function useProducts({
         return p;
       });
 
+      const updatedTarget = updatedList.find((p) => String(p.id) === String(id));
+
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
+      if (updatedTarget) {
+        saveSingleProduct(updatedTarget, false);
+      }
       if (newTotalStock === 0) {
         triggerToast(`[${targetProduct.title}] 상품이 품절 처리되었습니다.`);
       } else {
         triggerToast(`[${targetProduct.title}] 재고가 ${newTotalStock}개로 업데이트되었습니다.`);
       }
     },
-    [productsList, saveProductsToStorage, triggerToast]
+    [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]
   );
 
   return {

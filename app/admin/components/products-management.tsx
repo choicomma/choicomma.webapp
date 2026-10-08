@@ -124,15 +124,35 @@ function StockPopover({
   const [sizeStock, setSizeStock] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     if (colors.length > 0) {
+      const totalCombos = colors.length * sizes.length;
+      const baseShare = Math.max(0, Math.floor((currentStock || 0) / Math.max(1, totalCombos)));
+      let remainder = Math.max(0, (currentStock || 0) - baseShare * totalCombos);
+
       colors.forEach((c) => {
         sizes.forEach((s) => {
           const key = `${c}-${s}`;
-          initial[key] = product.sizeStock?.[key] !== undefined ? String(product.sizeStock[key]) : "0";
+          if (product.sizeStock?.[key] !== undefined) {
+            initial[key] = String(product.sizeStock[key]);
+          } else {
+            const alloc = baseShare + (remainder > 0 ? 1 : 0);
+            if (remainder > 0) remainder -= 1;
+            initial[key] = String(alloc);
+          }
         });
       });
     } else if (sizes.length > 0) {
+      const totalSizes = sizes.length;
+      const baseShare = Math.max(0, Math.floor((currentStock || 0) / totalSizes));
+      let remainder = Math.max(0, (currentStock || 0) - baseShare * totalSizes);
+
       sizes.forEach((s) => {
-        initial[s] = product.sizeStock?.[s] !== undefined ? String(product.sizeStock[s]) : String(currentStock || 0);
+        if (product.sizeStock?.[s] !== undefined) {
+          initial[s] = String(product.sizeStock[s]);
+        } else {
+          const alloc = baseShare + (remainder > 0 ? 1 : 0);
+          if (remainder > 0) remainder -= 1;
+          initial[s] = String(alloc);
+        }
       });
     }
     return initial;
@@ -333,6 +353,12 @@ function TimeSettingPopover({
   const [isScheduled, setIsScheduled] = useState<boolean>(Boolean(product.releaseDate));
   const [releaseDate, setReleaseDate] = useState<string>(product.releaseDate || "");
 
+  useEffect(() => {
+    setAvailable(product.availableForSale !== false);
+    setIsScheduled(Boolean(product.releaseDate));
+    setReleaseDate(product.releaseDate || "");
+  }, [product.availableForSale, product.releaseDate]);
+
   const handleApplyPreset = (preset: "tomorrow10" | "today18" | "day3_10" | "day7_10") => {
     setIsScheduled(true);
     const d = new Date();
@@ -355,6 +381,7 @@ function TimeSettingPopover({
   const handleClearSchedule = () => {
     setIsScheduled(false);
     setReleaseDate("");
+    onSaveSchedule(available, undefined);
   };
 
   const handleSave = () => {
@@ -403,7 +430,11 @@ function TimeSettingPopover({
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => setAvailable(true)}
+            onClick={() => {
+              setAvailable(true);
+              const finalDate = isScheduled && releaseDate ? releaseDate : undefined;
+              onSaveSchedule(true, finalDate);
+            }}
             className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
               available
                 ? "bg-blue-600 text-white border-blue-600 shadow-xs"
@@ -415,7 +446,11 @@ function TimeSettingPopover({
           </button>
           <button
             type="button"
-            onClick={() => setAvailable(false)}
+            onClick={() => {
+              setAvailable(false);
+              const finalDate = isScheduled && releaseDate ? releaseDate : undefined;
+              onSaveSchedule(false, finalDate);
+            }}
             className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
               !available
                 ? "bg-neutral-900 text-white border-neutral-900 shadow-xs"
@@ -677,11 +712,11 @@ export function ProductsManagement({
     let list = filteredProducts;
 
     if (selectedMetricFilter === "active") {
-      list = list.filter((p) => getProductStock(p) > 0);
+      list = list.filter((p) => p.availableForSale !== false && getProductStock(p) > 0);
     } else if (selectedMetricFilter === "main_featured") {
       list = list.filter((p) => Boolean(p.isMainFeatured));
     } else if (selectedMetricFilter === "sold_out") {
-      list = list.filter((p) => getProductStock(p) === 0);
+      list = list.filter((p) => p.availableForSale === false || getProductStock(p) === 0);
     }
 
     return list;
@@ -748,6 +783,16 @@ export function ProductsManagement({
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
+
+  // Prune deleted IDs from selectedProductIds when productsList changes (Bug 6 fix)
+  useEffect(() => {
+    if (selectedProductIds.length === 0) return;
+    const existingIdSet = new Set(productsList.map((p) => String(p.id)));
+    setSelectedProductIds((prev) => {
+      const filtered = prev.filter((id) => existingIdSet.has(id));
+      return filtered.length !== prev.length ? filtered : prev;
+    });
+  }, [productsList, selectedProductIds.length]);
 
   const [isBulkActionMenuOpen, setIsBulkActionMenuOpen] = useState(false);
 
@@ -870,6 +915,7 @@ export function ProductsManagement({
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const isDraggingRef = useRef(false);
   const dragStartTimeRef = useRef(0);
+  const lastDragEndTimeRef = useRef(0);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     isDraggingRef.current = true;
@@ -898,6 +944,7 @@ export function ProductsManagement({
   const handleDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     e.stopPropagation();
+    lastDragEndTimeRef.current = Date.now();
     if (draggedProductId && targetId && draggedProductId !== targetId) {
       if (handleReorderProducts) {
         handleReorderProducts(draggedProductId, targetId, true);
@@ -911,6 +958,7 @@ export function ProductsManagement({
   };
 
   const handleDragEnd = () => {
+    lastDragEndTimeRef.current = Date.now();
     setDraggedProductId(null);
     setDropTargetId(null);
     setTimeout(() => {
@@ -1285,7 +1333,7 @@ export function ProductsManagement({
             </div>
           </div>
           <p className="text-2xl font-extrabold mt-2 text-neutral-950">
-            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && getProductStock(p) > 0).length.toLocaleString()} 개
+            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && p.availableForSale !== false && getProductStock(p) > 0).length.toLocaleString()} 개
           </p>
           <div className="flex items-center justify-between mt-1">
             <p className="text-xs text-neutral-600 font-bold">재고 보유 중 (판매 가능)</p>
@@ -1347,7 +1395,7 @@ export function ProductsManagement({
             </div>
           </div>
           <p className="text-2xl font-extrabold mt-2 text-neutral-950">
-            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && getProductStock(p) === 0).length.toLocaleString()} 개
+            {productsList.filter((p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-") && (p.availableForSale === false || getProductStock(p) === 0)).length.toLocaleString()} 개
           </p>
           <div className="flex items-center justify-between mt-1">
             <p className="text-xs text-neutral-600 font-bold">재고 0개 (입고 수량 추가 필요)</p>
@@ -1586,7 +1634,11 @@ export function ProductsManagement({
                       onDrop={(e) => handleDrop(e, String(p.id))}
                       onDragEnd={handleDragEnd}
                       onClick={() => {
-                        if (isDraggingRef.current || Date.now() - dragStartTimeRef.current < 200) {
+                        if (
+                          isDraggingRef.current ||
+                          Date.now() - dragStartTimeRef.current < 200 ||
+                          Date.now() - lastDragEndTimeRef.current < 400
+                        ) {
                           return;
                         }
                         handleOpenEditModal(p);
@@ -1680,13 +1732,13 @@ export function ProductsManagement({
                               setActiveStockPopoverId(activeStockPopoverId === String(p.id) ? null : String(p.id));
                             }}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 whitespace-nowrap border ${
-                              p.availableForSale !== false && (p.stock === undefined || Number(p.stock) > 0)
+                              (p.stock !== undefined ? Number(p.stock) : getProductStock(p)) > 0
                                 ? "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100 hover:border-blue-500"
                                 : "bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 hover:border-rose-500"
                             }`}
                             title="클릭하여 옵션/컬러/사이즈별 재고 수량 수정"
                           >
-                            {p.availableForSale !== false && (p.stock === undefined || Number(p.stock) > 0) ? (
+                            {(p.stock !== undefined ? Number(p.stock) : getProductStock(p)) > 0 ? (
                               <span>● 재고 ({p.stock !== undefined ? Number(p.stock) : getProductStock(p)}개) ▾</span>
                             ) : (
                               <span>○ 품절 (0개) ▾</span>
@@ -1814,7 +1866,10 @@ export function ProductsManagement({
                             <ExternalLink className="w-3.5 h-3.5" />
                           </Link>
                           <button
-                            onClick={() => handleDeleteProduct(p.id, p.title)}
+                            onClick={() => {
+                              handleDeleteProduct(p.id, p.title);
+                              setSelectedProductIds((prev) => prev.filter((id) => id !== String(p.id)));
+                            }}
                             className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer border border-rose-200 shadow-2xs"
                             title="상품 완전 삭제"
                           >
@@ -1917,6 +1972,17 @@ export function ProductsManagement({
           </div>
         )}
       </div>
+
+      {/* Click-outside backdrop for Popovers */}
+      {(activeTimePopoverId || activeStockPopoverId) && (
+        <div
+          className="fixed inset-0 z-40 bg-transparent"
+          onClick={() => {
+            setActiveTimePopoverId(null);
+            setActiveStockPopoverId(null);
+          }}
+        />
+      )}
 
       {/* Excel Upload Preview Modal */}
       {isExcelModalOpen && (
@@ -2068,7 +2134,16 @@ export function ProductsManagement({
                   disabled={excelPreviewItems.length === 0}
                   onClick={() => {
                     if (handleBulkAddProducts) {
-                      handleBulkAddProducts(excelPreviewItems);
+                      const baseNo = getNextBaseProductNo();
+                      const resequencedItems = excelPreviewItems.map((item, idx) => {
+                        const pNo = baseNo + idx + 1;
+                        return {
+                          ...item,
+                          productNo: pNo,
+                          productCode: `CC-${String(pNo).padStart(3, "0")}`,
+                        };
+                      });
+                      handleBulkAddProducts(resequencedItems);
                     }
                     setIsExcelModalOpen(false);
                   }}
