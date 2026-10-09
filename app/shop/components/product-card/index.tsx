@@ -296,13 +296,13 @@ export const ProductCard = ({ product }: { product: Product }) => {
   return (
     <Link
       href={`/product/${product.handle || "item"}`}
-      className="group relative flex flex-col items-center justify-between aspect-[4/5] overflow-hidden border-b md:border-r border-neutral-200 bg-white w-full"
+      className="group relative flex flex-col items-center justify-between aspect-[4/5] overflow-hidden border-b border-r border-neutral-200 bg-white w-full"
     >
       {/* 1. Badges: Moved to Top (상단으로 위치 변경) */}
-      <div className="absolute top-3 inset-x-3 sm:top-4 sm:inset-x-4 flex items-center gap-1.5 flex-wrap z-20 pointer-events-none">
+      <div className="absolute top-2 inset-x-2 sm:top-3 sm:inset-x-3 md:top-4 md:inset-x-4 flex items-center gap-1 sm:gap-1.5 flex-wrap z-20 pointer-events-none">
         {(product as any).productLabel && (
           <span
-            className={`text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm shrink-0 whitespace-nowrap shadow-xs ${
+            className={`text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs shrink-0 whitespace-nowrap shadow-2xs ${
               (product as any).productLabel === "BLACK_LABEL"
                 ? "bg-black text-white"
                 : (product as any).productLabel === "PREMIUM"
@@ -315,38 +315,38 @@ export const ProductCard = ({ product }: { product: Product }) => {
         )}
 
         {secretSaleInfo ? (
-          <span className="text-[11px] sm:text-xs px-2.5 py-1 font-black uppercase tracking-wider rounded-sm bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 flex items-center gap-1 border border-amber-400 shadow-xs shrink-0 whitespace-nowrap">
-            <Sparkles className="w-3.5 h-3.5 fill-neutral-950 text-neutral-950 shrink-0 animate-spin-slow" />
-            <span>SECRET SALE {secretSaleInfo.discount}% OFF</span>
+          <span className="text-[9px] sm:text-[11px] md:text-xs px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 font-black uppercase tracking-wider rounded-xs bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 flex items-center gap-1 border border-amber-400 shadow-2xs shrink-0 whitespace-nowrap">
+            <Sparkles className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 fill-neutral-950 text-neutral-950 shrink-0 animate-spin-slow" />
+            <span>SECRET {secretSaleInfo.discount}% OFF</span>
           </span>
         ) : timeSaleDiscount !== null ? (
-          <span className="text-[11px] sm:text-xs px-2.5 py-1 font-black uppercase tracking-wider rounded-sm bg-white text-neutral-950 flex items-center gap-1 border border-neutral-300 shadow-xs shrink-0 whitespace-nowrap">
-            <Clock className="w-3.5 h-3.5 text-neutral-950 shrink-0" />
-            <span>TIME SALE {timeSaleDiscount}% OFF</span>
+          <span className="text-[9px] sm:text-[11px] md:text-xs px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 font-black uppercase tracking-wider rounded-xs bg-white text-neutral-950 flex items-center gap-1 border border-neutral-300 shadow-2xs shrink-0 whitespace-nowrap">
+            <Clock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-neutral-950 shrink-0" />
+            <span>SALE {timeSaleDiscount}% OFF</span>
           </span>
         ) : null}
         {/* 쿠폰 최대할인 뱃지 */}
         {bestCouponDiscount > 0 && (
-          <span className="text-[11px] sm:text-xs px-2.5 py-1 font-black uppercase tracking-wider rounded-sm bg-neutral-900 text-white flex items-center gap-1 shadow-xs shrink-0 whitespace-nowrap">
-            <Ticket className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span className="text-[9px] sm:text-[11px] md:text-xs px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 font-black uppercase tracking-wider rounded-xs bg-neutral-900 text-white flex items-center gap-1 shadow-2xs shrink-0 whitespace-nowrap">
+            <Ticket className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0" />
             <span>쿠폰 (-{bestCouponDiscount.toLocaleString()}원)</span>
           </span>
         )}
         {/* 오픈 예정 / 품절 Badge: 가장 마지막에 배치 */}
         {product.releaseDate && new Date(product.releaseDate).getTime() > Date.now() ? (
-          <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-amber-500 text-neutral-950 shadow-xs shrink-0 whitespace-nowrap flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-neutral-950" />
+          <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
+            <Clock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-neutral-950" />
             <span>오픈 예정</span>
           </span>
         ) : product.availableForSale === false ? (
-          <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-xs shrink-0 whitespace-nowrap">
+          <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
             품절
           </span>
         ) : null}
       </div>
 
-      {/* 1:1 Square Product Image Area with White Background (상단 뱃지와의 여백을 위해 mt-8 sm:mt-10 적용) */}
-      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-5 sm:p-7 md:p-7 mt-8 sm:mt-10">
+      {/* 1:1 Square Product Image Area with White Background */}
+      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-3 sm:p-5 md:p-7 mt-6 sm:mt-8 md:mt-10">
         <Image
           src={product.featuredImage?.url || "/product_1.webp"}
           alt={product.title || "Product"}
@@ -356,21 +356,21 @@ export const ProductCard = ({ product }: { product: Product }) => {
         />
       </div>
 
-      {/* Bottom Bar: Title on Top (Single Full Line) & Price on Bottom */}
-      <div className="absolute bottom-0 inset-x-0 p-4 sm:p-5 flex flex-col gap-1.5 z-10 w-full bg-gradient-to-t from-white via-white/80 to-transparent pt-8">
-        {/* 2. 상품명은 한줄로 변경 (모바일에서 2배 크기, PC는 기존 md:text-lg 유지) */}
-        <span className="text-2xl sm:text-3xl md:text-lg font-black text-neutral-950 uppercase tracking-tight truncate block w-full leading-tight md:leading-normal">
+      {/* Bottom Bar: Title on Top & Price on Bottom */}
+      <div className="absolute bottom-0 inset-x-0 p-2.5 sm:p-4 md:p-5 flex flex-col gap-1 sm:gap-1.5 z-10 w-full bg-gradient-to-t from-white via-white/80 to-transparent pt-6 sm:pt-8">
+        {/* 상품명은 한줄로 truncate 유지 (모바일 2열에 최적화된 텍스트 크기) */}
+        <span className="text-xs sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight truncate block w-full leading-tight md:leading-normal">
           {product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
         </span>
 
-        {/* 3. 가격은 하단으로 위치 변경 & 4. 빗금친 원래 가격이 할인 가격 바로 옆에 붙어있도록 수정 (justify-end) */}
-        <div className="flex items-baseline justify-end gap-2 sm:gap-2.5 w-full">
+        {/* 가격 정보 */}
+        <div className="flex items-baseline justify-end gap-1.5 sm:gap-2 md:gap-2.5 w-full">
           {strikethroughPriceNum !== null && (
-            <span className="text-xs sm:text-sm text-neutral-400 line-through font-bold whitespace-nowrap notranslate" translate="no">
+            <span className="text-[10px] sm:text-xs md:text-sm text-neutral-400 line-through font-bold whitespace-nowrap notranslate" translate="no">
               {formatPrice(strikethroughPriceNum.toString(), currCode)}
             </span>
           )}
-          <span className="text-base sm:text-lg md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap notranslate" translate="no">
+          <span className="text-xs sm:text-base md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap notranslate" translate="no">
             {formatPrice(finalPriceNum.toString(), currCode)}
           </span>
         </div>

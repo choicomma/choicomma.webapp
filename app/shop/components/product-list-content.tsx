@@ -335,7 +335,7 @@ export function ProductListContent({
       <>
         {sortedProducts.length > 0 ? (
         <div className="flex flex-col w-full">
-          <div className="grid grid-cols-1 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
+          <div className="grid grid-cols-2 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
             {paginatedProducts.map((product, idx) => (
               <ProductCard key={`${product.id}-${idx}`} product={product} />
             ))}

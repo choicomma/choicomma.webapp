@@ -735,6 +735,16 @@ export function ProductsManagement({
     setCurrentPage(1);
   }, [searchQuery, selectedCategoryFilter, selectedMetricFilter, pageSize]);
 
+  // When a new product is added (productsList length increases), reset metric filter to "all" and currentPage to 1
+  const prevProductsLengthRef = useRef(productsList.length);
+  useEffect(() => {
+    if (productsList.length > prevProductsLengthRef.current) {
+      setSelectedMetricFilter("all");
+      setCurrentPage(1);
+    }
+    prevProductsLengthRef.current = productsList.length;
+  }, [productsList.length]);
+
   // Keep currentPage inside valid range
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {

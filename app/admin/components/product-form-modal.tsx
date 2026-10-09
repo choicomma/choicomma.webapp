@@ -232,7 +232,7 @@ export function ProductFormModal({
 
   // Form states
   const [title, setTitle] = useState("");
-  const [categories, setCategories] = useState<string[]>(["new"]);
+  const [categories, setCategories] = useState<string[]>(["outer"]);
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [detailDescription, setDetailDescription] = useState("");
@@ -754,8 +754,8 @@ export function ProductFormModal({
       description: description || "새로운 시그니처 상품입니다.",
       detailDescription: detailDescription || "",
       descriptionHtml: detailDescription || (description ? `<p>${description}</p>` : ""),
-      categoryId: categories[0] || "outer",
-      categoryIds: categories,
+      categoryId: (categories && categories.length > 0 && categories[0] !== "new" ? categories[0] : "outer"),
+      categoryIds: (categories && categories.length > 0 ? categories.filter((c: string) => c !== "new") : ["outer"]),
       stock: totalStockCalc,
       sizeStock,
       availableForSale,

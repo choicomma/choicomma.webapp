@@ -1337,6 +1337,10 @@ export default function AdminPage() {
           if (isNew) {
             updatedList = [savedProduct, ...productsList];
             triggerToast(`신규 상품 '${savedProduct.title}'이 성공적으로 등록되었습니다.`);
+            // Automatically clear search query and reset category filter so new product is immediately visible
+            setSearchQuery("");
+            setSelectedCategoryFilter("all");
+            setProductSortOrder("custom");
           } else {
             updatedList = productsList.map((p) => String(p.id) === String(savedProduct.id) ? { ...p, ...savedProduct } : p);
             triggerToast(`'${savedProduct.title}' 상품 정보가 성공적으로 수정되었습니다.`);
@@ -1360,7 +1364,7 @@ export default function AdminPage() {
             } catch (e) {}
           }
 
-          saveSingleProduct(savedProduct, isNew);
+          // Unified catalog persistence (prevents duplicate concurrent POST race condition)
           saveProductsToStorage(updatedList);
         }}
         triggerToast={triggerToast}

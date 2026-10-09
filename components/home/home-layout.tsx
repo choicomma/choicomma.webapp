@@ -398,11 +398,11 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       {/* INFINITE MARQUEE TICKER BANNER: CHOICOMMA Logo & Luxury Branding */}
       <ChoicommaMarqueeTicker />
 
-      {/* SECTION 2: Responsive Paginated Grid (Matching Shop Page Exactly: 1 Column on Mobile, 3 Columns on PC) */}
+      {/* SECTION 2: Responsive Paginated Grid (Matching Shop Page: 2 Columns on Mobile, 3 Columns on PC) */}
       <section className="w-full bg-white">
         {allProducts.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
+            <div className="grid grid-cols-2 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
               {allProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((product, idx) => (
                 <ProductCard key={`${product.id || idx}-${currentPage}`} product={product} />
               ))}

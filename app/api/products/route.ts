@@ -44,9 +44,18 @@ function safeAtomicWriteJsonFile(targetPath: string, data: any) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    const tempPath = `${targetPath}.tmp.${Date.now()}`;
-    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf-8");
-    fs.renameSync(tempPath, targetPath);
+    const tempPath = `${targetPath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
+    const jsonStr = JSON.stringify(data, null, 2);
+    try {
+      fs.writeFileSync(tempPath, jsonStr, "utf-8");
+      fs.renameSync(tempPath, targetPath);
+    } catch (renameErr) {
+      // Windows fallback if target file is locked during atomic rename
+      try {
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+      } catch {}
+      fs.writeFileSync(targetPath, jsonStr, "utf-8");
+    }
   } catch (err) {
     console.warn("[Atomic Write Warning]:", err);
   }
@@ -134,6 +143,16 @@ export async function GET(req: NextRequest) {
             }
           }
         });
+
+        // Merge custom registered products if missing from Supabase DB
+        if (localCustomItems.length > 0) {
+          localCustomItems.forEach((cust: any) => {
+            const matched = finalProducts.find((dbp: any) => String(dbp.id) === String(cust.id));
+            if (!matched) {
+              finalProducts.unshift(cust);
+            }
+          });
+        }
 
         // Merge heroes
         const heroes = localList.filter((p: any) => p.isHeroFeatured === true || String(p.id).startsWith("hero-slide-"));

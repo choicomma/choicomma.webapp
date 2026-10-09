@@ -210,6 +210,23 @@ export function useProducts({
               });
             }
 
+            // Restore any custom products from localStorage backup if not yet present in server response
+            if (typeof window !== "undefined") {
+              try {
+                const customBackupRaw = localStorage.getItem("admin_custom_products");
+                if (customBackupRaw) {
+                  const customBackup = JSON.parse(customBackupRaw);
+                  if (Array.isArray(customBackup) && customBackup.length > 0) {
+                    customBackup.forEach((cb: any) => {
+                      if (cb?.id && !merged.some((p: any) => String(p.id) === String(cb.id))) {
+                        merged.unshift(cb);
+                      }
+                    });
+                  }
+                }
+              } catch (e) {}
+            }
+
             setProductsList(merged);
             if (typeof window !== "undefined") {
               try {
@@ -277,6 +294,26 @@ export function useProducts({
       }
       localStorage.setItem("admin_custom_products", JSON.stringify(customList));
     } catch (e) {}
+
+    // 3. Mirror to localStorage admin_products safely
+    try {
+      const savedProductsRaw = localStorage.getItem("admin_products");
+      let allList: any[] = savedProductsRaw ? JSON.parse(savedProductsRaw) : [];
+      if (Array.isArray(allList)) {
+        const existIdx = allList.findIndex((p: any) => String(p.id) === String(product.id));
+        if (existIdx !== -1) {
+          allList[existIdx] = { ...allList[existIdx], ...product };
+        } else {
+          allList.unshift(product);
+        }
+        const lightweight = pruneForLocalStorage(allList);
+        localStorage.setItem("admin_products", JSON.stringify(lightweight));
+      }
+    } catch (e) {}
+
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("admin_products_updated"));
+    }, 0);
   }, []);
 
   // Helper: Safely save to Central Server API (/api/products) and mirror to localStorage
@@ -497,15 +534,12 @@ export function useProducts({
 
     setProductsList(updated);
     saveProductsToStorage(updated);
-    if (updatedTarget) {
-      saveSingleProduct(updatedTarget, false);
-    }
     triggerToast(
       nextAvailable
         ? `'${targetProduct.title}' 상품이 [구매 가능(ON)]으로 설정되었습니다.`
         : `'${targetProduct.title}' 상품이 [구매 불가(OFF)]로 설정되었습니다.`
     );
-  }, [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]);
+  }, [productsList, saveProductsToStorage, triggerToast]);
 
   const toggleMainFeatured = useCallback((id: string) => {
     const targetProduct = productsList.find((p) => p.id === id);
@@ -836,9 +870,6 @@ export function useProducts({
 
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
-      if (updatedTarget) {
-        saveSingleProduct(updatedTarget, false);
-      }
 
       if (releaseDate && new Date(releaseDate).getTime() > Date.now()) {
         triggerToast(
@@ -892,9 +923,6 @@ export function useProducts({
       const updatedTarget = updatedList.find((p) => String(p.id) === String(id));
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
-      if (updatedTarget) {
-        saveSingleProduct(updatedTarget, false);
-      }
       triggerToast(`카테고리가 [${newCategory.toUpperCase()}] (으)로 즉시 변경되었습니다.`);
     },
     [
@@ -906,7 +934,6 @@ export function useProducts({
       setAdminTimeSaleProductIds,
       handleUpdateProductTimeSetting,
       saveProductsToStorage,
-      saveSingleProduct,
       triggerToast,
     ]
   );
@@ -948,13 +975,10 @@ export function useProducts({
       const updatedTarget = updatedList.find((p) => String(p.id) === String(id));
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
-      if (updatedTarget) {
-        saveSingleProduct(updatedTarget, false);
-      }
       triggerToast(`판매가가 ${newFormatted}원으로 변경되었습니다.`);
       return true;
     },
-    [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]
+    [productsList, saveProductsToStorage, triggerToast]
   );
 
   const handleQuickUpdateStock = useCallback(
@@ -1000,16 +1024,13 @@ export function useProducts({
 
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
-      if (updatedTarget) {
-        saveSingleProduct(updatedTarget, false);
-      }
       if (newTotalStock === 0) {
         triggerToast(`[${targetProduct.title}] 상품이 품절 처리되었습니다.`);
       } else {
         triggerToast(`[${targetProduct.title}] 재고가 ${newTotalStock}개로 업데이트되었습니다.`);
       }
     },
-    [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]
+    [productsList, saveProductsToStorage, triggerToast]
   );
 
   return {
