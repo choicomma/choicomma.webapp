@@ -1905,6 +1905,7 @@ export function ProductsManagement({
                 </>
               )}
             </div>
+            </div>
           )}
         </div>
       </div>

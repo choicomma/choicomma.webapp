@@ -642,6 +642,8 @@ export function GitDataManagement() {
             </div>
           </div>
         </div>
+      )}
+
       {/* 7. Individual Ledger JSON Inspection Modal */}
       {inspectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">

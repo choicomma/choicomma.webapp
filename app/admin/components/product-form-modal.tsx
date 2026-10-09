@@ -726,7 +726,6 @@ export function ProductFormModal({
     // Build variants
     const effectiveColors = colors.length > 0 ? colors : ["Default"];
     const effectiveSizes = sizes.length > 0 ? sizes : ["FREE"];
-    const numPrice = String(price).replace(/[^0-9]/g, "");
 
     const variants: any[] = [];
     effectiveColors.forEach((c) => {
