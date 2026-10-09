@@ -134,7 +134,7 @@ export function HomePopupModal() {
       {/* Centered Modal Container */}
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[580px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200/90 animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh] overflow-y-auto"
+        className="relative w-full max-w-[520px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200/90 animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh] overflow-y-auto"
       >
         {/* Top Accent Gradient Bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-neutral-950 via-amber-600 to-neutral-900" />
@@ -150,13 +150,13 @@ export function HomePopupModal() {
         </button>
 
         {isNoticeMode ? (
-          /* ── Rich Announcement Notice Modal (글씨 크게 공지 팝업) ── */
-          <div className="p-6 sm:p-8 space-y-6">
+          /* ── Rich Announcement Notice Modal (정돈된 공지 팝업) ── */
+          <div className="p-6 sm:p-7 space-y-4.5">
             {/* 1. Official Header Badge */}
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-amber-50 text-amber-900 border border-amber-300/80 shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                긴급 안내 (NOTICE)
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200/90 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                서비스 일시 중단 안내
               </span>
               <span className="text-[11px] font-extrabold text-neutral-400 tracking-widest uppercase">
                 CHOICOMMA OFFICIAL
@@ -164,21 +164,21 @@ export function HomePopupModal() {
             </div>
 
             {/* 2. Main Large Headline */}
-            <div className="space-y-1.5">
-              <h2 className="text-xl sm:text-2xl font-black text-neutral-950 tracking-tight leading-snug break-keep">
+            <div className="space-y-1">
+              <h2 className="text-lg sm:text-xl font-black text-neutral-950 tracking-tight leading-snug break-keep">
                 초이콤마 글로벌 몰 오픈 준비에 따른<br />
                 서비스 일시 이용 불가 안내
               </h2>
               <p className="text-[11px] font-bold text-neutral-400 tracking-wider uppercase">
-                Global Store Launch &amp; Temporary Service Unavailability
+                Global Store Launch &amp; Temporary Service Pause
               </p>
             </div>
 
-            {/* 3. Core Highlight Box (가장 크고 강조된 핵심 멘트) */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-400/50 space-y-3">
+            {/* 3. Core Highlight Box (핵심 요약 강조 박스) */}
+            <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-400/40 space-y-2.5">
               <div className="flex items-start gap-2.5">
                 <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-base sm:text-[17px] font-black text-neutral-950 leading-relaxed break-keep">
+                <p className="text-sm sm:text-base font-black text-neutral-950 leading-relaxed break-keep">
                   "{config.noticeMessage || "초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다."}"
                 </p>
               </div>
@@ -189,36 +189,36 @@ export function HomePopupModal() {
                   <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>정상화 완료 목표 기한:</span>
                 </div>
-                <span className="px-3 py-1 rounded-xl bg-white border border-amber-300 font-black text-rose-600 text-sm sm:text-base shadow-2xs">
+                <span className="px-3 py-1 rounded-xl bg-white border border-amber-300 font-black text-rose-600 text-xs sm:text-sm shadow-2xs">
                   {config.noticePeriod || "2026.10.12(월)까지"}
                 </span>
               </div>
             </div>
 
-            {/* 4. Polite Customer Care Copywriting (하단 안내글 - 글씨 2배 확대 및 이용 불가 내용 적용) */}
-            <div className="space-y-4 text-lg sm:text-2xl text-neutral-800 leading-relaxed break-keep">
-              <p className="font-bold text-neutral-950">
+            {/* 4. Polite Customer Care Copywriting (가독성 최적화된 본문 안내글) */}
+            <div className="space-y-2.5 text-sm sm:text-base text-neutral-700 leading-relaxed break-keep">
+              <p className="font-bold text-neutral-900">
                 초이콤마를 찾아주신 고객 여러분께 진심으로 감사드립니다.
               </p>
               <p>
                 현재 해외 글로벌 고객님들과 함께하기 위한 <strong className="text-neutral-950 font-black">초이콤마 글로벌 몰 공식 런칭 및 인프라 연동 작업</strong>이 집중 진행되고 있습니다.
               </p>
               <p className="font-semibold text-neutral-900">
-                이로 인해 현재 일시적으로 <strong className="text-rose-600 font-black underline underline-offset-4 decoration-rose-300">쇼핑몰 서비스 이용 및 접속을 하실 수 없습니다.</strong> 고객님들의 쾌적하고 안전한 쇼핑을 위해 <strong className="text-neutral-950 font-black">2026년 10월 12일까지</strong> 모든 작업을 완료하여 신속히 정상화하겠습니다.
+                이로 인해 작업 기간 동안 일시적으로 <strong className="text-rose-600 font-black underline underline-offset-4 decoration-rose-300">쇼핑몰 서비스 이용 및 사이트 접속을 하실 수 없습니다.</strong> 고객님들의 쾌적하고 안전한 쇼핑을 위해 <strong className="text-neutral-950 font-black">2026년 10월 12일까지</strong> 모든 작업을 완료하여 신속히 정상화하겠습니다.
               </p>
-              <p className="text-neutral-500 font-medium text-base sm:text-lg">
+              <p className="text-neutral-500 font-medium text-xs sm:text-sm">
                 이용에 큰 불편을 드려 고개 숙여 사과드리며, 더욱 품격 있고 새로워진 글로벌 서비스로 찾아뵙겠습니다.
               </p>
             </div>
 
-            {/* 5. Safe Order Assurance Banner (하단 배너 안내 - 글씨 확대 및 이용 불가/기존 배송 안내) */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-neutral-50 border border-neutral-200/90 flex items-center gap-3.5 text-sm sm:text-lg text-neutral-800 font-bold">
-              <AlertTriangle className="w-6 h-6 sm:w-7 h-7 text-rose-600 shrink-0" />
-              <span>작업 기간 동안 쇼핑몰 서비스 이용 및 주문·결제를 하실 수 없습니다. (기존 주문 배송 업무 정상 진행)</span>
+            {/* 5. Safe Order Assurance Banner (안심 배송 안내) */}
+            <div className="p-3.5 rounded-2xl bg-neutral-50 border border-neutral-200/80 flex items-center gap-2.5 text-xs sm:text-sm text-neutral-700 font-semibold">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>작업 기간 중 신규 주문·결제는 불가하며, 기존 주문건의 배송 업무는 정상 진행됩니다.</span>
             </div>
 
             {/* 6. Footer Controls: Don't show today & Close button */}
-            <div className="pt-4 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="pt-3.5 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-3">
               <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-neutral-600 hover:text-neutral-950 transition-colors w-full sm:w-auto">
                 <input
                   type="checkbox"
@@ -232,7 +232,7 @@ export function HomePopupModal() {
               <button
                 type="button"
                 onClick={handleClose}
-                className="w-full sm:w-auto min-w-[140px] px-6 py-3.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 active:scale-[0.98] text-white text-xs sm:text-sm font-black transition-all shadow-md cursor-pointer text-center"
+                className="w-full sm:w-auto min-w-[130px] px-5 py-3 rounded-xl bg-neutral-950 hover:bg-neutral-800 active:scale-[0.98] text-white text-xs sm:text-sm font-black transition-all shadow-md cursor-pointer text-center"
               >
                 확인 및 닫기
               </button>

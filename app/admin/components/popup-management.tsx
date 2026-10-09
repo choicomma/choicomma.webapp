@@ -461,36 +461,41 @@ export function PopupManagement({
                 /* TAB 1: Home Notice Modal Preview */
                 <div className="relative w-full max-w-[440px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-200 flex flex-col text-left">
                   <div className="h-1.5 w-full bg-gradient-to-r from-neutral-950 via-amber-600 to-neutral-900" />
-                  <div className="p-6 space-y-4">
+                  <div className="p-5 sm:p-6 space-y-3.5">
                     <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-900 border border-amber-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                        긴급 안내 (NOTICE)
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                        서비스 일시 중단 안내
                       </span>
                       <span className="text-[10px] font-bold text-neutral-400">CHOICOMMA</span>
                     </div>
 
-                    <h4 className="text-base font-black text-neutral-950 leading-snug break-keep">
-                      {config.title || "초이콤마 글로벌 몰 오픈 준비 및 서비스 일시 이용 불가 안내"}
+                    <h4 className="text-sm sm:text-base font-black text-neutral-950 leading-snug break-keep">
+                      {config.title || "초이콤마 글로벌 몰 오픈 준비에 따른 서비스 일시 이용 불가 안내"}
                     </h4>
 
-                    <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-400/40 space-y-2">
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-400/40 space-y-2">
                       <p className="text-xs font-black text-neutral-900 leading-relaxed break-keep">
                         "{config.noticeMessage || "초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다."}"
                       </p>
                       <div className="flex items-center justify-between pt-1 border-t border-amber-300/40 text-[11px] font-bold">
-                        <span className="text-amber-950">정상화 목표 기한:</span>
+                        <span className="text-amber-950">정상화 완료 목표 기한:</span>
                         <span className="text-rose-600 font-black">{config.noticePeriod || "2026.10.12(월)까지"}</span>
                       </div>
                     </div>
 
-                    <div className="space-y-1.5 text-xs text-neutral-800 leading-relaxed break-keep">
+                    <div className="space-y-1.5 text-xs text-neutral-700 leading-relaxed break-keep">
+                      <p className="font-bold text-neutral-900">
+                        초이콤마를 찾아주신 고객 여러분께 감사드립니다.
+                      </p>
                       <p className="font-semibold text-rose-600">
-                        현재 일시적으로 쇼핑몰 서비스 이용 및 접속을 하실 수 없습니다.
+                        작업 기간 동안 쇼핑몰 서비스 이용 및 접속을 하실 수 없습니다.
                       </p>
-                      <p className="text-[11px] text-neutral-500">
-                        2026년 10월 12일까지 신속히 정상화하겠습니다. (기존 주문 배송 정상 진행)
-                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-neutral-50 border border-neutral-200/80 flex items-center gap-2 text-[11px] text-neutral-600 font-semibold">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>기존 주문건 배송 업무는 정상 진행됩니다.</span>
                     </div>
 
                     <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500 font-bold">
