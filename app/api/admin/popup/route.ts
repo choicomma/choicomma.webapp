@@ -24,41 +24,72 @@ function readSiteSettings(): Record<string, any> {
 }
 
 function writeSiteSettings(settings: Record<string, any>) {
-  try {
-    const targetPath = getSettingsFilePath();
-    const dir = path.dirname(targetPath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const targetPath = getSettingsFilePath();
+  const dir = path.dirname(targetPath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
+  const jsonStr = JSON.stringify(settings, null, 2);
+  let lastError: any = null;
+
+  // Retry up to 3 times for Windows/OneDrive locks
+  for (let attempt = 1; attempt <= 3; attempt++) {
     const tempPath = `${targetPath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
-    const jsonStr = JSON.stringify(settings, null, 2);
     try {
       fs.writeFileSync(tempPath, jsonStr, "utf-8");
-      fs.renameSync(tempPath, targetPath);
-    } catch {
+      try {
+        fs.renameSync(tempPath, targetPath);
+      } catch (renameErr) {
+        try {
+          if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+        } catch {}
+        fs.writeFileSync(targetPath, jsonStr, "utf-8");
+      }
+      return;
+    } catch (err: any) {
+      lastError = err;
       try {
         if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
       } catch {}
-      fs.writeFileSync(targetPath, jsonStr, "utf-8");
     }
-  } catch (err) {
-    console.error("[Site Settings File Write Error]:", err);
+  }
+
+  // Final direct fallback
+  try {
+    fs.writeFileSync(targetPath, jsonStr, "utf-8");
+  } catch (finalErr) {
+    console.error("[Site Settings File Write Error]:", lastError || finalErr);
   }
 }
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
 
 // GET: 팝업 설정 불러오기
 export async function GET() {
   try {
     const settings = readSiteSettings();
     if (settings && settings.popup_config) {
-      return NextResponse.json({
-        success: true,
-        config: { ...DEFAULT_POPUP_CONFIG, ...settings.popup_config },
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          config: { ...DEFAULT_POPUP_CONFIG, ...settings.popup_config },
+        },
+        { headers: NO_CACHE_HEADERS }
+      );
     }
 
-    return NextResponse.json({ success: true, config: DEFAULT_POPUP_CONFIG });
+    return NextResponse.json(
+      { success: true, config: DEFAULT_POPUP_CONFIG },
+      { headers: NO_CACHE_HEADERS }
+    );
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: err.message },
+      { status: 500, headers: NO_CACHE_HEADERS }
+    );
   }
 }
 
@@ -67,7 +98,10 @@ export async function POST(req: NextRequest) {
   try {
     const body: PopupConfig = await req.json();
     if (!body) {
-      return NextResponse.json({ success: false, error: "설정 데이터가 누락되었습니다." }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "설정 데이터가 누락되었습니다." },
+        { status: 400, headers: NO_CACHE_HEADERS }
+      );
     }
 
     const updatedConfig: PopupConfig = {
@@ -80,9 +114,15 @@ export async function POST(req: NextRequest) {
     settings.popup_config = updatedConfig;
     writeSiteSettings(settings);
 
-    return NextResponse.json({ success: true, config: updatedConfig });
+    return NextResponse.json(
+      { success: true, config: updatedConfig },
+      { headers: NO_CACHE_HEADERS }
+    );
   } catch (err: any) {
     console.error("API /api/admin/popup error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: err.message },
+      { status: 500, headers: NO_CACHE_HEADERS }
+    );
   }
 }

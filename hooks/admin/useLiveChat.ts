@@ -77,7 +77,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
         return false;
       };
 
-      if (!sessionErr && Array.isArray(dbSessions)) {
+      if (Array.isArray(dbSessions)) {
         dbMappedSessions = dbSessions
           .filter((s: any) => hasConversation(s?.id, s?.customerEmail))
           .map((s: any) => {
@@ -201,7 +201,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
               id: m.id,
               sender: m.sender || "user",
               senderName: m.sender === "admin" ? "choicomma VIP 케어팀" : "고객님",
-              text: m.text,
+              text: m.text || m.content || m.message || "",
               timestamp: `${hours}:${mins}`,
               created_at: m.created_at,
             };
@@ -396,6 +396,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
           sessionId: normalizedSessionId,
           sender: "admin",
           text: newReply.text,
+          content: newReply.text,
         }),
       }).catch((e) => console.warn("Chat API insert admin message notice:", e));
     } catch (e) {

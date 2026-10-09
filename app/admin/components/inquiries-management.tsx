@@ -26,7 +26,11 @@ import {
   ChevronUp,
   ChevronDown,
   Truck,
+  Download,
+  Search,
+  Image as ImageIcon,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { getProductThumbnail } from "@/lib/products/thumbnail-helper";
 import { explodeOrderToSingleItems, type ExplodedExchangeItem } from "@/lib/shipping/exchange-item-helper";
 import { TossRefundModal } from "@/components/chat/toss-refund-modal";
@@ -112,6 +116,15 @@ interface InquiriesManagementProps {
   handleAdminSendLiveChat: (text?: string) => void;
   handleAdminEndLiveChat: (sessionId: string) => void;
   handleAdminClearLiveChat: () => void;
+  // 1:1 Board Customer Inquiries Props
+  inquiriesList?: any[];
+  setInquiriesList?: React.Dispatch<React.SetStateAction<any[]>>;
+  zoomedInquiryImage?: string | null;
+  setZoomedInquiryImage?: (url: string | null) => void;
+  inquiriesFilter?: "all" | "pending" | "completed";
+  setInquiriesFilter?: (filter: "all" | "pending" | "completed") => void;
+  handleReplyToInquiry?: (inquiry: any, replyMessage: string) => Promise<void>;
+  handleDeleteInquiry?: (id: string) => Promise<void>;
 }
 
 export function InquiriesManagement({
@@ -126,7 +139,24 @@ export function InquiriesManagement({
   handleAdminSendLiveChat,
   handleAdminEndLiveChat,
   handleAdminClearLiveChat,
+  inquiriesList = [],
+  setInquiriesList,
+  zoomedInquiryImage = null,
+  setZoomedInquiryImage,
+  inquiriesFilter = "all",
+  setInquiriesFilter,
+  handleReplyToInquiry,
+  handleDeleteInquiry,
 }: InquiriesManagementProps) {
+  // CS Sub-tab State ("live_chat" | "board_inquiries")
+  const [csSubTab, setCsSubTab] = useState<"live_chat" | "board_inquiries">("live_chat");
+  const [boardSearchQuery, setBoardSearchQuery] = useState("");
+  const [boardStatusFilter, setBoardStatusFilter] = useState<"all" | "pending" | "completed">("all");
+  const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [localZoomImage, setLocalZoomImage] = useState<string | null>(null);
+
   // Custom Editable Templates State
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -1222,46 +1252,201 @@ export function InquiriesManagement({
     };
   };
 
+  // Board inquiries statistics & filtering
+  const totalInquiriesCount = (inquiriesList || []).length;
+  const pendingInquiriesCount = (inquiriesList || []).filter((item: any) => item.status !== "completed").length;
+  const completedInquiriesCount = (inquiriesList || []).filter((item: any) => item.status === "completed").length;
+
+  const currentBoardFilter = inquiriesFilter || boardStatusFilter;
+
+  const filteredBoardInquiries = (inquiriesList || []).filter((item: any) => {
+    const matchesFilter =
+      currentBoardFilter === "all" ||
+      (currentBoardFilter === "pending" && item.status !== "completed") ||
+      (currentBoardFilter === "completed" && item.status === "completed");
+
+    const q = boardSearchQuery.toLowerCase().trim();
+    if (!q) return matchesFilter;
+
+    const name = String(item.userName || item.name || item.customerName || "").toLowerCase();
+    const email = String(item.userEmail || item.email || item.customerEmail || "").toLowerCase();
+    const phone = String(item.userPhone || item.phone || "").toLowerCase();
+    const title = String(item.title || item.subject || "").toLowerCase();
+    const content = String(item.content || item.message || "").toLowerCase();
+    const orderNo = String(item.orderNumber || item.orderId || "").toLowerCase();
+    const cat = String(item.category || item.type || "").toLowerCase();
+
+    return matchesFilter && (
+      name.includes(q) ||
+      email.includes(q) ||
+      phone.includes(q) ||
+      title.includes(q) ||
+      content.includes(q) ||
+      orderNo.includes(q) ||
+      cat.includes(q)
+    );
+  });
+
+  const handleExportInquiriesExcel = () => {
+    const listToExport = inquiriesList || [];
+    if (listToExport.length === 0) {
+      alert("다운로드할 1:1 문의 내역이 없습니다.");
+      return;
+    }
+    try {
+      const exportData = listToExport.map((item: any, idx: number) => ({
+        "번호": idx + 1,
+        "문의ID": item.id || "-",
+        "작성일시": item.created_at ? new Date(item.created_at).toLocaleString() : "-",
+        "상태": item.status === "completed" ? "답변 완료" : "답변 대기",
+        "고객명": item.userName || item.name || item.customerName || "-",
+        "이메일": item.userEmail || item.email || item.customerEmail || "-",
+        "연락처": item.userPhone || item.phone || "-",
+        "문의유형": item.category || item.type || "일반 문의",
+        "문의제목": item.title || item.subject || "-",
+        "문의내용": item.content || item.message || "-",
+        "답변내용": item.reply || "-",
+        "답변일시": item.repliedAt ? new Date(item.repliedAt).toLocaleString() : "-",
+      }));
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "1대1고객문의");
+      const today = new Date().toISOString().split("T")[0];
+      XLSX.writeFile(wb, `초이콤마_1대1고객문의_${today}.xlsx`);
+    } catch (e) {
+      console.error(e);
+      alert("엑셀 다운로드 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleAdminSubmitReply = async (inquiry: any) => {
+    const replyText = (replyInputs[inquiry.id] ?? inquiry.reply ?? "").trim();
+    if (!replyText) {
+      alert("답변 내용을 입력해 주세요.");
+      return;
+    }
+    setIsSubmittingReply(true);
+    try {
+      if (handleReplyToInquiry) {
+        await handleReplyToInquiry(inquiry, replyText);
+      }
+      setEditingReplyId(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  const activeZoomImage = zoomedInquiryImage || localZoomImage;
+  const handleCloseZoom = () => {
+    setLocalZoomImage(null);
+    setZoomedInquiryImage?.(null);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Top Header & Status */}
+      {/* Top Header & Sub-Tab Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-neutral-950 flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-neutral-900" />
-            1:1 실시간 라이브 채팅 상담
+            1:1 고객 상담 및 CS 관리 (Customer Care Console)
           </h1>
           <p className="text-sm text-neutral-500 mt-0.5">
-            쇼핑몰 라이브 채팅 문의를 실시간으로 확인하고 응대합니다. 하단 원클릭 답장 템플릿은 입력 즉시 변경됩니다.
+            실시간 1:1 라이브 상담 및 마이페이지/고객센터 접수 문의를 실시간으로 통합 관리합니다.
           </p>
         </div>
 
+        {/* Sub-tab Switcher & Context Actions */}
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsAutoReplyModalOpen(true)}
-            className="flex items-center gap-1.5 bg-white hover:bg-neutral-100 text-neutral-900 font-black text-xs px-4 py-2.5 rounded-2xl transition-all shadow-xs cursor-pointer border border-neutral-300"
-          >
-            <Sliders className="w-4 h-4 text-neutral-900" />
-            <span>자동 답변 설정</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${autoReplyEnabled ? "bg-neutral-950 text-white" : "bg-neutral-200 text-neutral-700"}`}>
-              {autoReplyEnabled ? `${autoReplyDelay}초` : "꺼짐"}
-            </span>
-          </button>
+          {/* Sub Tab Switcher */}
+          <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-2xl border border-neutral-200">
+            <button
+              type="button"
+              onClick={() => setCsSubTab("live_chat")}
+              className={`px-3.5 py-2 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                csSubTab === "live_chat"
+                  ? "bg-neutral-950 text-white shadow-xs"
+                  : "text-neutral-600 hover:text-neutral-950"
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>실시간 라이브 채팅</span>
+              {chatSessionsList.length > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-black">
+                  {chatSessionsList.length}
+                </span>
+              )}
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setIsEditModalOpen(true)}
-            className="flex items-center gap-1.5 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl transition-all shadow-md cursor-pointer border border-neutral-800"
-          >
-            <Edit3 className="w-4 h-4 text-white" />
-            <span>실시간 템플릿 수정/편집</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setCsSubTab("board_inquiries")}
+              className={`px-3.5 py-2 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                csSubTab === "board_inquiries"
+                  ? "bg-neutral-950 text-white shadow-xs"
+                  : "text-neutral-600 hover:text-neutral-950"
+              }`}
+            >
+              <Tag className="w-3.5 h-3.5" />
+              <span>1:1 문의 접수함</span>
+              {pendingInquiriesCount > 0 ? (
+                <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-black">
+                  {pendingInquiriesCount}대기
+                </span>
+              ) : totalInquiriesCount > 0 ? (
+                <span className="bg-neutral-300 text-neutral-800 text-[10px] px-1.5 py-0.2 rounded-full font-black">
+                  {totalInquiriesCount}
+                </span>
+              ) : null}
+            </button>
+          </div>
+
+          {/* Context Actions for Live Chat */}
+          {csSubTab === "live_chat" && (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsAutoReplyModalOpen(true)}
+                className="flex items-center gap-1.5 bg-white hover:bg-neutral-100 text-neutral-900 font-black text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer border border-neutral-300"
+              >
+                <Sliders className="w-3.5 h-3.5 text-neutral-900" />
+                <span>자동 답변 설정</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${autoReplyEnabled ? "bg-neutral-950 text-white" : "bg-neutral-200 text-neutral-700"}`}>
+                  {autoReplyEnabled ? `${autoReplyDelay}초` : "꺼짐"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(true)}
+                className="flex items-center gap-1.5 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl transition-all shadow-md cursor-pointer border border-neutral-800"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-white" />
+                <span>템플릿 편집</span>
+              </button>
+            </>
+          )}
+
+          {/* Context Actions for Board Inquiries */}
+          {csSubTab === "board_inquiries" && totalInquiriesCount > 0 && (
+            <button
+              type="button"
+              onClick={handleExportInquiriesExcel}
+              className="flex items-center gap-1.5 bg-white hover:bg-neutral-100 text-neutral-900 font-extrabold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer border border-neutral-300"
+              title="1:1 고객 문의 내역 엑셀 다운로드"
+            >
+              <Download className="w-3.5 h-3.5 text-neutral-900" />
+              <span>엑셀 다운로드 (.xlsx)</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Main 2-Column Console Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      {/* Main 2-Column Console Grid (Live Chat) */}
+      {csSubTab === "live_chat" ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Left Session Card List */}
         <div className="bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
@@ -2327,6 +2512,321 @@ export function InquiriesManagement({
           </div>
         </div>
       </div>
+      ) : (
+        /* TAB 2: 1:1 고객 문의 접수함 (VIP & 회원 문의 내역 및 답변 관리) */
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Summary Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                <span>총 접수 문의</span>
+                <MessageSquare className="w-4 h-4 text-neutral-900" />
+              </div>
+              <p className="text-2xl font-extrabold text-neutral-950 mt-2">{totalInquiriesCount} 건</p>
+              <p className="text-xs text-neutral-500 mt-1">고객센터 및 마이페이지 통합 접수</p>
+            </div>
+
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                <span>답변 대기 중</span>
+                <Clock className="w-4 h-4 text-rose-600" />
+              </div>
+              <p className="text-2xl font-extrabold text-rose-600 mt-2">{pendingInquiriesCount} 건</p>
+              <p className="text-xs text-rose-500 font-bold mt-1">관리자 답변 작성 필요</p>
+            </div>
+
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                <span>답변 완료</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              </div>
+              <p className="text-2xl font-extrabold text-emerald-700 mt-2">{completedInquiriesCount} 건</p>
+              <p className="text-xs text-neutral-500 mt-1">답변 전달 완료</p>
+            </div>
+          </div>
+
+          {/* Filtering & Search Toolbar */}
+          <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            {/* Status Filter Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setBoardStatusFilter("all");
+                  setInquiriesFilter?.("all");
+                }}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer shrink-0 ${
+                  currentBoardFilter === "all"
+                    ? "bg-neutral-950 text-white shadow-xs"
+                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700"
+                }`}
+              >
+                전체 ({totalInquiriesCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setBoardStatusFilter("pending");
+                  setInquiriesFilter?.("pending");
+                }}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer shrink-0 ${
+                  currentBoardFilter === "pending"
+                    ? "bg-rose-600 text-white shadow-xs"
+                    : "bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
+                }`}
+              >
+                답변 대기 ({pendingInquiriesCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setBoardStatusFilter("completed");
+                  setInquiriesFilter?.("completed");
+                }}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer shrink-0 ${
+                  currentBoardFilter === "completed"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
+                }`}
+              >
+                답변 완료 ({completedInquiriesCount})
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="고객명, 이메일, 제목, 내용, 문의유형 검색..."
+                value={boardSearchQuery}
+                onChange={(e) => setBoardSearchQuery(e.target.value)}
+                className="w-full bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl pl-9 pr-3.5 py-2 text-xs font-bold text-neutral-950 focus:outline-none transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Inquiries List Cards */}
+          <div className="space-y-4">
+            {filteredBoardInquiries.length === 0 ? (
+              <div className="bg-white border border-neutral-200/80 rounded-3xl p-12 text-center space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto">
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+                <h4 className="text-base font-bold text-neutral-800">조회된 1:1 고객 문의가 없습니다</h4>
+                <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+                  {boardSearchQuery ? "검색 조건과 일치하는 문의가 없습니다. 다른 검색어를 입력해 보세요." : "등록된 문의 내역이 없습니다."}
+                </p>
+              </div>
+            ) : (
+              filteredBoardInquiries.map((inquiry: any) => {
+                const isCompleted = inquiry.status === "completed";
+                const isEditing = editingReplyId === inquiry.id;
+                const createdAtStr = inquiry.created_at ? new Date(inquiry.created_at).toLocaleString() : "-";
+                const repliedAtStr = inquiry.repliedAt ? new Date(inquiry.repliedAt).toLocaleString() : "-";
+                const currentReplyInput = replyInputs[inquiry.id] ?? inquiry.reply ?? "";
+                const inquiryImages = Array.isArray(inquiry.images) ? inquiry.images : (inquiry.image ? [inquiry.image] : []);
+
+                return (
+                  <div
+                    key={inquiry.id}
+                    className={`bg-white border rounded-3xl p-6 shadow-xs transition-all space-y-4 ${
+                      isCompleted ? "border-neutral-200/90" : "border-rose-200 bg-rose-50/10"
+                    }`}
+                  >
+                    {/* Top Row: Category, ID, Status Badge, Date */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-100">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-neutral-400">
+                          #{inquiry.id}
+                        </span>
+                        <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
+                          {inquiry.category || inquiry.type || "일반 문의"}
+                        </span>
+                        <span
+                          className={`text-[10px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
+                            isCompleted
+                              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                              : "bg-rose-100 text-rose-800 border border-rose-200 animate-pulse"
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              <span>답변 완료</span>
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="w-3 h-3 text-rose-600" />
+                              <span>답변 대기</span>
+                            </>
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="text-xs text-neutral-400 font-mono">
+                        접수일시: {createdAtStr}
+                      </div>
+                    </div>
+
+                    {/* Customer Info Row */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs bg-neutral-50 p-3 rounded-2xl border border-neutral-100">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-neutral-500 font-bold">고객명:</span>
+                        <span className="font-extrabold text-neutral-950">
+                          {inquiry.userName || inquiry.name || inquiry.customerName || "고객"}
+                        </span>
+                        {inquiry.userGrade && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded font-black bg-neutral-200 text-neutral-800">
+                            {inquiry.userGrade}
+                          </span>
+                        )}
+                      </div>
+                      {(inquiry.userEmail || inquiry.email || inquiry.customerEmail) && (
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <span className="text-neutral-500 font-bold">이메일:</span>
+                          <span className="text-neutral-700">{inquiry.userEmail || inquiry.email || inquiry.customerEmail}</span>
+                        </div>
+                      )}
+                      {(inquiry.userPhone || inquiry.phone) && (
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <span className="text-neutral-500 font-bold">연락처:</span>
+                          <span className="text-neutral-700">{inquiry.userPhone || inquiry.phone}</span>
+                        </div>
+                      )}
+                      {inquiry.orderNumber && (
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <span className="text-neutral-500 font-bold">관련 주문번호:</span>
+                          <span className="font-bold text-blue-600">{inquiry.orderNumber}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Inquiry Subject & Content */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-extrabold text-neutral-950">
+                        {inquiry.title || inquiry.subject || "1:1 문의 내용"}
+                      </h4>
+                      <p className="text-xs text-neutral-700 leading-relaxed whitespace-pre-wrap bg-white p-3.5 rounded-2xl border border-neutral-100 font-medium">
+                        {inquiry.content || inquiry.message || "문의 내용이 없습니다."}
+                      </p>
+                    </div>
+
+                    {/* Attached Images */}
+                    {inquiryImages.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[11px] font-bold text-neutral-500 flex items-center gap-1">
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          첨부 사진 ({inquiryImages.length}장) - 클릭 시 원본 확대
+                        </span>
+                        <div className="flex flex-wrap gap-2.5">
+                          {inquiryImages.map((imgUrl: string, idx: number) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setLocalZoomImage(imgUrl);
+                                setZoomedInquiryImage?.(imgUrl);
+                              }}
+                              className="relative w-20 h-20 rounded-2xl overflow-hidden border border-neutral-200 hover:border-neutral-950 transition-all cursor-pointer group shadow-2xs"
+                              title="클릭하여 원본 사진 확대"
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={`첨부 이미지 ${idx + 1}`}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Admin Reply Section */}
+                    {isCompleted && !isEditing ? (
+                      <div className="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-extrabold text-emerald-950 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <span>초이콤마 공식 답변 ({repliedAtStr})</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingReplyId(inquiry.id);
+                              setReplyInputs((prev) => ({ ...prev, [inquiry.id]: inquiry.reply || "" }));
+                            }}
+                            className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 underline cursor-pointer"
+                          >
+                            ✏️ 답변 수정
+                          </button>
+                        </div>
+                        <p className="text-xs text-neutral-800 leading-relaxed whitespace-pre-wrap font-medium">
+                          {inquiry.reply}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-neutral-50 border border-neutral-200/90 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-black text-neutral-900 flex items-center gap-1.5">
+                            <Edit3 className="w-3.5 h-3.5 text-neutral-900" />
+                            <span>{isEditing ? "답변 내용 수정" : "관리자 답변 작성"}</span>
+                          </label>
+                          {isEditing && (
+                            <button
+                              type="button"
+                              onClick={() => setEditingReplyId(null)}
+                              className="text-[11px] text-neutral-500 hover:text-neutral-900 cursor-pointer"
+                            >
+                              수정 취소
+                            </button>
+                          )}
+                        </div>
+                        <textarea
+                          rows={3}
+                          placeholder="고객에게 안내할 친절하고 정확한 공식 답변을 작성하세요..."
+                          value={currentReplyInput}
+                          onChange={(e) => setReplyInputs((prev) => ({ ...prev, [inquiry.id]: e.target.value }))}
+                          className="w-full text-xs font-medium p-3 rounded-xl border border-neutral-200 bg-white focus:outline-none focus:border-neutral-950 resize-y"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            disabled={isSubmittingReply || !currentReplyInput.trim()}
+                            onClick={() => handleAdminSubmitReply(inquiry)}
+                            className="bg-neutral-950 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold text-xs px-4 py-2 rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            <span>{isEditing ? "답변 수정 완료" : "답변 등록 및 완료 처리"}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bottom Delete Button */}
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (window.confirm("정말로 해당 1:1 고객 문의 내역을 삭제하시겠습니까?")) {
+                            if (handleDeleteInquiry) {
+                              await handleDeleteInquiry(inquiry.id);
+                            }
+                          }
+                        }}
+                        className="text-[11px] font-bold text-neutral-400 hover:text-rose-600 flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>문의 삭제</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
 
 
@@ -3160,6 +3660,27 @@ export function InquiriesManagement({
         initialOrder={selectedRefundPrefillOrder}
         onSuccess={handleRefundSuccess}
       />
+
+      {/* 1:1 고객 문의 첨부 사진 고해상도 확대 모달 */}
+      {activeZoomImage && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="relative max-w-4xl max-h-[90vh] bg-neutral-900 rounded-3xl overflow-hidden shadow-2xl p-2 flex flex-col items-center">
+            <button
+              type="button"
+              onClick={handleCloseZoom}
+              className="absolute top-4 right-4 z-10 p-2 bg-neutral-800/80 hover:bg-neutral-700 text-white rounded-full transition-colors cursor-pointer"
+              title="닫기"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={activeZoomImage}
+              alt="문의 첨부 이미지 원본 확대"
+              className="max-h-[85vh] w-auto object-contain rounded-2xl"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

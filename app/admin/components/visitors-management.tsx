@@ -48,7 +48,10 @@ function cleanIp(rawIp: string = ""): string {
   let ip = String(rawIp || "").trim();
   if (ip.startsWith("::ffff:")) ip = ip.replace("::ffff:", "");
   if (ip === "::1") ip = "127.0.0.1";
-  return ip.split(":")[0];
+  if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$/.test(ip)) {
+    return ip.split(":")[0];
+  }
+  return ip;
 }
 
 export function VisitorsManagement({ triggerToast }: VisitorsManagementProps) {

@@ -259,14 +259,18 @@ export function useVisitors(triggerToast?: (msg: string) => void) {
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_blocked_ips_cache", JSON.stringify(data.blockedIps));
         }
+        triggerToast?.(`IP [${cleanIp}]가 차단 목록에 성공적으로 등록되었습니다.`);
+        fetchVisitorData(true);
+      } else {
+        triggerToast?.(data.error || "IP 차단 등록에 실패했습니다.");
       }
-    } catch (err) {}
+    } catch (err) {
+      triggerToast?.("IP 차단 처리 중 네트워크 오류가 발생했습니다.");
+    }
 
     setIsAddBlockModalOpen(false);
     setNewBlockIp("");
     setNewBlockReason("");
-    triggerToast?.(`IP [${cleanIp}]가 차단 목록에 성공적으로 등록되었습니다.`);
-    fetchVisitorData(true);
   };
 
   // Action: Unblock IP
@@ -285,11 +289,14 @@ export function useVisitors(triggerToast?: (msg: string) => void) {
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_blocked_ips_cache", JSON.stringify(data.blockedIps));
         }
+        triggerToast?.(`IP [${ip}]의 차단이 해제되었습니다.`);
+        fetchVisitorData(true);
+      } else {
+        triggerToast?.(data.error || "차단 해제에 실패했습니다.");
       }
-    } catch (err) {}
-
-    triggerToast?.(`IP [${ip}]의 차단이 해제되었습니다.`);
-    fetchVisitorData(true);
+    } catch (err) {
+      triggerToast?.("차단 해제 처리 중 네트워크 오류가 발생했습니다.");
+    }
   };
 
   // Action: Quick Block Suspicious Activity
@@ -319,11 +326,14 @@ export function useVisitors(triggerToast?: (msg: string) => void) {
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_blocked_ips_cache", JSON.stringify(data.blockedIps));
         }
+        triggerToast?.(`이상 행동 IP [${item.ip}]가 즉시 차단되었습니다.`);
+        fetchVisitorData(true);
+      } else {
+        triggerToast?.(data.error || "즉시 차단에 실패했습니다.");
       }
-    } catch (err) {}
-
-    triggerToast?.(`이상 행동 IP [${item.ip}]가 즉시 차단되었습니다.`);
-    fetchVisitorData(true);
+    } catch (err) {
+      triggerToast?.("즉시 차단 중 네트워크 오류가 발생했습니다.");
+    }
   };
 
   // Action: Add Admin IP (관리자 IP 통계 제외 등록)
@@ -383,6 +393,8 @@ export function useVisitors(triggerToast?: (msg: string) => void) {
         setAdminIps(data.adminIps);
         triggerToast?.(`관리자 IP [${ipToRemove}]가 제외 목록에서 해제되었습니다.`);
         fetchVisitorData(true);
+      } else {
+        triggerToast?.(data.error || "관리자 IP 삭제에 실패했습니다.");
       }
     } catch (e) {
       triggerToast?.("관리자 IP 삭제 중 오류가 발생했습니다.");

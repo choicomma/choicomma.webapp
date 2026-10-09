@@ -11,6 +11,7 @@ export interface PopupConfig {
   popupType?: "IMAGE" | "NOTICE";
   noticeMessage?: string;
   noticePeriod?: string;
+  description?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -28,6 +29,7 @@ export const DEFAULT_POPUP_CONFIG: PopupConfig = {
   popupType: "NOTICE",
   noticeMessage: "초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다.",
   noticePeriod: "2026.10.12일까지",
+  description: "현재 해외 글로벌 고객님들과 함께하기 위한 초이콤마 글로벌 몰 공식 런칭 및 인프라 연동 작업이 집중 진행되고 있습니다.\n이로 인해 작업 기간 동안 일시적으로 쇼핑몰 서비스 이용 및 사이트 접속을 하실 수 없습니다.\n고객님들의 쾌적하고 안전한 쇼핑을 위해 2026년 10월 12일까지 모든 작업을 완료하여 신속히 정상화하겠습니다.",
   createdAt: "2026-10-09",
   updatedAt: "2026-10-09",
 };

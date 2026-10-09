@@ -48,7 +48,14 @@ export function MembershipPopupBanner() {
     };
   }, []);
 
-  if (!mounted || !config || !config.isActive || !config.imageUrl || !config.showOnMembership) {
+  if (!mounted || !config || !config.isActive || !config.showOnMembership) {
+    return null;
+  }
+
+  const hasImage = Boolean(config.imageUrl);
+  const hasNotice = Boolean(config.title || config.noticeMessage);
+
+  if (!hasImage && !hasNotice) {
     return null;
   }
 
@@ -63,34 +70,69 @@ export function MembershipPopupBanner() {
 
   return (
     <div className="w-full my-6 animate-in fade-in duration-300">
-      <div
-        onClick={handleClick}
-        className={`relative w-full rounded-3xl overflow-hidden border border-neutral-200/90 bg-neutral-950 shadow-md group transition-all duration-300 ${
-          config.linkUrl ? "cursor-pointer hover:shadow-xl hover:border-neutral-400" : ""
-        }`}
-      >
-        {/* Banner Top Decorative Accent */}
-        <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold tracking-wide">
-          <Sparkles className="w-3 h-3 text-amber-400 fill-amber-400" />
-          <span>{config.title || "SPECIAL EVENT"}</span>
-        </div>
-
-        {config.linkUrl && (
-          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white/80 hover:text-white text-[11px] font-medium transition-colors">
-            <span>자세히 보기</span>
-            <ExternalLink className="w-3 h-3" />
+      {hasImage ? (
+        <div
+          onClick={handleClick}
+          className={`relative w-full rounded-3xl overflow-hidden border border-neutral-200/90 bg-neutral-950 shadow-md group transition-all duration-300 ${
+            config.linkUrl ? "cursor-pointer hover:shadow-xl hover:border-neutral-400" : ""
+          }`}
+        >
+          {/* Banner Top Decorative Accent */}
+          <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold tracking-wide">
+            <Sparkles className="w-3 h-3 text-amber-400 fill-amber-400" />
+            <span>{config.title || "SPECIAL EVENT"}</span>
           </div>
-        )}
 
-        {/* Banner Image */}
-        <div className="relative w-full max-h-[340px] flex items-center justify-center bg-neutral-900 overflow-hidden">
-          <img
-            src={config.imageUrl}
-            alt={config.title || "멤버십 전용 팝업 이벤트"}
-            className="w-full h-auto max-h-[340px] object-cover sm:object-contain mx-auto transition-transform duration-500 group-hover:scale-[1.01]"
-          />
+          {config.linkUrl && (
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white/80 hover:text-white text-[11px] font-medium transition-colors">
+              <span>자세히 보기</span>
+              <ExternalLink className="w-3 h-3" />
+            </div>
+          )}
+
+          {/* Banner Image */}
+          <div className="relative w-full max-h-[340px] flex items-center justify-center bg-neutral-900 overflow-hidden">
+            <img
+              src={config.imageUrl}
+              alt={config.title || "멤버십 전용 팝업 이벤트"}
+              className="w-full h-auto max-h-[340px] object-cover sm:object-contain mx-auto transition-transform duration-500 group-hover:scale-[1.01]"
+            />
+          </div>
         </div>
-      </div>
+      ) : (
+        <div
+          onClick={handleClick}
+          className={`relative w-full rounded-2xl border border-neutral-900 bg-neutral-950 text-white p-5 sm:p-6 shadow-md transition-all ${
+            config.linkUrl ? "cursor-pointer hover:border-neutral-700" : ""
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full">
+                  공지사항
+                </span>
+                <span className="text-xs font-bold text-neutral-400">CHOICOMMA MEMBERSHIP</span>
+              </div>
+              <h4 className="text-sm sm:text-base font-black text-white">
+                {config.title}
+              </h4>
+              {config.noticeMessage && (
+                <p className="text-xs text-neutral-300 leading-relaxed max-w-2xl">
+                  {config.noticeMessage}
+                </p>
+              )}
+            </div>
+
+            {config.linkUrl && (
+              <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-colors">
+                <span>자세히 보기</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -702,8 +702,6 @@ export function ProductsManagement({
   // Active Time Setting Popover Product ID
   const [activeTimePopoverId, setActiveTimePopoverId] = useState<string | null>(null);
 
-  // Drag & Drop Reordering State
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // Bulk Selection State
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -732,10 +730,43 @@ export function ProductsManagement({
   const totalItems = displayedProducts.length;
   const totalPages = pageSize === -1 ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
 
-  // Reset page to 1 when filter/search/metric/pageSize changes
+  // Reset page to 1 and clear selections when filter/search/metric/pageSize changes
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedProductIds([]);
   }, [searchQuery, selectedCategoryFilter, selectedMetricFilter, pageSize]);
+
+  const getCategoryCount = useCallback(
+    (catId: string) => {
+      if (catId === "all") {
+        return productsList.filter(
+          (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+        ).length;
+      }
+      const target = catId.toLowerCase();
+      if (target === "timesale") {
+        return productsList.filter(
+          (p) =>
+            p.categoryId !== "main_banner" &&
+            !String(p.id).startsWith("hero-slide-") &&
+            ((p.categoryId && String(p.categoryId).toLowerCase() === "timesale") ||
+              (Array.isArray(p.categoryIds) &&
+                p.categoryIds.some((c: any) => String(c).toLowerCase() === "timesale")) ||
+              p.isTimeSale === true ||
+              (p.timeSaleDiscountRate !== undefined && Number(p.timeSaleDiscountRate) > 0))
+        ).length;
+      }
+      return productsList.filter(
+        (p) =>
+          p.categoryId !== "main_banner" &&
+          !String(p.id).startsWith("hero-slide-") &&
+          ((p.categoryId && String(p.categoryId).toLowerCase() === target) ||
+            (Array.isArray(p.categoryIds) &&
+              p.categoryIds.some((c: any) => String(c).toLowerCase() === target)))
+      ).length;
+    },
+    [productsList]
+  );
 
   // When a new product is added (productsList length increases), reset metric filter to "all" and currentPage to 1
   const prevProductsLengthRef = useRef(productsList.length);
@@ -1244,9 +1275,19 @@ export function ProductsManagement({
 
         json.forEach((row: any, idx: number) => {
           const getVal = (keys: string[]) => {
+            // 1st pass: exact match (case-insensitive)
             for (const key of keys) {
               const foundKey = Object.keys(row).find(
-                (k) => k.trim().toLowerCase() === key.toLowerCase() || k.includes(key)
+                (k) => k.trim().toLowerCase() === key.toLowerCase()
+              );
+              if (foundKey && row[foundKey] !== undefined && row[foundKey] !== "") {
+                return row[foundKey];
+              }
+            }
+            // 2nd pass: prefix/contains match
+            for (const key of keys) {
+              const foundKey = Object.keys(row).find(
+                (k) => k.trim().toLowerCase().includes(key.toLowerCase())
               );
               if (foundKey && row[foundKey] !== undefined && row[foundKey] !== "") {
                 return row[foundKey];
@@ -1276,7 +1317,7 @@ export function ProductsManagement({
           const categoryId = parsedCats[0] || (categoryIdRaw ? normalizeCat(categoryIdRaw) : "outer");
           const categoryIds = parsedCats.length > 0 ? parsedCats : [categoryId];
 
-          const priceRaw = getVal(["판매가", "price", "amount", "가격"]);
+          const priceRaw = getVal(["판매가(원)", "판매가", "price", "amount", "가격"]);
           const priceNum = typeof priceRaw === "number" ? priceRaw : parseInt(String(priceRaw).replace(/[^0-9]/g, ""), 10) || 0;
 
           const description = String(getVal(["상품 간단설명", "간단설명", "description", "설명"])).trim();
@@ -1300,7 +1341,7 @@ export function ProductsManagement({
             ? sizesRaw.split(/[,/|]/).map((s) => s.trim()).filter(Boolean)
             : ["1", "2", "3"];
 
-          const stockRaw = getVal(["초기 재고수량", "재고수량", "재고", "stock", "quantity"]);
+          const stockRaw = getVal(["총 재고수량", "초기 재고수량", "재고수량", "stock", "quantity", "재고"]);
           const stockNum = typeof stockRaw === "number" ? stockRaw : parseInt(String(stockRaw).replace(/[^0-9]/g, ""), 10) || 30;
 
           const labelRaw = String(getVal(["상품 라벨", "label", "productLabel"])).trim().toUpperCase();
@@ -1325,16 +1366,42 @@ export function ProductsManagement({
           const timeSaleRateRaw = getVal(["타임세일 할인율", "timeSaleDiscountRate"]);
           const timeSaleDiscountRate = timeSaleRateRaw ? parseInt(String(timeSaleRateRaw).replace(/[^0-9]/g, ""), 10) : undefined;
 
-          currentNo += 1;
-          const prodId = `prod-excel-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`;
+          // Preserve existing identifiers if present (prevents ID/code jump on re-import)
+          const rawNo = getVal(["상품번호", "productNo", "번호"]);
+          const existingNo = rawNo ? parseInt(String(rawNo).replace(/[^0-9]/g, ""), 10) : 0;
+          const assignedNo = existingNo > 0 ? existingNo : (++currentNo);
 
+          const rawCode = String(getVal(["자체상품코드", "상품코드", "productCode", "code"])).trim();
+          const assignedCode = rawCode || `CC-${String(assignedNo).padStart(3, "0")}`;
+
+          const existingId = String(getVal(["id", "ID", "상품ID", "productId"])).trim();
+          const prodId = existingId || `prod-excel-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`;
+
+          // Check if optionStock string exists (e.g., from exported Excel: "BLACK-1: 15개 | BLACK-2: 15개")
+          const optionStockRaw = String(getVal(["옵션별 재고상세", "optionStock"])).trim();
           const sizeStockMap: Record<string, number> = {};
-          const perCombo = Math.floor(stockNum / Math.max(1, colors.length * sizes.length)) || 1;
-          colors.forEach((c) => {
-            sizes.forEach((s) => {
-              sizeStockMap[`${c}-${s}`] = perCombo;
+          if (optionStockRaw && optionStockRaw.includes(":")) {
+            optionStockRaw.split("|").forEach((part) => {
+              const segs = part.split(":");
+              if (segs.length === 2) {
+                const k = segs[0].trim();
+                const v = parseInt(segs[1].replace(/[^0-9]/g, ""), 10);
+                if (k && !isNaN(v)) sizeStockMap[k] = v;
+              }
             });
-          });
+          }
+          if (Object.keys(sizeStockMap).length === 0) {
+            const perCombo = Math.floor(stockNum / Math.max(1, colors.length * sizes.length)) || 1;
+            colors.forEach((c) => {
+              sizes.forEach((s) => {
+                sizeStockMap[`${c}-${s}`] = perCombo;
+              });
+            });
+          }
+
+          const statusRaw = String(getVal(["판매상태", "상태", "status", "availableForSale"])).trim();
+          const isSoldOutStatus = statusRaw === "품절" || statusRaw === "OFF" || statusRaw === "구매불가" || statusRaw === "FALSE";
+          const isAvailable = !isSoldOutStatus && stockNum > 0;
 
           const baseSlug = title
             .trim()
@@ -1347,8 +1414,8 @@ export function ProductsManagement({
 
           parsedItems.push({
             id: prodId,
-            productNo: currentNo,
-            productCode: `CC-${String(currentNo).padStart(3, "0")}`,
+            productNo: assignedNo,
+            productCode: assignedCode,
             createdAt: new Date().toISOString(),
             handle: safeHandle,
             title,
@@ -1369,7 +1436,8 @@ export function ProductsManagement({
             sizeMeasurements: DEFAULT_SIZE_MEASUREMENTS,
             stock: stockNum,
             sizeStock: sizeStockMap,
-            availableForSale: stockNum > 0,
+            stockMap: sizeStockMap,
+            availableForSale: isAvailable,
             isMainFeatured,
             productLabel: label,
             options: [
@@ -1377,16 +1445,20 @@ export function ProductsManagement({
               { id: "size", name: "Size", values: sizes },
             ],
             variants: colors.flatMap((c) =>
-              sizes.map((s) => ({
-                id: `${prodId}-${c}-${s}`,
-                title: `${title} - ${c} / ${s}`,
-                availableForSale: stockNum > 0,
-                selectedOptions: [
-                  { name: "Color", value: c },
-                  { name: "Size", value: s },
-                ],
-                price: { amount: String(priceNum), currencyCode: "KRW" },
-              }))
+              sizes.map((s) => {
+                const vComboKey = `${c}-${s}`;
+                const vStock = sizeStockMap[vComboKey] !== undefined ? sizeStockMap[vComboKey] : (sizeStockMap[s] !== undefined ? sizeStockMap[s] : 1);
+                return {
+                  id: `${prodId}-${c}-${s}`,
+                  title: `${title} - ${c} / ${s}`,
+                  availableForSale: isAvailable && vStock > 0,
+                  selectedOptions: [
+                    { name: "Color", value: c },
+                    { name: "Size", value: s },
+                  ],
+                  price: { amount: String(priceNum), currencyCode: "KRW" },
+                };
+              })
             ),
             fabricComposition,
             elasticity,
@@ -1465,6 +1537,33 @@ export function ProductsManagement({
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
             엑셀 대량 등록
           </button>
+
+          {handleRestoreDefaultProducts && (
+            <button
+              type="button"
+              onClick={handleRestoreDefaultProducts}
+              className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold px-3.5 py-2.5 rounded-xl transition-all border border-amber-300 text-xs cursor-pointer shadow-2xs hover:border-amber-400"
+              title="초이콤마 정식 카탈로그 50개 원본 데이터로 초기화 복원합니다."
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+              카탈로그 50개 복원
+            </button>
+          )}
+
+          {handleClearAllProducts && (
+            <button
+              type="button"
+              onClick={() => {
+                handleClearAllProducts();
+                setSelectedProductIds([]);
+              }}
+              className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold px-3 py-2.5 rounded-xl transition-all border border-rose-200 text-xs cursor-pointer shadow-2xs hover:border-rose-300"
+              title="등록된 모든 상품을 일괄 비웁니다."
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+              전체 비우기
+            </button>
+          )}
 
           <button
             onClick={() => {
@@ -1625,11 +1724,21 @@ export function ProductsManagement({
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-neutral-400" />
           <input
             type="text"
-            placeholder="상품번호(CC-001), 상품명 또는 설명으로 검색..."
+            placeholder="상품번호(CC-001), 상품명, 색상, 설명으로 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-2 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 transition-colors"
+            className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-2 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 transition-colors"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-2.5 p-1 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-200/60 rounded-full transition-colors cursor-pointer"
+              title="검색어 지우기"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -1661,10 +1770,10 @@ export function ProductsManagement({
               onChange={(e) => setSelectedCategoryFilter(e.target.value)}
               className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 cursor-pointer"
             >
-              <option value="all">전체 카테고리</option>
+              <option value="all">전체 카테고리 ({getCategoryCount("all")}개)</option>
               {categoriesList.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {c.name} ({getCategoryCount(c.id)}개)
                 </option>
               ))}
             </select>
@@ -1703,17 +1812,26 @@ export function ProductsManagement({
 
 
           {selectedProductIds.length > 0 && (
-            <div className="relative inline-block text-left animate-in fade-in">
+            <div className="flex items-center gap-2 animate-in fade-in">
               <button
                 type="button"
-                onClick={() => setIsBulkActionMenuOpen(!isBulkActionMenuOpen)}
-                className="flex items-center gap-2 bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer"
-                title="선택한 상품 일괄 관리 메뉴"
+                onClick={() => setSelectedProductIds([])}
+                className="text-neutral-500 hover:text-neutral-900 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
+                title="선택 해제"
               >
-                <Layers className="w-3.5 h-3.5" />
-                <span>선택 관리 ({selectedProductIds.length}개)</span>
-                <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
+                선택 해제
               </button>
+              <div className="relative inline-block text-left">
+                <button
+                  type="button"
+                  onClick={() => setIsBulkActionMenuOpen(!isBulkActionMenuOpen)}
+                  className="flex items-center gap-2 bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer"
+                  title="선택한 상품 일괄 관리 메뉴"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>선택 관리 ({selectedProductIds.length}개)</span>
+                  <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
+                </button>
 
               {isBulkActionMenuOpen && (
                 <>
@@ -1797,7 +1915,7 @@ export function ProductsManagement({
           <table className="w-full text-left text-xs text-neutral-700 min-w-[1080px]">
             <thead className="bg-neutral-50 text-neutral-500 text-[11px] uppercase font-semibold border-b border-neutral-200">
               <tr>
-                <th className="py-3 px-1.5 w-8 text-center whitespace-nowrap text-neutral-400 font-bold" title="드래그하여 순서 변경">
+                <th className="py-3 px-1.5 w-12 text-center whitespace-nowrap text-neutral-400 font-bold" title="드래그 또는 버튼으로 순서 변경">
                   순서
                 </th>
                 <th className="py-3 px-2 w-8 text-center whitespace-nowrap">
@@ -1824,8 +1942,27 @@ export function ProductsManagement({
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
               {displayedProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-12 text-center text-neutral-500 text-xs">
-                    검색 조건에 해당 상품이 없습니다.
+                  <td colSpan={10} className="py-16 text-center text-neutral-500 text-xs">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Search className="w-8 h-8 text-neutral-300 stroke-1" />
+                      <p className="font-bold text-neutral-700 text-sm">일치하는 상품을 찾을 수 없습니다.</p>
+                      <p className="text-neutral-400 text-xs">
+                        {searchQuery ? `검색어 "${searchQuery}"에 해당하는 상품이 없습니다.` : "선택한 필터 조건에 해당하는 상품이 없습니다."}
+                      </p>
+                      {(searchQuery || selectedCategoryFilter !== "all" || selectedMetricFilter !== "all") && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery("");
+                            setSelectedCategoryFilter("all");
+                            setSelectedMetricFilter("all");
+                          }}
+                          className="mt-2 px-3.5 py-1.5 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-neutral-800 transition-colors shadow-sm cursor-pointer"
+                        >
+                          검색 및 필터 초기화
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -1866,12 +2003,52 @@ export function ProductsManagement({
                     >
                       {/* Drag Handle Column */}
                       <td
-                        className="py-2 px-1 text-center whitespace-nowrap cursor-grab active:cursor-grabbing text-neutral-400 hover:text-amber-800 transition-colors select-none"
-                        title="마우스로 드래그하여 상품 순서를 위/아래로 이동할 수 있습니다."
+                        className="py-2 px-1 text-center whitespace-nowrap select-none"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-center p-1 rounded hover:bg-neutral-200/50 pointer-events-none">
-                          <GripVertical className="w-4 h-4 text-neutral-400 group-hover:text-amber-800 transition-colors pointer-events-none" />
+                        <div className="flex items-center justify-center gap-0.5">
+                          <div
+                            className="p-1 rounded cursor-grab active:cursor-grabbing text-neutral-400 hover:text-amber-800 hover:bg-neutral-200/50 transition-colors"
+                            title="마우스로 드래그하여 순서를 이동할 수 있습니다."
+                          >
+                            <GripVertical className="w-4 h-4 pointer-events-none" />
+                          </div>
+                          {handleMoveProduct && (
+                            <div className="flex flex-col -space-y-1">
+                              <button
+                                type="button"
+                                disabled={displayedProducts[0]?.id === p.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMoveProduct(String(p.id), "up");
+                                }}
+                                className={`p-0.5 rounded transition-colors ${
+                                  displayedProducts[0]?.id === p.id
+                                    ? "opacity-20 cursor-not-allowed text-neutral-300"
+                                    : "text-neutral-400 hover:text-neutral-900 hover:bg-neutral-200/70 cursor-pointer"
+                                }`}
+                                title="한 칸 위로 이동"
+                              >
+                                <ChevronUp className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={displayedProducts[displayedProducts.length - 1]?.id === p.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMoveProduct(String(p.id), "down");
+                                }}
+                                className={`p-0.5 rounded transition-colors ${
+                                  displayedProducts[displayedProducts.length - 1]?.id === p.id
+                                    ? "opacity-20 cursor-not-allowed text-neutral-300"
+                                    : "text-neutral-400 hover:text-neutral-900 hover:bg-neutral-200/70 cursor-pointer"
+                                }`}
+                                title="한 칸 아래로 이동"
+                              >
+                                <ChevronDown className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="py-2 px-2 w-8 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
@@ -2333,7 +2510,7 @@ export function ProductsManagement({
                 전체 항목 포함 양식 재다운로드
               </button>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => setIsExcelModalOpen(false)}
@@ -2342,6 +2519,26 @@ export function ProductsManagement({
                   취소
                 </button>
 
+                {handleReplaceAllProducts && (
+                  <button
+                    type="button"
+                    disabled={excelPreviewItems.length === 0}
+                    onClick={() => {
+                      const isConfirmed = window.confirm(
+                        `⚠️ [경고: 전체 덮어쓰기]\n\n현재 등록된 전체 상품(${productsList.length}개)을 삭제하고, 엑셀 파일의 ${excelPreviewItems.length}개 상품으로 전체 교체하시겠습니까?\n\n이 작업은 기존 상품 목록을 완전히 덮어씁니다.`
+                      );
+                      if (!isConfirmed) return;
+                      handleReplaceAllProducts(excelPreviewItems);
+                      setIsExcelModalOpen(false);
+                    }}
+                    className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    title="기존 상품을 모두 지우고 엑셀 파일의 상품들로 전체 교체합니다."
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    전체 덮어쓰기 (기존 {productsList.length}개 교체)
+                  </button>
+                )}
+
                 <button
                   type="button"
                   disabled={excelPreviewItems.length === 0}
@@ -2349,11 +2546,11 @@ export function ProductsManagement({
                     if (handleBulkAddProducts) {
                       const baseNo = getNextBaseProductNo();
                       const resequencedItems = excelPreviewItems.map((item, idx) => {
-                        const pNo = baseNo + idx + 1;
+                        const pNo = item.productNo || (baseNo + idx + 1);
                         return {
                           ...item,
                           productNo: pNo,
-                          productCode: `CC-${String(pNo).padStart(3, "0")}`,
+                          productCode: item.productCode || `CC-${String(pNo).padStart(3, "0")}`,
                         };
                       });
                       handleBulkAddProducts(resequencedItems);
@@ -2363,7 +2560,7 @@ export function ProductsManagement({
                   className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl transition-all shadow-md text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  {excelPreviewItems.length}개 상품 일괄 등록 완료
+                  기존 목록에 추가 등록 ({excelPreviewItems.length}개)
                 </button>
               </div>
             </div>

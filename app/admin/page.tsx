@@ -91,6 +91,7 @@ import { GlobalSalesManagement } from "./components/global-sales-management";
 import { PopupManagement } from "./components/popup-management";
 import { VisitorsManagement } from "./components/visitors-management";
 import { GitDataManagement } from "./components/git-data-management";
+import { StoreSettingsManagement } from "./components/store-settings-management";
 import { LanguageSelector } from "@/components/layout/header/language-selector";
 import { getAllUserCoupons, syncAdminCouponsFromSupabase } from "@/lib/membership/coupons";
 
@@ -239,7 +240,8 @@ export default function AdminPage() {
     inquiriesList, setInquiriesList,
     zoomedInquiryImage, setZoomedInquiryImage,
     inquiriesFilter, setInquiriesFilter,
-    handleReplyToInquiry
+    handleReplyToInquiry,
+    handleDeleteInquiry,
   } = useInquiries(triggerToast);
   // Revenue Management State
   const {
@@ -425,17 +427,26 @@ export default function AdminPage() {
   const [setSalesList, setSetSalesList] = useState<any[]>(initialSetSales);
 
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_set_sales");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            setSetSalesList(parsed);
-          }
-        } catch (e) { }
+    const handleSetSalesSync = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("admin_set_sales");
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              setSetSalesList(parsed);
+            }
+          } catch (e) {}
+        }
       }
-    }
+    };
+    handleSetSalesSync();
+    window.addEventListener("storage", handleSetSalesSync);
+    window.addEventListener("admin_set_sales_updated", handleSetSalesSync);
+    return () => {
+      window.removeEventListener("storage", handleSetSalesSync);
+      window.removeEventListener("admin_set_sales_updated", handleSetSalesSync);
+    };
   }, []);
 
   const [isSetModalOpen, setIsSetModalOpen] = useState(false);
@@ -758,13 +769,20 @@ export default function AdminPage() {
           {/* 2. CS */}
           <button
             onClick={() => setActiveTab("inquiries")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "inquiries"
+            className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "inquiries"
                 ? "bg-neutral-100 text-neutral-950 font-extrabold"
                 : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
               }`}
           >
-            <MessageSquare className="w-4 h-4 text-neutral-900" />
-            CS
+            <div className="flex items-center gap-3">
+              <MessageSquare className="w-4 h-4 text-neutral-900" />
+              <span>CS & 실시간 상담</span>
+            </div>
+            {(chatSessionsList.length > 0 || (Array.isArray(inquiriesList) && inquiriesList.some((i: any) => i.status !== "completed"))) && (
+              <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+                {chatSessionsList.length + (inquiriesList.filter((i: any) => i.status !== "completed").length)}
+              </span>
+            )}
           </button>
 
           {/* 3. 상품 관리 */}
@@ -1092,13 +1110,17 @@ export default function AdminPage() {
             />
           )}
 
-          {/* TAB: TIMESALE & PROMOTION (SECRET TIME SALE) */}
+          {/* TAB: TIMESALE & PROMOTION (SECRET TIME SALE & SET BUNDLE) */}
           {activeTab === "sales" && (
             <TimesaleManagement
               productsList={productsList}
               customersList={customersList}
               secretSalesList={secretSalesList}
               setSecretSalesList={setSecretSalesList}
+              setSalesList={setSalesList}
+              setSetSalesList={setSetSalesList}
+              onOpenSetBundleModal={() => setIsSetModalOpen(true)}
+              setAdminTimeSaleProductIds={setAdminTimeSaleProductIds}
               triggerToast={triggerToast}
             />
           )}
@@ -1135,6 +1157,13 @@ export default function AdminPage() {
               setProductsList={setProductsList}
               saveProductsToStorage={saveProductsToStorage}
               triggerToast={triggerToast}
+              mainNoticeBanner={mainNoticeBanner}
+              setMainNoticeBanner={setMainNoticeBanner}
+              isMainNoticeActive={isMainNoticeActive}
+              setIsMainNoticeActive={setIsMainNoticeActive}
+              mainBadgeText={mainBadgeText}
+              setMainBadgeText={setMainBadgeText}
+              handleSaveMainPageSettings={handleSaveMainPageSettings}
             />
           )}
 
@@ -1234,6 +1263,22 @@ export default function AdminPage() {
               setNewInboundDate={setNewInboundDate}
               handleUpdateInboundStatus={handleUpdateInboundStatus}
               handleDeleteInboundSchedule={handleDeleteInboundSchedule}
+              isAddInboundModalOpen={isAddInboundModalOpen}
+              selectedInboundItem={selectedInboundItem}
+              newInboundDate={newInboundDate}
+              newInboundTitle={newInboundTitle}
+              setNewInboundTitle={setNewInboundTitle}
+              newInboundQuantity={newInboundQuantity}
+              setNewInboundQuantity={setNewInboundQuantity}
+              newInboundSupplier={newInboundSupplier}
+              setNewInboundSupplier={setNewInboundSupplier}
+              newInboundWarehouse={newInboundWarehouse}
+              setNewInboundWarehouse={setNewInboundWarehouse}
+              newInboundNotes={newInboundNotes}
+              setNewInboundNotes={setNewInboundNotes}
+              newInboundStatus={newInboundStatus}
+              setNewInboundStatus={setNewInboundStatus}
+              handleAddInboundSchedule={handleAddInboundSchedule}
             />
           )}
 
@@ -1251,6 +1296,14 @@ export default function AdminPage() {
               handleAdminSendLiveChat={handleAdminSendLiveChat}
               handleAdminEndLiveChat={handleAdminEndLiveChat}
               handleAdminClearLiveChat={handleAdminClearLiveChat}
+              inquiriesList={inquiriesList}
+              setInquiriesList={setInquiriesList}
+              zoomedInquiryImage={zoomedInquiryImage}
+              setZoomedInquiryImage={setZoomedInquiryImage}
+              inquiriesFilter={inquiriesFilter}
+              setInquiriesFilter={setInquiriesFilter}
+              handleReplyToInquiry={handleReplyToInquiry}
+              handleDeleteInquiry={handleDeleteInquiry}
             />
           )}
 
@@ -1261,63 +1314,10 @@ export default function AdminPage() {
           )}
 
           {activeTab === "settings" && (
-            <div className="space-y-6 max-w-3xl animate-in fade-in duration-300">
-              <div>
-                <h1 className="text-2xl font-bold text-neutral-950">스토어 설정</h1>
-                <p className="text-sm text-neutral-500 mt-0.5">
-                  choicomma 브랜드의 기본 운영 환경을 관리합니다.
-                </p>
-              </div>
-
-              <div className="bg-white border border-neutral-200/80 rounded-2xl p-6 space-y-6 shadow-sm">
-                <div>
-                  <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2">
-                    스토어명 (Brand Name)
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="choicomma"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-950 font-bold focus:outline-none focus:border-neutral-950 focus:bg-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2">
-                    기본 화폐 단위 (Currency Code)
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="KRW (₩)"
-                    disabled
-                    className="w-full bg-neutral-100 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-500 font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2">
-                    대표 관리자 ID
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="admin"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950 focus:bg-white"
-                  />
-                </div>
-
-                <div className="pt-4 border-t border-neutral-200 flex justify-end">
-                  <button
-                    onClick={() => triggerToast("스토어 설정이 저장되었습니다.")}
-                    className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-6 py-2.5 rounded-xl transition-all shadow-md text-sm"
-                  >
-                    설정 저장하기
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-neutral-200">
-                <GitDataManagement />
-              </div>
-            </div>
+            <StoreSettingsManagement
+              triggerToast={triggerToast}
+              onNavigateGitData={() => setActiveTab("git_data")}
+            />
           )}
 
           {activeTab === "git_data" && (
@@ -1371,20 +1371,43 @@ export default function AdminPage() {
             setSelectedCategoryFilter("all");
             setProductSortOrder("custom");
           } else {
-            updatedList = productsList.map((p) => String(p.id) === String(savedProduct.id) ? { ...p, ...savedProduct } : p);
+            updatedList = productsList.map((p) => {
+              if (String(p.id) === String(savedProduct.id)) {
+                const merged = { ...p, ...savedProduct };
+                if (!savedProduct.releaseDate) {
+                  delete merged.releaseDate;
+                }
+                return merged;
+              }
+              return p;
+            });
             triggerToast(`'${savedProduct.title}' 상품 정보가 성공적으로 수정되었습니다.`);
           }
           setProductsList(updatedList);
           setIsAddModalOpen(false);
           setEditingProduct(null);
 
-          // Synchronize secret_timesale_item_settings if exists in localStorage
+          // Synchronize secret_timesale_product_ids & secret_timesale_item_settings in localStorage
           if (typeof window !== "undefined" && savedProduct.id) {
             try {
+              const pId = String(savedProduct.id);
+              if (savedProduct.isTimeSale) {
+                if (!adminTimeSaleProductIds.includes(pId)) {
+                  const updatedIds = [...adminTimeSaleProductIds, pId];
+                  setAdminTimeSaleProductIds(updatedIds);
+                  localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedIds));
+                }
+              } else {
+                if (adminTimeSaleProductIds.includes(pId)) {
+                  const updatedIds = adminTimeSaleProductIds.filter((id) => id !== pId);
+                  setAdminTimeSaleProductIds(updatedIds);
+                  localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedIds));
+                }
+              }
+
               const itemSettingsRaw = localStorage.getItem("secret_timesale_item_settings");
               if (itemSettingsRaw) {
                 const itemSettings = JSON.parse(itemSettingsRaw);
-                const pId = String(savedProduct.id);
                 if (itemSettings[pId]) {
                   itemSettings[pId].discountRate = savedProduct.timeSaleDiscountRate;
                   localStorage.setItem("secret_timesale_item_settings", JSON.stringify(itemSettings));

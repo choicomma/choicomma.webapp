@@ -84,7 +84,12 @@ export function SetBundleSection({ products }: SetBundleSectionProps) {
       const prod = allProducts.find((p) => p.id === itemConfig.productId);
       if (!prod) return;
 
-      const singlePrice = parseFloat(prod.priceRange.minVariantPrice.amount);
+      const singlePrice = parseFloat(
+        prod.priceRange?.minVariantPrice?.amount ||
+        (prod as any).price?.amount ||
+        (prod as any).price ||
+        "0"
+      );
       const discountedSinglePrice = Math.round(
         singlePrice * (1 - setBundle.discountRate / 100)
       );

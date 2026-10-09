@@ -15,9 +15,12 @@ import {
   Calendar,
   Eye,
   Tag,
-  AlertCircle
+  AlertCircle,
+  Gift,
+  Boxes,
 } from "lucide-react";
 import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
+import { formatPrice } from "@/lib/sfcc/utils";
 
 export interface SecretTimeSale {
   id: string;
@@ -32,11 +35,29 @@ export interface SecretTimeSale {
   createdAt: string;
 }
 
+export interface SetSaleItemConfig {
+  productId: string;
+  quantity: number;
+}
+
+export interface SetSaleBundle {
+  id: string;
+  title: string;
+  items: SetSaleItemConfig[];
+  discountRate: number;
+  status: "active" | "paused" | "ended";
+  createdAt?: string;
+}
+
 interface TimesaleManagementProps {
   productsList?: any[];
   customersList?: any[];
   secretSalesList?: SecretTimeSale[];
   setSecretSalesList?: React.Dispatch<React.SetStateAction<SecretTimeSale[]>>;
+  setSalesList?: any[];
+  setSetSalesList?: React.Dispatch<React.SetStateAction<any[]>>;
+  onOpenSetBundleModal?: () => void;
+  setAdminTimeSaleProductIds?: React.Dispatch<React.SetStateAction<string[]>>;
   triggerToast?: (msg: string) => void;
 }
 
@@ -45,8 +66,13 @@ export function TimesaleManagement({
   customersList = [],
   secretSalesList = [],
   setSecretSalesList,
+  setSalesList = [],
+  setSetSalesList,
+  onOpenSetBundleModal,
+  setAdminTimeSaleProductIds,
   triggerToast = () => {},
 }: TimesaleManagementProps) {
+  const [activeSubTab, setActiveSubTab] = useState<"secret" | "bundle">("secret");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingSecretSale, setEditingSecretSale] = useState<SecretTimeSale | null>(null);
 
@@ -206,222 +232,524 @@ export function TimesaleManagement({
     return matchGrade && matchQ;
   });
 
+  const handleToggleBundleStatus = (id: string) => {
+    if (!setSetSalesList) return;
+    const updated = setSalesList.map((item) => {
+      if (item.id === id) {
+        const nextStatus = item.status === "active" ? "paused" : "active";
+        triggerToast(
+          nextStatus === "active"
+            ? `'${item.title}' 세트 기획전이 활성화되었습니다.`
+            : `'${item.title}' 세트 기획전이 일시정지되었습니다.`
+        );
+        return { ...item, status: nextStatus };
+      }
+      return item;
+    });
+    setSetSalesList(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("admin_set_sales", JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent("storage"));
+      } catch (e) {}
+    }
+  };
+
+  const handleDeleteBundle = (id: string, bundleTitle: string) => {
+    const isConfirmed = window.confirm(
+      `정말로 '${bundleTitle}' 세트 기획전을 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.`
+    );
+    if (!isConfirmed) return;
+
+    if (setSetSalesList) {
+      const updated = setSalesList.filter((item) => item.id !== id);
+      setSetSalesList(updated);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("admin_set_sales", JSON.stringify(updated));
+          const setProdId = `set-product-${id}`;
+          const savedTS = localStorage.getItem("secret_timesale_product_ids");
+          if (savedTS) {
+            const parsed = JSON.parse(savedTS);
+            if (Array.isArray(parsed)) {
+              const filteredTS = parsed.filter((pId: string) => pId !== setProdId);
+              localStorage.setItem("secret_timesale_product_ids", JSON.stringify(filteredTS));
+              setAdminTimeSaleProductIds?.(filteredTS);
+            }
+          }
+          window.dispatchEvent(new CustomEvent("storage"));
+        } catch (e) {}
+      }
+      triggerToast(`'${bundleTitle}' 세트 기획전이 성공적으로 삭제되었습니다.`);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="bg-neutral-900 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-xs">
-              <Lock className="w-3 h-3 text-white" />
-              SECRET TARGET PROMOTION
-            </span>
-          </div>
-          <h1 className="text-2xl font-black text-neutral-950">시크릿 타임세일 관리</h1>
-          <p className="text-sm text-neutral-500 mt-0.5">
-            관리자가 직접 지정한 특정 회원(또는 VIP 등급)에게만 비밀스럽게 노출되는 단독 타깃 할인전입니다.
-          </p>
-        </div>
+      {/* Sub-tab Navigation */}
+      <div className="flex items-center gap-2 border-b border-neutral-200 pb-2">
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("secret")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer ${
+            activeSubTab === "secret"
+              ? "bg-neutral-950 text-white shadow-sm"
+              : "bg-white text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950 border border-neutral-200"
+          }`}
+        >
+          <Lock className="w-3.5 h-3.5" />
+          <span>시크릿 타임세일 ({secretSalesList.length})</span>
+        </button>
 
         <button
           type="button"
-          onClick={openCreateModal}
-          className="flex items-center gap-2 bg-neutral-950 hover:bg-black text-white font-extrabold px-5 py-3 rounded-2xl transition-all shadow-md text-xs cursor-pointer hover:scale-[1.02] active:scale-95 shrink-0 border border-neutral-800"
+          onClick={() => setActiveSubTab("bundle")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer ${
+            activeSubTab === "bundle"
+              ? "bg-neutral-950 text-white shadow-sm"
+              : "bg-white text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950 border border-neutral-200"
+          }`}
         >
-          <Plus className="w-4 h-4 stroke-[3] text-white" />
-          <span>새 시크릿 타임세일 개설</span>
+          <Gift className="w-3.5 h-3.5" />
+          <span>세트 상품(Set Bundle) 기획전 ({setSalesList.length})</span>
         </button>
       </div>
 
-      {/* Summary Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>진행 중인 시크릿 세일</span>
-            <Lock className="w-4 h-4 text-neutral-900" />
-          </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-            {secretSalesList.filter((s) => s.status === "active").length} 개
-          </p>
-          <p className="text-xs text-neutral-500 mt-1">타깃 회원 전용 활성 프로모션</p>
-        </div>
-
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>적용 상품 수</span>
-            <ShoppingBag className="w-4 h-4 text-neutral-900" />
-          </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-            {Array.from(new Set(secretSalesList.flatMap((s) => s.productIds || []))).length} 개
-          </p>
-          <p className="text-xs text-neutral-500 mt-1">시크릿 할인가 적용 상품</p>
-        </div>
-
-        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>지정 대상 회원 수</span>
-            <Users className="w-4 h-4 text-neutral-900" />
-          </div>
-          <p className="text-2xl font-extrabold text-neutral-950 mt-2">
-            {Array.from(new Set(secretSalesList.flatMap((s) => s.targetCustomerEmails || []))).length} 명
-          </p>
-          <p className="text-xs text-neutral-500 mt-1">개별 타깃 지정 회원</p>
-        </div>
-      </div>
-
-      {/* Secret Sales List Cards */}
-      <div className="space-y-4">
-        {secretSalesList.length === 0 ? (
-          <div className="bg-white border border-neutral-200/80 rounded-3xl p-12 text-center space-y-3 shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-800 flex items-center justify-center mx-auto">
-              <Lock className="w-6 h-6" />
-            </div>
-            <h3 className="font-extrabold text-base text-neutral-900">개설된 시크릿 타임세일이 없습니다.</h3>
-            <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-              상단의 '새 시크릿 타임세일 개설' 버튼을 눌러 지정한 회원만을 위한 프라이빗 세일을 시작해보세요.
-            </p>
-          </div>
-        ) : (
-          secretSalesList.map((sale) => {
-            const targetProducts = productsList.filter((p) => (sale.productIds || []).includes(p.id));
-            const targetCustomers = deduplicateCustomers(customersList).filter((c) => (sale.targetCustomerEmails || []).includes(c.email));
-
-            return (
-              <div
-                key={sale.id}
-                className="bg-white border border-neutral-200/90 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all space-y-5"
-              >
-                {/* Header of Card */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-neutral-900 text-white font-black text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-neutral-800">
-                        <Lock className="w-3 h-3 text-white" />
-                        SECRET SALE {sale.discountRate}% OFF
-                      </span>
-                      <span
-                        className={`text-xs font-black px-2.5 py-0.5 rounded-full ${
-                          sale.status === "active"
-                            ? "bg-neutral-100 text-neutral-900 border border-neutral-300"
-                            : "bg-neutral-100 text-neutral-400 border border-neutral-200"
-                        }`}
-                      >
-                        {sale.status === "active" ? "● 진행중 (노출)" : "○ 일시정지"}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-black text-neutral-950 mt-1">{sale.title}</h3>
-                  </div>
-
-                  <div className="flex items-center gap-2 self-start sm:self-auto">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStatus(sale.id)}
-                      className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-colors cursor-pointer ${
-                        sale.status === "active"
-                          ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300"
-                          : "bg-neutral-900 hover:bg-black text-white border-neutral-900"
-                      }`}
-                    >
-                      {sale.status === "active" ? "세일 일시정지" : "세일 활성화"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(sale)}
-                      className="text-xs font-bold px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 transition-colors cursor-pointer"
-                    >
-                      수정
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteSecretSale(sale.id)}
-                      className="text-xs font-bold p-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 transition-colors cursor-pointer"
-                      title="시크릿 세일 삭제"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Body Details: Target Customers & Target Products */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Left Column: Target Members */}
-                  <div className="bg-neutral-50 rounded-2xl p-4 border border-neutral-200/80 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-neutral-800 flex items-center gap-1.5">
-                        <Users className="w-4 h-4 text-neutral-900" />
-                        노출 대상 회원 ({targetCustomers.length}명 직접 지정)
-                      </span>
-                      {sale.targetGrades && sale.targetGrades.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          {sale.targetGrades.map((g) => (
-                            <span key={g} className="text-[10px] font-black bg-neutral-900 text-white px-2 py-0.5 rounded-md">
-                              {g} 등급 전체
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
-                      {targetCustomers.length === 0 && (!sale.targetGrades || sale.targetGrades.length === 0) ? (
-                        <span className="text-xs text-neutral-400">지정된 회원이 없습니다.</span>
-                      ) : (
-                        targetCustomers.map((cust, index) => (
-                          <span
-                            key={`${cust.id || cust.email || 'cust'}-${index}`}
-                            className="bg-white border border-neutral-200 text-neutral-800 text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-2xs"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
-                            {cust.name} ({cust.email})
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Right Column: Target Products */}
-                  <div className="bg-neutral-50 rounded-2xl p-4 border border-neutral-200/80 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold text-neutral-800 flex items-center gap-1.5">
-                        <ShoppingBag className="w-4 h-4 text-neutral-900" />
-                        시크릿 세일 적용 상품 ({targetProducts.length}개)
-                      </span>
-                      <span className="text-xs font-black text-neutral-900 font-mono">
-                        {sale.discountRate}% 한정 특가
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 max-h-28">
-                      {targetProducts.length === 0 ? (
-                        <span className="text-xs text-neutral-400">지정된 상품이 없습니다.</span>
-                      ) : (
-                        targetProducts.map((prod) => (
-                          <div
-                            key={prod.id}
-                            className="bg-white border border-neutral-200 p-1.5 rounded-xl flex items-center gap-2 shrink-0 shadow-2xs"
-                          >
-                            <img
-                              src={prod.featuredImage?.url || "/product_1.webp"}
-                              alt={prod.title}
-                              className="w-8 h-10 object-cover rounded-lg bg-neutral-100 shrink-0"
-                            />
-                            <div className="max-w-[120px] truncate text-[11px] pr-1">
-                              <p className="font-bold text-neutral-900 truncate">{prod.title}</p>
-                              <p className="text-neutral-500 text-[10px] font-mono">
-                                {formatPrice(prod.priceRange?.minVariantPrice?.amount || "0")}
-                              </p>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
+      {/* SUBTAB 1: SECRET TIME SALE */}
+      {activeSubTab === "secret" && (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="bg-neutral-900 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                  <Lock className="w-3 h-3 text-white" />
+                  SECRET TARGET PROMOTION
+                </span>
               </div>
-            );
-          })
-        )}
-      </div>
+              <h1 className="text-2xl font-black text-neutral-950">시크릿 타임세일 관리</h1>
+              <p className="text-sm text-neutral-500 mt-0.5">
+                관리자가 직접 지정한 특정 회원(또는 VIP 등급)에게만 비밀스럽게 노출되는 단독 타깃 할인전입니다.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="flex items-center gap-2 bg-neutral-950 hover:bg-black text-white font-extrabold px-5 py-3 rounded-2xl transition-all shadow-md text-xs cursor-pointer hover:scale-[1.02] active:scale-95 shrink-0 border border-neutral-800"
+            >
+              <Plus className="w-4 h-4 stroke-[3] text-white" />
+              <span>새 시크릿 타임세일 개설</span>
+            </button>
+          </div>
+
+          {/* Summary Metrics */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                <span>진행 중인 시크릿 세일</span>
+                <Lock className="w-4 h-4 text-neutral-900" />
+              </div>
+              <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+                {secretSalesList.filter((s) => s.status === "active").length} 개
+              </p>
+              <p className="text-xs text-neutral-500 mt-1">타깃 회원 전용 활성 프로모션</p>
+            </div>
+
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                <span>적용 상품 수</span>
+                <ShoppingBag className="w-4 h-4 text-neutral-900" />
+              </div>
+              <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+                {Array.from(new Set(secretSalesList.flatMap((s) => s.productIds || []))).length} 개
+              </p>
+              <p className="text-xs text-neutral-500 mt-1">시크릿 할인가 적용 상품</p>
+            </div>
+
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                <span>지정 대상 회원 수</span>
+                <Users className="w-4 h-4 text-neutral-900" />
+              </div>
+              <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+                {Array.from(new Set(secretSalesList.flatMap((s) => s.targetCustomerEmails || []))).length} 명
+              </p>
+              <p className="text-xs text-neutral-500 mt-1">개별 타깃 지정 회원</p>
+            </div>
+          </div>
+
+          {/* Secret Sales List Cards */}
+          <div className="space-y-4">
+            {secretSalesList.length === 0 ? (
+              <div className="bg-white border border-neutral-200/80 rounded-3xl p-12 text-center space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-800 flex items-center justify-center mx-auto">
+                  <Lock className="w-6 h-6" />
+                </div>
+                <h3 className="font-extrabold text-base text-neutral-900">개설된 시크릿 타임세일이 없습니다.</h3>
+                <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+                  상단의 '새 시크릿 타임세일 개설' 버튼을 눌러 지정한 회원만을 위한 프라이빗 세일을 시작해보세요.
+                </p>
+              </div>
+            ) : (
+              secretSalesList.map((sale) => {
+                const targetProducts = productsList.filter((p) => (sale.productIds || []).includes(p.id));
+                const targetCustomers = deduplicateCustomers(customersList).filter((c) => (sale.targetCustomerEmails || []).includes(c.email));
+
+                return (
+                  <div
+                    key={sale.id}
+                    className="bg-white border border-neutral-200/90 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all space-y-5"
+                  >
+                    {/* Header of Card */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-neutral-900 text-white font-black text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-neutral-800">
+                            <Lock className="w-3 h-3 text-white" />
+                            SECRET SALE {sale.discountRate}% OFF
+                          </span>
+                          <span
+                            className={`text-xs font-black px-2.5 py-0.5 rounded-full ${
+                              sale.status === "active"
+                                ? "bg-neutral-100 text-neutral-900 border border-neutral-300"
+                                : "bg-neutral-100 text-neutral-400 border border-neutral-200"
+                            }`}
+                          >
+                            {sale.status === "active" ? "● 진행중 (노출)" : "○ 일시정지"}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-black text-neutral-950 mt-1">{sale.title}</h3>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(sale.id)}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-colors cursor-pointer ${
+                            sale.status === "active"
+                              ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300"
+                              : "bg-neutral-900 hover:bg-black text-white border-neutral-900"
+                          }`}
+                        >
+                          {sale.status === "active" ? "세일 일시정지" : "세일 활성화"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(sale)}
+                          className="text-xs font-bold px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 transition-colors cursor-pointer"
+                        >
+                          수정
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSecretSale(sale.id)}
+                          className="text-xs font-bold p-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 transition-colors cursor-pointer"
+                          title="시크릿 세일 삭제"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Body Details: Target Customers & Target Products */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Left Column: Target Members */}
+                      <div className="bg-neutral-50 rounded-2xl p-4 border border-neutral-200/80 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-extrabold text-neutral-800 flex items-center gap-1.5">
+                            <Users className="w-4 h-4 text-neutral-900" />
+                            노출 대상 회원 ({targetCustomers.length}명 직접 지정)
+                          </span>
+                          {sale.targetGrades && sale.targetGrades.length > 0 && (
+                            <div className="flex items-center gap-1">
+                              {sale.targetGrades.map((g) => (
+                                <span key={g} className="text-[10px] font-black bg-neutral-900 text-white px-2 py-0.5 rounded-md">
+                                  {g} 등급 전체
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
+                          {targetCustomers.length === 0 && (!sale.targetGrades || sale.targetGrades.length === 0) ? (
+                            <span className="text-xs text-neutral-400">지정된 회원이 없습니다.</span>
+                          ) : (
+                            targetCustomers.map((cust, index) => (
+                              <span
+                                key={`${cust.id || cust.email || 'cust'}-${index}`}
+                                className="bg-white border border-neutral-200 text-neutral-800 text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-2xs"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
+                                {cust.name} ({cust.email})
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right Column: Target Products */}
+                      <div className="bg-neutral-50 rounded-2xl p-4 border border-neutral-200/80 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-extrabold text-neutral-800 flex items-center gap-1.5">
+                            <ShoppingBag className="w-4 h-4 text-neutral-900" />
+                            시크릿 세일 적용 상품 ({targetProducts.length}개)
+                          </span>
+                          <span className="text-xs font-black text-neutral-900 font-mono">
+                            {sale.discountRate}% 한정 특가
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 max-h-28">
+                          {targetProducts.length === 0 ? (
+                            <span className="text-xs text-neutral-400">지정된 상품이 없습니다.</span>
+                          ) : (
+                            targetProducts.map((prod) => (
+                              <div
+                                key={prod.id}
+                                className="bg-white border border-neutral-200 p-1.5 rounded-xl flex items-center gap-2 shrink-0 shadow-2xs"
+                              >
+                                <img
+                                  src={prod.featuredImage?.url || "/product_1.webp"}
+                                  alt={prod.title}
+                                  className="w-8 h-10 object-cover rounded-lg bg-neutral-100 shrink-0"
+                                />
+                                <div className="max-w-[120px] truncate text-[11px] pr-1">
+                                  <p className="font-bold text-neutral-900 truncate">{prod.title}</p>
+                                  <p className="text-neutral-500 text-[10px] font-mono">
+                                    {formatPrice(prod.priceRange?.minVariantPrice?.amount || "0")}
+                                  </p>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* SUBTAB 2: SET BUNDLE PROMOTION */}
+      {activeSubTab === "bundle" && (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="bg-amber-500 text-neutral-950 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                  <Gift className="w-3 h-3 text-neutral-950" />
+                  SPECIAL BUNDLE PROMOTION
+                </span>
+              </div>
+              <h1 className="text-2xl font-black text-neutral-950">세트 상품 기획전 관리</h1>
+              <p className="text-sm text-neutral-500 mt-0.5">
+                2개 이상의 상품을 묶어 파격적인 세트 할인가로 제공하는 룩북 기획전입니다. 활성화 시 쇼핑몰 메인 및 SPECIAL 카테고리에 실시간 노출됩니다.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onOpenSetBundleModal?.()}
+              className="flex items-center gap-2 bg-neutral-950 hover:bg-black text-white font-extrabold px-5 py-3 rounded-2xl transition-all shadow-md text-xs cursor-pointer hover:scale-[1.02] active:scale-95 shrink-0 border border-neutral-800"
+            >
+              <Plus className="w-4 h-4 stroke-[3] text-white" />
+              <Gift className="w-4 h-4 text-amber-400" />
+              <span>새 세트 상품 기획전 등록</span>
+            </button>
+          </div>
+
+          {/* Summary Metrics */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                <span>진행 중인 세트 기획전</span>
+                <Gift className="w-4 h-4 text-amber-600" />
+              </div>
+              <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+                {setSalesList.filter((s) => s.status === "active").length} 개
+              </p>
+              <p className="text-xs text-neutral-500 mt-1">쇼핑몰 SPECIAL 카테고리 즉시 노출</p>
+            </div>
+
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                <span>전체 등록 세트 패키지</span>
+                <Boxes className="w-4 h-4 text-neutral-900" />
+              </div>
+              <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+                {setSalesList.length} 개
+              </p>
+              <p className="text-xs text-neutral-500 mt-1">관리자 기획 등록 번들</p>
+            </div>
+
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                <span>평균 세트 할인율</span>
+                <Percent className="w-4 h-4 text-neutral-900" />
+              </div>
+              <p className="text-2xl font-extrabold text-neutral-950 mt-2">
+                {setSalesList.length > 0
+                  ? Math.round(
+                      setSalesList.reduce((acc, s) => acc + (Number(s.discountRate) || 0), 0) /
+                        setSalesList.length
+                    )
+                  : 0} %
+              </p>
+              <p className="text-xs text-neutral-500 mt-1">번들 패키지 특별 할인</p>
+            </div>
+          </div>
+
+          {/* Bundle List Cards */}
+          <div className="space-y-4">
+            {setSalesList.length === 0 ? (
+              <div className="bg-white border border-neutral-200/80 rounded-3xl p-12 text-center space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
+                  <Gift className="w-6 h-6" />
+                </div>
+                <h3 className="font-extrabold text-base text-neutral-950">등록된 세트 상품 기획전이 없습니다.</h3>
+                <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+                  상단의 '새 세트 상품 기획전 등록' 버튼을 눌러 아우터, 상의, 하의 등을 매력적인 세트로 구성해보세요.
+                </p>
+              </div>
+            ) : (
+              setSalesList.map((bundle) => {
+                const resolvedItems = (bundle.items || []).map((ic: any) => {
+                  const p = productsList.find((prod) => String(prod.id) === String(ic.productId));
+                  const qty = Number(ic.quantity) || 1;
+                  const price = Number(p?.priceRange?.minVariantPrice?.amount || p?.price?.amount || 0);
+                  return { config: ic, product: p, qty, price };
+                });
+
+                const originalTotal = resolvedItems.reduce(
+                  (acc: number, item: any) => acc + item.price * item.qty,
+                  0
+                );
+                const discountRate = Number(bundle.discountRate) || 20;
+                const discountedTotal = Math.round(originalTotal * (1 - discountRate / 100));
+
+                return (
+                  <div
+                    key={bundle.id}
+                    className="bg-white border border-neutral-200/90 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all space-y-5"
+                  >
+                    {/* Header of Bundle Card */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-amber-500 text-neutral-950 font-black text-xs px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                            <Gift className="w-3 h-3" />
+                            SET BUNDLE {discountRate}% OFF
+                          </span>
+                          <span
+                            className={`text-xs font-black px-2.5 py-0.5 rounded-full ${
+                              bundle.status === "active"
+                                ? "bg-emerald-50 text-emerald-800 border border-emerald-300"
+                                : "bg-neutral-100 text-neutral-400 border border-neutral-200"
+                            }`}
+                          >
+                            {bundle.status === "active" ? "● 진행중 (쇼핑몰 노출)" : "○ 일시정지"}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-black text-neutral-950 mt-1">{bundle.title}</h3>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleBundleStatus(bundle.id)}
+                          className={`text-xs font-bold px-3.5 py-2 rounded-xl border transition-colors cursor-pointer ${
+                            bundle.status === "active"
+                              ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300"
+                              : "bg-neutral-950 hover:bg-black text-white border-neutral-950"
+                          }`}
+                        >
+                          {bundle.status === "active" ? "기획전 일시정지" : "기획전 활성화"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBundle(bundle.id, bundle.title)}
+                          className="text-xs font-bold p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors cursor-pointer"
+                          title="세트 기획전 삭제"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Bundle Composition Items Row */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs font-extrabold text-neutral-700">
+                        <span className="flex items-center gap-1.5">
+                          <Boxes className="w-4 h-4 text-neutral-900" />
+                          세트 구성 상품 ({resolvedItems.length}종 품목)
+                        </span>
+                        <span className="text-neutral-500">
+                          총 수량: {resolvedItems.reduce((acc: number, r: any) => acc + r.qty, 0)}개
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        {resolvedItems.map((item: any, idx: number) => {
+                          const prod = item.product;
+                          return (
+                            <div
+                              key={`${bundle.id}-${item.config.productId}-${idx}`}
+                              className="bg-neutral-50 border border-neutral-200 p-2.5 rounded-2xl flex items-center gap-3"
+                            >
+                              <img
+                                src={prod?.featuredImage?.url || "/product_1.webp"}
+                                alt={prod?.title || "상품"}
+                                className="w-12 h-14 object-cover rounded-xl bg-neutral-200 shrink-0"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="font-bold text-xs text-neutral-900 truncate">
+                                  {prod?.title || `상품 ID: ${item.config.productId}`}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[10px] font-black bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded-md">
+                                    {item.qty}개
+                                  </span>
+                                  <span className="text-[11px] font-bold text-neutral-600">
+                                    {formatPrice(item.price.toString())}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Bundle Pricing Summary */}
+                    <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-xs font-bold text-neutral-500">개별 정가 합계: </span>
+                        <span className="text-sm font-bold text-neutral-600 line-through">
+                          {formatPrice(originalTotal.toString())}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-amber-900">
+                          세트 최종 할인가 ({discountRate}% OFF):
+                        </span>
+                        <span className="text-lg font-black text-amber-700 font-mono">
+                          {formatPrice(discountedTotal.toString())}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
       {/* CREATE / EDIT MODAL */}
       {isCreateModalOpen && (

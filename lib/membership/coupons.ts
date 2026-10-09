@@ -229,6 +229,14 @@ export function saveAdminCoupons(coupons: AvailableCoupon[]): void {
     } catch (e) {}
 
     try {
+      // 1. Git 쿠폰 원장(/api/admin/coupons)에 원자적 파일 쓰기 영속화
+      fetch("/api/admin/coupons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cleanCoupons),
+      }).catch(() => {});
+
+      // 2. site-settings.json 미러링 저장 (이중 안전장치)
       fetch("/api/admin/site-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -242,10 +250,37 @@ export function saveAdminCoupons(coupons: AvailableCoupon[]): void {
 }
 
 /**
- * Git 원격/로컬 site_settings로부터 최신 관리자 쿠폰 설정을 비동기 동기화합니다.
+ * Git 원격/로컬 원장(/api/admin/coupons 및 site_settings)으로부터 최신 관리자 쿠폰 설정을 비동기 동기화합니다.
  */
 export async function syncAdminCouponsFromSupabase(): Promise<AvailableCoupon[]> {
   try {
+    // 1. /api/admin/coupons 우선 조회
+    const couponRes = await fetch("/api/admin/coupons", { cache: "no-store" });
+    if (couponRes.ok) {
+      const couponJson = await couponRes.json();
+      if (couponJson?.success && Array.isArray(couponJson?.coupons)) {
+        const sanitized = couponJson.coupons.filter((c: any) => !isLegacyCoupon(c));
+        memoryCouponsCache = sanitized;
+
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("admin_coupons", JSON.stringify(sanitized));
+            localStorage.removeItem("membership_user_coupons");
+          } catch (e) {}
+
+          try {
+            window.dispatchEvent(
+              new CustomEvent("coupons_updated", {
+                detail: { count: sanitized.length, coupons: sanitized },
+              })
+            );
+          } catch (e) {}
+        }
+        return sanitized;
+      }
+    }
+
+    // 2. /api/admin/site-settings 보조 조회
     const res = await fetch("/api/admin/site-settings?key=admin_coupons_config", { cache: "no-store" });
     if (res.ok) {
       const json = await res.json();
@@ -283,7 +318,7 @@ export async function syncAdminCouponsFromSupabase(): Promise<AvailableCoupon[]>
       }
     }
   } catch (e) {
-    console.warn("Failed to sync coupons from Supabase:", e);
+    console.warn("Failed to sync coupons from server:", e);
   }
 
   return getAllUserCoupons();

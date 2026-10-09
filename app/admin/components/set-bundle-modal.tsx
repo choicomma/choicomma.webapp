@@ -109,6 +109,7 @@ export function SetBundleModal({
       }
 
       window.dispatchEvent(new CustomEvent("storage"));
+      window.dispatchEvent(new CustomEvent("admin_set_sales_updated"));
     }
 
     onClose();

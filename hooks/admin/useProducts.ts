@@ -104,14 +104,19 @@ export function useProducts({
     } catch {}
   }, []);
 
+  // Concurrency queue to completely prevent race conditions and rollback overwrites
+  const isSavingRef = useRef(false);
+  const pendingSaveListRef = useRef<any[] | null>(null);
+
   // Client-side hydration sync for productsList (Source of Truth: Central Server File /api/products)
   useEffect(() => {
+    let isMounted = true;
     const fetchServerProducts = async () => {
       try {
         const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data)) {
+          if (Array.isArray(data) && isMounted) {
             setProductsList(data);
             isProductsLoadedRef.current = true;
             return;
@@ -121,46 +126,92 @@ export function useProducts({
         console.error("Failed to fetch products from /api/products", err);
       }
 
-      setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
-      isProductsLoadedRef.current = true;
+      if (isMounted) {
+        setProductsList((prev) => (prev.length > 0 ? prev : INITIAL_CHOICOMMA_PRODUCTS));
+        isProductsLoadedRef.current = true;
+      }
     };
 
     fetchServerProducts();
+    return () => {
+      isMounted = false;
+    };
   }, [INITIAL_CHOICOMMA_PRODUCTS]);
 
   // Fast single product save helper (High performance save to Server file)
-  const saveSingleProduct = useCallback(async (product: any, isNew: boolean = false) => {
-    if (typeof window === "undefined") return;
+  const saveSingleProduct = useCallback(async (product: any, isNew: boolean = false): Promise<boolean> => {
+    if (typeof window === "undefined") return false;
 
     try {
-      await fetch("/api/products", {
+      const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ product, isNew }),
       });
+
+      if (!res.ok) {
+        console.error("Failed to persist single product, status:", res.status);
+        triggerToast("⚠️ 상품 저장에 실패했습니다. 다시 시도해주세요.");
+        return false;
+      }
+
+      window.dispatchEvent(new CustomEvent("admin_products_updated"));
+      return true;
     } catch (err) {
       console.error("Failed to persist single product:", err);
+      triggerToast("⚠️ 네트워크 오류로 상품 저장에 실패했습니다.");
+      return false;
     }
+  }, [triggerToast]);
 
-    setTimeout(() => {
+  // Sequential queue processor ensuring save requests never resolve out-of-order
+  const executeSaveQueue = useCallback(async (listToSend: any[]): Promise<boolean> => {
+    if (typeof window === "undefined") return false;
+
+    isSavingRef.current = true;
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(listToSend),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to persist products to /api/products, status:", res.status);
+        triggerToast("⚠️ 서버에 저장하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        return false;
+      }
+
       window.dispatchEvent(new CustomEvent("admin_products_updated"));
-    }, 0);
-  }, []);
+      return true;
+    } catch (err) {
+      console.error("Failed to persist products to /api/products:", err);
+      triggerToast("⚠️ 네트워크 연결을 확인해주세요. 서버 저장 실패");
+      return false;
+    } finally {
+      isSavingRef.current = false;
+      if (pendingSaveListRef.current !== null) {
+        const nextList = pendingSaveListRef.current;
+        pendingSaveListRef.current = null;
+        setTimeout(() => {
+          executeSaveQueue(nextList);
+        }, 0);
+      }
+    }
+  }, [triggerToast]);
 
-  // Helper: Safely save to Central Server file (/api/products)
+  // Helper: Safely save to Central Server file (/api/products) with concurrency protection
   const saveProductsToStorage = useCallback((list: any[]) => {
     if (typeof window === "undefined") return;
 
-    fetch("/api/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(list),
-    }).catch((err) => console.error("Failed to persist products to /api/products:", err));
+    if (isSavingRef.current) {
+      // Save is currently in-flight; queue the latest snapshot so it executes immediately after
+      pendingSaveListRef.current = list;
+      return;
+    }
 
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent("admin_products_updated"));
-    }, 0);
-  }, []);
+    executeSaveQueue(list);
+  }, [executeSaveQueue]);
 
   // Replace all products helper (Used for full JSON backup restore)
   const handleReplaceAllProducts = useCallback((fullList: any[]) => {
@@ -236,33 +287,77 @@ export function useProducts({
         return false;
       }
 
-      // 1. Search Query Filter (Checks DB code, dynamically formatted CC-code, product number, title, and description)
+      // 1. Search Query Filter (Supports multi-term AND search, CC-code variations, tags, colors, categories)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
+        const terms = q.split(/\s+/).filter(Boolean);
+
         const code = (p.productCode || "").toLowerCase();
         const dynamicCode = getProductNo(p).toLowerCase();
         const no = String(p.productNo || "");
         const title = (p.title || "").toLowerCase();
         const desc = (p.description || "").toLowerCase();
-        if (!code.includes(q) && !dynamicCode.includes(q) && !no.includes(q) && !title.includes(q) && !desc.includes(q)) {
+        const detailDesc = (p.detailDescription || "").toLowerCase();
+        const handle = (p.handle || "").toLowerCase();
+        const colors = Array.isArray(p.colors) ? p.colors.join(" ").toLowerCase() : "";
+        const tags = Array.isArray(p.tags) ? p.tags.join(" ").toLowerCase() : "";
+        const category = (p.categoryId || "").toLowerCase();
+
+        // Normalized codes without hyphens/spaces (e.g., "cc463" matches "CC-463")
+        const codeClean = code.replace(/[^a-z0-9가-힣]/g, "");
+        const dynamicCodeClean = dynamicCode.replace(/[^a-z0-9가-힣]/g, "");
+
+        // Category Korean keyword mappings for natural search
+        const catMap: Record<string, string[]> = {
+          outer: ["아우터", "자켓", "재킷", "코트", "패딩", "점퍼"],
+          top: ["상의", "니트", "셔츠", "티셔츠", "맨투맨", "후드", "블라우스"],
+          bottom: ["하의", "바지", "팬츠", "스커트", "치마", "슬랙스", "데님"],
+          bag: ["가방", "백", "토트", "숄더"],
+          shoes: ["신발", "슈즈", "부츠", "로퍼", "스니커즈"],
+          accessory: ["악세사리", "액세서리", "잡화", "머플러", "스카프", "벨트", "모자"],
+          timesale: ["타임세일", "세일", "할인"],
+        };
+
+        const catKeywords = (catMap[category] || []).join(" ");
+
+        const matchesAllTerms = terms.every((term) => {
+          const termClean = term.replace(/[^a-z0-9가-힣]/g, "");
+          return (
+            code.includes(term) ||
+            dynamicCode.includes(term) ||
+            no.includes(term) ||
+            title.includes(term) ||
+            desc.includes(term) ||
+            detailDesc.includes(term) ||
+            handle.includes(term) ||
+            colors.includes(term) ||
+            tags.includes(term) ||
+            category.includes(term) ||
+            catKeywords.includes(term) ||
+            (termClean.length >= 2 && (codeClean.includes(termClean) || dynamicCodeClean.includes(termClean)))
+          );
+        });
+
+        if (!matchesAllTerms) {
           return false;
         }
       }
 
-      // 2. Category Filter
+      // 2. Category Filter (Case-insensitive, supports categoryIds array and time-sale tags)
       if (selectedCategoryFilter !== "all") {
-        if (selectedCategoryFilter === "timesale") {
+        const filterLower = selectedCategoryFilter.toLowerCase();
+        if (filterLower === "timesale") {
           const isTimeSale =
-            p.categoryId === "timesale" ||
-            (Array.isArray(p.categoryIds) && p.categoryIds.includes("timesale")) ||
+            (p.categoryId && String(p.categoryId).toLowerCase() === "timesale") ||
+            (Array.isArray(p.categoryIds) && p.categoryIds.some((c: string) => String(c).toLowerCase() === "timesale")) ||
             p.isTimeSale === true ||
             adminTimeSaleProductIds.includes(String(p.id)) ||
             (p.timeSaleDiscountRate !== undefined && Number(p.timeSaleDiscountRate) > 0);
           if (!isTimeSale) return false;
         } else {
-          const hasCategory =
-            p.categoryId === selectedCategoryFilter ||
-            (Array.isArray(p.categoryIds) && p.categoryIds.includes(selectedCategoryFilter));
+          const prodCat = p.categoryId ? String(p.categoryId).toLowerCase() : "";
+          const prodCats = Array.isArray(p.categoryIds) ? p.categoryIds.map((c: any) => String(c).toLowerCase()) : [];
+          const hasCategory = prodCat === filterLower || prodCats.includes(filterLower);
           if (!hasCategory) return false;
         }
       }
@@ -275,17 +370,22 @@ export function useProducts({
 
   const categoryProducts = useMemo(() => {
     if (!selectedCategoryForProducts) return [];
-    if (selectedCategoryForProducts === "timesale") {
+    const filterLower = selectedCategoryForProducts.toLowerCase();
+    if (filterLower === "timesale") {
       return productsList.filter(
         (p) =>
-          p.categoryId === "timesale" ||
-          (Array.isArray(p.categoryIds) && p.categoryIds.includes("timesale")) ||
+          (p.categoryId && String(p.categoryId).toLowerCase() === "timesale") ||
+          (Array.isArray(p.categoryIds) && p.categoryIds.some((c: string) => String(c).toLowerCase() === "timesale")) ||
           p.isTimeSale === true ||
           adminTimeSaleProductIds.includes(String(p.id)) ||
           (p.timeSaleDiscountRate !== undefined && Number(p.timeSaleDiscountRate) > 0)
       );
     }
-    return productsList.filter((p) => p.categoryId === selectedCategoryForProducts);
+    return productsList.filter((p) => {
+      const prodCat = p.categoryId ? String(p.categoryId).toLowerCase() : "";
+      const prodCats = Array.isArray(p.categoryIds) ? p.categoryIds.map((c: any) => String(c).toLowerCase()) : [];
+      return prodCat === filterLower || prodCats.includes(filterLower);
+    });
   }, [selectedCategoryForProducts, productsList, adminTimeSaleProductIds]);
 
   const actualProductsCount = useMemo(() => {
@@ -383,7 +483,18 @@ export function useProducts({
             ? `'${p.title}' 상품이 쇼핑몰 메인 화면 [전시 중]으로 설정되었습니다.`
             : `'${p.title}' 상품이 메인 화면 [미전시]로 변경되었습니다.`
         );
-        return { ...p, isMainFeatured: nextFeatured };
+        const existingTags = Array.isArray(p.tags) ? p.tags : [];
+        let newTags = [...existingTags];
+        if (nextFeatured) {
+          if (!newTags.includes("top-seller")) newTags.push("top-seller");
+        } else {
+          newTags = newTags.filter((t: string) => t !== "top-seller");
+        }
+        return {
+          ...p,
+          isMainFeatured: nextFeatured,
+          tags: newTags,
+        };
       }
       return p;
     });
@@ -402,8 +513,19 @@ export function useProducts({
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);
 
+    // Sync adminTimeSaleProductIds if the deleted product was in timesale
+    if (adminTimeSaleProductIds.includes(String(id))) {
+      const updatedTimeSaleIds = adminTimeSaleProductIds.filter((pId) => pId !== String(id));
+      setAdminTimeSaleProductIds?.(updatedTimeSaleIds);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedTimeSaleIds));
+        } catch {}
+      }
+    }
+
     triggerToast(`'${title}' 상품이 성공적으로 삭제되었습니다.`);
-  }, [productsList, saveProductsToStorage, triggerToast]);
+  }, [productsList, saveProductsToStorage, triggerToast, adminTimeSaleProductIds, setAdminTimeSaleProductIds]);
 
   const handleBulkUpdateMainFeatured = useCallback((targetIds: string[], isFeatured: boolean) => {
     if (!targetIds || targetIds.length === 0) return;
@@ -475,12 +597,16 @@ export function useProducts({
           }
         }
 
+        const nextAvail = isSoldOut ? false : (p.availableForSale !== false);
         return {
           ...p,
           stock: stockQty,
-          availableForSale: isSoldOut ? false : (p.availableForSale !== false),
+          availableForSale: nextAvail,
           sizeStock: updatedSizeStock,
           stockMap: updatedStockMap,
+          variants: Array.isArray(p.variants)
+            ? p.variants.map((v: any) => ({ ...v, availableForSale: nextAvail }))
+            : p.variants,
         };
       }
       return p;
@@ -507,8 +633,19 @@ export function useProducts({
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);
 
+    // Clean up any deleted IDs from timesale
+    const remainingTimeSaleIds = adminTimeSaleProductIds.filter((pId) => !idSet.has(String(pId)));
+    if (remainingTimeSaleIds.length !== adminTimeSaleProductIds.length) {
+      setAdminTimeSaleProductIds?.(remainingTimeSaleIds);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("secret_timesale_product_ids", JSON.stringify(remainingTimeSaleIds));
+        } catch {}
+      }
+    }
+
     triggerToast(`🗑️ 선택한 ${targetIds.length}개 상품이 성공적으로 삭제되었습니다.`);
-  }, [productsList, saveProductsToStorage, triggerToast]);
+  }, [productsList, saveProductsToStorage, triggerToast, adminTimeSaleProductIds, setAdminTimeSaleProductIds]);
 
   const handleReorderProducts = useCallback((fromId: string, toId: string, showToast: boolean = true) => {
     setProductSortOrder("custom");
@@ -535,24 +672,51 @@ export function useProducts({
 
     setProductsList([]);
     saveProductsToStorage([]);
+    setAdminTimeSaleProductIds?.([]);
     if (typeof window !== "undefined") {
-      localStorage.removeItem("admin_products");
-      localStorage.removeItem("secret_timesale_product_ids");
+      try {
+        localStorage.removeItem("admin_products");
+        localStorage.removeItem("admin_custom_products");
+        localStorage.removeItem("secret_timesale_product_ids");
+      } catch {}
     }
     triggerToast(`🗑️ 상품관리에 등록된 전체 상품 ${totalCount}개가 모두 성공적으로 삭제되었습니다.`);
-  }, [actualProductsCount, saveProductsToStorage, triggerToast]);
+  }, [actualProductsCount, saveProductsToStorage, triggerToast, setAdminTimeSaleProductIds]);
 
-  const handleRestoreDefaultProducts = useCallback(() => {
+  const handleRestoreDefaultProducts = useCallback(async () => {
     const isConfirmed = window.confirm(
       "정말로 모든 상품 데이터를 '초이콤마 정식 카탈로그 (50개)'로 초기화하시겠습니까?\n임시 등록/수정 내역이 정리되고 원본 상품 50개로 복원됩니다."
     );
     if (!isConfirmed) return;
 
-    setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
-    saveProductsToStorage(INITIAL_CHOICOMMA_PRODUCTS);
+    try {
+      const res = await fetch("/api/products?action=restore", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+          setProductsList(data.products);
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.removeItem("admin_products");
+              localStorage.removeItem("admin_custom_products");
+            } catch {}
+          }
+          triggerToast(`✨ 전체 상품 리스트가 정식 카탈로그(${data.products.length}개)로 완벽하게 초기화되었습니다!`);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Direct restore endpoint failed, falling back to local seed:", e);
+    }
+
+    const freshCatalog = JSON.parse(JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
+    setProductsList(freshCatalog);
+    saveProductsToStorage(freshCatalog);
     if (typeof window !== "undefined") {
-      localStorage.removeItem("admin_products");
-      localStorage.removeItem("admin_custom_products");
+      try {
+        localStorage.removeItem("admin_products");
+        localStorage.removeItem("admin_custom_products");
+      } catch {}
     }
     triggerToast("✨ 전체 상품 리스트가 정식 카탈로그(50개)로 완벽하게 초기화되었습니다!");
   }, [INITIAL_CHOICOMMA_PRODUCTS, saveProductsToStorage, triggerToast]);
@@ -661,14 +825,19 @@ export function useProducts({
 
       const updatedList = productsList.map((p) => {
         if (String(p.id) === String(id)) {
-          return {
+          const updatedItem: any = {
             ...p,
             availableForSale,
-            releaseDate: releaseDate || undefined,
             variants: Array.isArray(p.variants)
               ? p.variants.map((v: any) => ({ ...v, availableForSale }))
               : p.variants,
           };
+          if (releaseDate && releaseDate.trim()) {
+            updatedItem.releaseDate = releaseDate.trim();
+          } else {
+            delete updatedItem.releaseDate;
+          }
+          return updatedItem;
         }
         return p;
       });
@@ -701,11 +870,19 @@ export function useProducts({
 
       const updatedList = productsList.map((p) => {
         if (String(p.id) === String(id)) {
+          const existingTags = Array.isArray(p.tags) ? p.tags : [];
+          let newTags = [...existingTags];
+          if (newCategory === "timesale") {
+            if (!newTags.includes("TIMESALE")) newTags.push("TIMESALE");
+          } else {
+            newTags = newTags.filter((t: string) => t !== "TIMESALE");
+          }
           return {
             ...p,
             categoryId: newCategory,
             categoryIds: [newCategory],
             isTimeSale: newCategory === "timesale",
+            tags: newTags,
           };
         }
         return p;
@@ -807,6 +984,7 @@ export function useProducts({
             ...p,
             stock: newTotalStock,
             sizeStock: newSizeStock !== undefined ? newSizeStock : p.sizeStock,
+            stockMap: newSizeStock !== undefined ? newSizeStock : p.stockMap,
             availableForSale: isAvailable,
             variants: Array.isArray(p.variants)
               ? p.variants.map((v: any) => {

@@ -11,30 +11,39 @@ import {
 export const dynamic = "force-dynamic";
 export const revalidate = 0; // 항상 실시간 실제 데이터 반환
 
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+
 // GET: 실제 수집된 방문자 트래픽 통계 및 로그 조회 (관리자 IP 원천 제외)
 export async function GET(req: NextRequest) {
   try {
     const realAnalytics = await getRealVisitorAnalytics(req.headers);
 
-    return NextResponse.json({
-      success: true,
-      cached: false,
-      isRealData: true,
-      overview: realAnalytics.overview,
-      channels: realAnalytics.channels,
-      trend7Days: realAnalytics.trend7Days,
-      trend30Days: realAnalytics.trend30Days,
-      logs: realAnalytics.logs,
-      blockedIps: realAnalytics.blockedIps,
-      suspiciousActivities: realAnalytics.suspiciousActivities,
-      adminIps: realAnalytics.adminIps,
-      currentClientIp: realAnalytics.currentClientIp,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        cached: false,
+        isRealData: true,
+        overview: realAnalytics.overview,
+        channels: realAnalytics.channels,
+        trend7Days: realAnalytics.trend7Days,
+        trend30Days: realAnalytics.trend30Days,
+        logs: realAnalytics.logs,
+        blockedIps: realAnalytics.blockedIps,
+        suspiciousActivities: realAnalytics.suspiciousActivities,
+        adminIps: realAnalytics.adminIps,
+        currentClientIp: realAnalytics.currentClientIp,
+      },
+      { headers: NO_CACHE_HEADERS }
+    );
   } catch (err: any) {
     console.error("Error fetching real visitor analytics:", err);
     return NextResponse.json(
       { success: false, error: err.message },
-      { status: 500 }
+      { status: 500, headers: NO_CACHE_HEADERS }
     );
   }
 }

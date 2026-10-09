@@ -149,6 +149,26 @@ export async function GET(req: NextRequest) {
     // Clean up temporary scratch file if present
     cleanupScratchFiles(dataDir);
 
+    // Action: download - Export single data file
+    const targetKey = req.nextUrl.searchParams.get("key");
+    if (action === "download" && targetKey) {
+      const item = DATA_REGISTRY.find((d) => d.key === targetKey || d.filename === targetKey);
+      if (item) {
+        const filePath = path.join(dataDir, item.filename);
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath, "utf-8");
+          return new NextResponse(content, {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json; charset=utf-8",
+              "Content-Disposition": `attachment; filename="${item.filename}"`,
+            },
+          });
+        }
+      }
+      return NextResponse.json({ success: false, error: "요청하신 원장 파일을 찾을 수 없습니다." }, { status: 404 });
+    }
+
     // Action: backup - Export all data as a single JSON bundle
     if (action === "backup") {
       const bundle: Record<string, any> = {

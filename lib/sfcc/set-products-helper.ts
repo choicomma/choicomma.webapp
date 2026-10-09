@@ -37,11 +37,12 @@ export function convertSetBundleToProduct(
     .filter((item): item is { config: SetSaleItemConfig; product: Product } => item.product != null);
 
   const originalTotal = resolvedItems.reduce((sum, item) => {
-    return (
-      sum +
-      parseFloat(item.product.priceRange?.minVariantPrice?.amount || (item.product as any).price || "0") *
-        item.config.quantity
-    );
+    const rawPrice =
+      item.product.priceRange?.minVariantPrice?.amount ||
+      (item.product as any).price?.amount ||
+      (item.product as any).price ||
+      "0";
+    return sum + (parseFloat(String(rawPrice)) || 0) * (item.config.quantity || 1);
   }, 0);
 
   const discountRate = setBundle.discountRate || 20;

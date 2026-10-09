@@ -95,7 +95,8 @@ export async function POST(req: NextRequest) {
       id: body.id || `MSG-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       sessionId: body.sessionId,
       sender: body.sender || "customer",
-      content: body.content || body.message || "",
+      content: body.content || body.message || body.text || "",
+      text: body.text || body.content || body.message || "",
       created_at: body.created_at || new Date().toISOString(),
       ...body,
     };

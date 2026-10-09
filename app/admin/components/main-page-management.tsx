@@ -12,6 +12,9 @@ import {
   Check,
   Search,
   Filter,
+  ChevronUp,
+  ChevronDown,
+  Megaphone,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { compressImageDataUrl } from "@/lib/admin/helpers";
@@ -22,6 +25,13 @@ interface MainPageManagementProps {
   setProductsList: React.Dispatch<React.SetStateAction<any[]>>;
   saveProductsToStorage: (list: any[]) => void;
   triggerToast: (msg: string) => void;
+  mainNoticeBanner?: string;
+  setMainNoticeBanner?: (val: string) => void;
+  isMainNoticeActive?: boolean;
+  setIsMainNoticeActive?: (val: boolean) => void;
+  mainBadgeText?: string;
+  setMainBadgeText?: (val: string) => void;
+  handleSaveMainPageSettings?: (e: React.FormEvent) => void;
 }
 
 export function MainPageManagement({
@@ -29,6 +39,13 @@ export function MainPageManagement({
   setProductsList,
   saveProductsToStorage,
   triggerToast,
+  mainNoticeBanner,
+  setMainNoticeBanner,
+  isMainNoticeActive,
+  setIsMainNoticeActive,
+  mainBadgeText,
+  setMainBadgeText,
+  handleSaveMainPageSettings,
 }: MainPageManagementProps) {
   const DEFAULT_HERO_FALLBACKS = Array.from({ length: 9 }, (_, i) => ({
     id: `hero-slide-${i + 1}`,
@@ -40,6 +57,85 @@ export function MainPageManagement({
 
   const filteredHero = productsList.filter((p) => p.isHeroFeatured === true);
   const heroProducts = filteredHero.length > 0 ? filteredHero : DEFAULT_HERO_FALLBACKS;
+
+  // Local fallback states for notice banner and badge
+  const [localNotice, setLocalNotice] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("main_notice_banner") || "전 상품 무료배송 & VIP 회원 추가 10% 할인이 진행 중입니다.";
+    }
+    return "전 상품 무료배송 & VIP 회원 추가 10% 할인이 진행 중입니다.";
+  });
+
+  const [localNoticeActive, setLocalNoticeActive] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("main_notice_active");
+      return saved !== null ? saved === "true" : true;
+    }
+    return true;
+  });
+
+  const [localBadge, setLocalBadge] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("main_badge_text") || "latest drop";
+    }
+    return "latest drop";
+  });
+
+  const noticeValue = mainNoticeBanner !== undefined ? mainNoticeBanner : localNotice;
+  const noticeActiveValue = isMainNoticeActive !== undefined ? isMainNoticeActive : localNoticeActive;
+  const badgeValue = mainBadgeText !== undefined ? mainBadgeText : localBadge;
+
+  const handleUpdateNotice = (val: string) => {
+    setLocalNotice(val);
+    setMainNoticeBanner?.(val);
+  };
+
+  const handleUpdateNoticeActive = (val: boolean) => {
+    setLocalNoticeActive(val);
+    setIsMainNoticeActive?.(val);
+  };
+
+  const handleUpdateBadge = (val: string) => {
+    setLocalBadge(val);
+    setMainBadgeText?.(val);
+  };
+
+  const handleSaveNoticeAndBadge = (e?: React.FormEvent) => {
+    if (e && typeof e.preventDefault === "function") e.preventDefault();
+    if (handleSaveMainPageSettings) {
+      handleSaveMainPageSettings(e || ({} as any));
+    } else {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("main_notice_banner", noticeValue);
+        localStorage.setItem("main_notice_active", String(noticeActiveValue));
+        localStorage.setItem("main_badge_text", badgeValue);
+        window.dispatchEvent(new CustomEvent("storage"));
+      }
+    }
+    triggerToast("메인 공지 띠배너 및 배지 설정이 즉시 반영되었습니다!");
+  };
+
+  // Move Hero Slide Up/Down
+  const handleMoveHeroSlide = (index: number, direction: "up" | "down") => {
+    const targetIdx = direction === "up" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= heroProducts.length) return;
+
+    const currentHeroList = [...heroProducts];
+    const itemToMove = currentHeroList[index];
+    currentHeroList.splice(index, 1);
+    currentHeroList.splice(targetIdx, 0, itemToMove);
+
+    // non-hero 상품들과 병합하여 저장
+    const nonHeroProducts = productsList.filter((p) => !p.isHeroFeatured && !String(p.id).startsWith("hero-slide-"));
+    const updatedAll = [...currentHeroList, ...nonHeroProducts];
+
+    setProductsList(updatedAll);
+    saveProductsToStorage(updatedAll);
+    triggerToast(`슬라이드 순서가 변경되었습니다. (슬라이드 #${targetIdx + 1})`);
+  };
+
+  // Sub Tab ("banner" | "notice" | "display")
+  const [mainSubTab, setMainSubTab] = useState<"banner" | "notice" | "display">("banner");
 
   // Modal 1, 2, 3 States
   const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState<boolean>(false);
@@ -275,12 +371,12 @@ export function MainPageManagement({
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="bg-amber-500 text-neutral-950 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-              HERO SLIDER IMAGE CONTROL
+              MAIN VISUAL & BANNER MANAGEMENT
             </span>
           </div>
-          <h1 className="text-2xl font-black text-neutral-950">메인 이미지 관리</h1>
+          <h1 className="text-2xl font-black text-neutral-950">메인 화면 및 비주얼 배너 관리</h1>
           <p className="text-sm text-neutral-500 mt-0.5">
-            쇼핑몰 최상단 배너 슬라이더에 노출할 배너 이미지(1920*1080)를 직접 지정하고 관리합니다.
+            쇼핑몰 최상단 공지 띠배너, 브랜드 슬로건 배지, 메인 슬라이더 배너 이미지(1920*1080) 및 진열 상품을 통합 관리합니다.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -303,6 +399,127 @@ export function MainPageManagement({
         </div>
       </div>
 
+      {/* SECTION 0: NOTICE BANNER & BRAND BADGE CONTROLLER */}
+      <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 md:p-8 shadow-xs space-y-5">
+        <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-amber-500 text-neutral-950 flex items-center justify-center font-black shadow-xs">
+              <Megaphone className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-neutral-950">
+                📢 상단 공지 띠배너 & 브랜드 배지 실시간 설정
+              </h3>
+              <p className="text-xs text-neutral-500">
+                쇼핑몰 최상단 헤더 띠배너 활성화 여부 및 안내 문구, 로고 옆 브랜드 배지를 직접 편집합니다.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveNoticeAndBadge}
+            className="bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+          >
+            <span>💾 설정 즉시 저장</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left: Input Controls */}
+          <div className="space-y-4">
+            {/* Toggle Notice Active */}
+            <div className="flex items-center justify-between p-3.5 bg-neutral-50 rounded-2xl border border-neutral-200/80">
+              <div>
+                <label className="text-xs font-black text-neutral-900 block">
+                  상단 공지 띠배너 노출 여부
+                </label>
+                <p className="text-[11px] text-neutral-500">
+                  켜짐 상태일 때 쇼핑몰 최상단 헤더에 공지 띠배너가 표시됩니다.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleUpdateNoticeActive(!noticeActiveValue)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  noticeActiveValue
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "bg-neutral-200 text-neutral-600"
+                }`}
+              >
+                {noticeActiveValue ? "노출 중 (ON)" : "숨김 (OFF)"}
+              </button>
+            </div>
+
+            {/* Notice Text Input */}
+            <div>
+              <label className="text-xs font-bold text-neutral-700 block mb-1">
+                공지 띠배너 안내 문구
+              </label>
+              <input
+                type="text"
+                value={noticeValue}
+                onChange={(e) => handleUpdateNotice(e.target.value)}
+                placeholder="예: 전 상품 무료배송 & VIP 회원 추가 10% 할인이 진행 중입니다."
+                className="w-full bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Badge Text Input */}
+            <div>
+              <label className="text-xs font-bold text-neutral-700 block mb-1">
+                브랜드 슬로건 / 배지 문구
+              </label>
+              <input
+                type="text"
+                value={badgeValue}
+                onChange={(e) => handleUpdateBadge(e.target.value)}
+                placeholder="예: latest drop, AUTUMN 2026, SIGNATURE"
+                className="w-full bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none uppercase font-mono transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Right: Live Preview */}
+          <div className="space-y-3">
+            <span className="text-[11px] font-black text-neutral-400 uppercase tracking-wider block">
+              👀 실시간 화면 미리보기 (Live Preview)
+            </span>
+
+            {/* Preview Header mockup */}
+            <div className="bg-neutral-900 rounded-2xl overflow-hidden border border-neutral-800 shadow-md">
+              {/* Notice Mockup */}
+              {noticeActiveValue ? (
+                <div className="bg-neutral-950 text-white text-[11px] font-bold py-2 px-3 flex items-center justify-between border-b border-neutral-800">
+                  <div className="flex items-center gap-1.5 mx-auto">
+                    <Megaphone className="w-3 h-3 text-amber-400" />
+                    <span>{noticeValue || "공지 문구를 입력하세요"}</span>
+                  </div>
+                  <X className="w-3 h-3 text-neutral-500" />
+                </div>
+              ) : (
+                <div className="p-2 bg-neutral-950/60 text-center text-[10px] text-neutral-500 font-mono">
+                  [공지 띠배너 비활성화됨]
+                </div>
+              )}
+
+              {/* Main Nav Mockup */}
+              <div className="p-4 bg-white flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-serif font-black text-sm text-neutral-950 tracking-wider">CHOICOMMA</span>
+                  <span className="px-2 py-0.5 rounded-full border border-neutral-300 text-[10px] font-extrabold uppercase bg-neutral-50 text-neutral-800 flex items-center gap-1">
+                    <Sparkles className="w-2.5 h-2.5 text-amber-500" />
+                    {badgeValue || "LATEST DROP"}
+                  </span>
+                </div>
+                <div className="text-[10px] font-mono text-neutral-400">
+                  header preview
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* SECTION 1: SLIDER IMAGE MANAGEMENT */}
       <div className="bg-gradient-to-r from-amber-500/15 via-yellow-500/20 to-amber-500/15 border-2 border-amber-400 rounded-3xl p-6 md:p-8 shadow-sm space-y-5">
         {/* Hero Product Cards Grid */}
@@ -317,9 +534,31 @@ export function MainPageManagement({
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
-                    <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide bg-amber-500 text-neutral-950 shadow-2xs">
-                      슬라이드 #{index + 1}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide bg-amber-500 text-neutral-950 shadow-2xs">
+                        슬라이드 #{index + 1}
+                      </span>
+                      <div className="flex items-center bg-neutral-100 rounded-lg p-0.5 border border-neutral-200">
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() => handleMoveHeroSlide(index, "up")}
+                          className="p-1 text-neutral-500 hover:text-neutral-950 disabled:opacity-25 cursor-pointer disabled:cursor-not-allowed rounded hover:bg-white transition-colors"
+                          title="슬라이드 앞으로 이동"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === heroProducts.length - 1}
+                          onClick={() => handleMoveHeroSlide(index, "down")}
+                          className="p-1 text-neutral-500 hover:text-neutral-950 disabled:opacity-25 cursor-pointer disabled:cursor-not-allowed rounded hover:bg-white transition-colors"
+                          title="슬라이드 뒤로 이동"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                     <span className="text-[10px] font-extrabold text-amber-900 uppercase bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">
                       메인 배너 이미지
                     </span>

@@ -88,18 +88,87 @@ function serializeShipmentsForDiff(list: any[]): string {
   );
 }
 
-function readShipmentsDisk(): any[] {
+function getOrdersFilePath() {
+  return path.join(process.cwd(), "data", "orders.json");
+}
+
+function readOrdersDisk(): any[] {
   try {
-    const targetPath = getShipmentsFilePath();
+    const targetPath = getOrdersFilePath();
     if (fs.existsSync(targetPath)) {
       const raw = fs.readFileSync(targetPath, "utf-8");
       const data = JSON.parse(raw);
       if (Array.isArray(data)) return data;
     }
+  } catch (err) {}
+  return [];
+}
+
+function orderToShipment(order: any): any {
+  const itemsText = Array.isArray(order.items)
+    ? order.items.map((i: any) => `${i.title || i.name} x${i.quantity || 1}`).join(", ")
+    : String(order.items || "");
+  const qty = Array.isArray(order.items)
+    ? order.items.reduce((s: number, i: any) => s + (i.quantity || 1), 0)
+    : (order.quantity || 1);
+
+  return {
+    id: order.id || order.orderNumber,
+    orderId: order.orderNumber || order.id,
+    ordererName: order.ordererName || order.customer || order.customerName || order.recipient || "",
+    recipient: order.recipient || order.customerName || order.customer || "",
+    phone: order.phone || order.customerPhone || "",
+    altPhone: order.altPhone || "",
+    zipCode: order.zipCode || order.postalCode || "",
+    address: order.address || order.shippingAddress || "",
+    detailAddress: order.detailAddress || "",
+    items: itemsText,
+    quantity: qty,
+    shippingMemo: order.shippingMemo || order.orderMemo || order.deliveryMemo || "",
+    carrier: order.carrier || "CJ대한통운",
+    trackingNumber: order.trackingNumber || "-",
+    status: order.shippingStatus || order.status || "Pending",
+    orderDate: order.orderDate || (order.created_at ? order.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10)),
+    shippedDate: order.shippedDate || null,
+    estimatedDelivery: order.estimatedDelivery || null,
+    packages: order.packages || [],
+  };
+}
+
+function readShipmentsDisk(): any[] {
+  let shipments: any[] = [];
+  try {
+    const targetPath = getShipmentsFilePath();
+    if (fs.existsSync(targetPath)) {
+      const raw = fs.readFileSync(targetPath, "utf-8");
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) shipments = data;
+    }
   } catch (err) {
     console.warn("[Shipments File Read Warning]:", err);
   }
-  return [];
+
+  // Cross-check with data/orders.json to guarantee zero missed orders
+  try {
+    const orders = readOrdersDisk();
+    if (orders.length > 0) {
+      const existingKeys = new Set(shipments.map((s: any) => s.id || s.orderId));
+      let newlyAdded = false;
+      for (const ord of orders) {
+        const ordKey = ord.id || ord.orderNumber;
+        if (ordKey && !existingKeys.has(ordKey)) {
+          shipments.unshift(orderToShipment(ord));
+          existingKeys.add(ordKey);
+          newlyAdded = true;
+        }
+      }
+      if (newlyAdded) {
+        writeShipmentsDisk(shipments);
+      }
+    }
+  } catch (err) {}
+
+  return shipments;
 }
 
 function writeShipmentsDisk(data: any[]) {

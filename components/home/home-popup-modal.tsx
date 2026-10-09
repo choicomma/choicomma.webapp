@@ -32,12 +32,13 @@ export function HomePopupModal() {
       return;
     }
 
-    // 2. '오늘 하루 보지 않기' 만료 시간 확인 (팝업 ID별 독립 검사)
+    // 2. '오늘 하루 보지 않기' 만료 시간 확인 (팝업 ID별 독립 검사 및 레거시 키 검사)
     if (typeof window !== "undefined") {
-      const specificKey = `choicomma_hide_home_popup_${cfg.id || "default"}_until`;
-      const hideUntilSpecific = localStorage.getItem(specificKey);
-      if (hideUntilSpecific) {
-        const timestamp = parseInt(hideUntilSpecific, 10);
+      const popupId = cfg.id || "default";
+      const specificKey = `choicomma_hide_home_popup_${popupId}_until`;
+      const hideUntil = localStorage.getItem(specificKey) || localStorage.getItem(POPUP_HIDE_UNTIL_KEY);
+      if (hideUntil) {
+        const timestamp = parseInt(hideUntil, 10);
         if (!isNaN(timestamp) && Date.now() < timestamp) {
           setIsOpen(false);
           return;
@@ -45,7 +46,14 @@ export function HomePopupModal() {
       }
     }
 
-    // 3. 조건 만족 시 즉시 팝업 오픈
+    // 3. 이미지 팝업 모드인데 이미지가 비어있는 경우 노출 안 함
+    const isNotice = cfg.popupType === "NOTICE" || (!cfg.imageUrl && Boolean(cfg.noticeMessage || cfg.title));
+    if (!isNotice && !cfg.imageUrl) {
+      setIsOpen(false);
+      return;
+    }
+
+    // 4. 조건 만족 시 즉시 팝업 오픈
     setIsOpen(true);
   }, []);
 
@@ -98,11 +106,13 @@ export function HomePopupModal() {
   }, [checkAndShowPopup]);
 
   const handleClose = () => {
-    if (dontShowToday && config?.id && typeof window !== "undefined") {
-      // 오늘 자정 또는 24시간 뒤까지 숨김 처리
-      const expireTime = Date.now() + 24 * 60 * 60 * 1000;
-      const specificKey = `choicomma_hide_home_popup_${config.id}_until`;
-      localStorage.setItem(specificKey, String(expireTime));
+    if (dontShowToday && typeof window !== "undefined") {
+      const now = new Date();
+      // 오늘 밤 23:59:59.999 자정 기준 만료 시간 (최소 12시간)
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
+      const expireTime = Math.max(endOfDay, Date.now() + 12 * 60 * 60 * 1000);
+      const popupId = config?.id || "default";
+      localStorage.setItem(`choicomma_hide_home_popup_${popupId}_until`, String(expireTime));
       localStorage.setItem(POPUP_HIDE_UNTIL_KEY, String(expireTime));
     }
     setIsOpen(false);
@@ -122,6 +132,10 @@ export function HomePopupModal() {
   if (!mounted || !isOpen || !config || !config.isActive) return null;
 
   const isNoticeMode = config.popupType === "NOTICE" || (!config.imageUrl && Boolean(config.noticeMessage || config.title));
+
+  if (!isNoticeMode && !config.imageUrl) {
+    return null;
+  }
 
   return (
     <div
@@ -156,59 +170,85 @@ export function HomePopupModal() {
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200/90 shadow-2xs">
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                서비스 일시 중단 안내
+                공지 및 안내
               </span>
               <span className="text-[11px] font-extrabold text-neutral-400 tracking-widest uppercase">
                 CHOICOMMA OFFICIAL
               </span>
             </div>
 
+            {/* Optional Header Image for Notice Mode */}
+            {config.imageUrl && (
+              <div className="relative w-full rounded-2xl overflow-hidden border border-neutral-200/80 aspect-16/7 bg-neutral-100">
+                <img
+                  src={config.imageUrl}
+                  alt={config.title || "공지 이미지"}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
             {/* 2. Main Large Headline */}
             <div className="space-y-1">
               <h2 className="text-lg sm:text-xl font-black text-neutral-950 tracking-tight leading-snug break-keep">
-                초이콤마 글로벌 몰 오픈 준비에 따른<br />
-                서비스 일시 이용 불가 안내
+                {config.title || "서비스 일시 이용 불가 안내"}
               </h2>
-              <p className="text-[11px] font-bold text-neutral-400 tracking-wider uppercase">
-                Global Store Launch &amp; Temporary Service Pause
-              </p>
+              {config.subtitle && (
+                <p className="text-[11px] font-bold text-neutral-400 tracking-wider uppercase">
+                  {config.subtitle}
+                </p>
+              )}
             </div>
 
             {/* 3. Core Highlight Box (핵심 요약 강조 박스) */}
-            <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-400/40 space-y-2.5">
-              <div className="flex items-start gap-2.5">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-sm sm:text-base font-black text-neutral-950 leading-relaxed break-keep">
-                  "{config.noticeMessage || "초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다."}"
-                </p>
-              </div>
+            {(config.noticeMessage || config.noticePeriod) && (
+              <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-400/40 space-y-2.5">
+                {config.noticeMessage && (
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-sm sm:text-base font-black text-neutral-950 leading-relaxed break-keep">
+                      "{config.noticeMessage}"
+                    </p>
+                  </div>
+                )}
 
-              {/* Target Date Box */}
-              <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-amber-300/60 text-xs sm:text-sm font-bold text-neutral-800">
-                <div className="flex items-center gap-1.5 text-amber-950">
-                  <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>정상화 완료 목표 기한:</span>
-                </div>
-                <span className="px-3 py-1 rounded-xl bg-white border border-amber-300 font-black text-rose-600 text-xs sm:text-sm shadow-2xs">
-                  {config.noticePeriod || "2026.10.12(월)까지"}
-                </span>
+                {/* Target Date Box */}
+                {config.noticePeriod && (
+                  <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-amber-300/60 text-xs sm:text-sm font-bold text-neutral-800">
+                    <div className="flex items-center gap-1.5 text-amber-950">
+                      <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>정상화 완료 목표 기한:</span>
+                    </div>
+                    <span className="px-3 py-1 rounded-xl bg-white border border-amber-300 font-black text-rose-600 text-xs sm:text-sm shadow-2xs">
+                      {config.noticePeriod}
+                    </span>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             {/* 4. Polite Customer Care Copywriting (가독성 최적화된 본문 안내글) */}
             <div className="space-y-2.5 text-sm sm:text-base text-neutral-700 leading-relaxed break-keep">
-              <p className="font-bold text-neutral-900">
-                초이콤마를 찾아주신 고객 여러분께 진심으로 감사드립니다.
-              </p>
-              <p>
-                현재 해외 글로벌 고객님들과 함께하기 위한 <strong className="text-neutral-950 font-black">초이콤마 글로벌 몰 공식 런칭 및 인프라 연동 작업</strong>이 집중 진행되고 있습니다.
-              </p>
-              <p className="font-semibold text-neutral-900">
-                이로 인해 작업 기간 동안 일시적으로 <strong className="text-rose-600 font-black underline underline-offset-4 decoration-rose-300">쇼핑몰 서비스 이용 및 사이트 접속을 하실 수 없습니다.</strong> 고객님들의 쾌적하고 안전한 쇼핑을 위해 <strong className="text-neutral-950 font-black">2026년 10월 12일까지</strong> 모든 작업을 완료하여 신속히 정상화하겠습니다.
-              </p>
-              <p className="text-neutral-500 font-medium text-xs sm:text-sm">
-                이용에 큰 불편을 드려 고개 숙여 사과드리며, 더욱 품격 있고 새로워진 글로벌 서비스로 찾아뵙겠습니다.
-              </p>
+              {config.description ? (
+                <div className="whitespace-pre-line text-neutral-800 font-medium leading-relaxed">
+                  {config.description}
+                </div>
+              ) : (
+                <>
+                  <p className="font-bold text-neutral-900">
+                    초이콤마를 찾아주신 고객 여러분께 진심으로 감사드립니다.
+                  </p>
+                  <p>
+                    현재 해외 글로벌 고객님들과 함께하기 위한 <strong className="text-neutral-950 font-black">초이콤마 글로벌 몰 공식 런칭 및 인프라 연동 작업</strong>이 집중 진행되고 있습니다.
+                  </p>
+                  <p className="font-semibold text-neutral-900">
+                    이로 인해 작업 기간 동안 일시적으로 <strong className="text-rose-600 font-black underline underline-offset-4 decoration-rose-300">쇼핑몰 서비스 이용 및 사이트 접속을 하실 수 없습니다.</strong> 고객님들의 쾌적하고 안전한 쇼핑을 위해 <strong className="text-neutral-950 font-black">{config.noticePeriod || "2026년 10월 12일까지"}</strong> 모든 작업을 완료하여 신속히 정상화하겠습니다.
+                  </p>
+                  <p className="text-neutral-500 font-medium text-xs sm:text-sm">
+                    이용에 큰 불편을 드려 고개 숙여 사과드리며, 더욱 품격 있고 새로워진 글로벌 서비스로 찾아뵙겠습니다.
+                  </p>
+                </>
+              )}
             </div>
 
             {/* 5. Safe Order Assurance Banner (안심 배송 안내) */}
@@ -216,6 +256,20 @@ export function HomePopupModal() {
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>작업 기간 중 신규 주문·결제는 불가하며, 기존 주문건의 배송 업무는 정상 진행됩니다.</span>
             </div>
+
+            {/* Optional Link Button */}
+            {config.linkUrl && (
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={handleImageClick}
+                  className="w-full py-2.5 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <span>관련 안내 페이지로 이동</span>
+                  <ExternalLink className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
             {/* 6. Footer Controls: Don't show today & Close button */}
             <div className="pt-3.5 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-3">

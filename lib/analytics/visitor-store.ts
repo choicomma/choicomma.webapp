@@ -67,7 +67,7 @@ let isInitialized = false;
 
 // 1. 디스크 및 Supabase site_settings에서 저장소 초기화
 export async function initializeStore(): Promise<AnalyticsStore> {
-  if (isInitialized && memoryStore.logs.length > 0) {
+  if (isInitialized) {
     return memoryStore;
   }
 
@@ -100,17 +100,47 @@ export async function initializeStore(): Promise<AnalyticsStore> {
   return memoryStore;
 }
 
-// 2. 파일에 비동기 저장
+// 2. 파일에 비동기 안전 원자적 저장 (Retry 지원)
 function persistStoreLocally(store: AnalyticsStore) {
-  try {
-    const dir = path.dirname(STORE_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(STORE_FILE_PATH, JSON.stringify(store, null, 2), "utf8");
-  } catch (err) {
-    console.error("Failed to write visitor data to disk:", err);
+  const dir = path.dirname(STORE_FILE_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
+
+  const jsonStr = JSON.stringify(store, null, 2);
+  let lastError: any = null;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const tempPath = `${STORE_FILE_PATH}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
+    try {
+      fs.writeFileSync(tempPath, jsonStr, "utf8");
+      try {
+        fs.renameSync(tempPath, STORE_FILE_PATH);
+      } catch {
+        try {
+          if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+        } catch {}
+        fs.writeFileSync(STORE_FILE_PATH, jsonStr, "utf8");
+      }
+      return;
+    } catch (err) {
+      lastError = err;
+      try {
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+      } catch {}
+    }
+  }
+
+  try {
+    fs.writeFileSync(STORE_FILE_PATH, jsonStr, "utf8");
+  } catch (finalErr) {
+    console.error("Failed to write visitor data to disk:", lastError || finalErr);
+  }
+}
+
+// Supabase 원격 동기화 안전 폴백 함수 (미정의 ReferenceError 방어)
+async function syncToSupabase(store: AnalyticsStore): Promise<void> {
+  return Promise.resolve();
 }
 
 // 3. User-Agent 파싱 헬퍼

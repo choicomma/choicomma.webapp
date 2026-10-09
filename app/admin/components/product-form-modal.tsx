@@ -678,6 +678,12 @@ export function ProductFormModal({
       return;
     }
 
+    const numPrice = String(price).replace(/[^0-9]/g, "");
+    if (!numPrice) {
+      alert("판매가를 입력해주세요.");
+      return;
+    }
+
     const totalStockCalc = calculateTotalStock(colors, sizes, sizeStock);
     const finalImages = images.length > 0 ? images : ["/product_1.webp"];
 
@@ -685,9 +691,16 @@ export function ProductFormModal({
     let finalProdNo: number;
     let finalProductCode: string;
 
-    if (isEdit && initialProduct?.productNo) {
-      finalProdNo = Number(initialProduct.productNo);
-      finalProductCode = initialProduct.productCode || `CC-${String(finalProdNo).padStart(3, "0")}`;
+    if (isEdit) {
+      let existingNo = 0;
+      if (initialProduct?.productNo && !isNaN(Number(initialProduct.productNo))) {
+        existingNo = Number(initialProduct.productNo);
+      } else {
+        const match = String(initialProduct?.productCode || initialProduct?.id || "").match(/\d+/);
+        if (match) existingNo = parseInt(match[0], 10);
+      }
+      finalProdNo = existingNo > 0 ? existingNo : 1;
+      finalProductCode = initialProduct?.productCode || `CC-${String(finalProdNo).padStart(3, "0")}`;
     } else {
       // 기존 상품 목록 중 최대 번호 추출 후 +1 순차 자동 부여
       const maxNo = productsList.reduce((max, p) => {
@@ -739,7 +752,21 @@ export function ProductFormModal({
     const baseSlug = title.trim().toLowerCase().replace(/[^a-z0-9가-힣\s-]/g, "").replace(/\s+/g, "-") || "product";
     const uniqueHandle = (isEdit && initialProduct?.handle) ? String(initialProduct.handle) : `${baseSlug}-${generatedId}`;
 
-    const resultProduct = {
+    // Tags synchronization
+    const existingTags = Array.isArray(initialProduct?.tags) ? initialProduct.tags : (!isEdit ? ["NEW"] : []);
+    let finalTags = [...existingTags];
+    if (isMainFeatured) {
+      if (!finalTags.includes("top-seller")) finalTags.push("top-seller");
+    } else {
+      finalTags = finalTags.filter((t: string) => t !== "top-seller");
+    }
+    if (isTimeSale) {
+      if (!finalTags.includes("TIMESALE")) finalTags.push("TIMESALE");
+    } else {
+      finalTags = finalTags.filter((t: string) => t !== "TIMESALE");
+    }
+
+    const resultProduct: any = {
       customTitles: formTitles,
       ...(isEdit ? initialProduct : {}),
       id: generatedId,
@@ -758,9 +785,10 @@ export function ProductFormModal({
       categoryIds: (categories && categories.length > 0 ? categories.filter((c: string) => c !== "new") : ["outer"]),
       stock: totalStockCalc,
       sizeStock,
+      stockMap: sizeStock,
       availableForSale,
-      releaseDate: isScheduledRelease && releaseDate ? releaseDate : undefined,
       isMainFeatured,
+      tags: finalTags,
       productLabel: label,
       colors,
       colorHexMap,
@@ -818,6 +846,12 @@ export function ProductFormModal({
         ? `${new Date().getFullYear()}-${(timeSaleEndMonth || "1").padStart(2, "0")}-${(timeSaleEndDay || "1").padStart(2, "0")}T${timeSaleEndAmpm === "오후" ? String(((parseInt(timeSaleEndHour, 10) || 12) % 12) + 12).padStart(2, "0") : String((parseInt(timeSaleEndHour, 10) || 12) % 12).padStart(2, "0")}:${(timeSaleEndMinute || "0").padStart(2, "0")}:00`
         : undefined,
     };
+
+    if (isScheduledRelease && releaseDate && releaseDate.trim()) {
+      resultProduct.releaseDate = releaseDate.trim();
+    } else {
+      delete resultProduct.releaseDate;
+    }
 
     onSave(resultProduct, !isEdit);
   };

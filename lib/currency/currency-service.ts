@@ -58,6 +58,7 @@ export function saveGlobalSalesSettings(settings: GlobalSalesSettings): void {
   try {
     localStorage.setItem("global_sales_settings", JSON.stringify(settings));
     window.dispatchEvent(new Event("global_sales_settings_updated"));
+    window.dispatchEvent(new Event("storage"));
   } catch (e) {
     console.error("Error saving global_sales_settings", e);
   }
@@ -74,7 +75,7 @@ export async function fetchLatestLiveExchangeRates(): Promise<GlobalSalesSetting
     if (data && data.rates) {
       const r = data.rates;
       const usdInKrw = r.USD ? Math.round((1 / r.USD) * 10) / 10 : 1350;
-      const jpyInKrw = r.JPY ? Math.round((1 / r.JPY) * 100) / 10 : 9.0;
+      const jpyInKrw = r.JPY ? Math.round((1 / r.JPY) * 100) / 100 : 9.0;
       const cnyInKrw = r.CNY ? Math.round((1 / r.CNY) * 10) / 10 : 185;
       const eurInKrw = r.EUR ? Math.round((1 / r.EUR) * 10) / 10 : 1470;
       const vndInKrw = r.VND ? Math.round((1 / r.VND) * 1000) / 1000 : 0.055;

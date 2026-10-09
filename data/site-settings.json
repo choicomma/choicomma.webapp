@@ -1,4 +1,13 @@
 {
+  "store_info": {
+    "storeName": "choicomma",
+    "storeSlogan": "CONTEMPORARY SIGNATURE FASHION",
+    "adminId": "admin",
+    "csPhone": "02-579-1171",
+    "csEmail": "help@choicomma.com",
+    "currency": "KRW (₩)",
+    "operatingHours": "평일 10:00 ~ 18:00 (점심 12:30 ~ 13:30 / 주말·공휴일 휴무)"
+  },
   "cj_logistics": {
     "clientCode": "choicomma",
     "contractNo": "7108803854",

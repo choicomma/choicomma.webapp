@@ -455,6 +455,48 @@ export function CouponsManagement({
     }
   };
 
+  // 11. Download Coupons Master as Excel
+  const handleDownloadCouponsExcel = () => {
+    if (coupons.length === 0) {
+      notify("다운로드할 쿠폰 데이터가 없습니다.");
+      return;
+    }
+
+    try {
+      const exportData = coupons.map((c, index) => {
+        let targetText = "전체 회원";
+        if (c.targetType === "GRADE") {
+          targetText = `등급 지정 (${(c.targetGrades || []).join(", ")})`;
+        } else if (c.targetType === "CUSTOMER") {
+          targetText = `회원 지정 (${(c.targetCustomerNames || c.targetCustomerEmails || []).join(", ")})`;
+        }
+
+        return {
+          "번호": index + 1,
+          "쿠폰코드": c.code || c.id,
+          "쿠폰명": c.title,
+          "혜택유형": c.type === "SHIPPING" ? "배송비지원" : "일반할인",
+          "할인금액": Number(c.discountAmount || 0),
+          "적용조건": c.condition,
+          "발급대상": targetText,
+          "유효기간": c.validUntil,
+          "뱃지": c.badge || "-",
+          "상태": c.isActive !== false ? "활성(ON)" : "비활성(OFF)",
+          "등록일": c.createdAt || "-",
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "쿠폰목록");
+      const today = new Date().toISOString().split("T")[0];
+      XLSX.writeFile(wb, `스토어_쿠폰목록_${today}.xlsx`);
+    } catch (e) {
+      console.error(e);
+      notify("쿠폰 목록 엑셀 다운로드 중 오류가 발생했습니다.");
+    }
+  };
+
   // Filtered Usage History
   const filteredUsageHistory = useMemo(() => {
     if (!usageSearchQuery.trim()) return usageHistory;
@@ -730,15 +772,25 @@ export function CouponsManagement({
 
         <div className="flex items-center gap-2 shrink-0">
           {coupons.length > 0 && (
-            <button
-              type="button"
-              onClick={handleDeleteAllCoupons}
-              className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-              title="등록된 모든 쿠폰 일괄 삭제"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              전체 삭제
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleDownloadCouponsExcel}
+                className="px-3.5 py-2.5 bg-white hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                title="등록된 쿠폰 목록 엑셀 다운로드 (.xlsx)"
+              >
+                <span>쿠폰목록 다운로드 (.xlsx)</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAllCoupons}
+                className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                title="등록된 모든 쿠폰 일괄 삭제"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                전체 삭제
+              </button>
+            </>
           )}
           <button
             type="button"

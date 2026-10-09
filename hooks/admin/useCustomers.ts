@@ -742,7 +742,16 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         if (typeof window !== "undefined") {
           localStorage.setItem("admin_customers", JSON.stringify(combined));
           window.dispatchEvent(new CustomEvent("storage"));
+          window.dispatchEvent(new CustomEvent("admin_customers_updated"));
         }
+
+        // 원격 Git DB(data/customers.json)에 일괄 원자적 영속화
+        fetch("/api/admin/customers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(combined),
+        }).catch((err) => console.warn("Failed to persist excel customers to server:", err));
+
         triggerToast(`엑셀 파일에서 총 ${parsedCustomers.length.toLocaleString()}명의 회원 정보(배송지 주소 포함)가 연동되었습니다!`);
       } catch (err) {
         console.error(err);
@@ -758,7 +767,13 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       if (typeof window !== "undefined") {
         localStorage.setItem("admin_customers", JSON.stringify(DEFAULT_CUSTOMERS));
         window.dispatchEvent(new CustomEvent("storage"));
+        window.dispatchEvent(new CustomEvent("admin_customers_updated"));
       }
+      fetch("/api/admin/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(DEFAULT_CUSTOMERS),
+      }).catch((err) => console.warn("Failed to reset customers on server:", err));
       triggerToast("회원 목록이 최고관리자 및 기본 등록 회원 상태로 초기화되었습니다.");
     }
   };
@@ -769,7 +784,13 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       if (typeof window !== "undefined") {
         localStorage.setItem("admin_customers", JSON.stringify([]));
         window.dispatchEvent(new CustomEvent("storage"));
+        window.dispatchEvent(new CustomEvent("admin_customers_updated"));
       }
+      fetch("/api/admin/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([]),
+      }).catch((err) => console.warn("Failed to clear customers on server:", err));
       triggerToast("전체 회원 목록이 0명으로 초기화되었습니다.");
     }
   };

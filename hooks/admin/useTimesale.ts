@@ -53,11 +53,20 @@ export function useTimesale(triggerToast: (msg: string) => void) {
     };
     fetchTimesales();
 
-    const handleUpdated = () => fetchTimesales();
-    window.addEventListener("secret_timesales_updated", handleUpdated);
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "admin_secret_timesales" && e.newValue && isMounted) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setSecretSalesList(parsed.filter((t: any) => t?.id !== "SECRET-TS-001"));
+          }
+        } catch (err) {}
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
     return () => {
       isMounted = false;
-      window.removeEventListener("secret_timesales_updated", handleUpdated);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
@@ -69,8 +78,9 @@ export function useTimesale(triggerToast: (msg: string) => void) {
     }
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("admin_secret_timesales", JSON.stringify(secretSalesList));
-      window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
+      try {
+        localStorage.setItem("admin_secret_timesales", JSON.stringify(secretSalesList));
+      } catch (e) {}
     }
     // Sync to Git File API
     if (Array.isArray(secretSalesList)) {

@@ -23,26 +23,46 @@ function readSiteSettings(): Record<string, any> {
 }
 
 function writeSiteSettings(settings: Record<string, any>) {
-  try {
-    const targetPath = getSettingsFilePath();
-    const dir = path.dirname(targetPath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const targetPath = getSettingsFilePath();
+  const dir = path.dirname(targetPath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
+  const jsonStr = JSON.stringify(settings, null, 2);
+  let lastError: any = null;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
     const tempPath = `${targetPath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
-    const jsonStr = JSON.stringify(settings, null, 2);
     try {
       fs.writeFileSync(tempPath, jsonStr, "utf-8");
-      fs.renameSync(tempPath, targetPath);
-    } catch {
+      try {
+        fs.renameSync(tempPath, targetPath);
+      } catch (renameErr) {
+        try {
+          if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+        } catch {}
+        fs.writeFileSync(targetPath, jsonStr, "utf-8");
+      }
+      return;
+    } catch (err: any) {
+      lastError = err;
       try {
         if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
       } catch {}
-      fs.writeFileSync(targetPath, jsonStr, "utf-8");
     }
-  } catch (err) {
-    console.error("[Site Settings File Write Error]:", err);
+  }
+
+  try {
+    fs.writeFileSync(targetPath, jsonStr, "utf-8");
+  } catch (finalErr) {
+    console.error("[Site Settings File Write Error]:", lastError || finalErr);
   }
 }
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -50,10 +70,13 @@ export async function GET(req: NextRequest) {
   const settings = readSiteSettings();
 
   if (key) {
-    return NextResponse.json({ success: true, key, value: settings[key] || null });
+    return NextResponse.json(
+      { success: true, key, value: settings[key] || null },
+      { headers: NO_CACHE_HEADERS }
+    );
   }
 
-  return NextResponse.json({ success: true, settings });
+  return NextResponse.json({ success: true, settings }, { headers: NO_CACHE_HEADERS });
 }
 
 export async function POST(req: NextRequest) {
@@ -68,8 +91,11 @@ export async function POST(req: NextRequest) {
     }
 
     writeSiteSettings(settings);
-    return NextResponse.json({ success: true, settings });
+    return NextResponse.json({ success: true, settings }, { headers: NO_CACHE_HEADERS });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: err.message },
+      { status: 500, headers: NO_CACHE_HEADERS }
+    );
   }
 }

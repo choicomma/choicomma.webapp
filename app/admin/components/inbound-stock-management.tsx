@@ -14,7 +14,9 @@ import {
   Pencil,
   Trash2,
   X,
+  Download,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface InboundStockManagementProps {
   inboundSchedulesList: any[];
@@ -45,7 +47,7 @@ interface InboundStockManagementProps {
   setNewInboundNotes?: (val: string) => void;
   newInboundStatus?: string;
   setNewInboundStatus?: (val: string) => void;
-  handleAddInboundSchedule?: () => void;
+  handleAddInboundSchedule?: (e?: React.FormEvent) => void;
 }
 
 export function InboundStockManagement({
@@ -107,15 +109,52 @@ export function InboundStockManagement({
   const completedCount = inboundSchedulesList.filter((s) => s.status === "Completed").length;
 
   const filteredInboundList = inboundSchedulesList.filter((item) => {
+    const pTitle = String(item.productTitle || item.title || "").toLowerCase();
+    const supplier = String(item.supplier || "").toLowerCase();
+    const warehouse = String(item.warehouse || "").toLowerCase();
+    const id = String(item.id || "").toLowerCase();
+    const q = inboundSearchQuery.toLowerCase().trim();
+
     const matchesSearch =
-      item.productTitle.toLowerCase().includes(inboundSearchQuery.toLowerCase()) ||
-      item.supplier.toLowerCase().includes(inboundSearchQuery.toLowerCase()) ||
-      item.warehouse.toLowerCase().includes(inboundSearchQuery.toLowerCase()) ||
-      item.id.toLowerCase().includes(inboundSearchQuery.toLowerCase());
+      !q ||
+      pTitle.includes(q) ||
+      supplier.includes(q) ||
+      warehouse.includes(q) ||
+      id.includes(q);
     const matchesStatus =
       inboundStatusFilter === "all" || item.status === inboundStatusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handleExportInboundExcel = () => {
+    if (inboundSchedulesList.length === 0) {
+      alert("다운로드할 입고 일정 데이터가 없습니다.");
+      return;
+    }
+
+    try {
+      const exportData = inboundSchedulesList.map((item, index) => ({
+        "번호": index + 1,
+        "입고번호": item.id || "-",
+        "입고일자": item.date || "-",
+        "품목명": item.productTitle || item.title || "-",
+        "수량": Number(item.quantity || 0),
+        "공급처": item.supplier || "-",
+        "입고창고": item.warehouse || "-",
+        "진행상태": item.status === "Completed" ? "입고 완료" : item.status === "In Progress" ? "검수 진행 중" : "입고 대기",
+        "비고/메모": item.notes || "-",
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "입고일정");
+      const today = new Date().toISOString().split("T")[0];
+      XLSX.writeFile(wb, `초이콤마_입고일정_${today}.xlsx`);
+    } catch (e) {
+      console.error(e);
+      alert("입고 일정 엑셀 다운로드 중 오류가 발생했습니다.");
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -130,17 +169,30 @@ export function InboundStockManagement({
             공급업체 발주 상품의 월별/일별 입고 일정 시각화, 물류 입고 검수 진행 현황 및 재고 수량 동기화
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setNewInboundDate(realTodayStr);
-            setIsAddInboundModalOpen(true);
-          }}
-          className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs cursor-pointer"
-        >
-          <Plus className="w-4 h-4 text-white" />
-          <span>+ 신규 입고 일정 등록</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {inboundSchedulesList.length > 0 && (
+            <button
+              type="button"
+              onClick={handleExportInboundExcel}
+              className="bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+              title="입고 일정 목록 엑셀 다운로드 (.xlsx)"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>입고일정 다운로드 (.xlsx)</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setNewInboundDate(realTodayStr);
+              setIsAddInboundModalOpen(true);
+            }}
+            className="bg-neutral-950 hover:bg-neutral-800 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-white" />
+            <span>+ 신규 입고 일정 등록</span>
+          </button>
+        </div>
       </div>
 
       {/* Metrics Summary */}
@@ -300,10 +352,10 @@ export function InboundStockManagement({
                             ? "bg-sky-50 text-sky-950 border-sky-300 hover:bg-sky-100"
                             : "bg-amber-50 text-amber-950 border-amber-300 hover:bg-amber-100"
                         }`}
-                        title={`[${item.id}] ${item.productTitle} (${item.quantity}개) - ${item.supplier}`}
+                        title={`[${item.id}] ${item.productTitle || item.title || "입고 품목"} (${item.quantity}개) - ${item.supplier || "공급처 미지정"}`}
                       >
                         <div className="flex items-center justify-between gap-1 leading-tight">
-                          <span className="truncate font-extrabold">{item.productTitle}</span>
+                          <span className="truncate font-extrabold">{item.productTitle || item.title || "미지정 품목"}</span>
                           <span className="font-mono text-[10px] shrink-0 bg-white/80 px-1 rounded font-black">
                             +{item.quantity}개
                           </span>
@@ -316,7 +368,7 @@ export function InboundStockManagement({
                               ? "⏳ 검수중"
                               : "📦 대기"}
                           </span>
-                          <span className="truncate max-w-[65px]">{item.warehouse.split(" ")[0]}</span>
+                          <span className="truncate max-w-[65px]">{(item.warehouse || "물류센터").split(" ")[0]}</span>
                         </div>
                       </div>
                     ))}
@@ -405,15 +457,15 @@ export function InboundStockManagement({
                       {item.id}
                     </td>
                     <td className="py-3.5 px-4">
-                      <p className="font-bold text-neutral-900 text-sm">{item.productTitle}</p>
-                      <p className="text-[11px] text-neutral-500 truncate max-w-xs">{item.notes}</p>
+                      <p className="font-bold text-neutral-900 text-sm">{item.productTitle || item.title || "미지정 품목"}</p>
+                      <p className="text-[11px] text-neutral-500 truncate max-w-xs">{item.notes || "-"}</p>
                     </td>
                     <td className="py-3.5 px-4 font-extrabold text-emerald-700 font-mono">
-                      +{item.quantity.toLocaleString()} 개
+                      +{Number(item.quantity || 0).toLocaleString()} 개
                     </td>
                     <td className="py-3.5 px-4 text-xs">
-                      <p className="font-bold text-neutral-900">{item.supplier}</p>
-                      <p className="text-[11px] text-neutral-500">{item.warehouse}</p>
+                      <p className="font-bold text-neutral-900">{item.supplier || "-"}</p>
+                      <p className="text-[11px] text-neutral-500">{item.warehouse || "-"}</p>
                     </td>
                     <td className="py-3.5 px-4">
                       <button
@@ -625,11 +677,11 @@ export function InboundStockManagement({
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-neutral-500 font-bold">입고 상품명:</span>
-                  <span className="font-extrabold text-neutral-950">{selectedInboundItem.productTitle}</span>
+                  <span className="font-extrabold text-neutral-950">{selectedInboundItem.productTitle || selectedInboundItem.title || "미지정 품목"}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-neutral-500 font-bold">입고 예정 수량:</span>
-                  <span className="font-mono font-black text-emerald-600 text-sm">+{selectedInboundItem.quantity.toLocaleString()} 개</span>
+                  <span className="font-mono font-black text-emerald-600 text-sm">+{(selectedInboundItem.quantity || 0).toLocaleString()} 개</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-neutral-500 font-bold">공급업체 (발주처):</span>

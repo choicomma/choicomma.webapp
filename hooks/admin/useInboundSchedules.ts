@@ -90,11 +90,25 @@ export function useInboundSchedules(triggerToast?: (msg: string) => void) {
     triggerToast?.("입고 일정이 삭제되었습니다.");
   };
 
-  const handleUpdateInboundStatus = (id: string, status: string) => {
+  const handleUpdateInboundStatus = (id: string, statusParam?: string) => {
+    let nextStatus = statusParam;
+    const currentItem = inboundSchedulesList.find((item: any) => item.id === id);
+    if (currentItem) {
+      // 만약 현재 상태와 동일한 값이 전달되었거나 생략된 경우 순환 토글 (Scheduled -> In Progress -> Completed -> Scheduled)
+      if (!statusParam || statusParam === currentItem.status) {
+        if (currentItem.status === "Scheduled") nextStatus = "In Progress";
+        else if (currentItem.status === "In Progress") nextStatus = "Completed";
+        else nextStatus = "Scheduled";
+      }
+    }
+
     const updated = inboundSchedulesList.map((item: any) =>
-      item.id === id ? { ...item, status } : item
+      item.id === id ? { ...item, status: nextStatus } : item
     );
     setInboundSchedulesList(updated);
+    if (selectedInboundItem?.id === id) {
+      setSelectedInboundItem((prev: any) => (prev ? { ...prev, status: nextStatus } : null));
+    }
 
     const target = updated.find((item: any) => item.id === id);
     if (target) {
@@ -108,10 +122,13 @@ export function useInboundSchedules(triggerToast?: (msg: string) => void) {
         .catch((err) => console.warn("Inbound update notice:", err));
     }
 
-    triggerToast?.("입고 상태가 변경되었습니다.");
+    triggerToast?.(`입고 상태가 [${nextStatus === "Completed" ? "입고 완료" : nextStatus === "In Progress" ? "검수 진행 중" : "입고 대기"}]로 변경되었습니다.`);
   };
 
-  const handleAddInboundSchedule = () => {
+  const handleAddInboundSchedule = (e?: React.FormEvent) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
     if (!newInboundTitle.trim()) {
       alert("입고 품목명을 입력해주세요.");
       return;
@@ -119,12 +136,13 @@ export function useInboundSchedules(triggerToast?: (msg: string) => void) {
     const newItem = {
       id: `INBOUND-${Date.now()}`,
       title: newInboundTitle.trim(),
+      productTitle: newInboundTitle.trim(),
       date: newInboundDate,
       quantity: newInboundQuantity,
-      supplier: newInboundSupplier.trim(),
-      warehouse: newInboundWarehouse,
+      supplier: newInboundSupplier.trim() || "자체 생산 / 공급처 미지정",
+      warehouse: newInboundWarehouse || "제1물류센터 A구역",
       notes: newInboundNotes.trim(),
-      status: newInboundStatus,
+      status: newInboundStatus || "Scheduled",
     };
     setInboundSchedulesList((prev) => [newItem, ...prev]);
 
