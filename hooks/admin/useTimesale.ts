@@ -6,8 +6,24 @@ import React from "react";
 
 export function useTimesale(triggerToast: (msg: string) => void) {
   // Time sale states
-  const [adminTimeSaleHours, setAdminTimeSaleHours] = useState("14");
-  const [adminTimeSaleMinutes, setAdminTimeSaleMinutes] = useState("55");
+  const [adminTimeSaleHours, setAdminTimeSaleHours] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedSeconds = localStorage.getItem("secret_timesale_seconds");
+      if (savedSeconds) {
+        return Math.floor(parseInt(savedSeconds) / 3600).toString();
+      }
+    }
+    return "14";
+  });
+  const [adminTimeSaleMinutes, setAdminTimeSaleMinutes] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedSeconds = localStorage.getItem("secret_timesale_seconds");
+      if (savedSeconds) {
+        return Math.floor((parseInt(savedSeconds) % 3600) / 60).toString();
+      }
+    }
+    return "55";
+  });
   const [adminTimeSaleDiscount, setAdminTimeSaleDiscount] = useState("35");
   const [adminTimeSaleTitle, setAdminTimeSaleTitle] = useState("VIP 회원만을 위해 준비된 파격 할인 한정 단독 시크릿 타임세일");
   const [adminTimeSaleStatus, setAdminTimeSaleStatus] = useState("active");
@@ -129,7 +145,13 @@ export function useTimesale(triggerToast: (msg: string) => void) {
   useEffect(() => {
     const h = parseInt(adminTimeSaleHours) || 0;
     const m = parseInt(adminTimeSaleMinutes) || 0;
-    setTimeSaleRemainingSec(h * 3600 + m * 60);
+    const totalSec = h * 3600 + m * 60;
+    setTimeSaleRemainingSec(totalSec);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("secret_timesale_seconds", totalSec.toString());
+      } catch (e) {}
+    }
   }, [adminTimeSaleHours, adminTimeSaleMinutes]);
 
   useEffect(() => {

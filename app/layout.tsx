@@ -57,8 +57,7 @@ export default async function RootLayout({
               (function() {
                 if (typeof window === 'undefined') return;
                 try {
-                  localStorage.removeItem('admin_products');
-                  localStorage.removeItem('admin_custom_products');
+                  // Admin product cache persistence preserved
                 } catch(e) {}
                 if (Node.prototype.removeChild) {
                   var origRemoveChild = Node.prototype.removeChild;

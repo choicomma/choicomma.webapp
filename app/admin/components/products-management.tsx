@@ -367,6 +367,9 @@ function TimeSettingPopover({
       d.setDate(d.getDate() + 1);
       d.setHours(10, 0, 0, 0);
     } else if (preset === "today18") {
+      if (d.getHours() >= 18) {
+        d.setDate(d.getDate() + 1);
+      }
       d.setHours(18, 0, 0, 0);
     } else if (preset === "day3_10") {
       d.setDate(d.getDate() + 3);
@@ -377,6 +380,7 @@ function TimeSettingPopover({
     }
     const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     setReleaseDate(iso);
+    onSaveSchedule(available, iso);
   };
 
   const handleClearSchedule = () => {
