@@ -493,8 +493,8 @@ export default function AdminPage() {
 
   // Main Home Page Admin Control State
   const [mainBadgeText, setMainBadgeText] = useState("latest drop");
-  const [mainNoticeBanner, setMainNoticeBanner] = useState("전 상품 무료배송 & VIP 회원 추가 10% 할인이 진행 중입니다.");
-  const [isMainNoticeActive, setIsMainNoticeActive] = useState(true);
+  const [mainNoticeBanner, setMainNoticeBanner] = useState("");
+  const [isMainNoticeActive, setIsMainNoticeActive] = useState(false);
 
   // Default Admin Account
   const DEFAULT_ADMIN_CUSTOMER = {

@@ -61,17 +61,17 @@ export function MainPageManagement({
   // Local fallback states for notice banner and badge
   const [localNotice, setLocalNotice] = useState<string>(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("main_notice_banner") || "전 상품 무료배송 & VIP 회원 추가 10% 할인이 진행 중입니다.";
+      return localStorage.getItem("main_notice_banner") || "";
     }
-    return "전 상품 무료배송 & VIP 회원 추가 10% 할인이 진행 중입니다.";
+    return "";
   });
 
   const [localNoticeActive, setLocalNoticeActive] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("main_notice_active");
-      return saved !== null ? saved === "true" : true;
+      return saved !== null ? saved === "true" : false;
     }
-    return true;
+    return false;
   });
 
   const [localBadge, setLocalBadge] = useState<string>(() => {
@@ -459,7 +459,7 @@ export function MainPageManagement({
                 type="text"
                 value={noticeValue}
                 onChange={(e) => handleUpdateNotice(e.target.value)}
-                placeholder="예: 전 상품 무료배송 & VIP 회원 추가 10% 할인이 진행 중입니다."
+                placeholder="예: 공지사항 또는 프로모션 안내 문구를 입력하세요"
                 className="w-full bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-3.5 py-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-colors"
               />
             </div>
