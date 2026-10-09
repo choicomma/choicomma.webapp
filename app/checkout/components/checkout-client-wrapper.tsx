@@ -23,8 +23,6 @@ import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
 import { generateNextOrderId } from "@/lib/shipping/order-id";
 import { splitKoreanAddress } from "@/lib/address";
-
-import { supabase } from "@/lib/supabase/client";
 import {
   normalizeUserGrade,
   getTierPointRate,
@@ -357,21 +355,26 @@ export default function CheckoutClientWrapper() {
         } catch (e) {}
       }
 
-      // Supabase DB customers 실시간 조회 (DB에 최신 등급/적립금이 있는 경우)
+      // Git data/customers.json 실시간 조회 (최신 등급/적립금이 있는 경우)
       if (currentEmail || currentPhone) {
         try {
-          let query = supabase.from("customers").select("grade, points, email, phone");
-          if (currentEmail) {
-            query = query.eq("email", currentEmail);
-          } else if (currentPhone) {
-            query = query.eq("phone", currentPhone);
-          }
-          const { data, error } = await query;
-          if (!error && data && data.length > 0 && isMounted) {
-            const sbCust = data[0];
-            if (sbCust.grade) determinedGrade = sbCust.grade;
-            if (sbCust.points !== undefined && !isNaN(Number(sbCust.points))) {
-              foundPoints = Number(sbCust.points);
+          const res = await fetch("/api/admin/customers", { cache: "no-store" });
+          if (res.ok) {
+            const json = await res.json();
+            const customers: any[] = json.customers || [];
+            const matched = customers.find((c: any) => {
+              const cEmail = (c.email || "").toLowerCase().trim();
+              const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+              return (
+                (currentEmail && cEmail === currentEmail) ||
+                (currentPhone && currentPhone.length >= 8 && cPhone === currentPhone)
+              );
+            });
+            if (matched && isMounted) {
+              if (matched.grade) determinedGrade = matched.grade;
+              if (matched.points !== undefined && !isNaN(Number(matched.points))) {
+                foundPoints = Number(matched.points);
+              }
             }
           }
         } catch (e) {}

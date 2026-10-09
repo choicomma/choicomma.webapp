@@ -1,6 +1,11 @@
+/**
+ * @deprecated [MIGRATION COMPLETED]
+ * 초이콤마의 모든 운영 데이터는 이제 로컬 Git JSON(data/*.json) 파일로 완전 이전되었습니다.
+ * 본 파일은 하위 호환성 보존을 위한 스텁(Stub)이며, 런타임 앱 코드에서 직접 호출되지 않습니다.
+ */
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-// 환경변수가 누락되었을 때 createClient()가 즉시 에러(supabaseUrl is required)를 던지며
+// 환경변수가 누락되었을 때 createClient()가 즉시 에러를 던지지 않도록 방어 (0% 의존성)
 // 전체 웹앱이 다운되는 것을 방지하기 위한 방어 코드
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const rawKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)?.trim();

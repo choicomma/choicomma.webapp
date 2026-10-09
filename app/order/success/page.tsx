@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle2, ShoppingBag, ArrowRight, ShieldCheck, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
-import { supabase } from "@/lib/supabase/client";
 import { recordCouponUsage } from "@/lib/membership/coupons";
 
 interface SuccessParams {
@@ -161,19 +160,18 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
 
           window.dispatchEvent(new CustomEvent("live_chat_updated"));
 
-          // Supabase chat_messages에 교환 완료 카드 등록
+          // Git chat_messages에 교환 완료 카드 등록
           if (rawId && rawId !== "guest") {
-            supabase
-              .from("chat_messages")
-              .insert([
-                {
-                  id: newMsg.id,
-                  sessionId: rawId,
-                  sender: "user",
-                  text: newMsg.text,
-                },
-              ])
-              .then(() => {});
+            fetch("/api/admin/chat?type=message", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: newMsg.id,
+                sessionId: rawId,
+                sender: "user",
+                text: newMsg.text,
+              }),
+            }).catch(() => {});
           }
         }
 
@@ -344,12 +342,12 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
               orderMemo: newOrder.shippingMemo || "",
             };
 
-            supabase
-              .from("orders")
-              .upsert([dbOrder], { onConflict: "id" })
-              .then(({ error }) => {
-                if (error) console.warn("Supabase orders insert notice:", error.message);
-              });
+            // 1) Git orders API에 영구 동기화
+            fetch("/api/orders", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(dbOrder),
+            }).catch((err) => console.warn("Orders API insert notice:", err));
 
             // 2) 서버 API에 백그라운드 영구 동기화
             fetch("/api/admin/shipments", {
@@ -505,28 +503,26 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
                   ? { phone: customerPhone }
                   : null;
 
-                if (matchFilter) {
-                  supabase
-                    .from("customers")
-                    .select("id, points, totalSpent")
-                    .match(matchFilter)
-                    .then(({ data: sbCusts }) => {
-                      if (sbCusts && sbCusts.length > 0) {
-                        const dbCust = sbCusts[0];
-                        const updatedDbPoints = updatedUserPoints;
+                const searchTarget = customerEmail || customerPhone;
+                if (searchTarget) {
+                  fetch(`/api/admin/customers?q=${encodeURIComponent(searchTarget)}`)
+                    .then((res) => res.json())
+                    .then((json) => {
+                      if (json?.customers && json.customers.length > 0) {
+                        const dbCust = json.customers[0];
                         const updatedDbSpent = (Number(dbCust.totalSpent) || 0) + (isZeroPayment ? 0 : Number(amount));
-                        supabase
-                          .from("customers")
-                          .update({
-                            points: updatedDbPoints,
+                        fetch("/api/admin/customers", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            ...dbCust,
+                            points: updatedUserPoints,
                             totalSpent: updatedDbSpent,
-                          })
-                          .eq("id", dbCust.id)
-                          .then(({ error }) => {
-                            if (error) console.warn("Supabase customer points update notice:", error.message);
-                          });
+                          }),
+                        }).catch(() => {});
                       }
-                    });
+                    })
+                    .catch(() => {});
                 }
               } catch (e) {}
 

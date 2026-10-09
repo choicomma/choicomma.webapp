@@ -24,7 +24,7 @@ import {
   Layers3,
   CalendarDays,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
+
 
 // 정적 백업 JSON 데이터 임포트
 import fallbackDailyData from "@/lib/sfcc/sales-daily-data.json";
@@ -181,59 +181,45 @@ export function RevenueManagement({ triggerToast, shipmentsList = [] }: RevenueM
   const [itemsSalesMap, setItemsSalesMap] = useState<Record<string, ItemRecord[]>>(
     fallbackItemsData as Record<string, ItemRecord[]>
   );
-  const [isSupabaseSynced, setIsSupabaseSynced] = useState<boolean>(false);
+  const [isGitSynced, setIsGitSynced] = useState<boolean>(false);
 
-  // Supabase 실시간 동기화
-  const loadSalesFromSupabase = useCallback(async () => {
+  // Git site-settings 실시간 동기화
+  const loadSalesFromSettings = useCallback(async () => {
     try {
-      const [mRes, iRes] = await Promise.all([
-        supabase.from("site_settings").select("value").eq("key", "monthly_revenue_history").maybeSingle(),
-        supabase.from("site_settings").select("value").eq("key", "items_revenue_history").maybeSingle(),
-      ]);
+      const res = await fetch("/api/admin/site-settings", { cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        const settings = json.settings || {};
+        let syncedCount = 0;
+        if (settings.monthly_revenue_history && Array.isArray(settings.monthly_revenue_history)) {
+          setMonthlySalesList(settings.monthly_revenue_history);
+          syncedCount++;
+        }
+        if (settings.items_revenue_history && typeof settings.items_revenue_history === "object") {
+          setItemsSalesMap(settings.items_revenue_history);
+          syncedCount++;
+        }
 
-      let syncedCount = 0;
-      if (mRes.data?.value && Array.isArray(mRes.data.value)) {
-        setMonthlySalesList(mRes.data.value);
-        syncedCount++;
-      }
-      if (iRes.data?.value && typeof iRes.data.value === "object") {
-        setItemsSalesMap(iRes.data.value);
-        syncedCount++;
-      }
-
-      if (syncedCount > 0) {
-        setIsSupabaseSynced(true);
+        if (syncedCount > 0) {
+          setIsGitSynced(true);
+        }
       }
     } catch (err) {
-      console.warn("Failed to load sales from Supabase, using local data:", err);
+      console.warn("Failed to load sales from site settings, using local data:", err);
     }
   }, []);
 
   useEffect(() => {
-    loadSalesFromSupabase();
+    loadSalesFromSettings();
 
-    const channel = supabase
-      .channel("sales_stats_sync")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "site_settings" },
-        (payload) => {
-          if (payload.new && (payload.new as any).key === "monthly_revenue_history") {
-            setMonthlySalesList((payload.new as any).value);
-            setIsSupabaseSynced(true);
-          }
-          if (payload.new && (payload.new as any).key === "items_revenue_history") {
-            setItemsSalesMap((payload.new as any).value);
-            setIsSupabaseSynced(true);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+    const handleUpdate = () => {
+      loadSalesFromSettings();
     };
-  }, [loadSalesFromSupabase]);
+    window.addEventListener("site_settings_updated", handleUpdate);
+    return () => {
+      window.removeEventListener("site_settings_updated", handleUpdate);
+    };
+  }, [loadSalesFromSettings]);
 
   // 가용 연도 및 월 목록 동적 산출
   const availableYears = useMemo(() => ["2026", "2025", "2024"], []);
@@ -574,10 +560,10 @@ export function RevenueManagement({ triggerToast, shipmentsList = [] }: RevenueM
               <h1 className="text-xl md:text-2xl font-extrabold text-neutral-950">
                 매출 & 아이템 성과 분석 대시보드
               </h1>
-              {isSupabaseSynced ? (
+              {isGitSynced ? (
                 <span className="text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-2xs">
                   <Database className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>슈파베이스(Supabase) 실시간 연동 완료</span>
+                  <span>Git 데이터 실시간 연동 완료</span>
                 </span>
               ) : (
                 <span className="text-xs bg-neutral-100 text-neutral-800 border border-neutral-200 font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">

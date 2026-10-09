@@ -1,10 +1,24 @@
 import { NextResponse } from "next/server";
-import { supabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
+import fs from "fs";
+import path from "path";
 import { getTodayKSTDateString, formatOrderId, parseOrderId } from "@/lib/shipping/order-id";
 import { initialShipments } from "@/lib/sfcc/mock/shipments-data";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+function readJsonFileSafe(filePath: string): any[] {
+  try {
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data;
+    }
+  } catch (err) {
+    console.warn(`[Read Warning: ${filePath}]:`, err);
+  }
+  return [];
+}
 
 export async function GET() {
   try {
@@ -19,32 +33,17 @@ export async function GET() {
       }
     };
 
-    // 1. Supabase 조회 (shipments 및 orders 테이블)
-    if (isSupabaseConfigured) {
-      try {
-        const { data: shipments } = await supabaseServer
-          .from("shipments")
-          .select("orderId, id")
-          .ilike("orderId", `%${today}%`);
+    // 1. data/shipments.json 검사
+    const shipmentsPath = path.join(process.cwd(), "data", "shipments.json");
+    const shipments = readJsonFileSafe(shipmentsPath);
+    shipments.forEach((s) => checkOrderId(s.orderId || s.id));
 
-        if (Array.isArray(shipments)) {
-          shipments.forEach((s) => checkOrderId(s.orderId || s.id));
-        }
+    // 2. data/orders.json 검사
+    const ordersPath = path.join(process.cwd(), "data", "orders.json");
+    const orders = readJsonFileSafe(ordersPath);
+    orders.forEach((o) => checkOrderId(o.orderNumber || o.id));
 
-        const { data: orders } = await supabaseServer
-          .from("orders")
-          .select("orderNumber, id")
-          .ilike("orderNumber", `%${today}%`);
-
-        if (Array.isArray(orders)) {
-          orders.forEach((o) => checkOrderId(o.orderNumber || o.id));
-        }
-      } catch (err) {
-        console.warn("[next-id API] Supabase query notice:", err);
-      }
-    }
-
-    // 2. Mock shipments 원장도 검사
+    // 3. Fallback mock shipments 검사
     if (Array.isArray(initialShipments)) {
       initialShipments.forEach((s: any) => checkOrderId(s.orderId || s.id));
     }
@@ -59,14 +58,13 @@ export async function GET() {
       today,
     });
   } catch (error: any) {
+    console.error("[next-id API Error]:", error);
     const today = getTodayKSTDateString();
-    const fallbackId = formatOrderId(today, 1);
     return NextResponse.json({
       success: true,
-      nextOrderId: fallbackId,
+      nextOrderId: formatOrderId(today, 1),
       sequence: 1,
       today,
-      fallback: true,
     });
   }
 }

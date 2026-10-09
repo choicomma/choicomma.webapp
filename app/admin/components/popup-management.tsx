@@ -379,6 +379,28 @@ export function PopupManagement({
             </div>
 
             <div className="space-y-1.5">
+              <label className="text-xs font-bold text-neutral-700 block">공지 핵심 문구 (텍스트 공지 모드)</label>
+              <textarea
+                rows={2}
+                value={config.noticeMessage || ""}
+                onChange={(e) => setConfig((prev) => ({ ...prev, noticeMessage: e.target.value }))}
+                placeholder="초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다."
+                className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-none"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-neutral-700 block">정상화 완료 목표 기한</label>
+              <input
+                type="text"
+                value={config.noticePeriod || ""}
+                onChange={(e) => setConfig((prev) => ({ ...prev, noticePeriod: e.target.value }))}
+                placeholder="2026.10.12일까지"
+                className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950"
+              />
+            </div>
+
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-neutral-700 block">
                 팝업 클릭 시 이동할 링크 URL (선택)
               </label>
@@ -393,7 +415,7 @@ export function PopupManagement({
                 <ExternalLink className="w-4 h-4 text-neutral-400 absolute left-3 top-3" />
               </div>
               <p className="text-[11px] text-neutral-400">
-                입력하지 않으면 단순 이미지 팝업으로 표시되며 클릭 시 아무 링크로도 이동하지 않습니다.
+                입력하지 않으면 단순 이미지/공지 팝업으로 표시되며 클릭 시 아무 링크로도 이동하지 않습니다.
               </p>
             </div>
 
@@ -434,8 +456,50 @@ export function PopupManagement({
 
             {/* Preview Display Stage */}
             <div className="min-h-[460px] bg-neutral-100/90 rounded-2xl p-4 sm:p-6 flex items-center justify-center border border-neutral-200 relative overflow-hidden">
-              {/* When no image uploaded yet */}
-              {!config.imageUrl ? (
+              {/* When notice mode or no image uploaded yet */}
+              {previewTab === "home" && (config.popupType === "NOTICE" || (!config.imageUrl && (config.noticeMessage || config.title))) ? (
+                /* TAB 1: Home Notice Modal Preview */
+                <div className="relative w-full max-w-[440px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-200 flex flex-col text-left">
+                  <div className="h-1.5 w-full bg-gradient-to-r from-neutral-950 via-amber-600 to-neutral-900" />
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-900 border border-amber-300">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        긴급 안내 (NOTICE)
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-400">CHOICOMMA</span>
+                    </div>
+
+                    <h4 className="text-base font-black text-neutral-950 leading-snug break-keep">
+                      {config.title || "초이콤마 글로벌 몰 오픈 준비 및 서비스 일시 이용 불가 안내"}
+                    </h4>
+
+                    <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-400/40 space-y-2">
+                      <p className="text-xs font-black text-neutral-900 leading-relaxed break-keep">
+                        "{config.noticeMessage || "초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다."}"
+                      </p>
+                      <div className="flex items-center justify-between pt-1 border-t border-amber-300/40 text-[11px] font-bold">
+                        <span className="text-amber-950">정상화 목표 기한:</span>
+                        <span className="text-rose-600 font-black">{config.noticePeriod || "2026.10.12(월)까지"}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs text-neutral-800 leading-relaxed break-keep">
+                      <p className="font-semibold text-rose-600">
+                        현재 일시적으로 쇼핑몰 서비스 이용 및 접속을 하실 수 없습니다.
+                      </p>
+                      <p className="text-[11px] text-neutral-500">
+                        2026년 10월 12일까지 신속히 정상화하겠습니다. (기존 주문 배송 정상 진행)
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500 font-bold">
+                      <span>☑ 오늘 하루 동안 열지 않기</span>
+                      <span className="px-3 py-1 bg-neutral-950 text-white rounded-lg font-black text-[11px]">확인 및 닫기</span>
+                    </div>
+                  </div>
+                </div>
+              ) : !config.imageUrl ? (
                 <div className="text-center p-8 space-y-3 max-w-sm">
                   <div className="w-14 h-14 rounded-2xl bg-neutral-200/70 mx-auto flex items-center justify-center text-neutral-400">
                     <ImageIcon className="w-7 h-7 stroke-1" />
@@ -516,7 +580,7 @@ export function PopupManagement({
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 <span>저장 시 메인 화면 및 멤버십 페이지에 0초 지연 실시간 반영됩니다.</span>
               </span>
-              <span className="font-mono text-[10px] text-neutral-400">Sync: Supabase + LocalStorage</span>
+              <span className="font-mono text-[10px] text-emerald-600 font-bold">Sync: Git JSON + LocalStorage</span>
             </div>
           </div>
         </div>

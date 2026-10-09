@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import { supabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export interface VisitorRecord {
   id: string;
@@ -97,39 +96,11 @@ export async function initializeStore(): Promise<AnalyticsStore> {
     console.warn("Notice: Failed to read local visitor store:", err);
   }
 
-  // 2순위: Supabase site_settings 확인
-  try {
-    if (isSupabaseConfigured) {
-      const { data } = await supabaseServer
-        .from("site_settings")
-        .select("value")
-        .eq("key", "real_visitor_analytics_store")
-        .single();
-
-      if (data && data.value && Array.isArray(data.value.logs)) {
-        memoryStore = {
-          logs: data.value.logs || [],
-          blockedIps: data.value.blockedIps || [],
-          suspiciousActivities: data.value.suspiciousActivities || [],
-          adminIps: Array.isArray(data.value.adminIps)
-            ? data.value.adminIps
-            : ["127.0.0.1", "::1", "localhost", "172.30.1.74"],
-          updatedAt: data.value.updatedAt || new Date().toISOString(),
-        };
-        isInitialized = true;
-        persistStoreLocally(memoryStore);
-        return memoryStore;
-      }
-    }
-  } catch (err) {
-    console.warn("Notice: Failed to load from Supabase visitor store:", err);
-  }
-
   isInitialized = true;
   return memoryStore;
 }
 
-// 2. 파일 및 Supabase에 비동기 저장
+// 2. 파일에 비동기 저장
 function persistStoreLocally(store: AnalyticsStore) {
   try {
     const dir = path.dirname(STORE_FILE_PATH);
@@ -139,23 +110,6 @@ function persistStoreLocally(store: AnalyticsStore) {
     fs.writeFileSync(STORE_FILE_PATH, JSON.stringify(store, null, 2), "utf8");
   } catch (err) {
     console.error("Failed to write visitor data to disk:", err);
-  }
-}
-
-async function syncToSupabase(store: AnalyticsStore) {
-  if (!isSupabaseConfigured) return;
-  try {
-    await supabaseServer.from("site_settings").upsert(
-      {
-        key: "real_visitor_analytics_store",
-        value: store,
-        description: "실제 방문자 트래픽 및 접속 로그 통합 저장소 (관리자 IP 제외)",
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "key" }
-    );
-  } catch (err) {
-    console.warn("Failed to sync visitor data to Supabase:", err);
   }
 }
 

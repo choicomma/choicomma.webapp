@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+
 
 export interface AvailableCoupon {
   id: string;
@@ -228,43 +228,35 @@ export function saveAdminCoupons(coupons: AvailableCoupon[]): void {
       );
     } catch (e) {}
 
-    Promise.resolve(
-      supabase
-        .from("site_settings")
-        .upsert({
+    try {
+      fetch("/api/admin/site-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           key: "admin_coupons_config",
-          value: JSON.stringify(cleanCoupons),
-          updated_at: new Date().toISOString(),
-        })
-    )
-      .then(({ error }: any) => {
-        if (error) console.warn("Supabase coupons config sync notice:", error?.message);
-      })
-      .catch(() => {});
+          value: cleanCoupons,
+        }),
+      }).catch(() => {});
+    } catch (e) {}
   }
 }
 
 /**
- * Supabase 원격 DB(site_settings)로부터 최신 관리자 쿠폰 설정을 비동기 동기화합니다.
+ * Git 원격/로컬 site_settings로부터 최신 관리자 쿠폰 설정을 비동기 동기화합니다.
  */
 export async function syncAdminCouponsFromSupabase(): Promise<AvailableCoupon[]> {
   try {
-    const { data, error } = await supabase
-      .from("site_settings")
-      .select("value")
-      .eq("key", "admin_coupons_config")
-      .maybeSingle();
-
-    if (!error && data?.value) {
-      let parsed: any = null;
-      if (typeof data.value === "string") {
+    const res = await fetch("/api/admin/site-settings?key=admin_coupons_config", { cache: "no-store" });
+    if (res.ok) {
+      const json = await res.json();
+      const val = json.value;
+      let parsed: any = val;
+      if (typeof val === "string") {
         try {
-          parsed = JSON.parse(data.value);
+          parsed = JSON.parse(val);
         } catch (e) {
           console.warn("JSON parse error for admin_coupons_config:", e);
         }
-      } else if (Array.isArray(data.value)) {
-        parsed = data.value;
       }
 
       if (Array.isArray(parsed)) {
@@ -296,6 +288,8 @@ export async function syncAdminCouponsFromSupabase(): Promise<AvailableCoupon[]>
 
   return getAllUserCoupons();
 }
+
+export const syncAdminCouponsFromGit = syncAdminCouponsFromSupabase;
 
 /**
  * 관리자가 등록한 쿠폰 설정을 초기화합니다 (빈 목록).
@@ -358,19 +352,16 @@ export function saveCouponUsageHistory(history: CouponUsageRecord[]): void {
     window.dispatchEvent(new CustomEvent("storage", { detail: { key: "admin_coupon_usage_history" } }));
     window.dispatchEvent(new CustomEvent("coupon_usage_updated"));
 
-    Promise.resolve(
-      supabase
-        .from("site_settings")
-        .upsert({
+    try {
+      fetch("/api/admin/site-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           key: "admin_coupon_usage_history",
-          value: JSON.stringify(history),
-          updated_at: new Date().toISOString(),
-        })
-    )
-      .then(({ error }: any) => {
-        if (error) console.warn("Supabase coupon usage history sync notice:", error?.message);
-      })
-      .catch(() => {});
+          value: history,
+        }),
+      }).catch(() => {});
+    } catch (e) {}
   } catch (e) {
     console.error("Failed to save coupon usage history:", e);
   }

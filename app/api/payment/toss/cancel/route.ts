@@ -1,5 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
+import fs from "fs";
+import path from "path";
+
+function getPaymentLogsFilePath() {
+  return path.join(process.cwd(), "data", "payment-logs.json");
+}
+
+function readPaymentLogs(): any[] {
+  try {
+    const filePath = getPaymentLogsFilePath();
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data;
+    }
+  } catch (err) {
+    console.warn("[Payment Logs Read Warning]:", err);
+  }
+  return [];
+}
+
+function writePaymentLogs(logs: any[]) {
+  try {
+    const targetPath = getPaymentLogsFilePath();
+    const dir = path.dirname(targetPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    const tempPath = `${targetPath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
+    const jsonStr = JSON.stringify(logs, null, 2);
+    try {
+      fs.writeFileSync(tempPath, jsonStr, "utf-8");
+      fs.renameSync(tempPath, targetPath);
+    } catch {
+      try {
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+      } catch {}
+      fs.writeFileSync(targetPath, jsonStr, "utf-8");
+    }
+  } catch (err) {
+    console.error("[Payment Logs Write Error]:", err);
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,24 +53,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. paymentKey 찾기 (직접 전달되지 않은 경우 Supabase payment_logs에서 조회)
+    // 1. paymentKey 찾기 (직접 전달되지 않은 경우 data/payment-logs.json에서 조회)
     let effPaymentKey = paymentKey?.trim() || "";
 
     if (!effPaymentKey) {
       try {
-        const { data: logData } = await supabaseServer
-          .from("payment_logs")
-          .select("paymentKey, amount, status")
-          .eq("orderId", orderId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (logData?.paymentKey) {
-          effPaymentKey = logData.paymentKey;
+        const logs = readPaymentLogs();
+        const found = logs.find((l) => l.orderId === orderId);
+        if (found?.paymentKey) {
+          effPaymentKey = found.paymentKey;
         }
-      } catch (dbErr) {
-        console.warn("Notice: Failed to lookup paymentKey from Supabase:", dbErr);
+      } catch (err) {
+        console.warn("Notice: Failed to lookup paymentKey from payment-logs.json:", err);
       }
     }
 
@@ -74,13 +109,12 @@ export async function POST(req: NextRequest) {
       };
 
       try {
-        await supabaseServer
-          .from("payment_logs")
-          .update({
-            status: "CANCELED",
-            rawResponse: mockResult,
-          })
-          .eq("orderId", orderId);
+        const logs = readPaymentLogs();
+        const idx = logs.findIndex((l) => l.orderId === orderId);
+        if (idx !== -1) {
+          logs[idx] = { ...logs[idx], status: "CANCELED", rawResponse: mockResult, canceledAt: mockResult.canceledAt };
+          writePaymentLogs(logs);
+        }
       } catch {}
 
       return NextResponse.json({
@@ -123,17 +157,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Supabase payment_logs 테이블 상태를 CANCELED로 업데이트
+    // 4. Git payment-logs.json 테이블 상태를 CANCELED로 업데이트
     try {
-      await supabaseServer
-        .from("payment_logs")
-        .update({
+      const logs = readPaymentLogs();
+      const idx = logs.findIndex((l) => l.paymentKey === effPaymentKey || l.orderId === orderId);
+      if (idx !== -1) {
+        logs[idx] = {
+          ...logs[idx],
           status: data.status || "CANCELED",
           rawResponse: data,
-        })
-        .eq("paymentKey", effPaymentKey);
+          canceledAt: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        writePaymentLogs(logs);
+      }
     } catch (dbErr) {
-      console.warn("Notice: Failed to update payment_logs in Supabase:", dbErr);
+      console.warn("Notice: Failed to update payment_logs in Git JSON:", dbErr);
     }
 
     return NextResponse.json({
@@ -144,7 +183,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Toss Cancel API Internal Error:", error);
     return NextResponse.json(
-      { message: error.message || "서버 내부 오류가 발생했습니다." },
+      { message: error.message || "결제 취소 처리 중 서버 오류가 발생했습니다." },
       { status: 500 }
     );
   }

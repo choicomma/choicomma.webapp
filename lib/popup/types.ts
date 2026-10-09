@@ -1,27 +1,35 @@
 export interface PopupConfig {
   id: string;
   title: string;
+  subtitle?: string;
   imageUrl: string;
   linkUrl: string;
   isActive: boolean;
   showOnHome: boolean;
   showOnMembership: boolean;
   hideForTodayEnabled: boolean;
+  popupType?: "IMAGE" | "NOTICE";
+  noticeMessage?: string;
+  noticePeriod?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export const DEFAULT_POPUP_CONFIG: PopupConfig = {
-  id: "main_popup_001",
-  title: "초이콤마 시즌 스페셜 이벤트",
+  id: "global_mall_notice_20261012",
+  title: "초이콤마 글로벌 몰 오픈 준비 및 서비스 일시 이용 불가 안내",
+  subtitle: "GLOBAL STORE LAUNCH & TEMPORARY SERVICE UNAVAILABILITY NOTICE",
   imageUrl: "",
-  linkUrl: "/shop",
-  isActive: false,
+  linkUrl: "",
+  isActive: true,
   showOnHome: true,
-  showOnMembership: true,
+  showOnMembership: false,
   hideForTodayEnabled: true,
-  createdAt: "2026-09-28",
-  updatedAt: "2026-09-28",
+  popupType: "NOTICE",
+  noticeMessage: "초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다.",
+  noticePeriod: "2026.10.12일까지",
+  createdAt: "2026-10-09",
+  updatedAt: "2026-10-09",
 };
 
 export const POPUP_STORAGE_KEY = "admin_popup_config";

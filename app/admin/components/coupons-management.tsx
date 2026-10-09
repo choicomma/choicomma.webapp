@@ -38,7 +38,6 @@ import {
   cancelCouponUsage,
   resetCouponUsageHistory,
 } from "@/lib/membership/coupons";
-import { supabase } from "@/lib/supabase/client";
 import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
 
 interface CouponsManagementProps {
@@ -165,19 +164,15 @@ export function CouponsManagement({
       }
     });
 
-    // Supabase site_settings로부터 최신 쿠폰 사용 내역 동기화
+    // Git site_settings로부터 최신 쿠폰 사용 내역 동기화
     if (typeof window !== "undefined") {
-      Promise.resolve(
-        supabase
-          .from("site_settings")
-          .select("value")
-          .eq("key", "admin_coupon_usage_history")
-          .maybeSingle()
-      )
-        .then(({ data, error }: any) => {
-          if (!error && data?.value) {
+      fetch("/api/admin/site-settings?key=admin_coupon_usage_history", { cache: "no-store" })
+        .then((res) => res.json())
+        .then((json) => {
+          if (json?.success && json?.value) {
             try {
-              const parsed = JSON.parse(data.value);
+              const val = json.value;
+              const parsed = typeof val === "string" ? JSON.parse(val) : val;
               if (Array.isArray(parsed)) {
                 localStorage.setItem("admin_coupon_usage_history", JSON.stringify(parsed));
                 setUsageHistory(parsed);

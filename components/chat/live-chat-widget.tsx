@@ -31,7 +31,6 @@ import {
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
 import { DEFAULT_AUTO_RULES, type AutoReplyRule } from "@/app/admin/components/inquiries-management";
-import { supabase } from "@/lib/supabase/client";
 import { splitKoreanAddress } from "@/lib/address";
 import { initCustomerSession } from "@/lib/auth/customer-session";
 import { getProductThumbnail } from "@/lib/products/thumbnail-helper";
@@ -701,21 +700,27 @@ export function LiveChatWidget() {
         }
       }
 
-      // 3. Supabase DB 조회
+      // 3. Git customers (data/customers.json) 조회
       if (!matchedCustomer) {
         try {
-          let query = supabase.from("customers").select("*");
-          if (inputId.includes("@")) {
-            query = query.ilike("email", inputId);
-          } else if (cleanPhoneId.length >= 8) {
-            query = query.or(`phone.eq.${inputId},phone.eq.${cleanPhoneId}`);
-          } else {
-            query = query.or(`email.ilike.${inputId},phone.eq.${inputId},id.eq.${inputId}`);
-          }
-          const { data, error } = await query.limit(1).maybeSingle();
-          if (!error && data) {
-            matchedCustomer = data;
-            if (typeof window !== "undefined") {
+          const res = await fetch("/api/admin/customers", { cache: "no-store" });
+          if (res.ok) {
+            const json = await res.json();
+            const customers: any[] = json.customers || [];
+            matchedCustomer = customers.find((c: any) => {
+              const cEmail = (c.email || "").toLowerCase().trim();
+              const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+              const cId = (c.id || "").toLowerCase().trim();
+              const cLoginId = (c.loginId || c.login_id || "").toLowerCase().trim();
+              return (
+                (inputId.includes("@") && cEmail === inputId.toLowerCase()) ||
+                (cleanPhoneId.length >= 8 && cPhone === cleanPhoneId) ||
+                (c.phone && c.phone.trim() === inputId) ||
+                cId === inputId.toLowerCase() ||
+                cLoginId === inputId.toLowerCase()
+              );
+            });
+            if (matchedCustomer && typeof window !== "undefined") {
               const saved = localStorage.getItem("admin_customers");
               let list: any[] = [];
               if (saved) {
@@ -876,16 +881,17 @@ export function LiveChatWidget() {
     localStorage.setItem("admin_chat_sessions", JSON.stringify(sessionList));
 
     try {
-      supabase.from("chat_sessions").upsert([
-        {
+      fetch("/api/admin/chat?type=session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           id: rawId,
           customerName: uName,
           customerEmail: uEmail,
           customerPhone: phone || "",
           status: status,
-          updated_at: new Date().toISOString(),
-        }
-      ], { onConflict: "id" }).then(() => {});
+        }),
+      }).catch(() => {});
     } catch (e) {}
 
     window.dispatchEvent(new CustomEvent("live_chat_updated"));
@@ -992,20 +998,18 @@ export function LiveChatWidget() {
       localStorage.setItem(chatKey, JSON.stringify(defaultInit));
     }
 
-    // Sync from Supabase chat_messages with non-destructive merge
+    // Sync from Git chat API (/api/admin/chat) with non-destructive merge
     if (rawId) {
-      supabase
-        .from("chat_messages")
-        .select("*")
-        .or(`sessionId.eq.${rawId},sessionId.eq.${email}`)
-        .order("created_at", { ascending: true })
-        .then(({ data: dbMsgs, error }) => {
+      fetch(`/api/admin/chat?type=messages&sessionId=${encodeURIComponent(rawId)}`, { cache: "no-store" })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
           // If a reset occurred within the last 1.5s, ignore any in-flight stale data
           if (Date.now() - lastResetTimeRef.current < 1500) {
             return;
           }
 
-          if (!error && Array.isArray(dbMsgs)) {
+          const dbMsgs = json?.messages;
+          if (Array.isArray(dbMsgs)) {
             const defaultWelcome: ChatMessage = {
               id: "msg-welcome-1",
               sender: "admin",
@@ -1152,69 +1156,36 @@ export function LiveChatWidget() {
     };
     window.addEventListener("live_chat_config_updated", handleConfigUpdate);
 
-    // Initial sync of auto-reply config from Supabase site_settings
+    // Initial sync of auto-reply config from Git site_settings API
     const syncAutoReplyConfig = async () => {
       try {
-        const { data, error } = await supabase
-          .from("site_settings")
-          .select("value")
-          .eq("key", "chat_auto_reply_config")
-          .maybeSingle();
-
-        if (!error && data?.value) {
-          const val = data.value;
-          if (typeof window !== "undefined") {
-            if (typeof val.enabled === "boolean") {
-              localStorage.setItem("admin_auto_reply_enabled", String(val.enabled));
-            }
-            if (typeof val.delay === "number") {
-              localStorage.setItem("admin_auto_reply_delay", String(val.delay));
-            }
-            if (Array.isArray(val.rules) && val.rules.length > 0) {
-              localStorage.setItem("admin_auto_reply_rules", JSON.stringify(val.rules));
-            }
-            if (typeof val.fallback === "string" && val.fallback.trim()) {
-              localStorage.setItem("admin_auto_reply_fallback", val.fallback.trim());
-            }
-          }
-          if (typeof val.fallback === "string" && val.fallback.trim()) {
-            updateWelcomeMessageInState(val.fallback.trim());
-          }
-        }
-      } catch (e) {}
-    };
-    syncAutoReplyConfig();
-
-    // Supabase Realtime channel for site_settings
-    const settingsChannel = supabase
-      .channel("customer_chat_settings_realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "site_settings", filter: "key=eq.chat_auto_reply_config" },
-        (payload: any) => {
-          if (payload?.new?.value) {
-            const val = payload.new.value;
+        const res = await fetch("/api/admin/site-settings?key=chat_auto_reply_config", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.success && json?.value) {
+            const val = json.value;
             if (typeof window !== "undefined") {
-              if (typeof val.fallback === "string") {
-                localStorage.setItem("admin_auto_reply_fallback", val.fallback);
-              }
               if (typeof val.enabled === "boolean") {
                 localStorage.setItem("admin_auto_reply_enabled", String(val.enabled));
               }
               if (typeof val.delay === "number") {
                 localStorage.setItem("admin_auto_reply_delay", String(val.delay));
               }
-              if (val.rules) {
+              if (Array.isArray(val.rules) && val.rules.length > 0) {
                 localStorage.setItem("admin_auto_reply_rules", JSON.stringify(val.rules));
               }
+              if (typeof val.fallback === "string" && val.fallback.trim()) {
+                localStorage.setItem("admin_auto_reply_fallback", val.fallback.trim());
+              }
             }
-            if (typeof val.fallback === "string") {
-              updateWelcomeMessageInState(val.fallback);
+            if (typeof val.fallback === "string" && val.fallback.trim()) {
+              updateWelcomeMessageInState(val.fallback.trim());
             }
           }
         }
-      )
-      .subscribe();
+      } catch (e) {}
+    };
+    syncAutoReplyConfig();
 
     // BroadcastChannel for instant 0ms cross-tab sync with Admin console
     let bc: BroadcastChannel | null = null;
@@ -1284,56 +1255,22 @@ export function LiveChatWidget() {
       window.removeEventListener("live_chat_ended", handleChatEnded);
       window.removeEventListener("open_live_chat", handleOpenChat);
       window.removeEventListener("live_chat_config_updated", handleConfigUpdate);
-      supabase.removeChannel(settingsChannel);
       if (bc) bc.close();
     };
   }, [currentLang, isOpen]);
 
-  // Periodic sync & realtime updates from Supabase (runs continuously for logged-in users)
+  // Periodic sync from Git chat API (runs continuously for logged-in users)
   useEffect(() => {
     const isAuthed = checkAuth();
     if (!isAuthed) return;
 
     loadMessages();
 
-    const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
-    const phone = (typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") || "" : "").trim();
-    const rawId = email || phone;
-
-    let channel: any = null;
-    if (rawId) {
-      const channelId = `customer_live_chat_${rawId.replace(/[^a-zA-Z0-9]/g, "_")}`;
-      channel = supabase
-        .channel(channelId)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "chat_messages",
-          },
-          (payload: any) => {
-            const sid = (payload?.new?.sessionId || "").toLowerCase().trim();
-            if (!sid || sid === rawId || (email && sid === email)) {
-              if (payload?.new?.sender === "admin") {
-                cancelAutoReply();
-                if (!isOpen) {
-                  setUnreadCount((c) => c + 1);
-                }
-              }
-              loadMessages();
-            }
-          }
-        )
-        .subscribe();
-    }
-
     const interval = setInterval(() => {
       loadMessages();
     }, 3000);
 
     return () => {
-      if (channel) supabase.removeChannel(channel);
       clearInterval(interval);
     };
   }, [isOpen]);
@@ -1473,21 +1410,19 @@ export function LiveChatWidget() {
     setInputText("");
     setAttachedImages([]);
 
-    // Supabase DB message insert in background without blocking UI
+    // Git chat API message insert in background without blocking UI
     if (rawId) {
-      supabase
-        .from("chat_messages")
-        .insert([
-          {
-            id: newMsg.id,
-            sessionId: rawId,
-            sender: "user",
-            text: newMsg.text || (newMsg.images?.length ? "[사진 첨부]" : ""),
-          },
-        ])
-        .then(({ error }) => {
-          if (error) console.warn("Supabase user message insert error:", error);
-        });
+      fetch("/api/admin/chat?type=message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: newMsg.id,
+          sessionId: rawId,
+          sender: "user",
+          content: newMsg.text || (newMsg.images?.length ? "[사진 첨부]" : ""),
+          text: newMsg.text || (newMsg.images?.length ? "[사진 첨부]" : ""),
+        }),
+      }).catch((e) => console.warn("Git user message insert notice:", e));
     }
 
     // Auto simulated response based on Admin Smart Auto-reply settings
@@ -1577,17 +1512,17 @@ export function LiveChatWidget() {
               localStorage.setItem(chatKey, JSON.stringify(updatedWithAuto));
             }
             if (rawId) {
-              supabase
-                .from("chat_messages")
-                .insert([
-                  {
-                    id: autoReply.id,
-                    sessionId: rawId,
-                    sender: "admin",
-                    text: autoReply.text,
-                  },
-                ])
-                .then(() => {});
+              fetch("/api/admin/chat?type=message", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  id: autoReply.id,
+                  sessionId: rawId,
+                  sender: "admin",
+                  content: autoReply.text,
+                  text: autoReply.text,
+                }),
+              }).catch(() => {});
             }
             return updatedWithAuto;
           }
@@ -1629,15 +1564,14 @@ export function LiveChatWidget() {
       localStorage.removeItem("site_live_chat_ended");
     }
 
-    // 1. Delete all messages for this customer session from Supabase
+    // 1. Delete all messages for this customer session from Git chat API
     if (rawId) {
       try {
-        await supabase
-          .from("chat_messages")
-          .delete()
-          .or(`sessionId.eq.${rawId},sessionId.eq.${email}`);
+        await fetch(`/api/admin/chat?sessionId=${encodeURIComponent(rawId)}&clearOnly=true`, {
+          method: "DELETE",
+        });
       } catch (e) {
-        console.warn("Notice: Failed to delete chat_messages from Supabase:", e);
+        console.warn("Notice: Failed to delete chat_messages from Git:", e);
       }
     }
 

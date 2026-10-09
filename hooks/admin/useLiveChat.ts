@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase } from "@/lib/supabase/client";
+
 
 export function useLiveChat(triggerToast: (msg: string) => void) {
   // Live Chat Admin State & Storage Sync
@@ -28,19 +28,17 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       } catch (e) {}
     }
 
-    // A. Fetch active sessions and messages from Supabase
+    // A. Fetch active sessions and messages from Git chat API
     let dbMappedSessions: any[] = [];
     try {
-      const [{ data: dbSessions, error: sessionErr }, { data: dbMsgRows }] = await Promise.all([
-        supabase
-          .from("chat_sessions")
-          .select("*")
-          .neq("status", "closed")
-          .order("updated_at", { ascending: false }),
-        supabase
-          .from("chat_messages")
-          .select("sessionId"),
-      ]);
+      let dbSessions: any[] = [];
+      let dbMsgRows: any[] = [];
+      const res = await fetch("/api/admin/chat?type=all", { cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        dbSessions = (json.sessions || []).filter((s: any) => s.status !== "closed");
+        dbMsgRows = json.messages || [];
+      }
 
       const dbMsgSessionIds = new Set<string>();
       if (Array.isArray(dbMsgRows)) {
@@ -187,33 +185,30 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       } catch (e) {}
     }
 
-    // A. Fetch from Supabase chat_messages
+    // A. Fetch from Git chat_messages
     let dbFormatted: any[] = [];
     try {
-      const { data: dbMessages, error } = await supabase
-        .from("chat_messages")
-        .select("*")
-        .or(`sessionId.eq.${currentId},sessionId.eq.${rawId}`)
-        .order("created_at", { ascending: true });
-
-      if (!error && Array.isArray(dbMessages) && dbMessages.length > 0) {
-        dbFormatted = dbMessages.map((m: any) => {
-          const d = new Date(m.created_at || Date.now());
-          const hours = String(d.getHours()).padStart(2, "0");
-          const mins = String(d.getMinutes()).padStart(2, "0");
-          return {
-            id: m.id,
-            sender: m.sender || "user",
-            senderName: m.sender === "admin" ? "choicomma VIP 케어팀" : "고객님",
-            text: m.text,
-            timestamp: `${hours}:${mins}`,
-            created_at: m.created_at,
-          };
-        });
+      const res = await fetch(`/api/admin/chat?type=messages&sessionId=${encodeURIComponent(currentId)}`, { cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        const dbMessages = json.messages || [];
+        if (Array.isArray(dbMessages) && dbMessages.length > 0) {
+          dbFormatted = dbMessages.map((m: any) => {
+            const d = new Date(m.created_at || Date.now());
+            const hours = String(d.getHours()).padStart(2, "0");
+            const mins = String(d.getMinutes()).padStart(2, "0");
+            return {
+              id: m.id,
+              sender: m.sender || "user",
+              senderName: m.sender === "admin" ? "choicomma VIP 케어팀" : "고객님",
+              text: m.text,
+              timestamp: `${hours}:${mins}`,
+              created_at: m.created_at,
+            };
+          });
+        }
       }
-    } catch (e) {
-      console.warn("Notice: Failed to fetch chat_messages from Supabase:", e);
-    }
+    } catch (e) {}
 
     // B. Merge DB messages with any recent local optimistic messages not yet fetched
     setAdminLiveChatMessages((prev) => {
@@ -306,26 +301,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       } catch (e) {}
     }
 
-    // Supabase Realtime Channel
-    const channel = supabase
-      .channel("admin_live_chat_realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "chat_sessions" },
-        () => {
-          loadSessions();
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "chat_messages" },
-        () => {
-          syncAdminLiveChat();
-        }
-      )
-      .subscribe();
-
-    // Resilient Polling Fallback (every 3.5 seconds)
+    // Resilient Polling (every 3.5 seconds)
     const interval = setInterval(() => {
       loadSessions();
       syncAdminLiveChat();
@@ -335,7 +311,6 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("live_chat_updated", handleStorageChange);
       if (bc) bc.close();
-      supabase.removeChannel(channel);
       clearInterval(interval);
     };
   }, [loadSessions, syncAdminLiveChat]);
@@ -413,23 +388,18 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
 
     // 4. Background Supabase insert without blocking or causing UI blink
     try {
-      supabase
-        .from("chat_messages")
-        .insert([
-          {
-            id: newReply.id,
-            sessionId: normalizedSessionId,
-            sender: "admin",
-            text: newReply.text,
-          },
-        ])
-        .then(({ error }) => {
-          if (error) {
-            console.warn("Supabase insert admin message notice:", error);
-          }
-        });
+      fetch("/api/admin/chat?type=message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: newReply.id,
+          sessionId: normalizedSessionId,
+          sender: "admin",
+          text: newReply.text,
+        }),
+      }).catch((e) => console.warn("Chat API insert admin message notice:", e));
     } catch (e) {
-      console.warn("Supabase insert admin message notice:", e);
+      console.warn("Chat API insert admin message notice:", e);
     }
   };
 
@@ -467,17 +437,11 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       }
     }
 
-    // Supabase 세션 상태 업데이트 (closed) 및 chat_messages 삭제
+    // Git chat 세션 및 대화 내역 삭제
     try {
-      await supabase
-        .from("chat_sessions")
-        .update({ status: "closed", updated_at: new Date().toISOString() })
-        .eq("id", targetId);
-
-      await supabase
-        .from("chat_messages")
-        .delete()
-        .or(`sessionId.eq.${normalizedTargetId},sessionId.eq.${targetId}`);
+      await fetch(`/api/admin/chat?sessionId=${encodeURIComponent(targetId)}`, {
+        method: "DELETE",
+      });
     } catch (e) {
       console.warn("Notice: Failed to delete chat_messages on end live chat:", e);
     }
@@ -508,14 +472,13 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       localStorage.setItem(sessionKey, JSON.stringify([]));
       localStorage.setItem("site_live_chat_messages", JSON.stringify([]));
 
-      // Supabase chat_messages 삭제
+      // Git chat_messages 초기화
       try {
-        await supabase
-          .from("chat_messages")
-          .delete()
-          .or(`sessionId.eq.${normalizedActiveId},sessionId.eq.${activeSessionId}`);
+        await fetch(`/api/admin/chat?sessionId=${encodeURIComponent(activeSessionId)}&clearOnly=true`, {
+          method: "DELETE",
+        });
       } catch (e) {
-        console.warn("Notice: Failed to delete chat_messages from Supabase:", e);
+        console.warn("Notice: Failed to delete chat_messages from Git:", e);
       }
 
       if ("BroadcastChannel" in window) {

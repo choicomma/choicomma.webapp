@@ -1,7 +1,63 @@
 import { NextResponse } from "next/server";
-import { supabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
+import fs from "fs";
+import path from "path";
 
 import { processCjShippingIssue } from "@/lib/cj/cj-api";
+
+function syncToGitOrdersAndShipments(order: any, orderId: string, trackingNumber: string) {
+  try {
+    const baseOrderId = order.parentOrderId || (orderId.includes("-") && /-\d+$/.test(orderId) ? orderId.replace(/-\d+$/, "") : orderId);
+
+    // 1. data/orders.json 업데이트
+    const ordersPath = path.join(process.cwd(), "data", "orders.json");
+    if (fs.existsSync(ordersPath)) {
+      try {
+        const raw = fs.readFileSync(ordersPath, "utf-8");
+        const orders = JSON.parse(raw);
+        if (Array.isArray(orders)) {
+          let updated = false;
+          for (const o of orders) {
+            if (o.id === baseOrderId || o.orderNumber === baseOrderId || o.id === orderId || o.orderNumber === orderId) {
+              o.trackingNumber = trackingNumber;
+              o.status = "배송 중";
+              o.updated_at = new Date().toISOString();
+              updated = true;
+            }
+          }
+          if (updated) {
+            fs.writeFileSync(ordersPath, JSON.stringify(orders, null, 2), "utf-8");
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 2. data/shipments.json 업데이트
+    const shipmentsPath = path.join(process.cwd(), "data", "shipments.json");
+    if (fs.existsSync(shipmentsPath)) {
+      try {
+        const raw = fs.readFileSync(shipmentsPath, "utf-8");
+        const shipments = JSON.parse(raw);
+        if (Array.isArray(shipments)) {
+          let updated = false;
+          for (const s of shipments) {
+            if (s.id === baseOrderId || s.orderId === baseOrderId || s.id === orderId || s.orderId === orderId) {
+              s.trackingNumber = trackingNumber;
+              s.status = "In Transit";
+              s.shippedDate = new Date().toISOString().split("T")[0];
+              s.updated_at = new Date().toISOString();
+              updated = true;
+            }
+          }
+          if (updated) {
+            fs.writeFileSync(shipmentsPath, JSON.stringify(shipments, null, 2), "utf-8");
+          }
+        }
+      } catch (e) {}
+    }
+  } catch (err) {
+    console.warn("Notice: Failed to sync CJ tracking to Git data files:", err);
+  }
+}
 
 export interface PrintData {
   orderId: string;           // 예약접수 시 사용한 고객사용번호 (CUST_USE_NO)
@@ -84,150 +140,12 @@ export async function POST(req: Request) {
       const clldlvBranNm = cjResult.clldlvBranNm;
       const p2pCd = cjResult.p2pCd;
 
-      // Supabase DB 자동 동기화 (운송장 번호 저장 및 주문 상태 '배송 중' 업데이트)
-      if (isSupabaseConfigured && trackingNumber) {
-        try {
-          // 다박스 분리배송인 경우 baseOrderId 및 pkgIndex 추출
-          const baseOrderId = order.parentOrderId || (orderId.includes("-") && /-\d+$/.test(orderId) ? orderId.replace(/-\d+$/, "") : orderId);
-          const rawPkgIndex = order.pkgIndex ?? (orderId.match(/-(\d+)$/) ? parseInt(orderId.match(/-(\d+)$/)![1], 10) : null);
-          const targetPkgIndex = typeof rawPkgIndex === "number" && !isNaN(rawPkgIndex) ? rawPkgIndex : null;
-
-          // 1. orders 테이블 업데이트 (id 또는 orderNumber 일치 레코드: 운송장번호 저장 및 상태 '배송 중' 반영)
-          try {
-            for (const targetOrdKey of [baseOrderId, orderId]) {
-              // 1) trackingNumber, status 컬럼 업데이트 시도
-              let updateSuccess = false;
-
-              const { error: err1, data: r1 } = await supabaseServer
-                .from("orders")
-                .update({
-                  trackingNumber: trackingNumber,
-                  status: "배송 중",
-                  updated_at: new Date().toISOString(),
-                })
-                .or(`id.eq.${targetOrdKey},orderNumber.eq.${targetOrdKey}`)
-                .select();
-
-              if (!err1 && r1 && r1.length > 0) {
-                updateSuccess = true;
-              } else if (err1 && (err1.code === "42703" || err1.code === "PGRST204" || err1.message?.includes("column"))) {
-                // 2) tracking_number (snake_case) 컬럼 시도
-                const { error: err2, data: r2 } = await supabaseServer
-                  .from("orders")
-                  .update({
-                    tracking_number: trackingNumber,
-                    status: "배송 중",
-                    updated_at: new Date().toISOString(),
-                  })
-                  .or(`id.eq.${targetOrdKey},orderNumber.eq.${targetOrdKey}`)
-                  .select();
-
-                if (!err2 && r2 && r2.length > 0) {
-                  updateSuccess = true;
-                }
-              }
-
-              // 3) orders 테이블에 별도 tracking 컬럼이 없는 경우 orderMemo 컬럼에 운송장번호 및 배송상태 기록
-              if (!updateSuccess) {
-                const memoStamp = `[CJ대한통운: ${trackingNumber}] [상태: 배송 중]`;
-                const { error: memoErr, data: memoData } = await supabaseServer
-                  .from("orders")
-                  .update({
-                    orderMemo: memoStamp,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .or(`id.eq.${targetOrdKey},orderNumber.eq.${targetOrdKey}`)
-                  .select();
-
-                if (!memoErr && memoData && memoData.length > 0) {
-                  updateSuccess = true;
-                }
-              }
-
-              if (updateSuccess) {
-                break;
-              }
-            }
-          } catch (ordErr) {
-            console.warn(`[Supabase] orders 테이블 업데이트 알림 (orderId: ${orderId}):`, ordErr);
-          }
-
-          // 2. shipments 테이블 (관리자 웹앱 주문/배송 관리 연동 원장) 업데이트
-          try {
-            const parentShipmentId = order.parentShipmentId || (order.id && /-\d+$/.test(order.id) ? order.id.replace(/-\d+$/, "") : null);
-
-            // 기존 shipment 레코드 조회
-            let query = supabaseServer.from("shipments").select("*");
-            if (parentShipmentId) {
-              query = query.eq("id", parentShipmentId);
-            } else {
-              query = query.or(`orderId.eq.${baseOrderId},id.eq.${order.id || orderId}`);
-            }
-            const { data: existingRows } = await query.limit(1);
-            const currentShipment = existingRows && existingRows.length > 0 ? existingRows[0] : null;
-
-            if (currentShipment) {
-              let updatedPackages = currentShipment.packages;
-              if (Array.isArray(updatedPackages) && updatedPackages.length > 0 && targetPkgIndex !== null) {
-                updatedPackages = updatedPackages.map((p: any, idx: number) => {
-                  const pIdx = p.pkgIndex || idx + 1;
-                  if (pIdx === targetPkgIndex) {
-                    return {
-                      ...p,
-                      trackingNumber: trackingNumber,
-                      status: "In Transit",
-                    };
-                  }
-                  return p;
-                });
-              }
-
-              const allTransit = Array.isArray(updatedPackages) && updatedPackages.length > 0
-                ? updatedPackages.every((p: any) => p.trackingNumber && p.trackingNumber !== "-")
-                : true;
-              const anyTransit = Array.isArray(updatedPackages) && updatedPackages.length > 0
-                ? updatedPackages.some((p: any) => p.trackingNumber && p.trackingNumber !== "-")
-                : true;
-
-              const finalShipmentStatus = allTransit ? "In Transit" : anyTransit ? "Partially Shipped" : (currentShipment.status || "Pending");
-              const firstValidTracking = (Array.isArray(updatedPackages) && updatedPackages.find((p: any) => p.trackingNumber && p.trackingNumber !== "-")?.trackingNumber) || trackingNumber;
-
-              const shpUpdates: Record<string, any> = {
-                status: finalShipmentStatus,
-                shippedDate: new Date().toISOString().split("T")[0],
-                updated_at: new Date().toISOString(),
-              };
-
-              if (Array.isArray(updatedPackages)) {
-                shpUpdates.packages = updatedPackages;
-              }
-              if (firstValidTracking && firstValidTracking !== "-") {
-                shpUpdates.trackingNumber = firstValidTracking;
-              }
-
-              await supabaseServer
-                .from("shipments")
-                .update(shpUpdates)
-                .eq("id", currentShipment.id);
-            } else {
-              const shpUpdates = {
-                trackingNumber: trackingNumber,
-                status: "In Transit",
-                shippedDate: new Date().toISOString().split("T")[0],
-                updated_at: new Date().toISOString(),
-              };
-              await supabaseServer
-                .from("shipments")
-                .update(shpUpdates)
-                .or(`orderId.eq.${baseOrderId},id.eq.${order.id || orderId}`);
-            }
-          } catch (shpErr) {
-            console.warn(`[Supabase] shipments 테이블 업데이트 알림 (orderId: ${orderId}):`, shpErr);
-          }
-        } catch (dbErr) {
-          console.error(`[Supabase] DB 주문 상태 업데이트 실패 (orderId: ${orderId}):`, dbErr);
-        }
+      // 0. Git data/orders.json 및 data/shipments.json 즉시 동기화
+      if (trackingNumber) {
+        syncToGitOrdersAndShipments(order, orderId, trackingNumber);
       }
+
+
 
       // PrintData 인터페이스 규격에 100% 일치하도록 매핑
       const printItem: PrintData = {

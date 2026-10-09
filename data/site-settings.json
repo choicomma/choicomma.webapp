@@ -1,0 +1,33 @@
+{
+  "cj_logistics": {
+    "clientCode": "choicomma",
+    "contractNo": "7108803854",
+    "senderName": "주식회사 초이콤마",
+    "senderTel": "02-579-1171",
+    "senderZip": "06307",
+    "senderAddr1": "서울특별시 강남구 개포로22길 12",
+    "senderAddr2": "6층(개포동)"
+  },
+  "shipping_policy": {
+    "defaultShippingFee": 3000,
+    "freeShippingThreshold": 50000,
+    "remoteAreaFee": 3000
+  },
+  "popup_config": {
+    "id": "global_mall_notice_20261012",
+    "isActive": true,
+    "isEnabled": true,
+    "popupType": "NOTICE",
+    "title": "초이콤마 글로벌 몰 오픈 준비 및 서비스 일시 이용 불가 안내",
+    "subtitle": "GLOBAL STORE LAUNCH & TEMPORARY SERVICE UNAVAILABILITY NOTICE",
+    "noticeMessage": "초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다.",
+    "noticePeriod": "2026.10.12일까지",
+    "description": "초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다.",
+    "imageUrl": "",
+    "linkUrl": "",
+    "showOnHome": true,
+    "showOnMembership": false,
+    "hideForTodayEnabled": true,
+    "updatedAt": "2026-10-09T23:55:00.000Z"
+  }
+}

@@ -6,7 +6,8 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "verify:data": "node scripts/verify-git-data-integrity.js"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import React from "react";
-import { supabase } from "@/lib/supabase/client";
+
 
 export function useTimesale(triggerToast: (msg: string) => void) {
   // Time sale states
@@ -17,7 +17,7 @@ export function useTimesale(triggerToast: (msg: string) => void) {
   // Secret Time Sale states (Member Target Specific)
   const [secretSalesList, setSecretSalesList] = useState<any[]>([]);
 
-  // Load from Supabase and localStorage on mount
+// Load from Git File API and localStorage on mount
   useEffect(() => {
     let isMounted = true;
 
@@ -29,61 +29,35 @@ export function useTimesale(triggerToast: (msg: string) => void) {
           if (Array.isArray(parsed)) {
             const cleaned = parsed.filter((item: any) => item?.id !== "SECRET-TS-001");
             setSecretSalesList(cleaned);
-            localStorage.setItem("admin_secret_timesales", JSON.stringify(cleaned));
           }
         } catch (e) {}
-      } else {
-        localStorage.setItem("admin_secret_timesales", JSON.stringify([]));
       }
     }
+
     const fetchTimesales = async () => {
       try {
-        const { data, error } = await supabase
-          .from("timesales")
-          .select("*")
-          .order("created_at", { ascending: false });
-        if (!error && Array.isArray(data) && isMounted) {
-          const cleaned = data.filter((t: any) => t.id !== "SECRET-TS-001");
-          setSecretSalesList(cleaned);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("admin_secret_timesales", JSON.stringify(cleaned));
+        const res = await fetch("/api/admin/timesale");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data) && isMounted) {
+            const cleaned = json.data.filter((t: any) => t.id !== "SECRET-TS-001");
+            setSecretSalesList(cleaned);
+            if (typeof window !== "undefined") {
+              localStorage.setItem("admin_secret_timesales", JSON.stringify(cleaned));
+            }
           }
         }
-        // Cleanup fake mock sale from Supabase if present
-        await supabase.from("timesales").delete().eq("id", "SECRET-TS-001");
       } catch (err) {
-        console.warn("Timesale Supabase notice:", err);
+        console.warn("Timesale API fetch notice:", err);
       }
     };
     fetchTimesales();
 
-    let channel: any = null;
-    try {
-      channel = supabase
-        .channel("timesales-realtime-sub")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "timesales" },
-          (payload) => {
-            if (payload.eventType === "INSERT") {
-              if (payload.new?.id === "SECRET-TS-001") return;
-              setSecretSalesList((prev) => [payload.new, ...prev.filter((t) => t.id !== payload.new.id)]);
-            } else if (payload.eventType === "UPDATE") {
-              if (payload.new?.id === "SECRET-TS-001") return;
-              setSecretSalesList((prev) =>
-                prev.map((t) => (t.id === payload.new.id ? { ...t, ...payload.new } : t))
-              );
-            } else if (payload.eventType === "DELETE") {
-              setSecretSalesList((prev) => prev.filter((t) => t.id !== payload.old.id));
-            }
-          }
-        )
-        .subscribe();
-    } catch (e) {}
-
+    const handleUpdated = () => fetchTimesales();
+    window.addEventListener("secret_timesales_updated", handleUpdated);
     return () => {
       isMounted = false;
-      if (channel) supabase.removeChannel(channel);
+      window.removeEventListener("secret_timesales_updated", handleUpdated);
     };
   }, []);
 
@@ -98,23 +72,13 @@ export function useTimesale(triggerToast: (msg: string) => void) {
       localStorage.setItem("admin_secret_timesales", JSON.stringify(secretSalesList));
       window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
     }
-    // Sync to Supabase
-    if (Array.isArray(secretSalesList) && secretSalesList.length > 0) {
-      const formatted = secretSalesList.map((ts) => ({
-        id: ts.id,
-        title: ts.title || "",
-        discountRate: ts.discountRate || ts.discount_rate || 0,
-        productIds: ts.productIds || ts.product_ids || [],
-        targetCustomerEmails: ts.targetCustomerEmails || ts.target_customer_emails || [],
-        targetGrades: ts.targetGrades || ts.target_grades || [],
-        durationHours: ts.durationHours || 24,
-        durationMinutes: ts.durationMinutes || 0,
-        status: ts.status || "active",
-        updated_at: new Date().toISOString(),
-      }));
-      supabase.from("timesales").upsert(formatted, { onConflict: "id" }).then(({ error }) => {
-        if (error) console.warn("Supabase timesale upsert notice:", error.message);
-      });
+    // Sync to Git File API
+    if (Array.isArray(secretSalesList)) {
+      fetch("/api/admin/timesale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(secretSalesList),
+      }).catch((err) => console.warn("Timesale API save notice:", err));
     }
   }, [secretSalesList]);
 

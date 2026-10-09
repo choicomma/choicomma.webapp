@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import * as XLSX from "xlsx";
 
 import { initialShipments as defaultShipments } from "@/lib/sfcc/mock/shipments-data";
-import { supabase } from "@/lib/supabase/client";
 import { generateNextOrderId } from "@/lib/shipping/order-id";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -274,94 +273,6 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
     fetchServerShipments();
 
-    // Supabase Realtime 채널: 타 기기/창에서 변경 시 즉시 동기화
-    let realtimeChannel: any = null;
-    try {
-      realtimeChannel = supabase
-        .channel("shipments-realtime-sub")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "shipments" },
-          (payload) => {
-            if (payload.eventType === "INSERT") {
-              const newRow = payload.new;
-              isRemoteUpdateRef.current = true;
-              setShipmentsList((prev) => {
-                if (prev.some((s) => s.id === newRow.id)) return prev;
-                const next = sanitizeShipmentsList([newRow, ...prev]);
-                lastSyncedJsonRef.current = serializeShipmentsForSync(next);
-                if (typeof window !== "undefined") {
-                  localStorage.setItem("admin_shipments", JSON.stringify(next));
-                }
-                return next;
-              });
-            } else if (payload.eventType === "UPDATE") {
-              const updatedRow = payload.new;
-              isRemoteUpdateRef.current = true;
-              setShipmentsList((prev) => {
-                const next = sanitizeShipmentsList(
-                  prev.map((s) => {
-                    if (s.id !== updatedRow.id) return s;
-                    let pkgs = updatedRow.packages || s.packages;
-                    if (Array.isArray(s.packages) && Array.isArray(pkgs)) {
-                      pkgs = pkgs.map((upPkg: any, idx: number) => {
-                        const localPkg = s.packages.find((p: any) => (p.pkgIndex || idx + 1) === (upPkg.pkgIndex || idx + 1)) || s.packages[idx];
-                        if (localPkg && localPkg.trackingNumber && localPkg.trackingNumber !== "-" && (!upPkg.trackingNumber || upPkg.trackingNumber === "-")) {
-                          return { ...upPkg, trackingNumber: localPkg.trackingNumber, status: localPkg.status !== "Pending" ? localPkg.status : upPkg.status };
-                        }
-                        return upPkg;
-                      });
-                    }
-                    const finalTracking = (updatedRow.trackingNumber && updatedRow.trackingNumber !== "-")
-                      ? updatedRow.trackingNumber
-                      : (s.trackingNumber && s.trackingNumber !== "-")
-                      ? s.trackingNumber
-                      : (Array.isArray(pkgs) && pkgs.find((p: any) => p.trackingNumber && p.trackingNumber !== "-")?.trackingNumber) || "-";
-
-                    const pkg0 = Array.isArray(pkgs) && pkgs[0] ? pkgs[0] : {};
-                    const memo = updatedRow.shippingMemo || s.shippingMemo || "";
-
-                    const isMergedParent = Boolean(s.isMergedParent || pkg0.isMergedParent || memo.includes("[합배송:"));
-                    const isMergedChild = Boolean(s.isMergedChild || pkg0.isMergedChild || memo.includes("[합배송 완료]"));
-
-                    return {
-                      ...s,
-                      ...updatedRow,
-                      packages: pkgs,
-                      trackingNumber: finalTracking,
-                      isMergedParent,
-                      isMergedChild,
-                      mergedIntoId: s.mergedIntoId || pkg0.mergedIntoId,
-                      mergedIntoOrderId: s.mergedIntoOrderId || pkg0.mergedIntoOrderId,
-                      bundledShipmentIds: s.bundledShipmentIds || pkg0.bundledShipmentIds,
-                      bundledOrderNumbers: s.bundledOrderNumbers || pkg0.bundledOrderNumbers,
-                    };
-                  })
-                );
-                lastSyncedJsonRef.current = serializeShipmentsForSync(next);
-                if (typeof window !== "undefined") {
-                  localStorage.setItem("admin_shipments", JSON.stringify(next));
-                }
-                return next;
-              });
-            } else if (payload.eventType === "DELETE") {
-              isRemoteUpdateRef.current = true;
-              setShipmentsList((prev) => {
-                const next = prev.filter((s) => s.id !== payload.old.id);
-                lastSyncedJsonRef.current = serializeShipmentsForSync(next);
-                if (typeof window !== "undefined") {
-                  localStorage.setItem("admin_shipments", JSON.stringify(next));
-                }
-                return next;
-              });
-            }
-          }
-        )
-        .subscribe();
-    } catch (realtimeErr) {
-      console.warn("Supabase Realtime subscription notice:", realtimeErr);
-    }
-
     // Re-sync when user returns to the tab (e.g. on mobile or switching back from other apps)
     const onWindowFocus = () => {
       fetchServerShipments();
@@ -377,9 +288,6 @@ export function useShipments(triggerToast: (msg: string) => void) {
       isMounted = false;
       window.removeEventListener("focus", onWindowFocus);
       document.removeEventListener("visibilitychange", onVisibilityChange);
-      if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
-      }
     };
   }, []);
 

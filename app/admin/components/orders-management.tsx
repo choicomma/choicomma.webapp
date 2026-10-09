@@ -33,7 +33,6 @@ import {
 import * as XLSX from "xlsx";
 import { CjLabelPrint } from "./cj-label-print";
 import { sortShipmentsByNumber } from "@/hooks/admin/useShipments";
-import { supabase } from "@/lib/supabase/client";
 import {
   detectBundleCandidates,
   executeOrderMerge,
@@ -387,20 +386,18 @@ export function OrdersManagement({
             window.dispatchEvent(new CustomEvent("admin_customers_updated"));
           }
 
-          // Supabase DB 비동기 동기화
+          // Git 고객 API 비동기 동기화
           try {
-            supabase
-              .from("customers")
-              .update({
+            fetch("/api/admin/customers", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...cust,
                 points: newPoints,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", cust.id)
-              .then(({ error }) => {
-                if (error) console.warn("Supabase bundle refund points update warning:", error.message);
-              });
+              }),
+            }).catch((err) => console.warn("Customer API bundle points error:", err));
           } catch (sbErr) {
-            console.warn("Supabase bundle refund points error:", sbErr);
+            console.warn("Customer API bundle points error:", sbErr);
           }
 
           creditSummary = `\n💰 초과 부과된 배송비 ₩${refundPoints.toLocaleString()}원이 ${cust.name}님의 회원 적립금으로 지급되었습니다!\n(기존: ${currentPoints.toLocaleString()} P ➔ 지급 후: ${newPoints.toLocaleString()} P)`;
@@ -541,20 +538,18 @@ export function OrdersManagement({
             window.dispatchEvent(new CustomEvent("admin_customers_updated"));
           }
 
-          // Supabase DB 비동기 동기화
+          // Git 고객 API 비동기 동기화
           try {
-            supabase
-              .from("customers")
-              .update({
+            fetch("/api/admin/customers", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...cust,
                 points: newPoints,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", cust.id)
-              .then(({ error }) => {
-                if (error) console.warn("Supabase unbundle revoke points update warning:", error.message);
-              });
+              }),
+            }).catch((err) => console.warn("Customer API revoke points error:", err));
           } catch (sbErr) {
-            console.warn("Supabase unbundle revoke points error:", sbErr);
+            console.warn("Customer API revoke points error:", sbErr);
           }
 
           revokeSummary = `\n💰 합배송 해제에 따라 지급되었던 초과 배송비 ₩${revokePoints.toLocaleString()}원이 ${cust.name}님의 적립금에서 정상 회수(차감)되었습니다.\n(기존: ${currentPoints.toLocaleString()} P ➔ 회수 후: ${newPoints.toLocaleString()} P)`;

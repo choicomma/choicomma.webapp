@@ -73,6 +73,7 @@ import {
   Globe,
   User2,
   Ticket,
+  FolderGit2,
 } from "lucide-react";
 
 import { ProductsManagement } from "./components/products-management";
@@ -89,6 +90,7 @@ import { InquiriesManagement } from "./components/inquiries-management";
 import { GlobalSalesManagement } from "./components/global-sales-management";
 import { PopupManagement } from "./components/popup-management";
 import { VisitorsManagement } from "./components/visitors-management";
+import { GitDataManagement } from "./components/git-data-management";
 import { LanguageSelector } from "@/components/layout/header/language-selector";
 import { getAllUserCoupons, syncAdminCouponsFromSupabase } from "@/lib/membership/coupons";
 
@@ -126,6 +128,7 @@ export default function AdminPage() {
     | "inquiries"
     | "settings"
     | "global_sales"
+    | "git_data"
   >(() => {
     if (typeof window !== "undefined") {
       try {
@@ -134,7 +137,7 @@ export default function AdminPage() {
         const validTabs = [
           "overview", "products", "orders", "inbound", "timesale",
           "sales", "popup", "visitors", "revenue", "main",
-          "customers", "coupons", "inquiries", "settings", "global_sales"
+          "customers", "coupons", "inquiries", "settings", "global_sales", "git_data"
         ];
         if (tabFromUrl && validTabs.includes(tabFromUrl)) {
           return tabFromUrl as any;
@@ -169,7 +172,7 @@ export default function AdminPage() {
         const validTabs = [
           "overview", "products", "orders", "inbound", "timesale",
           "sales", "popup", "visitors", "revenue", "main",
-          "customers", "coupons", "inquiries", "settings", "global_sales"
+          "customers", "coupons", "inquiries", "settings", "global_sales", "git_data"
         ];
         if (tabFromUrl && validTabs.includes(tabFromUrl)) {
           setActiveTabState(tabFromUrl as any);
@@ -922,6 +925,22 @@ export default function AdminPage() {
             </Link>
 
             <button
+              onClick={() => setActiveTab("git_data")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "git_data"
+                  ? "bg-neutral-900 text-white font-extrabold shadow-sm"
+                  : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
+                }`}
+            >
+              <FolderGit2 className={`w-4 h-4 ${activeTab === "git_data" ? "text-emerald-400" : "text-emerald-600"}`} />
+              <span>Git 데이터 원장</span>
+              <span className={`ml-auto text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                activeTab === "git_data" ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
+              }`}>
+                12
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("settings")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "settings"
                   ? "bg-neutral-100 text-neutral-950 font-extrabold"
@@ -1294,7 +1313,15 @@ export default function AdminPage() {
                   </button>
                 </div>
               </div>
+
+              <div className="pt-6 border-t border-neutral-200">
+                <GitDataManagement />
+              </div>
             </div>
+          )}
+
+          {activeTab === "git_data" && (
+            <GitDataManagement />
           )}
 
 

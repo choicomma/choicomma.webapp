@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import * as XLSX from "xlsx";
-import { supabase } from "@/lib/supabase/client";
 import { splitKoreanAddress } from "@/lib/address";
 
 const initialCustomers: any[] = [];
@@ -227,15 +226,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
           }
         } catch (e) {}
 
-        if (serverData.length === 0) {
-          const { data, error } = await supabase
-            .from("customers")
-            .select("*")
-            .order("created_at", { ascending: false });
-          if (!error && Array.isArray(data)) {
-            serverData = data;
-          }
-        }
+
 
         const localCached = getCachedCustomers();
         const customerMap = new Map<string, any>();
@@ -345,37 +336,6 @@ export function useCustomers(triggerToast: (msg: string) => void) {
 
     fetchCustomers();
 
-    // Supabase Realtime 채널
-    let realtimeChannel: any = null;
-    try {
-      realtimeChannel = supabase
-        .channel("customers-realtime-sub")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "customers" },
-          (payload) => {
-            if (payload.eventType === "INSERT") {
-              const newRow = payload.new;
-              setCustomersList((prev) => deduplicateCustomers([newRow, ...prev]));
-            } else if (payload.eventType === "UPDATE") {
-              const updatedRow = payload.new;
-              setCustomersList((prev) =>
-                deduplicateCustomers(
-                  prev.map((c) => (c.id === updatedRow.id ? { ...c, ...updatedRow } : c))
-                )
-              );
-            } else if (payload.eventType === "DELETE") {
-              setCustomersList((prev) =>
-                deduplicateCustomers(prev.filter((c) => c.id !== payload.old.id))
-              );
-            }
-          }
-        )
-        .subscribe();
-    } catch (realtimeErr) {
-      console.warn("Customers Realtime error:", realtimeErr);
-    }
-
     // 로컬 스토리지 변경 및 타 컴포넌트(합배송 등) 적립금 변동 실시간 동기화
     const handleCustomersUpdated = (e?: any) => {
       if (e && e.key && e.key !== "admin_customers") return;
@@ -394,9 +354,6 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       if (typeof window !== "undefined") {
         window.removeEventListener("admin_customers_updated", handleCustomersUpdated);
         window.removeEventListener("storage", handleCustomersUpdated);
-      }
-      if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
       }
     };
   }, []);
@@ -482,16 +439,12 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       }
     }
 
-    // Supabase DB 비동기 저장 (Server API & Client SDK)
+    // Git 고객 API 비동기 저장
     fetch("/api/admin/customers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newCust),
-    }).catch(() => {
-      supabase.from("customers").upsert([newCust], { onConflict: "id" }).then(({ error }) => {
-        if (error) console.warn("Supabase customer insert notice:", error.message);
-      });
-    });
+    }).catch((err) => console.warn("Customer API insert notice:", err));
 
     setIsAddCustomerModalOpen(false);
     setNewCustName("");
@@ -601,17 +554,15 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       window.dispatchEvent(new CustomEvent("membership_points_updated"));
     }
 
-    // Supabase DB 비동기 수정
-    supabase
-      .from("customers")
-      .update({
+    // Git 고객 API 비동기 수정
+    fetch("/api/admin/customers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...editingCustomer,
         points: newPoints,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", editingCustomer.id)
-      .then(({ error }) => {
-        if (error) console.warn("Supabase points update notice:", error.message);
-      });
+      }),
+    }).catch((err) => console.warn("Customer API points update notice:", err));
 
     setEditCustPointAmount("");
     setEditCustPointReason("");
@@ -698,16 +649,18 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       window.dispatchEvent(new CustomEvent("admin_customers_updated"));
     }
 
-    // Supabase DB 비동기 수정
-    supabase.from("customers").update({
-      grade: editCustGrade,
-      address: editCustAddress,
-      points: calculatedPoints,
-      status: editCustStatus,
-      updated_at: new Date().toISOString(),
-    }).eq("id", editingCustomer.id).then(({ error }) => {
-      if (error) console.warn("Supabase customer update notice:", error.message);
-    });
+    // Git 고객 API 비동기 수정
+    fetch("/api/admin/customers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...editingCustomer,
+        grade: editCustGrade,
+        address: editCustAddress,
+        points: calculatedPoints,
+        status: editCustStatus,
+      }),
+    }).catch((err) => console.warn("Customer API update notice:", err));
 
     setEditingCustomer(null);
     setEditCustPointReason("");
@@ -753,31 +706,16 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         window.dispatchEvent(new CustomEvent("admin_customers_updated"));
       }
 
-      // Supabase DB 비동기 영구 삭제 (고객 정보 및 채팅 세션/메시지)
-      supabase.from("customers").delete().eq("id", id).then(({ error }) => {
-        if (error) console.warn("Supabase customer delete notice:", error.message);
-      });
+      // Git API 비동기 영구 삭제 (고객 정보 및 채팅 세션/메시지)
       const custEmail = targetCustomer?.email ? targetCustomer.email.trim().toLowerCase() : "";
-      const custLoginId = targetCustomer?.loginId || targetCustomer?.login_id ? (targetCustomer.loginId || targetCustomer.login_id).trim().toLowerCase() : "";
-      const custPhone = targetCustomer?.phone ? targetCustomer.phone.trim() : "";
-      const cleanPhone = custPhone.replace(/[^0-9]/g, "");
+      fetch(`/api/admin/customers?id=${encodeURIComponent(id)}${custEmail ? `&email=${encodeURIComponent(custEmail)}` : ""}`, {
+        method: "DELETE",
+      }).catch(() => {});
 
-      if (custEmail && custEmail !== "admin@choicomma.com") {
-        supabase.from("customers").delete().ilike("email", custEmail).then(() => {});
-        supabase.from("chat_sessions").delete().eq("id", custEmail).then(() => {});
-        supabase.from("chat_messages").delete().eq("sessionId", custEmail).then(() => {});
-      }
-      if (custLoginId) {
-        supabase.from("customers").delete().eq("loginId", custLoginId).then(() => {});
-        supabase.from("customers").delete().eq("login_id", custLoginId).then(() => {});
-        supabase.from("chat_sessions").delete().eq("id", custLoginId).then(() => {});
-        supabase.from("chat_messages").delete().eq("sessionId", custLoginId).then(() => {});
-      }
-      if (cleanPhone && cleanPhone.length >= 8) {
-        supabase.from("customers").delete().eq("phone", custPhone).then(() => {});
-        supabase.from("customers").delete().eq("phone", cleanPhone).then(() => {});
-        supabase.from("chat_sessions").delete().eq("id", cleanPhone).then(() => {});
-        supabase.from("chat_messages").delete().eq("sessionId", cleanPhone).then(() => {});
+      if (custEmail) {
+        fetch(`/api/admin/chat?sessionId=${encodeURIComponent(custEmail)}`, {
+          method: "DELETE",
+        }).catch(() => {});
       }
 
       triggerToast(`회원 '${name}'님의 정보가 삭제되었습니다.`);

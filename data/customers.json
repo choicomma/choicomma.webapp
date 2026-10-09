@@ -1,0 +1,36 @@
+[
+  {
+    "id": "ADMIN-001",
+    "name": "최고관리자 (Admin)",
+    "email": "admin@choicomma.com",
+    "phone": "02-579-1171",
+    "postcode": "06306",
+    "address": "서울특별시 강남구 개포로22길 12",
+    "detailAddress": "6층 (주)초이콤마 본사",
+    "grade": "VVIP",
+    "totalSpent": 25000000,
+    "points": 100000,
+    "couponsCount": 0,
+    "joinedDate": "2026-01-01",
+    "status": "Active",
+    "role": "ADMIN",
+    "isAdmin": true
+  },
+  {
+    "id": "chogun",
+    "name": "조건",
+    "email": "cho@findcategory.co.kr",
+    "phone": "010-7576-3031",
+    "postcode": "10835",
+    "address": "경기 파주시 파주읍 파주리 722-1",
+    "detailAddress": "한울하임 106동 202호",
+    "grade": "GENERAL",
+    "totalSpent": 0,
+    "points": 50000,
+    "couponsCount": 0,
+    "joinedDate": "2026-09-28",
+    "status": "Active",
+    "role": "CUSTOMER",
+    "isAdmin": false
+  }
+]

@@ -55,7 +55,6 @@ import { mockProducts } from "@/lib/sfcc/mock/products";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { SetBundleSection } from "@/components/products/set-bundle-section";
 import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
-import { supabase } from "@/lib/supabase/client";
 import { getAllUserCoupons, getUserCoupons, isLegacyCoupon, syncAdminCouponsFromSupabase } from "@/lib/membership/coupons";
 import { MembershipPopupBanner } from "@/components/membership/membership-popup-banner";
 import { SizeRecommendationTab } from "./components/size-recommendation-tab";
@@ -416,14 +415,17 @@ function MembershipContent() {
     const syncPhone = (savedPhone || userPhone || "").replace(/[^0-9]/g, "");
     if (syncEmail || syncPhone) {
       try {
-        const matchFilter = syncEmail ? { email: syncEmail } : { phone: syncPhone };
-        supabase
-          .from("customers")
-          .select("*")
-          .match(matchFilter)
-          .then(({ data, error }) => {
-            if (!error && data && data.length > 0) {
-              const freshCust = data[0];
+        fetch("/api/admin/customers", { cache: "no-store" })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((json) => {
+            if (!json || !Array.isArray(json.customers)) return;
+            const customers: any[] = json.customers;
+            const freshCust = customers.find((c: any) => {
+              const cEmail = (c.email || "").toLowerCase().trim();
+              const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+              return (syncEmail && cEmail === syncEmail) || (syncPhone && cPhone === syncPhone);
+            });
+            if (freshCust) {
               if (freshCust.points !== undefined && freshCust.points !== null) {
                 const freshPts = Number(freshCust.points);
                 setUserPoints(freshPts);
@@ -662,16 +664,14 @@ function MembershipContent() {
         window.dispatchEvent(new CustomEvent("admin_customers_updated"));
       }
 
-      // Supabase customers 테이블 address 필드 동기화
+      // Git customers (data/customers.json) address 필드 동기화
       const custId = localStorage.getItem("membership_user_id");
       if (custId) {
-        supabase
-          .from("customers")
-          .update({ address: formattedAddress })
-          .eq("id", custId)
-          .then(({ error }) => {
-            if (error) console.warn("Supabase address update notice:", error.message);
-          });
+        fetch("/api/admin/customers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: custId, address: formattedAddress }),
+        }).catch((err) => console.warn("Git address update notice:", err));
       }
     } catch (e) {}
 
@@ -820,15 +820,19 @@ function MembershipContent() {
         }
       }
 
-      // 3) Supabase DB customers 테이블 동기화 (password 컬럼 업데이트)
+      // 3) Git customers (data/customers.json) 비밀번호 동기화
       try {
-        if (targetId) {
-          await supabase.from("customers").update({ password: newPwd, updated_at: new Date().toISOString() }).eq("id", targetId);
-        } else if (targetEmail) {
-          await supabase.from("customers").update({ password: newPwd, updated_at: new Date().toISOString() }).ilike("email", targetEmail);
-        }
+        await fetch("/api/admin/customers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: targetId || undefined,
+            email: targetEmail || undefined,
+            password: newPwd,
+          }),
+        });
       } catch (dbErr) {
-        console.warn("Notice: Supabase password sync notice:", dbErr);
+        console.warn("Notice: Git password sync notice:", dbErr);
       }
 
       setIsChangingPassword(false);
@@ -864,33 +868,25 @@ function MembershipContent() {
         const targetPhone = (userPhone || localStorage.getItem("membership_user_phone") || "").trim();
         const cleanPhone = targetPhone.replace(/[^0-9]/g, "");
 
-        // 1. Supabase 원격 DB customers 테이블에서 완전히 영구 삭제
+        // 1. Git data/customers.json 및 chat API에서 완전 영구 삭제
         try {
           if (targetId) {
-            await supabase.from("customers").delete().eq("id", targetId);
-          }
-          if (targetLoginId) {
-            await supabase.from("customers").delete().eq("loginId", targetLoginId);
-            await supabase.from("customers").delete().eq("login_id", targetLoginId);
-          }
-          if (targetEmail && targetEmail !== "admin@choicomma.com") {
-            await supabase.from("customers").delete().ilike("email", targetEmail);
-          }
-          if (cleanPhone && cleanPhone.length >= 8) {
-            await supabase.from("customers").delete().eq("phone", targetPhone);
-            await supabase.from("customers").delete().eq("phone", cleanPhone);
+            await fetch(`/api/admin/customers?id=${encodeURIComponent(targetId)}`, { method: "DELETE" });
+          } else if (targetEmail && targetEmail !== "admin@choicomma.com") {
+            await fetch(`/api/admin/customers?email=${encodeURIComponent(targetEmail)}`, { method: "DELETE" });
+          } else if (cleanPhone && cleanPhone.length >= 8) {
+            await fetch(`/api/admin/customers?phone=${encodeURIComponent(cleanPhone)}`, { method: "DELETE" });
           }
 
-          // 1-1. Supabase 채팅 세션 및 대화 내역 영구 삭제
+          // 1-1. Git 채팅 세션 및 대화 내역 영구 삭제
           const chatIdentifiers = [targetEmail, targetLoginId, targetPhone, cleanPhone, targetId].filter(
             (id) => Boolean(id) && id !== "admin@choicomma.com" && id !== "admin"
           );
           for (const sId of chatIdentifiers) {
-            await supabase.from("chat_sessions").delete().eq("id", sId);
-            await supabase.from("chat_messages").delete().eq("sessionId", sId);
+            await fetch(`/api/admin/chat?sessionId=${encodeURIComponent(sId)}`, { method: "DELETE" });
           }
         } catch (dbErr) {
-          console.warn("Notice: Supabase customer delete notice:", dbErr);
+          console.warn("Notice: Git customer delete notice:", dbErr);
         }
 
         // 2. 관리자 고객 목록(admin_customers) 캐시에서 완전히 제외

@@ -20,7 +20,6 @@ import {
   Check,
 } from "lucide-react";
 import { LogoSvg } from "@/components/layout/header/logo-svg";
-import { supabase } from "@/lib/supabase/client";
 import { initCustomerSession } from "@/lib/auth/customer-session";
 import { validatePasswordComplexity } from "@/lib/auth/password";
 import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
@@ -90,40 +89,44 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Supabase 원격 DB와 로컬 캐시 안전 병합 동기화 (기존 가입 회원이 덮어쓰기로 삭제되지 않도록 보존)
+  // Git 원격 파일(data/customers.json)과 로컬 캐시 안전 병합 동기화
   useEffect(() => {
     let isMounted = true;
-    const syncCustomersWithSupabase = async () => {
+    const syncCustomersWithGit = async () => {
       try {
-        const { data, error } = await supabase.from("customers").select("*");
-        if (!error && Array.isArray(data) && isMounted && typeof window !== "undefined") {
-          const savedRaw = localStorage.getItem("admin_customers");
-          let localList: any[] = [];
-          if (savedRaw) {
-            try {
-              localList = JSON.parse(savedRaw);
-            } catch (err) {}
-          }
-          const customerMap = new Map<string, any>();
-          localList.forEach((c) => {
-            const key = (c.id || c.email || "").trim().toLowerCase();
-            if (key) customerMap.set(key, c);
-          });
-          data.forEach((c) => {
-            const key = (c.id || c.email || "").trim().toLowerCase();
-            if (key) {
-              const existing = customerMap.get(key) || {};
-              customerMap.set(key, { ...existing, ...c });
+        const res = await fetch("/api/admin/customers", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          const data = json.customers;
+          if (Array.isArray(data) && isMounted && typeof window !== "undefined") {
+            const savedRaw = localStorage.getItem("admin_customers");
+            let localList: any[] = [];
+            if (savedRaw) {
+              try {
+                localList = JSON.parse(savedRaw);
+              } catch (err) {}
             }
-          });
-          const merged = deduplicateCustomers(Array.from(customerMap.values()));
-          if (merged.length > 0) {
-            localStorage.setItem("admin_customers", JSON.stringify(merged));
+            const customerMap = new Map<string, any>();
+            localList.forEach((c) => {
+              const key = (c.id || c.email || "").trim().toLowerCase();
+              if (key) customerMap.set(key, c);
+            });
+            data.forEach((c: any) => {
+              const key = (c.id || c.email || "").trim().toLowerCase();
+              if (key) {
+                const existing = customerMap.get(key) || {};
+                customerMap.set(key, { ...existing, ...c });
+              }
+            });
+            const merged = deduplicateCustomers(Array.from(customerMap.values()));
+            if (merged.length > 0) {
+              localStorage.setItem("admin_customers", JSON.stringify(merged));
+            }
           }
         }
       } catch (e) {}
     };
-    syncCustomersWithSupabase();
+    syncCustomersWithGit();
     return () => {
       isMounted = false;
     };
@@ -202,15 +205,20 @@ export default function LoginPage() {
 
     let isDuplicate = false;
 
-    // 1. Supabase 원격 DB 최우선 확인 (실제 존재하는 회원인지 단일 진실 공급원 검증)
+    // 1. Git customers API 최우선 확인 (실제 존재하는 회원인지 단일 진실 공급원 검증)
     try {
-      const { data, error } = await supabase
-        .from("customers")
-        .select("id")
-        .or(`id.eq.${trimmedId},email.ilike.${trimmedId}`)
-        .limit(1);
-      if (!error && data && data.length > 0) {
-        isDuplicate = true;
+      const res = await fetch("/api/admin/customers", { cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.customers || [];
+        if (list.some((c: any) => {
+          const cId = (c.id || "").trim().toLowerCase();
+          const cLogin = (c.loginId || c.login_id || "").trim().toLowerCase();
+          const cEmail = (c.email || "").trim().toLowerCase();
+          return cId === trimmedId || cLogin === trimmedId || cEmail === trimmedId;
+        })) {
+          isDuplicate = true;
+        }
       }
     } catch (err) {}
 
@@ -273,16 +281,16 @@ export default function LoginPage() {
       isDuplicate = true;
     }
 
-    // 1. Supabase 원격 DB 최우선 확인
+    // 1. Git customers API 최우선 확인
     if (!isDuplicate) {
       try {
-        const { data, error } = await supabase
-          .from("customers")
-          .select("id")
-          .ilike("email", trimmedEmail)
-          .limit(1);
-        if (!error && data && data.length > 0) {
-          isDuplicate = true;
+        const res = await fetch("/api/admin/customers", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          const list = json.customers || [];
+          if (list.some((c: any) => c.email && c.email.trim().toLowerCase() === trimmedEmail)) {
+            isDuplicate = true;
+          }
         }
       } catch (err) {}
     }
@@ -332,15 +340,18 @@ export default function LoginPage() {
 
     let isDuplicate = false;
 
-    // 1. Supabase 원격 DB 최우선 확인 (실제 가입된 회원인지 검증)
+    // 1. Git customers API 최우선 확인 (실제 가입된 회원인지 검증)
     try {
-      const { data, error } = await supabase
-        .from("customers")
-        .select("id")
-        .or(`phone.eq.${cleanPhone},phone.eq.${phone.trim()}`)
-        .limit(1);
-      if (!error && data && data.length > 0) {
-        isDuplicate = true;
+      const res = await fetch("/api/admin/customers", { cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.customers || [];
+        if (list.some((c: any) => {
+          const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+          return (cleanPhone && cPhone === cleanPhone) || (c.phone && c.phone.trim() === phone.trim());
+        })) {
+          isDuplicate = true;
+        }
       }
     } catch (err) {}
 
@@ -435,13 +446,13 @@ export default function LoginPage() {
 
     if (!customerExists) {
       try {
-        const { data } = await supabase
-          .from("customers")
-          .select("id")
-          .ilike("email", targetEmail)
-          .limit(1);
-        if (data && data.length > 0) {
-          customerExists = true;
+        const res = await fetch("/api/admin/customers", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          const list = json.customers || [];
+          if (list.some((c: any) => c.email && c.email.trim().toLowerCase() === targetEmail)) {
+            customerExists = true;
+          }
         }
       } catch (err) {}
     }
@@ -517,36 +528,37 @@ export default function LoginPage() {
       const targetEmail = email.trim().toLowerCase();
       const targetLoginId = loginId.trim().toLowerCase();
 
-      // 1. Supabase 원격 DB 중복 검증 (단일 진실 공급원)
+      // 1. Git customers (data/customers.json) 중복 검증 (단일 진실 공급원)
       try {
-        const { data: existingLoginId } = await supabase
-          .from("customers")
-          .select("id")
-          .or(`id.eq.${targetLoginId},email.ilike.${targetLoginId}`)
-          .limit(1);
-        if (existingLoginId && existingLoginId.length > 0) {
-          setToastMsg("이미 사용 중인 로그인 ID입니다. 다른 아이디를 입력해 주세요.");
-          return;
-        }
+        const res = await fetch("/api/admin/customers", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          const list: any[] = json.customers || [];
 
-        const { data: existingEmail } = await supabase
-          .from("customers")
-          .select("id")
-          .ilike("email", targetEmail)
-          .limit(1);
-        if (existingEmail && existingEmail.length > 0) {
-          setToastMsg("이미 가입된 이메일 주소입니다. 다른 이메일을 입력해 주세요.");
-          return;
-        }
+          const existingLoginId = list.some((c: any) => {
+            const cId = (c.id || "").trim().toLowerCase();
+            const cLogin = (c.loginId || c.login_id || "").trim().toLowerCase();
+            return cId === targetLoginId || cLogin === targetLoginId;
+          });
+          if (existingLoginId) {
+            setToastMsg("이미 사용 중인 로그인 ID입니다. 다른 아이디를 입력해 주세요.");
+            return;
+          }
 
-        const { data: existingPhone } = await supabase
-          .from("customers")
-          .select("id")
-          .or(`phone.eq.${cleanPhone},phone.eq.${phone.trim()}`)
-          .limit(1);
-        if (existingPhone && existingPhone.length > 0) {
-          setToastMsg("이미 가입된 휴대폰 번호입니다. 기존 번호로 로그인해 주세요.");
-          return;
+          const existingEmail = list.some((c: any) => (c.email || "").trim().toLowerCase() === targetEmail);
+          if (existingEmail) {
+            setToastMsg("이미 가입된 이메일 주소입니다. 다른 이메일을 입력해 주세요.");
+            return;
+          }
+
+          const existingPhone = list.some((c: any) => {
+            const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+            return (cleanPhone && cPhone === cleanPhone) || (c.phone && c.phone.trim() === phone.trim());
+          });
+          if (existingPhone) {
+            setToastMsg("이미 가입된 휴대폰 번호입니다. 기존 번호로 로그인해 주세요.");
+            return;
+          }
         }
       } catch (err) {}
 
@@ -646,7 +658,7 @@ export default function LoginPage() {
         localStorage.setItem("admin_customers", JSON.stringify([localCustomer, ...filteredList]));
       }
 
-      // 2) Sync to Supabase DB via Server API & Client SDK
+      // 2) Sync to Git customers (data/customers.json) via Server API
       try {
         await fetch("/api/admin/customers", {
           method: "POST",
@@ -654,9 +666,7 @@ export default function LoginPage() {
           body: JSON.stringify(dbCustomer),
         });
       } catch (apiErr) {
-        try {
-          await supabase.from("customers").upsert([dbCustomer], { onConflict: "id" });
-        } catch (err) {}
+        console.warn("Notice: Failed to sync customer to Git file:", apiErr);
       }
 
       // 3) Save password in localStorage
@@ -730,32 +740,38 @@ export default function LoginPage() {
       }
     }
 
-    // 2) If not found in localStorage, fetch from Supabase customers table
+    // 2) If not found in localStorage, fetch from Git data/customers.json API
     if (!matchedCustomer) {
       try {
-        let query = supabase.from("customers").select("*");
-        if (inputLoginId.includes("@")) {
-          query = query.ilike("email", inputLoginId);
-        } else if (cleanPhoneId.length >= 8) {
-          query = query.or(`phone.eq.${inputLoginId},phone.eq.${cleanPhoneId}`);
-        } else {
-          query = query.or(`email.ilike.${inputLoginId},phone.eq.${inputLoginId},id.eq.${inputLoginId}`);
-        }
-        const { data, error } = await query.limit(1).maybeSingle();
-        if (!error && data) {
-          matchedCustomer = data;
+        const res = await fetch("/api/admin/customers", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          const list: any[] = json.customers || [];
+          matchedCustomer = list.find((c) => {
+            const cLoginId = (c.loginId || c.login_id || "").trim().toLowerCase();
+            const cEmail = (c.email || "").trim().toLowerCase();
+            const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+            const cId = (c.id || "").trim().toLowerCase();
+            return (
+              (cLoginId && cLoginId === inputLoginId) ||
+              (cEmail && cEmail === inputLoginId) ||
+              (cId && cId === inputLoginId) ||
+              (cleanPhoneId.length >= 8 && cPhone === cleanPhoneId) ||
+              (c.phone && c.phone.trim() === inputLoginId)
+            );
+          });
           // Sync into local admin_customers cache
-          if (typeof window !== "undefined") {
+          if (matchedCustomer && typeof window !== "undefined") {
             const saved = localStorage.getItem("admin_customers");
-            let list: any[] = [];
+            let localList: any[] = [];
             if (saved) {
-              try { list = JSON.parse(saved); } catch (e) {}
+              try { localList = JSON.parse(saved); } catch (e) {}
             }
-            localStorage.setItem("admin_customers", JSON.stringify([matchedCustomer, ...list.filter((c) => c.id !== matchedCustomer.id)]));
+            localStorage.setItem("admin_customers", JSON.stringify([matchedCustomer, ...localList.filter((c) => c.id !== matchedCustomer.id)]));
           }
         }
       } catch (err) {
-        console.warn("Notice: Supabase customer query error:", err);
+        console.warn("Notice: Git customer query error:", err);
       }
     }
 

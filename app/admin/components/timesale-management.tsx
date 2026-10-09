@@ -17,8 +17,6 @@ import {
   Tag,
   AlertCircle
 } from "lucide-react";
-import { formatPrice } from "@/lib/sfcc/utils";
-import { supabase } from "@/lib/supabase/client";
 import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
 
 export interface SecretTimeSale {
@@ -165,7 +163,7 @@ export function TimesaleManagement({
       triggerToast("시크릿 타임세일이 삭제되었습니다.");
     }
     try {
-      await supabase.from("timesales").delete().eq("id", id);
+      await fetch(`/api/admin/timesale?id=${encodeURIComponent(id)}`, { method: "DELETE" });
     } catch (e) {}
   };
 

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DEFAULT_POPUP_CONFIG, PopupConfig } from "@/lib/popup/types";
 import fs from "fs";
 import path from "path";
 
@@ -45,44 +44,32 @@ function writeSiteSettings(settings: Record<string, any>) {
   }
 }
 
-// GET: 팝업 설정 불러오기
-export async function GET() {
-  try {
-    const settings = readSiteSettings();
-    if (settings && settings.popup_config) {
-      return NextResponse.json({
-        success: true,
-        config: { ...DEFAULT_POPUP_CONFIG, ...settings.popup_config },
-      });
-    }
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const key = url.searchParams.get("key");
+  const settings = readSiteSettings();
 
-    return NextResponse.json({ success: true, config: DEFAULT_POPUP_CONFIG });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  if (key) {
+    return NextResponse.json({ success: true, key, value: settings[key] || null });
   }
+
+  return NextResponse.json({ success: true, settings });
 }
 
-// POST: 팝업 설정 저장/동기화하기 (Git 파일 data/site-settings.json에 저장)
 export async function POST(req: NextRequest) {
   try {
-    const body: PopupConfig = await req.json();
-    if (!body) {
-      return NextResponse.json({ success: false, error: "설정 데이터가 누락되었습니다." }, { status: 400 });
+    const body = await req.json();
+    const settings = readSiteSettings();
+
+    if (body.key && body.value !== undefined) {
+      settings[body.key] = body.value;
+    } else if (typeof body === "object") {
+      Object.assign(settings, body);
     }
 
-    const updatedConfig: PopupConfig = {
-      ...DEFAULT_POPUP_CONFIG,
-      ...body,
-      updatedAt: new Date().toISOString(),
-    };
-
-    const settings = readSiteSettings();
-    settings.popup_config = updatedConfig;
     writeSiteSettings(settings);
-
-    return NextResponse.json({ success: true, config: updatedConfig });
+    return NextResponse.json({ success: true, settings });
   } catch (err: any) {
-    console.error("API /api/admin/popup error:", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

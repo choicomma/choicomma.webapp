@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import {
   MessageSquare,
@@ -410,17 +409,17 @@ export function InquiriesManagement({
           matchedCust.totalSpent = Math.max(0, (Number(matchedCust.totalSpent) || 0) - Number(result.refundAmount || 0));
           localStorage.setItem("admin_customers", JSON.stringify(custList));
 
-          // Supabase DB 비동기 반영
+          // Git 고객 API 비동기 반영
           try {
-            supabase
-              .from("customers")
-              .update({
+            fetch("/api/admin/customers", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...matchedCust,
                 points: updatedPts,
                 totalSpent: matchedCust.totalSpent,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", matchedCust.id)
-              .then(() => {});
+              }),
+            }).catch(() => {});
           } catch (e) {}
         }
 
@@ -948,16 +947,13 @@ export function InquiriesManagement({
         setAutoReplyFallback(savedFallback);
       }
 
-      // Fetch shared settings from Supabase site_settings (for cross-device/browser sync)
+      // Fetch shared settings from Git site_settings API (for cross-device/browser sync)
       try {
-        supabase
-          .from("site_settings")
-          .select("value")
-          .eq("key", "chat_auto_reply_config")
-          .maybeSingle()
-          .then(({ data, error }) => {
-            if (!error && data?.value) {
-              const val = data.value;
+        fetch("/api/admin/site-settings?key=chat_auto_reply_config")
+          .then((res) => res.json())
+          .then((json) => {
+            if (json?.success && json?.value) {
+              const val = json.value;
               if (typeof val.enabled === "boolean") {
                 setAutoReplyEnabled(val.enabled);
                 localStorage.setItem("admin_auto_reply_enabled", String(val.enabled));
@@ -975,7 +971,8 @@ export function InquiriesManagement({
                 localStorage.setItem("admin_auto_reply_fallback", val.fallback);
               }
             }
-          });
+          })
+          .catch(() => {});
       } catch (e) {}
     }
   }, []);
@@ -1015,29 +1012,23 @@ export function InquiriesManagement({
       }
     }
 
-    // Persist to Supabase site_settings for cross-browser, cross-device persistence
+    // Persist to Git site_settings API for cross-browser, cross-device persistence
     try {
-      supabase
-        .from("site_settings")
-        .upsert(
-          {
-            key: "chat_auto_reply_config",
-            value: {
-              enabled,
-              delay,
-              rules,
-              fallback,
-            },
-            description: "실시간 채팅 자동 답변 및 기본 안내 문구 설정",
-            updated_at: new Date().toISOString(),
+      fetch("/api/admin/site-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: "chat_auto_reply_config",
+          value: {
+            enabled,
+            delay,
+            rules,
+            fallback,
           },
-          { onConflict: "key" }
-        )
-        .then(({ error }) => {
-          if (error) {
-            console.warn("Notice: Failed to persist auto-reply config to site_settings:", error);
-          }
-        });
+        }),
+      }).catch((err) => {
+        console.warn("Notice: Failed to persist auto-reply config to site-settings:", err);
+      });
     } catch (e) {}
   };
 
