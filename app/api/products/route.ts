@@ -196,7 +196,11 @@ export async function POST(req: NextRequest) {
       }
 
       globalForProducts.serverProductsCache = seedProducts;
-      safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), seedProducts);
+      try {
+        safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), seedProducts);
+      } catch (writeErr: any) {
+        console.warn("[Restore Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
+      }
       revalidateAllProductPaths();
 
       return NextResponse.json({
@@ -270,8 +274,12 @@ export async function POST(req: NextRequest) {
         existingList.unshift(itemToSave);
       }
 
-      safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), existingList);
       globalForProducts.serverProductsCache = existingList;
+      try {
+        safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), existingList);
+      } catch (writeErr: any) {
+        console.warn("[Single Product Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
+      }
 
       revalidateAllProductPaths(p.handle);
 
@@ -298,7 +306,11 @@ export async function POST(req: NextRequest) {
     }
 
     globalForProducts.serverProductsCache = products;
-    safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), products);
+    try {
+      safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), products);
+    } catch (writeErr: any) {
+      console.warn("[Batch Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
+    }
 
     revalidateAllProductPaths();
 
@@ -349,8 +361,12 @@ export async function DELETE(req: NextRequest) {
 
     const updated = existingList.filter((p: any) => !deleteSet.has(String(p.id)));
 
-    safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), updated);
     globalForProducts.serverProductsCache = updated;
+    try {
+      safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), updated);
+    } catch (writeErr: any) {
+      console.warn("[Delete Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
+    }
 
     revalidateAllProductPaths();
 

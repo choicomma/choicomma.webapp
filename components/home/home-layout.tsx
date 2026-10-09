@@ -121,6 +121,32 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  React.useEffect(() => {
+    const updateProductsFromLocal = () => {
+      if (typeof window === "undefined") return;
+      try {
+        const raw = localStorage.getItem("admin_products");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            let grid = parsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));
+            if (grid.length === 0) grid = parsed.filter((p: any) => p.isMainFeatured === true);
+            if (grid.length === 0) grid = parsed.filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-"));
+            if (grid.length > 0) setAllProducts(grid);
+          }
+        }
+      } catch (e) {}
+    };
+
+    updateProductsFromLocal();
+    window.addEventListener("storage", updateProductsFromLocal);
+    window.addEventListener("admin_products_updated", updateProductsFromLocal);
+    return () => {
+      window.removeEventListener("storage", updateProductsFromLocal);
+      window.removeEventListener("admin_products_updated", updateProductsFromLocal);
+    };
+  }, []);
+
   const [isHydrated, setIsHydrated] = React.useState(false);
 
   const [timeSaleSettings, setTimeSaleSettings] = React.useState<{

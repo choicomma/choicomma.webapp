@@ -32,7 +32,20 @@ export function useProducts({
   const INITIAL_CHOICOMMA_PRODUCTS: any[] = productsCache as any[];
 
   const isProductsLoadedRef = useRef(false);
-  const [productsList, setProductsList] = useState<any[]>(() => INITIAL_CHOICOMMA_PRODUCTS);
+  const [productsList, setProductsList] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("admin_products");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+    }
+    return INITIAL_CHOICOMMA_PRODUCTS;
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
   const [selectedCategoryForProducts, setSelectedCategoryForProducts] = useState("");
@@ -64,12 +77,10 @@ export function useProducts({
     }
   }, []);
 
-  // Sync sort order and purge stale localStorage on client mount
+  // Sync sort order on client mount
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      localStorage.removeItem("admin_products");
-      localStorage.removeItem("admin_custom_products");
       const saved = localStorage.getItem("admin_product_sort_order");
       if (
         saved &&
@@ -108,16 +119,39 @@ export function useProducts({
   const isSavingRef = useRef(false);
   const pendingSaveListRef = useRef<any[] | null>(null);
 
-  // Client-side hydration sync for productsList (Source of Truth: Central Server File /api/products)
+  // Client-side hydration sync for productsList (Source of Truth: Central Server File /api/products with Local Persistence)
   useEffect(() => {
     let isMounted = true;
     const fetchServerProducts = async () => {
+      let hasLocalData = false;
+      if (typeof window !== "undefined") {
+        try {
+          const saved = localStorage.getItem("admin_products");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              hasLocalData = true;
+              if (isMounted) {
+                setProductsList(parsed);
+                isProductsLoadedRef.current = true;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
       try {
         const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && isMounted) {
-            setProductsList(data);
+            // If local changes exist in this browser, preserve them; otherwise sync server catalog
+            if (!hasLocalData && data.length > 0) {
+              setProductsList(data);
+              try {
+                localStorage.setItem("admin_products", JSON.stringify(data));
+              } catch (e) {}
+            }
             isProductsLoadedRef.current = true;
             return;
           }
@@ -126,7 +160,7 @@ export function useProducts({
         console.error("Failed to fetch products from /api/products", err);
       }
 
-      if (isMounted) {
+      if (isMounted && !hasLocalData) {
         setProductsList((prev) => (prev.length > 0 ? prev : INITIAL_CHOICOMMA_PRODUCTS));
         isProductsLoadedRef.current = true;
       }
@@ -177,16 +211,14 @@ export function useProducts({
       });
 
       if (!res.ok) {
-        console.error("Failed to persist products to /api/products, status:", res.status);
-        triggerToast("⚠️ 서버에 저장하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        console.warn("Server file persistence skipped or failed (e.g. read-only serverless environment), local persistence active.");
         return false;
       }
 
       window.dispatchEvent(new CustomEvent("admin_products_updated"));
       return true;
     } catch (err) {
-      console.error("Failed to persist products to /api/products:", err);
-      triggerToast("⚠️ 네트워크 연결을 확인해주세요. 서버 저장 실패");
+      console.warn("Network error during /api/products sync, local persistence active:", err);
       return false;
     } finally {
       isSavingRef.current = false;
@@ -198,12 +230,22 @@ export function useProducts({
         }, 0);
       }
     }
-  }, [triggerToast]);
+  }, []);
 
-  // Helper: Safely save to Central Server file (/api/products) with concurrency protection
+  // Helper: Safely save to Central Server file (/api/products) and localStorage with concurrency protection
   const saveProductsToStorage = useCallback((list: any[]) => {
     if (typeof window === "undefined") return;
 
+    // 1. Immediately persist to localStorage for instant reload resilience
+    try {
+      localStorage.setItem("admin_products", JSON.stringify(list));
+      window.dispatchEvent(new CustomEvent("admin_products_updated"));
+      window.dispatchEvent(new CustomEvent("storage"));
+    } catch (e) {
+      console.warn("Failed to save products to localStorage:", e);
+    }
+
+    // 2. Concurrency queue to server API (/api/products)
     if (isSavingRef.current) {
       // Save is currently in-flight; queue the latest snapshot so it executes immediately after
       pendingSaveListRef.current = list;
@@ -697,8 +739,9 @@ export function useProducts({
           setProductsList(data.products);
           if (typeof window !== "undefined") {
             try {
-              localStorage.removeItem("admin_products");
-              localStorage.removeItem("admin_custom_products");
+              localStorage.setItem("admin_products", JSON.stringify(data.products));
+              window.dispatchEvent(new CustomEvent("admin_products_updated"));
+              window.dispatchEvent(new CustomEvent("storage"));
             } catch {}
           }
           triggerToast(`✨ 전체 상품 리스트가 정식 카탈로그(${data.products.length}개)로 완벽하게 초기화되었습니다!`);
@@ -712,12 +755,6 @@ export function useProducts({
     const freshCatalog = JSON.parse(JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
     setProductsList(freshCatalog);
     saveProductsToStorage(freshCatalog);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.removeItem("admin_products");
-        localStorage.removeItem("admin_custom_products");
-      } catch {}
-    }
     triggerToast("✨ 전체 상품 리스트가 정식 카탈로그(50개)로 완벽하게 초기화되었습니다!");
   }, [INITIAL_CHOICOMMA_PRODUCTS, saveProductsToStorage, triggerToast]);
 

@@ -52,6 +52,21 @@ export function ProductListContent({
         }
       } catch (e) {}
 
+      // Fallback/sync to client-side localStorage if available
+      if (typeof window !== "undefined") {
+        try {
+          const localRaw = localStorage.getItem("admin_products");
+          if (localRaw) {
+            const localData: any[] = JSON.parse(localRaw);
+            if (Array.isArray(localData) && localData.length > 0) {
+              activeSourceProducts = localData.filter(
+                (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+              );
+            }
+          }
+        } catch (e) {}
+      }
+
       // Filter active products by category if specific category is selected
       let categoryFilteredProducts = activeSourceProducts;
       if (
