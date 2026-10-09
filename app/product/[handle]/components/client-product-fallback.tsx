@@ -42,35 +42,7 @@ export function ClientProductFallback({ handle }: { handle: string }) {
       );
     };
 
-    // 1. Instant check in localStorage (admin_custom_products & admin_products)
-    try {
-      const customSaved = localStorage.getItem("admin_custom_products");
-      if (customSaved) {
-        const parsedCustom = JSON.parse(customSaved);
-        if (Array.isArray(parsedCustom)) {
-          const found = parsedCustom.find(matchesProduct);
-          if (found) {
-            setProduct(found);
-            setLoading(false);
-            return;
-          }
-        }
-      }
-
-      const saved = localStorage.getItem("admin_products");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          const found = parsed.find(matchesProduct);
-          if (found) {
-            setProduct(found);
-            setLoading(false);
-            return;
-          }
-        }
-      }
-    } catch (e) {}
-
+    // Fetch authoritative product from /api/products
     // 2. Fetch from /api/products to support newly created custom products
     fetch("/api/products?fresh=1")
       .then((res) => res.json())

@@ -1,4 +1,4 @@
 import { Product } from "../types";
-import parsedProducts from "./parsed-products.json";
+import productsCache from "@/data/products-cache.json";
 
-export const mockProducts: Product[] = parsedProducts as unknown as Product[];
+export const mockProducts: Product[] = productsCache as unknown as Product[];

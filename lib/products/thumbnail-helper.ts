@@ -1,4 +1,4 @@
-import excelParsedProducts from "@/lib/sfcc/mock/parsed-products.json";
+import productsCache from "@/data/products-cache.json";
 
 // Default fallback image if nothing else matches
 export const DEFAULT_PRODUCT_THUMBNAIL = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
@@ -6,10 +6,9 @@ export const DEFAULT_PRODUCT_THUMBNAIL = "https://cdn.imweb.me/thumbnail/2026092
 /**
  * Returns a high-quality product thumbnail URL based on:
  * 1. Explicit image passed in
- * 2. Product title match from localStorage admin_products
- * 3. Product title match from excelParsedProducts
- * 4. Keyword/token similarity match
- * 5. Default fallback
+ * 2. Product title match from productsCache
+ * 3. Keyword/token similarity match
+ * 4. Default fallback
  */
 export function getProductThumbnail(itemsText?: string, explicitImage?: string): string {
   if (
@@ -33,19 +32,7 @@ export function getProductThumbnail(itemsText?: string, explicitImage?: string):
     .toLowerCase()
     .trim();
 
-  // 1. Check localStorage admin_products if on client side
-  let localProducts: any[] = [];
-  if (typeof window !== "undefined") {
-    try {
-      const raw = localStorage.getItem("admin_products");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) localProducts = parsed;
-      }
-    } catch {}
-  }
-
-  const allProducts = [...localProducts, ...(excelParsedProducts as any[])];
+  const allProducts = productsCache as any[];
 
   // 2. Exact or substring match on product title
   for (const p of allProducts) {

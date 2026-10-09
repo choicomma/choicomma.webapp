@@ -231,19 +231,7 @@ function MembershipContent() {
   }, [secretSalesList, userEmail, userGrade, isAdmin]);
 
   const allAvailableProducts = useMemo(() => {
-    let prods: any[] = mockProducts;
-    if (typeof window !== "undefined") {
-      const savedAdminProds = localStorage.getItem("admin_products");
-      if (savedAdminProds) {
-        try {
-          const parsed = JSON.parse(savedAdminProds);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            prods = [...parsed, ...mockProducts.filter((mp) => !parsed.some((ap: any) => ap.id === mp.id))];
-          }
-        } catch (e) {}
-      }
-    }
-    return prods;
+    return mockProducts as any[];
   }, []);
 
   const handleAddProductToCart = (product: any, discountedPrice?: number) => {

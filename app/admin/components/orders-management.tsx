@@ -623,17 +623,7 @@ export function OrdersManagement({
       .trim()
       .toLowerCase();
 
-    const allProds: any[] = (productsList && productsList.length > 0)
-      ? productsList
-      : (() => {
-          if (typeof window !== "undefined") {
-            try {
-              const saved = localStorage.getItem("admin_products");
-              if (saved) return JSON.parse(saved);
-            } catch (e) {}
-          }
-          return [];
-        })();
+    const allProds: any[] = productsList || [];
 
     if (allProds.length > 0) {
       const found = allProds.find((p: any) => {

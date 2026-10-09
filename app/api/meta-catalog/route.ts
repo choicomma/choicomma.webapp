@@ -13,55 +13,22 @@ function getRuntimeProductsFilePath() {
   return path.join(process.cwd(), "data", "products-cache.json");
 }
 
-function getInitialMockFilePath() {
-  return path.join(process.cwd(), "lib", "sfcc", "mock", "parsed-products.json");
-}
-
 function readLocalProductsBackup(): any[] {
   try {
     const runtimePath = getRuntimeProductsFilePath();
     if (fs.existsSync(runtimePath)) {
       const raw = fs.readFileSync(runtimePath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) return data;
-    }
-  } catch (e) {
-    console.warn("[Meta Catalog] Failed reading runtime products cache:", e);
-  }
-
-  try {
-    const mockPath = getInitialMockFilePath();
-    if (fs.existsSync(mockPath)) {
-      const raw = fs.readFileSync(mockPath, "utf-8");
-      const data = JSON.parse(raw);
       if (Array.isArray(data)) return data;
     }
   } catch (e) {
-    console.warn("[Meta Catalog] Failed reading mock products:", e);
+    console.warn("[Meta Catalog] Failed reading runtime products cache:", e);
   }
 
   return [];
 }
 
 async function getProductsCatalog(): Promise<any[]> {
-  try {
-    if (isSupabaseConfigured) {
-      const { data: dbProducts, error: dbError } = await supabaseServer
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (!dbError && Array.isArray(dbProducts) && dbProducts.length > 0) {
-        return dbProducts;
-      }
-      if (dbError) {
-        console.warn("[Meta Catalog] Supabase query notice:", dbError.message);
-      }
-    }
-  } catch (err) {
-    console.warn("[Meta Catalog] Supabase connection error, falling back to disk cache:", err);
-  }
-
   return readLocalProductsBackup();
 }
 

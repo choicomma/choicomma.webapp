@@ -91,6 +91,7 @@ interface ProductsManagementProps {
   setNewTimeSaleHours?: (val: string) => void;
   setNewTimeSaleMinutes?: (val: string) => void;
   handleBulkAddProducts?: (newProducts: any[]) => void;
+  handleReplaceAllProducts?: (fullList: any[]) => void;
   handleMoveProduct?: (id: string, direction: "up" | "down") => void;
   handleBulkDeleteProducts?: (targetIds: string[]) => void;
   handleBulkUpdateMainFeatured?: (targetIds: string[], isFeatured: boolean) => void;
@@ -677,6 +678,7 @@ export function ProductsManagement({
   setNewTimeSaleHours,
   setNewTimeSaleMinutes,
   handleBulkAddProducts,
+  handleReplaceAllProducts,
   handleMoveProduct,
   handleBulkDeleteProducts,
   handleBulkUpdateMainFeatured,

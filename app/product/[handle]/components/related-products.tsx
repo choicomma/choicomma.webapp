@@ -20,15 +20,13 @@ export function RelatedProducts() {
   }, []);
 
   useEffect(() => {
-    const loadRelatedProducts = () => {
-      if (typeof window === "undefined") return;
+    const loadRelatedProducts = async () => {
       try {
-        let allProds: any[] = [];
-        const saved = localStorage.getItem("admin_products");
-        if (saved) {
-          allProds = JSON.parse(saved);
-        } else {
-          allProds = mockProducts;
+        let allProds: any[] = mockProducts;
+        const res = await fetch("/api/products");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) allProds = data;
         }
 
         // STRICT FILTER: Only products where isMainFeatured === true (메인 화면 전시 체크된 상품)

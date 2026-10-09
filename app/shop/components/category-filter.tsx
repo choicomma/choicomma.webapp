@@ -76,7 +76,7 @@ export function CategoryFilter({
             <Link
               className={cn(
                 "text-left w-full text-sm font-bold cursor-pointer transition-all transform hover:translate-x-1.5 uppercase tracking-wide block py-1",
-                params.collection === undefined && !queryVal
+                (params.collection === undefined || params.collection === "all") && !queryVal
                   ? "font-black text-neutral-950 translate-x-1.5 underline underline-offset-4"
                   : "text-neutral-600 hover:text-neutral-950 font-semibold"
               )}
@@ -87,7 +87,7 @@ export function CategoryFilter({
               전체보기
             </Link>
           </li>
-          {collections.map((cat) => {
+          {collections.filter((cat) => cat.handle !== "all" && cat.handle !== "joyco-root").map((cat) => {
             const isSelected = params.collection === cat.handle;
             const displayName = CATEGORY_KO_MAP[cat.handle] || CATEGORY_KO_MAP[cat.title] || cat.title;
             return (

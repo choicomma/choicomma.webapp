@@ -33,7 +33,7 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
   const colorDropdownRef = useRef<HTMLDivElement>(null);
   const sizeDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Sync when localStorage admin_products updates
+  // Sync when admin products update
   const [optionsTick, setOptionsTick] = useState(0);
   useEffect(() => {
     const handleUpdate = () => setOptionsTick((t) => t + 1);
@@ -223,14 +223,6 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
     if (typeof window === "undefined") return;
     try {
       let activeProd = product;
-      const savedAdminProds = localStorage.getItem("admin_products");
-      if (savedAdminProds) {
-        try {
-          const parsed = JSON.parse(savedAdminProds);
-          const found = parsed.find((p: any) => p.id === product.id || p.handle === product.handle);
-          if (found) activeProd = found;
-        } catch (e) {}
-      }
 
       let savedSelectedIds: string[] = [];
       const savedIds = localStorage.getItem("secret_timesale_product_ids");

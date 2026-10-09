@@ -273,12 +273,21 @@ export async function getCollectionProducts({
         (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
       );
 
-      if (collectionHandle === "all" || collectionHandle === "choice" || collectionHandle === "timesale" || collectionHandle === "new" || collectionHandle === "special") {
+      if (collectionHandle === "all" || collectionHandle === "choice" || collectionHandle === "timesale" || collectionHandle === "special") {
         return catalogProducts;
       }
 
+      if (collectionHandle === "new") {
+        const newItems = catalogProducts.filter((p: any) => {
+          const hasNewTag = Array.isArray(p.tags) && p.tags.some((t: string) => t.toUpperCase() === "NEW" || t === "신상품");
+          const hasNewCat = (p.categoryId || "").toLowerCase() === "new" || (Array.isArray(p.categoryIds) && p.categoryIds.some((c: any) => String(c).toLowerCase() === "new"));
+          return hasNewTag || hasNewCat || p.isNew === true;
+        });
+        return newItems.length > 0 ? newItems : catalogProducts;
+      }
+
       const collection = mockCollections.find(
-        (c) => c.handle === collectionHandle
+        (c) => c.handle.toLowerCase() === collectionHandle.toLowerCase()
       );
 
       if (!collection) {
@@ -289,9 +298,14 @@ export async function getCollectionProducts({
         return allList.filter((p) => (p as any).isMainFeatured === true);
       }
 
-      const categoryProducts = allList.filter(
-        (p) => p.categoryId === collectionHandle || ((p as any).categoryIds && (p as any).categoryIds.includes(collectionHandle))
-      );
+      const target = collectionHandle.toLowerCase();
+      const categoryProducts = catalogProducts.filter((p: any) => {
+        const pCat = (p.categoryId || "").toLowerCase();
+        const pCats = Array.isArray(p.categoryIds) ? p.categoryIds.map((c: any) => String(c).toLowerCase()) : [];
+        const matchesCat = pCat === target || pCats.includes(target);
+        const matchesTag = Array.isArray(p.tags) && p.tags.some((t: string) => t.toLowerCase() === target);
+        return matchesCat || matchesTag;
+      });
 
       const uniqueProducts = [
         ...new Set(categoryProducts.map((product) => product.id)),

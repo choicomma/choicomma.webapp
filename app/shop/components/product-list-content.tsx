@@ -42,42 +42,15 @@ export function ProductListContent({
           if (Array.isArray(serverData)) {
             if (serverData.length === 0) {
               activeSourceProducts = [];
-              if (typeof window !== "undefined") {
-                try {
-                  localStorage.setItem("admin_products", "[]");
-                } catch (err) {}
-              }
             } else {
               const nonBanner = serverData.filter(
                 (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
               );
               activeSourceProducts = nonBanner;
-              if (typeof window !== "undefined") {
-                try {
-                  localStorage.setItem("admin_products", JSON.stringify(serverData));
-                } catch (err) {}
-              }
             }
           }
         }
-      } catch (e) {
-        if (typeof window !== "undefined") {
-          const savedAdmin = localStorage.getItem("admin_products");
-          if (savedAdmin) {
-            try {
-              const parsedAdmin: any[] = JSON.parse(savedAdmin);
-              if (Array.isArray(parsedAdmin) && parsedAdmin.length > 0) {
-                const nonBannerAdmin = parsedAdmin.filter(
-                  (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
-                );
-                if (nonBannerAdmin.length > 0) {
-                  activeSourceProducts = nonBannerAdmin;
-                }
-              }
-            } catch (err) {}
-          }
-        }
-      }
+      } catch (e) {}
 
       // Filter active products by category if specific category is selected
       let categoryFilteredProducts = activeSourceProducts;

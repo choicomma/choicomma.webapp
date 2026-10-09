@@ -39,53 +39,12 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
                 }
               }
 
-              // Local storage fallback for recently updated fabricImage/fabricComposition if server is still propagating
-              if (typeof window !== "undefined") {
-                try {
-                  const saved = localStorage.getItem("admin_products");
-                  if (saved) {
-                    const parsed = JSON.parse(saved);
-                    const localFound = parsed.find(
-                      (p: any) => p.id === initialProduct.id || p.handle === initialProduct.handle
-                    );
-                    if (localFound) {
-                      found.fabricImage = found.fabricImage || localFound.fabricImage || localFound.fabricTextureImage || "";
-                      found.fabricTextureImage = found.fabricTextureImage || localFound.fabricTextureImage || found.fabricImage;
-                      found.fabricComposition = found.fabricComposition || localFound.fabricComposition;
-                    }
-                  }
-                } catch (e) {}
-              }
-
               setProduct(found);
               return;
             }
           }
         }
       } catch (e) {}
-
-      // 2. Fallback to localStorage
-      if (typeof window === "undefined") return;
-      const saved = localStorage.getItem("admin_products");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          const found = parsed.find(
-            (p: any) => p.id === initialProduct.id || p.handle === initialProduct.handle
-          );
-          if (found) {
-            const detail = found.detailDescription || found.descriptionHtml || "";
-            if (found.images && found.images.length > 1 && detail) {
-              const extras = found.images.slice(1);
-              if (extras.every((img: any) => detail.includes(img.url || img))) {
-                const rep = found.featuredImage || found.images[0];
-                found.images = [rep];
-              }
-            }
-            setProduct(found);
-          }
-        } catch (e) {}
-      }
     };
 
     syncProductFromStorage();

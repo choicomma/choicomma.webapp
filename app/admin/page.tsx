@@ -393,6 +393,7 @@ export default function AdminPage() {
     handleClearAllProducts,
     handleRestoreDefaultProducts,
     handleBulkAddProducts,
+    handleReplaceAllProducts,
     handleMoveProduct,
     handleMoveProductToTop,
     handleBulkMoveToTop,
@@ -1056,6 +1057,7 @@ export default function AdminPage() {
               toggleMainFeatured={toggleMainFeatured}
               setIsAddModalOpen={setIsAddModalOpen}
               handleBulkAddProducts={handleBulkAddProducts}
+              handleReplaceAllProducts={handleReplaceAllProducts}
               handleMoveProduct={handleMoveProduct}
               handleMoveProductToTop={handleMoveProductToTop}
               handleBulkMoveToTop={handleBulkMoveToTop}
@@ -1364,7 +1366,7 @@ export default function AdminPage() {
             } catch (e) {}
           }
 
-          // Unified catalog persistence (prevents duplicate concurrent POST race condition)
+          // Persist updated ordering & full catalog to server storage
           saveProductsToStorage(updatedList);
         }}
         triggerToast={triggerToast}

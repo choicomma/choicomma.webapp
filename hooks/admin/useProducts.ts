@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import excelParsedProducts from "@/lib/sfcc/mock/parsed-products.json";
+import productsCache from "@/data/products-cache.json";
 import { getRegisteredSetProducts } from "@/lib/sfcc/set-products-helper";
 
 interface UseProductsOptions {
@@ -29,23 +29,10 @@ export function useProducts({
   adminTimeSaleDiscount = "35",
   handleUpdateProductTimeSetting,
 }: UseProductsOptions) {
-  const INITIAL_CHOICOMMA_PRODUCTS: any[] = excelParsedProducts as any[];
+  const INITIAL_CHOICOMMA_PRODUCTS: any[] = productsCache as any[];
 
   const isProductsLoadedRef = useRef(false);
-  const [productsList, setProductsList] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("admin_products");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) {
-            return parsed;
-          }
-        }
-      } catch (e) {}
-    }
-    return INITIAL_CHOICOMMA_PRODUCTS;
-  });
+  const [productsList, setProductsList] = useState<any[]>(() => INITIAL_CHOICOMMA_PRODUCTS);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
   const [selectedCategoryForProducts, setSelectedCategoryForProducts] = useState("");
@@ -77,10 +64,12 @@ export function useProducts({
     }
   }, []);
 
-  // Sync sort order and local storage on client mount
+  // Sync sort order and purge stale localStorage on client mount
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
+      localStorage.removeItem("admin_products");
+      localStorage.removeItem("admin_custom_products");
       const saved = localStorage.getItem("admin_product_sort_order");
       if (
         saved &&
@@ -115,64 +104,7 @@ export function useProducts({
     } catch {}
   }, []);
 
-  // Helper: Prune huge base64 strings so catalog safely fits inside browser's 5MB localStorage
-  const pruneForLocalStorage = (items: any[]) => {
-    return items.map((p) => {
-      let detailDesc = p.detailDescription;
-      if (typeof detailDesc === "string" && (detailDesc.length > 5000 || detailDesc.includes("data:image/"))) {
-        detailDesc = detailDesc.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "/product_1.webp");
-      }
-
-      // Truncate huge images array for localStorage fallback
-      let imgs = Array.isArray(p.images) ? p.images : [];
-      let cleanedImgs = imgs.map((img: any) => {
-        const urlStr = typeof img === "string" ? img : img?.url || "";
-        if (typeof urlStr === "string" && urlStr.startsWith("data:image/")) {
-          return typeof img === "string" ? "/product_1.webp" : { ...img, url: "/product_1.webp" };
-        }
-        return img;
-      });
-
-      // Clean huge colorImages base64
-      let cleanedColorImgs: Record<string, string> = {};
-      if (p.colorImages && typeof p.colorImages === "object") {
-        Object.entries(p.colorImages).forEach(([k, v]) => {
-          if (typeof v === "string" && (v as string).startsWith("data:image/")) {
-            cleanedColorImgs[k] = "/product_1.webp";
-          } else {
-            cleanedColorImgs[k] = v as string;
-          }
-        });
-      }
-
-      return {
-        ...p,
-        detailDescription: detailDesc,
-        images: cleanedImgs,
-        featuredImage: (p.featuredImage?.url && p.featuredImage.url.startsWith("data:image/"))
-          ? { ...p.featuredImage, url: "/product_1.webp" }
-          : p.featuredImage,
-        colorImages: cleanedColorImgs,
-      };
-    });
-  };
-
-  // Helper: Safely save custom products backup in localStorage
-  const saveCustomProductsBackup = (items: any[]) => {
-    if (typeof window === "undefined") return;
-    try {
-      const customItems = items.filter(
-        (p: any) => String(p.id).startsWith("custom-prod-") || String(p.id).startsWith("prod-custom-")
-      );
-      if (customItems.length > 0) {
-        localStorage.setItem("admin_custom_products", JSON.stringify(customItems));
-      } else {
-        localStorage.removeItem("admin_custom_products");
-      }
-    } catch (e) {}
-  };
-
-  // Client-side hydration sync for productsList (Source of Truth: Central Server API /api/products)
+  // Client-side hydration sync for productsList (Source of Truth: Central Server File /api/products)
   useEffect(() => {
     const fetchServerProducts = async () => {
       try {
@@ -180,63 +112,7 @@ export function useProducts({
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
-            if (data.length === 0) {
-              setProductsList([]);
-              if (typeof window !== "undefined") {
-                try {
-                  localStorage.setItem("admin_products", "[]");
-                  localStorage.removeItem("admin_custom_products");
-                } catch (e) {}
-              }
-              isProductsLoadedRef.current = true;
-              return;
-            }
-            let merged = [...data];
-
-            const hasHero = merged.some((p: any) => p.isHeroFeatured === true);
-            if (!hasHero) {
-              const defaultHeroes = INITIAL_CHOICOMMA_PRODUCTS.filter((p: any) => p.isHeroFeatured === true);
-              defaultHeroes.forEach((dh: any) => {
-                const existingIdx = merged.findIndex((p: any) => String(p.id) === String(dh.id));
-                if (existingIdx !== -1) {
-                  merged[existingIdx] = {
-                    ...merged[existingIdx],
-                    isHeroFeatured: true,
-                    heroCustomImage: dh.heroCustomImage || dh.featuredImage?.url,
-                  };
-                } else {
-                  merged.unshift(dh);
-                }
-              });
-            }
-
-            // Restore any custom products from localStorage backup if not yet present in server response
-            if (typeof window !== "undefined") {
-              try {
-                const customBackupRaw = localStorage.getItem("admin_custom_products");
-                if (customBackupRaw) {
-                  const customBackup = JSON.parse(customBackupRaw);
-                  if (Array.isArray(customBackup) && customBackup.length > 0) {
-                    customBackup.forEach((cb: any) => {
-                      if (cb?.id && !merged.some((p: any) => String(p.id) === String(cb.id))) {
-                        merged.unshift(cb);
-                      }
-                    });
-                  }
-                }
-              } catch (e) {}
-            }
-
-            setProductsList(merged);
-            if (typeof window !== "undefined") {
-              try {
-                const lightweight = pruneForLocalStorage(merged);
-                localStorage.setItem("admin_products", JSON.stringify(lightweight));
-                saveCustomProductsBackup(merged);
-              } catch (e) {
-                console.warn("Notice: Skipped localStorage write due to size limit");
-              }
-            }
+            setProductsList(data);
             isProductsLoadedRef.current = true;
             return;
           }
@@ -245,32 +121,17 @@ export function useProducts({
         console.error("Failed to fetch products from /api/products", err);
       }
 
-      // Fallback: Read from existing localStorage first rather than resetting to initial mock!
-      if (typeof window !== "undefined") {
-        try {
-          const cached = localStorage.getItem("admin_products");
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setProductsList(parsed);
-              isProductsLoadedRef.current = true;
-              return;
-            }
-          }
-        } catch (e) {}
-        setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
-        isProductsLoadedRef.current = true;
-      }
+      setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
+      isProductsLoadedRef.current = true;
     };
 
     fetchServerProducts();
-  }, []);
+  }, [INITIAL_CHOICOMMA_PRODUCTS]);
 
-  // Fast single product save helper (High performance 0.1s save to Server DB)
+  // Fast single product save helper (High performance save to Server file)
   const saveSingleProduct = useCallback(async (product: any, isNew: boolean = false) => {
     if (typeof window === "undefined") return;
 
-    // 1. Immediately persist single product to Central Server API (Supabase + Disk)
     try {
       await fetch("/api/products", {
         method: "POST",
@@ -281,70 +142,33 @@ export function useProducts({
       console.error("Failed to persist single product:", err);
     }
 
-    // 2. Backup to localStorage custom products immediately
-    try {
-      const savedCustomRaw = localStorage.getItem("admin_custom_products");
-      let customList: any[] = savedCustomRaw ? JSON.parse(savedCustomRaw) : [];
-      if (!Array.isArray(customList)) customList = [];
-      const existIdx = customList.findIndex((p: any) => String(p.id) === String(product.id));
-      if (existIdx !== -1) {
-        customList[existIdx] = product;
-      } else {
-        customList.unshift(product);
-      }
-      localStorage.setItem("admin_custom_products", JSON.stringify(customList));
-    } catch (e) {}
-
-    // 3. Mirror to localStorage admin_products safely
-    try {
-      const savedProductsRaw = localStorage.getItem("admin_products");
-      let allList: any[] = savedProductsRaw ? JSON.parse(savedProductsRaw) : [];
-      if (Array.isArray(allList)) {
-        const existIdx = allList.findIndex((p: any) => String(p.id) === String(product.id));
-        if (existIdx !== -1) {
-          allList[existIdx] = { ...allList[existIdx], ...product };
-        } else {
-          allList.unshift(product);
-        }
-        const lightweight = pruneForLocalStorage(allList);
-        localStorage.setItem("admin_products", JSON.stringify(lightweight));
-      }
-    } catch (e) {}
-
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent("admin_products_updated"));
     }, 0);
   }, []);
 
-  // Helper: Safely save to Central Server API (/api/products) and mirror to localStorage
+  // Helper: Safely save to Central Server file (/api/products)
   const saveProductsToStorage = useCallback((list: any[]) => {
     if (typeof window === "undefined") return;
 
-    // 1. Persist to Central Server API first so all devices see changes immediately
     fetch("/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(list),
     }).catch((err) => console.error("Failed to persist products to /api/products:", err));
 
-    // 2. Backup custom products immediately
-    saveCustomProductsBackup(list);
-
-    // 3. Mirror to localStorage safely (pruned to fit inside 5MB limit)
-    try {
-      const lightweight = pruneForLocalStorage(list);
-      localStorage.setItem("admin_products", JSON.stringify(lightweight));
-    } catch (e) {
-      // If 5MB quota exceeded, do NOT save truncated 80 items. Remove it to prevent count flicker.
-      try {
-        localStorage.removeItem("admin_products");
-      } catch (err2) {}
-    }
-
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent("admin_products_updated"));
     }, 0);
   }, []);
+
+  // Replace all products helper (Used for full JSON backup restore)
+  const handleReplaceAllProducts = useCallback((fullList: any[]) => {
+    if (!fullList || !Array.isArray(fullList) || fullList.length === 0) return;
+    setProductsList(fullList);
+    saveProductsToStorage(fullList);
+    triggerToast(`총 ${fullList.length}개의 상품 목록이 파일로부터 성공적으로 동기화되었습니다.`);
+  }, [saveProductsToStorage, triggerToast]);
 
 
 
@@ -530,8 +354,6 @@ export function useProducts({
       return p;
     });
 
-    const updatedTarget = updated.find((p) => String(p.id) === String(id));
-
     setProductsList(updated);
     saveProductsToStorage(updated);
     triggerToast(
@@ -579,11 +401,6 @@ export function useProducts({
     const updatedList = productsList.filter((p) => String(p.id) !== String(id));
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);
-
-    // Call DELETE API to immediately remove from Supabase DB and server cache
-    fetch(`/api/products?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch((err) =>
-      console.error("Failed to delete product on server:", err)
-    );
 
     triggerToast(`'${title}' 상품이 성공적으로 삭제되었습니다.`);
   }, [productsList, saveProductsToStorage, triggerToast]);
@@ -690,13 +507,6 @@ export function useProducts({
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);
 
-    // Call DELETE API to immediately remove bulk items from Supabase DB and server cache
-    fetch("/api/products", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: targetIds }),
-    }).catch((err) => console.error("Failed to bulk delete products on server:", err));
-
     triggerToast(`🗑️ 선택한 ${targetIds.length}개 상품이 성공적으로 삭제되었습니다.`);
   }, [productsList, saveProductsToStorage, triggerToast]);
 
@@ -726,7 +536,7 @@ export function useProducts({
     setProductsList([]);
     saveProductsToStorage([]);
     if (typeof window !== "undefined") {
-      localStorage.setItem("admin_products", "[]");
+      localStorage.removeItem("admin_products");
       localStorage.removeItem("secret_timesale_product_ids");
     }
     triggerToast(`🗑️ 상품관리에 등록된 전체 상품 ${totalCount}개가 모두 성공적으로 삭제되었습니다.`);
@@ -734,20 +544,17 @@ export function useProducts({
 
   const handleRestoreDefaultProducts = useCallback(() => {
     const isConfirmed = window.confirm(
-      "정말로 모든 상품 데이터를 '초이콤마 정식 원본 카탈로그 (417개)'로 완전 초기화하시겠습니까?\n임시 등록/수정 내역이 정리되고 원본 상품 417개로 복원됩니다."
+      "정말로 모든 상품 데이터를 '초이콤마 정식 카탈로그 (50개)'로 초기화하시겠습니까?\n임시 등록/수정 내역이 정리되고 원본 상품 50개로 복원됩니다."
     );
     if (!isConfirmed) return;
 
     setProductsList(INITIAL_CHOICOMMA_PRODUCTS);
     saveProductsToStorage(INITIAL_CHOICOMMA_PRODUCTS);
     if (typeof window !== "undefined") {
-      try {
-        const lightweight = pruneForLocalStorage(INITIAL_CHOICOMMA_PRODUCTS);
-        localStorage.setItem("admin_products", JSON.stringify(lightweight));
-        localStorage.removeItem("admin_custom_products");
-      } catch (e) {}
+      localStorage.removeItem("admin_products");
+      localStorage.removeItem("admin_custom_products");
     }
-    triggerToast("✨ 전체 상품 리스트가 정식 원본 카탈로그(417개)로 완벽하게 초기화되었습니다!");
+    triggerToast("✨ 전체 상품 리스트가 정식 카탈로그(50개)로 완벽하게 초기화되었습니다!");
   }, [INITIAL_CHOICOMMA_PRODUCTS, saveProductsToStorage, triggerToast]);
 
   const handleBulkAddProducts = useCallback((newProducts: any[]) => {
@@ -866,8 +673,6 @@ export function useProducts({
         return p;
       });
 
-      const updatedTarget = updatedList.find((p) => String(p.id) === String(id));
-
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
 
@@ -886,7 +691,7 @@ export function useProducts({
         triggerToast(`✓ '${targetProduct.title}' 상품이 [구매 가능(ON / 상시판매)]으로 설정되었습니다.`);
       }
     },
-    [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]
+    [productsList, saveProductsToStorage, triggerToast]
   );
 
   const handleQuickUpdateCategory = useCallback(
@@ -900,7 +705,7 @@ export function useProducts({
             ...p,
             categoryId: newCategory,
             categoryIds: [newCategory],
-            isTimeSale: newCategory === "timesale" ? true : p.isTimeSale,
+            isTimeSale: newCategory === "timesale",
           };
         }
         return p;
@@ -918,9 +723,16 @@ export function useProducts({
         const m = parseInt(adminTimeSaleMinutes) || 0;
         const rateNum = parseInt(adminTimeSaleDiscount) || 35;
         handleUpdateProductTimeSetting?.(String(id), h, m, undefined, rateNum);
+      } else {
+        if (adminTimeSaleProductIds.includes(String(id))) {
+          const filteredIds = adminTimeSaleProductIds.filter((pId) => pId !== String(id));
+          setAdminTimeSaleProductIds?.(filteredIds);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("secret_timesale_product_ids", JSON.stringify(filteredIds));
+          }
+        }
       }
 
-      const updatedTarget = updatedList.find((p) => String(p.id) === String(id));
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
       triggerToast(`카테고리가 [${newCategory.toUpperCase()}] (으)로 즉시 변경되었습니다.`);
@@ -972,7 +784,6 @@ export function useProducts({
         }
         return p;
       });
-      const updatedTarget = updatedList.find((p) => String(p.id) === String(id));
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
       triggerToast(`판매가가 ${newFormatted}원으로 변경되었습니다.`);
@@ -1020,8 +831,6 @@ export function useProducts({
         return p;
       });
 
-      const updatedTarget = updatedList.find((p) => String(p.id) === String(id));
-
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
       if (newTotalStock === 0) {
@@ -1063,6 +872,7 @@ export function useProducts({
     handleClearAllProducts,
     handleRestoreDefaultProducts,
     handleBulkAddProducts,
+    handleReplaceAllProducts,
     handleMoveProduct,
     handleMoveProductToTop,
     handleBulkMoveToTop,

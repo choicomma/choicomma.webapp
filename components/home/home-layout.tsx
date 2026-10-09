@@ -249,27 +249,9 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
           const serverData = await res.json();
           if (Array.isArray(serverData)) {
             parsed = serverData;
-            if (typeof window !== "undefined") {
-              try {
-                localStorage.setItem("admin_products", JSON.stringify(serverData));
-              } catch (err) {}
-            }
           }
         }
-      } catch (e) {
-        // Fallback to localStorage
-        if (typeof window !== "undefined") {
-          const saved = localStorage.getItem("admin_products");
-          if (saved) {
-            try {
-              const localParsed = JSON.parse(saved);
-              if (Array.isArray(localParsed) && localParsed.length > 0) {
-                parsed = localParsed;
-              }
-            } catch (err) {}
-          }
-        }
-      }
+      } catch (e) {}
 
       // 1. Grid Products: Display bottom-featured products (isBottomFeatured) or isMainFeatured products, fallback to full product list if none explicitly selected
       let gridProducts = parsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));

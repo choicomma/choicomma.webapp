@@ -74,22 +74,8 @@ export function getAllProductOptions(
     return { colors: [], sizes: ["FREE"], colorImageMap: {}, colorHandleMap: {}, sisterProducts: [] };
   }
 
-  // Combine mockProducts with extraProducts (e.g. from localStorage admin_products)
+  // Combine mockProducts with extraProducts
   let allList: any[] = mockProducts;
-  if (typeof window !== "undefined") {
-    try {
-      const savedAdminProds = localStorage.getItem("admin_products");
-      if (savedAdminProds) {
-        const parsed = JSON.parse(savedAdminProds);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          allList = [
-            ...parsed,
-            ...mockProducts.filter((mp) => !parsed.some((ap: any) => ap.id === mp.id)),
-          ];
-        }
-      }
-    } catch (e) {}
-  }
 
   if (extraProducts && extraProducts.length > 0) {
     allList = [

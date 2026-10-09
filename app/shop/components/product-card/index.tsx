@@ -90,14 +90,6 @@ export const ProductCard = ({ product }: { product: Product }) => {
         }
 
         let currentProd = product;
-        const savedProds = localStorage.getItem("admin_products");
-        if (savedProds) {
-          try {
-            const parsed = JSON.parse(savedProds);
-            const found = parsed.find((p: any) => String(p.id) === String(product.id) || (product.handle && p.handle === product.handle));
-            if (found) currentProd = found;
-          } catch (e) {}
-        }
 
         let isSelected = false;
         const savedIds = localStorage.getItem("secret_timesale_product_ids");

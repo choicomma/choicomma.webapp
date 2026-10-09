@@ -31,36 +31,6 @@ export function MainProductDisplay({ initialProducts }: MainProductDisplayProps)
   }, []);
 
   const syncProductsFromStorage = () => {
-    if (typeof window === "undefined") return;
-    const savedAdminProducts = localStorage.getItem("admin_products");
-    if (savedAdminProducts) {
-      try {
-        const parsed: any[] = JSON.parse(savedAdminProducts);
-
-        // 1. Top Hero Products (isHeroFeatured === true or has heroCustomImage)
-        let explicitHero = parsed.filter(
-          (p) => (p.isHeroFeatured === true || Boolean(p.heroCustomImage)) && Boolean(p.heroCustomImage || p.featuredImage?.url)
-        );
-
-        // 2. Sub-Products Grid: ONLY products with isMainFeatured === true (preserve admin list order)
-        const featuredSubProducts = parsed.filter((p) => p.isMainFeatured === true);
-
-        const resolvedHero = explicitHero.map((p) => {
-          if (p.linkedProductId) {
-            const linked = parsed.find((item) => item.id === p.linkedProductId);
-            if (linked) return { ...p, linkedProduct: linked };
-          }
-          return p;
-        });
-
-        setHeroProducts(resolvedHero);
-        setSubProducts(featuredSubProducts);
-        return;
-      } catch (e) {
-        console.error("Error parsing admin_products in Home", e);
-      }
-    }
-
     const explicitHeroInitial = initialProducts.filter(
       (p) => (p.isHeroFeatured === true || Boolean((p as any).heroCustomImage)) && Boolean((p as any).heroCustomImage || p.featuredImage?.url)
     );
@@ -70,16 +40,7 @@ export function MainProductDisplay({ initialProducts }: MainProductDisplayProps)
 
   useEffect(() => {
     syncProductsFromStorage();
-    const handleStorageChange = () => {
-      syncProductsFromStorage();
-    };
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("admin_products_updated", handleStorageChange);
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("admin_products_updated", handleStorageChange);
-    };
-  }, []);
+  }, [initialProducts]);
 
   const scrollTo = useCallback(
     (index: number) => {

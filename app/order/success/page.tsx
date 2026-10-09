@@ -377,6 +377,29 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
               });
             }
 
+            // 2-2) 주문된 상품 실시간 재고 자동 차감 (품절 시 자동 품절 전환)
+            if (pendingOrder?.cart?.lines && Array.isArray(pendingOrder.cart.lines)) {
+              const deductItems = pendingOrder.cart.lines.map((l: any) => {
+                const opts = l.merchandise?.selectedOptions || [];
+                const colorVal = opts.find((o: any) => o.name?.toLowerCase() === "color")?.value || "";
+                const sizeVal = opts.find((o: any) => o.name?.toLowerCase() === "size")?.value || "";
+                return {
+                  productId: l.merchandise?.product?.id || l.id,
+                  quantity: Number(l.quantity) || 1,
+                  color: colorVal,
+                  size: sizeVal,
+                };
+              });
+
+              fetch("/api/products/deduct-stock", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items: deductItems }),
+              }).then(() => {
+                window.dispatchEvent(new CustomEvent("admin_products_updated"));
+              }).catch((err) => console.warn("Stock deduction notice:", err));
+            }
+
             // 3) 결제 성공 후 장바구니 처리 (바로구매인 경우 일반 장바구니 유지)
             try {
               if (pendingOrder?.isDirectOrder) {

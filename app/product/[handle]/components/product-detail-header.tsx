@@ -236,19 +236,6 @@ export function ProductDetailHeader({
 
       let activeProd = initialProduct;
 
-      // Check localStorage for updated admin product data
-      const savedAdminProds = localStorage.getItem("admin_products");
-      if (savedAdminProds) {
-        try {
-          const parsed = JSON.parse(savedAdminProds);
-          const found = parsed.find(
-            (p: any) => p.id === initialProduct.id || p.handle === initialProduct.handle
-          );
-          if (found) {
-            activeProd = found;
-          }
-        } catch (e) {}
-      }
 
       // Extract colors and sizes from active product using sister products
       const {
