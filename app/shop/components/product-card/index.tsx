@@ -9,8 +9,7 @@ import { ProductImage } from "./product-image";
 import { QuickOptionModal } from "@/components/products/quick-option-modal";
 import { FeaturedProductLabel } from "@/components/products/featured-product-label";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Plus, Clock, ChevronLeft, ChevronRight, Ticket } from "lucide-react";
-import { getAvailableCoupons } from "@/lib/membership/coupons";
+import { Sparkles, Plus, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { translateProductTitle, translateProductDescription, translateUiText, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 
@@ -18,9 +17,6 @@ export const ProductCard = ({ product }: { product: Product }) => {
   const [currentLang, setCurrentLang] = React.useState("ko");
   const [timeSaleDiscount, setTimeSaleDiscount] = React.useState<number | null>(null);
   const [secretSaleInfo, setSecretSaleInfo] = React.useState<{ discount: number; title?: string } | null>(null);
-  const [bestCouponDiscount, setBestCouponDiscount] = React.useState<number>(0);
-  const [bestCouponTitle, setBestCouponTitle] = React.useState<string>("");
-  const [bestPointsDiscount, setBestPointsDiscount] = React.useState<number>(0);
 
   React.useEffect(() => {
     setCurrentLang(getCurrentLanguage());
@@ -175,113 +171,14 @@ export const ProductCard = ({ product }: { product: Product }) => {
   const maxPrice = parseSafeAmount(rawMax);
   const origPriceNum = maxPrice > basePrice ? maxPrice : (basePrice > 0 ? basePrice : 0);
 
-  // Calculate Best Available Coupon & Points for this Customer (상세페이지 세일+쿠폰+적립금 적용가와 동일 로직)
-  React.useEffect(() => {
-    const updateCouponStatus = () => {
-      if (typeof window === "undefined") return;
-      try {
-        // Check if Time Sale is active for this product
-        const isTimeSaleActive = timeSaleDiscount !== null && timeSaleDiscount > 0;
-        const allowCouponInTimeSale = (product as any).timeSaleAllowCoupon !== false;
-
-        // 쿠폰 할인 계산 기준 금액 (타임세일 적용 시 타임세일가, 아닐 시 정상가)
-        const currentTargetPrice = isTimeSaleActive
-          ? Math.round(origPriceNum * (1 - (timeSaleDiscount || 0) / 100))
-          : origPriceNum;
-
-        const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-        const grade = (localStorage.getItem("user_grade") || localStorage.getItem("user_role") || "GENERAL").toUpperCase();
-        const availableCoupons = getAvailableCoupons(email, grade);
-
-        // 배송비 쿠폰(SHIPPING) 및 사용완료 쿠폰 제외, 상품 할인 가능한 쿠폰만 필터링
-        const eligibleCoupons = availableCoupons.filter(
-          (c) => c.type !== "SHIPPING" && !c.isUsed && c.isActive !== false
-        );
-
-        let maxDiscount = 0;
-        let bestTitle = "";
-
-        // 타임세일 중인데 쿠폰 적용이 비활성화된 경우가 아니면 쿠폰 할인 적용
-        if (!(isTimeSaleActive && !allowCouponInTimeSale) && eligibleCoupons.length > 0) {
-          for (const coupon of eligibleCoupons) {
-            if (coupon.minOrderAmount && currentTargetPrice < coupon.minOrderAmount) {
-              continue;
-            }
-
-            let discountVal = 0;
-            const isPercent =
-              (coupon.discount && coupon.discount.includes("%")) ||
-              (coupon.discountAmount > 0 && coupon.discountAmount <= 99 && (coupon as any).discountType === "RATE");
-
-            if (isPercent) {
-              discountVal = Math.round(currentTargetPrice * (coupon.discountAmount / 100));
-            } else {
-              discountVal = coupon.discountAmount || 0;
-            }
-
-            if (discountVal > currentTargetPrice) {
-              discountVal = currentTargetPrice;
-            }
-
-            if (discountVal > maxDiscount) {
-              maxDiscount = discountVal;
-              bestTitle = coupon.title;
-            }
-          }
-        }
-
-        const afterCoupon = Math.max(0, currentTargetPrice - maxDiscount);
-
-        // 적립금 (Points) 계산: 상세페이지 세일+쿠폰+적립금 적용가와 동일하게 산출
-        let pointsD = 0;
-        try {
-          const userPts = parseInt(localStorage.getItem("membership_user_points") || "0");
-          if (userPts > 0) {
-            pointsD = Math.min(userPts, afterCoupon);
-          } else {
-            pointsD = Math.floor(afterCoupon * 0.01);
-          }
-        } catch (e) {}
-
-        setBestCouponDiscount(maxDiscount);
-        setBestCouponTitle(bestTitle);
-        setBestPointsDiscount(pointsD);
-      } catch (e) {
-        setBestCouponDiscount(0);
-        setBestCouponTitle("");
-        setBestPointsDiscount(0);
-      }
-    };
-
-    updateCouponStatus();
-    window.addEventListener("storage", updateCouponStatus);
-    window.addEventListener("auth_changed", updateCouponStatus);
-    window.addEventListener("coupons_updated", updateCouponStatus);
-    window.addEventListener("membership_points_updated", updateCouponStatus);
-    window.addEventListener("secret_timesales_updated", updateCouponStatus);
-    window.addEventListener("admin_products_updated", updateCouponStatus);
-    window.addEventListener("admin_customers_updated", updateCouponStatus);
-    return () => {
-      window.removeEventListener("storage", updateCouponStatus);
-      window.removeEventListener("auth_changed", updateCouponStatus);
-      window.removeEventListener("coupons_updated", updateCouponStatus);
-      window.removeEventListener("membership_points_updated", updateCouponStatus);
-      window.removeEventListener("secret_timesales_updated", updateCouponStatus);
-      window.removeEventListener("admin_products_updated", updateCouponStatus);
-      window.removeEventListener("admin_customers_updated", updateCouponStatus);
-    };
-  }, [product, timeSaleDiscount, origPriceNum]);
-
   const isTimeSaleActive = timeSaleDiscount !== null && timeSaleDiscount > 0;
   const timeSalePrice = isTimeSaleActive
     ? Math.round(origPriceNum * (1 - (timeSaleDiscount || 0) / 100))
     : origPriceNum;
 
-  // 상세페이지의 '세일+쿠폰+적립금 적용가'와 100% 동일하게 산출
-  const baseForBenefits = isTimeSaleActive ? timeSalePrice : origPriceNum;
-  const afterCoupon = Math.max(0, baseForBenefits - bestCouponDiscount);
-  const finalPriceNum = Math.max(0, afterCoupon - bestPointsDiscount);
-  const strikethroughPriceNum = finalPriceNum < origPriceNum ? origPriceNum : null;
+  // 상품가격: 쿠폰적용가는 제외하고 타임세일 적용가만 반영
+  const finalPriceNum = timeSalePrice;
+  const strikethroughPriceNum = isTimeSaleActive && timeSalePrice < origPriceNum ? origPriceNum : null;
 
   const currCode = product.currencyCode || product.priceRange?.minVariantPrice?.currencyCode || "KRW";
 
@@ -306,24 +203,6 @@ export const ProductCard = ({ product }: { product: Product }) => {
           </span>
         )}
 
-        {secretSaleInfo ? (
-          <span className="text-[9px] sm:text-[11px] md:text-xs px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 font-black uppercase tracking-wider rounded-xs bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 flex items-center gap-1 border border-amber-400 shadow-2xs shrink-0 whitespace-nowrap">
-            <Sparkles className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 fill-neutral-950 text-neutral-950 shrink-0 animate-spin-slow" />
-            <span>SECRET {secretSaleInfo.discount}% OFF</span>
-          </span>
-        ) : timeSaleDiscount !== null ? (
-          <span className="text-[9px] sm:text-[11px] md:text-xs px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 font-black uppercase tracking-wider rounded-xs bg-white text-neutral-950 flex items-center gap-1 border border-neutral-300 shadow-2xs shrink-0 whitespace-nowrap">
-            <Clock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-neutral-950 shrink-0" />
-            <span>SALE {timeSaleDiscount}% OFF</span>
-          </span>
-        ) : null}
-        {/* 쿠폰 최대할인 뱃지 */}
-        {bestCouponDiscount > 0 && (
-          <span className="text-[9px] sm:text-[11px] md:text-xs px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 font-black uppercase tracking-wider rounded-xs bg-neutral-900 text-white flex items-center gap-1 shadow-2xs shrink-0 whitespace-nowrap">
-            <Ticket className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0" />
-            <span>쿠폰 (-{bestCouponDiscount.toLocaleString()}원)</span>
-          </span>
-        )}
         {/* 오픈 예정 / 품절 Badge: 가장 마지막에 배치 */}
         {product.releaseDate && new Date(product.releaseDate).getTime() > Date.now() ? (
           <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">

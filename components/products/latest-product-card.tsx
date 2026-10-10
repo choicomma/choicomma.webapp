@@ -161,13 +161,6 @@ export function LatestProductCard({
             quality={100}
             className="object-contain size-full"
           />
-          {/* TIME SALE BADGE OVERLAY ON PRODUCT IMAGE */}
-          {(timeSaleDiscount !== null || (product as any).isTimeSale || (product as any).productLabel === "TIME SALE" || (product as any).categoryId === "timesale") && (
-            <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-amber-500 text-neutral-950 px-3 py-1 rounded-xl shadow-lg border border-amber-300/80 font-black text-xs">
-              <Clock className="w-3.5 h-3.5 text-neutral-950 animate-pulse" />
-              <span>TIME SALE {timeSaleDiscount ? `${timeSaleDiscount}% OFF` : ""}</span>
-            </div>
-          )}
           {isOutOfStock && (
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
               <span className="bg-neutral-950 text-white font-black text-xs md:text-sm px-4 py-2 rounded-2xl border border-neutral-700 shadow-2xl tracking-widest uppercase">
@@ -198,13 +191,6 @@ export function LatestProductCard({
           fill
           className="object-contain size-full"
         />
-        {/* TIME SALE BADGE OVERLAY ON PRODUCT IMAGE */}
-        {(timeSaleDiscount !== null || (product as any).isTimeSale || (product as any).productLabel === "TIME SALE" || (product as any).categoryId === "timesale") && (
-          <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 bg-amber-500 text-neutral-950 px-2.5 py-1 rounded-xl shadow-lg border border-amber-300/80 font-black text-[11px]">
-            <Clock className="w-3.5 h-3.5 text-neutral-950 animate-pulse" />
-            <span>TIME SALE {timeSaleDiscount ? `${timeSaleDiscount}% OFF` : ""}</span>
-          </div>
-        )}
         {isOutOfStock && (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <span className="bg-neutral-950 text-white font-black text-xs px-3 py-1.5 rounded-xl border border-neutral-700 shadow-xl tracking-widest uppercase">

@@ -182,85 +182,16 @@ export function FeaturedProductLabel({
     };
   }, [product]);
 
-  const [couponDiscount, setCouponDiscount] = useState<number>(0);
-  const [pointsDiscount, setPointsDiscount] = useState<number>(0);
-
   const basePrice = parseFloat(product.priceRange?.minVariantPrice?.amount || "0");
   const maxPrice = parseFloat(product.priceRange?.maxVariantPrice?.amount || "0");
   const origPriceNum = maxPrice > basePrice ? maxPrice : basePrice;
 
-  useEffect(() => {
-    const updateBenefitDiscount = () => {
-      if (typeof window === "undefined") return;
-      try {
-        const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-        const grade = (localStorage.getItem("user_grade") || localStorage.getItem("user_role") || "GENERAL").toUpperCase();
-        const availableCoupons = getAvailableCoupons(email, grade);
-        const eligibleCoupons = availableCoupons.filter((c) => c.type !== "SHIPPING" && !c.isUsed && c.isActive !== false);
-
-        const currentTargetPrice = (timeSaleDiscount !== null && timeSaleDiscount > 0)
-          ? Math.round(origPriceNum * (1 - timeSaleDiscount / 100))
-          : origPriceNum;
-
-        let maxDiscount = 0;
-        if (eligibleCoupons.length > 0) {
-          for (const coupon of eligibleCoupons) {
-            if (coupon.minOrderAmount && currentTargetPrice < coupon.minOrderAmount) continue;
-            let d = 0;
-            const isPercent =
-              (coupon.discount && coupon.discount.includes("%")) ||
-              (coupon.discountAmount > 0 && coupon.discountAmount <= 99 && (coupon as any).discountType === "RATE");
-            if (isPercent) {
-              d = Math.round(currentTargetPrice * (coupon.discountAmount / 100));
-            } else {
-              d = coupon.discountAmount || 0;
-            }
-            if (d > currentTargetPrice) d = currentTargetPrice;
-            if (d > maxDiscount) maxDiscount = d;
-          }
-        }
-
-        const afterCoupon = Math.max(0, currentTargetPrice - maxDiscount);
-        let pointsD = 0;
-        try {
-          const userPts = parseInt(localStorage.getItem("membership_user_points") || "0");
-          if (userPts > 0) {
-            pointsD = Math.min(userPts, afterCoupon);
-          } else {
-            pointsD = Math.floor(afterCoupon * 0.01);
-          }
-        } catch (e) {}
-
-        setCouponDiscount(maxDiscount);
-        setPointsDiscount(pointsD);
-      } catch (e) {
-        setCouponDiscount(0);
-        setPointsDiscount(0);
-      }
-    };
-
-    updateBenefitDiscount();
-    window.addEventListener("storage", updateBenefitDiscount);
-    window.addEventListener("auth_changed", updateBenefitDiscount);
-    window.addEventListener("coupons_updated", updateBenefitDiscount);
-    window.addEventListener("membership_points_updated", updateBenefitDiscount);
-    window.addEventListener("admin_products_updated", updateBenefitDiscount);
-    return () => {
-      window.removeEventListener("storage", updateBenefitDiscount);
-      window.removeEventListener("auth_changed", updateBenefitDiscount);
-      window.removeEventListener("coupons_updated", updateBenefitDiscount);
-      window.removeEventListener("membership_points_updated", updateBenefitDiscount);
-      window.removeEventListener("admin_products_updated", updateBenefitDiscount);
-    };
-  }, [product, timeSaleDiscount, origPriceNum]);
-
-  const timeSalePrice = (timeSaleDiscount !== null && timeSaleDiscount > 0)
+  const isTimeSaleActive = timeSaleDiscount !== null && timeSaleDiscount > 0;
+  const timeSalePrice = isTimeSaleActive
     ? Math.round(origPriceNum * (1 - timeSaleDiscount / 100))
     : origPriceNum;
-  const baseForBenefits = (timeSaleDiscount !== null && timeSaleDiscount > 0) ? timeSalePrice : origPriceNum;
-  const afterCoupon = Math.max(0, baseForBenefits - couponDiscount);
-  const finalPriceNum = Math.max(0, afterCoupon - pointsDiscount);
-  const strikethroughPriceNum = finalPriceNum < origPriceNum ? origPriceNum : null;
+  const finalPriceNum = timeSalePrice;
+  const strikethroughPriceNum = isTimeSaleActive && timeSalePrice < origPriceNum ? origPriceNum : null;
 
   if (principal) {
     return (
@@ -274,12 +205,6 @@ export function FeaturedProductLabel({
           {/* Left Column: Badge, Title */}
           <div className="flex flex-col items-start min-w-0">
             <div className="mb-2 flex items-center gap-1.5 flex-wrap">
-              {timeSaleDiscount !== null && (
-                <Badge className="font-extrabold rounded-none text-xs px-3 py-1 bg-white text-neutral-950 border border-neutral-300 shadow-2xs tracking-wider flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-neutral-950 shrink-0" />
-                  <span>TIME SALE {timeSaleDiscount}% OFF</span>
-                </Badge>
-              )}
               {isSetProduct ? (
                 <Badge className="font-extrabold rounded-none text-xs px-3.5 py-1 bg-neutral-950 text-white border-none">
                   SET SALE
@@ -335,12 +260,6 @@ export function FeaturedProductLabel({
     >
       <div className="flex flex-col gap-1 min-w-0 w-full">
         <div className="flex items-center gap-1.5 flex-wrap">
-          {timeSaleDiscount !== null && (
-            <Badge className="bg-white text-neutral-950 font-black text-[10px] px-2.5 py-0.5 rounded-none uppercase border border-neutral-300 shadow-2xs tracking-wider inline-flex items-center gap-1">
-              <Clock className="w-3 h-3 text-neutral-950 shrink-0" />
-              <span>TIME SALE {timeSaleDiscount}% OFF</span>
-            </Badge>
-          )}
           {isSetProduct ? (
             <Badge className="bg-neutral-950 text-white font-extrabold text-[10px] px-2.5 py-0.5 rounded-none uppercase inline-block border-none">
               SET SALE
