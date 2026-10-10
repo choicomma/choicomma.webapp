@@ -28,7 +28,18 @@ export function useTimesale(triggerToast: (msg: string) => void) {
   const [adminTimeSaleTitle, setAdminTimeSaleTitle] = useState("VIP 회원만을 위해 준비된 파격 할인 한정 단독 시크릿 타임세일");
   const [adminTimeSaleStatus, setAdminTimeSaleStatus] = useState("active");
   const [adminTimeSaleCategory, setAdminTimeSaleCategory] = useState("all");
-  const [adminTimeSaleProductIds, setAdminTimeSaleProductIds] = useState<string[]>([]);
+  const [adminTimeSaleProductIds, setAdminTimeSaleProductIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("secret_timesale_product_ids");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return parsed.map(String);
+        }
+      } catch (e) {}
+    }
+    return [];
+  });
 
   // Secret Time Sale states (Member Target Specific)
   const [secretSalesList, setSecretSalesList] = useState<any[]>([]);
@@ -48,6 +59,16 @@ export function useTimesale(triggerToast: (msg: string) => void) {
           }
         } catch (e) {}
       }
+
+      try {
+        const savedTS = localStorage.getItem("secret_timesale_product_ids");
+        if (savedTS) {
+          const parsedTS = JSON.parse(savedTS);
+          if (Array.isArray(parsedTS)) {
+            setAdminTimeSaleProductIds(parsedTS.map(String));
+          }
+        }
+      } catch (e) {}
     }
 
     const fetchTimesales = async () => {
@@ -78,11 +99,36 @@ export function useTimesale(triggerToast: (msg: string) => void) {
           }
         } catch (err) {}
       }
+      if (e.key === "secret_timesale_product_ids" && e.newValue && isMounted) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setAdminTimeSaleProductIds(parsed.map(String));
+          }
+        } catch (err) {}
+      }
     };
+
+    const handleCustomTimesaleSync = () => {
+      if (typeof window !== "undefined" && isMounted) {
+        try {
+          const savedTS = localStorage.getItem("secret_timesale_product_ids");
+          if (savedTS) {
+            const parsedTS = JSON.parse(savedTS);
+            if (Array.isArray(parsedTS)) {
+              setAdminTimeSaleProductIds(parsedTS.map(String));
+            }
+          }
+        } catch (e) {}
+      }
+    };
+
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("secret_timesales_updated", handleCustomTimesaleSync);
     return () => {
       isMounted = false;
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("secret_timesales_updated", handleCustomTimesaleSync);
     };
   }, []);
 

@@ -104,6 +104,14 @@ interface ProductsManagementProps {
   handleQuickUpdatePrice?: (id: string, newPrice: number | string) => boolean | void;
   handleQuickUpdateStock?: (id: string, newTotalStock: number, newSizeStock?: Record<string, number>) => boolean | void;
   handleQuickUpdateReleaseSchedule?: (id: string, availableForSale: boolean, releaseDate?: string) => void;
+  handleQuickUpdateTimeSale?: (
+    id: string,
+    isTimeSale: boolean,
+    discountRate: number,
+    durationHours: number,
+    durationMinutes: number
+  ) => void;
+  adminTimeSaleProductIds?: string[];
 }
 
 function StockPopover({
@@ -344,21 +352,54 @@ function StockPopover({
 function TimeSettingPopover({
   product,
   onSaveSchedule,
+  onSaveTimeSale,
   onClose,
+  adminTimeSaleProductIds = [],
 }: {
   product: any;
   onSaveSchedule: (availableForSale: boolean, releaseDate?: string) => void;
+  onSaveTimeSale?: (
+    isTimeSale: boolean,
+    discountRate: number,
+    durationHours: number,
+    durationMinutes: number
+  ) => void;
   onClose: () => void;
+  adminTimeSaleProductIds?: string[];
 }) {
+  const isCurrentlyTimeSale =
+    product.isTimeSale === true ||
+    (Array.isArray(product.tags) && product.tags.includes("TIMESALE")) ||
+    adminTimeSaleProductIds.includes(String(product.id));
+
+  const [activeTab, setActiveTab] = useState<"timesale" | "release">(
+    isCurrentlyTimeSale ? "timesale" : "timesale"
+  );
+
+  // Time Sale States
+  const [isTimeSale, setIsTimeSale] = useState<boolean>(isCurrentlyTimeSale);
+  const [discountRate, setDiscountRate] = useState<number>(
+    product.timeSaleDiscountRate ? parseInt(String(product.timeSaleDiscountRate), 10) : 35
+  );
+  const [durationHours, setDurationHours] = useState<number>(24);
+  const [durationMinutes, setDurationMinutes] = useState<number>(0);
+
+  // Release Schedule States
   const [available, setAvailable] = useState<boolean>(product.availableForSale !== false);
   const [isScheduled, setIsScheduled] = useState<boolean>(Boolean(product.releaseDate));
   const [releaseDate, setReleaseDate] = useState<string>(product.releaseDate || "");
 
   useEffect(() => {
+    const isTS =
+      product.isTimeSale === true ||
+      (Array.isArray(product.tags) && product.tags.includes("TIMESALE")) ||
+      adminTimeSaleProductIds.includes(String(product.id));
+    setIsTimeSale(isTS);
+    setDiscountRate(product.timeSaleDiscountRate ? parseInt(String(product.timeSaleDiscountRate), 10) : 35);
     setAvailable(product.availableForSale !== false);
     setIsScheduled(Boolean(product.releaseDate));
     setReleaseDate(product.releaseDate || "");
-  }, [product.availableForSale, product.releaseDate]);
+  }, [product, adminTimeSaleProductIds]);
 
   const handleApplyPreset = (preset: "tomorrow10" | "today18" | "day3_10" | "day7_10") => {
     setIsScheduled(true);
@@ -380,22 +421,28 @@ function TimeSettingPopover({
     }
     const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     setReleaseDate(iso);
-    onSaveSchedule(available, iso);
   };
 
   const handleClearSchedule = () => {
     setIsScheduled(false);
     setReleaseDate("");
-    onSaveSchedule(available, undefined);
   };
 
   const handleSave = () => {
+    // 1. Save Time Sale
+    if (onSaveTimeSale) {
+      onSaveTimeSale(isTimeSale, discountRate, durationHours, durationMinutes);
+    }
+    // 2. Save Release Schedule
     const finalDate = isScheduled && releaseDate ? releaseDate : undefined;
     onSaveSchedule(available, finalDate);
     onClose();
   };
 
   const isFuture = releaseDate && new Date(releaseDate).getTime() > Date.now();
+  const origPrice = parseFloat(product.priceRange?.minVariantPrice?.amount || product.price?.amount || "0") || 0;
+  const salePrice = origPrice > 0 ? Math.round(origPrice * (1 - discountRate / 100)) : 0;
+  const savings = origPrice > salePrice ? origPrice - salePrice : 0;
 
   return (
     <div
@@ -404,7 +451,7 @@ function TimeSettingPopover({
         e.preventDefault();
         e.stopPropagation();
       }}
-      className="absolute top-full right-0 mt-2 z-50 bg-white border border-neutral-300 rounded-2xl shadow-2xl p-4 w-84 text-left animate-in fade-in zoom-in-95 duration-150 select-text cursor-default"
+      className="absolute top-full right-0 mt-2 z-50 bg-white border border-neutral-300 rounded-2xl shadow-2xl p-4 w-92 text-left animate-in fade-in zoom-in-95 duration-150 select-text cursor-default"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
@@ -412,7 +459,7 @@ function TimeSettingPopover({
         <div className="flex items-center gap-1.5 min-w-0">
           <Clock className="w-4 h-4 text-amber-600 shrink-0" />
           <span className="text-xs font-black text-neutral-900 truncate">
-            {product.productCode || "상품"} 판매 시간 &amp; ON/OFF 설정
+            {product.productCode || "상품"} 시간 &amp; 타임세일 설정
           </span>
         </div>
         <button
@@ -424,129 +471,279 @@ function TimeSettingPopover({
         </button>
       </div>
 
-      {/* Body: 1. Purchase ON / OFF Status */}
-      <div className="mb-3.5 bg-neutral-50 border border-neutral-200/80 rounded-xl p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-extrabold text-neutral-900">상품 구매 가능 상태</span>
-          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${available ? "bg-blue-100 text-blue-800" : "bg-neutral-200 text-neutral-700"}`}>
-            {available ? "ON (구매 가능)" : "OFF (구매 불가)"}
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setAvailable(true);
-              const finalDate = isScheduled && releaseDate ? releaseDate : undefined;
-              onSaveSchedule(true, finalDate);
-            }}
-            className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
-              available
-                ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
-            }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${available ? "bg-white animate-pulse" : "bg-neutral-400"}`} />
-            <span>ON (구매 가능)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setAvailable(false);
-              const finalDate = isScheduled && releaseDate ? releaseDate : undefined;
-              onSaveSchedule(false, finalDate);
-            }}
-            className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
-              !available
-                ? "bg-neutral-900 text-white border-neutral-900 shadow-xs"
-                : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
-            }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${!available ? "bg-rose-400" : "bg-neutral-400"}`} />
-            <span>OFF (구매 불가)</span>
-          </button>
-        </div>
-        <p className="text-[10px] text-neutral-500 leading-tight">
-          * OFF 시 쇼핑몰 화면에서 구매/장바구니 담기가 차단됩니다.
-        </p>
+      {/* Tabs */}
+      <div className="grid grid-cols-2 gap-1 p-1 bg-neutral-100 rounded-xl mb-3">
+        <button
+          type="button"
+          onClick={() => setActiveTab("timesale")}
+          className={`py-1.5 text-[11px] font-black rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1 ${
+            activeTab === "timesale"
+              ? "bg-white text-neutral-950 shadow-xs border border-neutral-200"
+              : "text-neutral-500 hover:text-neutral-900"
+          }`}
+        >
+          <Sparkles className={`w-3 h-3 ${isTimeSale ? "text-amber-500" : "text-neutral-400"}`} />
+          <span>⚡ 타임세일 특가</span>
+          {isTimeSale && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("release")}
+          className={`py-1.5 text-[11px] font-black rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1 ${
+            activeTab === "release"
+              ? "bg-white text-neutral-950 shadow-xs border border-neutral-200"
+              : "text-neutral-500 hover:text-neutral-900"
+          }`}
+        >
+          <Clock className="w-3 h-3 text-blue-500" />
+          <span>⏰ 예약 오픈/ON·OFF</span>
+          {isScheduled && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+        </button>
       </div>
 
-      {/* Body: 2. Scheduled Release Time */}
-      <div className="bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 space-y-2.5">
-        <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={isScheduled}
-            onChange={(e) => {
-              const checked = e.target.checked;
-              setIsScheduled(checked);
-              if (checked && !releaseDate) {
-                handleApplyPreset("tomorrow10");
-              }
-            }}
-            className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-950 accent-neutral-950 cursor-pointer"
-          />
-          <span className="text-xs font-black text-neutral-900">판매 시작 시간 지정 (예약 오픈)</span>
-        </label>
-
-        {isScheduled && (
-          <div className="space-y-2 pt-1 animate-in fade-in duration-150">
-            <input
-              type="datetime-local"
-              value={releaseDate}
-              onChange={(e) => setReleaseDate(e.target.value)}
-              className="w-full bg-white border border-neutral-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs"
-            />
-
-            {/* Quick Presets */}
-            <div className="flex flex-wrap gap-1">
+      {/* TAB 1: TIME SALE CONFIGURATION */}
+      {activeTab === "timesale" && (
+        <div className="space-y-3 animate-in fade-in duration-100">
+          <div className="bg-neutral-50 border border-neutral-200/80 rounded-xl p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-extrabold text-neutral-900">타임세일 적용 여부</span>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isTimeSale ? "bg-amber-100 text-amber-900" : "bg-neutral-200 text-neutral-700"}`}>
+                {isTimeSale ? "ON (타임세일 진행)" : "OFF (미진행)"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleApplyPreset("today18")}
-                className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-neutral-200 hover:border-amber-400 text-neutral-700 hover:text-amber-800 transition-colors cursor-pointer"
+                onClick={() => setIsTimeSale(true)}
+                className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+                  isTimeSale
+                    ? "bg-amber-500 text-neutral-950 border-amber-400 shadow-xs"
+                    : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
+                }`}
               >
-                오늘 18시
+                <span className={`w-1.5 h-1.5 rounded-full ${isTimeSale ? "bg-neutral-950 animate-pulse" : "bg-neutral-400"}`} />
+                <span>⚡ 타임세일 ON</span>
               </button>
               <button
                 type="button"
-                onClick={() => handleApplyPreset("tomorrow10")}
-                className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-neutral-200 hover:border-amber-400 text-neutral-700 hover:text-amber-800 transition-colors cursor-pointer"
+                onClick={() => setIsTimeSale(false)}
+                className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+                  !isTimeSale
+                    ? "bg-neutral-900 text-white border-neutral-900 shadow-xs"
+                    : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
+                }`}
               >
-                내일 10시
-              </button>
-              <button
-                type="button"
-                onClick={() => handleApplyPreset("day3_10")}
-                className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-neutral-200 hover:border-amber-400 text-neutral-700 hover:text-amber-800 transition-colors cursor-pointer"
-              >
-                3일 뒤 10시
-              </button>
-              <button
-                type="button"
-                onClick={handleClearSchedule}
-                className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 hover:border-rose-400 text-rose-700 transition-colors cursor-pointer ml-auto"
-              >
-                해제 (즉시 오픈)
+                <span className={`w-1.5 h-1.5 rounded-full ${!isTimeSale ? "bg-rose-400" : "bg-neutral-400"}`} />
+                <span>OFF (해제)</span>
               </button>
             </div>
+          </div>
 
-            {/* Status explanation */}
-            {releaseDate && (
-              <div className="text-[10px] font-bold leading-tight">
-                {isFuture ? (
-                  <span className="text-amber-800 flex items-center gap-1">
-                    ⏰ {new Date(releaseDate).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}에 자동 구매 오픈
-                  </span>
-                ) : (
-                  <span className="text-emerald-700 flex items-center gap-1">
-                    ✓ 설정된 시간이 이미 지나 현재 즉시 구매 가능 상태입니다.
-                  </span>
+          {isTimeSale && (
+            <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-3 space-y-2.5 animate-in fade-in duration-150">
+              {/* Discount Rate */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-extrabold text-amber-950">할인율 입력 (%)</label>
+                  <span className="text-[10px] font-black text-amber-700">{discountRate}% OFF</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={discountRate}
+                    onChange={(e) => setDiscountRate(Math.min(99, Math.max(1, parseInt(e.target.value) || 0)))}
+                    className="w-full bg-white border border-amber-300 rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-amber-500"
+                  />
+                  <div className="flex gap-1 shrink-0">
+                    {[20, 30, 35, 40, 50].map((rate) => (
+                      <button
+                        key={rate}
+                        type="button"
+                        onClick={() => setDiscountRate(rate)}
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                          discountRate === rate
+                            ? "bg-amber-500 text-neutral-950 border-amber-500"
+                            : "bg-white text-neutral-700 border-neutral-200 hover:border-amber-400"
+                        }`}
+                      >
+                        {rate}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Price Preview */}
+              {origPrice > 0 && (
+                <div className="bg-white/90 border border-amber-200/80 rounded-lg p-2 text-[11px] font-sans">
+                  <div className="flex items-center justify-between text-neutral-500 line-through text-[10px]">
+                    <span>정상가</span>
+                    <span>{formatPrice(String(origPrice), "KRW")}</span>
+                  </div>
+                  <div className="flex items-center justify-between font-black text-amber-900 text-xs mt-0.5">
+                    <span>타임세일가 ({discountRate}%)</span>
+                    <span>{formatPrice(String(salePrice), "KRW")}</span>
+                  </div>
+                  {savings > 0 && (
+                    <div className="text-[10px] font-bold text-amber-600 text-right mt-0.5">
+                      (-{formatPrice(String(savings), "KRW")} 할인)
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Duration Presets */}
+              <div>
+                <label className="text-[10px] font-extrabold text-neutral-600 block mb-1">
+                  세일 지속 시간 (타이머 카운트다운)
+                </label>
+                <div className="grid grid-cols-4 gap-1">
+                  {[
+                    { h: 6, label: "6시간" },
+                    { h: 12, label: "12시간" },
+                    { h: 24, label: "24시간" },
+                    { h: 48, label: "48시간" },
+                  ].map((preset) => (
+                    <button
+                      key={preset.h}
+                      type="button"
+                      onClick={() => {
+                        setDurationHours(preset.h);
+                        setDurationMinutes(0);
+                      }}
+                      className={`text-[10px] font-bold py-1 rounded-md border text-center transition-colors cursor-pointer ${
+                        durationHours === preset.h && durationMinutes === 0
+                          ? "bg-amber-500 text-neutral-950 border-amber-400 font-black shadow-2xs"
+                          : "bg-white text-neutral-700 border-neutral-200 hover:border-amber-300"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 2: RELEASE TIME / ON·OFF */}
+      {activeTab === "release" && (
+        <div className="space-y-3 animate-in fade-in duration-100">
+          {/* Purchase ON / OFF */}
+          <div className="bg-neutral-50 border border-neutral-200/80 rounded-xl p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-extrabold text-neutral-900">상품 구매 가능 상태</span>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${available ? "bg-blue-100 text-blue-800" : "bg-neutral-200 text-neutral-700"}`}>
+                {available ? "ON (구매 가능)" : "OFF (구매 불가)"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setAvailable(true)}
+                className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+                  available
+                    ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                    : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${available ? "bg-white animate-pulse" : "bg-neutral-400"}`} />
+                <span>ON (구매 가능)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAvailable(false)}
+                className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+                  !available
+                    ? "bg-neutral-900 text-white border-neutral-900 shadow-xs"
+                    : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${!available ? "bg-rose-400" : "bg-neutral-400"}`} />
+                <span>OFF (구매 불가)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Scheduled Release */}
+          <div className="bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 space-y-2.5">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isScheduled}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setIsScheduled(checked);
+                  if (checked && !releaseDate) {
+                    handleApplyPreset("tomorrow10");
+                  }
+                }}
+                className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-950 accent-neutral-950 cursor-pointer"
+              />
+              <span className="text-xs font-black text-neutral-900">판매 시작 시간 지정 (예약 오픈)</span>
+            </label>
+
+            {isScheduled && (
+              <div className="space-y-2 pt-1">
+                <input
+                  type="datetime-local"
+                  value={releaseDate}
+                  onChange={(e) => setReleaseDate(e.target.value)}
+                  className="w-full bg-white border border-neutral-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-neutral-950 focus:outline-none focus:border-neutral-950 shadow-2xs"
+                />
+
+                <div className="flex flex-wrap gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset("today18")}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-neutral-200 hover:border-amber-400 text-neutral-700 transition-colors cursor-pointer"
+                  >
+                    오늘 18시
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset("tomorrow10")}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-neutral-200 hover:border-amber-400 text-neutral-700 transition-colors cursor-pointer"
+                  >
+                    내일 10시
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset("day3_10")}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-neutral-200 hover:border-amber-400 text-neutral-700 transition-colors cursor-pointer"
+                  >
+                    3일 뒤 10시
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearSchedule}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 hover:border-rose-400 text-rose-700 transition-colors cursor-pointer ml-auto"
+                  >
+                    해제
+                  </button>
+                </div>
+
+                {releaseDate && (
+                  <div className="text-[10px] font-bold leading-tight">
+                    {isFuture ? (
+                      <span className="text-amber-800 flex items-center gap-1">
+                        ⏰ {new Date(releaseDate).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}에 자동 구매 오픈
+                      </span>
+                    ) : (
+                      <span className="text-emerald-700 flex items-center gap-1">
+                        ✓ 설정된 시간이 이미 지나 현재 즉시 구매 가능 상태입니다.
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Footer Actions */}
       <div className="mt-3.5 pt-2.5 border-t border-neutral-100 flex items-center justify-between">
@@ -695,6 +892,8 @@ export function ProductsManagement({
   handleQuickUpdatePrice,
   handleQuickUpdateStock,
   handleQuickUpdateReleaseSchedule,
+  handleQuickUpdateTimeSale,
+  adminTimeSaleProductIds = [],
 }: ProductsManagementProps) {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [excelPreviewItems, setExcelPreviewItems] = useState<any[]>([]);
@@ -2177,24 +2376,32 @@ export function ProductsManagement({
                               setActiveStockPopoverId(null);
                               setActiveTimePopoverId(activeTimePopoverId === String(p.id) ? null : String(p.id));
                             }}
-                            title="클릭하여 판매 시작 시간 지정 및 ON/OFF 설정"
+                            title="클릭하여 타임세일 설정 및 판매 시작 시간 지정"
                             className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 whitespace-nowrap border select-none ${
-                              p.availableForSale === false
+                              p.isTimeSale || (adminTimeSaleProductIds && adminTimeSaleProductIds.includes(String(p.id)))
+                                ? "bg-amber-500 text-neutral-950 border-amber-400 hover:bg-amber-400 font-black shadow-xs animate-pulse"
+                                : p.availableForSale === false
                                 ? "bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 hover:border-rose-500"
                                 : p.releaseDate && new Date(p.releaseDate).getTime() > Date.now()
                                 ? "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 hover:border-amber-500"
                                 : "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100 hover:border-blue-500"
                             }`}
                           >
-                            <Clock className={`w-3 h-3 ${
-                              p.availableForSale === false
-                                ? "text-rose-600"
-                                : p.releaseDate && new Date(p.releaseDate).getTime() > Date.now()
-                                ? "text-amber-800 animate-pulse"
-                                : "text-blue-600"
-                            }`} />
+                            {p.isTimeSale || (adminTimeSaleProductIds && adminTimeSaleProductIds.includes(String(p.id))) ? (
+                              <Sparkles className="w-3 h-3 text-neutral-950" />
+                            ) : (
+                              <Clock className={`w-3 h-3 ${
+                                p.availableForSale === false
+                                  ? "text-rose-600"
+                                  : p.releaseDate && new Date(p.releaseDate).getTime() > Date.now()
+                                  ? "text-amber-800 animate-pulse"
+                                  : "text-blue-600"
+                              }`} />
+                            )}
                             <span>
-                              {p.availableForSale === false
+                              {p.isTimeSale || (adminTimeSaleProductIds && adminTimeSaleProductIds.includes(String(p.id)))
+                                ? `⚡ 타임세일 (${p.timeSaleDiscountRate || 35}%) ▾`
+                                : p.availableForSale === false
                                 ? "OFF (구매불가) ▾"
                                 : p.releaseDate && new Date(p.releaseDate).getTime() > Date.now()
                                 ? `${new Date(p.releaseDate).getMonth() + 1}/${new Date(p.releaseDate).getDate()} 오픈 ▾`
@@ -2215,6 +2422,12 @@ export function ProductsManagement({
                           {activeTimePopoverId === String(p.id) && (
                             <TimeSettingPopover
                               product={p}
+                              adminTimeSaleProductIds={adminTimeSaleProductIds}
+                              onSaveTimeSale={(isTS, rate, hours, mins) => {
+                                if (handleQuickUpdateTimeSale) {
+                                  handleQuickUpdateTimeSale(String(p.id), isTS, rate, hours, mins);
+                                }
+                              }}
                               onSaveSchedule={(avail, date) => {
                                 if (handleQuickUpdateReleaseSchedule) {
                                   handleQuickUpdateReleaseSchedule(String(p.id), avail, date);

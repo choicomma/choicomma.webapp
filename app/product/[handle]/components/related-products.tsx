@@ -23,10 +23,35 @@ export function RelatedProducts() {
     const loadRelatedProducts = async () => {
       try {
         let allProds: any[] = mockProducts;
-        const res = await fetch("/api/products");
+        let localData: any[] | null = null;
+        if (typeof window !== "undefined") {
+          try {
+            const raw = localStorage.getItem("admin_products");
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                localData = parsed;
+                allProds = parsed;
+              }
+            }
+          } catch {}
+        }
+
+        const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) allProds = data;
+          if (Array.isArray(data) && data.length > 0) {
+            if (localData && localData.length > 0) {
+              const localMap = new Map(localData.map((p: any) => [String(p.id), p]));
+              const merged = localData.slice();
+              data.forEach((sp: any) => {
+                if (sp && !localMap.has(String(sp.id))) merged.push(sp);
+              });
+              allProds = merged;
+            } else {
+              allProds = data;
+            }
+          }
         }
 
         // Filter out any explicitly deleted products

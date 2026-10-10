@@ -404,6 +404,7 @@ export default function AdminPage() {
     handleBulkMoveToTop,
     handleSortOrderChange,
     handleQuickUpdateReleaseSchedule,
+    handleQuickUpdateTimeSale,
     handleQuickUpdateCategory,
     handleQuickUpdatePrice,
     handleQuickUpdateStock,
@@ -1104,6 +1105,8 @@ export default function AdminPage() {
               toggleProductPurchasable={toggleProductPurchasable}
               handleReorderProducts={handleReorderProducts}
               handleQuickUpdateReleaseSchedule={handleQuickUpdateReleaseSchedule}
+              handleQuickUpdateTimeSale={handleQuickUpdateTimeSale}
+              adminTimeSaleProductIds={adminTimeSaleProductIds}
               handleQuickUpdateCategory={handleQuickUpdateCategory}
               handleQuickUpdatePrice={handleQuickUpdatePrice}
               handleQuickUpdateStock={handleQuickUpdateStock}

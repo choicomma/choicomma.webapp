@@ -121,47 +121,6 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  React.useEffect(() => {
-    const updateProductsFromLocal = () => {
-      if (typeof window === "undefined") return;
-      try {
-        let deletedSet = new Set<string>();
-        try {
-          const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
-          if (deletedRaw) deletedSet = new Set(JSON.parse(deletedRaw).map(String));
-        } catch {}
-
-        const raw = localStorage.getItem("admin_products");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            // 미진열(isMainFeatured === false) 및 삭제된 상품은 홈화면에서 원천 차단
-            const filteredParsed = parsed.filter(
-              (p: any) =>
-                !deletedSet.has(String(p.id)) &&
-                !deletedSet.has(String(p.productCode)) &&
-                !deletedSet.has(String(p.handle)) &&
-                p.isMainFeatured !== false &&
-                p.categoryId !== "main_banner" &&
-                !String(p.id).startsWith("hero-slide-")
-            );
-            let grid = filteredParsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured === true && !p.isHeroFeatured));
-            if (grid.length === 0) grid = filteredParsed.filter((p: any) => p.isMainFeatured === true);
-            if (grid.length === 0) grid = filteredParsed;
-            setAllProducts(grid);
-          }
-        }
-      } catch (e) {}
-    };
-
-    updateProductsFromLocal();
-    window.addEventListener("storage", updateProductsFromLocal);
-    window.addEventListener("admin_products_updated", updateProductsFromLocal);
-    return () => {
-      window.removeEventListener("storage", updateProductsFromLocal);
-      window.removeEventListener("admin_products_updated", updateProductsFromLocal);
-    };
-  }, []);
 
   const [isHydrated, setIsHydrated] = React.useState(false);
 
@@ -281,88 +240,111 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   };
 
   React.useEffect(() => {
+    let isSubscribed = true;
+
     const updateHomeData = async () => {
-      let parsed = products || [];
+      let currentList = products || [];
+      let localList: any[] | null = null;
+      let deletedSet = new Set<string>();
 
-      // 1. 브라우저 localStorage 최신 데이터 우선 동기화 (즉각 반응성 보장)
-      if (typeof window !== "undefined") {
-        try {
-          const localRaw = localStorage.getItem("admin_products");
-          if (localRaw) {
-            const localData = JSON.parse(localRaw);
-            if (Array.isArray(localData) && localData.length > 0) {
-              parsed = localData;
-            }
-          }
-        } catch (e) {}
-      }
-
-      // 2. 서버 API 최신 권한 데이터 비동기 페치
-      try {
-        const res = await fetch("/api/products");
-        if (res.ok) {
-          const serverData = await res.json();
-          if (Array.isArray(serverData) && serverData.length > 0) {
-            parsed = serverData;
-          }
-        }
-      } catch (e) {}
-
-      // 3. 삭제된 상품 블랙리스트 필터링
       if (typeof window !== "undefined") {
         try {
           const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
-          if (deletedRaw) {
-            const delSet = new Set(JSON.parse(deletedRaw).map(String));
-            parsed = parsed.filter(
-              (p: any) =>
-                !delSet.has(String(p.id)) &&
-                !delSet.has(String(p.productCode)) &&
-                !delSet.has(String(p.handle))
-            );
+          if (deletedRaw) deletedSet = new Set(JSON.parse(deletedRaw).map(String));
+        } catch {}
+
+        try {
+          const localRaw = localStorage.getItem("admin_products");
+          if (localRaw) {
+            const parsed = JSON.parse(localRaw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              localList = parsed;
+              currentList = parsed;
+            }
           }
-        } catch (e) {}
+        } catch {}
       }
 
-      // 4. ⭐ 핵심: 미진열 상품(isMainFeatured === false)은 홈화면 추천/카탈로그에서 원천 차단
-      const validHomeProducts = parsed.filter(
-        (p: any) =>
-          p.isMainFeatured !== false &&
-          p.categoryId !== "main_banner" &&
-          !String(p.id).startsWith("hero-slide-")
-      );
+      const applyProductsToList = (rawList: any[]) => {
+        // 1. 삭제된 상품 블랙리스트 필터링
+        const notDeleted = rawList.filter(
+          (p: any) =>
+            p &&
+            !deletedSet.has(String(p.id)) &&
+            !deletedSet.has(String(p.productCode)) &&
+            !deletedSet.has(String(p.handle))
+        );
 
-      // 1순위: 메인 진열 설정된 상품 (isMainFeatured === true)
-      let gridProducts = validHomeProducts.filter(
-        (p: any) => p.isBottomFeatured || (p.isMainFeatured === true && !p.isHeroFeatured)
-      );
-      if (gridProducts.length === 0) {
-        gridProducts = validHomeProducts.filter((p: any) => p.isMainFeatured === true);
-      }
-      // 2순위 (안전 폴백): 0개일 때도 미진열(isMainFeatured === false) 상품은 절대 제외하고 정상 진열 상품들만 노출
-      if (gridProducts.length === 0) {
-        gridProducts = validHomeProducts;
-      }
-      setAllProducts(gridProducts);
+        // 2. ⭐ 핵심: 미진열 상품(isMainFeatured === false)은 홈화면 추천/카탈로그에서 원천 차단
+        const validHomeProducts = notDeleted.filter(
+          (p: any) =>
+            p.isMainFeatured !== false &&
+            p.categoryId !== "main_banner" &&
+            !String(p.id).startsWith("hero-slide-")
+        );
 
-      // Hero Slider Images: 미진열 상품은 히어로 배너 후보에서도 제외
-      const heroCandidates = parsed.filter((p: any) =>
-        p.isMainFeatured !== false &&
-        (p.isHeroFeatured ||
-          Boolean(p.heroCustomImage) ||
-          p.categoryId === "main_banner" ||
-          String(p.id).startsWith("hero-slide-"))
-      );
+        // 1순위: 메인 진열 설정된 상품 (isMainFeatured === true)
+        let gridProducts = validHomeProducts.filter(
+          (p: any) => p.isBottomFeatured || (p.isMainFeatured === true && !p.isHeroFeatured)
+        );
+        if (gridProducts.length === 0) {
+          gridProducts = validHomeProducts.filter((p: any) => p.isMainFeatured === true);
+        }
+        // 2순위 (안전 폴백): 0개일 때도 미진열(isMainFeatured === false) 상품은 절대 제외하고 정상 진열 상품들만 노출
+        if (gridProducts.length === 0) {
+          gridProducts = validHomeProducts;
+        }
 
-      let urls = heroCandidates
-        .map((p: any) => p.heroCustomImage || p.featuredImage?.url)
-        .filter(Boolean);
+        if (isSubscribed) {
+          setAllProducts(gridProducts);
 
-      if (urls.length === 0) {
-        urls = Array.from({ length: 9 }, (_, i) => `/main_slider/${i + 1}.webp`);
-      }
+          // Hero Slider Images: 미진열 상품은 히어로 배너 후보에서도 제외
+          const heroCandidates = notDeleted.filter(
+            (p: any) =>
+              p.isMainFeatured !== false &&
+              (p.isHeroFeatured ||
+                Boolean(p.heroCustomImage) ||
+                p.categoryId === "main_banner" ||
+                String(p.id).startsWith("hero-slide-"))
+          );
 
-      setHeroImages(urls);
+          let urls = heroCandidates
+            .map((p: any) => p.heroCustomImage || p.featuredImage?.url)
+            .filter(Boolean);
+
+          if (urls.length === 0) {
+            urls = Array.from({ length: 9 }, (_, i) => `/main_slider/${i + 1}.webp`);
+          }
+
+          setHeroImages(urls);
+        }
+      };
+
+      // 1. 브라우저 localStorage 최신 데이터 즉각 동기화 (깜빡임 및 롤백 방지)
+      applyProductsToList(currentList);
+
+      // 2. 서버 API 최신 권한 데이터 비동기 페치 (로컬 상품의 미진열 상태는 100% 우선 보존)
+      try {
+        const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
+        if (res.ok && isSubscribed) {
+          const serverData = await res.json();
+          if (Array.isArray(serverData) && serverData.length > 0) {
+            if (localList && localList.length > 0) {
+              const localMap = new Map(localList.map((p: any) => [String(p.id), p]));
+              // 서버에서 새로 추가된 상품만 병합, 기존 로컬 상품의 상태(isMainFeatured)는 100% 로컬 기준 유지
+              const merged = localList.slice();
+              serverData.forEach((sp: any) => {
+                if (sp && !localMap.has(String(sp.id))) {
+                  merged.push(sp);
+                }
+              });
+              applyProductsToList(merged);
+            } else {
+              applyProductsToList(serverData);
+            }
+          }
+        }
+      } catch (e) {}
     };
 
     // Initial load
@@ -373,6 +355,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     window.addEventListener("storage", updateHomeData);
     window.addEventListener("admin_products_updated", updateHomeData);
     return () => {
+      isSubscribed = false;
       window.removeEventListener("storage", updateHomeData);
       window.removeEventListener("admin_products_updated", updateHomeData);
     };

@@ -54,8 +54,7 @@ function getAllServerProducts(): Product[] {
     const id = String(item.id || "");
     const code = String(item.productCode || "");
     const handle = String(item.handle || "");
-    const no = item.productNo !== undefined && item.productNo !== null ? String(item.productNo) : "";
-    return !deletedIdSet.has(id) && !deletedIdSet.has(code) && !deletedIdSet.has(handle) && (!no || !deletedIdSet.has(no));
+    return !deletedIdSet.has(id) && !deletedIdSet.has(code) && !deletedIdSet.has(handle);
   };
 
   try {
@@ -325,7 +324,7 @@ export async function getCollectionProducts({
       }
 
       if (collectionHandle === "top-seller" || collectionHandle === "main") {
-        return allList.filter((p) => (p as any).isMainFeatured === true);
+        return catalogProducts.filter((p) => (p as any).isMainFeatured === true);
       }
 
       const target = collectionHandle.toLowerCase();

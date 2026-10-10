@@ -206,10 +206,11 @@ export function useProducts({
             if (hasLocalData && localParsedList.length > 0) {
               const localIdSet = new Set(localParsedList.map((p: any) => String(p?.id || "")));
               const missingLocally = sanitized.filter((sp: any) => sp && !localIdSet.has(String(sp.id || "")));
-              if (missingLocally.length > 0 || sanitized.length >= localParsedList.length) {
-                setProductsList(sanitized);
+              if (missingLocally.length > 0) {
+                const merged = [...localParsedList, ...missingLocally];
+                setProductsList(merged);
                 try {
-                  localStorage.setItem("admin_products", JSON.stringify(sanitized));
+                  localStorage.setItem("admin_products", JSON.stringify(merged));
                 } catch (e) {}
               }
             } else {
@@ -611,6 +612,7 @@ export function useProducts({
 
     if (!window.confirm(confirmMsg)) return;
 
+    let updatedTarget: any = null;
     const updated = productsList.map((p) => {
       if (p.id === id) {
         triggerToast(
@@ -625,18 +627,23 @@ export function useProducts({
         } else {
           newTags = newTags.filter((t: string) => t !== "top-seller");
         }
-        return {
+        updatedTarget = {
           ...p,
           isMainFeatured: nextFeatured,
           tags: newTags,
+          updated_at: new Date().toISOString(),
         };
+        return updatedTarget;
       }
       return p;
     });
 
     setProductsList(updated);
     saveProductsToStorage(updated);
-  }, [productsList, saveProductsToStorage, triggerToast]);
+    if (updatedTarget) {
+      saveSingleProduct(updatedTarget, false);
+    }
+  }, [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]);
 
   const handleDeleteProduct = useCallback(async (id: string, title: string) => {
     const isConfirmed = window.confirm(
@@ -732,6 +739,7 @@ export function useProducts({
           ...p,
           isMainFeatured: isFeatured,
           tags: newTags,
+          updated_at: new Date().toISOString(),
         };
       }
       return p;
@@ -1074,11 +1082,13 @@ export function useProducts({
       const targetProduct = productsList.find((p) => String(p.id) === String(id));
       if (!targetProduct) return;
 
+      let updatedTarget: any = null;
       const updatedList = productsList.map((p) => {
         if (String(p.id) === String(id)) {
           const updatedItem: any = {
             ...p,
             availableForSale,
+            updated_at: new Date().toISOString(),
             variants: Array.isArray(p.variants)
               ? p.variants.map((v: any) => ({ ...v, availableForSale }))
               : p.variants,
@@ -1088,6 +1098,7 @@ export function useProducts({
           } else {
             delete updatedItem.releaseDate;
           }
+          updatedTarget = updatedItem;
           return updatedItem;
         }
         return p;
@@ -1095,6 +1106,9 @@ export function useProducts({
 
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
+      if (updatedTarget) {
+        saveSingleProduct(updatedTarget, false);
+      }
 
       if (releaseDate && new Date(releaseDate).getTime() > Date.now()) {
         triggerToast(
@@ -1111,7 +1125,101 @@ export function useProducts({
         triggerToast(`✓ '${targetProduct.title}' 상품이 [구매 가능(ON / 상시판매)]으로 설정되었습니다.`);
       }
     },
-    [productsList, saveProductsToStorage, triggerToast]
+    [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]
+  );
+
+  const handleQuickUpdateTimeSale = useCallback(
+    (
+      id: string,
+      isTimeSale: boolean,
+      discountRate: number = 35,
+      durationHours: number = 24,
+      durationMinutes: number = 0,
+      startDate?: string,
+      endDate?: string
+    ) => {
+      const targetProduct = productsList.find((p) => String(p.id) === String(id));
+      if (!targetProduct) return;
+
+      let updatedTarget: any = null;
+      const updatedList = productsList.map((p) => {
+        if (String(p.id) === String(id)) {
+          const existingTags = Array.isArray(p.tags) ? p.tags : [];
+          let newTags = [...existingTags];
+          if (isTimeSale) {
+            if (!newTags.includes("TIMESALE")) newTags.push("TIMESALE");
+          } else {
+            newTags = newTags.filter((t: string) => t !== "TIMESALE");
+          }
+
+          updatedTarget = {
+            ...p,
+            isTimeSale,
+            timeSaleDiscountRate: isTimeSale ? discountRate : undefined,
+            timeSaleStartDate: isTimeSale && startDate ? startDate : undefined,
+            timeSaleEndDate: isTimeSale && endDate ? endDate : undefined,
+            tags: newTags,
+            updated_at: new Date().toISOString(),
+          };
+          return updatedTarget;
+        }
+        return p;
+      });
+
+      // Synchronize secret_timesale_product_ids in localStorage & state safely
+      let currentIds: string[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("secret_timesale_product_ids");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) currentIds = parsed.map(String);
+          }
+        } catch {}
+      }
+      if (currentIds.length === 0 && Array.isArray(adminTimeSaleProductIds)) {
+        currentIds = [...adminTimeSaleProductIds];
+      }
+
+      const pIdStr = String(id);
+      let nextIds: string[];
+      if (isTimeSale) {
+        nextIds = Array.from(new Set([...currentIds, pIdStr]));
+        handleUpdateProductTimeSetting?.(pIdStr, durationHours, durationMinutes, undefined, discountRate);
+      } else {
+        nextIds = currentIds.filter((pId) => pId !== pIdStr);
+      }
+
+      setAdminTimeSaleProductIds?.(nextIds);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("secret_timesale_product_ids", JSON.stringify(nextIds));
+          window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
+          window.dispatchEvent(new CustomEvent("storage"));
+        } catch {}
+      }
+
+      setProductsList(updatedList);
+      saveProductsToStorage(updatedList);
+      if (updatedTarget) {
+        saveSingleProduct(updatedTarget, false);
+      }
+
+      if (isTimeSale) {
+        triggerToast(`⚡ '${targetProduct.title}' 상품이 [타임세일 ${discountRate}% 특가]로 등록되었습니다.`);
+      } else {
+        triggerToast(`'${targetProduct.title}' 상품의 타임세일이 해제되었습니다.`);
+      }
+    },
+    [
+      productsList,
+      adminTimeSaleProductIds,
+      setAdminTimeSaleProductIds,
+      handleUpdateProductTimeSetting,
+      saveProductsToStorage,
+      saveSingleProduct,
+      triggerToast,
+    ]
   );
 
   const handleQuickUpdateCategory = useCallback(
@@ -1119,6 +1227,7 @@ export function useProducts({
       const targetProd = productsList.find((p) => String(p.id) === String(id));
       if (!targetProd) return;
 
+      let updatedTarget: any = null;
       const updatedList = productsList.map((p) => {
         if (String(p.id) === String(id)) {
           const existingTags = Array.isArray(p.tags) ? p.tags : [];
@@ -1128,41 +1237,64 @@ export function useProducts({
           } else {
             newTags = newTags.filter((t: string) => t !== "TIMESALE");
           }
-          return {
+          const rateNum = parseInt(adminTimeSaleDiscount) || 35;
+          updatedTarget = {
             ...p,
             categoryId: newCategory,
             categoryIds: [newCategory],
             isTimeSale: newCategory === "timesale",
+            timeSaleDiscountRate: newCategory === "timesale" ? rateNum : p.timeSaleDiscountRate,
             tags: newTags,
+            updated_at: new Date().toISOString(),
           };
+          return updatedTarget;
         }
         return p;
       });
 
-      if (newCategory === "timesale") {
-        if (!adminTimeSaleProductIds.includes(String(id))) {
-          const updatedIds = [...adminTimeSaleProductIds, String(id)];
-          setAdminTimeSaleProductIds?.(updatedIds);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedIds));
+      let currentIds: string[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("secret_timesale_product_ids");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) currentIds = parsed.map(String);
           }
+        } catch {}
+      }
+      if (currentIds.length === 0 && Array.isArray(adminTimeSaleProductIds)) {
+        currentIds = [...adminTimeSaleProductIds];
+      }
+
+      const pIdStr = String(id);
+      if (newCategory === "timesale") {
+        const nextIds = Array.from(new Set([...currentIds, pIdStr]));
+        setAdminTimeSaleProductIds?.(nextIds);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("secret_timesale_product_ids", JSON.stringify(nextIds));
         }
         const h = parseInt(adminTimeSaleHours) || 24;
         const m = parseInt(adminTimeSaleMinutes) || 0;
         const rateNum = parseInt(adminTimeSaleDiscount) || 35;
-        handleUpdateProductTimeSetting?.(String(id), h, m, undefined, rateNum);
+        handleUpdateProductTimeSetting?.(pIdStr, h, m, undefined, rateNum);
       } else {
-        if (adminTimeSaleProductIds.includes(String(id))) {
-          const filteredIds = adminTimeSaleProductIds.filter((pId) => pId !== String(id));
-          setAdminTimeSaleProductIds?.(filteredIds);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("secret_timesale_product_ids", JSON.stringify(filteredIds));
-          }
+        const filteredIds = currentIds.filter((pId) => pId !== pIdStr);
+        setAdminTimeSaleProductIds?.(filteredIds);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("secret_timesale_product_ids", JSON.stringify(filteredIds));
         }
+      }
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
+        window.dispatchEvent(new CustomEvent("storage"));
       }
 
       setProductsList(updatedList);
       saveProductsToStorage(updatedList);
+      if (updatedTarget) {
+        saveSingleProduct(updatedTarget, false);
+      }
       triggerToast(`카테고리가 [${newCategory.toUpperCase()}] (으)로 즉시 변경되었습니다.`);
     },
     [
@@ -1174,6 +1306,7 @@ export function useProducts({
       setAdminTimeSaleProductIds,
       handleUpdateProductTimeSetting,
       saveProductsToStorage,
+      saveSingleProduct,
       triggerToast,
     ]
   );
@@ -1307,6 +1440,7 @@ export function useProducts({
     handleBulkMoveToTop,
     handleSortOrderChange,
     handleQuickUpdateReleaseSchedule,
+    handleQuickUpdateTimeSale,
     handleQuickUpdateCategory,
     handleQuickUpdatePrice,
     handleQuickUpdateStock,

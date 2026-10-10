@@ -34,40 +34,23 @@ export function ProductListContent({
   const sort = searchParams?.get("sort") || "";
 
   useEffect(() => {
+    let isSubscribed = true;
+
     const loadAdminChoiceProducts = async () => {
       let activeSourceProducts: Product[] = (products || []).filter(
         (p: any) => p.isMainFeatured !== false
       );
+      let localData: any[] | null = null;
 
-      // Fetch live authoritative products from Central Server API
-      try {
-        const res = await fetch("/api/products");
-        if (res.ok) {
-          const serverData: any[] = await res.json();
-          if (Array.isArray(serverData)) {
-            if (serverData.length === 0) {
-              activeSourceProducts = [];
-            } else {
-              const nonBanner = serverData.filter(
-                (p) =>
-                  p.categoryId !== "main_banner" &&
-                  !String(p.id).startsWith("hero-slide-") &&
-                  p.isMainFeatured !== false
-              );
-              activeSourceProducts = nonBanner;
-            }
-          }
-        }
-      } catch (e) {}
-
-      // Fallback/sync to client-side localStorage if available
+      // 1. Immediately prioritize browser localStorage to prevent flicker and rollbacks
       if (typeof window !== "undefined") {
         try {
           const localRaw = localStorage.getItem("admin_products");
           if (localRaw) {
-            const localData: any[] = JSON.parse(localRaw);
-            if (Array.isArray(localData)) {
-              activeSourceProducts = localData.filter(
+            const parsed: any[] = JSON.parse(localRaw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              localData = parsed;
+              activeSourceProducts = parsed.filter(
                 (p) =>
                   p.categoryId !== "main_banner" &&
                   !String(p.id).startsWith("hero-slide-") &&
@@ -76,8 +59,44 @@ export function ProductListContent({
             }
           }
         } catch (e) {}
+      }
 
-        // Guarantee any deleted products never reappear in shop view
+      // 2. Fetch live authoritative products from Central Server API
+      try {
+        const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
+        if (res.ok && isSubscribed) {
+          const serverData: any[] = await res.json();
+          if (Array.isArray(serverData)) {
+            if (localData && localData.length > 0) {
+              const localMap = new Map(localData.map((p: any) => [String(p.id), p]));
+              const merged = localData.slice();
+              serverData.forEach((sp: any) => {
+                if (sp && !localMap.has(String(sp.id))) {
+                  merged.push(sp);
+                }
+              });
+              activeSourceProducts = merged.filter(
+                (p) =>
+                  p.categoryId !== "main_banner" &&
+                  !String(p.id).startsWith("hero-slide-") &&
+                  p.isMainFeatured !== false
+              );
+            } else if (serverData.length === 0) {
+              activeSourceProducts = [];
+            } else {
+              activeSourceProducts = serverData.filter(
+                (p) =>
+                  p.categoryId !== "main_banner" &&
+                  !String(p.id).startsWith("hero-slide-") &&
+                  p.isMainFeatured !== false
+              );
+            }
+          }
+        }
+      } catch (e) {}
+
+      // Guarantee any deleted products never reappear in shop view
+      if (typeof window !== "undefined") {
         try {
           const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
           if (deletedRaw) {
@@ -294,6 +313,7 @@ export function ProductListContent({
     window.addEventListener("secret_timesales_updated", loadAdminChoiceProducts);
     window.addEventListener("admin_products_updated", loadAdminChoiceProducts);
     return () => {
+      isSubscribed = false;
       window.removeEventListener("storage", loadAdminChoiceProducts);
       window.removeEventListener("auth_changed", loadAdminChoiceProducts);
       window.removeEventListener("secret_timesales_updated", loadAdminChoiceProducts);
