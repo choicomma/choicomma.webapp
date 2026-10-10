@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Product, Collection } from "@/lib/sfcc/types";
 import { useProducts } from "../providers/products-provider";
@@ -32,96 +32,55 @@ export function ProductListContent({
   const searchParams = useSearchParams();
   const query = searchParams?.get("q") || "";
   const sort = searchParams?.get("sort") || "";
+  // SSR products prop의 최신 값을 ref로 추적 — 메인 effect를 재실행하지 않고도 authoritativeProducts 초기화에 사용
+  const productsRef = useRef<Product[]>(products);
+  useEffect(() => {
+    productsRef.current = products;
+  }, [products]);
 
   useEffect(() => {
     let isSubscribed = true;
+    // 요청 순번: 이벤트가 연달아 발생해도 "가장 마지막에 시작한 요청"의 응답만 화면에 반영한다.
+    let requestSeq = 0;
+    let abortController: AbortController | null = null;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const loadAdminChoiceProducts = async () => {
-      let activeSourceProducts: Product[] = (products || []).filter(
-        (p: any) => p.isMainFeatured !== false
+    // 화면에 반영할 "서버 기준" 최신 상품 목록 (최초에는 SSR 목록, 서버 응답 수신 후에는 서버 응답으로 교체)
+    let authoritativeProducts: any[] = (products || []) as any[];
+    // 서버가 알려준 삭제 상품 ID (서버 응답 수신 후에는 이 목록이 유일한 기준)
+    let serverDeletedIds: Set<string> | null = null;
+
+    // 주어진 목록으로 전체보기 화면을 즉시(동기) 계산해서 반영한다.
+    // 시간세일 가격/컬렉션 필터까지 한 번에 적용되므로 네트워크 응답 전후로 가격·목록이 바뀌는 깜빡임이 없다.
+    const renderProducts = (sourceList: any[]) => {
+      if (!isSubscribed) return;
+
+      // 배너/히어로/미진열 상품은 전체보기에서 제외
+      let activeSourceProducts: Product[] = (sourceList || []).filter(
+        (p: any) =>
+          p &&
+          p.categoryId !== "main_banner" &&
+          !String(p.id).startsWith("hero-slide-") &&
+          p.isMainFeatured !== false
       );
-      let localData: any[] | null = null;
 
-      // 1. Immediately prioritize browser localStorage to prevent flicker and rollbacks
-      if (typeof window !== "undefined") {
-        try {
-          const localRaw = localStorage.getItem("admin_products");
-          if (localRaw) {
-            const parsed: any[] = JSON.parse(localRaw);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              localData = parsed;
-              activeSourceProducts = parsed.filter(
-                (p) =>
-                  p.categoryId !== "main_banner" &&
-                  !String(p.id).startsWith("hero-slide-") &&
-                  p.isMainFeatured !== false
-              );
-            }
-          }
-        } catch (e) {}
-      }
-
-      // 2. Fetch live authoritative products from Central Server API
-      try {
-        const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
-        if (res.ok && isSubscribed) {
-          // 서버에서 영구 삭제된 상품 ID 블랙리스트를 수신하여 로컬에 동기화
-          const delHeader = res.headers.get("x-deleted-product-ids");
-          if (delHeader) {
-            try {
-              const serverDelIds = JSON.parse(delHeader);
-              if (Array.isArray(serverDelIds) && serverDelIds.length > 0) {
-                const curDeletedRaw = localStorage.getItem("admin_deleted_product_ids");
-                const curSet = curDeletedRaw ? new Set(JSON.parse(curDeletedRaw).map(String)) : new Set<string>();
-                serverDelIds.forEach((id: string) => curSet.add(String(id)));
-                localStorage.setItem("admin_deleted_product_ids", JSON.stringify(Array.from(curSet)));
-              }
-            } catch {}
-          }
-
-          const serverData: any[] = await res.json();
-          if (Array.isArray(serverData)) {
-            // 서버에 없는 상품은 삭제된 상품이므로 로컬 캐시(admin_products)에서도 깨끗하게 동기화(제거)
-            if (localData && localData.length > 0) {
-              const serverIdSet = new Set(serverData.map((sp: any) => String(sp.id)));
-              const pruned = localData.filter((p: any) => serverIdSet.has(String(p?.id)));
-              if (typeof window !== "undefined" && pruned.length !== localData.length) {
-                try {
-                  localStorage.setItem("admin_products", JSON.stringify(pruned));
-                } catch {}
-              }
-            }
-
-            activeSourceProducts = serverData.filter(
-              (p) =>
-                p.categoryId !== "main_banner" &&
-                !String(p.id).startsWith("hero-slide-") &&
-                p.isMainFeatured !== false
-            );
-          }
-        }
-      } catch (e) {}
-
-      // Guarantee any deleted products never reappear in shop view
-      if (typeof window !== "undefined") {
+      // 삭제된 상품은 어떤 경우에도 다시 나타나지 않도록 제외
+      let deletedSet: Set<string> = serverDeletedIds || new Set<string>();
+      if (!serverDeletedIds && typeof window !== "undefined") {
+        // 서버 응답 전(최초 SSR 렌더 직후)에는 이 기기에 기록된 삭제 목록으로만 임시 필터링
         try {
           const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
-          if (deletedRaw) {
-            const delSet = new Set(JSON.parse(deletedRaw).map(String));
-            activeSourceProducts = activeSourceProducts.filter(
-              (p: any) =>
-                !delSet.has(String(p.id)) &&
-                !delSet.has(String(p.productCode)) &&
-                !delSet.has(String(p.handle))
-            );
-          }
+          if (deletedRaw) deletedSet = new Set(JSON.parse(deletedRaw).map(String));
         } catch (e) {}
       }
-
-      // Final strict filter: Never display unfeatured products in shop
-      activeSourceProducts = activeSourceProducts.filter(
-        (p: any) => p.isMainFeatured !== false
-      );
+      if (deletedSet.size > 0) {
+        activeSourceProducts = activeSourceProducts.filter(
+          (p: any) =>
+            !deletedSet.has(String(p.id)) &&
+            !deletedSet.has(String(p.productCode)) &&
+            !deletedSet.has(String(p.handle))
+        );
+      }
 
       // Filter active products by category if specific category is selected
       let categoryFilteredProducts = activeSourceProducts;
@@ -314,19 +273,78 @@ export function ProductListContent({
       }
     };
 
-    loadAdminChoiceProducts();
-    window.addEventListener("storage", loadAdminChoiceProducts);
-    window.addEventListener("auth_changed", loadAdminChoiceProducts);
-    window.addEventListener("secret_timesales_updated", loadAdminChoiceProducts);
-    window.addEventListener("admin_products_updated", loadAdminChoiceProducts);
+    // 서버 API가 알려주는 최신 목록이 유일한 기준 (이 기기의 오래된 localStorage 스냅샷은 사용/수정하지 않음)
+    const syncFromServer = async () => {
+      const mySeq = ++requestSeq;
+      abortController?.abort();
+      const controller = new AbortController();
+      abortController = controller;
+
+      try {
+        const res = await fetch("/api/products?fresh=1", { cache: "no-store", signal: controller.signal });
+        if (!res.ok || !isSubscribed || mySeq !== requestSeq) return;
+
+        let deleted: Set<string> | null = null;
+        const delHeader = res.headers.get("x-deleted-product-ids");
+        if (delHeader) {
+          try {
+            const ids = JSON.parse(delHeader);
+            if (Array.isArray(ids)) deleted = new Set(ids.map(String));
+          } catch (e) {}
+        }
+
+        const serverData = await res.json();
+        // 응답을 기다리는 사이 더 최신 요청이 시작됐거나 화면이 바뀌었다면 이 (오래된) 응답은 버린다
+        if (!Array.isArray(serverData) || !isSubscribed || mySeq !== requestSeq) return;
+
+        authoritativeProducts = serverData;
+        if (deleted) serverDeletedIds = deleted;
+        renderProducts(serverData);
+      } catch (e) {
+        // 네트워크 오류/요청 중단: 현재 화면을 유지한다 (오래된 로컬 캐시로 되돌리지 않음)
+      }
+    };
+
+    // 관리자 저장 직후 이벤트가 연달아(저장 전/후) 들어오므로 짧게 모아서 한 번만 서버에서 다시 읽는다
+    const scheduleSync = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
+        syncFromServer();
+      }, 250);
+    };
+
+    // 로그인/시간세일 설정 변경은 네트워크를 기다리지 않고 마지막으로 받은 서버 목록으로 즉시 다시 계산
+    const handleLocalSettingChange = () => {
+      renderProducts(authoritativeProducts);
+    };
+
+    // 관리자 상품 변경 이벤트: 서버 최신 목록만 재조회
+    // (즉시 renderProducts(authoritativeProducts) 실행 시, effect 재실행으로 인해
+    // authoritativeProducts가 SSR 데이터로 리셋된 경우 순간적으로 롤백 현상이 발생하므로 제거)
+    const handleProductsChanged = () => {
+      scheduleSync();
+    };
+
+    // 1. SSR로 내려온 서버 목록을 즉시 반영 (시간세일 가격/컬렉션 필터 포함)
+    renderProducts(authoritativeProducts);
+    // 2. 서버 최신 데이터로 갱신
+    syncFromServer();
+
+    window.addEventListener("storage", handleProductsChanged);
+    window.addEventListener("auth_changed", handleLocalSettingChange);
+    window.addEventListener("secret_timesales_updated", handleLocalSettingChange);
+    window.addEventListener("admin_products_updated", handleProductsChanged);
     return () => {
       isSubscribed = false;
-      window.removeEventListener("storage", loadAdminChoiceProducts);
-      window.removeEventListener("auth_changed", loadAdminChoiceProducts);
-      window.removeEventListener("secret_timesales_updated", loadAdminChoiceProducts);
-      window.removeEventListener("admin_products_updated", loadAdminChoiceProducts);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      abortController?.abort();
+      window.removeEventListener("storage", handleProductsChanged);
+      window.removeEventListener("auth_changed", handleLocalSettingChange);
+      window.removeEventListener("secret_timesales_updated", handleLocalSettingChange);
+      window.removeEventListener("admin_products_updated", handleProductsChanged);
     };
-  }, [collectionHandle, products, setProducts]);
+  }, [collectionHandle, setProducts]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 12;

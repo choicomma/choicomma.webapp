@@ -279,6 +279,16 @@ export function useProducts({
           const data = await res.json();
           if (Array.isArray(data) && isMounted) {
             const sanitized = filterOutDeletedProducts(data, deletedSet);
+
+            // Proactively sync local deleted product IDs to server so other devices (e.g. mobile) are immediately synced
+            if (deletedSet.size > 0) {
+              fetch("/api/products?action=sync-deleted", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ids: Array.from(deletedSet) }),
+              }).catch(() => {});
+            }
+
             // Reconcile between localStorage and authoritative server catalog based on updated_at timestamp
             if (hasLocalData && localParsedList.length > 0) {
               const serverIdSet = new Set(sanitized.map((sp: any) => String(sp?.id || "")));
@@ -462,18 +472,25 @@ export function useProducts({
   const saveProductsToStorage = useCallback((list: any[], skipServerSync: boolean = false) => {
     if (typeof window === "undefined") return;
 
+    // skipServerSync=true 인 호출은 직후에 서버 저장(saveSingleProduct / DELETE)이 이어지고,
+    // 그 완료 시점에 변경 이벤트가 발행된다. 서버 저장 전에 이벤트를 먼저 보내면
+    // 홈/전체보기가 아직 갱신되지 않은 서버 데이터를 받아 "이전 상태로 되돌아가는" 깜빡임이 생기므로 억제한다.
+    const notifyChange = () => {
+      if (skipServerSync) return;
+      window.dispatchEvent(new CustomEvent("admin_products_updated"));
+      window.dispatchEvent(new CustomEvent("storage"));
+    };
+
     // 1. Immediately persist to localStorage for instant reload resilience
     try {
       localStorage.setItem("admin_products", JSON.stringify(list));
-      window.dispatchEvent(new CustomEvent("admin_products_updated"));
-      window.dispatchEvent(new CustomEvent("storage"));
+      notifyChange();
     } catch (e) {
       console.warn("Failed to save products to localStorage, attempting lightweight fallback:", e);
       try {
         const lightList = sanitizeProductsForLocalStorage(list);
         localStorage.setItem("admin_products", JSON.stringify(lightList));
-        window.dispatchEvent(new CustomEvent("admin_products_updated"));
-        window.dispatchEvent(new CustomEvent("storage"));
+        notifyChange();
       } catch (fallbackErr) {
         console.warn("Sanitized fallback also exceeded quota, stripping long text:", fallbackErr);
         try {
@@ -484,8 +501,7 @@ export function useProducts({
             description: p.title || "",
           }));
           localStorage.setItem("admin_products", JSON.stringify(minimalList));
-          window.dispatchEvent(new CustomEvent("admin_products_updated"));
-          window.dispatchEvent(new CustomEvent("storage"));
+          notifyChange();
         } catch (minErr) {
           console.error("Critical: localStorage setItem failed completely:", minErr);
         }
@@ -827,10 +843,15 @@ export function useProducts({
     setProductsList(updatedList);
     saveProductsToStorage(updatedList, true);
 
-    // 3. Explicitly call Server DELETE endpoint
+    // 3. Explicitly call Server DELETE endpoint and sync-deleted
     try {
       await fetch(`/api/products?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
+      });
+      await fetch("/api/products?action=sync-deleted", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: idsToBlacklist }),
       });
     } catch (delErr) {
       console.warn("Failed to call /api/products DELETE endpoint:", delErr);
@@ -992,10 +1013,15 @@ export function useProducts({
     setProductsList(updatedList);
     saveProductsToStorage(updatedList, true);
 
-    // 3. Explicitly call Server DELETE endpoint
+    // 3. Explicitly call Server DELETE endpoint and sync-deleted
     try {
       await fetch("/api/products", {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(allIdsToBlacklist) }),
+      });
+      await fetch("/api/products?action=sync-deleted", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(allIdsToBlacklist) }),
       });

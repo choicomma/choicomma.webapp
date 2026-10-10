@@ -137,12 +137,6 @@ function readLocalProductsBackup(): any[] {
       return memTime >= diskTime ? mp : dp;
     });
 
-    const diskIdSet = new Set(diskData.map((dp: any) => String(dp?.id || "")));
-    globalForProducts.serverProductsCache.forEach((mp: any) => {
-      if (mp?.id && !diskIdSet.has(String(mp.id))) {
-        reconciled.push(mp);
-      }
-    });
     return filterOutDeletedServerProducts(reconciled);
   }
 
@@ -338,6 +332,40 @@ export async function POST(req: NextRequest) {
         count: seedProducts.length,
         products: seedProducts,
       }, {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
+    }
+
+    // -------------------------------------------------------------
+    // CASE 0.5: Sync Client Deleted Product IDs to Central Server
+    // -------------------------------------------------------------
+    if (action === "sync-deleted" || body?.action === "sync-deleted") {
+      const idsToSync: string[] = Array.isArray(body?.ids) ? body.ids.map(String) : [];
+      if (idsToSync.length > 0) {
+        const currentDeleted = readDeletedProductsList();
+        const updatedDeletedSet = new Set([...currentDeleted, ...idsToSync]);
+        writeDeletedProductsList(Array.from(updatedDeletedSet));
+
+        const diskList = readLocalProductsBackup();
+        if (diskList.length > 0) {
+          const cleaned = diskList.filter((p: any) => {
+            if (!p) return false;
+            const id = String(p.id || "");
+            const code = String(p.productCode || "");
+            const handle = String(p.handle || "");
+            return !updatedDeletedSet.has(id) && !updatedDeletedSet.has(code) && !updatedDeletedSet.has(handle);
+          });
+          if (cleaned.length !== diskList.length) {
+            globalForProducts.serverProductsCache = cleaned;
+            await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), cleaned);
+          }
+        }
+        revalidateAllProductPaths();
+      }
+      return NextResponse.json({ success: true, count: idsToSync.length }, {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
           Pragma: "no-cache",

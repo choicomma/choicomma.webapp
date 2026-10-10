@@ -63,11 +63,9 @@ export function ClientProductFallback({ handle }: { handle: string }) {
         if (delHeader) {
           try {
             const serverDelIds = JSON.parse(delHeader);
-            if (Array.isArray(serverDelIds) && serverDelIds.length > 0) {
-              const curDeletedRaw = localStorage.getItem("admin_deleted_product_ids");
-              const curSet = curDeletedRaw ? new Set(JSON.parse(curDeletedRaw).map(String)) : new Set<string>();
-              serverDelIds.forEach((id: string) => curSet.add(String(id)));
-              localStorage.setItem("admin_deleted_product_ids", JSON.stringify(Array.from(curSet)));
+            if (Array.isArray(serverDelIds)) {
+              // 서버 목록이 기준: 복원/재등록된 상품이 이 기기의 오래된 삭제 기록 때문에 계속 숨겨지지 않도록 교체
+              localStorage.setItem("admin_deleted_product_ids", JSON.stringify(serverDelIds.map(String)));
             }
           } catch {}
         }
