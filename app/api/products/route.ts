@@ -96,59 +96,141 @@ function readSeedCatalog(): any[] {
 // In-memory cache for ultra-fast response & fail-safe fallback
 const globalForProducts = global as unknown as { serverProductsCache?: any[] };
 
+// Process-level write mutex queue to serialize all disk writes and eliminate EBUSY write lock collisions
+let fileWriteChain = Promise.resolve();
+
 function readLocalProductsBackup(): any[] {
   ensureSeedBackupExists();
   const runtimePath = getRuntimeProductsFilePath();
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  let diskData: any[] | null = null;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       if (fs.existsSync(runtimePath)) {
         const raw = fs.readFileSync(runtimePath, "utf-8");
         const data = JSON.parse(raw);
-        if (Array.isArray(data)) return filterOutDeletedServerProducts(data);
+        if (Array.isArray(data) && data.length > 0) {
+          diskData = filterOutDeletedServerProducts(data);
+          break;
+        }
       }
     } catch (e) {
       console.warn(`[Products File Read Attempt ${attempt} Warning]:`, e);
-      if (attempt < 2) {
-        // Synchronous brief backoff for Windows / OneDrive file locks
+      if (attempt < 3) {
         const start = Date.now();
-        while (Date.now() - start < 30) {}
+        while (Date.now() - start < 40) {}
       }
     }
   }
 
-  // Safety fallback: if reading from disk failed or file was temporarily locked,
-  // do NOT wipe memory cache; use global in-memory catalog
-  if (globalForProducts.serverProductsCache !== undefined && Array.isArray(globalForProducts.serverProductsCache)) {
-    return filterOutDeletedServerProducts(globalForProducts.serverProductsCache);
+  // Reconciliation: if in-memory cache has newer product updates, NEVER downgrade memory with stale disk data!
+  if (globalForProducts.serverProductsCache && Array.isArray(globalForProducts.serverProductsCache) && globalForProducts.serverProductsCache.length > 0) {
+    if (!diskData || diskData.length === 0) {
+      return filterOutDeletedServerProducts(globalForProducts.serverProductsCache);
+    }
+    const memMap = new Map(globalForProducts.serverProductsCache.map((p: any) => [String(p?.id || ""), p]));
+    const reconciled = diskData.map((dp: any) => {
+      const mp = memMap.get(String(dp?.id || ""));
+      if (!mp) return dp;
+      const memTime = (mp.updated_at || mp.updatedAt) ? new Date(mp.updated_at || mp.updatedAt).getTime() : 0;
+      const diskTime = (dp.updated_at || dp.updatedAt) ? new Date(dp.updated_at || dp.updatedAt).getTime() : 0;
+      return memTime >= diskTime ? mp : dp;
+    });
+
+    const diskIdSet = new Set(diskData.map((dp: any) => String(dp?.id || "")));
+    globalForProducts.serverProductsCache.forEach((mp: any) => {
+      if (mp?.id && !diskIdSet.has(String(mp.id))) {
+        reconciled.push(mp);
+      }
+    });
+    return filterOutDeletedServerProducts(reconciled);
+  }
+
+  if (diskData && diskData.length > 0) {
+    return diskData;
   }
 
   return readSeedCatalog();
 }
 
-function safeAtomicWriteJsonFile(targetPath: string, data: any) {
-  const dir = path.dirname(targetPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+async function safeAtomicWriteJsonFile(targetPath: string, data: any): Promise<boolean> {
+  const writeOp = async (): Promise<boolean> => {
+    const dir = path.dirname(targetPath);
+    if (!fs.existsSync(dir)) {
+      try {
+        fs.mkdirSync(dir, { recursive: true });
+      } catch {}
+    }
 
-  const jsonStr = JSON.stringify(data, null, 2);
-  let lastError: any = null;
+    const jsonStr = JSON.stringify(data, null, 2);
+    const tmpPath = `${targetPath}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`;
 
-  // Retry up to 5 times to gracefully overcome Windows / OneDrive file lock collisions
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    try {
-      fs.writeFileSync(targetPath, jsonStr, "utf-8");
-      return;
-    } catch (err: any) {
-      lastError = err;
-      if (attempt < 5) {
-        const start = Date.now();
-        while (Date.now() - start < 40 * attempt) {}
+    // 1. Write to temporary file
+    let tmpWritten = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        fs.writeFileSync(tmpPath, jsonStr, "utf-8");
+        tmpWritten = true;
+        break;
+      } catch (tmpErr) {
+        if (attempt < 3) {
+          await new Promise((r) => setTimeout(r, 40 * attempt));
+        }
       }
     }
-  }
 
-  console.warn("[Safe Write Notice after retries]:", lastError?.message || lastError);
+    if (!tmpWritten) {
+      // Fallback: direct write
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+          fs.writeFileSync(targetPath, jsonStr, "utf-8");
+          return true;
+        } catch (directErr) {
+          if (attempt < 5) await new Promise((r) => setTimeout(r, 60 * attempt));
+        }
+      }
+      return false;
+    }
+
+    // 2. Atomic swap with retries for Windows / OneDrive file locks
+    let replaced = false;
+    for (let attempt = 1; attempt <= 10; attempt++) {
+      try {
+        fs.renameSync(tmpPath, targetPath);
+        replaced = true;
+        break;
+      } catch (renameErr) {
+        try {
+          fs.copyFileSync(tmpPath, targetPath);
+          try { fs.unlinkSync(tmpPath); } catch {}
+          replaced = true;
+          break;
+        } catch (copyErr) {
+          if (attempt < 10) {
+            await new Promise((r) => setTimeout(r, 60 * attempt));
+          }
+        }
+      }
+    }
+
+    if (!replaced) {
+      try {
+        fs.writeFileSync(targetPath, jsonStr, "utf-8");
+        replaced = true;
+      } catch (finalErr) {
+        console.warn("[Safe Atomic Write Notice after retries]:", finalErr);
+      }
+      try {
+        if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+      } catch {}
+    }
+
+    return replaced;
+  };
+
+  const nextChain = fileWriteChain.then(writeOp, writeOp);
+  fileWriteChain = nextChain.then(() => {}, () => {});
+  return nextChain;
 }
 
 function revalidateAllProductPaths(handle?: string) {
@@ -309,17 +391,21 @@ export async function POST(req: NextRequest) {
 
       const existingIdx = existingList.findIndex((item: any) => String(item.id) === pId);
       if (existingIdx !== -1) {
-        if (!relDate) {
-          delete existingList[existingIdx].releaseDate;
-        }
-        existingList[existingIdx] = { ...existingList[existingIdx], ...itemToSave };
+        const prevCreatedAt = existingList[existingIdx].created_at || existingList[existingIdx].createdAt;
+        existingList[existingIdx] = {
+          ...itemToSave,
+          created_at: itemToSave.created_at || prevCreatedAt || new Date().toISOString(),
+          createdAt: itemToSave.createdAt || prevCreatedAt || new Date().toISOString(),
+          updated_at: itemToSave.updated_at || new Date().toISOString(),
+          updatedAt: itemToSave.updatedAt || new Date().toISOString(),
+        };
       } else {
         existingList.unshift(itemToSave);
       }
 
       globalForProducts.serverProductsCache = existingList;
       try {
-        safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), existingList);
+        await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), existingList);
       } catch (writeErr: any) {
         console.warn("[Single Product Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
       }
@@ -328,7 +414,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        product: itemToSave,
+        product: existingList[existingIdx !== -1 ? existingIdx : 0],
       }, {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
@@ -365,7 +451,7 @@ export async function POST(req: NextRequest) {
 
     globalForProducts.serverProductsCache = products;
     try {
-      safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), products);
+      await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), products);
     } catch (writeErr: any) {
       console.warn("[Batch Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
     }
@@ -452,7 +538,7 @@ export async function DELETE(req: NextRequest) {
 
     globalForProducts.serverProductsCache = updated;
     try {
-      safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), updated);
+      await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), updated);
     } catch (writeErr: any) {
       console.warn("[Delete Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
     }

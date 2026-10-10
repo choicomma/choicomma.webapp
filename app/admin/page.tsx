@@ -1374,36 +1374,42 @@ export default function AdminPage() {
             ]);
           }
 
+          const nowIso = new Date().toISOString();
+          const finalProduct: any = {
+            ...savedProduct,
+            updated_at: nowIso,
+            updatedAt: nowIso,
+          };
+          if (!finalProduct.releaseDate) {
+            delete finalProduct.releaseDate;
+          }
+
           let updatedList: any[];
           if (isNew) {
-            updatedList = [savedProduct, ...productsList];
-            triggerToast(`신규 상품 '${savedProduct.title}'이 성공적으로 등록되었습니다.`);
+            updatedList = [finalProduct, ...productsList];
+            triggerToast(`신규 상품 '${finalProduct.title}'이 성공적으로 등록되었습니다.`);
             // Automatically clear search query and reset category filter so new product is immediately visible
             setSearchQuery("");
             setSelectedCategoryFilter("all");
             setProductSortOrder("custom");
           } else {
             updatedList = productsList.map((p) => {
-              if (String(p.id) === String(savedProduct.id)) {
-                const merged = { ...p, ...savedProduct };
-                if (!savedProduct.releaseDate) {
-                  delete merged.releaseDate;
-                }
-                return merged;
+              if (String(p.id) === String(finalProduct.id)) {
+                return finalProduct;
               }
               return p;
             });
-            triggerToast(`'${savedProduct.title}' 상품 정보가 성공적으로 수정되었습니다.`);
+            triggerToast(`'${finalProduct.title}' 상품 정보가 성공적으로 수정되었습니다.`);
           }
           setProductsList(updatedList);
           setIsAddModalOpen(false);
           setEditingProduct(null);
 
           // Synchronize secret_timesale_product_ids & secret_timesale_item_settings in localStorage
-          if (typeof window !== "undefined" && savedProduct.id) {
+          if (typeof window !== "undefined" && finalProduct.id) {
             try {
-              const pId = String(savedProduct.id);
-              if (savedProduct.isTimeSale) {
+              const pId = String(finalProduct.id);
+              if (finalProduct.isTimeSale) {
                 if (!adminTimeSaleProductIds.includes(pId)) {
                   const updatedIds = [...adminTimeSaleProductIds, pId];
                   setAdminTimeSaleProductIds(updatedIds);
@@ -1421,18 +1427,18 @@ export default function AdminPage() {
               if (itemSettingsRaw) {
                 const itemSettings = JSON.parse(itemSettingsRaw);
                 if (itemSettings[pId]) {
-                  itemSettings[pId].discountRate = savedProduct.timeSaleDiscountRate;
+                  itemSettings[pId].discountRate = finalProduct.timeSaleDiscountRate;
                   localStorage.setItem("secret_timesale_item_settings", JSON.stringify(itemSettings));
                 }
               }
             } catch (e) {}
           }
 
-          // 1. Direct single item persistence to server (fast upsert & server-side un-blacklist)
-          await saveSingleProduct(savedProduct, isNew);
+          // 1. Immediately persist full catalog to localStorage (skip server batch sync to prevent race condition)
+          saveProductsToStorage(updatedList, true);
 
-          // 2. Persist updated ordering & full catalog to localStorage and server storage
-          saveProductsToStorage(updatedList);
+          // 2. Direct single item persistence to server (authoritative atomic write & disk sync)
+          await saveSingleProduct(finalProduct, isNew);
         }}
         triggerToast={triggerToast}
       />

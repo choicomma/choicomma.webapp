@@ -70,6 +70,73 @@ export function filterOutDeletedProducts(list: any[], deletedSet: Set<string>): 
   });
 }
 
+// Helper to sanitize products specifically for localStorage so browser 5MB quota is never breached
+export function sanitizeProductsForLocalStorage(list: any[]): any[] {
+  if (!Array.isArray(list)) return [];
+  return list.map((p: any) => {
+    if (!p) return p;
+    let detail = p.detailDescription || "";
+    if (typeof detail === "string" && detail.includes("data:image")) {
+      detail = detail.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "/product_1.webp");
+    }
+    let html = p.descriptionHtml || "";
+    if (typeof html === "string" && html.includes("data:image")) {
+      html = html.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "/product_1.webp");
+    }
+
+    let featuredImage = p.featuredImage;
+    if (featuredImage?.url && typeof featuredImage.url === "string" && featuredImage.url.startsWith("data:image")) {
+      featuredImage = { ...featuredImage, url: "/product_1.webp" };
+    }
+
+    let images = p.images;
+    if (Array.isArray(images)) {
+      images = images.map((img: any) => {
+        const u = typeof img === "string" ? img : img?.url;
+        if (typeof u === "string" && u.startsWith("data:image")) {
+          return typeof img === "string" ? "/product_1.webp" : { ...img, url: "/product_1.webp" };
+        }
+        return img;
+      });
+    }
+
+    let fabricImg = p.fabricImage;
+    if (typeof fabricImg === "string" && fabricImg.startsWith("data:image")) {
+      fabricImg = "";
+    }
+    let sizeGuideImg = p.sizeGuideImage;
+    if (typeof sizeGuideImg === "string" && sizeGuideImg.startsWith("data:image")) {
+      sizeGuideImg = "";
+    }
+
+    let colorImages = p.colorImages;
+    if (colorImages && typeof colorImages === "object") {
+      let hasBase64 = false;
+      const sanitizedColorImages: Record<string, string> = {};
+      Object.entries(colorImages).forEach(([k, v]) => {
+        if (typeof v === "string" && v.startsWith("data:image")) {
+          hasBase64 = true;
+          sanitizedColorImages[k] = "/product_1.webp";
+        } else if (typeof v === "string") {
+          sanitizedColorImages[k] = v;
+        }
+      });
+      if (hasBase64) colorImages = sanitizedColorImages;
+    }
+
+    return {
+      ...p,
+      detailDescription: detail,
+      descriptionHtml: html,
+      featuredImage,
+      images,
+      fabricImage: fabricImg,
+      sizeGuideImage: sizeGuideImg,
+      colorImages,
+    };
+  });
+}
+
 export function useProducts({
   triggerToast,
   adminTimeSaleProductIds = [],
@@ -201,23 +268,56 @@ export function useProducts({
           const data = await res.json();
           if (Array.isArray(data) && isMounted) {
             const sanitized = filterOutDeletedProducts(data, deletedSet);
-            // If local changes exist in this browser, preserve them; otherwise sync server catalog
-            // Also if server catalog has items missing from local storage (e.g. quota issue or saved on server), sync server
+            // Reconcile between localStorage and authoritative server catalog based on updated_at timestamp
             if (hasLocalData && localParsedList.length > 0) {
-              const localIdSet = new Set(localParsedList.map((p: any) => String(p?.id || "")));
-              const missingLocally = sanitized.filter((sp: any) => sp && !localIdSet.has(String(sp.id || "")));
-              if (missingLocally.length > 0) {
-                const merged = [...localParsedList, ...missingLocally];
+              const localMap = new Map(localParsedList.map((p: any) => [String(p?.id || ""), p]));
+              let hasAnyUpdate = false;
+
+              // Compare each product's updated_at: preserve custom local order, update items if server is newer
+              const serverMap = new Map(sanitized.map((sp: any) => [String(sp?.id || ""), sp]));
+              const merged = localParsedList.map((lp: any) => {
+                const lpId = String(lp?.id || "");
+                const sp = serverMap.get(lpId);
+                if (!sp) return lp;
+                const serverTime = (sp.updated_at || sp.updatedAt) ? new Date(sp.updated_at || sp.updatedAt).getTime() : 0;
+                const localTime = (lp.updated_at || lp.updatedAt) ? new Date(lp.updated_at || lp.updatedAt).getTime() : 0;
+                if (serverTime > localTime) {
+                  hasAnyUpdate = true;
+                  return sp;
+                }
+                return lp;
+              });
+
+              // Also preserve any new items that exist on server but not in local storage
+              sanitized.forEach((sp: any) => {
+                const spId = String(sp?.id || "");
+                if (spId && !localMap.has(spId)) {
+                  merged.push(sp);
+                  hasAnyUpdate = true;
+                }
+              });
+
+              if (hasAnyUpdate) {
                 setProductsList(merged);
                 try {
                   localStorage.setItem("admin_products", JSON.stringify(merged));
-                } catch (e) {}
+                } catch (e) {
+                  try {
+                    const light = sanitizeProductsForLocalStorage(merged);
+                    localStorage.setItem("admin_products", JSON.stringify(light));
+                  } catch {}
+                }
               }
             } else {
               setProductsList(sanitized);
               try {
                 localStorage.setItem("admin_products", JSON.stringify(sanitized));
-              } catch (e) {}
+              } catch (e) {
+                try {
+                  const light = sanitizeProductsForLocalStorage(sanitized);
+                  localStorage.setItem("admin_products", JSON.stringify(light));
+                } catch {}
+              }
             }
             isProductsLoadedRef.current = true;
             return;
@@ -240,7 +340,7 @@ export function useProducts({
     };
   }, []);
 
-  // Fast single product save helper (High performance save to Server file)
+  // Fast single product save helper (High performance save to Server file with instant local sync)
   const saveSingleProduct = useCallback(async (product: any, isNew: boolean = false): Promise<boolean> => {
     if (typeof window === "undefined") return false;
 
@@ -257,6 +357,9 @@ export function useProducts({
         return false;
       }
 
+      const resData = await res.json().catch(() => null);
+      const savedItem = resData?.product || product;
+
       // If this product was previously deleted, un-blacklist it
       removeDeletedProductIdsFromStorage([
         String(product.id || ""),
@@ -264,7 +367,29 @@ export function useProducts({
         String(product.handle || ""),
       ]);
 
+      // Synchronously sync local products list state & localStorage with authoritative product
+      setProductsList((prev) => {
+        const pIdStr = String(savedItem.id);
+        const exists = prev.some((p) => String(p.id) === pIdStr);
+        let nextList: any[];
+        if (exists) {
+          nextList = prev.map((p) => (String(p.id) === pIdStr ? savedItem : p));
+        } else {
+          nextList = [savedItem, ...prev];
+        }
+        try {
+          localStorage.setItem("admin_products", JSON.stringify(nextList));
+        } catch (e) {
+          try {
+            const light = sanitizeProductsForLocalStorage(nextList);
+            localStorage.setItem("admin_products", JSON.stringify(light));
+          } catch {}
+        }
+        return nextList;
+      });
+
       window.dispatchEvent(new CustomEvent("admin_products_updated"));
+      window.dispatchEvent(new CustomEvent("storage"));
       return true;
     } catch (err) {
       console.error("Failed to persist single product:", err);
@@ -308,7 +433,7 @@ export function useProducts({
   }, []);
 
   // Helper: Safely save to Central Server file (/api/products) and localStorage with concurrency protection
-  const saveProductsToStorage = useCallback((list: any[]) => {
+  const saveProductsToStorage = useCallback((list: any[], skipServerSync: boolean = false) => {
     if (typeof window === "undefined") return;
 
     // 1. Immediately persist to localStorage for instant reload resilience
@@ -319,24 +444,30 @@ export function useProducts({
     } catch (e) {
       console.warn("Failed to save products to localStorage, attempting lightweight fallback:", e);
       try {
-        const lightList = list.map((p: any) => {
-          if (!p) return p;
-          let detail = p.detailDescription || "";
-          if (typeof detail === "string" && detail.includes("data:image")) {
-            detail = detail.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "/product_1.webp");
-          }
-          return {
-            ...p,
-            detailDescription: detail,
-            descriptionHtml: detail,
-          };
-        });
+        const lightList = sanitizeProductsForLocalStorage(list);
         localStorage.setItem("admin_products", JSON.stringify(lightList));
         window.dispatchEvent(new CustomEvent("admin_products_updated"));
         window.dispatchEvent(new CustomEvent("storage"));
       } catch (fallbackErr) {
-        console.warn("Lightweight fallback also failed:", fallbackErr);
+        console.warn("Sanitized fallback also exceeded quota, stripping long text:", fallbackErr);
+        try {
+          const minimalList = sanitizeProductsForLocalStorage(list).map((p: any) => ({
+            ...p,
+            detailDescription: "",
+            descriptionHtml: "",
+            description: p.title || "",
+          }));
+          localStorage.setItem("admin_products", JSON.stringify(minimalList));
+          window.dispatchEvent(new CustomEvent("admin_products_updated"));
+          window.dispatchEvent(new CustomEvent("storage"));
+        } catch (minErr) {
+          console.error("Critical: localStorage setItem failed completely:", minErr);
+        }
       }
+    }
+
+    if (skipServerSync) {
+      return;
     }
 
     // 2. Concurrency queue to server API (/api/products)
@@ -639,7 +770,7 @@ export function useProducts({
     });
 
     setProductsList(updated);
-    saveProductsToStorage(updated);
+    saveProductsToStorage(updated, true);
     if (updatedTarget) {
       saveSingleProduct(updatedTarget, false);
     }
@@ -1078,7 +1209,7 @@ export function useProducts({
   }, [setProductSortOrder, triggerToast]);
 
   const handleQuickUpdateReleaseSchedule = useCallback(
-    (id: string, availableForSale: boolean, releaseDate?: string) => {
+    async (id: string, availableForSale: boolean, releaseDate?: string) => {
       const targetProduct = productsList.find((p) => String(p.id) === String(id));
       if (!targetProduct) return;
 
@@ -1104,11 +1235,25 @@ export function useProducts({
         return p;
       });
 
+      // 1. Immediately update React state
       setProductsList(updatedList);
-      saveProductsToStorage(updatedList);
-      if (updatedTarget) {
-        saveSingleProduct(updatedTarget, false);
+
+      // 2. Synchronously persist to localStorage for instant reload resilience
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("admin_products", JSON.stringify(updatedList));
+          window.dispatchEvent(new CustomEvent("admin_products_updated"));
+          window.dispatchEvent(new CustomEvent("storage"));
+        } catch (e) {}
       }
+
+      // 3. Atomically persist single item to server first
+      if (updatedTarget) {
+        await saveSingleProduct(updatedTarget, false);
+      }
+
+      // 4. Then trigger safe batch queue sync
+      saveProductsToStorage(updatedList, true);
 
       if (releaseDate && new Date(releaseDate).getTime() > Date.now()) {
         triggerToast(
@@ -1200,7 +1345,7 @@ export function useProducts({
       }
 
       setProductsList(updatedList);
-      saveProductsToStorage(updatedList);
+      saveProductsToStorage(updatedList, true);
       if (updatedTarget) {
         saveSingleProduct(updatedTarget, false);
       }
@@ -1291,7 +1436,7 @@ export function useProducts({
       }
 
       setProductsList(updatedList);
-      saveProductsToStorage(updatedList);
+      saveProductsToStorage(updatedList, true);
       if (updatedTarget) {
         saveSingleProduct(updatedTarget, false);
       }
