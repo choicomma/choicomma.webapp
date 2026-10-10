@@ -265,17 +265,43 @@ export function useProducts({
       try {
         const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok) {
+          const delHeader = res.headers.get("x-deleted-product-ids");
+          if (delHeader) {
+            try {
+              const serverDelIds = JSON.parse(delHeader);
+              if (Array.isArray(serverDelIds) && serverDelIds.length > 0) {
+                addDeletedProductIdsToStorage(serverDelIds);
+                serverDelIds.forEach((id: string) => deletedSet.add(String(id)));
+              }
+            } catch {}
+          }
+
           const data = await res.json();
           if (Array.isArray(data) && isMounted) {
             const sanitized = filterOutDeletedProducts(data, deletedSet);
             // Reconcile between localStorage and authoritative server catalog based on updated_at timestamp
             if (hasLocalData && localParsedList.length > 0) {
-              const localMap = new Map(localParsedList.map((p: any) => [String(p?.id || ""), p]));
-              let hasAnyUpdate = false;
+              const serverIdSet = new Set(sanitized.map((sp: any) => String(sp?.id || "")));
+              const serverCodeSet = new Set(sanitized.map((sp: any) => sp?.productCode ? String(sp.productCode) : ""));
+              serverCodeSet.delete("");
+
+              // Prune any items from localParsedList that were deleted on the server or in deletedSet
+              const prunedLocalList = localParsedList.filter((lp: any) => {
+                if (!lp) return false;
+                const lpId = String(lp?.id || "");
+                const lpCode = lp?.productCode ? String(lp.productCode) : "";
+                const isDeleted = deletedSet.has(lpId) || (lpCode && deletedSet.has(lpCode));
+                if (isDeleted) return false;
+                return serverIdSet.has(lpId) || (lpCode && serverCodeSet.has(lpCode));
+              });
+
+              let hasAnyUpdate = prunedLocalList.length !== localParsedList.length;
+
+              const localMap = new Map(prunedLocalList.map((p: any) => [String(p?.id || ""), p]));
+              const serverMap = new Map(sanitized.map((sp: any) => [String(sp?.id || ""), sp]));
 
               // Compare each product's updated_at: preserve custom local order, update items if server is newer
-              const serverMap = new Map(sanitized.map((sp: any) => [String(sp?.id || ""), sp]));
-              const merged = localParsedList.map((lp: any) => {
+              const merged = prunedLocalList.map((lp: any) => {
                 const lpId = String(lp?.id || "");
                 const sp = serverMap.get(lpId);
                 if (!sp) return lp;
@@ -297,8 +323,8 @@ export function useProducts({
                 }
               });
 
+              setProductsList(merged);
               if (hasAnyUpdate) {
-                setProductsList(merged);
                 try {
                   localStorage.setItem("admin_products", JSON.stringify(merged));
                 } catch (e) {
@@ -799,7 +825,7 @@ export function useProducts({
         (!targetProduct?.productCode || String(p.productCode) !== String(targetProduct.productCode))
     );
     setProductsList(updatedList);
-    saveProductsToStorage(updatedList);
+    saveProductsToStorage(updatedList, true);
 
     // 3. Explicitly call Server DELETE endpoint
     try {
@@ -964,7 +990,7 @@ export function useProducts({
     // 2. Optimistically remove from state & localStorage
     const updatedList = productsList.filter((p) => !allIdsToBlacklist.has(String(p.id)));
     setProductsList(updatedList);
-    saveProductsToStorage(updatedList);
+    saveProductsToStorage(updatedList, true);
 
     // 3. Explicitly call Server DELETE endpoint
     try {
@@ -1040,7 +1066,7 @@ export function useProducts({
     addDeletedProductIdsToStorage(allIds);
 
     setProductsList([]);
-    saveProductsToStorage([]);
+    saveProductsToStorage([], true);
     setAdminTimeSaleProductIds?.([]);
     if (typeof window !== "undefined") {
       try {

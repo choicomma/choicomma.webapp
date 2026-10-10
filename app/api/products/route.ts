@@ -251,11 +251,14 @@ function revalidateAllProductPaths(handle?: string) {
 }
 
 function makeResponse(products: any[], req?: NextRequest) {
+  const deletedIds = readDeletedProductsList();
   return NextResponse.json(products, {
     headers: {
       "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
       Pragma: "no-cache",
       Expires: "0",
+      "Access-Control-Expose-Headers": "X-Deleted-Product-Ids",
+      "X-Deleted-Product-Ids": JSON.stringify(deletedIds),
     },
   });
 }
@@ -263,6 +266,18 @@ function makeResponse(products: any[], req?: NextRequest) {
 // GET: Return authoritative products catalog directly from local JSON file
 export async function GET(req: NextRequest) {
   try {
+    const action = req?.nextUrl.searchParams.get("action");
+    if (action === "deleted") {
+      const deletedIds = readDeletedProductsList();
+      return NextResponse.json(deletedIds, {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
+    }
+
     const isFresh = req?.nextUrl.searchParams.get("fresh") === "1";
     if (isFresh || globalForProducts.serverProductsCache === undefined) {
       const localList = readLocalProductsBackup();

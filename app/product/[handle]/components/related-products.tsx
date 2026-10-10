@@ -39,18 +39,22 @@ export function RelatedProducts() {
 
         const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok) {
+          const delHeader = res.headers.get("x-deleted-product-ids");
+          if (delHeader) {
+            try {
+              const serverDelIds = JSON.parse(delHeader);
+              if (Array.isArray(serverDelIds) && serverDelIds.length > 0) {
+                const curDeletedRaw = localStorage.getItem("admin_deleted_product_ids");
+                const curSet = curDeletedRaw ? new Set(JSON.parse(curDeletedRaw).map(String)) : new Set<string>();
+                serverDelIds.forEach((id: string) => curSet.add(String(id)));
+                localStorage.setItem("admin_deleted_product_ids", JSON.stringify(Array.from(curSet)));
+              }
+            } catch {}
+          }
+
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            if (localData && localData.length > 0) {
-              const localMap = new Map(localData.map((p: any) => [String(p.id), p]));
-              const merged = localData.slice();
-              data.forEach((sp: any) => {
-                if (sp && !localMap.has(String(sp.id))) merged.push(sp);
-              });
-              allProds = merged;
-            } else {
-              allProds = data;
-            }
+            allProds = data;
           }
         }
 

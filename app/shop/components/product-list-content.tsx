@@ -65,32 +65,39 @@ export function ProductListContent({
       try {
         const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok && isSubscribed) {
+          // 서버에서 영구 삭제된 상품 ID 블랙리스트를 수신하여 로컬에 동기화
+          const delHeader = res.headers.get("x-deleted-product-ids");
+          if (delHeader) {
+            try {
+              const serverDelIds = JSON.parse(delHeader);
+              if (Array.isArray(serverDelIds) && serverDelIds.length > 0) {
+                const curDeletedRaw = localStorage.getItem("admin_deleted_product_ids");
+                const curSet = curDeletedRaw ? new Set(JSON.parse(curDeletedRaw).map(String)) : new Set<string>();
+                serverDelIds.forEach((id: string) => curSet.add(String(id)));
+                localStorage.setItem("admin_deleted_product_ids", JSON.stringify(Array.from(curSet)));
+              }
+            } catch {}
+          }
+
           const serverData: any[] = await res.json();
           if (Array.isArray(serverData)) {
+            // 서버에 없는 상품은 삭제된 상품이므로 로컬 캐시(admin_products)에서도 깨끗하게 동기화(제거)
             if (localData && localData.length > 0) {
-              const localMap = new Map(localData.map((p: any) => [String(p.id), p]));
-              const merged = localData.slice();
-              serverData.forEach((sp: any) => {
-                if (sp && !localMap.has(String(sp.id))) {
-                  merged.push(sp);
-                }
-              });
-              activeSourceProducts = merged.filter(
-                (p) =>
-                  p.categoryId !== "main_banner" &&
-                  !String(p.id).startsWith("hero-slide-") &&
-                  p.isMainFeatured !== false
-              );
-            } else if (serverData.length === 0) {
-              activeSourceProducts = [];
-            } else {
-              activeSourceProducts = serverData.filter(
-                (p) =>
-                  p.categoryId !== "main_banner" &&
-                  !String(p.id).startsWith("hero-slide-") &&
-                  p.isMainFeatured !== false
-              );
+              const serverIdSet = new Set(serverData.map((sp: any) => String(sp.id)));
+              const pruned = localData.filter((p: any) => serverIdSet.has(String(p?.id)));
+              if (typeof window !== "undefined" && pruned.length !== localData.length) {
+                try {
+                  localStorage.setItem("admin_products", JSON.stringify(pruned));
+                } catch {}
+              }
             }
+
+            activeSourceProducts = serverData.filter(
+              (p) =>
+                p.categoryId !== "main_banner" &&
+                !String(p.id).startsWith("hero-slide-") &&
+                p.isMainFeatured !== false
+            );
           }
         }
       } catch (e) {}

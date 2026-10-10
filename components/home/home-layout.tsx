@@ -323,25 +323,51 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       // 1. 브라우저 localStorage 최신 데이터 즉각 동기화 (깜빡임 및 롤백 방지)
       applyProductsToList(currentList);
 
-      // 2. 서버 API 최신 권한 데이터 비동기 페치 (로컬 상품의 미진열 상태는 100% 우선 보존)
+      // 2. 서버 API 최신 권한 데이터 비동기 페치 (삭제 동기화 및 최신 상태 반영)
       try {
         const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok && isSubscribed) {
-          const serverData = await res.json();
-          if (Array.isArray(serverData) && serverData.length > 0) {
-            if (localList && localList.length > 0) {
-              const localMap = new Map(localList.map((p: any) => [String(p.id), p]));
-              // 서버에서 새로 추가된 상품만 병합, 기존 로컬 상품의 상태(isMainFeatured)는 100% 로컬 기준 유지
-              const merged = localList.slice();
-              serverData.forEach((sp: any) => {
-                if (sp && !localMap.has(String(sp.id))) {
-                  merged.push(sp);
+          // 서버에서 영구 삭제된 상품 ID 블랙리스트를 수신하여 로컬에 즉시 동기화
+          const delHeader = res.headers.get("x-deleted-product-ids");
+          if (delHeader) {
+            try {
+              const serverDelIds = JSON.parse(delHeader);
+              if (Array.isArray(serverDelIds) && serverDelIds.length > 0) {
+                serverDelIds.forEach((id: string) => deletedSet.add(String(id)));
+                if (typeof window !== "undefined") {
+                  try {
+                    localStorage.setItem("admin_deleted_product_ids", JSON.stringify(Array.from(deletedSet)));
+                  } catch {}
                 }
+              }
+            } catch {}
+          }
+
+          const serverData = await res.json();
+          if (Array.isArray(serverData)) {
+            // 서버에 없는 상품은 삭제된 상품이므로 로컬 캐시(admin_products)에서도 깨끗하게 동기화(제거)
+            if (localList && localList.length > 0) {
+              const serverIdSet = new Set(serverData.map((sp: any) => String(sp.id)));
+              const serverCodeSet = new Set(serverData.map((sp: any) => sp.productCode ? String(sp.productCode) : ""));
+              serverCodeSet.delete("");
+
+              const pruned = localList.filter((p: any) => {
+                if (!p) return false;
+                const idMatch = serverIdSet.has(String(p.id));
+                const codeMatch = p.productCode && serverCodeSet.has(String(p.productCode));
+                const isDeleted = deletedSet.has(String(p.id)) || (p.productCode && deletedSet.has(String(p.productCode)));
+                return (idMatch || codeMatch) && !isDeleted;
               });
-              applyProductsToList(merged);
-            } else {
-              applyProductsToList(serverData);
+
+              if (typeof window !== "undefined" && pruned.length !== localList.length) {
+                try {
+                  localStorage.setItem("admin_products", JSON.stringify(pruned));
+                } catch {}
+              }
             }
+
+            // 화면은 서버의 최신 권한 데이터(삭제된 상품이 이미 제외된 목록)로 즉시 갱신
+            applyProductsToList(serverData);
           }
         }
       } catch (e) {}
