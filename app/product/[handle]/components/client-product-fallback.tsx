@@ -30,6 +30,17 @@ export function ClientProductFallback({ handle }: { handle: string }) {
     // Matcher helper
     const matchesProduct = (p: any) => {
       if (!p) return false;
+      if (typeof window !== "undefined") {
+        try {
+          const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
+          if (deletedRaw) {
+            const delSet = new Set(JSON.parse(deletedRaw).map(String));
+            if (delSet.has(String(p.id)) || delSet.has(String(p.productCode)) || delSet.has(String(p.handle))) {
+              return false;
+            }
+          }
+        } catch {}
+      }
       const pHandleDecoded = p.handle ? decodeURIComponent(p.handle) : "";
       const pTitleSlug = p.title ? p.title.toLowerCase().replace(/\s+/g, "-") : "";
       return (

@@ -125,13 +125,25 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     const updateProductsFromLocal = () => {
       if (typeof window === "undefined") return;
       try {
+        let deletedSet = new Set<string>();
+        try {
+          const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
+          if (deletedRaw) deletedSet = new Set(JSON.parse(deletedRaw).map(String));
+        } catch {}
+
         const raw = localStorage.getItem("admin_products");
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            let grid = parsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));
-            if (grid.length === 0) grid = parsed.filter((p: any) => p.isMainFeatured === true);
-            if (grid.length === 0) grid = parsed.filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-"));
+            const filteredParsed = parsed.filter(
+              (p: any) =>
+                !deletedSet.has(String(p.id)) &&
+                !deletedSet.has(String(p.productCode)) &&
+                !deletedSet.has(String(p.handle))
+            );
+            let grid = filteredParsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));
+            if (grid.length === 0) grid = filteredParsed.filter((p: any) => p.isMainFeatured === true);
+            if (grid.length === 0) grid = filteredParsed.filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-"));
             if (grid.length > 0) setAllProducts(grid);
           }
         }
@@ -278,6 +290,22 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
           }
         }
       } catch (e) {}
+
+      // Filter out any explicitly deleted products
+      if (typeof window !== "undefined") {
+        try {
+          const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
+          if (deletedRaw) {
+            const delSet = new Set(JSON.parse(deletedRaw).map(String));
+            parsed = parsed.filter(
+              (p: any) =>
+                !delSet.has(String(p.id)) &&
+                !delSet.has(String(p.productCode)) &&
+                !delSet.has(String(p.handle))
+            );
+          }
+        } catch (e) {}
+      }
 
       // 1. Grid Products: Display bottom-featured products (isBottomFeatured) or isMainFeatured products, fallback to full product list if none explicitly selected
       let gridProducts = parsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));

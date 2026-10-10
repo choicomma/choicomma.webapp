@@ -29,6 +29,22 @@ export function RelatedProducts() {
           if (Array.isArray(data) && data.length > 0) allProds = data;
         }
 
+        // Filter out any explicitly deleted products
+        if (typeof window !== "undefined") {
+          try {
+            const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
+            if (deletedRaw) {
+              const delSet = new Set(JSON.parse(deletedRaw).map(String));
+              allProds = allProds.filter(
+                (p: any) =>
+                  !delSet.has(String(p.id)) &&
+                  !delSet.has(String(p.productCode)) &&
+                  !delSet.has(String(p.handle))
+              );
+            }
+          } catch {}
+        }
+
         // STRICT FILTER: Only products where isMainFeatured === true (메인 화면 전시 체크된 상품)
         const featured = allProds.filter((p: any) => p.isMainFeatured === true);
 

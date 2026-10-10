@@ -20,6 +20,57 @@ interface UseProductsOptions {
   ) => void;
 }
 
+const INITIAL_CHOICOMMA_PRODUCTS: any[] = (productsCache as any[]) || [];
+
+export function getDeletedProductIdsFromStorage(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem("admin_deleted_product_ids");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return new Set(parsed.map(String));
+      }
+    }
+  } catch {}
+  return new Set();
+}
+
+export function addDeletedProductIdsToStorage(ids: string[]) {
+  if (typeof window === "undefined" || !ids || ids.length === 0) return;
+  try {
+    const currentSet = getDeletedProductIdsFromStorage();
+    ids.forEach((id) => {
+      if (id) currentSet.add(String(id));
+    });
+    localStorage.setItem("admin_deleted_product_ids", JSON.stringify(Array.from(currentSet)));
+  } catch {}
+}
+
+export function removeDeletedProductIdsFromStorage(ids: string[]) {
+  if (typeof window === "undefined" || !ids || ids.length === 0) return;
+  try {
+    const currentSet = getDeletedProductIdsFromStorage();
+    ids.forEach((id) => {
+      if (id) currentSet.delete(String(id));
+    });
+    localStorage.setItem("admin_deleted_product_ids", JSON.stringify(Array.from(currentSet)));
+  } catch {}
+}
+
+export function filterOutDeletedProducts(list: any[], deletedSet: Set<string>): any[] {
+  if (!Array.isArray(list)) return [];
+  if (deletedSet.size === 0) return list;
+  return list.filter((p) => {
+    if (!p) return false;
+    const id = String(p.id || "");
+    const code = String(p.productCode || "");
+    const handle = String(p.handle || "");
+    const no = p.productNo !== undefined && p.productNo !== null ? String(p.productNo) : "";
+    return !deletedSet.has(id) && !deletedSet.has(code) && !deletedSet.has(handle) && (!no || !deletedSet.has(no));
+  });
+}
+
 export function useProducts({
   triggerToast,
   adminTimeSaleProductIds = [],
@@ -29,19 +80,19 @@ export function useProducts({
   adminTimeSaleDiscount = "35",
   handleUpdateProductTimeSetting,
 }: UseProductsOptions) {
-  const INITIAL_CHOICOMMA_PRODUCTS: any[] = productsCache as any[];
-
   const isProductsLoadedRef = useRef(false);
   const [productsList, setProductsList] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       try {
+        const deletedSet = getDeletedProductIdsFromStorage();
         const saved = localStorage.getItem("admin_products");
-        if (saved) {
+        if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
+          if (Array.isArray(parsed)) {
+            return filterOutDeletedProducts(parsed, deletedSet);
           }
         }
+        return filterOutDeletedProducts(INITIAL_CHOICOMMA_PRODUCTS, deletedSet);
       } catch (e) {}
     }
     return INITIAL_CHOICOMMA_PRODUCTS;
@@ -124,15 +175,18 @@ export function useProducts({
     let isMounted = true;
     const fetchServerProducts = async () => {
       let hasLocalData = false;
+      const deletedSet = getDeletedProductIdsFromStorage();
+
       if (typeof window !== "undefined") {
         try {
           const saved = localStorage.getItem("admin_products");
-          if (saved) {
+          if (saved !== null) {
             const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed) && parsed.length > 0) {
+            if (Array.isArray(parsed)) {
               hasLocalData = true;
+              const filtered = filterOutDeletedProducts(parsed, deletedSet);
               if (isMounted) {
-                setProductsList(parsed);
+                setProductsList(filtered);
                 isProductsLoadedRef.current = true;
               }
             }
@@ -145,11 +199,12 @@ export function useProducts({
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && isMounted) {
+            const sanitized = filterOutDeletedProducts(data, deletedSet);
             // If local changes exist in this browser, preserve them; otherwise sync server catalog
-            if (!hasLocalData && data.length > 0) {
-              setProductsList(data);
+            if (!hasLocalData) {
+              setProductsList(sanitized);
               try {
-                localStorage.setItem("admin_products", JSON.stringify(data));
+                localStorage.setItem("admin_products", JSON.stringify(sanitized));
               } catch (e) {}
             }
             isProductsLoadedRef.current = true;
@@ -161,7 +216,8 @@ export function useProducts({
       }
 
       if (isMounted && !hasLocalData) {
-        setProductsList((prev) => (prev.length > 0 ? prev : INITIAL_CHOICOMMA_PRODUCTS));
+        const fallback = filterOutDeletedProducts(INITIAL_CHOICOMMA_PRODUCTS, deletedSet);
+        setProductsList((prev) => (prev.length > 0 ? prev : fallback));
         isProductsLoadedRef.current = true;
       }
     };
@@ -170,7 +226,7 @@ export function useProducts({
     return () => {
       isMounted = false;
     };
-  }, [INITIAL_CHOICOMMA_PRODUCTS]);
+  }, []);
 
   // Fast single product save helper (High performance save to Server file)
   const saveSingleProduct = useCallback(async (product: any, isNew: boolean = false): Promise<boolean> => {
@@ -188,6 +244,13 @@ export function useProducts({
         triggerToast("⚠️ 상품 저장에 실패했습니다. 다시 시도해주세요.");
         return false;
       }
+
+      // If this product was previously deleted, un-blacklist it
+      removeDeletedProductIdsFromStorage([
+        String(product.id || ""),
+        String(product.productCode || ""),
+        String(product.handle || ""),
+      ]);
 
       window.dispatchEvent(new CustomEvent("admin_products_updated"));
       return true;
@@ -545,17 +608,42 @@ export function useProducts({
     saveProductsToStorage(updated);
   }, [productsList, saveProductsToStorage, triggerToast]);
 
-  const handleDeleteProduct = useCallback((id: string, title: string) => {
+  const handleDeleteProduct = useCallback(async (id: string, title: string) => {
     const isConfirmed = window.confirm(
       `정말로 '${title}' 상품을 완전히 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.`
     );
     if (!isConfirmed) return;
 
-    const updatedList = productsList.filter((p) => String(p.id) !== String(id));
+    const targetProduct = productsList.find((p) => String(p.id) === String(id));
+    const idsToBlacklist: string[] = [String(id)];
+    if (targetProduct) {
+      if (targetProduct.productCode) idsToBlacklist.push(String(targetProduct.productCode));
+      if (targetProduct.handle) idsToBlacklist.push(String(targetProduct.handle));
+      if (targetProduct.productNo !== undefined) idsToBlacklist.push(String(targetProduct.productNo));
+    }
+
+    // 1. Immediately record in persistent deleted IDs blacklist in localStorage
+    addDeletedProductIdsToStorage(idsToBlacklist);
+
+    // 2. Optimistically remove from state & localStorage
+    const updatedList = productsList.filter(
+      (p) =>
+        String(p.id) !== String(id) &&
+        (!targetProduct?.productCode || String(p.productCode) !== String(targetProduct.productCode))
+    );
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);
 
-    // Sync adminTimeSaleProductIds if the deleted product was in timesale
+    // 3. Explicitly call Server DELETE endpoint
+    try {
+      await fetch(`/api/products?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    } catch (delErr) {
+      console.warn("Failed to call /api/products DELETE endpoint:", delErr);
+    }
+
+    // 4. Sync adminTimeSaleProductIds if the deleted product was in timesale
     if (adminTimeSaleProductIds.includes(String(id))) {
       const updatedTimeSaleIds = adminTimeSaleProductIds.filter((pId) => pId !== String(id));
       setAdminTimeSaleProductIds?.(updatedTimeSaleIds);
@@ -566,6 +654,28 @@ export function useProducts({
       }
     }
 
+    // 5. Clean up from set bundle items if applicable
+    if (typeof window !== "undefined") {
+      try {
+        const setSalesRaw = localStorage.getItem("admin_set_sales");
+        if (setSalesRaw) {
+          const setSales = JSON.parse(setSalesRaw);
+          if (Array.isArray(setSales)) {
+            const cleaned = setSales.map((s: any) => ({
+              ...s,
+              items: Array.isArray(s.items)
+                ? s.items.filter((item: any) => String(item.id || item.productId) !== String(id))
+                : s.items,
+            }));
+            localStorage.setItem("admin_set_sales", JSON.stringify(cleaned));
+            window.dispatchEvent(new CustomEvent("admin_set_sales_updated"));
+          }
+        }
+      } catch {}
+    }
+
+    window.dispatchEvent(new CustomEvent("admin_products_updated"));
+    window.dispatchEvent(new CustomEvent("products_updated"));
     triggerToast(`'${title}' 상품이 성공적으로 삭제되었습니다.`);
   }, [productsList, saveProductsToStorage, triggerToast, adminTimeSaleProductIds, setAdminTimeSaleProductIds]);
 
@@ -663,7 +773,7 @@ export function useProducts({
     );
   }, [productsList, saveProductsToStorage, triggerToast]);
 
-  const handleBulkDeleteProducts = useCallback((targetIds: string[]) => {
+  const handleBulkDeleteProducts = useCallback(async (targetIds: string[]) => {
     if (!targetIds || targetIds.length === 0) return;
     const isConfirmed = window.confirm(
       `정말로 선택한 ${targetIds.length}개의 상품을 일괄 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.`
@@ -671,12 +781,37 @@ export function useProducts({
     if (!isConfirmed) return;
 
     const idSet = new Set(targetIds.map(String));
-    const updatedList = productsList.filter((p) => !idSet.has(String(p.id)));
+    const allIdsToBlacklist = new Set<string>(targetIds.map(String));
+    productsList.forEach((p) => {
+      if (idSet.has(String(p.id)) || (p.productCode && idSet.has(String(p.productCode)))) {
+        if (p.id) allIdsToBlacklist.add(String(p.id));
+        if (p.productCode) allIdsToBlacklist.add(String(p.productCode));
+        if (p.handle) allIdsToBlacklist.add(String(p.handle));
+        if (p.productNo !== undefined) allIdsToBlacklist.add(String(p.productNo));
+      }
+    });
+
+    // 1. Immediately record in persistent deleted IDs blacklist in localStorage
+    addDeletedProductIdsToStorage(Array.from(allIdsToBlacklist));
+
+    // 2. Optimistically remove from state & localStorage
+    const updatedList = productsList.filter((p) => !allIdsToBlacklist.has(String(p.id)));
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);
 
-    // Clean up any deleted IDs from timesale
-    const remainingTimeSaleIds = adminTimeSaleProductIds.filter((pId) => !idSet.has(String(pId)));
+    // 3. Explicitly call Server DELETE endpoint
+    try {
+      await fetch("/api/products", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(allIdsToBlacklist) }),
+      });
+    } catch (delErr) {
+      console.warn("Failed to delete via /api/products DELETE endpoint:", delErr);
+    }
+
+    // 4. Clean up any deleted IDs from timesale
+    const remainingTimeSaleIds = adminTimeSaleProductIds.filter((pId) => !allIdsToBlacklist.has(String(pId)));
     if (remainingTimeSaleIds.length !== adminTimeSaleProductIds.length) {
       setAdminTimeSaleProductIds?.(remainingTimeSaleIds);
       if (typeof window !== "undefined") {
@@ -686,6 +821,28 @@ export function useProducts({
       }
     }
 
+    // 5. Clean up from set sales
+    if (typeof window !== "undefined") {
+      try {
+        const setSalesRaw = localStorage.getItem("admin_set_sales");
+        if (setSalesRaw) {
+          const setSales = JSON.parse(setSalesRaw);
+          if (Array.isArray(setSales)) {
+            const cleaned = setSales.map((s: any) => ({
+              ...s,
+              items: Array.isArray(s.items)
+                ? s.items.filter((item: any) => !allIdsToBlacklist.has(String(item.id || item.productId)))
+                : s.items,
+            }));
+            localStorage.setItem("admin_set_sales", JSON.stringify(cleaned));
+            window.dispatchEvent(new CustomEvent("admin_set_sales_updated"));
+          }
+        }
+      } catch {}
+    }
+
+    window.dispatchEvent(new CustomEvent("admin_products_updated"));
+    window.dispatchEvent(new CustomEvent("products_updated"));
     triggerToast(`🗑️ 선택한 ${targetIds.length}개 상품이 성공적으로 삭제되었습니다.`);
   }, [productsList, saveProductsToStorage, triggerToast, adminTimeSaleProductIds, setAdminTimeSaleProductIds]);
 
@@ -705,31 +862,52 @@ export function useProducts({
     }
   }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
-  const handleClearAllProducts = useCallback(() => {
+  const handleClearAllProducts = useCallback(async () => {
     const totalCount = actualProductsCount;
     const isConfirmed = window.confirm(
       `정말로 상품관리에 등록된 전체 상품 (${totalCount}개)을 일괄 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.`
     );
     if (!isConfirmed) return;
 
+    const allIds = productsList.map((p) => String(p.id));
+    addDeletedProductIdsToStorage(allIds);
+
     setProductsList([]);
     saveProductsToStorage([]);
     setAdminTimeSaleProductIds?.([]);
     if (typeof window !== "undefined") {
       try {
-        localStorage.removeItem("admin_products");
+        localStorage.setItem("admin_products", JSON.stringify([]));
         localStorage.removeItem("admin_custom_products");
         localStorage.removeItem("secret_timesale_product_ids");
       } catch {}
     }
+
+    try {
+      await fetch("/api/products", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: allIds }),
+      });
+    } catch {}
+
+    window.dispatchEvent(new CustomEvent("admin_products_updated"));
+    window.dispatchEvent(new CustomEvent("products_updated"));
     triggerToast(`🗑️ 상품관리에 등록된 전체 상품 ${totalCount}개가 모두 성공적으로 삭제되었습니다.`);
-  }, [actualProductsCount, saveProductsToStorage, triggerToast, setAdminTimeSaleProductIds]);
+  }, [actualProductsCount, productsList, saveProductsToStorage, triggerToast, setAdminTimeSaleProductIds]);
 
   const handleRestoreDefaultProducts = useCallback(async () => {
     const isConfirmed = window.confirm(
       "정말로 모든 상품 데이터를 '초이콤마 정식 카탈로그 (50개)'로 초기화하시겠습니까?\n임시 등록/수정 내역이 정리되고 원본 상품 50개로 복원됩니다."
     );
     if (!isConfirmed) return;
+
+    // Clear client-side deleted blacklist on explicit restore
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("admin_deleted_product_ids");
+      } catch {}
+    }
 
     try {
       const res = await fetch("/api/products?action=restore", { method: "POST" });
@@ -756,7 +934,7 @@ export function useProducts({
     setProductsList(freshCatalog);
     saveProductsToStorage(freshCatalog);
     triggerToast("✨ 전체 상품 리스트가 정식 카탈로그(50개)로 완벽하게 초기화되었습니다!");
-  }, [INITIAL_CHOICOMMA_PRODUCTS, saveProductsToStorage, triggerToast]);
+  }, [saveProductsToStorage, triggerToast]);
 
   const handleBulkAddProducts = useCallback((newProducts: any[]) => {
     if (!newProducts || newProducts.length === 0) return;

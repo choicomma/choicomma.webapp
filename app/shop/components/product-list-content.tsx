@@ -58,11 +58,25 @@ export function ProductListContent({
           const localRaw = localStorage.getItem("admin_products");
           if (localRaw) {
             const localData: any[] = JSON.parse(localRaw);
-            if (Array.isArray(localData) && localData.length > 0) {
+            if (Array.isArray(localData)) {
               activeSourceProducts = localData.filter(
                 (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
               );
             }
+          }
+        } catch (e) {}
+
+        // Guarantee any deleted products never reappear in shop view
+        try {
+          const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
+          if (deletedRaw) {
+            const delSet = new Set(JSON.parse(deletedRaw).map(String));
+            activeSourceProducts = activeSourceProducts.filter(
+              (p: any) =>
+                !delSet.has(String(p.id)) &&
+                !delSet.has(String(p.productCode)) &&
+                !delSet.has(String(p.handle))
+            );
           }
         } catch (e) {}
       }

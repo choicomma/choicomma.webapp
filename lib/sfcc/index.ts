@@ -37,13 +37,34 @@ import fs from "fs";
 import path from "path";
 
 function getAllServerProducts(): Product[] {
+  let deletedIdSet = new Set<string>();
+  try {
+    const delPath = path.join(process.cwd(), "data", "deleted-products.json");
+    if (fs.existsSync(delPath)) {
+      const delRaw = fs.readFileSync(delPath, "utf-8");
+      const delList = JSON.parse(delRaw);
+      if (Array.isArray(delList) && delList.length > 0) {
+        deletedIdSet = new Set(delList.map(String));
+      }
+    }
+  } catch {}
+
+  const filterDeleted = (item: any) => {
+    if (!item || deletedIdSet.size === 0) return true;
+    const id = String(item.id || "");
+    const code = String(item.productCode || "");
+    const handle = String(item.handle || "");
+    const no = item.productNo !== undefined && item.productNo !== null ? String(item.productNo) : "";
+    return !deletedIdSet.has(id) && !deletedIdSet.has(code) && !deletedIdSet.has(handle) && (!no || !deletedIdSet.has(no));
+  };
+
   try {
     const cachePath = path.join(process.cwd(), "data", "products-cache.json");
     if (fs.existsSync(cachePath)) {
       const raw = fs.readFileSync(cachePath, "utf-8");
       const list = JSON.parse(raw);
       if (Array.isArray(list)) {
-        return list.map((p: any) => {
+        return list.filter(filterDeleted).map((p: any) => {
           const meta = p.bulkDiscount || {};
           const tagRate = Array.isArray(p.tags)
             ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
@@ -65,7 +86,7 @@ function getAllServerProducts(): Product[] {
   } catch (e) {
     // ignore
   }
-  return mockProducts as any[];
+  return (mockProducts as any[]).filter(filterDeleted);
 }
 
 const FORCE_MOCK_DATA = false;

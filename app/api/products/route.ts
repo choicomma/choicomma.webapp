@@ -15,6 +15,48 @@ function getSeedProductsFilePath() {
   return path.join(process.cwd(), "data", "default-products-seed.json");
 }
 
+function getDeletedProductsFilePath() {
+  return path.join(process.cwd(), "data", "deleted-products.json");
+}
+
+function readDeletedProductsList(): string[] {
+  try {
+    const filePath = getDeletedProductsFilePath();
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data.map(String);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function writeDeletedProductsList(ids: string[]) {
+  try {
+    const filePath = getDeletedProductsFilePath();
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(Array.from(new Set(ids)), null, 2), "utf-8");
+  } catch (e) {
+    console.warn("Failed to write deleted products list:", e);
+  }
+}
+
+function filterOutDeletedServerProducts(list: any[]): any[] {
+  if (!Array.isArray(list)) return [];
+  const deletedIds = readDeletedProductsList();
+  if (deletedIds.length === 0) return list;
+  const delSet = new Set(deletedIds.map(String));
+  return list.filter((p: any) => {
+    if (!p) return false;
+    const id = String(p.id || "");
+    const code = String(p.productCode || "");
+    const handle = String(p.handle || "");
+    const no = p.productNo !== undefined && p.productNo !== null ? String(p.productNo) : "";
+    return !delSet.has(id) && !delSet.has(code) && !delSet.has(handle) && (!no || !delSet.has(no));
+  });
+}
+
 function ensureSeedBackupExists() {
   const seedPath = getSeedProductsFilePath();
   const masterPath = getRuntimeProductsFilePath();
@@ -38,7 +80,7 @@ function readSeedCatalog(): any[] {
     try {
       const raw = fs.readFileSync(seedPath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data) && data.length > 0) return filterOutDeletedServerProducts(data);
     } catch (e) {}
   }
   const masterPath = getRuntimeProductsFilePath();
@@ -46,7 +88,7 @@ function readSeedCatalog(): any[] {
     try {
       const raw = fs.readFileSync(masterPath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data) && data.length > 0) return filterOutDeletedServerProducts(data);
     } catch (e) {}
   }
   return [];
@@ -63,7 +105,7 @@ function readLocalProductsBackup(): any[] {
       if (fs.existsSync(runtimePath)) {
         const raw = fs.readFileSync(runtimePath, "utf-8");
         const data = JSON.parse(raw);
-        if (Array.isArray(data)) return data;
+        if (Array.isArray(data)) return filterOutDeletedServerProducts(data);
       }
     } catch (e) {
       console.warn(`[Products File Read Attempt ${attempt} Warning]:`, e);
@@ -78,7 +120,7 @@ function readLocalProductsBackup(): any[] {
   // Safety fallback: if reading from disk failed or file was temporarily locked,
   // do NOT wipe memory cache; use global in-memory catalog
   if (globalForProducts.serverProductsCache !== undefined && Array.isArray(globalForProducts.serverProductsCache)) {
-    return globalForProducts.serverProductsCache;
+    return filterOutDeletedServerProducts(globalForProducts.serverProductsCache);
   }
 
   return readSeedCatalog();
@@ -93,34 +135,35 @@ function safeAtomicWriteJsonFile(targetPath: string, data: any) {
   const jsonStr = JSON.stringify(data, null, 2);
   let lastError: any = null;
 
-  // Retry up to 3 times to gracefully overcome Windows / OneDrive file lock collisions
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const tempPath = `${targetPath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
+  // Retry up to 4 times to gracefully overcome Windows / OneDrive file lock collisions
+  for (let attempt = 1; attempt <= 4; attempt++) {
     try {
-      fs.writeFileSync(tempPath, jsonStr, "utf-8");
-      try {
-        fs.renameSync(tempPath, targetPath);
-      } catch (renameErr) {
-        // Windows fallback if atomic rename fails due to lock/OneDrive sync
-        try {
-          if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-        } catch {}
-        fs.writeFileSync(targetPath, jsonStr, "utf-8");
-      }
+      // Direct write with overwrite is most reliable on Windows / OneDrive synced directories
+      fs.writeFileSync(targetPath, jsonStr, "utf-8");
       return;
     } catch (err: any) {
       lastError = err;
+      // Fallback: temporary file write then rename
       try {
-        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-      } catch {}
-      if (attempt < 3) {
+        const tempPath = `${targetPath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
+        fs.writeFileSync(tempPath, jsonStr, "utf-8");
+        try {
+          fs.renameSync(tempPath, targetPath);
+          return;
+        } catch {
+          if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+        }
+      } catch (tempErr: any) {
+        lastError = tempErr;
+      }
+      if (attempt < 4) {
         const start = Date.now();
-        while (Date.now() - start < 40) {}
+        while (Date.now() - start < 40 * attempt) {}
       }
     }
   }
 
-  console.error("[Atomic Write Error after 3 attempts]:", lastError);
+  console.error("[Atomic Write Error after 4 attempts]:", lastError);
   throw lastError || new Error("Failed to write products JSON file");
 }
 
@@ -157,7 +200,9 @@ export async function GET(req: NextRequest) {
     const isFresh = req?.nextUrl.searchParams.get("fresh") === "1";
     if (isFresh || globalForProducts.serverProductsCache === undefined) {
       const localList = readLocalProductsBackup();
-      globalForProducts.serverProductsCache = localList;
+      globalForProducts.serverProductsCache = filterOutDeletedServerProducts(localList);
+    } else if (Array.isArray(globalForProducts.serverProductsCache)) {
+      globalForProducts.serverProductsCache = filterOutDeletedServerProducts(globalForProducts.serverProductsCache);
     }
 
     return makeResponse(globalForProducts.serverProductsCache || [], req);
@@ -187,6 +232,9 @@ export async function POST(req: NextRequest) {
     // CASE 0: Explicit Restore to Official Seed Catalog (50 items)
     // -------------------------------------------------------------
     if (action === "restore" || body?.action === "restore") {
+      // Clear persistent deleted products blacklist on explicit restore
+      writeDeletedProductsList([]);
+
       const seedProducts = readSeedCatalog();
       if (!seedProducts || seedProducts.length === 0) {
         return NextResponse.json(
@@ -257,6 +305,17 @@ export async function POST(req: NextRequest) {
         itemToSave.releaseDate = relDate;
       } else {
         delete itemToSave.releaseDate;
+      }
+
+      // If this product was previously in deleted list, un-blacklist it
+      const currentDeleted = readDeletedProductsList();
+      if (currentDeleted.length > 0) {
+        const nextDeleted = currentDeleted.filter(
+          (d) => d !== pId && d !== code && d !== safeHandle && d !== String(num)
+        );
+        if (nextDeleted.length !== currentDeleted.length) {
+          writeDeletedProductsList(nextDeleted);
+        }
       }
 
       let existingList = readLocalProductsBackup();
@@ -353,13 +412,48 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: "삭제할 상품 ID가 지정되지 않았습니다." }, { status: 400 });
     }
 
-    const deleteSet = new Set(idsToDelete);
     let existingList = readLocalProductsBackup();
     if (existingList.length === 0 && globalForProducts.serverProductsCache && globalForProducts.serverProductsCache.length > 0) {
       existingList = [...globalForProducts.serverProductsCache];
     }
 
-    const updated = existingList.filter((p: any) => !deleteSet.has(String(p.id)));
+    // Collect all associated identifiers (id, productCode, handle, productNo)
+    const allIdentifiersToDelete = new Set<string>(idsToDelete);
+    existingList.forEach((p: any) => {
+      const match = idsToDelete.some(
+        (target) =>
+          String(p.id) === target ||
+          String(p.productCode) === target ||
+          String(p.handle) === target ||
+          (p.productNo !== undefined && String(p.productNo) === target)
+      );
+      if (match) {
+        if (p.id) allIdentifiersToDelete.add(String(p.id));
+        if (p.productCode) allIdentifiersToDelete.add(String(p.productCode));
+        if (p.handle) allIdentifiersToDelete.add(String(p.handle));
+        if (p.productNo !== undefined) allIdentifiersToDelete.add(String(p.productNo));
+      }
+    });
+
+    // 1. Record permanently in deleted-products.json
+    const existingDeleted = readDeletedProductsList();
+    const updatedDeletedSet = new Set([...existingDeleted, ...Array.from(allIdentifiersToDelete)]);
+    writeDeletedProductsList(Array.from(updatedDeletedSet));
+
+    // 2. Filter from catalog
+    const updated = existingList.filter((p: any) => {
+      if (!p) return false;
+      const id = String(p.id || "");
+      const code = String(p.productCode || "");
+      const handle = String(p.handle || "");
+      const no = p.productNo !== undefined && p.productNo !== null ? String(p.productNo) : "";
+      return (
+        !allIdentifiersToDelete.has(id) &&
+        !allIdentifiersToDelete.has(code) &&
+        !allIdentifiersToDelete.has(handle) &&
+        (!no || !allIdentifiersToDelete.has(no))
+      );
+    });
 
     globalForProducts.serverProductsCache = updated;
     try {
@@ -370,7 +464,7 @@ export async function DELETE(req: NextRequest) {
 
     revalidateAllProductPaths();
 
-    return NextResponse.json({ success: true, deletedCount: idsToDelete.length }, {
+    return NextResponse.json({ success: true, deletedCount: idsToDelete.length, deletedIds: Array.from(allIdentifiersToDelete) }, {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate",
         Pragma: "no-cache",
