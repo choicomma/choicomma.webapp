@@ -66,8 +66,7 @@ export function filterOutDeletedProducts(list: any[], deletedSet: Set<string>): 
     const id = String(p.id || "");
     const code = String(p.productCode || "");
     const handle = String(p.handle || "");
-    const no = p.productNo !== undefined && p.productNo !== null ? String(p.productNo) : "";
-    return !deletedSet.has(id) && !deletedSet.has(code) && !deletedSet.has(handle) && (!no || !deletedSet.has(no));
+    return !deletedSet.has(id) && !deletedSet.has(code) && !deletedSet.has(handle);
   });
 }
 
@@ -175,6 +174,7 @@ export function useProducts({
     let isMounted = true;
     const fetchServerProducts = async () => {
       let hasLocalData = false;
+      let localParsedList: any[] = [];
       const deletedSet = getDeletedProductIdsFromStorage();
 
       if (typeof window !== "undefined") {
@@ -182,8 +182,9 @@ export function useProducts({
           const saved = localStorage.getItem("admin_products");
           if (saved !== null) {
             const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed)) {
+            if (Array.isArray(parsed) && parsed.length > 0) {
               hasLocalData = true;
+              localParsedList = parsed;
               const filtered = filterOutDeletedProducts(parsed, deletedSet);
               if (isMounted) {
                 setProductsList(filtered);
@@ -201,7 +202,17 @@ export function useProducts({
           if (Array.isArray(data) && isMounted) {
             const sanitized = filterOutDeletedProducts(data, deletedSet);
             // If local changes exist in this browser, preserve them; otherwise sync server catalog
-            if (!hasLocalData) {
+            // Also if server catalog has items missing from local storage (e.g. quota issue or saved on server), sync server
+            if (hasLocalData && localParsedList.length > 0) {
+              const localIdSet = new Set(localParsedList.map((p: any) => String(p?.id || "")));
+              const missingLocally = sanitized.filter((sp: any) => sp && !localIdSet.has(String(sp.id || "")));
+              if (missingLocally.length > 0 || sanitized.length >= localParsedList.length) {
+                setProductsList(sanitized);
+                try {
+                  localStorage.setItem("admin_products", JSON.stringify(sanitized));
+                } catch (e) {}
+              }
+            } else {
               setProductsList(sanitized);
               try {
                 localStorage.setItem("admin_products", JSON.stringify(sanitized));
@@ -305,7 +316,26 @@ export function useProducts({
       window.dispatchEvent(new CustomEvent("admin_products_updated"));
       window.dispatchEvent(new CustomEvent("storage"));
     } catch (e) {
-      console.warn("Failed to save products to localStorage:", e);
+      console.warn("Failed to save products to localStorage, attempting lightweight fallback:", e);
+      try {
+        const lightList = list.map((p: any) => {
+          if (!p) return p;
+          let detail = p.detailDescription || "";
+          if (typeof detail === "string" && detail.includes("data:image")) {
+            detail = detail.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "/product_1.webp");
+          }
+          return {
+            ...p,
+            detailDescription: detail,
+            descriptionHtml: detail,
+          };
+        });
+        localStorage.setItem("admin_products", JSON.stringify(lightList));
+        window.dispatchEvent(new CustomEvent("admin_products_updated"));
+        window.dispatchEvent(new CustomEvent("storage"));
+      } catch (fallbackErr) {
+        console.warn("Lightweight fallback also failed:", fallbackErr);
+      }
     }
 
     // 2. Concurrency queue to server API (/api/products)
@@ -619,7 +649,6 @@ export function useProducts({
     if (targetProduct) {
       if (targetProduct.productCode) idsToBlacklist.push(String(targetProduct.productCode));
       if (targetProduct.handle) idsToBlacklist.push(String(targetProduct.handle));
-      if (targetProduct.productNo !== undefined) idsToBlacklist.push(String(targetProduct.productNo));
     }
 
     // 1. Immediately record in persistent deleted IDs blacklist in localStorage
@@ -787,7 +816,6 @@ export function useProducts({
         if (p.id) allIdsToBlacklist.add(String(p.id));
         if (p.productCode) allIdsToBlacklist.add(String(p.productCode));
         if (p.handle) allIdsToBlacklist.add(String(p.handle));
-        if (p.productNo !== undefined) allIdsToBlacklist.add(String(p.productNo));
       }
     });
 
@@ -938,6 +966,14 @@ export function useProducts({
 
   const handleBulkAddProducts = useCallback((newProducts: any[]) => {
     if (!newProducts || newProducts.length === 0) return;
+    const idsToUnblacklist: string[] = [];
+    newProducts.forEach((p) => {
+      if (p.id) idsToUnblacklist.push(String(p.id));
+      if (p.productCode) idsToUnblacklist.push(String(p.productCode));
+      if (p.handle) idsToUnblacklist.push(String(p.handle));
+    });
+    removeDeletedProductIdsFromStorage(idsToUnblacklist);
+
     const updatedList = [...newProducts, ...productsList];
     setProductsList(updatedList);
     saveProductsToStorage(updatedList);

@@ -30,8 +30,8 @@ export const calculateTotalStock = (
 
 export const compressImageDataUrl = (
   dataUrl: string,
-  maxWidth = 1920,
-  quality = 0.92
+  maxWidth = 1280,
+  quality = 0.82
 ): Promise<string> => {
   return new Promise((resolve) => {
     if (

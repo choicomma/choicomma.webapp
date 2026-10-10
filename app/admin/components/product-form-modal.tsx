@@ -533,7 +533,7 @@ export function ProductFormModal({
       const reader = new FileReader();
       reader.onload = async (evt) => {
         const rawResult = evt.target?.result as string;
-        const compressed = await compressImageDataUrl(rawResult, 1920, 0.92);
+        const compressed = await compressImageDataUrl(rawResult, 1280, 0.82);
         setImageUrl(compressed);
         if (!images.includes(compressed)) {
           setImages([compressed, ...images]);
@@ -562,7 +562,7 @@ export function ProductFormModal({
         reader.onload = async (evt) => {
           const raw = evt.target?.result as string;
           if (raw) {
-            const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+            const compressed = await compressImageDataUrl(raw, 1280, 0.82);
             resolve(compressed);
           } else {
             resolve("");
@@ -627,7 +627,7 @@ export function ProductFormModal({
         reader.onload = async (evt) => {
           const raw = evt.target?.result as string;
           if (raw) {
-            const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+            const compressed = await compressImageDataUrl(raw, 1280, 0.82);
             resolve(compressed);
           } else {
             resolve("");
@@ -1786,7 +1786,7 @@ export function ProductFormModal({
                               reader.onload = async (evt) => {
                                 const raw = evt.target?.result as string;
                                 if (raw) {
-                                  const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+                                  const compressed = await compressImageDataUrl(raw, 1280, 0.82);
                                   setFabricImage(compressed);
                                 }
                               };
@@ -1861,7 +1861,7 @@ export function ProductFormModal({
                                 reader.onload = async (evt) => {
                                   const raw = evt.target?.result as string;
                                   if (raw) {
-                                    const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+                                    const compressed = await compressImageDataUrl(raw, 1280, 0.82);
                                     setCustomColorImg(compressed);
                                   }
                                 };
@@ -1910,7 +1910,7 @@ export function ProductFormModal({
                                       reader.onload = async (evt) => {
                                         const raw = evt.target?.result as string;
                                         if (raw) {
-                                          const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+                                          const compressed = await compressImageDataUrl(raw, 1280, 0.82);
                                           setColorImages((prev) => ({ ...prev, [color]: compressed }));
                                         }
                                       };
@@ -2082,7 +2082,7 @@ export function ProductFormModal({
                                   reader.onload = async (evt) => {
                                     const raw = evt.target?.result as string;
                                     if (raw) {
-                                      const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+                                      const compressed = await compressImageDataUrl(raw, 1280, 0.82);
                                       setSizeGuideImage(compressed);
                                       triggerToast("사이즈 가이드 이미지가 변경되었습니다.");
                                     }
@@ -2124,7 +2124,7 @@ export function ProductFormModal({
                               reader.onload = async (evt) => {
                                 const raw = evt.target?.result as string;
                                 if (raw) {
-                                  const compressed = await compressImageDataUrl(raw, 1920, 0.92);
+                                  const compressed = await compressImageDataUrl(raw, 1280, 0.82);
                                   setSizeGuideImage(compressed);
                                   triggerToast("사이즈 가이드 이미지가 등록되었습니다.");
                                 }

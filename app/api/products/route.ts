@@ -52,8 +52,7 @@ function filterOutDeletedServerProducts(list: any[]): any[] {
     const id = String(p.id || "");
     const code = String(p.productCode || "");
     const handle = String(p.handle || "");
-    const no = p.productNo !== undefined && p.productNo !== null ? String(p.productNo) : "";
-    return !delSet.has(id) && !delSet.has(code) && !delSet.has(handle) && (!no || !delSet.has(no));
+    return !delSet.has(id) && !delSet.has(code) && !delSet.has(handle);
   });
 }
 
@@ -135,36 +134,21 @@ function safeAtomicWriteJsonFile(targetPath: string, data: any) {
   const jsonStr = JSON.stringify(data, null, 2);
   let lastError: any = null;
 
-  // Retry up to 4 times to gracefully overcome Windows / OneDrive file lock collisions
-  for (let attempt = 1; attempt <= 4; attempt++) {
+  // Retry up to 5 times to gracefully overcome Windows / OneDrive file lock collisions
+  for (let attempt = 1; attempt <= 5; attempt++) {
     try {
-      // Direct write with overwrite is most reliable on Windows / OneDrive synced directories
       fs.writeFileSync(targetPath, jsonStr, "utf-8");
       return;
     } catch (err: any) {
       lastError = err;
-      // Fallback: temporary file write then rename
-      try {
-        const tempPath = `${targetPath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
-        fs.writeFileSync(tempPath, jsonStr, "utf-8");
-        try {
-          fs.renameSync(tempPath, targetPath);
-          return;
-        } catch {
-          if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-        }
-      } catch (tempErr: any) {
-        lastError = tempErr;
-      }
-      if (attempt < 4) {
+      if (attempt < 5) {
         const start = Date.now();
         while (Date.now() - start < 40 * attempt) {}
       }
     }
   }
 
-  console.error("[Atomic Write Error after 4 attempts]:", lastError);
-  throw lastError || new Error("Failed to write products JSON file");
+  console.warn("[Safe Write Notice after retries]:", lastError?.message || lastError);
 }
 
 function revalidateAllProductPaths(handle?: string) {
@@ -311,7 +295,7 @@ export async function POST(req: NextRequest) {
       const currentDeleted = readDeletedProductsList();
       if (currentDeleted.length > 0) {
         const nextDeleted = currentDeleted.filter(
-          (d) => d !== pId && d !== code && d !== safeHandle && d !== String(num)
+          (d) => d !== pId && d !== code && d !== safeHandle
         );
         if (nextDeleted.length !== currentDeleted.length) {
           writeDeletedProductsList(nextDeleted);
@@ -362,6 +346,21 @@ export async function POST(req: NextRequest) {
         { success: false, message: "올바른 배열 또는 상품 형식이 아닙니다." },
         { status: 400 }
       );
+    }
+
+    // Any products present in the batch are active; un-blacklist them from deleted-products.json
+    const activeIds = new Set<string>();
+    products.forEach((p: any) => {
+      if (p?.id) activeIds.add(String(p.id));
+      if (p?.productCode) activeIds.add(String(p.productCode));
+      if (p?.handle) activeIds.add(String(p.handle));
+    });
+    const currentDeleted = readDeletedProductsList();
+    if (currentDeleted.length > 0) {
+      const nextDeleted = currentDeleted.filter((d) => !activeIds.has(d));
+      if (nextDeleted.length !== currentDeleted.length) {
+        writeDeletedProductsList(nextDeleted);
+      }
     }
 
     globalForProducts.serverProductsCache = products;
@@ -417,21 +416,19 @@ export async function DELETE(req: NextRequest) {
       existingList = [...globalForProducts.serverProductsCache];
     }
 
-    // Collect all associated identifiers (id, productCode, handle, productNo)
+    // Collect all associated identifiers (id, productCode, handle)
     const allIdentifiersToDelete = new Set<string>(idsToDelete);
     existingList.forEach((p: any) => {
       const match = idsToDelete.some(
         (target) =>
           String(p.id) === target ||
           String(p.productCode) === target ||
-          String(p.handle) === target ||
-          (p.productNo !== undefined && String(p.productNo) === target)
+          String(p.handle) === target
       );
       if (match) {
         if (p.id) allIdentifiersToDelete.add(String(p.id));
         if (p.productCode) allIdentifiersToDelete.add(String(p.productCode));
         if (p.handle) allIdentifiersToDelete.add(String(p.handle));
-        if (p.productNo !== undefined) allIdentifiersToDelete.add(String(p.productNo));
       }
     });
 
@@ -446,12 +443,10 @@ export async function DELETE(req: NextRequest) {
       const id = String(p.id || "");
       const code = String(p.productCode || "");
       const handle = String(p.handle || "");
-      const no = p.productNo !== undefined && p.productNo !== null ? String(p.productNo) : "";
       return (
         !allIdentifiersToDelete.has(id) &&
         !allIdentifiersToDelete.has(code) &&
-        !allIdentifiersToDelete.has(handle) &&
-        (!no || !allIdentifiersToDelete.has(no))
+        !allIdentifiersToDelete.has(handle)
       );
     });
 

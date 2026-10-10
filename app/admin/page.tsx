@@ -8,7 +8,7 @@ import { useInboundSchedules } from "@/hooks/admin/useInboundSchedules";
 import { useLiveChat } from "@/hooks/admin/useLiveChat";
 import { useCustomers } from "@/hooks/admin/useCustomers";
 import { useTimesale } from "@/hooks/admin/useTimesale";
-import { useProducts } from "@/hooks/admin/useProducts";
+import { useProducts, removeDeletedProductIdsFromStorage } from "@/hooks/admin/useProducts";
 import { useShipments } from "@/hooks/admin/useShipments";
 import {
   LayoutDashboard,
@@ -1362,6 +1362,15 @@ export default function AdminPage() {
           setEditingProduct(null);
         }}
         onSave={async (savedProduct, isNew) => {
+          // Immediately un-blacklist new or edited product identifiers from deleted storage
+          if (typeof window !== "undefined") {
+            removeDeletedProductIdsFromStorage([
+              String(savedProduct.id || ""),
+              String(savedProduct.productCode || ""),
+              String(savedProduct.handle || ""),
+            ]);
+          }
+
           let updatedList: any[];
           if (isNew) {
             updatedList = [savedProduct, ...productsList];
@@ -1416,7 +1425,10 @@ export default function AdminPage() {
             } catch (e) {}
           }
 
-          // Persist updated ordering & full catalog to server storage
+          // 1. Direct single item persistence to server (fast upsert & server-side un-blacklist)
+          await saveSingleProduct(savedProduct, isNew);
+
+          // 2. Persist updated ordering & full catalog to localStorage and server storage
           saveProductsToStorage(updatedList);
         }}
         triggerToast={triggerToast}
