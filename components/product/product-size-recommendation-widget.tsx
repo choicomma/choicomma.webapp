@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   Ruler,
@@ -30,12 +31,35 @@ export function ProductSizeRecommendationWidget({
   onSelectSize,
   className = "",
 }: ProductSizeRecommendationWidgetProps) {
+  const router = useRouter();
   const [profile, setProfile] = useState<UserSizeProfile | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showGuestAlertModal, setShowGuestAlertModal] = useState(false);
   const [recommendation, setRecommendation] = useState<SizeRecommendationResult | null>(null);
 
-  // 로컬스토리지에서 프로필 로드 및 추천값 계산
+  // 회원 로그인 상태 판별 (비회원은 로그인되지 않음)
+  const isUserLoggedIn = () => {
+    if (typeof window === "undefined") return false;
+    try {
+      const isAdmin =
+        localStorage.getItem("user_role") === "admin" ||
+        sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+      if (isAdmin) return true;
+      const isLoggedIn = localStorage.getItem("is_logged_in") === "true";
+      const email = (localStorage.getItem("membership_user_email") || "").trim();
+      return isLoggedIn && Boolean(email);
+    } catch {
+      return false;
+    }
+  };
+
+  // 로컬스토리지에서 프로필 로드 및 추천값 계산 (비회원은 프로필 미적용)
   const updateProfileAndRecommendation = useCallback(() => {
+    if (!isUserLoggedIn()) {
+      setProfile(null);
+      setRecommendation(null);
+      return;
+    }
     const loadedProfile = getUserSizeProfile();
     setProfile(loadedProfile);
     if (loadedProfile && product) {
@@ -56,12 +80,23 @@ export function ProductSizeRecommendationWidget({
 
     window.addEventListener("user_size_profile_updated", handleProfileUpdate);
     window.addEventListener("storage", handleProfileUpdate);
+    window.addEventListener("auth_changed", handleProfileUpdate);
 
     return () => {
       window.removeEventListener("user_size_profile_updated", handleProfileUpdate);
       window.removeEventListener("storage", handleProfileUpdate);
+      window.removeEventListener("auth_changed", handleProfileUpdate);
     };
   }, [updateProfileAndRecommendation]);
+
+  // 맞춤 사이즈 입력/수정 버튼 클릭 시: 비회원이면 회원가입 안내 알림창 띄움
+  const handleOpenSizeModal = () => {
+    if (!isUserLoggedIn()) {
+      setShowGuestAlertModal(true);
+      return;
+    }
+    setIsModalOpen(true);
+  };
 
   // 추천 사이즈 클릭 시 해당 사이즈 옵션 자동 선택
   const handleApplyRecommendedSize = () => {
@@ -97,7 +132,7 @@ export function ProductSizeRecommendationWidget({
 
             <button
               type="button"
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenSizeModal}
               className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-extrabold tracking-tight transition-all shadow-xs cursor-pointer group shrink-0"
             >
               <span>내 사이즈 입력하고 딱 맞는 사이즈 찾기</span>
@@ -126,7 +161,7 @@ export function ProductSizeRecommendationWidget({
               {/* 신체 정보 수정 소형 링크 버튼 */}
               <button
                 type="button"
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleOpenSizeModal}
                 className="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-500 hover:text-neutral-950 hover:underline transition-colors cursor-pointer"
                 title="등록된 키, 몸무게, 가슴둘레, 허리둘레, 선호 핏 수정"
               >
@@ -182,7 +217,7 @@ export function ProductSizeRecommendationWidget({
         )
       )}
 
-      {/* 신체 정보 입력/수정 모달 */}
+      {/* 신체 정보 입력/수정 모달 (로그인 회원 전용) */}
       <SizeProfileModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -190,6 +225,50 @@ export function ProductSizeRecommendationWidget({
           updateProfileAndRecommendation();
         }}
       />
+
+      {/* 비회원용 회원가입 안내 알림창 (Modal) */}
+      {showGuestAlertModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="guest-alert-title"
+          className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200 font-sans"
+        >
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-neutral-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200/60 text-amber-600 flex items-center justify-center mb-3.5 shadow-2xs">
+              <Sparkles className="w-6 h-6 text-amber-500 fill-amber-300/30" />
+            </div>
+            <h3 id="guest-alert-title" className="text-base font-extrabold text-neutral-950 tracking-tight">
+              회원가입 안내
+            </h3>
+            <p className="text-xs text-neutral-600 mt-2.5 leading-relaxed font-medium">
+              맞춤 사이즈 추천 서비스는 회원 전용 혜택입니다.
+              <br />
+              간편 회원가입 후 나만의 맞춤 사이즈를 확인해 보세요!
+            </p>
+
+            <div className="flex items-center gap-2.5 w-full mt-5">
+              <button
+                type="button"
+                onClick={() => setShowGuestAlertModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowGuestAlertModal(false);
+                  router.push("/login?mode=signup");
+                }}
+                className="flex-[1.4] py-2.5 rounded-xl bg-neutral-950 hover:bg-black text-white text-xs font-black tracking-tight transition-all cursor-pointer shadow-sm hover:shadow"
+              >
+                회원가입하러 가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

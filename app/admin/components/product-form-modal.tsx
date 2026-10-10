@@ -272,6 +272,7 @@ export function ProductFormModal({
   const [showFabricBadge, setShowFabricBadge] = useState<boolean>(false);
   const [showFabricInfo, setShowFabricInfo] = useState<boolean>(true);
   const [showSizeGuide, setShowSizeGuide] = useState<boolean>(false);
+  const [showSizeRecommendation, setShowSizeRecommendation] = useState<boolean>(false);
   const [elasticity, setElasticity] = useState("보통");
   const [sheerness, setSheerness] = useState("없음");
   const [thickness, setThickness] = useState("적당함");
@@ -417,6 +418,7 @@ export function ProductFormModal({
       setShowFabricBadge(Boolean(initialProduct.showFabricBadge));
       setShowFabricInfo(Boolean(initFabricImg));
       setShowSizeGuide(Boolean(initialProduct.showSizeGuide));
+      setShowSizeRecommendation(Boolean(initialProduct.showSizeRecommendation));
       setSizeGuideImage(initialProduct.sizeGuideImage || (initialProduct as any).sizeChartImage || "");
       setSizeGuideImgUrlInput("");
       setElasticity(initialProduct.elasticity || "보통");
@@ -488,6 +490,7 @@ export function ProductFormModal({
       setShowFabricBadge(false);
       setShowFabricInfo(true);
       setShowSizeGuide(false);
+      setShowSizeRecommendation(false);
       setSizeGuideImage("");
       setSizeGuideImgUrlInput("");
       setElasticity("보통");
@@ -798,6 +801,7 @@ export function ProductFormModal({
       showFabricBadge,
       showFabricInfo: Boolean(fabricImage && fabricImage.trim() !== ""),
       showSizeGuide,
+      showSizeRecommendation,
       fabricComposition: (fabricComposition || "").replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼"),
       elasticity,
       sheerness,
@@ -1959,23 +1963,23 @@ export function ProductFormModal({
                       </div>
                     </div>
 
-                    {/* 우측: 상세페이지에 표시 체크박스 */}
-                    <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-xl border border-neutral-300 hover:border-neutral-500 transition-all shadow-2xs group">
+                    {/* 우측: 맞춤 사이즈 추천 노출 여부 체크박스 */}
+                    <label className="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-xl border border-neutral-300 hover:border-neutral-500 transition-all shadow-2xs group" title="체크 시 상세페이지에서 '맞춤 사이즈 추천 (AI FIT ADVISOR)' 기능이 노출됩니다.">
                       <input
                         type="checkbox"
-                        checked={showSizeGuide}
-                        onChange={(e) => setShowSizeGuide(e.target.checked)}
+                        checked={showSizeRecommendation}
+                        onChange={(e) => setShowSizeRecommendation(e.target.checked)}
                         className="w-4 h-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 accent-neutral-950 cursor-pointer"
                       />
                       <span className="text-xs font-black text-neutral-950">
-                        상세페이지에 표시
+                        맞춤 사이즈 추천 노출
                       </span>
                       <span
                         className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${
-                          showSizeGuide ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-400"
+                          showSizeRecommendation ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-400"
                         }`}
                       >
-                        {showSizeGuide ? "ON" : "OFF"}
+                        {showSizeRecommendation ? "ON" : "OFF"}
                       </span>
                     </label>
                   </div>

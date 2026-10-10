@@ -1053,16 +1053,18 @@ export function ProductDetailHeader({
         </div>
       </div>
 
-      {/* 맞춤 사이즈 추천 위젯 (구매 버튼 위쪽) */}
-      <ProductSizeRecommendationWidget
-        product={product}
-        selectedSize={selectedSize}
-        onSelectSize={(newSize) => {
-          setSelectedSize(newSize);
-          window.dispatchEvent(new CustomEvent("product_size_selected", { detail: { size: newSize } }));
-        }}
-        className="my-3"
-      />
+      {/* 맞춤 사이즈 추천 위젯 (상품 등록/수정에서 '맞춤 사이즈 추천 노출' 체크 시에만 표시) */}
+      {Boolean(product.showSizeRecommendation) && (
+        <ProductSizeRecommendationWidget
+          product={product}
+          selectedSize={selectedSize}
+          onSelectSize={(newSize) => {
+            setSelectedSize(newSize);
+            window.dispatchEvent(new CustomEvent("product_size_selected", { detail: { size: newSize } }));
+          }}
+          className="my-3"
+        />
+      )}
 
       {/* Bottom Action Row: Quantity + Cart Icon Button (Left) + Buy Now button */}
       <div id="product-header-action-row" className="flex items-center gap-3 sm:gap-4 mt-2">

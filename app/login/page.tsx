@@ -69,6 +69,9 @@ export default function LoginPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get("mode") === "signup" || searchParams.get("tab") === "signup") {
+        setIsSignUp(true);
+      }
       if (searchParams.get("expired") === "true") {
         setToastMsg("안전한 쇼핑을 위해 로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
         // URL에서 ?expired=true 파라미터를 정리하여 새로고침 시 무한 반복 표시 방지
