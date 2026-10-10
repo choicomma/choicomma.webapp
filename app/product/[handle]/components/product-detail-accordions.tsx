@@ -242,13 +242,13 @@ export function ProductDetailAccordions({
   // 원단 이미지가 등록되어 있을 때만 원단 정보 탭 노출 (이미지 없을 시 탭 자체 미노출)
   const hasFabricInfo = Boolean(fabricImg);
 
-  // 모바일 버전에서는 고객후기를 제일 앞으로 추가
+  // 모바일 버전에서는 고객후기를 가장 오른쪽(마지막)으로 추가
   const tabs = [
-    ...(isMobile ? [{ id: "reviews", label: t.reviews || "고객 후기" }] : []),
     { id: "details", label: t.designerDesc },
     ...(hasFabricInfo ? [{ id: "fabric", label: t.fabricInfo }] : []),
     ...(hasSizeGuide ? [{ id: "guide", label: t.sizeGuide }] : []),
     { id: "care", label: t.shippingReturns },
+    ...(isMobile ? [{ id: "reviews", label: t.reviews || "고객 후기" }] : []),
   ];
 
   const hasReviewsTab = tabs.some((tab) => tab.id === "reviews");
@@ -588,7 +588,7 @@ export function ProductDetailAccordions({
               >
                 {/* 고객후기 상단 말풍선: 베스트댓글 선정 시, 최대 50,000원 */}
                 {tab.id === "reviews" && (
-                  <div className="absolute -top-7 left-0 z-30 select-none pointer-events-none">
+                  <div className="absolute -top-7 right-0 z-30 select-none pointer-events-none">
                     <div className="relative inline-flex items-center gap-1 px-2.5 py-0.5 sm:py-1 bg-neutral-900 text-white text-[10px] sm:text-[11px] font-bold rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.18)] whitespace-nowrap animate-bounce">
                       <span className="text-amber-400 text-xs shrink-0">✨</span>
                       {currentLang === "ko" ? (
@@ -604,7 +604,7 @@ export function ProductDetailAccordions({
                         </span>
                       )}
                       {/* 말풍선 꼬리 (삼각형 화살표) */}
-                      <span className="absolute -bottom-1.5 left-7 w-0 h-0 border-x-[5px] border-x-transparent border-t-[6px] border-t-neutral-900" />
+                      <span className="absolute -bottom-1.5 right-6 w-0 h-0 border-x-[5px] border-x-transparent border-t-[6px] border-t-neutral-900" />
                     </div>
                   </div>
                 )}
@@ -785,7 +785,7 @@ export function ProductDetailAccordions({
                   : "opacity-0 h-0 overflow-hidden pointer-events-none"
               )}
             >
-              {/* 고객 후기 (모바일 전용 탭 - 제일 앞) */}
+              {/* 고객 후기 (모바일 전용 탭 - 가장 오른쪽) */}
               {tab.id === "reviews" && (
                 <div className="w-full">
                   <ProductReviews

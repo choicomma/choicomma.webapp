@@ -153,7 +153,7 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
           />
         </div>
         
-        {/* Mobile Detail Menu: Placed under Add to Cart button (Customer reviews is tab #0 on mobile) */}
+        {/* Mobile Detail Menu: Placed under Add to Cart button (Customer reviews is the rightmost tab on mobile) */}
         <div className="md:hidden w-full mt-8">
           <ProductDetailAccordions
             key={`mobile-${product.handle || product.id}-${(product as any).fabricImage ? "fabric" : "nofabric"}-${(product as any).updatedAt || (product as any).updated_at || ""}`}
