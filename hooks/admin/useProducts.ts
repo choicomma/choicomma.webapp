@@ -576,8 +576,8 @@ export function useProducts({
     const nextFeatured = !isCurrentlyFeatured;
 
     const confirmMsg = nextFeatured
-      ? `'${targetProduct.title}' 상품을 메인 화면에 진열하시겠습니까?`
-      : `'${targetProduct.title}' 상품을 메인 화면에서 미진열 처리하시겠습니까?`;
+      ? `'${targetProduct.title}' 상품을 쇼핑몰에 정상 진열(전체 노출)하시겠습니까?`
+      : `'${targetProduct.title}' 상품을 미진열(쇼핑몰 전체에서 완전히 숨김) 처리하시겠습니까?`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -585,8 +585,8 @@ export function useProducts({
       if (p.id === id) {
         triggerToast(
           nextFeatured
-            ? `'${p.title}' 상품이 쇼핑몰 메인 화면 [전시 중]으로 설정되었습니다.`
-            : `'${p.title}' 상품이 메인 화면 [미전시]로 변경되었습니다.`
+            ? `'${p.title}' 상품이 쇼핑몰 [정상 진열]로 설정되었습니다.`
+            : `'${p.title}' 상품이 쇼핑몰 [미진열 (전체 숨김)] 처리되었습니다.`
         );
         const existingTags = Array.isArray(p.tags) ? p.tags : [];
         let newTags = [...existingTags];
@@ -681,7 +681,7 @@ export function useProducts({
 
   const handleBulkUpdateMainFeatured = useCallback((targetIds: string[], isFeatured: boolean) => {
     if (!targetIds || targetIds.length === 0) return;
-    const actionLabel = isFeatured ? "메인화면 진열" : "메인화면 미진열";
+    const actionLabel = isFeatured ? "쇼핑몰 전체 정상 진열" : "쇼핑몰 전체 미진열 (완전 숨김)";
     const isConfirmed = window.confirm(
       `선택한 ${targetIds.length}개 상품을 [${actionLabel}]로 일괄 변경하시겠습니까?`
     );
@@ -712,8 +712,8 @@ export function useProducts({
     saveProductsToStorage(updatedList);
     triggerToast(
       isFeatured
-        ? `✨ 선택한 ${targetIds.length}개 상품이 쇼핑몰 메인 화면 [진열]로 일괄 등록되었습니다.`
-        : `🚫 선택한 ${targetIds.length}개 상품이 메인 화면 [미진열]로 일괄 해제되었습니다.`
+        ? `✨ 선택한 ${targetIds.length}개 상품이 쇼핑몰 [정상 진열]로 일괄 등록되었습니다.`
+        : `🔒 선택한 ${targetIds.length}개 상품이 쇼핑몰 [미진열 (전체 숨김)]으로 일괄 변경되었습니다.`
     );
   }, [productsList, saveProductsToStorage, triggerToast]);
 

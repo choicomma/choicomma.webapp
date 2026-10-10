@@ -97,16 +97,16 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   const [heroImages, setHeroImages] = React.useState<string[]>(heroUrlsFiltered);
   const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
 
-  // Initial Grid Products
-  let initialGrid = (products || []).filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));
+  // Initial Grid Products: Strictly require products not marked as unfeatured (isMainFeatured !== false)
+  const initialValidCandidates = (products || []).filter(
+    (p: any) => p.isMainFeatured !== false && p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+  );
+  let initialGrid = initialValidCandidates.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured === true && !p.isHeroFeatured));
   if (initialGrid.length === 0) {
-    initialGrid = (products || []).filter((p: any) => p.isMainFeatured === true);
+    initialGrid = initialValidCandidates.filter((p: any) => p.isMainFeatured === true);
   }
   if (initialGrid.length === 0) {
-    initialGrid = (products || []).filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-"));
-  }
-  if (initialGrid.length === 0) {
-    initialGrid = products || [];
+    initialGrid = initialValidCandidates;
   }
   const [allProducts, setAllProducts] = React.useState<any[]>(initialGrid);
   const [currentPage, setCurrentPage] = React.useState(1);
@@ -135,16 +135,20 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.length > 0) {
+            // 미진열(isMainFeatured === false) 및 삭제된 상품은 홈화면에서 원천 차단
             const filteredParsed = parsed.filter(
               (p: any) =>
                 !deletedSet.has(String(p.id)) &&
                 !deletedSet.has(String(p.productCode)) &&
-                !deletedSet.has(String(p.handle))
+                !deletedSet.has(String(p.handle)) &&
+                p.isMainFeatured !== false &&
+                p.categoryId !== "main_banner" &&
+                !String(p.id).startsWith("hero-slide-")
             );
-            let grid = filteredParsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));
+            let grid = filteredParsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured === true && !p.isHeroFeatured));
             if (grid.length === 0) grid = filteredParsed.filter((p: any) => p.isMainFeatured === true);
-            if (grid.length === 0) grid = filteredParsed.filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-"));
-            if (grid.length > 0) setAllProducts(grid);
+            if (grid.length === 0) grid = filteredParsed;
+            setAllProducts(grid);
           }
         }
       } catch (e) {}
@@ -280,18 +284,31 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     const updateHomeData = async () => {
       let parsed = products || [];
 
-      // Fetch live authoritative products from Central Server API
+      // 1. 브라우저 localStorage 최신 데이터 우선 동기화 (즉각 반응성 보장)
+      if (typeof window !== "undefined") {
+        try {
+          const localRaw = localStorage.getItem("admin_products");
+          if (localRaw) {
+            const localData = JSON.parse(localRaw);
+            if (Array.isArray(localData) && localData.length > 0) {
+              parsed = localData;
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 2. 서버 API 최신 권한 데이터 비동기 페치
       try {
         const res = await fetch("/api/products");
         if (res.ok) {
           const serverData = await res.json();
-          if (Array.isArray(serverData)) {
+          if (Array.isArray(serverData) && serverData.length > 0) {
             parsed = serverData;
           }
         }
       } catch (e) {}
 
-      // Filter out any explicitly deleted products
+      // 3. 삭제된 상품 블랙리스트 필터링
       if (typeof window !== "undefined") {
         try {
           const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
@@ -307,22 +324,34 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
         } catch (e) {}
       }
 
-      // 1. Grid Products: Display bottom-featured products (isBottomFeatured) or isMainFeatured products, fallback to full product list if none explicitly selected
-      let gridProducts = parsed.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured && !p.isHeroFeatured));
-      if (gridProducts.length === 0) {
-        gridProducts = parsed.filter((p: any) => p.isMainFeatured === true);
-      }
-      if (gridProducts.length === 0) {
-        gridProducts = parsed.filter((p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-"));
-      }
-      setAllProducts(gridProducts.length > 0 ? gridProducts : parsed);
+      // 4. ⭐ 핵심: 미진열 상품(isMainFeatured === false)은 홈화면 추천/카탈로그에서 원천 차단
+      const validHomeProducts = parsed.filter(
+        (p: any) =>
+          p.isMainFeatured !== false &&
+          p.categoryId !== "main_banner" &&
+          !String(p.id).startsWith("hero-slide-")
+      );
 
-      // 2. Hero Slider Images: Strictly display dedicated main banners or custom hero images
+      // 1순위: 메인 진열 설정된 상품 (isMainFeatured === true)
+      let gridProducts = validHomeProducts.filter(
+        (p: any) => p.isBottomFeatured || (p.isMainFeatured === true && !p.isHeroFeatured)
+      );
+      if (gridProducts.length === 0) {
+        gridProducts = validHomeProducts.filter((p: any) => p.isMainFeatured === true);
+      }
+      // 2순위 (안전 폴백): 0개일 때도 미진열(isMainFeatured === false) 상품은 절대 제외하고 정상 진열 상품들만 노출
+      if (gridProducts.length === 0) {
+        gridProducts = validHomeProducts;
+      }
+      setAllProducts(gridProducts);
+
+      // Hero Slider Images: 미진열 상품은 히어로 배너 후보에서도 제외
       const heroCandidates = parsed.filter((p: any) =>
-        p.isHeroFeatured ||
-        Boolean(p.heroCustomImage) ||
-        p.categoryId === "main_banner" ||
-        String(p.id).startsWith("hero-slide-")
+        p.isMainFeatured !== false &&
+        (p.isHeroFeatured ||
+          Boolean(p.heroCustomImage) ||
+          p.categoryId === "main_banner" ||
+          String(p.id).startsWith("hero-slide-"))
       );
 
       let urls = heroCandidates

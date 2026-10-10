@@ -222,6 +222,11 @@ export async function getProduct(handle: string) {
         return null;
       }
 
+      // 미진열 설정된 상품(isMainFeatured === false)은 쇼핑몰 상세페이지에서도 노출 차단
+      if ((product as any).isMainFeatured === false) {
+        return null;
+      }
+
       if (!product.tags || !Array.isArray(product.tags)) {
         (product as any).tags = [];
       }
@@ -290,8 +295,12 @@ export async function getCollectionProducts({
   try {
     if (USE_MOCK_DATA) {
       const allList = getAllServerProducts();
+      // 미진열 상품(isMainFeatured === false)은 쇼핑몰 전체 카탈로그에서 완전히 제외
       const catalogProducts = allList.filter(
-        (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+        (p) =>
+          p.categoryId !== "main_banner" &&
+          !String(p.id).startsWith("hero-slide-") &&
+          (p as any).isMainFeatured !== false
       );
 
       if (collectionHandle === "all" || collectionHandle === "choice" || collectionHandle === "timesale" || collectionHandle === "special") {

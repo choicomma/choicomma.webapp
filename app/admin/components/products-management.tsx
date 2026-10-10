@@ -868,7 +868,7 @@ export function ProductsManagement({
       handleBulkUpdateMainFeatured(selectedProductIds, true);
     } else {
       const isConfirmed = window.confirm(
-        `선택한 ${selectedProductIds.length}개 상품을 [메인화면 진열]로 일괄 등록하시겠습니까?`
+        `선택한 ${selectedProductIds.length}개 상품을 [쇼핑몰 정상 진열]로 일괄 등록하시겠습니까?`
       );
       if (!isConfirmed) return;
       selectedProductIds.forEach((id) => {
@@ -889,7 +889,7 @@ export function ProductsManagement({
       handleBulkUpdateMainFeatured(selectedProductIds, false);
     } else {
       const isConfirmed = window.confirm(
-        `선택한 ${selectedProductIds.length}개 상품을 [메인화면 미진열]로 일괄 해제하시겠습니까?`
+        `선택한 ${selectedProductIds.length}개 상품을 [쇼핑몰 미진열 (전체 숨김)]로 일괄 변경하시겠습니까?`
       );
       if (!isConfirmed) return;
       selectedProductIds.forEach((id) => {
@@ -1854,7 +1854,7 @@ export function ProductsManagement({
                       className="w-full text-left px-3.5 py-2 text-xs font-bold text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition-colors cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                      <span>메인화면 진열 등록</span>
+                      <span>쇼핑몰 정상 진열 등록</span>
                     </button>
 
                     <button
@@ -1863,7 +1863,7 @@ export function ProductsManagement({
                       className="w-full text-left px-3.5 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-100 flex items-center gap-2 transition-colors cursor-pointer"
                     >
                       <EyeOff className="w-3.5 h-3.5 text-neutral-500" />
-                      <span>메인화면 진열 해제</span>
+                      <span>쇼핑몰 미진열 (전체 숨김)</span>
                     </button>
 
                     <button
@@ -2159,12 +2159,12 @@ export function ProductsManagement({
                                 ? "bg-neutral-950 text-white border-neutral-950 hover:bg-neutral-800"
                                 : "bg-white text-neutral-500 border-neutral-300 hover:bg-neutral-100 hover:text-neutral-800"
                             }`}
-                            title="클릭 시 메인 진열 ↔ 미진열 원클릭 전환"
+                            title="클릭 시 진열(쇼핑몰 전체 노출) ↔ 미진열(쇼핑몰 전체 숨김) 원클릭 전환"
                           >
                             {p.isMainFeatured ? (
                               <span>🌟 메인진열</span>
                             ) : (
-                              <span>⚙️ 미진열</span>
+                              <span>⚙️ 미진열 (숨김)</span>
                             )}
                           </button>
                         </div>

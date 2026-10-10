@@ -23,7 +23,10 @@ export function ProductListContent({
 }: ProductListContentProps) {
   const { setProducts } = useProducts();
   const initialValidProducts = (products || []).filter(
-    (p: any) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+    (p: any) =>
+      p.categoryId !== "main_banner" &&
+      !String(p.id).startsWith("hero-slide-") &&
+      p.isMainFeatured !== false
   );
   const [displayProducts, setDisplayProducts] = useState<Product[]>(initialValidProducts);
   const searchParams = useSearchParams();
@@ -32,7 +35,9 @@ export function ProductListContent({
 
   useEffect(() => {
     const loadAdminChoiceProducts = async () => {
-      let activeSourceProducts: Product[] = products || [];
+      let activeSourceProducts: Product[] = (products || []).filter(
+        (p: any) => p.isMainFeatured !== false
+      );
 
       // Fetch live authoritative products from Central Server API
       try {
@@ -44,7 +49,10 @@ export function ProductListContent({
               activeSourceProducts = [];
             } else {
               const nonBanner = serverData.filter(
-                (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+                (p) =>
+                  p.categoryId !== "main_banner" &&
+                  !String(p.id).startsWith("hero-slide-") &&
+                  p.isMainFeatured !== false
               );
               activeSourceProducts = nonBanner;
             }
@@ -60,7 +68,10 @@ export function ProductListContent({
             const localData: any[] = JSON.parse(localRaw);
             if (Array.isArray(localData)) {
               activeSourceProducts = localData.filter(
-                (p) => p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+                (p) =>
+                  p.categoryId !== "main_banner" &&
+                  !String(p.id).startsWith("hero-slide-") &&
+                  p.isMainFeatured !== false
               );
             }
           }
@@ -80,6 +91,11 @@ export function ProductListContent({
           }
         } catch (e) {}
       }
+
+      // Final strict filter: Never display unfeatured products in shop
+      activeSourceProducts = activeSourceProducts.filter(
+        (p: any) => p.isMainFeatured !== false
+      );
 
       // Filter active products by category if specific category is selected
       let categoryFilteredProducts = activeSourceProducts;

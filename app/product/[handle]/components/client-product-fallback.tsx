@@ -30,6 +30,8 @@ export function ClientProductFallback({ handle }: { handle: string }) {
     // Matcher helper
     const matchesProduct = (p: any) => {
       if (!p) return false;
+      // 미진열(isMainFeatured === false) 상품은 상세페이지에서도 노출 차단
+      if (p.isMainFeatured === false) return false;
       if (typeof window !== "undefined") {
         try {
           const deletedRaw = localStorage.getItem("admin_deleted_product_ids");
