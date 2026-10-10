@@ -143,6 +143,16 @@ export function getUserCoupons(userEmail?: string, userGrade?: string): Availabl
     ""
   ).toLowerCase().trim();
 
+  const isLoggedIn = localStorage.getItem("is_logged_in") === "true";
+  const isAdmin =
+    localStorage.getItem("user_role") === "admin" ||
+    sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+  // 비회원(로그인하지 않은 상태)에게는 쿠폰이 지급 및 적용되지 않음
+  if (!isAdmin && (!isLoggedIn || !currentEmail)) {
+    return [];
+  }
+
   const rawGrade = (
     userGrade ||
     localStorage.getItem("user_grade") ||

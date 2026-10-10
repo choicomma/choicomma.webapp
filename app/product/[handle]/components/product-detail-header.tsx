@@ -172,6 +172,7 @@ export function ProductDetailHeader({
   const [unitSalePrice, setUnitSalePrice] = useState<number>(0);
   const [finalAllDiscountPrice, setFinalAllDiscountPrice] = useState<number>(0);
   const [pointsDiscountAmount, setPointsDiscountAmount] = useState<number>(0);
+  const [isLoggedInUser, setIsLoggedInUser] = useState<boolean>(false);
 
   const isSetProduct =
     product?.tags?.includes("SET_SALE") || String(product?.id || "").startsWith("set-product-");
@@ -313,6 +314,8 @@ export function ProductDetailHeader({
       const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
       const userRole = localStorage.getItem("user_role") || "";
       const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+      const isLoggedIn = isAdmin || (localStorage.getItem("is_logged_in") === "true" && Boolean(userEmail));
+      setIsLoggedInUser(isLoggedIn);
 
       const globalStatus = localStorage.getItem("secret_timesale_status");
       const isGlobalOff = globalStatus === "ended";
@@ -360,7 +363,8 @@ export function ProductDetailHeader({
                 )
             );
             const isGradeTargeted = Boolean(
-              (sale.targetGrades || []).length > 0 &&
+              isLoggedIn &&
+                (sale.targetGrades || []).length > 0 &&
                 (sale.targetGrades.includes("ALL") ||
                   sale.targetGrades.includes(userRole?.toUpperCase()) ||
                   (userRole?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")))
@@ -391,53 +395,58 @@ export function ProductDetailHeader({
         baseForBenefits = regPrice;
       }
 
-      // 4. Coupon Discount Check
+      // 4. Coupon Discount Check (비회원은 쿠폰 미적용)
       let maxDisc = 0;
       let bestTitle = "";
-      try {
-        const availableCoupons = getUserCoupons(userEmail, userRole).filter(
-          (c) => c.type !== "SHIPPING" && !c.isUsed && c.isActive !== false
-        );
+      if (isLoggedIn) {
+        try {
+          const availableCoupons = getUserCoupons(userEmail, userRole).filter(
+            (c) => c.type !== "SHIPPING" && !c.isUsed && c.isActive !== false
+          );
 
-        if (availableCoupons.length > 0) {
-          for (const c of availableCoupons) {
-            if (c.minOrderAmount && baseForBenefits < c.minOrderAmount) continue;
-            let d = 0;
-            const isPercent = (c.discount && c.discount.includes("%")) || (c.discountAmount > 0 && c.discountAmount <= 99 && (c as any).discountType === "RATE");
-            if (isPercent) {
-              d = Math.round(baseForBenefits * (c.discountAmount / 100));
-            } else {
-              d = c.discountAmount || 0;
-            }
-            if (d > baseForBenefits) d = baseForBenefits;
-            if (d > maxDisc) {
-              maxDisc = d;
-              bestTitle = c.title;
+          if (availableCoupons.length > 0) {
+            for (const c of availableCoupons) {
+              if (c.minOrderAmount && baseForBenefits < c.minOrderAmount) continue;
+              let d = 0;
+              const isPercent = (c.discount && c.discount.includes("%")) || (c.discountAmount > 0 && c.discountAmount <= 99 && (c as any).discountType === "RATE");
+              if (isPercent) {
+                d = Math.round(baseForBenefits * (c.discountAmount / 100));
+              } else {
+                d = c.discountAmount || 0;
+              }
+              if (d > baseForBenefits) d = baseForBenefits;
+              if (d > maxDisc) {
+                maxDisc = d;
+                bestTitle = c.title;
+              }
             }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
       setCouponDiscountAmount(maxDisc);
       setCouponTitle(bestTitle);
 
       const afterCoupon = Math.max(0, baseForBenefits - maxDisc);
 
-      // 5. Points (적립금) Check
+      // 5. Points (적립금) Check (비회원은 적립금 미적용)
       let pointsD = 0;
-      try {
-        const userPts = parseInt(localStorage.getItem("membership_user_points") || "0");
-        if (userPts > 0) {
-          // 보유 적립금이 있는 경우 사용 가능한 적립금 적용 (최대 혜택)
-          pointsD = Math.min(userPts, afterCoupon);
-        } else {
-          // 신규/일반 회원 기본 1% 적립 혜택
-          pointsD = Math.floor(afterCoupon * 0.01);
-        }
-      } catch (e) {}
+      if (isLoggedIn) {
+        try {
+          const userPts = parseInt(localStorage.getItem("membership_user_points") || "0");
+          if (userPts > 0) {
+            // 보유 적립금이 있는 경우 사용 가능한 적립금 적용 (최대 혜택)
+            pointsD = Math.min(userPts, afterCoupon);
+          } else {
+            // 신규/일반 회원 기본 1% 적립 혜택
+            pointsD = Math.floor(afterCoupon * 0.01);
+          }
+        } catch (e) {}
+      }
       setPointsDiscountAmount(pointsD);
 
       // 6. Final Combined Price: 세일 + 쿠폰 + 적립금 적용가 (1개 기준)
-      const finalAllPrice = Math.max(0, afterCoupon - pointsD);
+      // 비회원은 쿠폰 및 적립금이 적용되지 않으므로 baseForBenefits 그대로 적용
+      const finalAllPrice = isLoggedIn ? Math.max(0, afterCoupon - pointsD) : baseForBenefits;
       setFinalAllDiscountPrice(finalAllPrice);
 
       setOriginalPriceNum(origPrice);
@@ -781,7 +790,14 @@ export function ProductDetailHeader({
           {hasRegularTimeSale && (
             <div className="flex items-center justify-between w-full text-xs sm:text-[13px]">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-neutral-700 whitespace-nowrap">타임세일 적용가</span>
+                <span className={cn(
+                  "whitespace-nowrap",
+                  !isLoggedInUser || (couponDiscountAmount === 0 && pointsDiscountAmount === 0)
+                    ? "font-extrabold text-neutral-950"
+                    : "font-bold text-neutral-700"
+                )}>
+                  타임세일 적용가
+                </span>
                 {quantity > 1 && (
                   <span className="text-[11px] text-neutral-500 font-medium whitespace-nowrap">({quantity}개)</span>
                 )}
@@ -797,7 +813,12 @@ export function ProductDetailHeader({
                     (개당 {formatPrice(regularTimeSalePrice.toString(), product.currencyCode || "KRW")})
                   </span>
                 )}
-                <span className="font-bold text-neutral-900 font-mono whitespace-nowrap">
+                <span className={cn(
+                  "font-mono whitespace-nowrap",
+                  !isLoggedInUser || (couponDiscountAmount === 0 && pointsDiscountAmount === 0)
+                    ? "text-base sm:text-lg font-black text-neutral-950 tracking-tight"
+                    : "font-bold text-neutral-900"
+                )}>
                   {formatPrice((regularTimeSalePrice * quantity).toString(), product.currencyCode || "KRW")}
                 </span>
               </div>
@@ -831,31 +852,33 @@ export function ProductDetailHeader({
             </div>
           )}
 
-          {/* 5. 세일+쿠폰+적립금 적용가 (적립금까지 포함한 모든 할인가 표시) */}
-          <div className={cn(
-            "flex items-center justify-between w-full text-xs sm:text-[13px]",
-            (hasRegularTimeSale || hasSecretTimeSale) && "pt-2 border-t border-dashed border-neutral-200/90"
-          )}>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-extrabold text-neutral-950 whitespace-nowrap">세일+쿠폰+적립금 적용가</span>
-              {quantity > 1 && (
-                <span className="text-[11px] text-neutral-600 font-medium whitespace-nowrap">({quantity}개)</span>
-              )}
-              <span className="text-[10px] font-extrabold text-neutral-700 bg-neutral-100 px-1.5 py-0.5 rounded whitespace-nowrap">
-                최대 혜택가
-              </span>
-              {quantity > 1 && (couponDiscountAmount > 0 || pointsDiscountAmount > 0) && (
-                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 whitespace-nowrap">
-                  쿠폰·적립금 1회 적용
+          {/* 5. 세일+쿠폰+적립금 적용가 (회원 로그인 상태이고 실제 쿠폰 또는 적립금 할인이 적용된 경우에만 표시) */}
+          {isLoggedInUser && (couponDiscountAmount > 0 || pointsDiscountAmount > 0) && (
+            <div className={cn(
+              "flex items-center justify-between w-full text-xs sm:text-[13px]",
+              (hasRegularTimeSale || hasSecretTimeSale) && "pt-2 border-t border-dashed border-neutral-200/90"
+            )}>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-extrabold text-neutral-950 whitespace-nowrap">세일+쿠폰+적립금 적용가</span>
+                {quantity > 1 && (
+                  <span className="text-[11px] text-neutral-600 font-medium whitespace-nowrap">({quantity}개)</span>
+                )}
+                <span className="text-[10px] font-extrabold text-neutral-700 bg-neutral-100 px-1.5 py-0.5 rounded whitespace-nowrap">
+                  최대 혜택가
                 </span>
-              )}
+                {quantity > 1 && (couponDiscountAmount > 0 || pointsDiscountAmount > 0) && (
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 whitespace-nowrap">
+                    쿠폰·적립금 1회 적용
+                  </span>
+                )}
+              </div>
+              <div className="flex items-baseline gap-1.5 shrink-0 whitespace-nowrap">
+                <span className="text-base sm:text-lg font-black text-neutral-950 tracking-tight font-mono whitespace-nowrap">
+                  {formatPrice(totalFinalBenefitPrice.toString(), product.currencyCode || "KRW")}
+                </span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1.5 shrink-0 whitespace-nowrap">
-              <span className="text-base sm:text-lg font-black text-neutral-950 tracking-tight font-mono whitespace-nowrap">
-                {formatPrice(totalFinalBenefitPrice.toString(), product.currencyCode || "KRW")}
-              </span>
-            </div>
-          </div>
+          )}
         </div>
 
       </div>
@@ -866,8 +889,13 @@ export function ProductDetailHeader({
           {/* Standalone Product Cut Thumbnails with Color Text Persistent on Top */}
           <div className="flex flex-wrap items-center justify-start gap-3">
             {colors.map((color, idx) => {
-              const isSelected = selectedColor === color;
-              const colorStr = String(color);
+              const colorStr = typeof color === "object" && color !== null
+                ? (color as any).name || (color as any).value || (color as any).title || (color as any).label || ""
+                : String(color || "");
+              if (!colorStr || colorStr.includes("[object") || colorStr === "undefined" || colorStr === "null") {
+                return null;
+              }
+              const isSelected = selectedColor === colorStr || selectedColor === color;
               const customImg = optionsColorImages[colorStr] || (product as any).colorImages?.[colorStr];
               const fallbackImg = product.images?.[idx]?.url || product.featuredImage?.url || "/product_1.webp";
               const cutImgUrl = customImg || fallbackImg;

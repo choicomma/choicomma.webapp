@@ -143,16 +143,20 @@ export function getAllProductOptions(
     // Raw colors
     const rawC = Array.isArray(sp.colors) ? sp.colors : [];
     rawC.forEach((c: any) => {
-      const val =
-        typeof c === "object" && c != null ? c.name || c.value || c.id || String(c) : String(c);
-      if (val && val.trim()) {
-        const trimmed = val.trim();
-        colorsSet.add(trimmed);
-        if (spImg && !colorImageMap[trimmed]) {
-          colorImageMap[trimmed] = spImg;
+      let val = "";
+      if (typeof c === "object" && c != null) {
+        val = c.name || c.value || c.title || c.label || c.color || c.id || "";
+      } else {
+        val = String(c ?? "");
+      }
+      val = val.trim();
+      if (val && !val.includes("[object") && val !== "undefined" && val !== "null") {
+        colorsSet.add(val);
+        if (spImg && !colorImageMap[val]) {
+          colorImageMap[val] = spImg;
         }
-        if (!colorHandleMap[trimmed] || isCurrent) {
-          colorHandleMap[trimmed] = spHandle;
+        if (!colorHandleMap[val] || isCurrent) {
+          colorHandleMap[val] = spHandle;
         }
       }
     });
@@ -164,8 +168,14 @@ export function getAllProductOptions(
       );
       if (cOpt && Array.isArray(cOpt.values)) {
         cOpt.values.forEach((v: any) => {
-          const val = String(v).trim();
-          if (val) {
+          let val = "";
+          if (typeof v === "object" && v != null) {
+            val = v.name || v.value || v.title || v.label || v.color || v.id || "";
+          } else {
+            val = String(v ?? "");
+          }
+          val = val.trim();
+          if (val && !val.includes("[object") && val !== "undefined" && val !== "null") {
             colorsSet.add(val);
             if (spImg && !colorImageMap[val]) {
               colorImageMap[val] = spImg;

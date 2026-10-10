@@ -295,8 +295,17 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
     localFallbackPrices?.discountedPrice ??
     discountedPriceNum;
 
-  const couponDiscountAmount = syncedPrices?.couponDiscountAmount ?? 0;
-  const pointsDiscountAmount = syncedPrices?.pointsDiscountAmount ?? 0;
+  const isGuestUser =
+    typeof window !== "undefined" &&
+    !(
+      localStorage.getItem("user_role") === "admin" ||
+      sessionStorage.getItem("choicomma_admin_authenticated") === "true" ||
+      (localStorage.getItem("is_logged_in") === "true" &&
+        Boolean(localStorage.getItem("membership_user_email")?.trim()))
+    );
+
+  const couponDiscountAmount = isGuestUser ? 0 : (syncedPrices?.couponDiscountAmount ?? 0);
+  const pointsDiscountAmount = isGuestUser ? 0 : (syncedPrices?.pointsDiscountAmount ?? 0);
 
   // 1) 세일, 타임세일, 시크릿 타임세일은 제품마다(수량만큼) 적용
   const totalSaleBasePrice = effectiveUnitPrice * quantity;
@@ -548,16 +557,22 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
                   </div>
                   <div className="space-y-1">
                     {parsedColors.map((color) => {
-                      const isSelected = selectedColor === color;
+                      const colorStr = typeof color === "object" && color !== null
+                        ? (color as any).name || (color as any).value || (color as any).title || (color as any).label || ""
+                        : String(color || "");
+                      if (!colorStr || colorStr.includes("[object") || colorStr === "undefined" || colorStr === "null") {
+                        return null;
+                      }
+                      const isSelected = selectedColor === colorStr || selectedColor === color;
                       const customImg =
-                        colorImageMap[color] || (product as any).colorImages?.[color];
+                        colorImageMap[colorStr] || (product as any).colorImages?.[colorStr];
                       const fallbackImg = product.featuredImage?.url || "/product_1.webp";
 
                       return (
                         <button
-                          key={color}
+                          key={colorStr}
                           type="button"
-                          onClick={() => handleColorChange(color)}
+                          onClick={() => handleColorChange(colorStr)}
                           className={cn(
                             "w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl text-xs transition-colors cursor-pointer text-left",
                             isSelected
@@ -567,9 +582,9 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <div className="w-5 h-5 rounded-md overflow-hidden border border-neutral-300 shrink-0 bg-neutral-100">
-                              <img src={customImg || fallbackImg} alt={color} className="w-full h-full object-cover" />
+                              <img src={customImg || fallbackImg} alt={colorStr} className="w-full h-full object-cover" />
                             </div>
-                            <span className="truncate">{color}</span>
+                            <span className="truncate">{colorStr}</span>
                           </div>
                           {isSelected && <Check className="w-3.5 h-3.5 stroke-[3] shrink-0" />}
                         </button>
