@@ -4,6 +4,7 @@ import { TAGS } from "@/lib/constants";
 import fs from "fs";
 import path from "path";
 import { adoptDiskIfNewer, markMemorySyncedWithDisk } from "@/lib/products-disk-sync";
+import { slimProductsForList } from "@/lib/products-slim";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -305,7 +306,8 @@ function revalidateAllProductPaths(handle?: string) {
 
 function makeResponse(products: any[], req?: NextRequest) {
   const deletedIds = readDeletedProductsList();
-  return NextResponse.json(products, {
+  const slim = req?.nextUrl.searchParams.get("slim") === "1";
+  return NextResponse.json(slim ? slimProductsForList(products) : products, {
     headers: {
       "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
       Pragma: "no-cache",

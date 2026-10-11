@@ -334,7 +334,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       abortController = controller;
 
       try {
-        const res = await fetch("/api/products?fresh=1", { cache: "no-store", signal: controller.signal });
+        const res = await fetch("/api/products?fresh=1&slim=1", { cache: "no-store", signal: controller.signal });
         if (!res.ok || !isSubscribed || mySeq !== requestSeq) return;
 
         let deleted: Set<string> | null = null;
