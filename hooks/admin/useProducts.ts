@@ -521,8 +521,8 @@ export function useProducts({
 
       if (!res.ok) {
         console.error("Failed to persist single product, status:", res.status);
-        markProductsSyncPending();
-        triggerToast("⚠️ 상품 저장에 실패했습니다. 다시 시도해주세요.");
+        if (!isNew) markProductsSyncPending();
+        triggerToast(isNew ? "⚠️ 상품 등록에 실패하여 목록에서 제외했습니다. 다시 시도해주세요." : "⚠️ 상품 저장에 실패했습니다. 다시 시도해주세요.");
         return false;
       }
 
@@ -570,8 +570,8 @@ export function useProducts({
       return true;
     } catch (err) {
       console.error("Failed to persist single product:", err);
-      markProductsSyncPending();
-      triggerToast("⚠️ 네트워크 오류로 상품 저장에 실패했습니다.");
+      if (!isNew) markProductsSyncPending();
+      triggerToast(isNew ? "⚠️ 네트워크 오류로 상품 등록에 실패하여 목록에서 제외했습니다." : "⚠️ 네트워크 오류로 상품 저장에 실패했습니다.");
       return false;
     }
   }, [triggerToast, enqueueServerWrite]);

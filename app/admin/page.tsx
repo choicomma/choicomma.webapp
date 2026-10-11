@@ -1438,7 +1438,19 @@ export default function AdminPage() {
           saveProductsToStorage(updatedList, true);
 
           // 2. Direct single item persistence to server (authoritative atomic write & disk sync)
-          await saveSingleProduct(finalProduct, isNew);
+          const saved = await saveSingleProduct(finalProduct, isNew);
+
+          // 신규 등록이 서버에 저장되지 못했다면 화면(및 이 브라우저의 캐시)에 남기지 않는다
+          if (!saved && isNew) {
+            const failedId = String(finalProduct.id);
+            setProductsList((prev) => {
+              const next = prev.filter((p) => String(p.id) !== failedId);
+              try {
+                localStorage.setItem("admin_products", JSON.stringify(next));
+              } catch {}
+              return next;
+            });
+          }
         }}
         triggerToast={triggerToast}
       />

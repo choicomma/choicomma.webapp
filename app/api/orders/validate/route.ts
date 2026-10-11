@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { validatePurchaseItems } from "@/lib/product-availability";
+import { syncCatalogFromRemote } from "@/lib/products-remote-store";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "검증할 상품이 없습니다." }, { status: 400 });
     }
 
+    await syncCatalogFromRemote();
     const catalog = readCatalog();
     // 카탈로그를 읽지 못한 경우 정상 주문을 막지 않도록 통과시키되 로그만 남긴다.
     if (catalog.length === 0) {

@@ -5,6 +5,15 @@ import fs from "fs";
 import path from "path";
 import { adoptDiskIfNewer, markMemorySyncedWithDisk } from "@/lib/products-disk-sync";
 import { slimProductsForList } from "@/lib/products-slim";
+import {
+  isRemoteCatalogEnabled,
+  remoteIsAuthoritative,
+  getRemoteDeletedList,
+  setRemoteDeletedListInMemory,
+  queueRemoteSave,
+  flushRemoteWrites,
+  syncCatalogFromRemote,
+} from "@/lib/products-remote-store";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -30,6 +39,9 @@ function getDeletedProductsFilePath() {
 }
 
 function readDeletedProductsList(): string[] {
+  // 원격 저장소(Supabase)가 설정된 배포 환경에서는 원격 삭제 목록이 기준이다
+  const remoteDeleted = getRemoteDeletedList();
+  if (remoteDeleted) return remoteDeleted;
   try {
     const filePath = getDeletedProductsFilePath();
     if (fs.existsSync(filePath)) {
@@ -42,6 +54,12 @@ function readDeletedProductsList(): string[] {
 }
 
 function writeDeletedProductsList(ids: string[]) {
+  // 원격 저장소: 메모리에 즉시 반영하고 저장을 대기열에 넣는다 (응답 전 flushRemoteWrites 로 완료 대기)
+  if (isRemoteCatalogEnabled) {
+    const unique = Array.from(new Set(ids.map(String)));
+    setRemoteDeletedListInMemory(unique);
+    queueRemoteSave("deleted", unique);
+  }
   try {
     const filePath = getDeletedProductsFilePath();
     const dir = path.dirname(filePath);
@@ -111,6 +129,14 @@ let fileWriteChain = Promise.resolve();
 
 function readLocalProductsBackup(): any[] {
   ensureSeedBackupExists();
+  // 원격 저장소가 기준이면 오래된 번들 파일을 섞지 않고 서버 메모리(=원격 최신)만 사용한다
+  if (
+    remoteIsAuthoritative() &&
+    Array.isArray(globalForProducts.serverProductsCache) &&
+    globalForProducts.serverProductsCache.length > 0
+  ) {
+    return filterOutDeletedServerProducts(globalForProducts.serverProductsCache);
+  }
   const runtimePath = getRuntimeProductsFilePath();
   let diskData: any[] | null = null;
   let lastReadError: unknown = null;
@@ -277,14 +303,21 @@ async function persistProducts(list: any[]): Promise<boolean> {
   } catch (writeErr: any) {
     console.warn("[Products Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
   }
-  // 더 최신 저장이 이미 메모리를 바꿨다면(다른 요청) dirty 상태를 그대로 둔다
-  logSync(`PERSIST ok=${ok} count=${list.length} first=${list.slice(0, 5).map((p: any) => p?.id).join(",")}`);
-  if (globalForProducts.serverProductsCache === list) {
-    globalForProducts.serverProductsDirty = !ok;
-    // 내가 방금 쓴 파일이므로 이 인스턴스의 메모리는 디스크와 같은 상태 (다음 요청에서 자기 저장분을 다시 읽지 않도록 기록)
-    if (ok) markMemorySyncedWithDisk();
+  // 원격 저장소(Supabase) 설정 시: 파일 저장이 막히는 배포 환경에서도 영구 저장이 되도록 함께 기록한다
+  let remoteOk = false;
+  if (isRemoteCatalogEnabled) {
+    queueRemoteSave("products", list);
+    remoteOk = await flushRemoteWrites();
   }
-  return ok;
+  const persisted = ok || remoteOk;
+  // 더 최신 저장이 이미 메모리를 바꿨다면(다른 요청) dirty 상태를 그대로 둔다
+  logSync(`PERSIST ok=${persisted} file=${ok} remote=${remoteOk} count=${list.length} first=${list.slice(0, 5).map((p: any) => p?.id).join(",")}`);
+  if (globalForProducts.serverProductsCache === list) {
+    globalForProducts.serverProductsDirty = !persisted;
+    // 내가 방금 쓴 파일이므로 이 인스턴스의 메모리는 디스크와 같은 상태 (다음 요청에서 자기 저장분을 다시 읽지 않도록 기록)
+    if (ok || remoteOk) markMemorySyncedWithDisk();
+  }
+  return persisted;
 }
 
 function revalidateAllProductPaths(handle?: string) {
@@ -322,6 +355,7 @@ function makeResponse(products: any[], req?: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     // 다른 서버 인스턴스가 더 최근에 저장한 순서/삭제를 먼저 반영 (오래된 메모리 목록으로 응답하는 롤백 방지)
+    await syncCatalogFromRemote();
     adoptDiskIfNewer();
     const action = req?.nextUrl.searchParams.get("action");
     if (action === "deleted") {
@@ -367,6 +401,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     ensureSeedBackupExists();
+    await syncCatalogFromRemote(true);
     adoptDiskIfNewer();
     const action = req.nextUrl.searchParams.get("action");
 
@@ -393,6 +428,10 @@ export async function POST(req: NextRequest) {
       }
 
       globalForProducts.serverProductsCache = seedProducts;
+      if (isRemoteCatalogEnabled) {
+        queueRemoteSave("products", seedProducts);
+        await flushRemoteWrites();
+      }
       try {
         safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), seedProducts);
       } catch (writeErr: any) {
@@ -434,9 +473,11 @@ export async function POST(req: NextRequest) {
           });
           if (cleaned.length !== diskList.length) {
             globalForProducts.serverProductsCache = cleaned;
+            if (isRemoteCatalogEnabled) queueRemoteSave("products", cleaned);
             await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), cleaned);
           }
         }
+        if (isRemoteCatalogEnabled) await flushRemoteWrites();
         revalidateAllProductPaths();
       }
       return NextResponse.json({ success: true, count: idsToSync.length }, {
@@ -466,8 +507,42 @@ export async function POST(req: NextRequest) {
       p.handle = safeHandle;
 
       const m = String(p.id).match(/\d+/);
-      const num = p.productNo !== undefined && !isNaN(Number(p.productNo)) ? Number(p.productNo) : (m && parseInt(m[0], 10) < 100000 ? parseInt(m[0], 10) : 0);
-      const code = p.productCode || (num > 0 ? `CC-${String(num).padStart(3, "0")}` : `CC-${pId}`);
+      let num = p.productNo !== undefined && !isNaN(Number(p.productNo)) ? Number(p.productNo) : (m && parseInt(m[0], 10) < 100000 ? parseInt(m[0], 10) : 0);
+      let code = p.productCode || (num > 0 ? `CC-${String(num).padStart(3, "0")}` : `CC-${pId}`);
+
+      // 신규 등록 상품: 기존/삭제된 상품이 쓰던 번호와 겹치지 않는 다음 CC-NNN 번호를 서버가 확정한다
+      if (isNewItem) {
+        const toNo = (v: any): number => {
+          const mm = String(v ?? "").match(/(\d+)\s*$/);
+          const n = mm ? parseInt(mm[1], 10) : 0;
+          return n > 0 && n < 100000 ? n : 0;
+        };
+        const usedNos = new Set<number>();
+        let maxNo = 0;
+        for (const item of readLocalProductsBackup()) {
+          if (String(item?.id) === pId) continue;
+          const n = Number(item?.productNo) > 0 && Number(item?.productNo) < 100000 ? Number(item.productNo) : toNo(item?.productCode) || toNo(item?.id);
+          if (n > 0) {
+            usedNos.add(n);
+            if (n > maxNo) maxNo = n;
+          }
+        }
+        for (const d of readDeletedProductsList()) {
+          const n = toNo(d);
+          if (n > 0) {
+            usedNos.add(n);
+            if (n > maxNo) maxNo = n;
+          }
+        }
+        if (!(num > 0) || usedNos.has(num)) {
+          num = maxNo + 1;
+          code = `CC-${String(num).padStart(3, "0")}`;
+        } else if (!p.productCode) {
+          code = `CC-${String(num).padStart(3, "0")}`;
+        }
+        p.productNo = num;
+        p.productCode = code;
+      }
       const relDate = p.releaseDate ? String(p.releaseDate).trim() : null;
       const tsRate = p.timeSaleDiscountRate !== undefined && p.timeSaleDiscountRate !== null && !isNaN(Number(p.timeSaleDiscountRate))
         ? Number(p.timeSaleDiscountRate)
@@ -643,6 +718,7 @@ export async function POST(req: NextRequest) {
 // DELETE: Delete product(s) directly from local JSON file
 export async function DELETE(req: NextRequest) {
   try {
+    await syncCatalogFromRemote(true);
     adoptDiskIfNewer();
     const url = new URL(req.url);
     let idsToDelete: string[] = [];
@@ -705,11 +781,14 @@ export async function DELETE(req: NextRequest) {
     });
 
     globalForProducts.serverProductsCache = updated;
+    if (isRemoteCatalogEnabled) queueRemoteSave("products", updated);
     try {
       await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), updated);
     } catch (writeErr: any) {
       console.warn("[Delete Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
     }
+
+    if (isRemoteCatalogEnabled) await flushRemoteWrites();
 
     revalidateAllProductPaths();
 

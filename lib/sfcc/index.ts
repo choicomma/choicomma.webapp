@@ -35,13 +35,16 @@ import { mockProducts } from "./mock/products";
 import { mockCollections } from "./mock/collections";
 import fs from "fs";
 import { adoptDiskIfNewer } from "@/lib/products-disk-sync";
+import { getRemoteDeletedList, syncCatalogFromRemote } from "@/lib/products-remote-store";
 import path from "path";
 
 function getAllServerProducts(): Product[] {
   let deletedIdSet = new Set<string>();
+  const remoteDeleted = getRemoteDeletedList();
+  if (remoteDeleted) deletedIdSet = new Set(remoteDeleted.map(String));
   try {
     const delPath = path.join(process.cwd(), "data", "deleted-products.json");
-    if (fs.existsSync(delPath)) {
+    if (!remoteDeleted && fs.existsSync(delPath)) {
       const delRaw = fs.readFileSync(delPath, "utf-8");
       const delList = JSON.parse(delRaw);
       if (Array.isArray(delList) && delList.length > 0) {
@@ -212,7 +215,8 @@ export async function getProduct(handle: string) {
       try {
         decoded = decodeURIComponent(handle);
       } catch (e) {}
-      const allList = getAllServerProducts();
+      await syncCatalogFromRemote();
+  const allList = getAllServerProducts();
       let product = allList.find(
         (p) =>
           p.handle === handle ||
@@ -310,7 +314,8 @@ export async function getCollectionProducts({
 }) {
   try {
     if (USE_MOCK_DATA) {
-      const allList = getAllServerProducts();
+      await syncCatalogFromRemote();
+  const allList = getAllServerProducts();
       // 미진열 상품(isMainFeatured === false)은 쇼핑몰 전체 카탈로그에서 완전히 제외
       const catalogProducts = allList.filter(
         (p) =>
