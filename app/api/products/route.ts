@@ -94,7 +94,7 @@ function readSeedCatalog(): any[] {
 }
 
 // In-memory cache for ultra-fast response & fail-safe fallback
-const globalForProducts = global as unknown as { serverProductsCache?: any[] };
+const globalForProducts = global as unknown as { serverProductsCache?: any[]; serverProductsDirty?: boolean };
 
 // Process-level write mutex queue to serialize all disk writes and eliminate EBUSY write lock collisions
 let fileWriteChain = Promise.resolve();
@@ -125,6 +125,11 @@ function readLocalProductsBackup(): any[] {
 
   // Reconciliation: if in-memory cache has newer product updates, NEVER downgrade memory with stale disk data!
   if (globalForProducts.serverProductsCache && Array.isArray(globalForProducts.serverProductsCache) && globalForProducts.serverProductsCache.length > 0) {
+    // 디스크 저장이 아직 진행 중이거나 실패한 상태라면 메모리가 최신(순서 포함)이므로 그대로 사용한다.
+    // (오래된 디스크 순서에 최신 값만 섞어 돌려주면 상품 순서가 이전으로 되돌아가 보인다)
+    if (globalForProducts.serverProductsDirty) {
+      return filterOutDeletedServerProducts(globalForProducts.serverProductsCache);
+    }
     if (!diskData || diskData.length === 0) {
       return filterOutDeletedServerProducts(globalForProducts.serverProductsCache);
     }
@@ -225,6 +230,24 @@ async function safeAtomicWriteJsonFile(targetPath: string, data: any): Promise<b
   const nextChain = fileWriteChain.then(writeOp, writeOp);
   fileWriteChain = nextChain.then(() => {}, () => {});
   return nextChain;
+}
+
+// 메모리 캐시를 먼저 갱신하고 디스크에 저장한다. 저장이 끝나기 전/실패한 동안은 dirty 로 표시해
+// 최신 목록 조회가 메모리(최신 순서)를 기준으로 응답하도록 한다.
+async function persistProducts(list: any[]): Promise<boolean> {
+  globalForProducts.serverProductsCache = list;
+  globalForProducts.serverProductsDirty = true;
+  let ok = false;
+  try {
+    ok = await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), list);
+  } catch (writeErr: any) {
+    console.warn("[Products Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
+  }
+  // 더 최신 저장이 이미 메모리를 바꿨다면(다른 요청) dirty 상태를 그대로 둔다
+  if (globalForProducts.serverProductsCache === list) {
+    globalForProducts.serverProductsDirty = !ok;
+  }
+  return ok;
 }
 
 function revalidateAllProductPaths(handle?: string) {
@@ -446,12 +469,7 @@ export async function POST(req: NextRequest) {
         existingList.unshift(itemToSave);
       }
 
-      globalForProducts.serverProductsCache = existingList;
-      try {
-        await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), existingList);
-      } catch (writeErr: any) {
-        console.warn("[Single Product Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
-      }
+      await persistProducts(existingList);
 
       revalidateAllProductPaths(p.handle);
 
@@ -549,12 +567,7 @@ export async function POST(req: NextRequest) {
       finalList = merged;
     }
 
-    globalForProducts.serverProductsCache = finalList;
-    try {
-      await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), finalList);
-    } catch (writeErr: any) {
-      console.warn("[Batch Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
-    }
+    await persistProducts(finalList);
 
     revalidateAllProductPaths();
 
