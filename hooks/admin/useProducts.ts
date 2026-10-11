@@ -359,14 +359,20 @@ export function useProducts({
       try {
         const res = await fetch("/api/products?fresh=1", { cache: "no-store" });
         if (res.ok) {
+          // 서버의 삭제 목록이 기준이다. 이 브라우저에 남은 옛 삭제 ID(예: 이후 다시 등록된 상품)는 버린다.
           const delHeader = res.headers.get("x-deleted-product-ids");
-          if (delHeader) {
+          {
+            let serverDelIds: string[] = [];
+            if (delHeader) {
+              try {
+                const parsedDel = JSON.parse(delHeader);
+                if (Array.isArray(parsedDel)) serverDelIds = parsedDel.map(String);
+              } catch {}
+            }
+            deletedSet.clear();
+            serverDelIds.forEach((id: string) => deletedSet.add(id));
             try {
-              const serverDelIds = JSON.parse(delHeader);
-              if (Array.isArray(serverDelIds) && serverDelIds.length > 0) {
-                addDeletedProductIdsToStorage(serverDelIds);
-                serverDelIds.forEach((id: string) => deletedSet.add(String(id)));
-              }
+              localStorage.setItem("admin_deleted_product_ids", JSON.stringify(serverDelIds));
             } catch {}
           }
 
@@ -374,14 +380,7 @@ export function useProducts({
           if (Array.isArray(data) && isMounted) {
             const sanitized = filterOutDeletedProducts(data, deletedSet);
 
-            // Proactively sync local deleted product IDs to server so other devices (e.g. mobile) are immediately synced
-            if (deletedSet.size > 0) {
-              fetch("/api/products?action=sync-deleted", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ids: Array.from(deletedSet) }),
-              }).catch(() => {});
-            }
+            // (삭제는 DELETE 요청으로 서버에 이미 반영되므로, 로컬 삭제 목록을 서버로 다시 밀어 넣지 않는다.)
 
             // Reconcile between localStorage and authoritative server catalog based on updated_at timestamp
             if (hasLocalData && localParsedList.length > 0) {
