@@ -276,6 +276,7 @@ async function persistProducts(list: any[]): Promise<boolean> {
     console.warn("[Products Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
   }
   // 더 최신 저장이 이미 메모리를 바꿨다면(다른 요청) dirty 상태를 그대로 둔다
+  logSync(`PERSIST ok=${ok} count=${list.length} first=${list.slice(0, 5).map((p: any) => p?.id).join(",")}`);
   if (globalForProducts.serverProductsCache === list) {
     globalForProducts.serverProductsDirty = !ok;
   }
@@ -511,6 +512,7 @@ export async function POST(req: NextRequest) {
         existingList.unshift(itemToSave);
       }
 
+      logSync(`POST single id=${pId} availableForSale=${p.availableForSale} stock=${p.stock}`);
       const persistedSingle = await persistProducts(existingList);
 
       revalidateAllProductPaths(p.handle);
@@ -540,6 +542,7 @@ export async function POST(req: NextRequest) {
       rawMode === "replace" ? "replace" : rawMode === "add" ? "add" : "merge";
 
     const products = body;
+    logSync(`POST batch mode=${mode} isArray=${Array.isArray(products)} count=${Array.isArray(products) ? products.length : -1} first=${Array.isArray(products) ? products.slice(0, 5).map((p: any) => p?.id).join(",") : ""}`);
     if (!Array.isArray(products)) {
       return NextResponse.json(
         { success: false, message: "올바른 배열 또는 상품 형식이 아닙니다." },

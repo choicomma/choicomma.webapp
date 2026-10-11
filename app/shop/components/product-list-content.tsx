@@ -319,36 +319,15 @@ export function ProductListContent({
       renderProducts(authoritativeProducts);
     };
 
-    const readLocalAdminProducts = (): any[] | null => {
-      if (typeof window === "undefined") return null;
-      try {
-        const localSaved = localStorage.getItem("admin_products");
-        if (localSaved) {
-          const parsed = JSON.parse(localSaved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {}
-      return null;
-    };
-
-    // 관리자 상품 변경 이벤트: 로컬 최신 목록을 즉시 반영하고 서버 최신 목록 재조회
+    // 관리자 상품 변경 이벤트: 서버 최신 목록만 재조회
+    // (즉시 renderProducts(authoritativeProducts) 실행 시, effect 재실행으로 인해
+    // authoritativeProducts가 SSR 데이터로 리셋된 경우 순간적으로 롤백 현상이 발생하므로 제거)
     const handleProductsChanged = () => {
-      const local = readLocalAdminProducts();
-      if (local) {
-        authoritativeProducts = local;
-        renderProducts(local);
-      }
       scheduleSync();
     };
 
-    // 1. 로컬에 저장된 최신 상품 순서가 있다면 SSR 목록보다 우선하여 즉시 반영
-    const localInitial = readLocalAdminProducts();
-    if (localInitial) {
-      authoritativeProducts = localInitial;
-      renderProducts(localInitial);
-    } else {
-      renderProducts(authoritativeProducts);
-    }
+    // 1. SSR로 내려온 서버 목록을 즉시 반영 (시간세일 가격/컬렉션 필터 포함)
+    renderProducts(authoritativeProducts);
     // 2. 서버 최신 데이터로 갱신
     syncFromServer();
 

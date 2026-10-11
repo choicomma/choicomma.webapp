@@ -10,7 +10,7 @@ function getRuntimeProductsFilePath() {
   return path.join(process.cwd(), "data", "products-cache.json");
 }
 
-function safeAtomicWriteJsonFile(targetPath: string, data: any) {
+function safeAtomicWriteJsonFile(targetPath: string, data: any): boolean {
   try {
     const dir = path.dirname(targetPath);
     if (!fs.existsSync(dir)) {
@@ -27,8 +27,10 @@ function safeAtomicWriteJsonFile(targetPath: string, data: any) {
       } catch {}
       fs.writeFileSync(targetPath, jsonStr, "utf-8");
     }
+    return true;
   } catch (err) {
     console.error("[Stock Deduct Write Error]:", err);
+    return false;
   }
 }
 
@@ -48,12 +50,20 @@ export async function POST(req: NextRequest) {
     }
 
     const filePath = getRuntimeProductsFilePath();
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ success: false, message: "Products file not found" }, { status: 404 });
-    }
+    const globalForProducts = global as unknown as { serverProductsCache?: any[]; serverProductsDirty?: boolean };
 
-    const raw = fs.readFileSync(filePath, "utf-8");
-    const products: any[] = JSON.parse(raw);
+    // 서버 메모리 캐시가 가장 최신(관리자 순서/품절 변경 포함)이므로 우선 사용한다.
+    // 오래된 파일을 기준으로 덮어쓰면 아직 디스크에 반영되지 않은 관리자 변경이 롤백된다.
+    let products: any[];
+    if (Array.isArray(globalForProducts.serverProductsCache) && globalForProducts.serverProductsCache.length > 0) {
+      products = JSON.parse(JSON.stringify(globalForProducts.serverProductsCache));
+    } else {
+      if (!fs.existsSync(filePath)) {
+        return NextResponse.json({ success: false, message: "Products file not found" }, { status: 404 });
+      }
+      const raw = fs.readFileSync(filePath, "utf-8");
+      products = JSON.parse(raw);
+    }
     if (!Array.isArray(products)) {
       return NextResponse.json({ success: false, message: "Invalid products catalog" }, { status: 500 });
     }
@@ -92,13 +102,18 @@ export async function POST(req: NextRequest) {
       // 3. Automatically toggle to Sold Out if total stock is 0
       if (newTotal === 0) {
         target.availableForSale = false;
+        if (Array.isArray(target.variants)) {
+          target.variants = target.variants.map((v: any) => ({ ...v, availableForSale: false }));
+        }
       }
+      target.updated_at = new Date().toISOString();
     });
 
     if (modified) {
-      safeAtomicWriteJsonFile(filePath, products);
-      const globalForProducts = global as unknown as { serverProductsCache?: any[] };
+      const written = safeAtomicWriteJsonFile(filePath, products);
       globalForProducts.serverProductsCache = products;
+      // 디스크 기록에 실패했다면 메모리가 최신이라는 표시를 남겨 다음 저장/조회에서 다시 기록되게 한다.
+      globalForProducts.serverProductsDirty = !written;
 
       // Revalidate cache across site
       try {

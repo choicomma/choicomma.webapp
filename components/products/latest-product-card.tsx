@@ -42,7 +42,10 @@ export function LatestProductCard({
     product.availableForSale === false ||
     (product as any).status === "sold_out" ||
     (product as any).isOutOfStock === true ||
-    (product as any).inventoryQuantity === 0;
+    (product as any).inventoryQuantity === 0 ||
+    ((product as any).stock !== undefined &&
+      (product as any).stock !== null &&
+      Number((product as any).stock) <= 0);
 
   const [timeSaleDiscount, setTimeSaleDiscount] = useState<number | null>(null);
 

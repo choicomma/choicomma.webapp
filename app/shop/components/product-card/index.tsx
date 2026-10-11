@@ -209,7 +209,10 @@ export const ProductCard = ({ product }: { product: Product }) => {
             <Clock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-neutral-950" />
             <span>오픈 예정</span>
           </span>
-        ) : product.availableForSale === false ? (
+        ) : product.availableForSale === false ||
+          ((product as any).stock !== undefined &&
+            (product as any).stock !== null &&
+            Number((product as any).stock) <= 0) ? (
           <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
             품절
           </span>

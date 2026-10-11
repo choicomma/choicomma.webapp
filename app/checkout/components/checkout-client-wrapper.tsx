@@ -555,6 +555,38 @@ export default function CheckoutClientWrapper() {
     try {
       setIsDirectPayLoading(true);
 
+      // 결제 전 서버 검증: 품절 / 구매불가(시간설정 OFF) / 오픈예정 / 재고 부족 상품은 주문 차단
+      try {
+        const validateItems = orderLines.map((l: any) => {
+          const opts = l.merchandise?.selectedOptions || [];
+          return {
+            productId: l.merchandise?.product?.id || l.merchandise?.product?.handle || l.id,
+            quantity: Number(l.quantity) || 1,
+            color: opts.find((o: any) => o.name?.toLowerCase() === "color")?.value || "",
+            size: opts.find((o: any) => o.name?.toLowerCase() === "size")?.value || "",
+          };
+        });
+        const validateRes = await fetch("/api/orders/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          body: JSON.stringify({ items: validateItems }),
+        });
+        if (validateRes.ok) {
+          const validateData = await validateRes.json();
+          if (validateData?.valid === false && Array.isArray(validateData.blocks) && validateData.blocks.length > 0) {
+            alert(
+              `주문할 수 없는 상품이 있습니다.\n\n${validateData.blocks
+                .map((b: any) => `- ${b.message}`)
+                .join("\n")}\n\n장바구니에서 해당 상품을 제거한 후 다시 시도해 주세요.`
+            );
+            return;
+          }
+        }
+      } catch (validateErr) {
+        console.warn("Purchase validation notice:", validateErr);
+      }
+
       const tossPayments = await loadTossPayments(clientKey);
 
       // 주문서번호 생성 규칙: CH + 날짜(YYYYMMDD) + '-' + 주문순서(001, 002...)

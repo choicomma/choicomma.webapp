@@ -595,6 +595,11 @@ export function ProductDetailHeader({
   const isScheduled = Boolean(
     product.releaseDate && new Date(product.releaseDate).getTime() > Date.now()
   );
+  // 재고가 0이면 availableForSale 값과 무관하게 품절로 취급 (서버 구매 검증과 동일 기준)
+  const isStockEmpty =
+    (product as any).stock !== undefined &&
+    (product as any).stock !== null &&
+    Number((product as any).stock) <= 0;
   const scheduledDateStr = isScheduled
     ? new Date(product.releaseDate!).toLocaleString("ko-KR", {
         month: "long",
@@ -616,7 +621,7 @@ export function ProductDetailHeader({
   );
 
   const handleAddToCart = () => {
-    if (!product.availableForSale || isScheduled) return;
+    if (!product.availableForSale || isScheduled || isStockEmpty) return;
     setIsAdding(true);
 
     const variant: ProductVariant = {
@@ -642,7 +647,7 @@ export function ProductDetailHeader({
   };
 
   const handleBuyNow = () => {
-    if (!product.availableForSale || isScheduled) return;
+    if (!product.availableForSale || isScheduled || isStockEmpty) return;
 
     const variantTitle = `${cleanProductTitle(product.title)} ${selectedColor ? `- ${selectedColor}` : ""} ${selectedSize ? `/ ${selectedSize}` : ""}`.trim();
     const directItem = {
@@ -683,7 +688,7 @@ export function ProductDetailHeader({
     router.push("/checkout");
   };
 
-  const isOutOfStock = !product.availableForSale || isScheduled;
+  const isOutOfStock = !product.availableForSale || isScheduled || isStockEmpty;
 
   const t = HEADER_I18N[currentLang] || HEADER_I18N.ko;
 
@@ -750,7 +755,7 @@ export function ProductDetailHeader({
               <Clock className="w-3.5 h-3.5 text-neutral-950" />
               <span>{scheduledDateStr} 오픈 예정</span>
             </span>
-          ) : product.availableForSale === false ? (
+          ) : product.availableForSale === false || isStockEmpty ? (
             <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
               품절
             </span>

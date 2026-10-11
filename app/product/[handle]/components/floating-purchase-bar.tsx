@@ -342,7 +342,11 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
         minute: "2-digit",
       })
     : "";
-  const isOutOfStock = curStock === 0 || !product.availableForSale || isScheduled;
+  const isTotalStockEmpty =
+    (product as any).stock !== undefined &&
+    (product as any).stock !== null &&
+    Number((product as any).stock) <= 0;
+  const isOutOfStock = curStock === 0 || isTotalStockEmpty || !product.availableForSale || isScheduled;
 
   const handleColorChange = (color: string) => {
     setIsColorOpen(false);

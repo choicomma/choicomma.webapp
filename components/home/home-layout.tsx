@@ -359,25 +359,8 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       }
     };
 
-    const readLocalAdminProducts = (): any[] | null => {
-      if (typeof window === "undefined") return null;
-      try {
-        const localSaved = localStorage.getItem("admin_products");
-        if (localSaved) {
-          const parsed = JSON.parse(localSaved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {}
-      return null;
-    };
-
-    // storage 이벤트(다른 탭 변경)는 로컬 최신 목록을 즉시 반영하고 서버와 동기화
+    // storage 이벤트(다른 탭 변경)는 debounce로 모아서 한 번만 조회
     const scheduleSync = () => {
-      const local = readLocalAdminProducts();
-      if (local) {
-        authoritativeProducts = local;
-        applyProductsToList(local);
-      }
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         debounceTimer = null;
@@ -385,13 +368,8 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       }, 250);
     };
 
-    // 어드민 상품 저장/수정 이벤트: 로컬 최신 순서를 즉시 반영하고 서버에서 최신 데이터를 가져온다
+    // 어드민 상품 저장/수정 이벤트: 즉시 서버에서 최신 데이터를 가져온다
     const handleAdminProductsUpdated = () => {
-      const local = readLocalAdminProducts();
-      if (local) {
-        authoritativeProducts = local;
-        applyProductsToList(local);
-      }
       if (debounceTimer) {
         clearTimeout(debounceTimer);
         debounceTimer = null;
@@ -404,14 +382,8 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       applyProductsToList(authoritativeProducts);
     };
 
-    // 1. 로컬에 저장된 최신 상품 순서가 있다면 SSR 목록보다 우선하여 즉시 반영
-    const localInitial = readLocalAdminProducts();
-    if (localInitial) {
-      authoritativeProducts = localInitial;
-      applyProductsToList(localInitial, false);
-    } else {
-      applyProductsToList(authoritativeProducts, false);
-    }
+    // 1. SSR로 내려온 서버 목록을 즉시 반영 (이 기기에서 삭제한 상품만 추가로 걸러냄)
+    applyProductsToList(authoritativeProducts, false);
     // 2. 서버 최신 데이터로 갱신
     syncFromServer();
     setIsHydrated(true);

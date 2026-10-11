@@ -1211,7 +1211,7 @@ export function useProducts({
 
   const handleReorderProducts = useCallback((fromId: string, toId: string, showToast: boolean = true) => {
     setProductSortOrder("custom");
-    const baseList = [...productsList];
+    const baseList = getSortedBaseList(productsList, productSortOrder);
     const fromIdx = baseList.findIndex((p) => String(p.id) === String(fromId));
     const toIdx = baseList.findIndex((p) => String(p.id) === String(toId));
     if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
@@ -1219,11 +1219,11 @@ export function useProducts({
     const [movedItem] = updated.splice(fromIdx, 1);
     updated.splice(toIdx, 0, movedItem);
     setProductsList(updated);
-    saveProductsToStorage(updated, false, "replace");
+    saveProductsToStorage(updated);
     if (showToast) {
       triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
     }
-  }, [productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleClearAllProducts = useCallback(async () => {
     const totalCount = actualProductsCount;
@@ -1320,7 +1320,7 @@ export function useProducts({
 
   const handleMoveProduct = useCallback((id: string, direction: "up" | "down") => {
     setProductSortOrder("custom");
-    const baseList = [...productsList];
+    const baseList = getSortedBaseList(productsList, productSortOrder);
     const currentFiltered = filteredProducts;
     const filteredIdx = currentFiltered.findIndex((p) => String(p.id) === String(id));
 
@@ -1335,7 +1335,7 @@ export function useProducts({
           const [movedItem] = updated.splice(fromIdx, 1);
           updated.splice(toIdx, 0, movedItem);
           setProductsList(updated);
-          saveProductsToStorage(updated, false, "replace");
+          saveProductsToStorage(updated);
           triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
           return;
         }
@@ -1353,13 +1353,13 @@ export function useProducts({
     newList[targetIdx] = temp;
 
     setProductsList(newList);
-    saveProductsToStorage(newList, false, "replace");
+    saveProductsToStorage(newList);
     triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
-  }, [filteredProducts, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [filteredProducts, getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleMoveProductToTop = useCallback((id: string) => {
     setProductSortOrder("custom");
-    const baseList = [...productsList];
+    const baseList = getSortedBaseList(productsList, productSortOrder);
     const idx = baseList.findIndex((p) => String(p.id) === String(id));
     if (idx === -1) return;
     if (idx === 0) {
@@ -1370,47 +1370,42 @@ export function useProducts({
     const [movedItem] = updated.splice(idx, 1);
     updated.unshift(movedItem);
     setProductsList(updated);
-    saveProductsToStorage(updated, false, "replace");
+    saveProductsToStorage(updated);
     triggerToast(`⬆️ '${movedItem.title}' 상품이 목록 최상단으로 이동되었습니다.`);
-  }, [productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleBulkMoveToTop = useCallback((targetIds: string[]) => {
     if (!targetIds || targetIds.length === 0) return;
     setProductSortOrder("custom");
-    const baseList = [...productsList];
+    const baseList = getSortedBaseList(productsList, productSortOrder);
     const idSet = new Set(targetIds.map(String));
     const selected = baseList.filter((p) => idSet.has(String(p.id)));
     const unselected = baseList.filter((p) => !idSet.has(String(p.id)));
     if (selected.length === 0) return;
     const updated = [...selected, ...unselected];
     setProductsList(updated);
-    saveProductsToStorage(updated, false, "replace");
+    saveProductsToStorage(updated);
     triggerToast(`⬆️ 선택한 ${selected.length}개 상품이 목록 최상단으로 일괄 이동되었습니다.`);
-  }, [productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleSortOrderChange = useCallback((
     newOrder: "productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom"
   ) => {
     setProductSortOrder(newOrder);
-    if (newOrder !== "custom") {
-      const sorted = getSortedBaseList(productsList, newOrder);
-      setProductsList(sorted);
-      saveProductsToStorage(sorted, false, "replace");
-    }
     triggerToast(
       newOrder === "custom"
         ? "✅ 사용자 지정 순서(드래그 앤 드롭) 모드로 변경되었습니다."
         : newOrder === "productNoDesc"
-        ? "✅ 상품 목록이 '최신 등록순'으로 정렬 및 홈화면에 반영되었습니다."
+        ? "✅ 상품 목록이 '최신 등록순'으로 정렬되었습니다."
         : newOrder === "productNoAsc"
-        ? "✅ 상품 목록이 '등록번호 순'으로 정렬 및 홈화면에 반영되었습니다."
+        ? "✅ 상품 목록이 '등록번호 순'으로 정렬되었습니다."
         : newOrder === "nameAsc"
-        ? "✅ 상품 목록이 '상품명 순'으로 정렬 및 홈화면에 반영되었습니다."
+        ? "✅ 상품 목록이 '상품명 순'으로 정렬되었습니다."
         : newOrder === "priceDesc"
-        ? "✅ 상품 목록이 '높은 가격순'으로 정렬 및 홈화면에 반영되었습니다."
-        : "✅ 상품 목록이 '낮은 가격순'으로 정렬 및 홈화면에 반영되었습니다."
+        ? "✅ 상품 목록이 '높은 가격순'으로 정렬되었습니다."
+        : "✅ 상품 목록이 '낮은 가격순'으로 정렬되었습니다."
     );
-  }, [getSortedBaseList, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [setProductSortOrder, triggerToast]);
 
   const handleQuickUpdateReleaseSchedule = useCallback(
     async (id: string, availableForSale: boolean, releaseDate?: string) => {
