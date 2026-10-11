@@ -23,6 +23,16 @@ interface UseProductsOptions {
 // 전체 목록 서버 저장 방식: merge(기본, 서버의 더 최신 값 유지) | add(merge + 삭제 목록 해제) | replace(전체 교체)
 type ServerSaveMode = "merge" | "add" | "replace";
 
+// 서버 저장/삭제가 '완료'된 뒤 다른 탭(홈/전체보기)에 알린다.
+// window.dispatchEvent 는 같은 탭에만 전달되므로, 실제 localStorage 값을 바꿔 탭 간 storage 이벤트를 발생시킨다.
+// (저장 전에 localStorage 에 쓰면서 발생한 storage 이벤트는 서버 반영보다 먼저 도착해 다른 탭이 이전 순서/값을 읽게 됨)
+function notifyProductsSynced() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("admin_products_synced_at", String(Date.now()));
+  } catch {}
+}
+
 const INITIAL_CHOICOMMA_PRODUCTS: any[] = (productsCache as any[]) || [];
 
 export function getDeletedProductIdsFromStorage(): Set<string> {
@@ -468,6 +478,7 @@ export function useProducts({
 
       window.dispatchEvent(new CustomEvent("admin_products_updated"));
       window.dispatchEvent(new CustomEvent("storage"));
+      notifyProductsSynced();
       return true;
     } catch (err) {
       console.error("Failed to persist single product:", err);
@@ -496,6 +507,7 @@ export function useProducts({
       }
 
       window.dispatchEvent(new CustomEvent("admin_products_updated"));
+      notifyProductsSynced();
       return true;
     } catch (err) {
       console.warn("Network error during /api/products sync, local persistence active:", err);
@@ -957,6 +969,7 @@ export function useProducts({
 
     window.dispatchEvent(new CustomEvent("admin_products_updated"));
     window.dispatchEvent(new CustomEvent("products_updated"));
+    notifyProductsSynced();
     triggerToast(`'${title}' 상품이 성공적으로 삭제되었습니다.`);
   }, [productsList, saveProductsToStorage, triggerToast, adminTimeSaleProductIds, setAdminTimeSaleProductIds]);
 
@@ -1132,6 +1145,7 @@ export function useProducts({
 
     window.dispatchEvent(new CustomEvent("admin_products_updated"));
     window.dispatchEvent(new CustomEvent("products_updated"));
+    notifyProductsSynced();
     triggerToast(`🗑️ 선택한 ${targetIds.length}개 상품이 성공적으로 삭제되었습니다.`);
   }, [productsList, saveProductsToStorage, triggerToast, adminTimeSaleProductIds, setAdminTimeSaleProductIds]);
 
@@ -1184,6 +1198,7 @@ export function useProducts({
 
     window.dispatchEvent(new CustomEvent("admin_products_updated"));
     window.dispatchEvent(new CustomEvent("products_updated"));
+    notifyProductsSynced();
     triggerToast(`🗑️ 상품관리에 등록된 전체 상품 ${totalCount}개가 모두 성공적으로 삭제되었습니다.`);
   }, [actualProductsCount, productsList, saveProductsToStorage, triggerToast, setAdminTimeSaleProductIds]);
 
