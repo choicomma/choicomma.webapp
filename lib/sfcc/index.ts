@@ -57,29 +57,44 @@ function getAllServerProducts(): Product[] {
     return !deletedIdSet.has(id) && !deletedIdSet.has(code) && !deletedIdSet.has(handle);
   };
 
+  const normalizeList = (list: any[]) =>
+    list.filter(filterDeleted).map((p: any) => {
+      const meta = p.bulkDiscount || {};
+      const tagRate = Array.isArray(p.tags)
+        ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
+        : null;
+      const rate = p.timeSaleDiscountRate !== undefined
+        ? Number(p.timeSaleDiscountRate)
+        : (meta.timeSaleDiscountRate !== undefined
+          ? Number(meta.timeSaleDiscountRate)
+          : (tagRate && !isNaN(Number(tagRate)) ? Number(tagRate) : undefined));
+      const isTs = Boolean(p.isTimeSale || meta.isTimeSale || (Array.isArray(p.tags) && p.tags.includes("TIMESALE")));
+      return {
+        ...p,
+        timeSaleDiscountRate: rate,
+        isTimeSale: isTs,
+      };
+    });
+
+  // 1순위: /api/products 가 유지하는 서버 메모리의 최신 목록 (관리자 화면/클라이언트 동기화와 동일한 기준).
+  // 디스크 저장이 지연·실패해도 상품관리에서 바꾼 순서/품절 상태가 홈 첫 렌더에 그대로 반영된다.
+  try {
+    const memList = (global as unknown as { serverProductsCache?: any[] }).serverProductsCache;
+    if (Array.isArray(memList) && memList.length > 0) {
+      return normalizeList(memList) as Product[];
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // 2순위: 디스크 파일
   try {
     const cachePath = path.join(process.cwd(), "data", "products-cache.json");
     if (fs.existsSync(cachePath)) {
       const raw = fs.readFileSync(cachePath, "utf-8");
       const list = JSON.parse(raw);
       if (Array.isArray(list)) {
-        return list.filter(filterDeleted).map((p: any) => {
-          const meta = p.bulkDiscount || {};
-          const tagRate = Array.isArray(p.tags)
-            ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
-            : null;
-          const rate = p.timeSaleDiscountRate !== undefined
-            ? Number(p.timeSaleDiscountRate)
-            : (meta.timeSaleDiscountRate !== undefined
-              ? Number(meta.timeSaleDiscountRate)
-              : (tagRate && !isNaN(Number(tagRate)) ? Number(tagRate) : undefined));
-          const isTs = Boolean(p.isTimeSale || meta.isTimeSale || (Array.isArray(p.tags) && p.tags.includes("TIMESALE")));
-          return {
-            ...p,
-            timeSaleDiscountRate: rate,
-            isTimeSale: isTs,
-          };
-        });
+        return normalizeList(list) as Product[];
       }
     }
   } catch (e) {

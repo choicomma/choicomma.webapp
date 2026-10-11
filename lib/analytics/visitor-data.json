@@ -1,6 +1,26 @@
 {
   "logs": [
     {
+      "id": "LOG-1791692661232-272",
+      "timestamp": "2026-10-11 13:24:21",
+      "isoDate": "2026-10-11T04:24:21.231Z",
+      "ip": "127.0.0.1",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "/",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791692661231_e083xo",
+      "sessionId": "s_1791692661232",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
       "id": "LOG-1791690877418-297",
       "timestamp": "2026-10-11 12:54:37",
       "isoDate": "2026-10-11T03:54:37.418Z",
@@ -8425,5 +8445,5 @@
     "172.30.1.74",
     "192.168.219.105"
   ],
-  "updatedAt": "2026-10-11T03:54:37.418Z"
+  "updatedAt": "2026-10-11T04:24:21.231Z"
 }

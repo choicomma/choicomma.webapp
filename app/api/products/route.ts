@@ -11,6 +11,14 @@ function getRuntimeProductsFilePath() {
   return path.join(process.cwd(), "data", "products-cache.json");
 }
 
+// 진단용 로그: 상품 저장/디스크 기록/파일 읽기 결과를 .next/products-sync.log 에 남긴다 (터미널 로그를 직접 볼 수 없는 경우 용).
+function logSync(message: string) {
+  try {
+    const logPath = path.join(process.cwd(), ".next", "products-sync.log");
+    fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${message}\n`, "utf-8");
+  } catch {}
+}
+
 function getSeedProductsFilePath() {
   return path.join(process.cwd(), "data", "default-products-seed.json");
 }
@@ -103,25 +111,31 @@ function readLocalProductsBackup(): any[] {
   ensureSeedBackupExists();
   const runtimePath = getRuntimeProductsFilePath();
   let diskData: any[] | null = null;
+  let lastReadError: unknown = null;
 
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= 5; attempt++) {
     try {
       if (fs.existsSync(runtimePath)) {
         const raw = fs.readFileSync(runtimePath, "utf-8");
         const data = JSON.parse(raw);
+        lastReadError = null;
         if (Array.isArray(data) && data.length > 0) {
           diskData = filterOutDeletedServerProducts(data);
           break;
         }
       }
+      break;
     } catch (e) {
+      lastReadError = e;
+      logSync(`READ FAIL attempt=${attempt}: ${(e as any)?.message || e}`);
       console.warn(`[Products File Read Attempt ${attempt} Warning]:`, e);
-      if (attempt < 3) {
+      if (attempt < 5) {
         const start = Date.now();
-        while (Date.now() - start < 40) {}
+        while (Date.now() - start < 60) {}
       }
     }
   }
+  const diskReadFailed = diskData === null && lastReadError !== null;
 
   // Reconciliation: if in-memory cache has newer product updates, NEVER downgrade memory with stale disk data!
   if (globalForProducts.serverProductsCache && Array.isArray(globalForProducts.serverProductsCache) && globalForProducts.serverProductsCache.length > 0) {
@@ -133,20 +147,38 @@ function readLocalProductsBackup(): any[] {
     if (!diskData || diskData.length === 0) {
       return filterOutDeletedServerProducts(globalForProducts.serverProductsCache);
     }
-    const memMap = new Map(globalForProducts.serverProductsCache.map((p: any) => [String(p?.id || ""), p]));
-    const reconciled = diskData.map((dp: any) => {
-      const mp = memMap.get(String(dp?.id || ""));
-      if (!mp) return dp;
+    // 순서는 항상 메모리(가장 최근 저장) 기준으로 유지한다. 디스크 순서를 따르면 관리자가 바꾼 순서가 되돌아간다.
+    // 상품별 값은 updated_at 이 더 최신인 쪽을 사용하고, 디스크에만 있는 상품(다른 경로로 추가됨)은 뒤에 붙인다.
+    const diskMap = new Map(diskData.map((p: any) => [String(p?.id || ""), p]));
+    const memIds = new Set<string>();
+    const reconciled: any[] = [];
+    for (const mp of globalForProducts.serverProductsCache) {
+      const id = String(mp?.id || "");
+      memIds.add(id);
+      const dp = diskMap.get(id);
+      if (!dp) {
+        reconciled.push(mp);
+        continue;
+      }
       const memTime = (mp.updated_at || mp.updatedAt) ? new Date(mp.updated_at || mp.updatedAt).getTime() : 0;
       const diskTime = (dp.updated_at || dp.updatedAt) ? new Date(dp.updated_at || dp.updatedAt).getTime() : 0;
-      return memTime >= diskTime ? mp : dp;
-    });
+      reconciled.push(diskTime > memTime ? dp : mp);
+    }
+    for (const dp of diskData) {
+      if (!memIds.has(String(dp?.id || ""))) reconciled.push(dp);
+    }
 
     return filterOutDeletedServerProducts(reconciled);
   }
 
   if (diskData && diskData.length > 0) {
     return diskData;
+  }
+
+  // 파일은 존재하지만 읽지 못한 경우(OneDrive 잠금 등)에는 초기 원본(seed)으로 대체하지 않는다.
+  // seed 가 "최신 목록"이 되어 관리자가 바꾼 순서/품절 상태를 덮어쓰는 롤백을 막기 위해 오류로 처리한다.
+  if (diskReadFailed) {
+    throw new Error("상품 파일을 일시적으로 읽을 수 없습니다. 잠시 후 다시 시도해주세요.");
   }
 
   return readSeedCatalog();
@@ -301,6 +333,16 @@ export async function GET(req: NextRequest) {
       globalForProducts.serverProductsCache = filterOutDeletedServerProducts(localList);
     } else if (Array.isArray(globalForProducts.serverProductsCache)) {
       globalForProducts.serverProductsCache = filterOutDeletedServerProducts(globalForProducts.serverProductsCache);
+    }
+
+    // 디스크 저장이 실패해 메모리에만 최신 목록이 남아있다면(dirty) 조회할 때마다 다시 디스크에 저장을 시도한다.
+    // (재시작/코드 다시 로드 시 오래된 파일 상태로 되돌아가는 롤백 방지)
+    if (
+      globalForProducts.serverProductsDirty &&
+      Array.isArray(globalForProducts.serverProductsCache) &&
+      globalForProducts.serverProductsCache.length > 0
+    ) {
+      await persistProducts(globalForProducts.serverProductsCache);
     }
 
     return makeResponse(globalForProducts.serverProductsCache || [], req);
@@ -469,12 +511,13 @@ export async function POST(req: NextRequest) {
         existingList.unshift(itemToSave);
       }
 
-      await persistProducts(existingList);
+      const persistedSingle = await persistProducts(existingList);
 
       revalidateAllProductPaths(p.handle);
 
       return NextResponse.json({
         success: true,
+        persisted: persistedSingle,
         product: existingList[existingIdx !== -1 ? existingIdx : 0],
       }, {
         headers: {
@@ -567,11 +610,11 @@ export async function POST(req: NextRequest) {
       finalList = merged;
     }
 
-    await persistProducts(finalList);
+    const persistedBatch = await persistProducts(finalList);
 
     revalidateAllProductPaths();
 
-    return NextResponse.json({ success: true, count: finalList.length, mode, keptServerCount }, {
+    return NextResponse.json({ success: true, persisted: persistedBatch, count: finalList.length, mode, keptServerCount }, {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate",
         Pragma: "no-cache",

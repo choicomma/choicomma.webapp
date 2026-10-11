@@ -33,6 +33,41 @@ function notifyProductsSynced() {
   } catch {}
 }
 
+// 상품관리(로컬) 변경사항이 서버 파일에 '확정 저장'되지 못했는지 표시하는 마커.
+// 서버 저장 실패 / 서버 디스크 쓰기 실패 시 켜지고, 다음 관리자 진입 시 로컬 목록을 서버로 다시 밀어 넣는다.
+const SYNC_PENDING_KEY = "admin_products_sync_pending";
+const SYNC_BOOTSTRAP_KEY = "admin_products_sync_bootstrap_v1";
+
+function markProductsSyncPending() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SYNC_PENDING_KEY, "1");
+  } catch {}
+}
+
+function clearProductsSyncPending() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(SYNC_PENDING_KEY);
+  } catch {}
+}
+
+function isProductsSyncPending(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (localStorage.getItem(SYNC_PENDING_KEY) === "1") return true;
+    // 최초 1회: 이전 버전에서 저장 실패로 생긴 관리자-서버 불일치를 바로잡기 위해 현재 로컬 목록을 한 번 서버로 밀어 넣는다.
+    if (!localStorage.getItem(SYNC_BOOTSTRAP_KEY)) {
+      localStorage.setItem(SYNC_BOOTSTRAP_KEY, "1");
+      if (localStorage.getItem("admin_products")) {
+        localStorage.setItem(SYNC_PENDING_KEY, "1");
+        return true;
+      }
+    }
+  } catch {}
+  return false;
+}
+
 const INITIAL_CHOICOMMA_PRODUCTS: any[] = (productsCache as any[]) || [];
 
 export function getDeletedProductIdsFromStorage(): Set<string> {
@@ -378,6 +413,27 @@ export function useProducts({
               });
 
               setProductsList(keepLocalEdits(merged));
+
+              // 이전 저장이 서버에 확정되지 못한 상태(순서/품절 등)라면 로컬 목록을 서버로 다시 반영해 홈화면과 맞춘다.
+              if (isProductsSyncPending()) {
+                enqueueServerWrite(() =>
+                  fetch("/api/products?mode=merge", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(merged),
+                  })
+                )
+                  .then(async (pushRes) => {
+                    if (!pushRes.ok) return;
+                    const pushData = await pushRes.json().catch(() => null);
+                    if (pushData?.success && pushData.persisted !== false) {
+                      clearProductsSyncPending();
+                    }
+                    window.dispatchEvent(new CustomEvent("admin_products_updated"));
+                    notifyProductsSynced();
+                  })
+                  .catch(() => {});
+              }
               if (hasAnyUpdate) {
                 try {
                   localStorage.setItem("admin_products", JSON.stringify(merged));
@@ -439,12 +495,18 @@ export function useProducts({
 
       if (!res.ok) {
         console.error("Failed to persist single product, status:", res.status);
+        markProductsSyncPending();
         triggerToast("⚠️ 상품 저장에 실패했습니다. 다시 시도해주세요.");
         return false;
       }
 
       const resData = await res.json().catch(() => null);
       const savedItem = resData?.product || product;
+      if (resData && resData.persisted === false) {
+        // 서버 메모리에는 반영됐지만 디스크 파일 저장이 실패 → 다음 진입 시 다시 반영하도록 표시
+        markProductsSyncPending();
+        console.warn("Product saved in server memory only (disk write failed). Will retry on next load.");
+      }
 
       // If this product was previously deleted, un-blacklist it
       removeDeletedProductIdsFromStorage([
@@ -482,6 +544,7 @@ export function useProducts({
       return true;
     } catch (err) {
       console.error("Failed to persist single product:", err);
+      markProductsSyncPending();
       triggerToast("⚠️ 네트워크 오류로 상품 저장에 실패했습니다.");
       return false;
     }
@@ -492,6 +555,7 @@ export function useProducts({
     if (typeof window === "undefined") return false;
 
     isSavingRef.current = true;
+    markProductsSyncPending();
     try {
       const res = await enqueueServerWrite(() =>
         fetch(`/api/products?mode=${serverMode}`, {
@@ -504,6 +568,14 @@ export function useProducts({
       if (!res.ok) {
         console.warn("Server file persistence skipped or failed (e.g. read-only serverless environment), local persistence active.");
         return false;
+      }
+
+      const saveData = await res.json().catch(() => null);
+      if (saveData?.success && saveData.persisted !== false) {
+        clearProductsSyncPending();
+      } else {
+        console.warn("Server accepted the catalog but could not write it to disk. Will retry on next load.");
+        triggerToast("⚠️ 서버 파일 저장이 지연되고 있습니다. 잠시 후 자동으로 다시 반영됩니다.");
       }
 
       window.dispatchEvent(new CustomEvent("admin_products_updated"));
@@ -524,32 +596,21 @@ export function useProducts({
         }, 0);
       }
     }
-  }, [enqueueServerWrite]);
+  }, [enqueueServerWrite, triggerToast]);
 
   // Helper: Safely save to Central Server file (/api/products) and localStorage with concurrency protection
   // serverMode: "merge"(기본, 서버의 더 최신 값 유지) | "add"(merge + 삭제 목록 해제) | "replace"(전체 교체)
   const saveProductsToStorage = useCallback((list: any[], skipServerSync: boolean = false, serverMode: ServerSaveMode = "merge") => {
     if (typeof window === "undefined") return;
 
-    // skipServerSync=true 인 호출은 직후에 서버 저장(saveSingleProduct / DELETE)이 이어지고,
-    // 그 완료 시점에 변경 이벤트가 발행된다. 서버 저장 전에 이벤트를 먼저 보내면
-    // 홈/전체보기가 아직 갱신되지 않은 서버 데이터를 받아 "이전 상태로 되돌아가는" 깜빡임이 생기므로 억제한다.
-    const notifyChange = () => {
-      if (skipServerSync) return;
-      window.dispatchEvent(new CustomEvent("admin_products_updated"));
-      window.dispatchEvent(new CustomEvent("storage"));
-    };
-
     // 1. Immediately persist to localStorage for instant reload resilience
     try {
       localStorage.setItem("admin_products", JSON.stringify(list));
-      notifyChange();
     } catch (e) {
       console.warn("Failed to save products to localStorage, attempting lightweight fallback:", e);
       try {
         const lightList = sanitizeProductsForLocalStorage(list);
         localStorage.setItem("admin_products", JSON.stringify(lightList));
-        notifyChange();
       } catch (fallbackErr) {
         console.warn("Sanitized fallback also exceeded quota, stripping long text:", fallbackErr);
         try {
@@ -560,7 +621,6 @@ export function useProducts({
             description: p.title || "",
           }));
           localStorage.setItem("admin_products", JSON.stringify(minimalList));
-          notifyChange();
         } catch (minErr) {
           console.error("Critical: localStorage setItem failed completely:", minErr);
         }
@@ -1151,7 +1211,7 @@ export function useProducts({
 
   const handleReorderProducts = useCallback((fromId: string, toId: string, showToast: boolean = true) => {
     setProductSortOrder("custom");
-    const baseList = getSortedBaseList(productsList, productSortOrder);
+    const baseList = [...productsList];
     const fromIdx = baseList.findIndex((p) => String(p.id) === String(fromId));
     const toIdx = baseList.findIndex((p) => String(p.id) === String(toId));
     if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
@@ -1159,11 +1219,11 @@ export function useProducts({
     const [movedItem] = updated.splice(fromIdx, 1);
     updated.splice(toIdx, 0, movedItem);
     setProductsList(updated);
-    saveProductsToStorage(updated);
+    saveProductsToStorage(updated, false, "replace");
     if (showToast) {
       triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
     }
-  }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleClearAllProducts = useCallback(async () => {
     const totalCount = actualProductsCount;
@@ -1200,7 +1260,7 @@ export function useProducts({
     window.dispatchEvent(new CustomEvent("products_updated"));
     notifyProductsSynced();
     triggerToast(`🗑️ 상품관리에 등록된 전체 상품 ${totalCount}개가 모두 성공적으로 삭제되었습니다.`);
-  }, [actualProductsCount, productsList, saveProductsToStorage, triggerToast, setAdminTimeSaleProductIds]);
+  }, [actualProductsCount, productsList, saveProductsToStorage, triggerToast, setAdminTimeSaleProductIds, enqueueServerWrite]);
 
   const handleRestoreDefaultProducts = useCallback(async () => {
     const isConfirmed = window.confirm(
@@ -1260,7 +1320,7 @@ export function useProducts({
 
   const handleMoveProduct = useCallback((id: string, direction: "up" | "down") => {
     setProductSortOrder("custom");
-    const baseList = getSortedBaseList(productsList, productSortOrder);
+    const baseList = [...productsList];
     const currentFiltered = filteredProducts;
     const filteredIdx = currentFiltered.findIndex((p) => String(p.id) === String(id));
 
@@ -1275,7 +1335,7 @@ export function useProducts({
           const [movedItem] = updated.splice(fromIdx, 1);
           updated.splice(toIdx, 0, movedItem);
           setProductsList(updated);
-          saveProductsToStorage(updated);
+          saveProductsToStorage(updated, false, "replace");
           triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
           return;
         }
@@ -1293,13 +1353,13 @@ export function useProducts({
     newList[targetIdx] = temp;
 
     setProductsList(newList);
-    saveProductsToStorage(newList);
+    saveProductsToStorage(newList, false, "replace");
     triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
-  }, [filteredProducts, getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [filteredProducts, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleMoveProductToTop = useCallback((id: string) => {
     setProductSortOrder("custom");
-    const baseList = getSortedBaseList(productsList, productSortOrder);
+    const baseList = [...productsList];
     const idx = baseList.findIndex((p) => String(p.id) === String(id));
     if (idx === -1) return;
     if (idx === 0) {
@@ -1310,42 +1370,47 @@ export function useProducts({
     const [movedItem] = updated.splice(idx, 1);
     updated.unshift(movedItem);
     setProductsList(updated);
-    saveProductsToStorage(updated);
+    saveProductsToStorage(updated, false, "replace");
     triggerToast(`⬆️ '${movedItem.title}' 상품이 목록 최상단으로 이동되었습니다.`);
-  }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleBulkMoveToTop = useCallback((targetIds: string[]) => {
     if (!targetIds || targetIds.length === 0) return;
     setProductSortOrder("custom");
-    const baseList = getSortedBaseList(productsList, productSortOrder);
+    const baseList = [...productsList];
     const idSet = new Set(targetIds.map(String));
     const selected = baseList.filter((p) => idSet.has(String(p.id)));
     const unselected = baseList.filter((p) => !idSet.has(String(p.id)));
     if (selected.length === 0) return;
     const updated = [...selected, ...unselected];
     setProductsList(updated);
-    saveProductsToStorage(updated);
+    saveProductsToStorage(updated, false, "replace");
     triggerToast(`⬆️ 선택한 ${selected.length}개 상품이 목록 최상단으로 일괄 이동되었습니다.`);
-  }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
+  }, [productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleSortOrderChange = useCallback((
     newOrder: "productNoDesc" | "productNoAsc" | "nameAsc" | "priceDesc" | "priceAsc" | "custom"
   ) => {
     setProductSortOrder(newOrder);
+    if (newOrder !== "custom") {
+      const sorted = getSortedBaseList(productsList, newOrder);
+      setProductsList(sorted);
+      saveProductsToStorage(sorted, false, "replace");
+    }
     triggerToast(
       newOrder === "custom"
         ? "✅ 사용자 지정 순서(드래그 앤 드롭) 모드로 변경되었습니다."
         : newOrder === "productNoDesc"
-        ? "✅ 상품 목록이 '최신 등록순'으로 정렬되었습니다."
+        ? "✅ 상품 목록이 '최신 등록순'으로 정렬 및 홈화면에 반영되었습니다."
         : newOrder === "productNoAsc"
-        ? "✅ 상품 목록이 '등록번호 순'으로 정렬되었습니다."
+        ? "✅ 상품 목록이 '등록번호 순'으로 정렬 및 홈화면에 반영되었습니다."
         : newOrder === "nameAsc"
-        ? "✅ 상품 목록이 '상품명 순'으로 정렬되었습니다."
+        ? "✅ 상품 목록이 '상품명 순'으로 정렬 및 홈화면에 반영되었습니다."
         : newOrder === "priceDesc"
-        ? "✅ 상품 목록이 '높은 가격순'으로 정렬되었습니다."
-        : "✅ 상품 목록이 '낮은 가격순'으로 정렬되었습니다."
+        ? "✅ 상품 목록이 '높은 가격순'으로 정렬 및 홈화면에 반영되었습니다."
+        : "✅ 상품 목록이 '낮은 가격순'으로 정렬 및 홈화면에 반영되었습니다."
     );
-  }, [setProductSortOrder, triggerToast]);
+  }, [getSortedBaseList, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
   const handleQuickUpdateReleaseSchedule = useCallback(
     async (id: string, availableForSale: boolean, releaseDate?: string) => {
