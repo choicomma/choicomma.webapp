@@ -1000,7 +1000,15 @@ export function LiveChatWidget() {
 
     // Sync from Git chat API (/api/admin/chat) with non-destructive merge
     if (rawId) {
-      fetch(`/api/admin/chat?type=messages&sessionId=${encodeURIComponent(rawId)}`, { cache: "no-store" })
+      // 이전 조회가 아직 응답 중이면 같은 조회를 또 보내지 않는다 (서버가 느릴 때 요청이 쌓이는 것을 방지)
+      const chatWin = window as unknown as { __chatSyncInFlight?: boolean };
+      (chatWin.__chatSyncInFlight
+        ? Promise.resolve({ ok: false } as Response)
+        : ((chatWin.__chatSyncInFlight = true),
+          fetch(`/api/admin/chat?type=messages&sessionId=${encodeURIComponent(rawId)}`, { cache: "no-store" }).finally(() => {
+            chatWin.__chatSyncInFlight = false;
+          }))
+      )
         .then((res) => (res.ok ? res.json() : null))
         .then((json) => {
           // If a reset occurred within the last 1.5s, ignore any in-flight stale data
@@ -1266,8 +1274,18 @@ export function LiveChatWidget() {
 
     loadMessages();
 
-    const interval = setInterval(() => {
-      loadMessages();
+    // 이전 조회가 끝나기 전에는 새로 보내지 않고, 화면에 보이지 않는 탭에서는 조회하지 않는다 (서버 과부하 방지)
+    let pollInFlight = false;
+    const interval = setInterval(async () => {
+      if (pollInFlight) return;
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      pollInFlight = true;
+      try {
+        await Promise.resolve(loadMessages());
+      } catch (e) {
+      } finally {
+        pollInFlight = false;
+      }
     }, 3000);
 
     return () => {

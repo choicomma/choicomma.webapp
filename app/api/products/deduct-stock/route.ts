@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { TAGS } from "@/lib/constants";
 import fs from "fs";
 import path from "path";
+import { adoptDiskIfNewer, markMemorySyncedWithDisk } from "@/lib/products-disk-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
 
     // 서버 메모리 캐시가 가장 최신(관리자 순서/품절 변경 포함)이므로 우선 사용한다.
     // 오래된 파일을 기준으로 덮어쓰면 아직 디스크에 반영되지 않은 관리자 변경이 롤백된다.
+    adoptDiskIfNewer();
     let products: any[];
     if (Array.isArray(globalForProducts.serverProductsCache) && globalForProducts.serverProductsCache.length > 0) {
       products = JSON.parse(JSON.stringify(globalForProducts.serverProductsCache));
@@ -114,6 +116,7 @@ export async function POST(req: NextRequest) {
       globalForProducts.serverProductsCache = products;
       // 디스크 기록에 실패했다면 메모리가 최신이라는 표시를 남겨 다음 저장/조회에서 다시 기록되게 한다.
       globalForProducts.serverProductsDirty = !written;
+      if (written) markMemorySyncedWithDisk();
 
       // Revalidate cache across site
       try {

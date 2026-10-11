@@ -34,6 +34,7 @@ import { getCardType, maskCardNumber } from "./utils";
 import { mockProducts } from "./mock/products";
 import { mockCollections } from "./mock/collections";
 import fs from "fs";
+import { adoptDiskIfNewer } from "@/lib/products-disk-sync";
 import path from "path";
 
 function getAllServerProducts(): Product[] {
@@ -79,6 +80,7 @@ function getAllServerProducts(): Product[] {
   // 1순위: /api/products 가 유지하는 서버 메모리의 최신 목록 (관리자 화면/클라이언트 동기화와 동일한 기준).
   // 디스크 저장이 지연·실패해도 상품관리에서 바꾼 순서/품절 상태가 홈 첫 렌더에 그대로 반영된다.
   try {
+    adoptDiskIfNewer();
     const memList = (global as unknown as { serverProductsCache?: any[] }).serverProductsCache;
     if (Array.isArray(memList) && memList.length > 0) {
       return normalizeList(memList) as Product[];

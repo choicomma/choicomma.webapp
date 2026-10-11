@@ -302,9 +302,19 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     }
 
     // Resilient Polling (every 3.5 seconds)
-    const interval = setInterval(() => {
-      loadSessions();
-      syncAdminLiveChat();
+    // 서버가 느릴 때 요청이 계속 쌓여 상품 저장까지 지연되지 않도록, 이전 조회가 끝나기 전에는 새로 보내지 않고
+    // 화면에 보이지 않는 탭에서는 조회하지 않는다.
+    let pollInFlight = false;
+    const interval = setInterval(async () => {
+      if (pollInFlight) return;
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      pollInFlight = true;
+      try {
+        await Promise.all([loadSessions(), syncAdminLiveChat()]);
+      } catch (e) {
+      } finally {
+        pollInFlight = false;
+      }
     }, 3500);
 
     return () => {

@@ -289,7 +289,22 @@ export function useProducts({
   // (직렬화하지 않으면 먼저 보낸 오래된 전체 목록이 늦게 도착해 방금 수정/삭제한 내용을 되돌리는 롤백이 발생)
   const serverWriteChainRef = useRef<Promise<unknown>>(Promise.resolve());
   const enqueueServerWrite = useCallback(<T,>(task: () => Promise<T>): Promise<T> => {
-    const next = serverWriteChainRef.current.then(task, task);
+    // 응답이 오지 않는(멈춘) 요청 하나가 이후의 모든 저장을 영원히 막지 않도록 시간 제한을 둔다.
+    const runWithTimeout = () =>
+      new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("server write timeout")), 90000);
+        task().then(
+          (v) => {
+            clearTimeout(timer);
+            resolve(v);
+          },
+          (e) => {
+            clearTimeout(timer);
+            reject(e);
+          }
+        );
+      });
+    const next = serverWriteChainRef.current.then(runWithTimeout, runWithTimeout);
     serverWriteChainRef.current = next.then(
       () => undefined,
       () => undefined
@@ -414,8 +429,19 @@ export function useProducts({
 
               setProductsList(keepLocalEdits(merged));
 
+              // 저장 대기 표시가 없더라도, 관리자 목록(이 기기)의 순서/품절 상태가 서버(=홈화면 기준)와 다르면 서버로 다시 반영한다.
+              // (예: 저장 요청이 서버에 도달하지 못했거나 서버 파일이 다른 값으로 복원된 경우 → 목록은 품절인데 홈은 판매중으로 남는 불일치 방지)
+              const localOrderIds = merged.map((p: any) => String(p?.id || "")).filter((id: string) => serverMap.has(id));
+              const serverOrderIds = sanitized.map((sp: any) => String(sp?.id || "")).filter((id: string) => localMap.has(id));
+              const orderDiffers = localOrderIds.join("|") !== serverOrderIds.join("|");
+              const availabilityDiffers = merged.some((p: any) => {
+                const sp = serverMap.get(String(p?.id || ""));
+                if (!sp) return false;
+                return (p?.availableForSale !== false) !== (sp?.availableForSale !== false) || String(p?.stock ?? "") !== String(sp?.stock ?? "");
+              });
+
               // 이전 저장이 서버에 확정되지 못한 상태(순서/품절 등)라면 로컬 목록을 서버로 다시 반영해 홈화면과 맞춘다.
-              if (isProductsSyncPending()) {
+              if (isProductsSyncPending() || orderDiffers || availabilityDiffers) {
                 enqueueServerWrite(() =>
                   fetch("/api/products?mode=merge", {
                     method: "POST",
@@ -557,13 +583,28 @@ export function useProducts({
     isSavingRef.current = true;
     markProductsSyncPending();
     try {
-      const res = await enqueueServerWrite(() =>
-        fetch(`/api/products?mode=${serverMode}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(listToSend),
-        })
-      );
+      const res = await enqueueServerWrite(async () => {
+        // 개발 서버가 느리거나 요청 본문이 잘려 400/네트워크 오류가 나는 경우가 있어 짧게 재시도한다.
+        let lastRes: Response | null = null;
+        let lastErr: unknown = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            const r = await fetch(`/api/products?mode=${serverMode}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(listToSend),
+            });
+            if (r.ok || attempt === 3) return r;
+            lastRes = r;
+          } catch (e) {
+            lastErr = e;
+            if (attempt === 3) throw e;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
+        }
+        if (lastRes) return lastRes;
+        throw lastErr ?? new Error("save failed");
+      });
 
       if (!res.ok) {
         console.warn("Server file persistence skipped or failed (e.g. read-only serverless environment), local persistence active.");
@@ -852,7 +893,14 @@ export function useProducts({
             ? `'${p.title}' 상태가 [재고 있음]으로 변경되었습니다.`
             : `'${p.title}' 상품이 [품절] 처리되었습니다.`
         );
-        updatedTarget = { ...p, availableForSale: nextAvailable, updated_at: new Date().toISOString() };
+        updatedTarget = {
+          ...p,
+          availableForSale: nextAvailable,
+          updated_at: new Date().toISOString(),
+          variants: Array.isArray(p.variants)
+            ? p.variants.map((v: any) => ({ ...v, availableForSale: nextAvailable }))
+            : p.variants,
+        };
         return updatedTarget;
       }
       return p;
