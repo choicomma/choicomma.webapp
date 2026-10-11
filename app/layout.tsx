@@ -9,6 +9,7 @@ import { CartDrawer } from "@/components/cart/modal";
 import { DebugGrid } from "@/components/debug-grid";
 import { isDevelopment } from "@/lib/constants";
 import { HeaderWithData } from "@/components/layout/header/server-wrapper";
+import { CATALOG_EPOCH, CATALOG_CACHE_KEYS_TO_PURGE, CATALOG_EPOCH_STORAGE_KEY } from "@/lib/catalog-epoch";
 
 const pretendard = localFont({
   src: "../public/font/PretendardVariable.woff2",
@@ -57,7 +58,16 @@ export default async function RootLayout({
               (function() {
                 if (typeof window === 'undefined') return;
                 try {
-                  // Admin product cache persistence preserved
+                  // 상품 캐시 세대가 바뀌면(새 배포) 이 브라우저에 남은 옛 상품 캐시를 한 번만 지운다.
+                  var epochKey = ${JSON.stringify(CATALOG_EPOCH_STORAGE_KEY)};
+                  var epoch = ${JSON.stringify(CATALOG_EPOCH)};
+                  if (window.localStorage.getItem(epochKey) !== epoch) {
+                    var purgeKeys = ${JSON.stringify(CATALOG_CACHE_KEYS_TO_PURGE)};
+                    for (var i = 0; i < purgeKeys.length; i++) {
+                      window.localStorage.removeItem(purgeKeys[i]);
+                    }
+                    window.localStorage.setItem(epochKey, epoch);
+                  }
                 } catch(e) {}
                 if (Node.prototype.removeChild) {
                   var origRemoveChild = Node.prototype.removeChild;
