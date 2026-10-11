@@ -172,6 +172,12 @@ export function sanitizeProductsForLocalStorage(list: any[]): any[] {
       if (hasBase64) colorImages = sanitizedColorImages;
     }
 
+    // 업로드 이미지(data:image)를 대체 이미지로 바꾼 절약본임을 표시한다. (불러올 때 서버 원본을 우선 사용)
+    let wasStripped = false;
+    try {
+      wasStripped = JSON.stringify(p).includes("data:image");
+    } catch {}
+
     return {
       ...p,
       detailDescription: detail,
@@ -181,6 +187,7 @@ export function sanitizeProductsForLocalStorage(list: any[]): any[] {
       fabricImage: fabricImg,
       sizeGuideImage: sizeGuideImg,
       colorImages,
+      ...(wasStripped ? { _lightStripped: true } : {}),
     };
   });
 }
@@ -408,6 +415,10 @@ export function useProducts({
                 const lpId = String(lp?.id || "");
                 const sp = serverMap.get(lpId);
                 if (!sp) return lp;
+                if (lp?._lightStripped) {
+                  hasAnyUpdate = true;
+                  return sp;
+                }
                 const serverTime = (sp.updated_at || sp.updatedAt) ? new Date(sp.updated_at || sp.updatedAt).getTime() : 0;
                 const localTime = (lp.updated_at || lp.updatedAt) ? new Date(lp.updated_at || lp.updatedAt).getTime() : 0;
                 if (serverTime > localTime) {

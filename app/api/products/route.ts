@@ -681,7 +681,20 @@ export async function POST(req: NextRequest) {
         const id = String(p.id || "");
         incomingIds.add(id);
         const serverItem = existingMap.get(id);
-        if (serverItem && getTime(serverItem) > getTime(p)) {
+        // 브라우저 저장 용량 절약본은 업로드 이미지를 /product_1.webp 로 바꿔 둔다. 그런 스냅샷이 서버의 실제 이미지를 덮어쓰지 않게 한다.
+        const hasPlaceholderImg = (x: any): boolean => {
+          try {
+            if (x?.featuredImage?.url === "/product_1.webp") return true;
+            if (Array.isArray(x?.images) && x.images.some((im: any) => (typeof im === "string" ? im : im?.url) === "/product_1.webp")) return true;
+            const d = String(x?.detailDescription || "") + String(x?.descriptionHtml || "");
+            return d.includes("/product_1.webp");
+          } catch {
+            return false;
+          }
+        };
+        const clientIsStrippedCopy = Boolean(serverItem) && Boolean(p?._lightStripped) && !hasPlaceholderImg(serverItem);
+        const clientHasPlaceholderOverReal = Boolean(serverItem) && hasPlaceholderImg(p) && !hasPlaceholderImg(serverItem);
+        if (serverItem && (clientIsStrippedCopy || clientHasPlaceholderOverReal || getTime(serverItem) > getTime(p))) {
           merged.push(serverItem);
           keptServerCount++;
         } else {

@@ -627,7 +627,7 @@ export function ProductFormModal({
         reader.onload = async (evt) => {
           const raw = evt.target?.result as string;
           if (raw) {
-            const compressed = await compressImageDataUrl(raw, 1280, 0.82);
+            const compressed = await compressImageDataUrl(raw, 860, 0.72);
             resolve(compressed);
           } else {
             resolve("");
@@ -688,7 +688,8 @@ export function ProductFormModal({
     }
 
     const totalStockCalc = calculateTotalStock(colors, sizes, sizeStock);
-    const finalImages = images.length > 0 ? images : ["/product_1.webp"];
+    const detailFirstImage = extractImagesFromHtml(detailDescription)[0];
+    const finalImages = images.length > 0 ? images : [detailFirstImage || "/product_1.webp"];
 
     // Product sequence number & code (상품 등록 순서로 순차 자동 부여)
     let finalProdNo: number;

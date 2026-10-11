@@ -237,7 +237,14 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
 
                 {/* Category Links with Larger Text & Increased Spacing */}
                 <div className="space-y-3 pt-2 border-t border-neutral-100">
-                  <ShopLinks label="" collections={collections} includeShopAll={true} />
+                  <ShopLinks
+                    label=""
+                    collections={collections.filter((c) => {
+                      const h = String(c?.handle || "").toLowerCase();
+                      return h !== "all" && h !== "new";
+                    })}
+                    includeShopAll={true}
+                  />
                 </div>
 
                 <div className="pt-4 border-t border-neutral-100" />
