@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { TAGS } from "@/lib/constants";
 import fs from "fs";
 import path from "path";
+import { adoptDiskIfNewer, markMemorySyncedWithDisk } from "@/lib/products-disk-sync";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -279,6 +280,8 @@ async function persistProducts(list: any[]): Promise<boolean> {
   logSync(`PERSIST ok=${ok} count=${list.length} first=${list.slice(0, 5).map((p: any) => p?.id).join(",")}`);
   if (globalForProducts.serverProductsCache === list) {
     globalForProducts.serverProductsDirty = !ok;
+    // 내가 방금 쓴 파일이므로 이 인스턴스의 메모리는 디스크와 같은 상태 (다음 요청에서 자기 저장분을 다시 읽지 않도록 기록)
+    if (ok) markMemorySyncedWithDisk();
   }
   return ok;
 }
@@ -316,6 +319,8 @@ function makeResponse(products: any[], req?: NextRequest) {
 // GET: Return authoritative products catalog directly from local JSON file
 export async function GET(req: NextRequest) {
   try {
+    // 다른 서버 인스턴스가 더 최근에 저장한 순서/삭제를 먼저 반영 (오래된 메모리 목록으로 응답하는 롤백 방지)
+    adoptDiskIfNewer();
     const action = req?.nextUrl.searchParams.get("action");
     if (action === "deleted") {
       const deletedIds = readDeletedProductsList();
@@ -360,6 +365,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     ensureSeedBackupExists();
+    adoptDiskIfNewer();
     const action = req.nextUrl.searchParams.get("action");
 
     let body: any = null;
@@ -635,6 +641,7 @@ export async function POST(req: NextRequest) {
 // DELETE: Delete product(s) directly from local JSON file
 export async function DELETE(req: NextRequest) {
   try {
+    adoptDiskIfNewer();
     const url = new URL(req.url);
     let idsToDelete: string[] = [];
 
