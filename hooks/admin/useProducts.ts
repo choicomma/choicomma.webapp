@@ -20,6 +20,9 @@ interface UseProductsOptions {
   ) => void;
 }
 
+// 전체 목록 서버 저장 방식: merge(기본, 서버의 더 최신 값 유지) | add(merge + 삭제 목록 해제) | replace(전체 교체)
+type ServerSaveMode = "merge" | "add" | "replace";
+
 const INITIAL_CHOICOMMA_PRODUCTS: any[] = (productsCache as any[]) || [];
 
 export function getDeletedProductIdsFromStorage(): Set<string> {
@@ -235,10 +238,41 @@ export function useProducts({
   // Concurrency queue to completely prevent race conditions and rollback overwrites
   const isSavingRef = useRef(false);
   const pendingSaveListRef = useRef<any[] | null>(null);
+  const pendingSaveModeRef = useRef<ServerSaveMode>("merge");
+
+  // 서버 쓰기 직렬화 큐: 단일 저장 / 전체 저장 / 삭제 요청이 서로 추월하지 않고 호출한 순서대로 서버에 반영되도록 한다.
+  // (직렬화하지 않으면 먼저 보낸 오래된 전체 목록이 늦게 도착해 방금 수정/삭제한 내용을 되돌리는 롤백이 발생)
+  const serverWriteChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  const enqueueServerWrite = useCallback(<T,>(task: () => Promise<T>): Promise<T> => {
+    const next = serverWriteChainRef.current.then(task, task);
+    serverWriteChainRef.current = next.then(
+      () => undefined,
+      () => undefined
+    );
+    return next;
+  }, []);
+  // 상품별 최신 저장 요청 번호: 같은 상품을 연속 저장할 때 오래된 응답이 최신 화면을 덮어쓰지 않도록 한다.
+  const productSaveSeqRef = useRef<Map<string, number>>(new Map());
 
   // Client-side hydration sync for productsList (Source of Truth: Central Server File /api/products with Local Persistence)
   useEffect(() => {
     let isMounted = true;
+    // 서버 목록 로딩 중에 사용자가 수정/저장한 상품은 로딩 결과로 덮어쓰지 않고 화면의 최신 값을 유지한다 (초기 로딩 시 롤백 방지)
+    const keepLocalEdits = (list: any[]) => (prev: any[]) => {
+      const edited = productSaveSeqRef.current;
+      if (edited.size === 0) return list;
+      const prevMap = new Map<string, any>(prev.map((p: any) => [String(p?.id || ""), p]));
+      const listIds = new Set<string>(list.map((p: any) => String(p?.id || "")));
+      const out = list.map((p: any) => {
+        const id = String(p?.id || "");
+        return edited.has(id) && prevMap.has(id) ? prevMap.get(id) : p;
+      });
+      const created = prev.filter((p: any) => {
+        const id = String(p?.id || "");
+        return edited.has(id) && !listIds.has(id);
+      });
+      return created.length > 0 ? [...created, ...out] : out;
+    };
     const fetchServerProducts = async () => {
       let hasLocalData = false;
       let localParsedList: any[] = [];
@@ -333,7 +367,7 @@ export function useProducts({
                 }
               });
 
-              setProductsList(merged);
+              setProductsList(keepLocalEdits(merged));
               if (hasAnyUpdate) {
                 try {
                   localStorage.setItem("admin_products", JSON.stringify(merged));
@@ -345,7 +379,7 @@ export function useProducts({
                 }
               }
             } else {
-              setProductsList(sanitized);
+              setProductsList(keepLocalEdits(sanitized));
               try {
                 localStorage.setItem("admin_products", JSON.stringify(sanitized));
               } catch (e) {
@@ -380,12 +414,18 @@ export function useProducts({
   const saveSingleProduct = useCallback(async (product: any, isNew: boolean = false): Promise<boolean> => {
     if (typeof window === "undefined") return false;
 
+    const productKey = String(product?.id ?? "");
+    const mySeq = (productSaveSeqRef.current.get(productKey) || 0) + 1;
+    productSaveSeqRef.current.set(productKey, mySeq);
+
     try {
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product, isNew }),
-      });
+      const res = await enqueueServerWrite(() =>
+        fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ product, isNew }),
+        })
+      );
 
       if (!res.ok) {
         console.error("Failed to persist single product, status:", res.status);
@@ -404,7 +444,9 @@ export function useProducts({
       ]);
 
       // Synchronously sync local products list state & localStorage with authoritative product
-      setProductsList((prev) => {
+      // 같은 상품에 더 최신 저장 요청이 진행 중이면 이 (오래된) 응답은 화면에 반영하지 않는다 (순간적인 이전 값 노출 = 롤백 방지)
+      const isLatestForProduct = productSaveSeqRef.current.get(productKey) === mySeq;
+      if (isLatestForProduct) setProductsList((prev) => {
         const pIdStr = String(savedItem.id);
         const exists = prev.some((p) => String(p.id) === pIdStr);
         let nextList: any[];
@@ -432,19 +474,21 @@ export function useProducts({
       triggerToast("⚠️ 네트워크 오류로 상품 저장에 실패했습니다.");
       return false;
     }
-  }, [triggerToast]);
+  }, [triggerToast, enqueueServerWrite]);
 
   // Sequential queue processor ensuring save requests never resolve out-of-order
-  const executeSaveQueue = useCallback(async (listToSend: any[]): Promise<boolean> => {
+  const executeSaveQueue = useCallback(async (listToSend: any[], serverMode: ServerSaveMode = "merge"): Promise<boolean> => {
     if (typeof window === "undefined") return false;
 
     isSavingRef.current = true;
     try {
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(listToSend),
-      });
+      const res = await enqueueServerWrite(() =>
+        fetch(`/api/products?mode=${serverMode}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(listToSend),
+        })
+      );
 
       if (!res.ok) {
         console.warn("Server file persistence skipped or failed (e.g. read-only serverless environment), local persistence active.");
@@ -460,16 +504,19 @@ export function useProducts({
       isSavingRef.current = false;
       if (pendingSaveListRef.current !== null) {
         const nextList = pendingSaveListRef.current;
+        const nextMode = pendingSaveModeRef.current;
         pendingSaveListRef.current = null;
+        pendingSaveModeRef.current = "merge";
         setTimeout(() => {
-          executeSaveQueue(nextList);
+          executeSaveQueue(nextList, nextMode);
         }, 0);
       }
     }
-  }, []);
+  }, [enqueueServerWrite]);
 
   // Helper: Safely save to Central Server file (/api/products) and localStorage with concurrency protection
-  const saveProductsToStorage = useCallback((list: any[], skipServerSync: boolean = false) => {
+  // serverMode: "merge"(기본, 서버의 더 최신 값 유지) | "add"(merge + 삭제 목록 해제) | "replace"(전체 교체)
+  const saveProductsToStorage = useCallback((list: any[], skipServerSync: boolean = false, serverMode: ServerSaveMode = "merge") => {
     if (typeof window === "undefined") return;
 
     // skipServerSync=true 인 호출은 직후에 서버 저장(saveSingleProduct / DELETE)이 이어지고,
@@ -515,18 +562,23 @@ export function useProducts({
     // 2. Concurrency queue to server API (/api/products)
     if (isSavingRef.current) {
       // Save is currently in-flight; queue the latest snapshot so it executes immediately after
+      // (합쳐지는 저장 방식은 더 강한 쪽을 유지: replace > add > merge)
+      const rank: Record<ServerSaveMode, number> = { merge: 0, add: 1, replace: 2 };
+      if (pendingSaveListRef.current === null || rank[serverMode] >= rank[pendingSaveModeRef.current]) {
+        pendingSaveModeRef.current = serverMode;
+      }
       pendingSaveListRef.current = list;
       return;
     }
 
-    executeSaveQueue(list);
+    executeSaveQueue(list, serverMode);
   }, [executeSaveQueue]);
 
   // Replace all products helper (Used for full JSON backup restore)
   const handleReplaceAllProducts = useCallback((fullList: any[]) => {
     if (!fullList || !Array.isArray(fullList) || fullList.length === 0) return;
     setProductsList(fullList);
-    saveProductsToStorage(fullList);
+    saveProductsToStorage(fullList, false, "replace");
     triggerToast(`총 ${fullList.length}개의 상품 목록이 파일로부터 성공적으로 동기화되었습니다.`);
   }, [saveProductsToStorage, triggerToast]);
 
@@ -720,6 +772,7 @@ export function useProducts({
 
     const nextAvailable = !isCurrentlyAvailable;
 
+    let updatedTarget: any = null;
     const updated = productsList.map((p) => {
       if (p.id === id) {
         triggerToast(
@@ -727,14 +780,19 @@ export function useProducts({
             ? `'${p.title}' 상태가 [재고 있음]으로 변경되었습니다.`
             : `'${p.title}' 상품이 [품절] 처리되었습니다.`
         );
-        return { ...p, availableForSale: nextAvailable };
+        updatedTarget = { ...p, availableForSale: nextAvailable, updated_at: new Date().toISOString() };
+        return updatedTarget;
       }
       return p;
     });
 
+    // 전체 목록을 서버에 덮어쓰지 않고 변경된 상품 1개만 저장한다 (오래된 스냅샷에 의한 롤백 방지)
     setProductsList(updated);
-    saveProductsToStorage(updated);
-  }, [productsList, saveProductsToStorage, triggerToast]);
+    saveProductsToStorage(updated, true);
+    if (updatedTarget) {
+      saveSingleProduct(updatedTarget, false);
+    }
+  }, [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]);
 
   const toggleProductPurchasable = useCallback((id: string) => {
     const targetProduct = productsList.find((p) => String(p.id) === String(id));
@@ -750,27 +808,33 @@ export function useProducts({
     const isConfirmed = window.confirm(confirmMessage);
     if (!isConfirmed) return;
 
+    let updatedTarget: any = null;
     const updated = productsList.map((p) => {
       if (String(p.id) === String(id)) {
-        return {
+        updatedTarget = {
           ...p,
           availableForSale: nextAvailable,
+          updated_at: new Date().toISOString(),
           variants: Array.isArray(p.variants)
             ? p.variants.map((v: any) => ({ ...v, availableForSale: nextAvailable }))
             : p.variants,
         };
+        return updatedTarget;
       }
       return p;
     });
 
     setProductsList(updated);
-    saveProductsToStorage(updated);
+    saveProductsToStorage(updated, true);
+    if (updatedTarget) {
+      saveSingleProduct(updatedTarget, false);
+    }
     triggerToast(
       nextAvailable
         ? `'${targetProduct.title}' 상품이 [구매 가능(ON)]으로 설정되었습니다.`
         : `'${targetProduct.title}' 상품이 [구매 불가(OFF)]로 설정되었습니다.`
     );
-  }, [productsList, saveProductsToStorage, triggerToast]);
+  }, [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]);
 
   const toggleMainFeatured = useCallback((id: string) => {
     const targetProduct = productsList.find((p) => p.id === id);
@@ -844,14 +908,17 @@ export function useProducts({
     saveProductsToStorage(updatedList, true);
 
     // 3. Explicitly call Server DELETE endpoint and sync-deleted
+    // (직렬화 큐 사용: 앞서 보낸 오래된 전체 저장 요청이 삭제 이후에 도착해 삭제된 상품을 되살리는 롤백 방지)
     try {
-      await fetch(`/api/products?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
-      await fetch("/api/products?action=sync-deleted", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: idsToBlacklist }),
+      await enqueueServerWrite(async () => {
+        await fetch(`/api/products?id=${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        });
+        await fetch("/api/products?action=sync-deleted", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: idsToBlacklist }),
+        });
       });
     } catch (delErr) {
       console.warn("Failed to call /api/products DELETE endpoint:", delErr);
@@ -969,6 +1036,7 @@ export function useProducts({
           ...p,
           stock: stockQty,
           availableForSale: nextAvail,
+          updated_at: new Date().toISOString(),
           sizeStock: updatedSizeStock,
           stockMap: updatedStockMap,
           variants: Array.isArray(p.variants)
@@ -1015,15 +1083,17 @@ export function useProducts({
 
     // 3. Explicitly call Server DELETE endpoint and sync-deleted
     try {
-      await fetch("/api/products", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: Array.from(allIdsToBlacklist) }),
-      });
-      await fetch("/api/products?action=sync-deleted", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: Array.from(allIdsToBlacklist) }),
+      await enqueueServerWrite(async () => {
+        await fetch("/api/products", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: Array.from(allIdsToBlacklist) }),
+        });
+        await fetch("/api/products?action=sync-deleted", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: Array.from(allIdsToBlacklist) }),
+        });
       });
     } catch (delErr) {
       console.warn("Failed to delete via /api/products DELETE endpoint:", delErr);
@@ -1103,11 +1173,13 @@ export function useProducts({
     }
 
     try {
-      await fetch("/api/products", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: allIds }),
-      });
+      await enqueueServerWrite(() =>
+        fetch("/api/products", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: allIds }),
+        })
+      );
     } catch {}
 
     window.dispatchEvent(new CustomEvent("admin_products_updated"));
@@ -1151,7 +1223,7 @@ export function useProducts({
 
     const freshCatalog = JSON.parse(JSON.stringify(INITIAL_CHOICOMMA_PRODUCTS));
     setProductsList(freshCatalog);
-    saveProductsToStorage(freshCatalog);
+    saveProductsToStorage(freshCatalog, false, "replace");
     triggerToast("✨ 전체 상품 리스트가 정식 카탈로그(50개)로 완벽하게 초기화되었습니다!");
   }, [saveProductsToStorage, triggerToast]);
 
@@ -1167,7 +1239,7 @@ export function useProducts({
 
     const updatedList = [...newProducts, ...productsList];
     setProductsList(updatedList);
-    saveProductsToStorage(updatedList);
+    saveProductsToStorage(updatedList, false, "add");
     triggerToast(`📊 엑셀 일괄 업로드 완료! ${newProducts.length}개의 신규 상품이 성공적으로 등록되었습니다.`);
   }, [productsList, saveProductsToStorage, triggerToast]);
 
@@ -1291,21 +1363,18 @@ export function useProducts({
       setProductsList(updatedList);
 
       // 2. Synchronously persist to localStorage for instant reload resilience
+      // (변경 이벤트는 서버 저장이 끝난 뒤 saveSingleProduct가 한 번만 발생시킨다 -
+      //  저장 전에 보내면 쇼핑몰이 아직 갱신되지 않은 서버 데이터를 받아 이전 상태로 되돌아가 보인다)
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("admin_products", JSON.stringify(updatedList));
-          window.dispatchEvent(new CustomEvent("admin_products_updated"));
-          window.dispatchEvent(new CustomEvent("storage"));
         } catch (e) {}
       }
 
-      // 3. Atomically persist single item to server first
+      // 3. Atomically persist single item to server (saveSingleProduct가 로컬 상태/저장소도 서버 응답으로 동기화한다)
       if (updatedTarget) {
         await saveSingleProduct(updatedTarget, false);
       }
-
-      // 4. Then trigger safe batch queue sync
-      saveProductsToStorage(updatedList, true);
 
       if (releaseDate && new Date(releaseDate).getTime() > Date.now()) {
         triggerToast(
@@ -1523,10 +1592,12 @@ export function useProducts({
       );
       if (!isConfirmed) return false;
 
+      let updatedTarget: any = null;
       const updatedList = productsList.map((p) => {
         if (String(p.id) === String(id)) {
-          return {
+          updatedTarget = {
             ...p,
+            updated_at: new Date().toISOString(),
             price: { amount: priceNum, currencyCode: "KRW" },
             priceRange: {
               maxVariantPrice: { amount: priceNum, currencyCode: "KRW" },
@@ -1539,15 +1610,20 @@ export function useProducts({
                 }))
               : p.variants,
           };
+          return updatedTarget;
         }
         return p;
       });
       setProductsList(updatedList);
-      saveProductsToStorage(updatedList);
+      // 전체 목록을 서버에 덮어쓰지 않고 변경된 상품 1개만 저장 (오래된 스냅샷에 의한 롤백 방지)
+      saveProductsToStorage(updatedList, true);
+      if (updatedTarget) {
+        saveSingleProduct(updatedTarget, false);
+      }
       triggerToast(`판매가가 ${newFormatted}원으로 변경되었습니다.`);
       return true;
     },
-    [productsList, saveProductsToStorage, triggerToast]
+    [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]
   );
 
   const handleQuickUpdateStock = useCallback(
@@ -1559,10 +1635,12 @@ export function useProducts({
       // If stock > 0, PRESERVE the product's explicit availableForSale state so 구매불가 is never unlocked by stock changes!
       const isAvailable = newTotalStock > 0 ? (targetProduct.availableForSale !== false) : false;
 
+      let updatedTarget: any = null;
       const updatedList = productsList.map((p) => {
         if (String(p.id) === String(id)) {
-          return {
+          updatedTarget = {
             ...p,
+            updated_at: new Date().toISOString(),
             stock: newTotalStock,
             sizeStock: newSizeStock !== undefined ? newSizeStock : p.sizeStock,
             stockMap: newSizeStock !== undefined ? newSizeStock : p.stockMap,
@@ -1586,19 +1664,24 @@ export function useProducts({
                 })
               : p.variants,
           };
+          return updatedTarget;
         }
         return p;
       });
 
       setProductsList(updatedList);
-      saveProductsToStorage(updatedList);
+      // 전체 목록을 서버에 덮어쓰지 않고 변경된 상품 1개만 저장 (오래된 스냅샷에 의한 롤백 방지)
+      saveProductsToStorage(updatedList, true);
+      if (updatedTarget) {
+        saveSingleProduct(updatedTarget, false);
+      }
       if (newTotalStock === 0) {
         triggerToast(`[${targetProduct.title}] 상품이 품절 처리되었습니다.`);
       } else {
         triggerToast(`[${targetProduct.title}] 재고가 ${newTotalStock}개로 업데이트되었습니다.`);
       }
     },
-    [productsList, saveProductsToStorage, triggerToast]
+    [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]
   );
 
   return {

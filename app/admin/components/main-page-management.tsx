@@ -23,7 +23,7 @@ import { CATEGORIES_LIST } from "@/lib/admin/constants";
 interface MainPageManagementProps {
   productsList: any[];
   setProductsList: React.Dispatch<React.SetStateAction<any[]>>;
-  saveProductsToStorage: (list: any[]) => void;
+  saveProductsToStorage: (list: any[], skipServerSync?: boolean, serverMode?: "merge" | "add" | "replace") => void;
   triggerToast: (msg: string) => void;
   mainNoticeBanner?: string;
   setMainNoticeBanner?: (val: string) => void;
@@ -250,7 +250,8 @@ export function MainPageManagement({
       .filter((p) => !(String(p.id).startsWith("hero-slide-") && !p.isHeroFeatured));
 
     setProductsList(updatedList);
-    saveProductsToStorage(updatedList);
+    // 슬라이드 항목을 목록에서 실제로 제거해야 하므로 전체 교체(replace) 방식으로 저장
+    saveProductsToStorage(updatedList, false, "replace");
     triggerToast("슬라이드 이미지가 성공적으로 삭제되었습니다.");
   };
 

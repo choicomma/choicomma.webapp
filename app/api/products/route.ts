@@ -469,6 +469,15 @@ export async function POST(req: NextRequest) {
     // -------------------------------------------------------------
     // CASE B: Full Catalog Array Batch Sync (Re-ordering, bulk save, file restore)
     // -------------------------------------------------------------
+    // mode:
+    //  - "merge"   (기본): 서버에 더 최신(updated_at) 상품이 있으면 서버 값을 유지, 클라이언트 목록에 없는 서버 상품은 보존,
+    //                      서버에서 삭제된 상품은 오래된 스냅샷으로 되살리지 않음 → 다른 기기/탭의 오래된 화면이 서버를 되돌리지 못함
+    //  - "add"            : merge + 목록에 포함된 상품은 삭제 목록에서 해제 (엑셀 일괄 등록 등)
+    //  - "replace"        : 전달한 목록으로 전체 교체 (백업 복원, 히어로 슬라이드 삭제 등 의도적 제거가 필요한 경우)
+    const rawMode = req.nextUrl.searchParams.get("mode");
+    const mode: "merge" | "add" | "replace" =
+      rawMode === "replace" ? "replace" : rawMode === "add" ? "add" : "merge";
+
     const products = body;
     if (!Array.isArray(products)) {
       return NextResponse.json(
@@ -477,31 +486,79 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Any products present in the batch are active; un-blacklist them from deleted-products.json
-    const activeIds = new Set<string>();
-    products.forEach((p: any) => {
-      if (p?.id) activeIds.add(String(p.id));
-      if (p?.productCode) activeIds.add(String(p.productCode));
-      if (p?.handle) activeIds.add(String(p.handle));
-    });
-    const currentDeleted = readDeletedProductsList();
-    if (currentDeleted.length > 0) {
-      const nextDeleted = currentDeleted.filter((d) => !activeIds.has(d));
-      if (nextDeleted.length !== currentDeleted.length) {
-        writeDeletedProductsList(nextDeleted);
+    // replace / add 모드: 목록에 포함된 상품은 활성 상품이므로 deleted-products.json 에서 해제
+    if (mode === "replace" || mode === "add") {
+      const activeIds = new Set<string>();
+      products.forEach((p: any) => {
+        if (p?.id) activeIds.add(String(p.id));
+        if (p?.productCode) activeIds.add(String(p.productCode));
+        if (p?.handle) activeIds.add(String(p.handle));
+      });
+      const currentDeleted = readDeletedProductsList();
+      if (currentDeleted.length > 0) {
+        const nextDeleted = currentDeleted.filter((d) => !activeIds.has(d));
+        if (nextDeleted.length !== currentDeleted.length) {
+          writeDeletedProductsList(nextDeleted);
+        }
       }
     }
 
-    globalForProducts.serverProductsCache = products;
+    let finalList: any[] = products;
+    let keptServerCount = 0;
+
+    if (mode !== "replace") {
+      const getTime = (p: any): number => {
+        const v = p?.updated_at || p?.updatedAt;
+        const t = v ? new Date(v).getTime() : 0;
+        return isNaN(t) ? 0 : t;
+      };
+
+      let existingList = readLocalProductsBackup();
+      if (existingList.length === 0 && globalForProducts.serverProductsCache && globalForProducts.serverProductsCache.length > 0) {
+        existingList = [...globalForProducts.serverProductsCache];
+      }
+      const existingMap = new Map<string, any>(existingList.map((p: any) => [String(p?.id || ""), p]));
+
+      const deletedSet = new Set(readDeletedProductsList().map(String));
+      const isDeletedProduct = (p: any) =>
+        deletedSet.has(String(p?.id || "")) ||
+        (p?.productCode ? deletedSet.has(String(p.productCode)) : false) ||
+        (p?.handle ? deletedSet.has(String(p.handle)) : false);
+
+      const incomingIds = new Set<string>();
+      const merged: any[] = [];
+      for (const p of products) {
+        if (!p) continue;
+        // 서버에서 이미 삭제된 상품이 오래된 클라이언트 스냅샷에 남아 있어도 되살리지 않는다
+        if (isDeletedProduct(p)) continue;
+        const id = String(p.id || "");
+        incomingIds.add(id);
+        const serverItem = existingMap.get(id);
+        if (serverItem && getTime(serverItem) > getTime(p)) {
+          merged.push(serverItem);
+          keptServerCount++;
+        } else {
+          merged.push(p);
+        }
+      }
+      // 클라이언트 목록에 없는 서버 상품(다른 기기에서 새로 등록 등)은 보존
+      for (const serverItem of existingList) {
+        const id = String(serverItem?.id || "");
+        if (!incomingIds.has(id)) merged.push(serverItem);
+      }
+      finalList = merged;
+    }
+
+    globalForProducts.serverProductsCache = finalList;
     try {
-      await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), products);
+      await safeAtomicWriteJsonFile(getRuntimeProductsFilePath(), finalList);
     } catch (writeErr: any) {
       console.warn("[Batch Disk Write Skipped (Serverless Environment)]:", writeErr?.message);
     }
 
     revalidateAllProductPaths();
 
-    return NextResponse.json({ success: true, count: products.length }, {
+    return NextResponse.json({ success: true, count: finalList.length, mode, keptServerCount }, {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate",
         Pragma: "no-cache",
