@@ -84,6 +84,13 @@ export function getAllProductOptions(
     ];
   }
 
+  // 현재 상품(서버 최신 데이터)을 항상 기준으로 삼는다. 번들(mock) 목록에 없거나 옛 값이면
+  // 관리자에서 고른 사이즈가 무시되고 FREE 로 보이는 문제가 생긴다.
+  allList = [
+    product,
+    ...allList.filter((item) => item && item.id !== product.id && item.handle !== product.handle),
+  ];
+
   const baseTitle = getProductBaseTitle(product.title);
 
   // Find sister products (products sharing the exact base title)
