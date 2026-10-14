@@ -1,6 +1,7 @@
 "use client";
 
 import { Cart, CartItem, Product, ProductVariant, SFCCMode } from "@/lib/sfcc/types";
+import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 import React, {
   createContext,
   use,
@@ -279,6 +280,24 @@ export function CartProvider({
         }, 0);
         return newCart;
       });
+
+      // 고객 구매 여정 (ADD_TO_CART) 실시간 트래킹
+      try {
+        trackCustomerJourney({
+          eventType: "ADD_TO_CART",
+          eventLabel: `장바구니 담기 (${product.title || variant.title})`,
+          metadata: {
+            productId: product.id,
+            handle: product.handle,
+            title: product.title,
+            variantId: variant.id,
+            variantTitle: variant.title,
+            quantity,
+            unitPrice: variant.price?.amount,
+            totalPrice: Number(variant.price?.amount || 0) * quantity,
+          },
+        });
+      } catch (e) {}
     },
     []
   );

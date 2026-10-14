@@ -181,7 +181,11 @@ export function ProductListContent({
       const directTimeSaleProducts = categoryFilteredProducts
         .filter((p) => savedSelectedIds.includes(p.id))
         .map((p: any) => {
-          const itemRate = p.timeSaleDiscountRate || itemSettings[p.id]?.discountRate || savedDiscountNum || 35;
+          const tagRate = Array.isArray(p.tags)
+            ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
+            : null;
+          const parsedTagRate = tagRate && !isNaN(Number(tagRate)) ? Number(tagRate) : null;
+          const itemRate = p.timeSaleDiscountRate || parsedTagRate || itemSettings[p.id]?.discountRate || savedDiscountNum || 25;
           const minP = parseFloat(p.priceRange?.minVariantPrice?.amount || "0");
           const maxP = parseFloat(p.priceRange?.maxVariantPrice?.amount || "0");
           const origPrice = maxP > minP ? maxP : minP;
@@ -213,7 +217,11 @@ export function ProductListContent({
             p.isTimeSale === true ||
             savedSelectedIds.includes(String(p.id))
         ).map((p: any) => {
-          const itemRate = p.timeSaleDiscountRate || itemSettings[p.id]?.discountRate || savedDiscountNum || 35;
+          const tagRate = Array.isArray(p.tags)
+            ? p.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
+            : null;
+          const parsedTagRate = tagRate && !isNaN(Number(tagRate)) ? Number(tagRate) : null;
+          const itemRate = p.timeSaleDiscountRate || parsedTagRate || itemSettings[p.id]?.discountRate || savedDiscountNum || 25;
           const minP = parseFloat(p.priceRange?.minVariantPrice?.amount || "0");
           const maxP = parseFloat(p.priceRange?.maxVariantPrice?.amount || "0");
           const origPrice = maxP > minP ? maxP : (minP > 0 ? minP : 100000);

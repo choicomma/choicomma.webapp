@@ -11,14 +11,11 @@ import {
   Save,
   RotateCcw,
   CheckCircle2,
-  FolderGit2,
-  ArrowRight,
   PackageCheck,
 } from "lucide-react";
 
 interface StoreSettingsManagementProps {
   triggerToast: (msg: string) => void;
-  onNavigateGitData?: () => void;
 }
 
 interface StoreInfo {
@@ -77,7 +74,6 @@ const DEFAULT_CJ_LOGISTICS: CjLogisticsInfo = {
 
 export function StoreSettingsManagement({
   triggerToast,
-  onNavigateGitData,
 }: StoreSettingsManagementProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -501,37 +497,6 @@ export function StoreSettingsManagement({
             />
           </div>
         </div>
-      </div>
-
-      {/* Section 4: Git Data Ledger Integration Shortcut */}
-      <div className="bg-gradient-to-r from-neutral-900 to-neutral-950 border border-neutral-800 rounded-3xl p-6 text-white shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-2xl shrink-0">
-            <FolderGit2 className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-sm md:text-base font-extrabold flex items-center gap-2">
-              <span>Git 데이터 원장 통합 관제 센터</span>
-              <span className="text-[10px] bg-emerald-500 text-neutral-950 font-black px-2 py-0.5 rounded-full">
-                12개 원장 100% 정상
-              </span>
-            </h3>
-            <p className="text-xs text-neutral-400 mt-0.5">
-              카탈로그, 주문, 배송, 회원, 쿠폰 등 전체 원장의 상태 검사, 단일/일괄 JSON 백업 및 복원을 진행합니다.
-            </p>
-          </div>
-        </div>
-
-        {onNavigateGitData && (
-          <button
-            type="button"
-            onClick={onNavigateGitData}
-            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-extrabold px-4 py-2.5 rounded-xl transition-all shadow-md text-xs cursor-pointer shrink-0 self-start sm:self-center"
-          >
-            <span>원장 관제 바로가기</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        )}
       </div>
     </div>
   );

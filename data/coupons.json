@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "id": "coupon-1791895695492",
+    "code": "CPN-MV6OFJIC",
+    "title": "회원가입 감사 쿠폰",
+    "discount": "30,000원 할인",
+    "discountAmount": 30000,
+    "type": "FIXED",
+    "condition": "전 상품 즉시 할인",
+    "validUntil": "2026.12.31",
+    "badge": "신규혜택",
+    "targetType": "ALL",
+    "targetGrades": [
+      "ALL"
+    ],
+    "targetCustomerEmails": [],
+    "targetCustomerNames": [],
+    "isActive": true,
+    "createdAt": "2026-10-13"
+  }
+]

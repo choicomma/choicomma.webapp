@@ -326,6 +326,7 @@ export function MainPageManagement({
         return {
           ...p,
           isHeroFeatured: willBeFeatured,
+          updated_at: new Date().toISOString(),
         };
       }
       return p;
@@ -358,6 +359,7 @@ export function MainPageManagement({
           isMainFeatured: willBeFeatured ? true : p.isHeroFeatured || false,
           isBottomFeatured: willBeFeatured,
           isHeroFeatured: willBeFeatured ? false : p.isHeroFeatured,
+          updated_at: new Date().toISOString(),
         };
       }
       return p;

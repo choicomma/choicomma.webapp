@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DEFAULT_POPUP_CONFIG, PopupConfig } from "@/lib/popup/types";
+import { EMPTY_POPUP_CONFIG, PopupConfig } from "@/lib/popup/types";
+import { runSafeSupabaseQuery } from "@/lib/supabase/server";
+import { logAdminActivity } from "@/lib/logging/audit-logger";
 import fs from "fs";
 import path from "path";
 
@@ -31,7 +33,6 @@ function writeSiteSettings(settings: Record<string, any>) {
   const jsonStr = JSON.stringify(settings, null, 2);
   let lastError: any = null;
 
-  // Retry up to 3 times for Windows/OneDrive locks
   for (let attempt = 1; attempt <= 3; attempt++) {
     const tempPath = `${targetPath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
     try {
@@ -53,7 +54,6 @@ function writeSiteSettings(settings: Record<string, any>) {
     }
   }
 
-  // Final direct fallback
   try {
     fs.writeFileSync(targetPath, jsonStr, "utf-8");
   } catch (finalErr) {
@@ -75,14 +75,14 @@ export async function GET() {
       return NextResponse.json(
         {
           success: true,
-          config: { ...DEFAULT_POPUP_CONFIG, ...settings.popup_config },
+          config: { ...EMPTY_POPUP_CONFIG, ...settings.popup_config },
         },
         { headers: NO_CACHE_HEADERS }
       );
     }
 
     return NextResponse.json(
-      { success: true, config: DEFAULT_POPUP_CONFIG },
+      { success: true, config: EMPTY_POPUP_CONFIG },
       { headers: NO_CACHE_HEADERS }
     );
   } catch (err: any) {
@@ -93,7 +93,7 @@ export async function GET() {
   }
 }
 
-// POST: 팝업 설정 저장/동기화하기 (Git 파일 data/site-settings.json에 저장)
+// POST: 팝업 설정 저장/동기화하기 (Git 파일 data/site-settings.json & Supabase 동시 저장)
 export async function POST(req: NextRequest) {
   try {
     const body: PopupConfig = await req.json();
@@ -105,14 +105,36 @@ export async function POST(req: NextRequest) {
     }
 
     const updatedConfig: PopupConfig = {
-      ...DEFAULT_POPUP_CONFIG,
+      ...EMPTY_POPUP_CONFIG,
       ...body,
       updatedAt: new Date().toISOString(),
     };
 
     const settings = readSiteSettings();
+    const prevConfig = settings.popup_config;
     settings.popup_config = updatedConfig;
     writeSiteSettings(settings);
+
+    // 관리자 팝업 설정 변경 감사 로그 기록
+    logAdminActivity({
+      adminId: "admin_master",
+      adminName: "스토어 관리자",
+      actionType: "UPDATE",
+      domain: "POPUP",
+      targetId: "popup_config",
+      targetName: updatedConfig.title || "홈페이지 팝업 공지",
+      description: `팝업 설정 저장 (활성화: ${updatedConfig.isActive ? "ON" : "OFF"}, 제목: ${updatedConfig.title || "-"})`,
+      beforeData: prevConfig ? { isActive: prevConfig.isActive, title: prevConfig.title } : undefined,
+      afterData: { isActive: updatedConfig.isActive, title: updatedConfig.title },
+    }).catch(() => {});
+
+    // Supabase site_settings 듀얼 라이트
+    runSafeSupabaseQuery(
+      async (supabase) => supabase.from("site_settings").upsert([
+        { key: "popup_config", value: updatedConfig, description: "관리자 설정 (popup_config)", updated_at: new Date().toISOString() }
+      ], { onConflict: "key" }),
+      2500
+    ).catch((e) => console.warn("[Supabase popup_config save warning]:", e));
 
     return NextResponse.json(
       { success: true, config: updatedConfig },
@@ -120,6 +142,56 @@ export async function POST(req: NextRequest) {
     );
   } catch (err: any) {
     console.error("API /api/admin/popup error:", err);
+    return NextResponse.json(
+      { success: false, error: err.message },
+      { status: 500, headers: NO_CACHE_HEADERS }
+    );
+  }
+}
+
+// DELETE: 팝업 설정 완전 삭제 및 비활성화
+export async function DELETE() {
+  try {
+    const emptyConfig: PopupConfig = {
+      ...EMPTY_POPUP_CONFIG,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const settings = readSiteSettings();
+    const prevConfig = settings.popup_config;
+    settings.popup_config = emptyConfig;
+    writeSiteSettings(settings);
+
+    // 관리자 팝업 삭제 감사 로그 기록
+    logAdminActivity({
+      adminId: "admin_master",
+      adminName: "스토어 관리자",
+      actionType: "DELETE",
+      domain: "POPUP",
+      targetId: "popup_config",
+      targetName: "홈페이지 팝업 공지",
+      description: "홈페이지 팝업 공지 완전 삭제 및 비활성화",
+      beforeData: prevConfig ? { isActive: prevConfig.isActive, title: prevConfig.title } : undefined,
+    }).catch(() => {});
+
+    // Supabase site_settings 듀얼 삭제/초기화
+    runSafeSupabaseQuery(
+      async (supabase) => supabase.from("site_settings").upsert([
+        { key: "popup_config", value: emptyConfig, description: "관리자 설정 (popup_config)", updated_at: new Date().toISOString() }
+      ], { onConflict: "key" }),
+      2500
+    ).catch((e) => console.warn("[Supabase popup_config delete warning]:", e));
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "팝업이 완전히 삭제되었습니다.",
+        config: emptyConfig,
+      },
+      { headers: NO_CACHE_HEADERS }
+    );
+  } catch (err: any) {
+    console.error("API /api/admin/popup DELETE error:", err);
     return NextResponse.json(
       { success: false, error: err.message },
       { status: 500, headers: NO_CACHE_HEADERS }

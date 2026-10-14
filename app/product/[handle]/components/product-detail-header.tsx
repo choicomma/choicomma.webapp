@@ -13,6 +13,7 @@ import { translateProductTitle, translateProductDescription, getCurrentLanguage,
 import { getAvailableCoupons, getUserCoupons } from "@/lib/membership/coupons";
 import { getAllProductOptions, getProductDirectColor } from "./product-options-helper";
 import { ProductSizeRecommendationWidget } from "@/components/product/product-size-recommendation-widget";
+import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -302,7 +303,11 @@ export function ProductDetailHeader({
       const origPrice = maxPrice > basePrice ? maxPrice : (basePrice > 0 ? basePrice : 0);
 
       // 1. Regular Time Sale Check & Calculation
-      let regRate = (activeProd as any).timeSaleDiscountRate || itemSettings[activeProd.id]?.discountRate || savedDiscountNum || 35;
+      const tagRate = Array.isArray(activeProd.tags)
+        ? activeProd.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
+        : null;
+      const parsedTagRate = tagRate && !isNaN(Number(tagRate)) ? Number(tagRate) : null;
+      let regRate = (activeProd as any).timeSaleDiscountRate || parsedTagRate || itemSettings[activeProd.id]?.discountRate || savedDiscountNum || 25;
       if (customDiscountPrice && !isNaN(parseFloat(customDiscountPrice)) && origPrice > 0) {
         const discVal = parseFloat(customDiscountPrice);
         if (discVal < origPrice) {
@@ -684,6 +689,22 @@ export function ProductDetailHeader({
     if (typeof window !== "undefined") {
       sessionStorage.setItem("choicomma_direct_order", JSON.stringify(directItem));
     }
+
+    try {
+      trackCustomerJourney({
+        eventType: "BEGIN_CHECKOUT",
+        eventLabel: `바로구매 주문서 진입 (${cleanProductTitle(product.title)})`,
+        metadata: {
+          productId: product.id,
+          handle: product.handle,
+          title: product.title,
+          variantTitle,
+          quantity,
+          totalAmount: totalSaleBasePrice,
+          isDirectBuy: true,
+        },
+      });
+    } catch (e) {}
 
     router.push("/checkout");
   };

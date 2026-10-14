@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState, useRef, Suspense } from "react";
 import { Product } from "@/lib/sfcc/types";
+import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 import { MobileGallerySlider } from "./mobile-gallery-slider";
 import { DesktopGallery } from "./desktop-gallery";
 import { ProductDetailHeader } from "./product-detail-header";
@@ -17,6 +18,24 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
   const leftTopRef = useRef<HTMLDivElement>(null);
   const rightTopRef = useRef<HTMLDivElement>(null);
   const [topSpacing, setTopSpacing] = useState<{ leftMargin?: number; rightMargin?: number }>({});
+  const hasTrackedViewRef = useRef<string>("");
+
+  useEffect(() => {
+    const currentProdId = product?.id || initialProduct?.id;
+    if (currentProdId && hasTrackedViewRef.current !== currentProdId) {
+      hasTrackedViewRef.current = currentProdId;
+      trackCustomerJourney({
+        eventType: "VIEW_PRODUCT",
+        eventLabel: `상품 조회 (${product?.title || initialProduct?.title})`,
+        metadata: {
+          productId: currentProdId,
+          handle: product?.handle || initialProduct?.handle,
+          title: product?.title || initialProduct?.title,
+          price: product?.priceRange?.minVariantPrice?.amount || initialProduct?.priceRange?.minVariantPrice?.amount,
+        },
+      });
+    }
+  }, [product?.id, initialProduct?.id]);
 
   useEffect(() => {
     const syncProductFromStorage = async () => {

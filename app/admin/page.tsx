@@ -73,7 +73,7 @@ import {
   Globe,
   User2,
   Ticket,
-  FolderGit2,
+  ScrollText,
 } from "lucide-react";
 
 import { ProductsManagement } from "./components/products-management";
@@ -90,8 +90,8 @@ import { InquiriesManagement } from "./components/inquiries-management";
 import { GlobalSalesManagement } from "./components/global-sales-management";
 import { PopupManagement } from "./components/popup-management";
 import { VisitorsManagement } from "./components/visitors-management";
-import { GitDataManagement } from "./components/git-data-management";
 import { StoreSettingsManagement } from "./components/store-settings-management";
+import { ActivityLogsManagement } from "./components/activity-logs-management";
 import { LanguageSelector } from "@/components/layout/header/language-selector";
 import { getAllUserCoupons, syncAdminCouponsFromSupabase } from "@/lib/membership/coupons";
 
@@ -129,7 +129,7 @@ export default function AdminPage() {
     | "inquiries"
     | "settings"
     | "global_sales"
-    | "git_data"
+    | "activity_logs"
   >(() => {
     if (typeof window !== "undefined") {
       try {
@@ -138,7 +138,7 @@ export default function AdminPage() {
         const validTabs = [
           "overview", "products", "orders", "inbound", "timesale",
           "sales", "popup", "visitors", "revenue", "main",
-          "customers", "coupons", "inquiries", "settings", "global_sales", "git_data"
+          "customers", "coupons", "inquiries", "settings", "global_sales", "activity_logs"
         ];
         if (tabFromUrl && validTabs.includes(tabFromUrl)) {
           return tabFromUrl as any;
@@ -173,7 +173,7 @@ export default function AdminPage() {
         const validTabs = [
           "overview", "products", "orders", "inbound", "timesale",
           "sales", "popup", "visitors", "revenue", "main",
-          "customers", "coupons", "inquiries", "settings", "global_sales", "git_data"
+          "customers", "coupons", "inquiries", "settings", "global_sales", "activity_logs"
         ];
         if (tabFromUrl && validTabs.includes(tabFromUrl)) {
           setActiveTabState(tabFromUrl as any);
@@ -944,18 +944,18 @@ export default function AdminPage() {
             </Link>
 
             <button
-              onClick={() => setActiveTab("git_data")}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "git_data"
+              onClick={() => setActiveTab("activity_logs")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "activity_logs"
                   ? "bg-neutral-900 text-white font-extrabold shadow-sm"
                   : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
                 }`}
             >
-              <FolderGit2 className={`w-4 h-4 ${activeTab === "git_data" ? "text-emerald-400" : "text-emerald-600"}`} />
-              <span>Git 데이터 원장</span>
+              <ScrollText className={`w-4 h-4 ${activeTab === "activity_logs" ? "text-indigo-400" : "text-indigo-600"}`} />
+              <span>활동 로그 센터</span>
               <span className={`ml-auto text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
-                activeTab === "git_data" ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
+                activeTab === "activity_logs" ? "bg-indigo-500 text-white" : "bg-indigo-100 text-indigo-800"
               }`}>
-                12
+                NEW
               </span>
             </button>
 
@@ -974,7 +974,7 @@ export default function AdminPage() {
 
         {/* Main Content Area */}
         <main className={`flex-1 p-4 md:p-6 lg:p-8 mx-auto w-full ${
-          activeTab === "products" || activeTab === "orders" || activeTab === "inbound" || activeTab === "revenue" || activeTab === "global_sales" || activeTab === "visitors"
+          activeTab === "products" || activeTab === "orders" || activeTab === "inbound" || activeTab === "revenue" || activeTab === "global_sales" || activeTab === "visitors" || activeTab === "activity_logs"
             ? "max-w-[1850px]"
             : "max-w-7xl"
         }`}>
@@ -1070,6 +1070,16 @@ export default function AdminPage() {
             >
               <Globe className="w-3.5 h-3.5 text-neutral-900" />
               해외 판매가
+            </button>
+            <button
+              onClick={() => setActiveTab("activity_logs")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 ${activeTab === "activity_logs"
+                  ? "bg-neutral-900 text-white"
+                  : "bg-neutral-100 text-neutral-600"
+                }`}
+            >
+              <ScrollText className="w-3.5 h-3.5 text-indigo-500" />
+              활동 로그
             </button>
           </div>
 
@@ -1319,12 +1329,13 @@ export default function AdminPage() {
           {activeTab === "settings" && (
             <StoreSettingsManagement
               triggerToast={triggerToast}
-              onNavigateGitData={() => setActiveTab("git_data")}
             />
           )}
 
-          {activeTab === "git_data" && (
-            <GitDataManagement />
+          {activeTab === "activity_logs" && (
+            <ActivityLogsManagement
+              triggerToast={triggerToast}
+            />
           )}
 
 
@@ -1409,28 +1420,35 @@ export default function AdminPage() {
           if (typeof window !== "undefined" && finalProduct.id) {
             try {
               const pId = String(finalProduct.id);
+              const pHandle = String(finalProduct.handle || "");
               if (finalProduct.isTimeSale) {
-                if (!adminTimeSaleProductIds.includes(pId)) {
-                  const updatedIds = [...adminTimeSaleProductIds, pId];
-                  setAdminTimeSaleProductIds(updatedIds);
-                  localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedIds));
-                }
+                const nextIds = Array.from(new Set([...adminTimeSaleProductIds, pId, pHandle].filter(Boolean)));
+                setAdminTimeSaleProductIds(nextIds);
+                localStorage.setItem("secret_timesale_product_ids", JSON.stringify(nextIds));
               } else {
-                if (adminTimeSaleProductIds.includes(pId)) {
-                  const updatedIds = adminTimeSaleProductIds.filter((id) => id !== pId);
-                  setAdminTimeSaleProductIds(updatedIds);
-                  localStorage.setItem("secret_timesale_product_ids", JSON.stringify(updatedIds));
-                }
+                const nextIds = adminTimeSaleProductIds.filter((id) => id !== pId && id !== pHandle);
+                setAdminTimeSaleProductIds(nextIds);
+                localStorage.setItem("secret_timesale_product_ids", JSON.stringify(nextIds));
               }
 
+              let itemSettings: Record<string, any> = {};
               const itemSettingsRaw = localStorage.getItem("secret_timesale_item_settings");
               if (itemSettingsRaw) {
-                const itemSettings = JSON.parse(itemSettingsRaw);
-                if (itemSettings[pId]) {
-                  itemSettings[pId].discountRate = finalProduct.timeSaleDiscountRate;
-                  localStorage.setItem("secret_timesale_item_settings", JSON.stringify(itemSettings));
-                }
+                try { itemSettings = JSON.parse(itemSettingsRaw); } catch {}
               }
+              if (finalProduct.isTimeSale && finalProduct.timeSaleDiscountRate !== undefined) {
+                const rate = Number(finalProduct.timeSaleDiscountRate);
+                itemSettings[pId] = { ...(itemSettings[pId] || {}), discountRate: rate };
+                if (pHandle) itemSettings[pHandle] = { ...(itemSettings[pHandle] || {}), discountRate: rate };
+                localStorage.setItem("secret_timesale_item_settings", JSON.stringify(itemSettings));
+              } else if (!finalProduct.isTimeSale) {
+                delete itemSettings[pId];
+                if (pHandle) delete itemSettings[pHandle];
+                localStorage.setItem("secret_timesale_item_settings", JSON.stringify(itemSettings));
+              }
+
+              window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
+              window.dispatchEvent(new CustomEvent("storage"));
             } catch (e) {}
           }
 

@@ -14,6 +14,7 @@ import {
   flushRemoteWrites,
   syncCatalogFromRemote,
 } from "@/lib/products-remote-store";
+import { logAdminActivity } from "@/lib/logging/audit-logger";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -598,6 +599,24 @@ export async function POST(req: NextRequest) {
       logSync(`POST single id=${pId} availableForSale=${p.availableForSale} stock=${p.stock}`);
       const persistedSingle = await persistProducts(existingList);
 
+      // 관리자 상품 작업 감사 로그 기록
+      const isNew = existingIdx === -1;
+      const prevItem = existingIdx !== -1 ? existingList[existingIdx] : undefined;
+      const savedProd = existingList[existingIdx !== -1 ? existingIdx : 0];
+      logAdminActivity({
+        adminId: "admin_master",
+        adminName: "상품 관리자",
+        actionType: isNew ? "CREATE" : "UPDATE",
+        domain: "PRODUCT",
+        targetId: pId,
+        targetName: savedProd?.title || pId,
+        description: isNew
+          ? `신규 상품 [${savedProd?.title || pId}] 등록 (가격: ${(savedProd?.priceRange?.minVariantPrice?.amount || 0).toLocaleString()}원, 재고: ${savedProd?.stock || 0}개)`
+          : `상품 [${savedProd?.title || pId}] 정보 수정 (가격: ${(savedProd?.priceRange?.minVariantPrice?.amount || 0).toLocaleString()}원, 재고: ${savedProd?.stock || 0}개, 상태: ${savedProd?.availableForSale !== false ? "판매중" : "품절/중지"})`,
+        beforeData: prevItem ? { title: prevItem.title, price: prevItem.priceRange?.minVariantPrice?.amount, stock: prevItem.stock, availableForSale: prevItem.availableForSale } : undefined,
+        afterData: { title: savedProd?.title, price: savedProd?.priceRange?.minVariantPrice?.amount, stock: savedProd?.stock, availableForSale: savedProd?.availableForSale },
+      }).catch(() => {});
+
       revalidateAllProductPaths(p.handle);
 
       return NextResponse.json({
@@ -774,6 +793,23 @@ export async function DELETE(req: NextRequest) {
         if (p.handle) allIdentifiersToDelete.add(String(p.handle));
       }
     });
+
+    // 관리자 상품 삭제 감사 로그 기록
+    const deletedProducts = existingList.filter((p: any) =>
+      idsToDelete.some((target) => String(p.id) === target || String(p.productCode) === target || String(p.handle) === target)
+    );
+    for (const dp of deletedProducts) {
+      logAdminActivity({
+        adminId: "admin_master",
+        adminName: "상품 관리자",
+        actionType: "DELETE",
+        domain: "PRODUCT",
+        targetId: dp.id,
+        targetName: dp.title || dp.id,
+        description: `상품 [${dp.title || dp.id}] 완전 삭제 처리`,
+        beforeData: { title: dp.title, handle: dp.handle, price: dp.priceRange?.minVariantPrice?.amount },
+      }).catch(() => {});
+    }
 
     // 1. Record permanently in deleted-products.json
     const existingDeleted = readDeletedProductsList();

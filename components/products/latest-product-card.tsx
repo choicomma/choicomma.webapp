@@ -38,14 +38,23 @@ export function LatestProductCard({
   const linkedProduct = (product as any).linkedProduct || product;
   const targetHandle = linkedProduct.handle || product.handle || "product-1";
 
+  const isScheduled = Boolean(
+    product.releaseDate && new Date(product.releaseDate).getTime() > Date.now()
+  );
+  const isReleaseOpen = Boolean(
+    product.releaseDate && new Date(product.releaseDate).getTime() <= Date.now()
+  );
   const isOutOfStock =
-    product.availableForSale === false ||
-    (product as any).status === "sold_out" ||
-    (product as any).isOutOfStock === true ||
-    (product as any).inventoryQuantity === 0 ||
-    ((product as any).stock !== undefined &&
-      (product as any).stock !== null &&
-      Number((product as any).stock) <= 0);
+    !isScheduled &&
+    (isReleaseOpen
+      ? (product as any).stock !== undefined && Number((product as any).stock) <= 0
+      : (product.availableForSale === false ||
+          (product as any).status === "sold_out" ||
+          (product as any).isOutOfStock === true ||
+          (product as any).inventoryQuantity === 0 ||
+          ((product as any).stock !== undefined &&
+            (product as any).stock !== null &&
+            Number((product as any).stock) <= 0)));
 
   const [timeSaleDiscount, setTimeSaleDiscount] = useState<number | null>(null);
 
@@ -103,8 +112,14 @@ export function LatestProductCard({
         const isTimeSale = isSelected || (product as any).isTimeSale === true || (linked as any)?.isTimeSale === true;
 
         if (isTimeSale) {
+          const tagRate = Array.isArray(product.tags)
+            ? product.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
+            : null;
+          const parsedTagRate = tagRate && !isNaN(Number(tagRate)) ? Number(tagRate) : null;
+
           let discount =
             (product as any).timeSaleDiscountRate ||
+            parsedTagRate ||
             (linked as any)?.timeSaleDiscountRate ||
             itemDiscount ||
             (product as any).discountRate ||
@@ -114,12 +129,10 @@ export function LatestProductCard({
             const savedDisc = localStorage.getItem("secret_timesale_discount");
             if (savedDisc && !isNaN(parseInt(savedDisc))) {
               discount = parseInt(savedDisc);
-            } else {
-              discount = 35;
             }
           }
 
-          setTimeSaleDiscount(discount);
+          setTimeSaleDiscount(discount || null);
         } else {
           setTimeSaleDiscount(null);
         }
@@ -164,13 +177,20 @@ export function LatestProductCard({
             quality={100}
             className="object-contain size-full"
           />
-          {isOutOfStock && (
+          {isScheduled ? (
+            <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+              <span className="bg-amber-500 text-neutral-950 font-black text-xs md:text-sm px-4 py-2 rounded-2xl border border-amber-600 shadow-2xl tracking-widest uppercase flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-neutral-950" />
+                <span>{translateUiText("오픈 예정", currentLang)}</span>
+              </span>
+            </div>
+          ) : isOutOfStock ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
               <span className="bg-neutral-950 text-white font-black text-xs md:text-sm px-4 py-2 rounded-2xl border border-neutral-700 shadow-2xl tracking-widest uppercase">
                 {translateUiText("SOLD OUT", currentLang)}
               </span>
             </div>
-          )}
+          ) : null}
         </Link>
       </div>
     );
@@ -194,13 +214,20 @@ export function LatestProductCard({
           fill
           className="object-contain size-full"
         />
-        {isOutOfStock && (
+        {isScheduled ? (
+          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+            <span className="bg-amber-500 text-neutral-950 font-black text-xs px-3 py-1.5 rounded-xl border border-amber-600 shadow-xl tracking-widest uppercase flex items-center gap-1">
+              <Clock className="w-3 h-3 text-neutral-950" />
+              <span>{translateUiText("오픈 예정", currentLang)}</span>
+            </span>
+          </div>
+        ) : isOutOfStock ? (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <span className="bg-neutral-950 text-white font-black text-xs px-3 py-1.5 rounded-xl border border-neutral-700 shadow-xl tracking-widest uppercase">
               {translateUiText("SOLD OUT", currentLang)}
             </span>
           </div>
-        )}
+        ) : null}
       </Link>
 
       <div className="w-full">

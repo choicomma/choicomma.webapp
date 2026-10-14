@@ -32,6 +32,13 @@ export function HomePopupModal() {
       return;
     }
 
+    // 내용이 전혀 없는 빈 팝업인 경우 노출 안 함
+    const hasAnyContent = Boolean(cfg.title?.trim() || cfg.noticeMessage?.trim() || cfg.description?.trim() || cfg.imageUrl?.trim());
+    if (!hasAnyContent) {
+      setIsOpen(false);
+      return;
+    }
+
     // 2. '오늘 하루 보지 않기' 만료 시간 확인 (팝업 ID별 독립 검사 및 레거시 키 검사)
     if (typeof window !== "undefined") {
       const popupId = cfg.id || "default";
@@ -191,7 +198,7 @@ export function HomePopupModal() {
             {/* 2. Main Large Headline */}
             <div className="space-y-1">
               <h2 className="text-lg sm:text-xl font-black text-neutral-950 tracking-tight leading-snug break-keep">
-                {config.title || "서비스 일시 이용 불가 안내"}
+                {config.title || "초이콤마 공지사항"}
               </h2>
               {config.subtitle && (
                 <p className="text-[11px] font-bold text-neutral-400 tracking-wider uppercase">
@@ -217,7 +224,7 @@ export function HomePopupModal() {
                   <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-amber-300/60 text-xs sm:text-sm font-bold text-neutral-800">
                     <div className="flex items-center gap-1.5 text-amber-950">
                       <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>정상화 완료 목표 기한:</span>
+                      <span>안내 기한:</span>
                     </div>
                     <span className="px-3 py-1 rounded-xl bg-white border border-amber-300 font-black text-rose-600 text-xs sm:text-sm shadow-2xs">
                       {config.noticePeriod}
@@ -227,35 +234,14 @@ export function HomePopupModal() {
               </div>
             )}
 
-            {/* 4. Polite Customer Care Copywriting (가독성 최적화된 본문 안내글) */}
-            <div className="space-y-2.5 text-sm sm:text-base text-neutral-700 leading-relaxed break-keep">
-              {config.description ? (
+            {/* 4. Customer Notice Body */}
+            {config.description && (
+              <div className="space-y-2.5 text-sm sm:text-base text-neutral-700 leading-relaxed break-keep">
                 <div className="whitespace-pre-line text-neutral-800 font-medium leading-relaxed">
                   {config.description}
                 </div>
-              ) : (
-                <>
-                  <p className="font-bold text-neutral-900">
-                    초이콤마를 찾아주신 고객 여러분께 진심으로 감사드립니다.
-                  </p>
-                  <p>
-                    현재 해외 글로벌 고객님들과 함께하기 위한 <strong className="text-neutral-950 font-black">초이콤마 글로벌 몰 공식 런칭 및 인프라 연동 작업</strong>이 집중 진행되고 있습니다.
-                  </p>
-                  <p className="font-semibold text-neutral-900">
-                    이로 인해 작업 기간 동안 일시적으로 <strong className="text-rose-600 font-black underline underline-offset-4 decoration-rose-300">쇼핑몰 서비스 이용 및 사이트 접속을 하실 수 없습니다.</strong> 고객님들의 쾌적하고 안전한 쇼핑을 위해 <strong className="text-neutral-950 font-black">{config.noticePeriod || "2026년 10월 12일까지"}</strong> 모든 작업을 완료하여 신속히 정상화하겠습니다.
-                  </p>
-                  <p className="text-neutral-500 font-medium text-xs sm:text-sm">
-                    이용에 큰 불편을 드려 고개 숙여 사과드리며, 더욱 품격 있고 새로워진 글로벌 서비스로 찾아뵙겠습니다.
-                  </p>
-                </>
-              )}
-            </div>
-
-            {/* 5. Safe Order Assurance Banner (안심 배송 안내) */}
-            <div className="p-3.5 rounded-2xl bg-neutral-50 border border-neutral-200/80 flex items-center gap-2.5 text-xs sm:text-sm text-neutral-700 font-semibold">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>작업 기간 중 신규 주문·결제는 불가하며, 기존 주문건의 배송 업무는 정상 진행됩니다.</span>
-            </div>
+              </div>
+            )}
 
             {/* Optional Link Button */}
             {config.linkUrl && (

@@ -6,6 +6,7 @@ import { CheckCircle2, ShoppingBag, ArrowRight, ShieldCheck, RefreshCw } from "l
 import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { recordCouponUsage } from "@/lib/membership/coupons";
+import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 
 interface SuccessParams {
   paymentKey: string | null;
@@ -48,9 +49,13 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
     userGrade: string;
   } | null>(null);
   const [orderPaymentMethod, setOrderPaymentMethod] = useState<string>("신용·체크카드");
+  const hasConfirmedRef = useState<{ current: boolean }>({ current: false })[0];
 
   useEffect(() => {
     async function confirmPayment() {
+      if (hasConfirmedRef.current) return;
+      hasConfirmedRef.current = true;
+
       // 1. 주문 번호가 없는 경우 (직접 URL 접속 등)
       if (!orderId) {
         setIsLoading(false);
@@ -62,18 +67,43 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
       const isZeroPayment = Number(amount) === 0 || !paymentKey || paymentKey === "FREE";
 
       let paymentResultData: any = null;
+      let serverOrder: any = null;
+      let serverShipment: any = null;
+
+      // 보류 주문 데이터 복원 (sessionStorage 우선 -> localStorage 차선 -> 서버 원장 3차 복원)
+      let pendingOrder: any = null;
+      if (typeof window !== "undefined") {
+        try {
+          const rawPending =
+            sessionStorage.getItem(`pending_order_${orderId}`) ||
+            localStorage.getItem(`pending_order_${orderId}`);
+          if (rawPending) pendingOrder = JSON.parse(rawPending);
+        } catch (e) {}
+      }
+
+      if (!pendingOrder && orderId) {
+        try {
+          const pendingRes = await fetch(`/api/orders/pending?orderId=${encodeURIComponent(orderId)}`);
+          if (pendingRes.ok) {
+            const pendingJson = await pendingRes.json();
+            if (pendingJson?.data) pendingOrder = pendingJson.data;
+          }
+        } catch (e) {}
+      }
 
       if (!isZeroPayment) {
         try {
           const res = await fetch("/api/payment/toss/confirm", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ paymentKey, orderId, amount }),
+            body: JSON.stringify({ paymentKey, orderId, amount, pendingOrder }),
           });
 
           const json = await res.json();
           if (res.ok && json.success) {
             paymentResultData = json.data;
+            serverOrder = json.order;
+            serverShipment = json.shipment;
             setPaymentData(json.data);
           } else {
             setErrorMessage(json.message || "결제 승인 과정에서 오류가 발생했습니다.");
@@ -84,6 +114,22 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
           setErrorMessage(err.message || "네트워크 통신 오류가 발생했습니다.");
           setIsLoading(false);
           return;
+        }
+      } else {
+        // 0원 결제 (전액 적립금 또는 전액 쿠폰 결제) 서버 원자적 확정
+        try {
+          const res = await fetch("/api/orders/confirm-free", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId, pendingOrder }),
+          });
+          const json = await res.json();
+          if (res.ok && json.success) {
+            serverOrder = json.order;
+            serverShipment = json.shipment;
+          }
+        } catch (err: any) {
+          console.warn("[Free Order Confirm Warning]:", err);
         }
       }
 
@@ -124,7 +170,7 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
         if (typeof window !== "undefined") {
           const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
           const phone = (localStorage.getItem("membership_user_phone") || "").trim();
-          const rawId = email || phone || "guest";
+          const rawId = (email || phone || "guest").toLowerCase().trim();
           const chatKey = `site_live_chat_messages_${rawId}`;
 
           const newMsg = {
@@ -188,11 +234,14 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
             }
 
             // Read pending checkout order form data (배송지, 우편번호, 수령인)
-            let pendingOrder: any = null;
-            try {
-              const rawPending = sessionStorage.getItem(`pending_order_${orderId}`);
-              if (rawPending) pendingOrder = JSON.parse(rawPending);
-            } catch (e) {}
+            if (!pendingOrder && typeof window !== "undefined") {
+              try {
+                const rawPending =
+                  sessionStorage.getItem(`pending_order_${orderId}`) ||
+                  localStorage.getItem(`pending_order_${orderId}`);
+                if (rawPending) pendingOrder = JSON.parse(rawPending);
+              } catch (e) {}
+            }
 
             const finalMethod = isZeroPayment
               ? (pendingOrder?.appliedPoints > 0 ? "전액 적립금 결제" : "전액 할인 쿠폰 결제")
@@ -203,9 +252,10 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
                     ? "간편결제 (카카오/네이버/토스)"
                     : "신용·체크카드 (토스)"));
 
-            const newOrder = {
+            const newOrder = serverOrder || {
               id: orderId,
               orderId: orderId,
+              orderNumber: orderId,
               customer: paymentResultData?.customerName || pendingOrder?.formData?.ordererName || pendingOrder?.formData?.recipientName || "VIP 고객님",
               ordererName: pendingOrder?.formData?.ordererName || paymentResultData?.customerName || pendingOrder?.formData?.recipientName || "VIP 고객님",
               email: paymentResultData?.customerEmail || pendingOrder?.formData?.ordererEmail || "customer@choicomma.com",
@@ -238,6 +288,7 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
               couponTitle: pendingOrder?.selectedCouponTitle || "",
               status: isZeroPayment ? "결제완료 (전액적립금)" : "결제완료 (토스)",
               method: finalMethod,
+              paymentMethod: finalMethod,
             };
 
             setOrderPaymentMethod(newOrder.method);
@@ -251,8 +302,26 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
               localStorage.setItem("admin_orders", JSON.stringify(updated));
               window.dispatchEvent(new CustomEvent("admin_orders_updated"));
 
+              // 고객 구매 여정 (PURCHASE_SUCCESS) 실시간 트래킹
+              try {
+                trackCustomerJourney({
+                  eventType: "PURCHASE_SUCCESS",
+                  eventLabel: `결제 완료 (${orderId})`,
+                  metadata: {
+                    orderId,
+                    amount: isZeroPayment ? 0 : Number(amount),
+                    paymentMethod: newOrder.method,
+                    items: newOrder.items,
+                    quantity: newOrder.quantity,
+                    customerName: newOrder.customer,
+                    recipient: newOrder.recipient,
+                    isZeroPayment,
+                  },
+                });
+              } catch (e) {}
+
             // admin_shipments (관리자 배송 주문 관리 및 마이페이지 주문조회) 실시간 동기화
-            const newShipment = {
+            const newShipment = serverShipment || {
               id: orderId,
               orderId: orderId,
               ordererName: newOrder.ordererName,
@@ -318,43 +387,37 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
               userGrade: effectiveUserGrade,
             });
 
-            // 1) Supabase orders 테이블에 주문 원장 영속 저장
-            const dbOrder = {
-              id: orderId,
-              orderNumber: orderId,
-              customerId: (typeof window !== "undefined" && localStorage.getItem("membership_user_id")) || null,
-              customerName: newOrder.ordererName,
-              customerEmail: newOrder.email,
-              customerPhone: newOrder.phone,
-              totalAmount: isZeroPayment ? 0 : Number(amount),
-              shippingFee: pendingOrder?.shippingFee || 0,
-              discountAmount: pendingOrder?.appliedDiscount || 0,
-              pointsUsed: effectiveAppliedPoints,
-              pointsEarned: effectiveEarnedPoints,
-              paymentMethod: newOrder.method || "카드결제 (토스)",
-              paymentStatus: "PAID",
-              shippingAddress: {
-                zipCode: newOrder.zipCode,
-                address: newOrder.address,
-                detailAddress: newOrder.detailAddress,
-              },
-              items: pendingOrder?.cart?.lines || [{ title: newOrder.items, quantity: newOrder.quantity, price: isZeroPayment ? 0 : Number(amount) }],
-              orderMemo: newOrder.shippingMemo || "",
-            };
-
-            // 1) Git orders API에 영구 동기화
-            fetch("/api/orders", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(dbOrder),
-            }).catch((err) => console.warn("Orders API insert notice:", err));
-
-            // 2) 서버 API에 백그라운드 영구 동기화
-            fetch("/api/admin/shipments", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(updatedShipments),
-            }).catch(() => {});
+            // 1) 서버에서 이미 원자적으로 orders/shipments/재고차감이 완료되었으므로,
+            // 미확인 비상 시에만 클라이언트 백업 동기화 수행
+            if (!serverOrder) {
+              const dbOrder = {
+                id: orderId,
+                orderNumber: orderId,
+                customerId: (typeof window !== "undefined" && localStorage.getItem("membership_user_id")) || null,
+                customerName: newOrder.ordererName,
+                customerEmail: newOrder.email,
+                customerPhone: newOrder.phone,
+                totalAmount: isZeroPayment ? 0 : Number(amount),
+                shippingFee: pendingOrder?.shippingFee || 0,
+                discountAmount: pendingOrder?.appliedDiscount || 0,
+                pointsUsed: effectiveAppliedPoints,
+                pointsEarned: effectiveEarnedPoints,
+                paymentMethod: newOrder.method || "카드결제 (토스)",
+                paymentStatus: "PAID",
+                shippingAddress: {
+                  zipCode: newOrder.zipCode,
+                  address: newOrder.address,
+                  detailAddress: newOrder.detailAddress,
+                },
+                items: pendingOrder?.cart?.lines || [{ title: newOrder.items, quantity: newOrder.quantity, price: isZeroPayment ? 0 : Number(amount) }],
+                orderMemo: newOrder.shippingMemo || "",
+              };
+              fetch("/api/orders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dbOrder),
+              }).catch((err) => console.warn("Orders API insert fallback notice:", err));
+            }
 
             // 2-1) 회원이 사용한 쿠폰 내역 영구 기록 및 실시간 보장
             if (
@@ -375,28 +438,8 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
               });
             }
 
-            // 2-2) 주문된 상품 실시간 재고 자동 차감 (품절 시 자동 품절 전환)
-            if (pendingOrder?.cart?.lines && Array.isArray(pendingOrder.cart.lines)) {
-              const deductItems = pendingOrder.cart.lines.map((l: any) => {
-                const opts = l.merchandise?.selectedOptions || [];
-                const colorVal = opts.find((o: any) => o.name?.toLowerCase() === "color")?.value || "";
-                const sizeVal = opts.find((o: any) => o.name?.toLowerCase() === "size")?.value || "";
-                return {
-                  productId: l.merchandise?.product?.id || l.id,
-                  quantity: Number(l.quantity) || 1,
-                  color: colorVal,
-                  size: sizeVal,
-                };
-              });
-
-              fetch("/api/products/deduct-stock", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ items: deductItems }),
-              }).then(() => {
-                window.dispatchEvent(new CustomEvent("admin_products_updated"));
-              }).catch((err) => console.warn("Stock deduction notice:", err));
-            }
+            // 2-2) 주문된 상품 실시간 재고 이벤트 발행 (서버 차감 완료 반영)
+            window.dispatchEvent(new CustomEvent("admin_products_updated"));
 
             // 3) 결제 성공 후 장바구니 처리 (바로구매인 경우 일반 장바구니 유지)
             try {
@@ -406,6 +449,9 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
                 localStorage.removeItem("choicomma_cart");
                 window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
               }
+              // 임시 보류 주문 세션/로컬 데이터 정리
+              sessionStorage.removeItem(`pending_order_${orderId}`);
+              localStorage.removeItem(`pending_order_${orderId}`);
             } catch (e) {}
 
             // 4) 고객 등급에 따른 적립금 지급 및 포인트 이력 저장 (중복 적립 방지)

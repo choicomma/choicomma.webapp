@@ -18,25 +18,47 @@
     "senderAddr2": "6층(개포동)"
   },
   "shipping_policy": {
-    "defaultShippingFee": 3000,
-    "freeShippingThreshold": 50000,
-    "remoteAreaFee": 3000
+    "defaultShippingFee": 4000,
+    "freeShippingThreshold": 100000,
+    "remoteAreaFee": 4000,
+    "returnShippingFee": 16000
   },
   "popup_config": {
-    "id": "global_mall_notice_20261012",
-    "isActive": true,
-    "isEnabled": true,
-    "popupType": "NOTICE",
-    "title": "초이콤마 글로벌 몰 오픈 준비 및 서비스 일시 이용 불가 안내",
-    "subtitle": "GLOBAL STORE LAUNCH & TEMPORARY SERVICE UNAVAILABILITY NOTICE",
-    "noticeMessage": "초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다.",
-    "noticePeriod": "2026.10.12일까지",
-    "description": "초이콤마 글로벌 몰 공식 런칭 준비로 현재 서비스 이용을 하실 수 없습니다. 신속히 정상화할 수 있도록 하겠습니다.",
+    "id": "",
+    "title": "",
+    "subtitle": "",
     "imageUrl": "",
     "linkUrl": "",
-    "showOnHome": true,
+    "isActive": false,
+    "showOnHome": false,
     "showOnMembership": false,
-    "hideForTodayEnabled": true,
-    "updatedAt": "2026-10-09T23:55:00.000Z"
-  }
+    "hideForTodayEnabled": false,
+    "popupType": "NOTICE",
+    "noticeMessage": "",
+    "noticePeriod": "",
+    "description": "",
+    "createdAt": "",
+    "updatedAt": "2026-10-13T11:33:02.106Z"
+  },
+  "admin_coupons_config": [
+    {
+      "id": "coupon-1791895695492",
+      "code": "CPN-MV6OFJIC",
+      "title": "회원가입 감사 쿠폰",
+      "discount": "30,000원 할인",
+      "discountAmount": 30000,
+      "type": "FIXED",
+      "condition": "전 상품 즉시 할인",
+      "validUntil": "2026.12.31",
+      "badge": "신규혜택",
+      "targetType": "ALL",
+      "targetGrades": [
+        "ALL"
+      ],
+      "targetCustomerEmails": [],
+      "targetCustomerNames": [],
+      "isActive": true,
+      "createdAt": "2026-10-13"
+    }
+  ]
 }

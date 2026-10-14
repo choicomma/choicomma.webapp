@@ -36,6 +36,7 @@ import {
   restoreCouponByOrder,
   syncAdminCouponsFromSupabase,
 } from "@/lib/membership/coupons";
+import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 
 export default function CheckoutClientWrapper() {
   const router = useRouter();
@@ -59,6 +60,7 @@ export default function CheckoutClientWrapper() {
   const [isTossModalOpen, setIsTossModalOpen] = useState(false);
   const [isDirectPayLoading, setIsDirectPayLoading] = useState(false);
   const [currentLang, setCurrentLang] = useState("ko");
+  const hasTrackedCheckoutRef = useRef(false);
 
   useEffect(() => {
     setCurrentLang(getCurrentLanguage());
@@ -445,6 +447,35 @@ export default function CheckoutClientWrapper() {
   const totalItemAmount = directOrder
     ? Number(directOrder.cost?.totalAmount?.amount || 0)
     : Number(cart?.cost?.totalAmount?.amount || 0);
+
+  // 고객 구매 여정 (BEGIN_CHECKOUT) 실시간 트래킹
+  useEffect(() => {
+    if (orderLines.length > 0 && !hasTrackedCheckoutRef.current) {
+      hasTrackedCheckoutRef.current = true;
+      const firstTitle =
+        orderLines[0]?.merchandise?.product?.title ||
+        orderLines[0]?.merchandise?.title ||
+        "상품";
+      const summary =
+        orderLines.length > 1
+          ? `${firstTitle} 외 ${orderLines.length - 1}건`
+          : firstTitle;
+      trackCustomerJourney({
+        eventType: "BEGIN_CHECKOUT",
+        eventLabel: `주문서 작성 페이지 진입 (${summary})`,
+        metadata: {
+          itemCount: orderLines.length,
+          isDirectOrder: Boolean(directOrder),
+          totalItemAmount,
+          items: orderLines.map((l: any) => ({
+            title: l.merchandise?.product?.title || l.merchandise?.title,
+            quantity: l.quantity,
+            amount: l.cost?.totalAmount?.amount,
+          })),
+        },
+      });
+    }
+  }, [orderLines.length, directOrder, totalItemAmount]);
   const freeThreshold = shippingPolicy.freeShippingThreshold !== undefined ? shippingPolicy.freeShippingThreshold : 100000;
   const baseShippingFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 4000;
 
@@ -643,37 +674,49 @@ export default function CheckoutClientWrapper() {
             ? (formData.customDeliveryMemo.trim() || "직접 입력")
             : formData.deliveryMemo;
 
-        sessionStorage.setItem(
-          `pending_order_${orderId}`,
-          JSON.stringify({
-            orderId,
-            formData: {
-              ...formData,
-              deliveryMemo: effectiveDeliveryMemo,
-            },
-            cart: {
-              lines: orderLines,
-              cost: {
-                totalAmount: {
-                  amount: totalItemAmount.toString(),
-                  currencyCode: "KRW",
-                },
+        const pendingPayload = {
+          orderId,
+          formData: {
+            ...formData,
+            deliveryMemo: effectiveDeliveryMemo,
+          },
+          cart: {
+            lines: orderLines,
+            cost: {
+              totalAmount: {
+                amount: totalItemAmount.toString(),
+                currencyCode: "KRW",
               },
             },
-            finalTotalAmount,
-            earnedPoints,
-            pointRate,
-            userGrade,
-            appliedPoints,
-            appliedDiscount,
-            isDirectOrder: !!directOrder,
-            selectedCouponId: selectedCouponId && selectedCouponId !== "NONE" ? selectedCouponId : null,
-            selectedCouponTitle: foundCoupon?.title || null,
-            selectedCouponType: foundCoupon?.type || "FIXED",
-            shippingFee,
-            paidAt: new Date().toISOString(),
-          })
-        );
+          },
+          finalTotalAmount,
+          earnedPoints,
+          pointRate,
+          userGrade,
+          appliedPoints,
+          appliedDiscount,
+          isDirectOrder: !!directOrder,
+          selectedCouponId: selectedCouponId && selectedCouponId !== "NONE" ? selectedCouponId : null,
+          selectedCouponTitle: foundCoupon?.title || null,
+          selectedCouponType: foundCoupon?.type || "FIXED",
+          shippingFee,
+          paidAt: new Date().toISOString(),
+        };
+
+        const serializedPending = JSON.stringify(pendingPayload);
+
+        // [Layer 1] 세션 스토리지 1차 저장 (탭 내 즉시 접근)
+        sessionStorage.setItem(`pending_order_${orderId}`, serializedPending);
+
+        // [Layer 2] 로컬 스토리지 2차 백업 (모바일 웹뷰 새 탭 리다이렉트 유실 방지)
+        localStorage.setItem(`pending_order_${orderId}`, serializedPending);
+
+        // [Layer 3] 서버 임시 원장 3차 백업 (클라이언트 스토리지 유실 완전 방어)
+        fetch("/api/orders/pending", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId, pendingOrder: pendingPayload }),
+        }).catch((pendingErr) => console.warn("[Pending Order Server Backup Notice]:", pendingErr));
       }
 
       // 전액 적립금 또는 전액 할인 쿠폰으로 최종 결제 금액이 0원인 경우
@@ -767,6 +810,8 @@ export default function CheckoutClientWrapper() {
       }
       try {
         sessionStorage.removeItem(`pending_order_${orderId}`);
+        localStorage.removeItem(`pending_order_${orderId}`);
+        fetch(`/api/orders/pending?orderId=${encodeURIComponent(orderId)}`, { method: "DELETE" }).catch(() => {});
       } catch (e) {}
 
       // Ignore user cancellation (closing the payment popup/window)

@@ -1,0 +1,43 @@
+{
+  "journeyLogs": [],
+  "auditLogs": [
+    {
+      "id": "adt_1791895695593_yly0z",
+      "adminId": "admin_master",
+      "adminName": "총괄 관리자",
+      "actionType": "UPDATE",
+      "domain": "SETTINGS",
+      "targetId": "admin_coupons_config",
+      "targetName": "스토어 설정 (admin_coupons_config)",
+      "description": "스토어 설정 항목 [admin_coupons_config] 값 수정 저장",
+      "afterData": {
+        "key": "admin_coupons_config",
+        "value": [
+          {
+            "id": "coupon-1791895695492",
+            "code": "CPN-MV6OFJIC",
+            "title": "회원가입 감사 쿠폰",
+            "discount": "30,000원 할인",
+            "discountAmount": 30000,
+            "type": "FIXED",
+            "condition": "전 상품 즉시 할인",
+            "validUntil": "2026.12.31",
+            "badge": "신규혜택",
+            "targetType": "ALL",
+            "targetGrades": [
+              "ALL"
+            ],
+            "targetCustomerEmails": [],
+            "targetCustomerNames": [],
+            "isActive": true,
+            "createdAt": "2026-10-13"
+          }
+        ]
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-13 21:48:15",
+      "created_at": "2026-10-13T12:48:15.593Z"
+    }
+  ],
+  "updatedAt": "2026-10-13T12:48:15.594Z"
+}

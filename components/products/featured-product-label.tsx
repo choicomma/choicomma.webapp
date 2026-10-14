@@ -142,8 +142,14 @@ export function FeaturedProductLabel({
         const isTimeSale = isSelected || (product as any).isTimeSale === true || (linked as any)?.isTimeSale === true;
 
         if (isTimeSale) {
+          const tagRate = Array.isArray(product.tags)
+            ? product.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
+            : null;
+          const parsedTagRate = tagRate && !isNaN(Number(tagRate)) ? Number(tagRate) : null;
+
           let discount =
             (product as any).timeSaleDiscountRate ||
+            parsedTagRate ||
             (linked as any)?.timeSaleDiscountRate ||
             itemDiscount ||
             (product as any).discountRate ||
@@ -153,12 +159,10 @@ export function FeaturedProductLabel({
             const savedDisc = localStorage.getItem("secret_timesale_discount");
             if (savedDisc && !isNaN(parseInt(savedDisc))) {
               discount = parseInt(savedDisc);
-            } else {
-              discount = 35;
             }
           }
 
-          setTimeSaleDiscount(discount);
+          setTimeSaleDiscount(discount || null);
         } else {
           setTimeSaleDiscount(null);
         }

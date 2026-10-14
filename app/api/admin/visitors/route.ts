@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  initializeStore,
   getRealVisitorAnalytics,
   blockIp,
   unblockIp,
@@ -20,6 +21,10 @@ const NO_CACHE_HEADERS = {
 // GET: 실제 수집된 방문자 트래픽 통계 및 로그 조회 (관리자 IP 원천 제외)
 export async function GET(req: NextRequest) {
   try {
+    const shouldRefresh = req.nextUrl.searchParams.get("refresh") === "true";
+    if (shouldRefresh) {
+      await initializeStore(true);
+    }
     const realAnalytics = await getRealVisitorAnalytics(req.headers);
 
     return NextResponse.json(

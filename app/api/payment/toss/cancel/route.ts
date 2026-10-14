@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { runSafeSupabaseQuery } from "@/lib/supabase/server";
 
 function getPaymentLogsFilePath() {
   return path.join(process.cwd(), "data", "payment-logs.json");
@@ -115,6 +116,19 @@ export async function POST(req: NextRequest) {
           logs[idx] = { ...logs[idx], status: "CANCELED", rawResponse: mockResult, canceledAt: mockResult.canceledAt };
           writePaymentLogs(logs);
         }
+
+        // Supabase 비동기 듀얼 라이트
+        runSafeSupabaseQuery(
+          async (supabase) => supabase.from("payment_logs").update({ status: "CANCELED", rawResponse: mockResult }).eq("orderId", orderId),
+          2500
+        ).catch((e) => console.warn("[Supabase Cancel Dual-Write Warning]:", e));
+
+        if (orderId) {
+          runSafeSupabaseQuery(
+            async (supabase) => supabase.from("orders").update({ paymentStatus: "CANCELED", status: "취소완료" }).or(`id.eq.${orderId},orderNumber.eq.${orderId}`),
+            2500
+          ).catch((e) => console.warn("[Supabase Order Cancel Warning]:", e));
+        }
       } catch {}
 
       return NextResponse.json({
@@ -157,7 +171,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Git payment-logs.json 테이블 상태를 CANCELED로 업데이트
+    // 4. Git payment-logs.json 테이블 상태를 CANCELED로 업데이트 및 Supabase 듀얼 라이트
     try {
       const logs = readPaymentLogs();
       const idx = logs.findIndex((l) => l.paymentKey === effPaymentKey || l.orderId === orderId);
@@ -170,6 +184,30 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         };
         writePaymentLogs(logs);
+      }
+
+      // Supabase 비동기 듀얼 라이트 (결제로그 + 주문 상태 동시 갱신)
+      if (effPaymentKey) {
+        runSafeSupabaseQuery(
+          async (supabase) => supabase.from("payment_logs").update({ status: data.status || "CANCELED", rawResponse: data }).eq("paymentKey", effPaymentKey),
+          2500
+        ).catch((e) => console.warn("[Supabase Cancel Dual-Write Warning]:", e));
+      } else if (orderId) {
+        runSafeSupabaseQuery(
+          async (supabase) => supabase.from("payment_logs").update({ status: data.status || "CANCELED", rawResponse: data }).eq("orderId", orderId),
+          2500
+        ).catch((e) => console.warn("[Supabase Cancel Dual-Write Warning]:", e));
+      }
+
+      if (orderId) {
+        runSafeSupabaseQuery(
+          async (supabase) => supabase.from("orders").update({
+            paymentStatus: "CANCELED",
+            status: "취소완료",
+            updated_at: new Date().toISOString(),
+          }).or(`id.eq.${orderId},orderNumber.eq.${orderId}`),
+          2500
+        ).catch((e) => console.warn("[Supabase Order Cancel Warning]:", e));
       }
     } catch (dbErr) {
       console.warn("Notice: Failed to update payment_logs in Git JSON:", dbErr);

@@ -1,5 +1,419 @@
 [
   {
+    "id": "excel-product-468",
+    "productNo": 468,
+    "productCode": "CC-468",
+    "created_at": "2026-10-12T07:29:03.842Z",
+    "createdAt": "2026-10-12T07:29:03.842Z",
+    "handle": "product-468",
+    "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+    "categoryId": "top",
+    "categoryIds": [
+      "top"
+    ],
+    "description": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/08922bea77e5f.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/1edaafdc7d0c8.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/44acbf4187532.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7c285ecacc052.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p>",
+    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/08922bea77e5f.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/1edaafdc7d0c8.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/44acbf4187532.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7c285ecacc052.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p>",
+    "priceRange": {
+      "minVariantPrice": {
+        "amount": "490000",
+        "currencyCode": "KRW"
+      },
+      "maxVariantPrice": {
+        "amount": "490000",
+        "currencyCode": "KRW"
+      }
+    },
+    "price": {
+      "amount": "490000",
+      "currencyCode": "KRW"
+    },
+    "featuredImage": {
+      "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+      "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+      "width": 1200,
+      "height": 1600
+    },
+    "images": [
+      {
+        "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/08922bea77e5f.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/1edaafdc7d0c8.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/44acbf4187532.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7c285ecacc052.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "width": 1200,
+        "height": 1600
+      }
+    ],
+    "colors": [
+      "B타입"
+    ],
+    "colorHexMap": {
+      "RED": "#DC2626",
+      "BLUE": "#2563EB",
+      "NAVY": "#000080",
+      "PINK": "#EC4899",
+      "BEIGE": "#F5F5DC",
+      "BLACK": "#000000",
+      "BROWN": "#8B4513",
+      "CREAM": "#FDFBF7",
+      "GREEN": "#16A34A",
+      "KHAKI": "#708090",
+      "WHITE": "#FFFFFF",
+      "모카": "#8B5A2B",
+      "블랙": "#000000",
+      "차콜": "#36454F",
+      "A타입": "#1C1C1C",
+      "B타입": "#2B2B2B",
+      "CHARCOAL": "#36454F",
+      "아이보리": "#FFFFF0",
+      "쿨그레이": "#8E9CA3"
+    },
+    "sizes": [
+      "1(44-55)",
+      "2(66-88)"
+    ],
+    "stock": 30,
+    "sizeStock": {
+      "B타입-1(44-55)": 15,
+      "B타입-2(66-88)": 15
+    },
+    "stockMap": {
+      "B타입-1(44-55)": 15,
+      "B타입-2(66-88)": 15
+    },
+    "availableForSale": true,
+    "isMainFeatured": true,
+    "productLabel": "BLACK_LABEL",
+    "options": [
+      {
+        "id": "color",
+        "name": "Color",
+        "values": [
+          {
+            "id": "B타입",
+            "name": "B타입"
+          }
+        ]
+      },
+      {
+        "id": "size",
+        "name": "Size",
+        "values": [
+          {
+            "id": "1(44-55)",
+            "name": "1(44-55)"
+          },
+          {
+            "id": "2(66-88)",
+            "name": "2(66-88)"
+          }
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "id": "var-468-B타입-1-44-55-",
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 1(44-55)",
+        "availableForSale": true,
+        "inventoryQuantity": 15,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "B타입"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "price": {
+          "amount": "490000",
+          "currencyCode": "KRW"
+        },
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 1(44-55)"
+        }
+      },
+      {
+        "id": "var-468-B타입-2-66-88-",
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 2(66-88)",
+        "availableForSale": true,
+        "inventoryQuantity": 15,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "B타입"
+          },
+          {
+            "name": "Size",
+            "value": "2(66-88)"
+          }
+        ],
+        "price": {
+          "amount": "490000",
+          "currencyCode": "KRW"
+        },
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 2(66-88)"
+        }
+      }
+    ],
+    "tags": [
+      "NEW",
+      "BLACK_LABEL",
+      "pno:468",
+      "pcode:CC-468",
+      "tsrate:25"
+    ],
+    "isTimeSale": true,
+    "timeSaleDiscountRate": 25,
+    "bulkDiscount": {
+      "enabled": false,
+      "rules": [],
+      "productNo": 468,
+      "productCode": "CC-468",
+      "releaseDate": ""
+    },
+    "fabricComposition": "SILK 100%",
+    "elasticity": "보통",
+    "sheerness": "없음",
+    "thickness": "적당함",
+    "lining": "없음",
+    "updated_at": "2026-10-12T13:10:18.757Z",
+    "updatedAt": "2026-10-12T07:29:03.842Z"
+  },
+  {
+    "id": "excel-product-463",
+    "productNo": 463,
+    "productCode": "CC-463",
+    "created_at": "2026-10-12T07:29:03.842Z",
+    "createdAt": "2026-10-12T07:29:03.842Z",
+    "handle": "product-463",
+    "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+    "categoryId": "top",
+    "categoryIds": [
+      "top"
+    ],
+    "description": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/40a0b8060fac2.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/996479957bb42.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/bd4e74baeb6ba.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/f2fe4624cf5bc.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><br></p><p><br></p><p><br></p>",
+    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/40a0b8060fac2.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/996479957bb42.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/bd4e74baeb6ba.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/f2fe4624cf5bc.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><br></p><p><br></p><p><br></p>",
+    "priceRange": {
+      "minVariantPrice": {
+        "amount": "490000",
+        "currencyCode": "KRW"
+      },
+      "maxVariantPrice": {
+        "amount": "490000",
+        "currencyCode": "KRW"
+      }
+    },
+    "price": {
+      "amount": "490000",
+      "currencyCode": "KRW"
+    },
+    "featuredImage": {
+      "url": "https://cdn.imweb.me/thumbnail/20261008/fed1806f5d8c4687.jpg",
+      "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+      "width": 1200,
+      "height": 1600
+    },
+    "images": [
+      {
+        "url": "https://cdn.imweb.me/thumbnail/20261008/fed1806f5d8c4687.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/40a0b8060fac2.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/996479957bb42.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/bd4e74baeb6ba.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "width": 1200,
+        "height": 1600
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/f2fe4624cf5bc.jpg",
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "width": 1200,
+        "height": 1600
+      }
+    ],
+    "colors": [
+      "A타입"
+    ],
+    "colorHexMap": {
+      "RED": "#DC2626",
+      "BLUE": "#2563EB",
+      "NAVY": "#000080",
+      "PINK": "#EC4899",
+      "BEIGE": "#F5F5DC",
+      "BLACK": "#000000",
+      "BROWN": "#8B4513",
+      "CREAM": "#FDFBF7",
+      "GREEN": "#16A34A",
+      "KHAKI": "#708090",
+      "WHITE": "#FFFFFF",
+      "모카": "#8B5A2B",
+      "블랙": "#000000",
+      "차콜": "#36454F",
+      "A타입": "#1C1C1C",
+      "B타입": "#2B2B2B",
+      "CHARCOAL": "#36454F",
+      "아이보리": "#FFFFF0",
+      "쿨그레이": "#8E9CA3"
+    },
+    "sizes": [
+      "1(44-55)",
+      "2(66-88)"
+    ],
+    "stock": 30,
+    "sizeStock": {
+      "A타입-1(44-55)": 15,
+      "A타입-2(66-88)": 15
+    },
+    "stockMap": {
+      "A타입-1(44-55)": 15,
+      "A타입-2(66-88)": 15
+    },
+    "availableForSale": true,
+    "isMainFeatured": true,
+    "productLabel": "BLACK_LABEL",
+    "options": [
+      {
+        "id": "color",
+        "name": "Color",
+        "values": [
+          {
+            "id": "A타입",
+            "name": "A타입"
+          }
+        ]
+      },
+      {
+        "id": "size",
+        "name": "Size",
+        "values": [
+          {
+            "id": "1(44-55)",
+            "name": "1(44-55)"
+          },
+          {
+            "id": "2(66-88)",
+            "name": "2(66-88)"
+          }
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "id": "var-463-A타입-1-44-55-",
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입 - A타입 / 1(44-55)",
+        "availableForSale": true,
+        "inventoryQuantity": 15,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "A타입"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "price": {
+          "amount": "490000",
+          "currencyCode": "KRW"
+        },
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20261008/fed1806f5d8c4687.jpg",
+          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입 - A타입 / 1(44-55)"
+        }
+      },
+      {
+        "id": "var-463-A타입-2-66-88-",
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입 - A타입 / 2(66-88)",
+        "availableForSale": true,
+        "inventoryQuantity": 15,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "A타입"
+          },
+          {
+            "name": "Size",
+            "value": "2(66-88)"
+          }
+        ],
+        "price": {
+          "amount": "490000",
+          "currencyCode": "KRW"
+        },
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20261008/fed1806f5d8c4687.jpg",
+          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입 - A타입 / 2(66-88)"
+        }
+      }
+    ],
+    "tags": [
+      "NEW",
+      "BLACK_LABEL",
+      "pno:463",
+      "pcode:CC-463",
+      "tsrate:25"
+    ],
+    "isTimeSale": true,
+    "timeSaleDiscountRate": 25,
+    "bulkDiscount": {
+      "enabled": false,
+      "rules": [],
+      "productNo": 463,
+      "productCode": "CC-463",
+      "releaseDate": ""
+    },
+    "fabricComposition": "SILK 100%",
+    "elasticity": "보통",
+    "sheerness": "없음",
+    "thickness": "적당함",
+    "lining": "없음",
+    "updated_at": "2026-10-12T07:29:09.750Z",
+    "updatedAt": "2026-10-12T07:29:03.842Z"
+  },
+  {
     "id": "excel-product-459",
     "productNo": 459,
     "productCode": "CC-459",
@@ -12,8 +426,6 @@
       "top"
     ],
     "description": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/2d37edf566abc.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/4ddcf1d3b8eba.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이\"></p><p><br></p>",
-    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/2d37edf566abc.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/4ddcf1d3b8eba.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이\"></p><p><br></p>",
     "priceRange": {
       "minVariantPrice": {
         "amount": "310000",
@@ -69,51 +481,6 @@
     "colors": [
       "멜란지 쿨그레이"
     ],
-    "colorHexMap": {
-      "RED": "#DC2626",
-      "BLUE": "#2563EB",
-      "NAVY": "#000080",
-      "PINK": "#EC4899",
-      "BEIGE": "#F5F5DC",
-      "BLACK": "#000000",
-      "BROWN": "#8B4513",
-      "CREAM": "#FDFBF7",
-      "GREEN": "#16A34A",
-      "KHAKI": "#708090",
-      "WHITE": "#FFFFFF",
-      "모카": "#8B5A2B",
-      "블랙": "#000000",
-      "차콜": "#36454F",
-      "A타입": "#1C1C1C",
-      "B타입": "#2B2B2B",
-      "CHARCOAL": "#36454F",
-      "베이지": "#F5F5DC",
-      "오트밀": "#D8C7B5",
-      "아이보리": "#FFFFF0",
-      "쿨그레이": "#8E9CA3",
-      "카멜": "#C19A6B",
-      "라이트그레이": "#D3D3D3",
-      "토프": "#483C32",
-      "소프트핑크": "#FFB6C1",
-      "라이트스카이": "#87CEFA",
-      "브릭로즈": "#C08081",
-      "와인브라운": "#5C2C35",
-      "모카브라운": "#6E4D3E",
-      "라이트웜그레이": "#BFB8AF",
-      "다크쿨그레이": "#4A5056",
-      "라이트 옐로우 베이지": "#F6F0D8",
-      "라이트옐로우베이지": "#F6F0D8",
-      "라이트 메로나": "#C8E6C9",
-      "라이트메로나": "#C8E6C9",
-      "초코브라운": "#3D2314",
-      "모카베이지": "#C8B6A6",
-      "모카그레이": "#8C827A",
-      "카멜베이지": "#D4A373",
-      "멜란지 모카": "#8B5A2B",
-      "멜란지 차콜": "#36454F",
-      "멜란지 쿨그레이": "#8E9CA3",
-      "화이트": "#FFFFFF"
-    },
     "sizes": [
       "1(44-55)",
       "2(66)",
@@ -125,7 +492,7 @@
       "멜란지 쿨그레이-2(66)": 12,
       "멜란지 쿨그레이-3(77-88)": 11
     },
-    "availableForSale": false,
+    "availableForSale": true,
     "isMainFeatured": true,
     "productLabel": "BLACK_LABEL",
     "options": [
@@ -248,7 +615,8 @@
     "sheerness": "없음",
     "thickness": "적당함",
     "lining": "없음",
-    "updated_at": "2026-10-11T07:41:41.343Z"
+    "updated_at": "2026-10-12T07:12:33.210Z",
+    "updatedAt": "2026-10-12T05:42:55.234Z"
   },
   {
     "id": "excel-product-462",
@@ -754,118 +1122,15 @@
   },
   {
     "id": "excel-product-458",
-    "productNo": 458,
-    "productCode": "CC-458",
-    "created_at": "2026-10-08T14:17:22.536Z",
-    "createdAt": "2026-10-08T14:17:22.536Z",
-    "handle": "product-458",
-    "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리",
-    "categoryId": "top",
-    "categoryIds": [
-      "top"
+    "tags": [
+      "NEW",
+      "BLACK_LABEL",
+      "pno:458",
+      "pcode:CC-458"
     ],
-    "description": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/958b7ae470f7f.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/69cd91c8e275b.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p>",
-    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/958b7ae470f7f.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/69cd91c8e275b.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p>",
-    "priceRange": {
-      "minVariantPrice": {
-        "amount": "310000",
-        "currencyCode": "KRW"
-      },
-      "maxVariantPrice": {
-        "amount": "310000",
-        "currencyCode": "KRW"
-      }
-    },
     "price": {
       "amount": "310000",
       "currencyCode": "KRW"
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
-      "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리",
-      "width": 1200,
-      "height": 1600
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리",
-        "width": 1200,
-        "height": 1600
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리",
-        "width": 1200,
-        "height": 1600
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리",
-        "width": 1200,
-        "height": 1600
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/958b7ae470f7f.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리",
-        "width": 1200,
-        "height": 1600
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/69cd91c8e275b.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리",
-        "width": 1200,
-        "height": 1600
-      }
-    ],
-    "colors": [
-      "아이보리"
-    ],
-    "colorHexMap": {
-      "RED": "#DC2626",
-      "BLUE": "#2563EB",
-      "NAVY": "#000080",
-      "PINK": "#EC4899",
-      "BEIGE": "#F5F5DC",
-      "BLACK": "#000000",
-      "BROWN": "#8B4513",
-      "CREAM": "#FDFBF7",
-      "GREEN": "#16A34A",
-      "KHAKI": "#708090",
-      "WHITE": "#FFFFFF",
-      "모카": "#8B5A2B",
-      "블랙": "#000000",
-      "차콜": "#36454F",
-      "A타입": "#1C1C1C",
-      "B타입": "#2B2B2B",
-      "CHARCOAL": "#36454F",
-      "베이지": "#F5F5DC",
-      "오트밀": "#D8C7B5",
-      "아이보리": "#FFFFF0",
-      "쿨그레이": "#8E9CA3",
-      "카멜": "#C19A6B",
-      "라이트그레이": "#D3D3D3",
-      "토프": "#483C32",
-      "소프트핑크": "#FFB6C1",
-      "라이트스카이": "#87CEFA",
-      "브릭로즈": "#C08081",
-      "와인브라운": "#5C2C35",
-      "모카브라운": "#6E4D3E",
-      "라이트웜그레이": "#BFB8AF",
-      "다크쿨그레이": "#4A5056",
-      "라이트 옐로우 베이지": "#F6F0D8",
-      "라이트옐로우베이지": "#F6F0D8",
-      "라이트 메로나": "#C8E6C9",
-      "라이트메로나": "#C8E6C9",
-      "초코브라운": "#3D2314",
-      "모카베이지": "#C8B6A6",
-      "모카그레이": "#8C827A",
-      "카멜베이지": "#D4A373",
-      "멜란지 모카": "#8B5A2B",
-      "멜란지 차콜": "#36454F",
-      "멜란지 쿨그레이": "#8E9CA3",
-      "화이트": "#FFFFFF"
     },
     "sizes": [
       "1(44-55)",
@@ -873,14 +1138,44 @@
       "3(77-88)"
     ],
     "stock": 25,
-    "sizeStock": {
-      "아이보리-1(44-55)": 9,
-      "아이보리-2(66)": 8,
-      "아이보리-3(77-88)": 8
-    },
-    "availableForSale": false,
-    "isMainFeatured": true,
-    "productLabel": "BLACK_LABEL",
+    "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리",
+    "colors": [
+      "아이보리"
+    ],
+    "handle": "product-458",
+    "images": [
+      {
+        "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리"
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리"
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리"
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/958b7ae470f7f.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리"
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/69cd91c8e275b.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리"
+      }
+    ],
+    "lining": "없음",
     "options": [
       {
         "id": "color",
@@ -914,8 +1209,15 @@
     "variants": [
       {
         "id": "var-458-아이보리-1-44-55-",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 아이보리 / 1(44-55)"
+        },
+        "price": {
+          "amount": "310000",
+          "currencyCode": "KRW"
+        },
         "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 아이보리 / 1(44-55)",
-        "availableForSale": false,
         "selectedOptions": [
           {
             "name": "Color",
@@ -926,19 +1228,19 @@
             "value": "1(44-55)"
           }
         ],
+        "availableForSale": false
+      },
+      {
+        "id": "var-458-아이보리-2-66-",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 아이보리 / 2(66)"
+        },
         "price": {
           "amount": "310000",
           "currencyCode": "KRW"
         },
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
-          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 아이보리 / 1(44-55)"
-        }
-      },
-      {
-        "id": "var-458-아이보리-2-66-",
         "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 아이보리 / 2(66)",
-        "availableForSale": false,
         "selectedOptions": [
           {
             "name": "Color",
@@ -949,19 +1251,19 @@
             "value": "2(66)"
           }
         ],
+        "availableForSale": false
+      },
+      {
+        "id": "var-458-아이보리-3-77-88-",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 아이보리 / 3(77-88)"
+        },
         "price": {
           "amount": "310000",
           "currencyCode": "KRW"
         },
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
-          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 아이보리 / 2(66)"
-        }
-      },
-      {
-        "id": "var-458-아이보리-3-77-88-",
         "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 아이보리 / 3(77-88)",
-        "availableForSale": false,
         "selectedOptions": [
           {
             "name": "Color",
@@ -972,36 +1274,103 @@
             "value": "3(77-88)"
           }
         ],
-        "price": {
-          "amount": "310000",
-          "currencyCode": "KRW"
-        },
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
-          "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리 - 아이보리 / 3(77-88)"
-        }
+        "availableForSale": false
       }
     ],
-    "tags": [
-      "NEW",
-      "BLACK_LABEL",
-      "pno:458",
-      "pcode:CC-458"
-    ],
+    "createdAt": "2026-10-08T14:17:22.536Z",
+    "productNo": 458,
+    "sheerness": "없음",
+    "sizeStock": {
+      "아이보리-2(66)": 8,
+      "아이보리-1(44-55)": 9,
+      "아이보리-3(77-88)": 8
+    },
+    "thickness": "적당함",
+    "updatedAt": "2026-10-11T10:57:03.190Z",
+    "categoryId": "top",
+    "created_at": "2026-10-08T14:17:22.536Z",
+    "elasticity": "보통",
     "isTimeSale": false,
+    "priceRange": {
+      "maxVariantPrice": {
+        "amount": "310000",
+        "currencyCode": "KRW"
+      },
+      "minVariantPrice": {
+        "amount": "310000",
+        "currencyCode": "KRW"
+      }
+    },
+    "updated_at": "2026-10-11T12:17:11.598Z",
+    "categoryIds": [
+      "top"
+    ],
+    "colorHexMap": {
+      "RED": "#DC2626",
+      "BLUE": "#2563EB",
+      "NAVY": "#000080",
+      "PINK": "#EC4899",
+      "BEIGE": "#F5F5DC",
+      "BLACK": "#000000",
+      "BROWN": "#8B4513",
+      "CREAM": "#FDFBF7",
+      "GREEN": "#16A34A",
+      "KHAKI": "#708090",
+      "WHITE": "#FFFFFF",
+      "모카": "#8B5A2B",
+      "블랙": "#000000",
+      "차콜": "#36454F",
+      "카멜": "#C19A6B",
+      "토프": "#483C32",
+      "A타입": "#1C1C1C",
+      "B타입": "#2B2B2B",
+      "CHARCOAL": "#36454F",
+      "베이지": "#F5F5DC",
+      "오트밀": "#D8C7B5",
+      "화이트": "#FFFFFF",
+      "브릭로즈": "#C08081",
+      "아이보리": "#FFFFF0",
+      "쿨그레이": "#8E9CA3",
+      "모카그레이": "#8C827A",
+      "모카베이지": "#C8B6A6",
+      "모카브라운": "#6E4D3E",
+      "소프트핑크": "#FFB6C1",
+      "와인브라운": "#5C2C35",
+      "초코브라운": "#3D2314",
+      "카멜베이지": "#D4A373",
+      "멜란지 모카": "#8B5A2B",
+      "멜란지 차콜": "#36454F",
+      "다크쿨그레이": "#4A5056",
+      "라이트그레이": "#D3D3D3",
+      "라이트메로나": "#C8E6C9",
+      "라이트스카이": "#87CEFA",
+      "라이트 메로나": "#C8E6C9",
+      "라이트웜그레이": "#BFB8AF",
+      "멜란지 쿨그레이": "#8E9CA3",
+      "라이트옐로우베이지": "#F6F0D8",
+      "라이트 옐로우 베이지": "#F6F0D8"
+    },
+    "description": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리",
+    "productCode": "CC-458",
     "bulkDiscount": {
-      "enabled": false,
       "rules": [],
+      "enabled": false,
       "productNo": 458,
       "productCode": "CC-458",
       "releaseDate": ""
     },
-    "fabricComposition": "MERINO WOOL 100%",
-    "elasticity": "보통",
-    "sheerness": "없음",
-    "thickness": "적당함",
-    "lining": "없음",
-    "updated_at": "2026-10-11T07:41:50.652Z"
+    "productLabel": "BLACK_LABEL",
+    "featuredImage": {
+      "url": "https://cdn.imweb.me/thumbnail/20260916/4b3fbd439c004492.jpg",
+      "width": 1200,
+      "height": 1600,
+      "altText": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리"
+    },
+    "isMainFeatured": true,
+    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/958b7ae470f7f.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/69cd91c8e275b.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p>",
+    "availableForSale": false,
+    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/8f53acfc0d3e3.png\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7cfe3251b1013.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/958b7ae470f7f.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/69cd91c8e275b.jpg\" alt=\"[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /아이보리\"></p>",
+    "fabricComposition": "MERINO WOOL 100%"
   },
   {
     "id": "excel-product-460",
@@ -1129,7 +1498,7 @@
       "블랙-2(66)": 7,
       "블랙-3(77-88)": 7
     },
-    "availableForSale": false,
+    "availableForSale": true,
     "isMainFeatured": true,
     "productLabel": "BLACK_LABEL",
     "options": [
@@ -1252,7 +1621,8 @@
     "sheerness": "없음",
     "thickness": "적당함",
     "lining": "없음",
-    "updated_at": "2026-10-11T07:41:54.319Z"
+    "updated_at": "2026-10-12T07:21:36.616Z",
+    "updatedAt": "2026-10-12T07:21:11.969Z"
   },
   {
     "id": "excel-product-466",
@@ -2434,144 +2804,66 @@
   },
   {
     "id": "excel-product-430",
-    "productNo": 430,
-    "productCode": "CC-430",
-    "created_at": "2026-10-08T14:17:18.537Z",
-    "createdAt": "2026-10-08T14:17:18.537Z",
-    "handle": "product-430",
-    "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
-    "categoryId": "outer",
-    "categoryIds": [
-      "outer"
+    "tags": [
+      "NEW",
+      "BLACK_LABEL",
+      "pno:430",
+      "pcode:CC-430",
+      "top-seller",
+      "TIMESALE"
     ],
-    "description": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/87b30dc7d6266.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 롱 가디건/ B타입\"></p>",
-    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/87b30dc7d6266.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 롱 가디건/ B타입\"></p>",
-    "priceRange": {
-      "minVariantPrice": {
-        "amount": "580000",
-        "currencyCode": "KRW"
-      },
-      "maxVariantPrice": {
-        "amount": "580000",
-        "currencyCode": "KRW"
-      }
-    },
     "price": {
       "amount": "580000",
       "currencyCode": "KRW"
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260528/f69c920118824927.jpg",
-      "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
-      "width": 1200,
-      "height": 1600
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260528/f69c920118824927.jpg",
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
-        "width": 1200,
-        "height": 1600
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/87b30dc7d6266.jpg",
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
-        "width": 1200,
-        "height": 1600
-      }
-    ],
-    "colors": [
-      "B타입"
-    ],
-    "colorHexMap": {
-      "RED": "#DC2626",
-      "BLUE": "#2563EB",
-      "NAVY": "#000080",
-      "PINK": "#EC4899",
-      "BEIGE": "#F5F5DC",
-      "BLACK": "#000000",
-      "BROWN": "#8B4513",
-      "CREAM": "#FDFBF7",
-      "GREEN": "#16A34A",
-      "KHAKI": "#708090",
-      "WHITE": "#FFFFFF",
-      "모카": "#8B5A2B",
-      "블랙": "#000000",
-      "차콜": "#36454F",
-      "A타입": "#1C1C1C",
-      "B타입": "#2B2B2B",
-      "CHARCOAL": "#36454F",
-      "베이지": "#F5F5DC",
-      "오트밀": "#D8C7B5",
-      "아이보리": "#FFFFF0",
-      "쿨그레이": "#8E9CA3",
-      "카멜": "#C19A6B",
-      "라이트그레이": "#D3D3D3",
-      "토프": "#483C32",
-      "소프트핑크": "#FFB6C1",
-      "라이트스카이": "#87CEFA",
-      "브릭로즈": "#C08081",
-      "와인브라운": "#5C2C35",
-      "모카브라운": "#6E4D3E",
-      "라이트웜그레이": "#BFB8AF",
-      "다크쿨그레이": "#4A5056",
-      "라이트 옐로우 베이지": "#F6F0D8",
-      "라이트옐로우베이지": "#F6F0D8",
-      "라이트 메로나": "#C8E6C9",
-      "라이트메로나": "#C8E6C9",
-      "초코브라운": "#3D2314",
-      "모카베이지": "#C8B6A6",
-      "모카그레이": "#8C827A",
-      "카멜베이지": "#D4A373",
-      "멜란지 모카": "#8B5A2B",
-      "멜란지 차콜": "#36454F",
-      "멜란지 쿨그레이": "#8E9CA3",
-      "화이트": "#FFFFFF"
     },
     "sizes": [
       "1(44-66)",
       "2(66-88)"
     ],
     "stock": 32,
-    "sizeStock": {
-      "B타입-1(44-66)": 16,
-      "B타입-2(66-88)": 16
-    },
-    "availableForSale": false,
-    "isMainFeatured": true,
-    "productLabel": "BLACK_LABEL",
+    "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+    "colors": [
+      "B타입"
+    ],
+    "handle": "product-430",
+    "images": [
+      {
+        "url": "https://cdn.imweb.me/thumbnail/20260528/f69c920118824927.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입 1"
+      }
+    ],
+    "lining": "없음",
     "options": [
       {
         "id": "color",
         "name": "Color",
         "values": [
-          {
-            "id": "B타입",
-            "name": "B타입"
-          }
+          "B타입"
         ]
       },
       {
         "id": "size",
         "name": "Size",
         "values": [
-          {
-            "id": "1(44-66)",
-            "name": "1(44-66)"
-          },
-          {
-            "id": "2(66-88)",
-            "name": "2(66-88)"
-          }
+          "1(44-66)",
+          "2(66-88)"
         ]
       }
     ],
+    "stockMap": {
+      "B타입-1(44-66)": 16,
+      "B타입-2(66-88)": 16
+    },
     "variants": [
       {
-        "id": "var-430-B타입-1-44-66-",
-        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입 - B타입 / 1(44-66)",
-        "availableForSale": false,
+        "id": "var-B타입-1(44-66)-1791725655069",
+        "price": {
+          "amount": "580000",
+          "currencyCode": "KRW"
+        },
+        "title": "B타입 / 1(44-66)",
         "selectedOptions": [
           {
             "name": "Color",
@@ -2582,19 +2874,15 @@
             "value": "1(44-66)"
           }
         ],
+        "availableForSale": true
+      },
+      {
+        "id": "var-B타입-2(66-88)-1791725655069",
         "price": {
           "amount": "580000",
           "currencyCode": "KRW"
         },
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260528/f69c920118824927.jpg",
-          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입 - B타입 / 1(44-66)"
-        }
-      },
-      {
-        "id": "var-430-B타입-2-66-88-",
-        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입 - B타입 / 2(66-88)",
-        "availableForSale": false,
+        "title": "B타입 / 2(66-88)",
         "selectedOptions": [
           {
             "name": "Color",
@@ -2605,88 +2893,35 @@
             "value": "2(66-88)"
           }
         ],
-        "price": {
-          "amount": "580000",
-          "currencyCode": "KRW"
-        },
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260528/f69c920118824927.jpg",
-          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입 - B타입 / 2(66-88)"
-        }
+        "availableForSale": true
       }
     ],
-    "tags": [
-      "NEW",
-      "BLACK_LABEL",
-      "pno:430",
-      "pcode:CC-430"
-    ],
-    "isTimeSale": false,
-    "releaseDate": "",
-    "bulkDiscount": {
-      "enabled": false,
-      "rules": [],
-      "productNo": 430,
-      "productCode": "CC-430",
-      "releaseDate": ""
-    },
-    "fabricComposition": "SILK 100%",
-    "elasticity": "보통",
+    "createdAt": "2026-10-08T14:17:18.537Z",
+    "productNo": 430,
     "sheerness": "없음",
+    "sizeStock": {
+      "B타입-1(44-66)": 16,
+      "B타입-2(66-88)": 16
+    },
     "thickness": "적당함",
-    "lining": "없음"
-  },
-  {
-    "id": "excel-product-419",
-    "productNo": 419,
-    "productCode": "CC-419",
-    "created_at": "2026-10-08T14:17:17.537Z",
-    "createdAt": "2026-10-08T14:17:17.537Z",
-    "handle": "product-419",
-    "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+    "updatedAt": "2026-10-11T13:34:15.069Z",
     "categoryId": "outer",
-    "categoryIds": [
-      "outer"
-    ],
-    "description": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/35f518b71c41c.jpg\" alt=\"[BLACK LABEL] SILK100% HERITAGE LONG CARDIGAN / 2SIZE\"></p>",
-    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/35f518b71c41c.jpg\" alt=\"[BLACK LABEL] SILK100% HERITAGE LONG CARDIGAN / 2SIZE\"></p>",
+    "created_at": "2026-10-08T14:17:18.537Z",
+    "elasticity": "보통",
+    "isTimeSale": true,
     "priceRange": {
-      "minVariantPrice": {
-        "amount": "580000",
-        "currencyCode": "KRW"
-      },
       "maxVariantPrice": {
         "amount": "580000",
         "currencyCode": "KRW"
-      }
-    },
-    "price": {
-      "amount": "580000",
-      "currencyCode": "KRW"
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260528/d016743167bb49cb.jpg",
-      "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
-      "width": 1200,
-      "height": 1600
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260528/d016743167bb49cb.jpg",
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
-        "width": 1200,
-        "height": 1600
       },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/35f518b71c41c.jpg",
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
-        "width": 1200,
-        "height": 1600
+      "minVariantPrice": {
+        "amount": "580000",
+        "currencyCode": "KRW"
       }
-    ],
-    "colors": [
-      "A타입"
+    },
+    "updated_at": "2026-10-11T13:34:18.151Z",
+    "categoryIds": [
+      "outer"
     ],
     "colorHexMap": {
       "RED": "#DC2626",
@@ -2703,79 +2938,196 @@
       "모카": "#8B5A2B",
       "블랙": "#000000",
       "차콜": "#36454F",
+      "카멜": "#C19A6B",
+      "토프": "#483C32",
       "A타입": "#1C1C1C",
       "B타입": "#2B2B2B",
       "CHARCOAL": "#36454F",
       "베이지": "#F5F5DC",
       "오트밀": "#D8C7B5",
+      "화이트": "#FFFFFF",
+      "브릭로즈": "#C08081",
       "아이보리": "#FFFFF0",
       "쿨그레이": "#8E9CA3",
-      "카멜": "#C19A6B",
-      "라이트그레이": "#D3D3D3",
-      "토프": "#483C32",
-      "소프트핑크": "#FFB6C1",
-      "라이트스카이": "#87CEFA",
-      "브릭로즈": "#C08081",
-      "와인브라운": "#5C2C35",
-      "모카브라운": "#6E4D3E",
-      "라이트웜그레이": "#BFB8AF",
-      "다크쿨그레이": "#4A5056",
-      "라이트 옐로우 베이지": "#F6F0D8",
-      "라이트옐로우베이지": "#F6F0D8",
-      "라이트 메로나": "#C8E6C9",
-      "라이트메로나": "#C8E6C9",
-      "초코브라운": "#3D2314",
-      "모카베이지": "#C8B6A6",
       "모카그레이": "#8C827A",
+      "모카베이지": "#C8B6A6",
+      "모카브라운": "#6E4D3E",
+      "소프트핑크": "#FFB6C1",
+      "와인브라운": "#5C2C35",
+      "초코브라운": "#3D2314",
       "카멜베이지": "#D4A373",
       "멜란지 모카": "#8B5A2B",
       "멜란지 차콜": "#36454F",
+      "다크쿨그레이": "#4A5056",
+      "라이트그레이": "#D3D3D3",
+      "라이트메로나": "#C8E6C9",
+      "라이트스카이": "#87CEFA",
+      "라이트 메로나": "#C8E6C9",
+      "라이트웜그레이": "#BFB8AF",
       "멜란지 쿨그레이": "#8E9CA3",
-      "화이트": "#FFFFFF"
+      "라이트옐로우베이지": "#F6F0D8",
+      "라이트 옐로우 베이지": "#F6F0D8"
+    },
+    "colorImages": {},
+    "description": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+    "fabricImage": "",
+    "productCode": "CC-430",
+    "releaseDate": "2026-10-12T23:00",
+    "bulkDiscount": {
+      "rules": [],
+      "enabled": false,
+      "fabricImage": "",
+      "showFabricInfo": false,
+      "fabricComposition": "SILK 100%",
+      "fabricTextureImage": ""
+    },
+    "customTitles": {
+      "price": "판매가 (KRW)",
+      "title": "상품명",
+      "timeSale": "타임세일 프로모션",
+      "productNo": "상품번호",
+      "sizeGuide": "실측 사이즈 가이드",
+      "sizeStock": "사이즈별 재고 수량",
+      "categories": "카테고리 선택",
+      "fabricInfo": "소재 및 원단 정보",
+      "saleStatus": "상품 판매 상태 (즉시 구매 On/Off)",
+      "description": "상품 간단설명 (상단 제목 밑 노출)",
+      "fabricImage": "원단 확대 이미지",
+      "option1Name": "Color",
+      "option2Name": "Size",
+      "sizeOptions": "사이즈 옵션",
+      "bulkDiscount": "대량 구매 구간별 할인 규칙 (수량 할인)",
+      "detailImages": "추가 상세 이미지",
+      "mainFeatured": "메인 전시 여부 (메인 슬라이더/추천 노출)",
+      "productLabel": "상품 라벨",
+      "previewScreen": "상세페이지 미리보기 화면",
+      "productImages": "제품 이미지 등록 (최대 10개)",
+      "scheduledRelease": "판매 시작 시간 지정 (예약 오픈)",
+      "variantCutImages": "컬러등록",
+      "fabricComposition": "혼용률 성분"
+    },
+    "productLabel": "BLACK_LABEL",
+    "featuredImage": {
+      "url": "https://cdn.imweb.me/thumbnail/20260528/f69c920118824927.jpg",
+      "width": 1200,
+      "height": 1600,
+      "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입"
+    },
+    "showSizeGuide": false,
+    "isMainFeatured": true,
+    "showFabricInfo": false,
+    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/87b30dc7d6266.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 롱 가디건/ B타입\"></p>",
+    "showFabricBadge": false,
+    "timeSaleEndDate": "2026-08-27T23:59:00",
+    "availableForSale": true,
+    "sizeMeasurements": [
+      {
+        "name": "어깨단면",
+        "values": {
+          "1": "50",
+          "2": "52",
+          "3": "54",
+          "FREE": "56"
+        }
+      },
+      {
+        "name": "가슴단면",
+        "values": {
+          "1": "56.5",
+          "2": "58.5",
+          "3": "60.5",
+          "FREE": "62.5"
+        }
+      },
+      {
+        "name": "팔길이",
+        "values": {
+          "1": "59",
+          "2": "60",
+          "3": "61",
+          "FREE": "61.5"
+        }
+      },
+      {
+        "name": "총장",
+        "values": {
+          "1": "58/62.5",
+          "2": "60/64.5",
+          "3": "62/66.5",
+          "FREE": "63/67.5"
+        }
+      }
+    ],
+    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/87b30dc7d6266.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 롱 가디건/ B타입\"></p>",
+    "fabricComposition": "SILK 100%",
+    "timeSaleStartDate": "2026-08-20T09:00:00",
+    "fabricTextureImage": "",
+    "timeSaleAllowCoupon": true,
+    "timeSaleDiscountRate": 20,
+    "showSizeRecommendation": false
+  },
+  {
+    "id": "excel-product-419",
+    "tags": [
+      "NEW",
+      "BLACK_LABEL",
+      "pno:419",
+      "pcode:CC-419",
+      "top-seller",
+      "TIMESALE"
+    ],
+    "price": {
+      "amount": "580000",
+      "currencyCode": "KRW"
     },
     "sizes": [
       "1(44-66)",
       "2(66-88)"
     ],
     "stock": 17,
-    "sizeStock": {
-      "A타입-1(44-66)": 9,
-      "A타입-2(66-88)": 8
-    },
-    "availableForSale": false,
-    "isMainFeatured": true,
-    "productLabel": "BLACK_LABEL",
+    "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+    "colors": [
+      "A타입"
+    ],
+    "handle": "product-419",
+    "images": [
+      {
+        "url": "https://cdn.imweb.me/thumbnail/20260528/d016743167bb49cb.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입 1"
+      }
+    ],
+    "lining": "없음",
     "options": [
       {
         "id": "color",
         "name": "Color",
         "values": [
-          {
-            "id": "A타입",
-            "name": "A타입"
-          }
+          "A타입"
         ]
       },
       {
         "id": "size",
         "name": "Size",
         "values": [
-          {
-            "id": "1(44-66)",
-            "name": "1(44-66)"
-          },
-          {
-            "id": "2(66-88)",
-            "name": "2(66-88)"
-          }
+          "1(44-66)",
+          "2(66-88)"
         ]
       }
     ],
+    "stockMap": {
+      "A타입-1(44-66)": 9,
+      "A타입-2(66-88)": 8
+    },
     "variants": [
       {
-        "id": "var-419-A타입-1-44-66-",
-        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입 - A타입 / 1(44-66)",
-        "availableForSale": false,
+        "id": "var-A타입-1(44-66)-1791725667511",
+        "price": {
+          "amount": "580000",
+          "currencyCode": "KRW"
+        },
+        "title": "A타입 / 1(44-66)",
         "selectedOptions": [
           {
             "name": "Color",
@@ -2786,19 +3138,15 @@
             "value": "1(44-66)"
           }
         ],
+        "availableForSale": true
+      },
+      {
+        "id": "var-A타입-2(66-88)-1791725667511",
         "price": {
           "amount": "580000",
           "currencyCode": "KRW"
         },
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260528/d016743167bb49cb.jpg",
-          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입 - A타입 / 1(44-66)"
-        }
-      },
-      {
-        "id": "var-419-A타입-2-66-88-",
-        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입 - A타입 / 2(66-88)",
-        "availableForSale": false,
+        "title": "A타입 / 2(66-88)",
         "selectedOptions": [
           {
             "name": "Color",
@@ -2809,36 +3157,178 @@
             "value": "2(66-88)"
           }
         ],
-        "price": {
-          "amount": "580000",
-          "currencyCode": "KRW"
-        },
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260528/d016743167bb49cb.jpg",
-          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입 - A타입 / 2(66-88)"
+        "availableForSale": true
+      }
+    ],
+    "createdAt": "2026-10-08T14:17:17.537Z",
+    "productNo": 419,
+    "sheerness": "없음",
+    "sizeStock": {
+      "A타입-1(44-66)": 9,
+      "A타입-2(66-88)": 8
+    },
+    "thickness": "적당함",
+    "updatedAt": "2026-10-11T13:34:27.511Z",
+    "categoryId": "outer",
+    "created_at": "2026-10-08T14:17:17.537Z",
+    "elasticity": "보통",
+    "isTimeSale": true,
+    "priceRange": {
+      "maxVariantPrice": {
+        "amount": "580000",
+        "currencyCode": "KRW"
+      },
+      "minVariantPrice": {
+        "amount": "580000",
+        "currencyCode": "KRW"
+      }
+    },
+    "updated_at": "2026-10-11T13:34:30.509Z",
+    "categoryIds": [
+      "outer"
+    ],
+    "colorHexMap": {
+      "RED": "#DC2626",
+      "BLUE": "#2563EB",
+      "NAVY": "#000080",
+      "PINK": "#EC4899",
+      "BEIGE": "#F5F5DC",
+      "BLACK": "#000000",
+      "BROWN": "#8B4513",
+      "CREAM": "#FDFBF7",
+      "GREEN": "#16A34A",
+      "KHAKI": "#708090",
+      "WHITE": "#FFFFFF",
+      "모카": "#8B5A2B",
+      "블랙": "#000000",
+      "차콜": "#36454F",
+      "카멜": "#C19A6B",
+      "토프": "#483C32",
+      "A타입": "#1C1C1C",
+      "B타입": "#2B2B2B",
+      "CHARCOAL": "#36454F",
+      "베이지": "#F5F5DC",
+      "오트밀": "#D8C7B5",
+      "화이트": "#FFFFFF",
+      "브릭로즈": "#C08081",
+      "아이보리": "#FFFFF0",
+      "쿨그레이": "#8E9CA3",
+      "모카그레이": "#8C827A",
+      "모카베이지": "#C8B6A6",
+      "모카브라운": "#6E4D3E",
+      "소프트핑크": "#FFB6C1",
+      "와인브라운": "#5C2C35",
+      "초코브라운": "#3D2314",
+      "카멜베이지": "#D4A373",
+      "멜란지 모카": "#8B5A2B",
+      "멜란지 차콜": "#36454F",
+      "다크쿨그레이": "#4A5056",
+      "라이트그레이": "#D3D3D3",
+      "라이트메로나": "#C8E6C9",
+      "라이트스카이": "#87CEFA",
+      "라이트 메로나": "#C8E6C9",
+      "라이트웜그레이": "#BFB8AF",
+      "멜란지 쿨그레이": "#8E9CA3",
+      "라이트옐로우베이지": "#F6F0D8",
+      "라이트 옐로우 베이지": "#F6F0D8"
+    },
+    "colorImages": {},
+    "description": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+    "fabricImage": "",
+    "productCode": "CC-419",
+    "releaseDate": "2026-10-12T23:00",
+    "bulkDiscount": {
+      "rules": [],
+      "enabled": false,
+      "fabricImage": "",
+      "showFabricInfo": false,
+      "fabricComposition": "SILK 100%",
+      "fabricTextureImage": ""
+    },
+    "customTitles": {
+      "price": "판매가 (KRW)",
+      "title": "상품명",
+      "timeSale": "타임세일 프로모션",
+      "productNo": "상품번호",
+      "sizeGuide": "실측 사이즈 가이드",
+      "sizeStock": "사이즈별 재고 수량",
+      "categories": "카테고리 선택",
+      "fabricInfo": "소재 및 원단 정보",
+      "saleStatus": "상품 판매 상태 (즉시 구매 On/Off)",
+      "description": "상품 간단설명 (상단 제목 밑 노출)",
+      "fabricImage": "원단 확대 이미지",
+      "option1Name": "Color",
+      "option2Name": "Size",
+      "sizeOptions": "사이즈 옵션",
+      "bulkDiscount": "대량 구매 구간별 할인 규칙 (수량 할인)",
+      "detailImages": "추가 상세 이미지",
+      "mainFeatured": "메인 전시 여부 (메인 슬라이더/추천 노출)",
+      "productLabel": "상품 라벨",
+      "previewScreen": "상세페이지 미리보기 화면",
+      "productImages": "제품 이미지 등록 (최대 10개)",
+      "scheduledRelease": "판매 시작 시간 지정 (예약 오픈)",
+      "variantCutImages": "컬러등록",
+      "fabricComposition": "혼용률 성분"
+    },
+    "productLabel": "BLACK_LABEL",
+    "featuredImage": {
+      "url": "https://cdn.imweb.me/thumbnail/20260528/d016743167bb49cb.jpg",
+      "width": 1200,
+      "height": 1600,
+      "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입"
+    },
+    "showSizeGuide": false,
+    "isMainFeatured": true,
+    "showFabricInfo": false,
+    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/35f518b71c41c.jpg\" alt=\"[BLACK LABEL] SILK100% HERITAGE LONG CARDIGAN / 2SIZE\"></p>",
+    "showFabricBadge": false,
+    "timeSaleEndDate": "2026-08-27T23:59:00",
+    "availableForSale": true,
+    "sizeMeasurements": [
+      {
+        "name": "어깨단면",
+        "values": {
+          "1": "50",
+          "2": "52",
+          "3": "54",
+          "FREE": "56"
+        }
+      },
+      {
+        "name": "가슴단면",
+        "values": {
+          "1": "56.5",
+          "2": "58.5",
+          "3": "60.5",
+          "FREE": "62.5"
+        }
+      },
+      {
+        "name": "팔길이",
+        "values": {
+          "1": "59",
+          "2": "60",
+          "3": "61",
+          "FREE": "61.5"
+        }
+      },
+      {
+        "name": "총장",
+        "values": {
+          "1": "58/62.5",
+          "2": "60/64.5",
+          "3": "62/66.5",
+          "FREE": "63/67.5"
         }
       }
     ],
-    "tags": [
-      "NEW",
-      "BLACK_LABEL",
-      "pno:419",
-      "pcode:CC-419"
-    ],
-    "isTimeSale": false,
-    "releaseDate": "",
-    "bulkDiscount": {
-      "enabled": false,
-      "rules": [],
-      "productNo": 419,
-      "productCode": "CC-419",
-      "releaseDate": ""
-    },
+    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/35f518b71c41c.jpg\" alt=\"[BLACK LABEL] SILK100% HERITAGE LONG CARDIGAN / 2SIZE\"></p>",
     "fabricComposition": "SILK 100%",
-    "elasticity": "보통",
-    "sheerness": "없음",
-    "thickness": "적당함",
-    "lining": "없음"
+    "timeSaleStartDate": "2026-08-20T09:00:00",
+    "fabricTextureImage": "",
+    "timeSaleAllowCoupon": true,
+    "timeSaleDiscountRate": 20,
+    "showSizeRecommendation": false
   },
   {
     "id": "excel-product-464",
@@ -2934,9 +3424,9 @@
     "sizes": [
       "FREE"
     ],
-    "stock": 0,
+    "stock": 10,
     "sizeStock": {
-      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 0
+      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
     },
     "availableForSale": true,
     "isMainFeatured": true,
@@ -2971,7 +3461,8 @@
         "image": {
           "url": "https://cdn.imweb.me/thumbnail/20260923/5f6b738e79304b21.jpg",
           "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - W 퓨어캐시미어 100 체인 하프넥 니트"
-        }
+        },
+        "inventoryQuantity": 10
       }
     ],
     "tags": [
@@ -2983,7 +3474,6 @@
       "tsrate:25"
     ],
     "isTimeSale": true,
-    "releaseDate": "",
     "bulkDiscount": {
       "enabled": false,
       "rules": [],
@@ -2998,7 +3488,9 @@
     "sheerness": "없음",
     "thickness": "적당함",
     "lining": "없음",
-    "timeSaleDiscountRate": 25
+    "timeSaleDiscountRate": 25,
+    "updated_at": "2026-10-12T07:20:32.860Z",
+    "updatedAt": "2026-10-12T05:31:36.240Z"
   },
   {
     "id": "excel-product-465",
@@ -3094,9 +3586,9 @@
     "sizes": [
       "FREE"
     ],
-    "stock": 0,
+    "stock": 10,
     "sizeStock": {
-      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 0
+      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
     },
     "availableForSale": true,
     "isMainFeatured": true,
@@ -3131,7 +3623,8 @@
         "image": {
           "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
           "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - W 퓨어캐시미어 100 체인 하프넥 니트"
-        }
+        },
+        "inventoryQuantity": 10
       }
     ],
     "tags": [
@@ -3143,7 +3636,6 @@
       "tsrate:25"
     ],
     "isTimeSale": true,
-    "releaseDate": "",
     "bulkDiscount": {
       "enabled": false,
       "rules": [],
@@ -3158,7 +3650,9 @@
     "sheerness": "없음",
     "thickness": "적당함",
     "lining": "없음",
-    "timeSaleDiscountRate": 25
+    "timeSaleDiscountRate": 25,
+    "updated_at": "2026-10-12T07:20:35.876Z",
+    "updatedAt": "2026-10-12T07:20:35.965Z"
   },
   {
     "id": "excel-product-275",

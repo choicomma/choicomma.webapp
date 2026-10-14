@@ -120,8 +120,14 @@ export const ProductCard = ({ product }: { product: Product }) => {
             } catch (e) {}
           }
 
+          const tagRate = Array.isArray(currentProd.tags)
+            ? currentProd.tags.find((t: any) => typeof t === "string" && t.startsWith("tsrate:"))?.replace("tsrate:", "")
+            : null;
+          const parsedTagRate = tagRate && !isNaN(Number(tagRate)) ? Number(tagRate) : null;
+
           let discount =
             (currentProd as any).timeSaleDiscountRate ||
+            parsedTagRate ||
             itemDiscount ||
             (currentProd as any).discountRate;
 
@@ -129,11 +135,9 @@ export const ProductCard = ({ product }: { product: Product }) => {
             const savedDisc = localStorage.getItem("secret_timesale_discount");
             if (savedDisc && !isNaN(parseInt(savedDisc))) {
               discount = parseInt(savedDisc);
-            } else {
-              discount = 35;
             }
           }
-          setTimeSaleDiscount(discount);
+          setTimeSaleDiscount(discount || null);
         } else {
           setTimeSaleDiscount(null);
         }
@@ -203,16 +207,23 @@ export const ProductCard = ({ product }: { product: Product }) => {
           </span>
         )}
 
+        {/* 타임세일 할인율 Badge */}
+        {isTimeSaleActive && timeSaleDiscount && (
+          <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-red-600 text-white shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
+            <span>🔥 {timeSaleDiscount}% OFF</span>
+          </span>
+        )}
+
         {/* 오픈 예정 / 품절 Badge: 가장 마지막에 배치 */}
         {product.releaseDate && new Date(product.releaseDate).getTime() > Date.now() ? (
           <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
             <Clock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-neutral-950" />
             <span>오픈 예정</span>
           </span>
-        ) : product.availableForSale === false ||
-          ((product as any).stock !== undefined &&
+        ) : ((product as any).stock !== undefined &&
             (product as any).stock !== null &&
-            Number((product as any).stock) <= 0) ? (
+            Number((product as any).stock) <= 0) ||
+          (product.availableForSale === false && !(product.releaseDate && new Date(product.releaseDate).getTime() <= Date.now())) ? (
           <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
             품절
           </span>
@@ -239,6 +250,11 @@ export const ProductCard = ({ product }: { product: Product }) => {
 
         {/* 가격 정보 */}
         <div className="flex items-baseline justify-end gap-1.5 sm:gap-2 md:gap-2.5 w-full">
+          {isTimeSaleActive && timeSaleDiscount && (
+            <span className="text-xs sm:text-base md:text-lg font-black text-red-600 whitespace-nowrap notranslate" translate="no">
+              {timeSaleDiscount}%
+            </span>
+          )}
           {strikethroughPriceNum !== null && (
             <span className="text-[10px] sm:text-xs md:text-sm text-neutral-400 line-through font-bold whitespace-nowrap notranslate" translate="no">
               {formatPrice(strikethroughPriceNum.toString(), currCode)}

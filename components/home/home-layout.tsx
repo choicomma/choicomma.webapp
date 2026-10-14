@@ -9,7 +9,6 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { translateProductTitle, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 import useEmblaCarousel from "embla-carousel-react";
 import { ProductCard } from "@/app/shop/components/product-card";
-import { HomePopupModal } from "@/components/home/home-popup-modal";
 
 function HomeProductTitle({ title, lang }: { title: string; lang: string }) {
   const [translated, setTranslated] = useState(() => translateProductTitle(title, lang));
@@ -165,11 +164,22 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     };
 
     updateTimeSaleInfo();
+    const handleFocusOrVisible = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        updateTimeSaleInfo();
+      }
+    };
     window.addEventListener("storage", updateTimeSaleInfo);
     window.addEventListener("admin_products_updated", updateTimeSaleInfo);
+    window.addEventListener("secret_timesales_updated", updateTimeSaleInfo);
+    window.addEventListener("focus", handleFocusOrVisible);
+    document.addEventListener("visibilitychange", handleFocusOrVisible);
     return () => {
       window.removeEventListener("storage", updateTimeSaleInfo);
       window.removeEventListener("admin_products_updated", updateTimeSaleInfo);
+      window.removeEventListener("secret_timesales_updated", updateTimeSaleInfo);
+      window.removeEventListener("focus", handleFocusOrVisible);
+      document.removeEventListener("visibilitychange", handleFocusOrVisible);
     };
   }, []);
 
@@ -334,7 +344,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       abortController = controller;
 
       try {
-        const res = await fetch("/api/products?fresh=1&slim=1", { cache: "no-store", signal: controller.signal });
+        const res = await fetch(`/api/products?fresh=1&slim=1&_t=${Date.now()}`, { cache: "no-store", signal: controller.signal });
         if (!res.ok || !isSubscribed || mySeq !== requestSeq) return;
 
         let deleted: Set<string> | null = null;
@@ -377,9 +387,17 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       syncFromServer();
     };
 
+    // 관리자가 다른 탭에서 설정을 바꾼 뒤 홈 화면 탭으로 전환(포커스)할 때 즉시 최신 데이터 반영
+    const handleTabFocus = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        syncFromServer();
+      }
+    };
+
     // 로그인/시간세일 설정 변경은 네트워크를 기다리지 않고 마지막으로 받은 서버 목록으로 즉시 다시 계산
     const handleLocalSettingChange = () => {
       applyProductsToList(authoritativeProducts);
+      syncFromServer();
     };
 
     // 1. SSR로 내려온 서버 목록을 즉시 반영 (이 기기에서 삭제한 상품만 추가로 걸러냄)
@@ -388,11 +406,13 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     syncFromServer();
     setIsHydrated(true);
 
-    // Listen for storage events & same-tab admin updates
+    // Listen for storage events & same-tab admin updates & focus/visibility
     window.addEventListener("storage", scheduleSync);
     window.addEventListener("admin_products_updated", handleAdminProductsUpdated);
     window.addEventListener("auth_changed", handleLocalSettingChange);
     window.addEventListener("secret_timesales_updated", handleLocalSettingChange);
+    window.addEventListener("focus", handleTabFocus);
+    document.addEventListener("visibilitychange", handleTabFocus);
     return () => {
       isSubscribed = false;
       if (debounceTimer) clearTimeout(debounceTimer);
@@ -401,6 +421,8 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       window.removeEventListener("admin_products_updated", handleAdminProductsUpdated);
       window.removeEventListener("auth_changed", handleLocalSettingChange);
       window.removeEventListener("secret_timesales_updated", handleLocalSettingChange);
+      window.removeEventListener("focus", handleTabFocus);
+      document.removeEventListener("visibilitychange", handleTabFocus);
     };
   }, [products]);
 
@@ -457,9 +479,6 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
 
   return (
     <div className="w-full flex flex-col bg-white">
-      {/* Home Popup Modal (Centered, immediate on visit) */}
-      <HomePopupModal />
-
       {/* SECTION 1: Auto Slider Hero Image (True Infinite Seamless Loop) */}
       {heroImages.length > 0 && (
         <section className="relative w-full h-[80vh] md:h-[105vh] min-h-[500px] md:min-h-[800px] bg-white overflow-hidden">
@@ -495,7 +514,10 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
               {allProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((product, idx) => (
-                <ProductCard key={`${product.id || idx}-${currentPage}`} product={product} />
+                <ProductCard
+                  key={`${product.id || idx}-${currentPage}-${product.updated_at || ""}-${product.availableForSale}-${product.releaseDate || ""}-${product.stock ?? ""}`}
+                  product={product}
+                />
               ))}
             </div>
 

@@ -1,52 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { createConfirmedOrderOnServer } from "@/lib/orders/server-order-service";
 
-function getPaymentLogsFilePath() {
-  return path.join(process.cwd(), "data", "payment-logs.json");
-}
-
-function readPaymentLogs(): any[] {
-  try {
-    const filePath = getPaymentLogsFilePath();
-    if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, "utf-8");
-      const data = JSON.parse(raw);
-      if (Array.isArray(data)) return data;
-    }
-  } catch (err) {
-    console.warn("[Payment Logs Read Warning]:", err);
-  }
-  return [];
-}
-
-function writePaymentLogs(logs: any[]) {
-  try {
-    const targetPath = getPaymentLogsFilePath();
-    const dir = path.dirname(targetPath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-    const tempPath = `${targetPath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
-    const jsonStr = JSON.stringify(logs, null, 2);
-    try {
-      fs.writeFileSync(tempPath, jsonStr, "utf-8");
-      fs.renameSync(tempPath, targetPath);
-    } catch {
-      try {
-        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-      } catch {}
-      fs.writeFileSync(targetPath, jsonStr, "utf-8");
-    }
-  } catch (err) {
-    console.error("[Payment Logs Write Error]:", err);
-  }
-}
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { paymentKey, orderId, amount } = await req.json();
+    const body = await req.json();
+    const { paymentKey, orderId, amount, pendingOrder } = body;
 
-    if (!paymentKey || !orderId || !amount) {
+    if (!paymentKey || !orderId || amount === undefined || amount === null) {
       return NextResponse.json(
         { message: "결제 요청 필수 파라미터가 누락되었습니다." },
         { status: 400 }
@@ -75,38 +37,58 @@ export async function POST(req: NextRequest) {
     const data = await response.json();
 
     if (!response.ok) {
+      // 이미 승인 완료된 결제인 경우(새로고침 또는 네트워크 재시도) 서버 주문 정보 복원 후 정상 처리
+      if (
+        data?.code === "ALREADY_PROCESSED_PAYMENT" ||
+        data?.message?.includes("이미 처리된 결제")
+      ) {
+        try {
+          const existingResult = await createConfirmedOrderOnServer({
+            orderId,
+            paymentKey,
+            amount: Number(amount),
+            method: data?.method || "신용·체크카드 (토스)",
+            pendingOrder: pendingOrder || null,
+            rawPaymentData: data,
+          });
+          return NextResponse.json({
+            success: true,
+            data,
+            order: existingResult?.order || null,
+            shipment: existingResult?.shipment || null,
+            alreadyExisted: true,
+          });
+        } catch (e) {}
+      }
+
       return NextResponse.json(
         { message: data.message || "토스페이먼츠 결제 승인에 실패하였습니다." },
         { status: response.status }
       );
     }
 
-    // Git payment-logs.json 파일에 결제 승인 로그 영속 저장
+    // 결제 승인 성공 즉시 서버 원자적 주문서 + 배송서 + 결제로그 + 재고차감 동시 생성
+    let orderResult: any = null;
     try {
-      const logs = readPaymentLogs();
-      const newLog = {
-        id: `PAY-${orderId}-${Date.now().toString().slice(-4)}`,
-        orderId: orderId,
-        paymentKey: paymentKey,
+      orderResult = await createConfirmedOrderOnServer({
+        orderId,
+        paymentKey,
         amount: Number(amount),
-        status: data.status || "DONE",
-        method: data.method || "간편결제",
-        approvedAt: data.approvedAt || new Date().toISOString(),
-        rawResponse: data,
-        created_at: new Date().toISOString(),
-      };
-      const existingIdx = logs.findIndex((l) => l.paymentKey === paymentKey);
-      if (existingIdx !== -1) {
-        logs[existingIdx] = { ...logs[existingIdx], ...newLog };
-      } else {
-        logs.unshift(newLog);
-      }
-      writePaymentLogs(logs);
-    } catch (logErr) {
-      console.warn("Notice: Failed to insert payment_log into Git JSON:", logErr);
+        method: data.method,
+        pendingOrder: pendingOrder || null,
+        rawPaymentData: data,
+      });
+    } catch (orderErr) {
+      console.error("[Toss Confirm: Atomic Order Creation Error]:", orderErr);
     }
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({
+      success: true,
+      data,
+      order: orderResult?.order || null,
+      shipment: orderResult?.shipment || null,
+      alreadyExisted: orderResult?.alreadyExisted || false,
+    });
   } catch (error: any) {
     console.error("Toss Payments Confirmation Error:", error);
     return NextResponse.json(

@@ -16,6 +16,12 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
   const activeSessionIdRef = useRef(activeSessionId);
   activeSessionIdRef.current = activeSessionId;
 
+  // In-flight sending state and pending message preservation
+  const isSendingLiveChatRef = useRef(false);
+  const [isSendingLiveChat, setIsSendingLiveChat] = useState(false);
+  const lastSentTextRef = useRef("");
+  const pendingAdminMsgIdsRef = useRef<Set<string>>(new Set());
+
   // 1. Load Sessions from Supabase + localStorage merge
   const loadSessions = useCallback(async () => {
     if (typeof window === "undefined") return;
@@ -49,39 +55,21 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
         });
       }
 
-      const hasConversation = (sessionId: string, sessionEmail?: string) => {
-        const sid = (sessionId || "").toLowerCase().trim();
-        const sEmail = (sessionEmail || "").toLowerCase().trim();
-        if (!sid) return false;
-        if (sid === "vip@choicomma.com") {
-          return false;
-        }
-        if (dbMsgSessionIds.has(sid) || (sEmail && dbMsgSessionIds.has(sEmail))) {
-          return true;
-        }
-        if (typeof window !== "undefined") {
-          const checkKeys = [`site_live_chat_messages_${sid}`];
-          if (sEmail && sEmail !== sid) checkKeys.push(`site_live_chat_messages_${sEmail}`);
-          for (const k of checkKeys) {
-            const saved = localStorage.getItem(k);
-            if (saved) {
-              try {
-                const msgs = JSON.parse(saved);
-                if (Array.isArray(msgs) && msgs.some((m: any) => m && (m.sender === "user" || (m.id && m.id !== "msg-welcome-1")))) {
-                  return true;
-                }
-              } catch (e) {}
-            }
-          }
-        }
-        return false;
+      const isValidSession = (s: any) => {
+        if (!s || !s.id) return false;
+        const sid = String(s.id).toLowerCase().trim();
+        if (s.status === "closed") return false;
+        if (sid === "vip@choicomma.com" && !dbMsgSessionIds.has(sid)) return false;
+        if (sid === "admin@choicomma.com" || sid === "admin") return false;
+        return true;
       };
 
       if (Array.isArray(dbSessions)) {
         dbMappedSessions = dbSessions
-          .filter((s: any) => hasConversation(s?.id, s?.customerEmail))
+          .filter(isValidSession)
           .map((s: any) => {
-            const rawEmail = (s.customerEmail || s.id || "").toLowerCase().trim();
+            const normId = String(s.id || "").toLowerCase().trim();
+            const rawEmail = (s.customerEmail || normId || "").toLowerCase().trim();
             const rawPhone = s.customerPhone || "";
             const foundCust = adminCustomers.find(
               (c: any) =>
@@ -104,20 +92,20 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
             }
 
             return {
-              id: s.id,
+              id: normId,
               name: uName.endsWith("님") ? uName : `${uName}님`,
-              email: s.customerEmail || s.id,
+              email: s.customerEmail || normId,
               phone: rawPhone || foundCust?.phone || "",
               tier: grade,
               badgeColor,
-              status: s.status === "active" ? "online" : s.status,
+              status: s.status === "active" ? "online" : (s.status || "online"),
             };
           });
       }
 
-      // B. Merge with localStorage sessions that actually have messages
+      // B. Merge with localStorage sessions that are active
       const sessionsMap = new Map<string, any>();
-      dbMappedSessions.forEach((s) => sessionsMap.set(s.id.toLowerCase(), s));
+      dbMappedSessions.forEach((s) => sessionsMap.set(s.id, s));
 
       const savedLocal = localStorage.getItem("admin_chat_sessions");
       if (savedLocal) {
@@ -125,9 +113,11 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
           const parsed = JSON.parse(savedLocal);
           if (Array.isArray(parsed)) {
             parsed.forEach((s: any) => {
-              if (s?.id && hasConversation(s.id, s.email)) {
-                if (!sessionsMap.has(s.id.toLowerCase())) {
-                  sessionsMap.set(s.id.toLowerCase(), s);
+              if (s?.id && s.status !== "closed") {
+                const normId = String(s.id).toLowerCase().trim();
+                if (normId === "admin@choicomma.com" || normId === "admin") return;
+                if (!sessionsMap.has(normId)) {
+                  sessionsMap.set(normId, { ...s, id: normId });
                 }
               }
             });
@@ -152,12 +142,16 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       });
       localStorage.setItem("admin_chat_sessions", JSON.stringify(finalList));
 
-      // Update activeSessionId
+      // Update activeSessionId with robust preservation (관리자 계정은 활성 세션에서 영구 제외)
       setActiveSessionId((prev) => {
-        if (!prev || !finalList.some((s) => s.id === prev)) {
+        const normPrev = (prev || "").toLowerCase().trim();
+        if (!normPrev || normPrev === "admin@choicomma.com" || normPrev === "admin") {
           return finalList.length > 0 ? finalList[0].id : "";
         }
-        return prev;
+        const match = finalList.find((s) => s.id.toLowerCase().trim() === normPrev);
+        if (match) return match.id;
+        if (finalList.length > 0) return finalList[0].id;
+        return "";
       });
     } catch (sbErr) {
       console.warn("Notice: Failed to fetch chat_sessions from Supabase:", sbErr);
@@ -173,6 +167,11 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     }
 
     const currentId = rawId.trim().toLowerCase();
+    // 관리자 계정은 상담 메시지 API를 호출하지 않음
+    if (currentId === "admin@choicomma.com" || currentId === "admin") {
+      setAdminLiveChatMessages([]);
+      return;
+    }
     const sessionKey = `site_live_chat_messages_${currentId}`;
 
     // Read existing local messages for optimistic retention
@@ -210,38 +209,37 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       }
     } catch (e) {}
 
-    // B. Merge DB messages with any recent local optimistic messages not yet fetched
+    // B. Merge DB messages with local messages (Non-destructive Smart Merge)
     setAdminLiveChatMessages((prev) => {
       const mergedMap = new Map<string, any>();
-      dbFormatted.forEach((m) => mergedMap.set(m.id, m));
 
-      const candidates = [...prev, ...existingLocal];
-      const now = Date.now();
-
+      // 1. Local/existing messages first
+      const candidates = [...existingLocal, ...prev];
       candidates.forEach((m) => {
-        if (!m || !m.id) return;
-        if (!mergedMap.has(m.id)) {
-          let isRecent = false;
-          const matchTime = m.id.match(/\d{10,}/);
-          if (matchTime) {
-            const timeVal = parseInt(matchTime[0], 10);
-            if (!isNaN(timeVal) && now - timeVal < 15000) {
-              isRecent = true;
-            }
-          } else if (m.created_at) {
-            const timeVal = new Date(m.created_at).getTime();
-            if (!isNaN(timeVal) && now - timeVal < 15000) {
-              isRecent = true;
-            }
-          }
+        if (m && m.id) mergedMap.set(m.id, m);
+      });
 
-          if (isRecent) {
-            mergedMap.set(m.id, m);
-          }
+      // 2. Server DB messages (authoritative updates)
+      dbFormatted.forEach((m) => {
+        if (m && m.id) mergedMap.set(m.id, m);
+      });
+
+      // 3. Explicitly preserve any in-flight pending messages against polling overwrite
+      pendingAdminMsgIdsRef.current.forEach((pendingId) => {
+        const pendingMsg = candidates.find((m) => m && m.id === pendingId);
+        if (pendingMsg) {
+          mergedMap.set(pendingId, pendingMsg);
         }
       });
 
       const finalList = Array.from(mergedMap.values());
+      // Chronological sort
+      finalList.sort((a, b) => {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : (parseInt((a.id || "").match(/\d{10,}/)?.[0] || "0", 10) || 0);
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : (parseInt((b.id || "").match(/\d{10,}/)?.[0] || "0", 10) || 0);
+        return timeA - timeB;
+      });
+
       if (typeof window !== "undefined") {
         localStorage.setItem(sessionKey, JSON.stringify(finalList));
       }
@@ -303,10 +301,11 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
 
     // Resilient Polling (every 3.5 seconds)
     // 서버가 느릴 때 요청이 계속 쌓여 상품 저장까지 지연되지 않도록, 이전 조회가 끝나기 전에는 새로 보내지 않고
-    // 화면에 보이지 않는 탭에서는 조회하지 않는다.
+    // 화면에 보이지 않는 탭에서는 조회하지 않는다. 관리자가 메시지 전송 중일 때도 덮어쓰기 방지를 위해 폴링을 일시 건너뛴다.
     let pollInFlight = false;
     const interval = setInterval(async () => {
       if (pollInFlight) return;
+      if (isSendingLiveChatRef.current) return;
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       pollInFlight = true;
       try {
@@ -342,6 +341,11 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     const textToSend = presetText || adminLiveInput;
     if (!textToSend.trim() || !activeSessionId) return;
 
+    // Prevent duplicate rapid submits of the exact same message while sending
+    if (isSendingLiveChatRef.current && (!presetText || presetText === lastSentTextRef.current)) {
+      return;
+    }
+
     const normalizedSessionId = activeSessionId.trim().toLowerCase();
     const dateNow = new Date();
     const hours = String(dateNow.getHours()).padStart(2, "0");
@@ -357,6 +361,12 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     };
 
     const sessionKey = `site_live_chat_messages_${normalizedSessionId}`;
+
+    // Mark as in-flight
+    isSendingLiveChatRef.current = true;
+    setIsSendingLiveChat(true);
+    lastSentTextRef.current = textToSend.trim();
+    pendingAdminMsgIdsRef.current.add(newReply.id);
     
     // 1. Optimistic Local Update
     setAdminLiveChatMessages((prev) => {
@@ -396,11 +406,14 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
 
     triggerToast("💬 고객 라이브 채팅방으로 답변이 성공적으로 전송되었습니다!");
 
-    // 4. Background Supabase insert without blocking or causing UI blink
+    // 4. Atomic Server Persistence (await with timeout & error resilience)
     try {
-      fetch("/api/admin/chat?type=message", {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch("/api/admin/chat?type=message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           id: newReply.id,
           sessionId: normalizedSessionId,
@@ -408,9 +421,19 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
           text: newReply.text,
           content: newReply.text,
         }),
-      }).catch((e) => console.warn("Chat API insert admin message notice:", e));
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        console.warn("Notice: Chat API returned non-ok status:", res.status);
+      }
     } catch (e) {
-      console.warn("Chat API insert admin message notice:", e);
+      console.warn("Notice: Chat API insert admin message failed or timed out:", e);
+    } finally {
+      pendingAdminMsgIdsRef.current.delete(newReply.id);
+      isSendingLiveChatRef.current = false;
+      setIsSendingLiveChat(false);
+      lastSentTextRef.current = "";
     }
   };
 
@@ -522,6 +545,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     lastLiveChatMsg,
     isLiveChatSessionEnded,
     activeSessionMessages,
+    isSendingLiveChat,
     handleAdminSendLiveChat,
     handleAdminEndLiveChat,
     handleAdminClearLiveChat,

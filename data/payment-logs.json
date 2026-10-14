@@ -1,1 +1,200 @@
-[]
+[
+  {
+    "id": "PAY-CH20261007-001-2923",
+    "orderId": "CH20261007-001",
+    "paymentKey": "choic20261007154905Nc7K8",
+    "amount": 1000,
+    "status": "CANCELED",
+    "method": "간편결제",
+    "approvedAt": "2026-10-07T06:49:51+00:00",
+    "rawResponse": {
+      "mId": "choicod4la",
+      "vat": 0,
+      "card": {
+        "amount": 1000,
+        "number": "51184500****973*",
+        "cardType": "체크",
+        "approveNo": "00609703",
+        "ownerType": "개인",
+        "issuerCode": "21",
+        "acquirerCode": "21",
+        "useCardPoint": false,
+        "acquireStatus": "READY",
+        "interestPayer": null,
+        "isInterestFree": false,
+        "installmentPlanMonths": 0
+      },
+      "type": "NORMAL",
+      "method": "간편결제",
+      "secret": "ps_26DlbXAaV0wyxQJ5mYmn3qY50Q9R",
+      "status": "CANCELED",
+      "cancels": [
+        {
+          "canceledAt": "2026-10-07T16:04:55+09:00",
+          "receiptKey": null,
+          "cancelAmount": 1000,
+          "cancelReason": "고객 단순 변심",
+          "cancelStatus": "DONE",
+          "taxFreeAmount": 0,
+          "transactionKey": "txrd_a01m4ajvwvemvsj18na1vwrvrk1",
+          "cancelRequestId": null,
+          "refundableAmount": 0,
+          "cardDiscountAmount": 0,
+          "taxExemptionAmount": 0,
+          "easyPayDiscountAmount": 0,
+          "transferDiscountAmount": 0
+        }
+      ],
+      "country": "KR",
+      "easyPay": {
+        "amount": 0,
+        "provider": "토스페이",
+        "discountAmount": 0
+      },
+      "failure": null,
+      "orderId": "CH20261007-001",
+      "receipt": {
+        "url": "https://dashboard.tosspayments.com/receipt/redirection?transactionId=choic20261007154905Nc7K8&ref=PX"
+      },
+      "version": "2024-06-01",
+      "checkout": {
+        "url": "https://api.tosspayments.com/v1/payments/choic20261007154905Nc7K8/checkout"
+      },
+      "currency": "KRW",
+      "discount": null,
+      "metadata": null,
+      "transfer": null,
+      "orderName": "테스트상품",
+      "useEscrow": false,
+      "approvedAt": "2026-10-07T15:49:51+09:00",
+      "paymentKey": "choic20261007154905Nc7K8",
+      "cashReceipt": null,
+      "mobilePhone": null,
+      "requestedAt": "2026-10-07T15:49:05+09:00",
+      "totalAmount": 1000,
+      "cashReceipts": null,
+      "balanceAmount": 0,
+      "taxFreeAmount": 0,
+      "cultureExpense": false,
+      "suppliedAmount": 0,
+      "virtualAccount": null,
+      "giftCertificate": null,
+      "lastTransactionKey": "txrd_a01m4ajvwvemvsj18na1vwrvrk1",
+      "taxExemptionAmount": 0,
+      "isPartialCancelable": true
+    },
+    "created_at": "2026-10-07T06:49:53.477478+00:00"
+  },
+  {
+    "id": "PAY-CH20261007-002-3395",
+    "orderId": "CH20261007-002",
+    "paymentKey": "choic20261007171539OVSv7",
+    "amount": 1000,
+    "status": "CANCELED",
+    "method": "계좌이체",
+    "approvedAt": "2026-10-07T08:22:22+00:00",
+    "rawResponse": {
+      "mId": "choicod4la",
+      "vat": 0,
+      "card": null,
+      "type": "NORMAL",
+      "method": "계좌이체",
+      "secret": "ps_ex6BJGQOVDKnQqy5kNNB3W4w2zNb",
+      "status": "CANCELED",
+      "cancels": [
+        {
+          "canceledAt": "2026-10-07T17:23:46+09:00",
+          "receiptKey": "lqNRYD097kZLKGPx4M3Mx02GDQNkBq8BaWypv1o6bemnOJz2",
+          "cancelAmount": 1000,
+          "cancelReason": "고객 요청에 의한 환불 (CS 라이브 채팅)",
+          "cancelStatus": "DONE",
+          "taxFreeAmount": 0,
+          "transactionKey": "txrd_a01m4aqc9xjw4d2qq81btygqn3s",
+          "cancelRequestId": null,
+          "refundableAmount": 0,
+          "cardDiscountAmount": 0,
+          "taxExemptionAmount": 0,
+          "easyPayDiscountAmount": 0,
+          "transferDiscountAmount": 0
+        }
+      ],
+      "country": "KR",
+      "easyPay": null,
+      "failure": null,
+      "orderId": "CH20261007-002",
+      "receipt": {
+        "url": "https://dashboard.tosspayments.com/receipt/redirection?transactionId=choic20261007171539OVSv7&ref=PX"
+      },
+      "version": "2024-06-01",
+      "checkout": {
+        "url": "https://api.tosspayments.com/v1/payments/choic20261007171539OVSv7/checkout"
+      },
+      "currency": "KRW",
+      "discount": null,
+      "metadata": null,
+      "transfer": {
+        "bankCode": "88",
+        "settlementStatus": "INCOMPLETED"
+      },
+      "orderName": "테스트상품",
+      "useEscrow": false,
+      "approvedAt": "2026-10-07T17:22:22+09:00",
+      "paymentKey": "choic20261007171539OVSv7",
+      "cashReceipt": {
+        "type": "지출증빙",
+        "amount": 1000,
+        "receiptKey": "xMljweGQBN5OWRapdA8dw4ReeOjdG6ro1zEqZKLPbmD70vk4",
+        "receiptUrl": "https://dashboard.tosspayments.com/receipts/cash-receipt/CH20261007-002/choicod4la?ref=PX",
+        "issueNumber": "731359928",
+        "taxFreeAmount": 0
+      },
+      "mobilePhone": null,
+      "requestedAt": "2026-10-07T17:15:39+09:00",
+      "totalAmount": 1000,
+      "cashReceipts": [
+        {
+          "type": "지출증빙",
+          "amount": 1000,
+          "failure": null,
+          "orderId": "CH20261007-002",
+          "orderName": "테스트상품",
+          "receiptKey": "xMljweGQBN5OWRapdA8dw4ReeOjdG6ro1zEqZKLPbmD70vk4",
+          "receiptUrl": "https://dashboard.tosspayments.com/receipts/cash-receipt/CH20261007-002/choicod4la?ref=PX",
+          "issueNumber": "731359928",
+          "issueStatus": "IN_PROGRESS",
+          "requestedAt": "2026-10-07T17:22:22+09:00",
+          "taxFreeAmount": 0,
+          "businessNumber": "7108803854",
+          "transactionType": "CONFIRM",
+          "customerIdentityNumber": "5401801327"
+        },
+        {
+          "type": "지출증빙",
+          "amount": 1000,
+          "failure": null,
+          "orderId": "CH20261007-002",
+          "orderName": "",
+          "receiptKey": "lqNRYD097kZLKGPx4M3Mx02GDQNkBq8BaWypv1o6bemnOJz2",
+          "receiptUrl": "https://dashboard.tosspayments.com/receipts/cash-receipt/CH20261007-002/choicod4la?ref=PX",
+          "issueNumber": "731364495",
+          "issueStatus": "IN_PROGRESS",
+          "requestedAt": "2026-10-07T17:23:46+09:00",
+          "taxFreeAmount": 0,
+          "businessNumber": "7108803854",
+          "transactionType": "CANCEL",
+          "customerIdentityNumber": "5401801327"
+        }
+      ],
+      "balanceAmount": 0,
+      "taxFreeAmount": 0,
+      "cultureExpense": false,
+      "suppliedAmount": 0,
+      "virtualAccount": null,
+      "giftCertificate": null,
+      "lastTransactionKey": "txrd_a01m4aqc9xjw4d2qq81btygqn3s",
+      "taxExemptionAmount": 0,
+      "isPartialCancelable": true
+    },
+    "created_at": "2026-10-07T08:22:23.567778+00:00"
+  }
+]

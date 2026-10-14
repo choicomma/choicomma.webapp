@@ -1,7 +1,9 @@
 /**
- * @deprecated [MIGRATION COMPLETED]
- * 초이콤마의 모든 운영 데이터는 이제 로컬 Git JSON(data/*.json) 파일로 완전 이전되었습니다.
- * 본 파일은 하위 호환성 보존을 위한 스텁(Stub)이며, 런타임 앱 코드에서 직접 호출되지 않습니다.
+ * [SUPABASE PRO HYBRID ARCHITECTURE]
+ * 초이콤마 Supabase Pro 클라우드 DB 연동 서버 클라이언트.
+ * - 원격 저장소: Supabase Pro (24/7 Always-On, 자동 백업, 영구 보존)
+ * - 로컬 안전망: Git JSON (data/*.json 원자적 쓰기 & 0ms 초고속 캐시)
+ * - Safe Dual-Write & Fallback 패턴 적용
  */
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
@@ -28,3 +30,29 @@ export const supabaseServer: SupabaseClient = createClient(effectiveUrl, effecti
     autoRefreshToken: false,
   },
 });
+
+/**
+ * 안전한 Supabase 쿼리 실행 헬퍼 (타임아웃 및 폴백 방어막)
+ * Supabase가 일시 정지(Paused) 상태이거나 네트워크 지연이 발생해도
+ * 지정된 시간(기본 3초) 내에 응답이 없으면 즉시 안전하게 반환하여 웹앱이 멈추지 않도록 보장합니다.
+ */
+export async function runSafeSupabaseQuery<T>(
+  queryFn: (client: SupabaseClient) => Promise<{ data: T | null; error: any }>,
+  timeoutMs = 3000
+): Promise<{ data: T | null; error: any; timedOut?: boolean }> {
+  if (!isSupabaseConfigured) {
+    return { data: null, error: new Error("Supabase is not configured"), timedOut: false };
+  }
+
+  try {
+    const result = await Promise.race([
+      queryFn(supabaseServer),
+      new Promise<{ data: null; error: Error; timedOut: true }>((_, reject) =>
+        setTimeout(() => reject(new Error(`Supabase query timeout after ${timeoutMs}ms`)), timeoutMs)
+      ),
+    ]);
+    return result;
+  } catch (err: any) {
+    return { data: null, error: err, timedOut: true };
+  }
+}

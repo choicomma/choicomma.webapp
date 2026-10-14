@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, Suspense } from "react";
 import { usePathname } from "next/navigation";
+import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 
 function VisitorTrackerCore() {
   const pathname = usePathname();
@@ -96,6 +97,16 @@ function VisitorTrackerCore() {
         })
         .catch(() => {});
     } catch (err) {}
+
+    // 고객 구매 여정 (PAGE_VIEW) 자동 연동
+    if (!isAdmin && !currentPath.startsWith("/admin") && !currentPath.startsWith("/product/") && !currentPath.startsWith("/checkout") && !currentPath.startsWith("/order/")) {
+      trackCustomerJourney({
+        eventType: "PAGE_VIEW",
+        eventLabel: currentPath === "/" ? "홈페이지 메인 방문" : `페이지 탐색 (${document.title || currentPath})`,
+        path: currentPath,
+        referrer: document.referrer || "직접 유입",
+      });
+    }
   }, [pathname]);
 
   return null;

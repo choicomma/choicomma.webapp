@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { logAdminActivity } from "@/lib/logging/audit-logger";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -156,6 +157,9 @@ export async function POST(req: NextRequest) {
     const targetId = String(body.id).trim();
     const idx = current.findIndex((c) => String(c.id).trim() === targetId);
 
+    const isNew = idx === -1;
+    const prevCoupon = idx !== -1 ? current[idx] : undefined;
+
     if (idx !== -1) {
       current[idx] = { ...current[idx], ...body, updatedAt: new Date().toISOString() };
     } else {
@@ -166,6 +170,19 @@ export async function POST(req: NextRequest) {
     }
 
     writeCouponsFile(current);
+
+    // 관리자 쿠폰 작업 감사 로그 기록
+    logAdminActivity({
+      adminId: "admin_master",
+      adminName: "마케팅 관리자",
+      actionType: isNew ? "CREATE" : "UPDATE",
+      domain: "COUPON",
+      targetId: body.id,
+      targetName: body.name || body.code || "쿠폰",
+      description: `쿠폰 [${body.name || body.code}] ${isNew ? "신규 발행" : "정보 수정"} (코드: ${body.code || "-"}, 할인: ${body.discountPercent || body.discountAmount || 0}%)`,
+      beforeData: prevCoupon ? { name: prevCoupon.name, code: prevCoupon.code, discountPercent: prevCoupon.discountPercent } : undefined,
+      afterData: { name: body.name, code: body.code, discountPercent: body.discountPercent, maxUsage: body.maxUsage },
+    }).catch(() => {});
     return NextResponse.json(
       { success: true, coupon: body, coupons: current },
       { headers: NO_CACHE_HEADERS }
@@ -187,9 +204,22 @@ export async function DELETE(req: NextRequest) {
     }
 
     const current = readCouponsFile();
-    const filtered = current.filter((c) => String(c.id) !== id);
+    const targetCoupon = current.find((c: any) => String(c.id) === id);
+    const filtered = current.filter((c: any) => String(c.id) !== id);
 
     writeCouponsFile(filtered);
+
+    // 관리자 쿠폰 삭제 감사 로그 기록
+    logAdminActivity({
+      adminId: "admin_master",
+      adminName: "마케팅 관리자",
+      actionType: "DELETE",
+      domain: "COUPON",
+      targetId: id,
+      targetName: targetCoupon?.name || targetCoupon?.code || id,
+      description: `쿠폰 [${targetCoupon?.name || targetCoupon?.code || id}] 삭제 처리`,
+      beforeData: targetCoupon,
+    }).catch(() => {});
     return NextResponse.json(
       { success: true, count: filtered.length, coupons: filtered },
       { headers: NO_CACHE_HEADERS }

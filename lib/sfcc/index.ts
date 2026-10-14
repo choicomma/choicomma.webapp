@@ -215,8 +215,13 @@ export async function getProduct(handle: string) {
       try {
         decoded = decodeURIComponent(handle);
       } catch (e) {}
-      await syncCatalogFromRemote();
-  const allList = getAllServerProducts();
+      const cachedList = getAllServerProducts();
+      if (!cachedList || cachedList.length === 0) {
+        await syncCatalogFromRemote();
+      } else {
+        syncCatalogFromRemote().catch(() => {});
+      }
+      const allList = getAllServerProducts();
       let product = allList.find(
         (p) =>
           p.handle === handle ||
@@ -314,8 +319,13 @@ export async function getCollectionProducts({
 }) {
   try {
     if (USE_MOCK_DATA) {
-      await syncCatalogFromRemote();
-  const allList = getAllServerProducts();
+      const cachedList = getAllServerProducts();
+      if (!cachedList || cachedList.length === 0) {
+        await syncCatalogFromRemote();
+      } else {
+        syncCatalogFromRemote().catch(() => {});
+      }
+      const allList = getAllServerProducts();
       // 미진열 상품(isMainFeatured === false)은 쇼핑몰 전체 카탈로그에서 완전히 제외
       const catalogProducts = allList.filter(
         (p) =>

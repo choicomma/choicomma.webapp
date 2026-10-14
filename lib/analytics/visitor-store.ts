@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { supabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export interface VisitorRecord {
   id: string;
@@ -53,51 +54,111 @@ interface AnalyticsStore {
 }
 
 const STORE_FILE_PATH = path.join(process.cwd(), "lib", "analytics", "visitor-data.json");
+const SETTINGS_KEY = "real_visitor_analytics_store";
 
 // 기본 초기 상태
 let memoryStore: AnalyticsStore = {
   logs: [],
   blockedIps: [],
   suspiciousActivities: [],
-  adminIps: ["127.0.0.1", "::1", "localhost", "172.30.1.74"],
+  adminIps: ["127.0.0.1", "::1", "localhost"],
   updatedAt: new Date().toISOString(),
 };
 
 let isInitialized = false;
+let initPromise: Promise<AnalyticsStore> | null = null;
 
-// 1. 디스크 및 Supabase site_settings에서 저장소 초기화
-export async function initializeStore(): Promise<AnalyticsStore> {
-  if (isInitialized) {
+// 1. 디스크 및 Supabase site_settings에서 저장소 초기화 (Self-Healing Fallback 적용)
+export async function initializeStore(force = false): Promise<AnalyticsStore> {
+  if (isInitialized && !force) {
     return memoryStore;
   }
-
-  // 1순위: 로컬 JSON 파일 확인
-  try {
-    if (fs.existsSync(STORE_FILE_PATH)) {
-      const content = fs.readFileSync(STORE_FILE_PATH, "utf8");
-      if (content.trim()) {
-        const parsed = JSON.parse(content);
-        if (Array.isArray(parsed.logs)) {
-          memoryStore = {
-            logs: parsed.logs || [],
-            blockedIps: parsed.blockedIps || [],
-            suspiciousActivities: parsed.suspiciousActivities || [],
-            adminIps: Array.isArray(parsed.adminIps)
-              ? parsed.adminIps
-              : ["127.0.0.1", "::1", "localhost", "172.30.1.74"],
-            updatedAt: parsed.updatedAt || new Date().toISOString(),
-          };
-          isInitialized = true;
-          return memoryStore;
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("Notice: Failed to read local visitor store:", err);
+  if (initPromise && !force) {
+    return initPromise;
   }
 
-  isInitialized = true;
-  return memoryStore;
+  initPromise = (async () => {
+    let localData: AnalyticsStore | null = null;
+
+    // 1순위: 로컬 JSON 파일 확인 (디스크 변경사항 실시간 즉시 반영)
+    try {
+      if (fs.existsSync(STORE_FILE_PATH)) {
+        const content = fs.readFileSync(STORE_FILE_PATH, "utf8");
+        if (content.trim()) {
+          const parsed = JSON.parse(content);
+          if (Array.isArray(parsed.logs)) {
+            localData = {
+              logs: parsed.logs || [],
+              blockedIps: parsed.blockedIps || [],
+              suspiciousActivities: parsed.suspiciousActivities || [],
+              adminIps: Array.isArray(parsed.adminIps)
+                ? parsed.adminIps
+                : ["127.0.0.1", "::1", "localhost"],
+              updatedAt: parsed.updatedAt || new Date().toISOString(),
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Notice: Failed to read local visitor store:", err);
+    }
+
+    // 2순위: Supabase site_settings에서 최신 원장 확인 및 원격 복구(Self-Healing)
+    if (isSupabaseConfigured) {
+      try {
+        const queryPromise = supabaseServer
+          .from("site_settings")
+          .select("value, updated_at")
+          .eq("key", SETTINGS_KEY)
+          .maybeSingle();
+
+        const { data, error } = await Promise.race([
+          queryPromise,
+          new Promise<any>((_, reject) =>
+            setTimeout(() => reject(new Error("Supabase visitor read timeout")), 2500)
+          ),
+        ]);
+
+        if (!error && data?.value && Array.isArray(data.value.logs)) {
+          const remoteStore: AnalyticsStore = data.value;
+          const remoteCount = remoteStore.logs?.length || 0;
+          const localCount = localData?.logs?.length || 0;
+
+          // 로컬 데이터가 없거나, Supabase에 더 많은 로그가 있을 때 복원
+          if (!localData || remoteCount > localCount) {
+            localData = {
+              logs: remoteStore.logs || [],
+              blockedIps: remoteStore.blockedIps || [],
+              suspiciousActivities: remoteStore.suspiciousActivities || [],
+              adminIps: Array.isArray(remoteStore.adminIps)
+                ? remoteStore.adminIps
+                : ["127.0.0.1", "::1", "localhost"],
+              updatedAt: remoteStore.updatedAt || new Date().toISOString(),
+            };
+            // 로컬 파일에 자가 복구(Self-Healing) 원자적 저장
+            try {
+              persistStoreLocally(localData);
+            } catch {}
+          } else if (localCount > remoteCount) {
+            // 로컬에 더 많은 로그가 있다면 원격 Supabase로 최신화 (백그라운드)
+            syncToSupabase(localData, false).catch(() => {});
+          }
+        }
+      } catch (remoteErr) {
+        // 네트워크 타임아웃 등의 경우 로컬 데이터로 중단 없이 안전 작동
+      }
+    }
+
+    if (localData) {
+      memoryStore = localData;
+    }
+
+    isInitialized = true;
+    initPromise = null;
+    return memoryStore;
+  })();
+
+  return initPromise;
 }
 
 // 2. 파일에 비동기 안전 원자적 저장 (Retry 지원)
@@ -122,6 +183,12 @@ function persistStoreLocally(store: AnalyticsStore) {
         } catch {}
         fs.writeFileSync(STORE_FILE_PATH, jsonStr, "utf8");
       }
+
+      try {
+        const backupDataPath = path.join(process.cwd(), "data", "visitor-data.json");
+        fs.writeFileSync(backupDataPath, jsonStr, "utf8");
+      } catch {}
+
       return;
     } catch (err) {
       lastError = err;
@@ -133,14 +200,73 @@ function persistStoreLocally(store: AnalyticsStore) {
 
   try {
     fs.writeFileSync(STORE_FILE_PATH, jsonStr, "utf8");
+    const backupDataPath = path.join(process.cwd(), "data", "visitor-data.json");
+    fs.writeFileSync(backupDataPath, jsonStr, "utf8");
   } catch (finalErr) {
     console.error("Failed to write visitor data to disk:", lastError || finalErr);
   }
 }
 
-// Supabase 원격 동기화 안전 폴백 함수 (미정의 ReferenceError 방어)
-async function syncToSupabase(store: AnalyticsStore): Promise<void> {
-  return Promise.resolve();
+// ── Supabase 원격 동기화 (트래픽 폭주 방지 3초 디바운스 & 관리자 즉시 동기화) ──
+let syncTimer: NodeJS.Timeout | null = null;
+let isSyncing = false;
+let pendingSync = false;
+
+async function doSupabaseUpsert(store: AnalyticsStore): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  if (isSyncing) {
+    pendingSync = true;
+    return;
+  }
+
+  isSyncing = true;
+  try {
+    const payload = {
+      key: SETTINGS_KEY,
+      value: store,
+      description: "실시간 방문자 통계 및 접속 로그 원장 (Safe Dual-Write)",
+      updated_at: new Date().toISOString(),
+    };
+
+    const queryPromise = supabaseServer
+      .from("site_settings")
+      .upsert(payload, { onConflict: "key" });
+
+    await Promise.race([
+      queryPromise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Supabase visitor sync timeout")), 3500)
+      ),
+    ]);
+  } catch (err: any) {
+    console.warn("⚠️ [Visitor Store Remote Sync Notice]:", err?.message || err);
+  } finally {
+    isSyncing = false;
+    if (pendingSync) {
+      pendingSync = false;
+      doSupabaseUpsert(memoryStore).catch(() => {});
+    }
+  }
+}
+
+export async function syncToSupabase(store: AnalyticsStore, immediate = false): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  if (immediate) {
+    if (syncTimer) {
+      clearTimeout(syncTimer);
+      syncTimer = null;
+    }
+    await doSupabaseUpsert(store);
+    return;
+  }
+
+  if (syncTimer) return; // 이미 디바운스 타이머가 가동 중인 경우 취합되어 일괄 전송됨
+
+  syncTimer = setTimeout(() => {
+    syncTimer = null;
+    doSupabaseUpsert(memoryStore).catch(() => {});
+  }, 3000);
 }
 
 // 3. User-Agent 파싱 헬퍼
@@ -272,7 +398,7 @@ export async function registerAdminIp(ip: string): Promise<string[]> {
   if (clean && !memoryStore.adminIps.some((a) => cleanIpString(a) === clean)) {
     memoryStore.adminIps.push(clean);
     persistStoreLocally(memoryStore);
-    await syncToSupabase(memoryStore);
+    await syncToSupabase(memoryStore, true);
   }
   return memoryStore.adminIps;
 }
@@ -282,7 +408,7 @@ export async function removeAdminIp(ip: string): Promise<string[]> {
   const clean = cleanIpString(ip);
   memoryStore.adminIps = memoryStore.adminIps.filter((a) => cleanIpString(a) !== clean);
   persistStoreLocally(memoryStore);
-  await syncToSupabase(memoryStore);
+  await syncToSupabase(memoryStore, true);
   return memoryStore.adminIps;
 }
 
@@ -338,6 +464,7 @@ export async function recordVisit(params: {
   if (isPathAdmin && !memoryStore.adminIps.some((a) => cleanIpString(a) === cleanIpString(ipInfo.ip))) {
     memoryStore.adminIps.push(cleanIpString(ipInfo.ip));
     persistStoreLocally(memoryStore);
+    syncToSupabase(memoryStore, true).catch(() => {});
   }
 
   // 차단 여부 검사
@@ -463,7 +590,7 @@ export async function blockIp(ip: string, reason: string): Promise<BlockedIpReco
     );
 
     persistStoreLocally(memoryStore);
-    await syncToSupabase(memoryStore);
+    await syncToSupabase(memoryStore, true);
   }
 
   return memoryStore.blockedIps;
@@ -483,7 +610,7 @@ export async function unblockIp(ip: string): Promise<BlockedIpRecord[]> {
   );
 
   persistStoreLocally(memoryStore);
-  await syncToSupabase(memoryStore);
+  await syncToSupabase(memoryStore, true);
 
   return memoryStore.blockedIps;
 }
@@ -500,7 +627,7 @@ export async function clearIpRecords(ip: string): Promise<{
   memoryStore.logs = memoryStore.logs.filter((l) => cleanIpString(l.ip) !== clean);
 
   persistStoreLocally(memoryStore);
-  await syncToSupabase(memoryStore);
+  await syncToSupabase(memoryStore, true);
 
   return {
     blockedIps: memoryStore.blockedIps,
@@ -515,18 +642,11 @@ export async function getRealVisitorAnalytics(headers?: Headers) {
   const clientIpInfo = headers ? resolveClientIp(headers) : { ip: "127.0.0.1" };
   const currentClientIp = cleanIpString(clientIpInfo.ip);
 
-  // 관리자 페이지에 접속하여 통계를 조회하는 현재 IP를 관리자 IP 목록에 자동 등재
-  if (currentClientIp && !memoryStore.adminIps.some((a) => cleanIpString(a) === currentClientIp)) {
-    memoryStore.adminIps.push(currentClientIp);
-    persistStoreLocally(memoryStore);
-    syncToSupabase(memoryStore).catch(() => {});
-  }
-
-  // ⚠️ 핵심 요구사항: 관리자 IP 및 관리자 세션 로그는 통계 집계에서 원천 배제
+  // ⚠️ 핵심 집계 기준: 관리자 콘솔(/admin) 페이지 접속 및 수동 등록된 관리자 IP는 통계에서 제외, 쇼핑몰 실방문 기록은 온전히 반영
   const eligibleLogs = memoryStore.logs.filter((log) => {
-    if (log.isAdmin) return false;
     if (log.landingPath && log.landingPath.startsWith("/admin")) return false;
     if (isAdminIp(log.ip)) return false;
+    if (log.isAdmin) return false;
     return true;
   });
 

@@ -174,6 +174,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
               lastSyncedJsonRef.current = "";
               if (typeof window !== "undefined") {
                 localStorage.setItem("admin_shipments", JSON.stringify([]));
+                localStorage.setItem("admin_orders", JSON.stringify([]));
               }
               setShipmentsList([]);
               return;
@@ -273,6 +274,13 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
     fetchServerShipments();
 
+    // 15초마다 백그라운드 자동 폴링 (관리자가 대시보드를 켜두고 있어도 신규 주문 실시간 자동 반영)
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchServerShipments();
+      }
+    }, 15000);
+
     // Re-sync when user returns to the tab (e.g. on mobile or switching back from other apps)
     const onWindowFocus = () => {
       fetchServerShipments();
@@ -286,6 +294,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
     return () => {
       isMounted = false;
+      clearInterval(pollInterval);
       window.removeEventListener("focus", onWindowFocus);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
@@ -321,9 +330,24 @@ export function useShipments(triggerToast: (msg: string) => void) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: currentJson,
-      }).catch((err) => {
-        console.warn("Failed to sync shipments to server:", err);
-      });
+      })
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.success && Array.isArray(json.data)) {
+            // 서버에서 스마트 병합된 최신 목록(그 사이 생성된 신규 주문 포함) 안전하게 반영
+            const serverMerged = sanitizeShipmentsList(json.data);
+            const serverSerialized = serializeShipmentsForSync(serverMerged);
+            if (serverSerialized && serverSerialized !== currentSerialized) {
+              isRemoteUpdateRef.current = true;
+              lastSyncedJsonRef.current = serverSerialized;
+              setShipmentsList(serverMerged);
+              localStorage.setItem("admin_shipments", JSON.stringify(serverMerged));
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn("Failed to sync shipments to server:", err);
+        });
     }, 800);
 
     return () => {
@@ -401,9 +425,11 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
     window.addEventListener("storage", onStorage);
     window.addEventListener("admin_orders_updated", onOrdersUpdate);
+    window.addEventListener("admin_shipments_updated", onOrdersUpdate);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("admin_orders_updated", onOrdersUpdate);
+      window.removeEventListener("admin_shipments_updated", onOrdersUpdate);
     };
   }, []);
 
@@ -569,12 +595,24 @@ export function useShipments(triggerToast: (msg: string) => void) {
   };
 
   // ── Add Shipment Submit ─────────────────────────────────────────────────────
-  const handleAddShipmentSubmit = () => {
+  const handleAddShipmentSubmit = async () => {
     if (!newShipmentRecipient || !newShipmentAddress) {
       alert("수령인, 배송지는 필수 항목입니다.");
       return;
     }
-    const finalOrderId = newShipmentOrderId.trim() || generateNextOrderId(shipmentsList);
+    let finalOrderId = newShipmentOrderId.trim();
+    if (!finalOrderId) {
+      try {
+        const res = await fetch("/api/orders/next-id", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.nextOrderId) finalOrderId = json.nextOrderId;
+        }
+      } catch {}
+      if (!finalOrderId) {
+        finalOrderId = generateNextOrderId(shipmentsList);
+      }
+    }
     const newShipment = {
       id: finalOrderId,
       orderId: finalOrderId,

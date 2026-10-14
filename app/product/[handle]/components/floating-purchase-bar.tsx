@@ -11,6 +11,7 @@ import { ShoppingBag, Zap, ChevronUp, Check, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
+import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 
 interface FloatingPurchaseBarProps {
   product: Product;
@@ -474,6 +475,22 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
     if (typeof window !== "undefined") {
       sessionStorage.setItem("choicomma_direct_order", JSON.stringify(directItem));
     }
+
+    try {
+      trackCustomerJourney({
+        eventType: "BEGIN_CHECKOUT",
+        eventLabel: `하단바 바로구매 주문서 진입 (${cleanProductTitle(product.title)})`,
+        metadata: {
+          productId: product.id,
+          handle: product.handle,
+          title: product.title,
+          variantTitle,
+          quantity,
+          totalAmount: totalSaleBasePrice,
+          isDirectBuy: true,
+        },
+      });
+    } catch (e) {}
 
     router.push("/checkout");
   };

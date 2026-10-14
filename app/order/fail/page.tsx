@@ -5,31 +5,73 @@ import { useSearchParams } from "next/navigation";
 import { XCircle, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { restoreCouponByOrder } from "@/lib/membership/coupons";
+import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 
 function OrderFailParamsHandler({ onParamsLoaded }: { onParamsLoaded: (p: { code: string | null; message: string | null; orderId: string | null }) => void }) {
   const searchParams = useSearchParams();
+  const restoredOrderIdRef = useState<string | null>(null)[0];
+  const hasRestoredRef = useState<{ current: boolean }>({ current: false })[0];
+  const hasTrackedFailRef = useState<{ current: boolean }>({ current: false })[0];
+
   useEffect(() => {
     const code = searchParams.get("code");
     const message = searchParams.get("message");
     const orderId = searchParams.get("orderId");
 
-    // 결제 실패/취소 리다이렉트 시 보류 주문에서 차감되었던 적립금 및 쿠폰 자동 원복
-    if (orderId && typeof window !== "undefined") {
+    // 결제 실패/취소 리다이렉트 시 보류 주문에서 차감되었던 적립금 및 쿠폰 자동 원복 (3중 복원 체계, 1회 한정 실행)
+    if (orderId && typeof window !== "undefined" && !hasRestoredRef.current) {
+      hasRestoredRef.current = true;
+      const applyRestoration = (pending: any) => {
+        if (!pending) return;
+        if (pending?.appliedPoints > 0) {
+          const currentPoints = parseInt(localStorage.getItem("membership_user_points") || "0", 10);
+          const restoredPoints = currentPoints + Number(pending.appliedPoints);
+          localStorage.setItem("membership_user_points", String(restoredPoints));
+          window.dispatchEvent(new CustomEvent("membership_points_updated"));
+        }
+        if (pending?.selectedCouponId) {
+          restoreCouponByOrder(orderId, pending.selectedCouponId);
+        }
+      };
+
       try {
-        const rawPending = sessionStorage.getItem(`pending_order_${orderId}`);
+        const rawPending =
+          sessionStorage.getItem(`pending_order_${orderId}`) ||
+          localStorage.getItem(`pending_order_${orderId}`);
+
         if (rawPending) {
           const pending = JSON.parse(rawPending);
-          if (pending?.appliedPoints > 0) {
-            const currentPoints = parseInt(localStorage.getItem("membership_user_points") || "0", 10);
-            const restoredPoints = currentPoints + Number(pending.appliedPoints);
-            localStorage.setItem("membership_user_points", String(restoredPoints));
-            window.dispatchEvent(new CustomEvent("membership_points_updated"));
-          }
-          if (pending?.selectedCouponId) {
-            restoreCouponByOrder(orderId, pending.selectedCouponId);
-          }
+          applyRestoration(pending);
           sessionStorage.removeItem(`pending_order_${orderId}`);
+          localStorage.removeItem(`pending_order_${orderId}`);
+          fetch(`/api/orders/pending?orderId=${encodeURIComponent(orderId)}`, { method: "DELETE" }).catch(() => {});
+        } else {
+          // 세션 및 로컬 스토리지가 모두 비어있는 경우(새 브라우저 탭/웹뷰 격리) 서버 보류 원장에서 조회 후 원복
+          fetch(`/api/orders/pending?orderId=${encodeURIComponent(orderId)}`)
+            .then((res) => res.json())
+            .then((json) => {
+              if (json?.data) {
+                applyRestoration(json.data);
+                fetch(`/api/orders/pending?orderId=${encodeURIComponent(orderId)}`, { method: "DELETE" }).catch(() => {});
+              }
+            })
+            .catch(() => {});
         }
+      } catch (e) {}
+    }
+
+    if (!hasTrackedFailRef.current) {
+      hasTrackedFailRef.current = true;
+      try {
+        trackCustomerJourney({
+          eventType: "PURCHASE_FAIL",
+          eventLabel: `결제 실패/취소 (${orderId || "주문 미완료"})`,
+          metadata: {
+            orderId: orderId || null,
+            errorCode: code || null,
+            errorMessage: message || null,
+          },
+        });
       } catch (e) {}
     }
 

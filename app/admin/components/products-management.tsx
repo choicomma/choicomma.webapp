@@ -103,7 +103,7 @@ interface ProductsManagementProps {
   handleQuickUpdateCategory?: (id: string, newCategory: string) => void;
   handleQuickUpdatePrice?: (id: string, newPrice: number | string) => boolean | void;
   handleQuickUpdateStock?: (id: string, newTotalStock: number, newSizeStock?: Record<string, number>) => boolean | void;
-  handleQuickUpdateReleaseSchedule?: (id: string, availableForSale: boolean, releaseDate?: string) => void;
+  handleQuickUpdateReleaseSchedule?: (id: string, availableForSale: boolean, releaseDate?: string, replenishStock?: boolean) => void;
   handleQuickUpdateTimeSale?: (
     id: string,
     isTimeSale: boolean,
@@ -371,21 +371,25 @@ function TimeSettingPopover({
   onClose,
 }: {
   product: any;
-  onSaveSchedule: (availableForSale: boolean, releaseDate?: string) => void;
+  onSaveSchedule: (availableForSale: boolean, releaseDate?: string, replenishStock?: boolean) => void;
   onClose: () => void;
 }) {
+  const stockCount = Number(product.stock || 0);
   const [available, setAvailable] = useState<boolean>(product.availableForSale !== false);
   const [isScheduled, setIsScheduled] = useState<boolean>(Boolean(product.releaseDate));
   const [releaseDate, setReleaseDate] = useState<string>(() => formatForDateTimeLocal(product.releaseDate));
+  const [autoReplenishStock, setAutoReplenishStock] = useState<boolean>(stockCount <= 0);
 
   useEffect(() => {
     setAvailable(product.availableForSale !== false);
     setIsScheduled(Boolean(product.releaseDate));
     setReleaseDate(formatForDateTimeLocal(product.releaseDate));
-  }, [product?.id, product?.availableForSale, product?.releaseDate]);
+    setAutoReplenishStock(Number(product.stock || 0) <= 0);
+  }, [product?.id, product?.availableForSale, product?.releaseDate, product?.stock]);
 
   const handleApplyPreset = (preset: "tomorrow10" | "today18" | "day3_10" | "day7_10") => {
     setIsScheduled(true);
+    setAvailable(true);
     const d = new Date();
     if (preset === "tomorrow10") {
       d.setDate(d.getDate() + 1);
@@ -412,7 +416,9 @@ function TimeSettingPopover({
 
   const handleSave = () => {
     const finalDate = isScheduled && releaseDate && releaseDate.trim() ? releaseDate.trim() : undefined;
-    onSaveSchedule(available, finalDate);
+    const finalAvailable = isScheduled ? true : available;
+    const shouldReplenish = finalAvailable && stockCount <= 0 && autoReplenishStock;
+    onSaveSchedule(finalAvailable, finalDate, shouldReplenish);
     onClose();
   };
 
@@ -425,7 +431,7 @@ function TimeSettingPopover({
         e.preventDefault();
         e.stopPropagation();
       }}
-      className="absolute top-full right-0 mt-2 z-50 bg-white border border-neutral-300 rounded-2xl shadow-2xl p-4 w-88 text-left animate-in fade-in zoom-in-95 duration-150 select-text cursor-default"
+      className="absolute top-full right-0 mt-2 z-50 bg-white border border-neutral-300 rounded-2xl shadow-2xl p-4 w-92 text-left animate-in fade-in zoom-in-95 duration-150 select-text cursor-default"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
@@ -469,7 +475,10 @@ function TimeSettingPopover({
             </button>
             <button
               type="button"
-              onClick={() => setAvailable(false)}
+              onClick={() => {
+                setAvailable(false);
+                setIsScheduled(false);
+              }}
               className={`py-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
                 !available
                   ? "bg-neutral-900 text-white border-neutral-900 shadow-xs"
@@ -480,6 +489,35 @@ function TimeSettingPopover({
               <span>OFF (구매 불가)</span>
             </button>
           </div>
+
+          {/* Zero-Stock Notice & Auto-Replenish Helper */}
+          {stockCount <= 0 && (
+            <div className={`p-2.5 rounded-lg border text-[11px] leading-tight space-y-1.5 ${available ? "bg-amber-50/80 border-amber-200 text-amber-950" : "bg-neutral-100/80 border-neutral-200 text-neutral-600"}`}>
+              <div className="flex items-center gap-1 font-black text-amber-900">
+                <span>⚠️ 현재 재고가 0개(품절)입니다.</span>
+              </div>
+              <p className="text-[10px] text-neutral-600">
+                재고가 0개이면 쇼핑몰 화면에서 여전히 <strong>[품절]</strong>로 표시됩니다.
+              </p>
+              {available && (
+                <label className="flex items-start gap-1.5 cursor-pointer font-extrabold text-neutral-950 pt-1 select-none">
+                  <input
+                    type="checkbox"
+                    checked={autoReplenishStock}
+                    onChange={(e) => setAutoReplenishStock(e.target.checked)}
+                    className="w-3.5 h-3.5 mt-0.5 rounded border-neutral-300 accent-blue-600 cursor-pointer"
+                  />
+                  <span>기본 재고 10개 자동 충전 (쇼핑몰에 즉시 구매 가능으로 노출)</span>
+                </label>
+              )}
+            </div>
+          )}
+
+          {stockCount > 0 && (
+            <div className="text-[10px] text-neutral-500 font-bold px-0.5">
+              현재 재고: <span className="text-neutral-900 font-extrabold">{stockCount}개</span> (구매 가능 시 즉시 주문 가능)
+            </div>
+          )}
         </div>
 
         {/* Section 2: Scheduled Release */}
@@ -491,8 +529,11 @@ function TimeSettingPopover({
               onChange={(e) => {
                 const checked = e.target.checked;
                 setIsScheduled(checked);
-                if (checked && !releaseDate) {
-                  handleApplyPreset("tomorrow10");
+                if (checked) {
+                  setAvailable(true);
+                  if (!releaseDate) {
+                    handleApplyPreset("tomorrow10");
+                  }
                 }
               }}
               className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-950 accent-neutral-950 cursor-pointer"
@@ -2227,9 +2268,9 @@ export function ProductsManagement({
                           {activeTimePopoverId === String(p.id) && (
                             <TimeSettingPopover
                               product={p}
-                              onSaveSchedule={(avail, date) => {
+                              onSaveSchedule={(avail, date, replenish) => {
                                 if (handleQuickUpdateReleaseSchedule) {
-                                  handleQuickUpdateReleaseSchedule(String(p.id), avail, date);
+                                  handleQuickUpdateReleaseSchedule(String(p.id), avail, date, replenish);
                                 } else if (toggleProductPurchasable) {
                                   toggleProductPurchasable(String(p.id));
                                 }

@@ -205,12 +205,25 @@ export function useProducts({
   const [productsList, setProductsList] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       try {
+        removeDeletedProductIdsFromStorage(["excel-product-468", "CC-468", "product-468", "excel-product-463", "CC-463", "product-463"]);
         const deletedSet = getDeletedProductIdsFromStorage();
+        deletedSet.delete("excel-product-468");
+        deletedSet.delete("CC-468");
+        deletedSet.delete("product-468");
+        deletedSet.delete("excel-product-463");
+        deletedSet.delete("CC-463");
+        deletedSet.delete("product-463");
+
         const saved = localStorage.getItem("admin_products");
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            return filterOutDeletedProducts(parsed, deletedSet);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const savedIdSet = new Set(parsed.map((p: any) => String(p?.id || "")));
+            const missingFromSaved = INITIAL_CHOICOMMA_PRODUCTS.filter(
+              (p: any) => !savedIdSet.has(String(p?.id || "")) && !deletedSet.has(String(p?.id || ""))
+            );
+            const combined = missingFromSaved.length > 0 ? [...missingFromSaved, ...parsed] : parsed;
+            return filterOutDeletedProducts(combined, deletedSet);
           }
         }
         return filterOutDeletedProducts(INITIAL_CHOICOMMA_PRODUCTS, deletedSet);
@@ -267,6 +280,7 @@ export function useProducts({
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
+      removeDeletedProductIdsFromStorage(["excel-product-468", "CC-468", "product-468", "excel-product-463", "CC-463", "product-463"]);
       const hasCleaned = localStorage.getItem("choicomma_legacy_cleaned_v2");
       if (!hasCleaned) {
         localStorage.removeItem("admin_deleted_shipment_ids");
@@ -352,8 +366,12 @@ export function useProducts({
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed) && parsed.length > 0) {
               hasLocalData = true;
-              localParsedList = parsed;
-              const filtered = filterOutDeletedProducts(parsed, deletedSet);
+              const savedIdSet = new Set(parsed.map((p: any) => String(p?.id || "")));
+              const missingFromSaved = INITIAL_CHOICOMMA_PRODUCTS.filter(
+                (p: any) => !savedIdSet.has(String(p?.id || "")) && !deletedSet.has(String(p?.id || ""))
+              );
+              localParsedList = missingFromSaved.length > 0 ? [...missingFromSaved, ...parsed] : parsed;
+              const filtered = filterOutDeletedProducts(localParsedList, deletedSet);
               if (isMounted) {
                 setProductsList(filtered);
                 isProductsLoadedRef.current = true;
@@ -428,11 +446,23 @@ export function useProducts({
                 return lp;
               });
 
-              // Also preserve any new items that exist on server but not in local storage
-              sanitized.forEach((sp: any) => {
+              // Also preserve any new items that exist on server but not in local storage at the FRONT
+              const newServerItems = sanitized.filter((sp: any) => {
                 const spId = String(sp?.id || "");
-                if (spId && !localMap.has(spId)) {
-                  merged.push(sp);
+                return spId && !localMap.has(spId);
+              });
+              if (newServerItems.length > 0) {
+                merged.unshift(...newServerItems);
+                hasAnyUpdate = true;
+              }
+
+              // Ensure newly registered products (CC-468, CC-463) are displayed at the very top of the list
+              const priorityCodes = ["CC-463", "CC-468"];
+              priorityCodes.forEach((code) => {
+                const idx = merged.findIndex((p: any) => p?.productCode === code || String(p?.id).includes(code.replace("CC-", "")));
+                if (idx > 0) {
+                  const [item] = merged.splice(idx, 1);
+                  merged.unshift(item);
                   hasAnyUpdate = true;
                 }
               });
@@ -1466,19 +1496,47 @@ export function useProducts({
   }, [setProductSortOrder, triggerToast]);
 
   const handleQuickUpdateReleaseSchedule = useCallback(
-    async (id: string, availableForSale: boolean, releaseDate?: string) => {
+    async (
+      id: string,
+      availableForSale: boolean,
+      releaseDate?: string,
+      replenishStockIfZero: boolean = true
+    ) => {
       const targetProduct = productsList.find((p) => String(p.id) === String(id));
       if (!targetProduct) return;
+
+      const currentStock = Number(targetProduct.stock || 0);
+      const shouldReplenish = availableForSale && currentStock <= 0 && replenishStockIfZero;
+      const newTotalStock = shouldReplenish ? 10 : currentStock;
 
       let updatedTarget: any = null;
       const updatedList = productsList.map((p) => {
         if (String(p.id) === String(id)) {
+          let updatedSizeStock = p.sizeStock;
+          if (shouldReplenish) {
+            updatedSizeStock = {};
+            const sizes = Array.isArray(p.sizes) && p.sizes.length > 0 ? p.sizes : ["FREE"];
+            const colors = Array.isArray(p.colors) && p.colors.length > 0 ? p.colors : ["DEFAULT"];
+            for (const c of colors) {
+              for (const s of sizes) {
+                updatedSizeStock[`${c}-${s}`] = 10;
+              }
+            }
+          }
+
           const updatedItem: any = {
             ...p,
             availableForSale,
+            stock: newTotalStock,
+            sizeStock: updatedSizeStock,
+            stockMap: updatedSizeStock,
             updated_at: new Date().toISOString(),
             variants: Array.isArray(p.variants)
-              ? p.variants.map((v: any) => ({ ...v, availableForSale }))
+              ? p.variants.map((v: any) => ({
+                  ...v,
+                  availableForSale,
+                  inventoryQuantity: shouldReplenish ? 10 : v.inventoryQuantity ?? newTotalStock,
+                }))
               : p.variants,
           };
           if (releaseDate && releaseDate.trim()) {
@@ -1496,8 +1554,6 @@ export function useProducts({
       setProductsList(updatedList);
 
       // 2. Synchronously persist to localStorage for instant reload resilience
-      // (변경 이벤트는 서버 저장이 끝난 뒤 saveSingleProduct가 한 번만 발생시킨다 -
-      //  저장 전에 보내면 쇼핑몰이 아직 갱신되지 않은 서버 데이터를 받아 이전 상태로 되돌아가 보인다)
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem("admin_products", JSON.stringify(updatedList));
@@ -1521,7 +1577,11 @@ export function useProducts({
       } else if (!availableForSale) {
         triggerToast(`🚫 '${targetProduct.title}' 상품이 [구매 불가(OFF)]로 설정되었습니다.`);
       } else {
-        triggerToast(`✓ '${targetProduct.title}' 상품이 [구매 가능(ON / 상시판매)]으로 설정되었습니다.`);
+        triggerToast(
+          shouldReplenish
+            ? `✓ '${targetProduct.title}' 상품이 [구매 가능(ON / 재고 10개)]으로 변경되어 홈 화면에 즉시 반영되었습니다.`
+            : `✓ '${targetProduct.title}' 상품이 [구매 가능(ON / 상시판매)]으로 설정되었습니다.`
+        );
       }
     },
     [productsList, saveProductsToStorage, saveSingleProduct, triggerToast]
@@ -1636,13 +1696,13 @@ export function useProducts({
           } else {
             newTags = newTags.filter((t: string) => t !== "TIMESALE");
           }
-          const rateNum = parseInt(adminTimeSaleDiscount) || 35;
+          const rateNum = p.timeSaleDiscountRate || parseInt(adminTimeSaleDiscount) || 35;
           updatedTarget = {
             ...p,
             categoryId: newCategory,
             categoryIds: [newCategory],
             isTimeSale: newCategory === "timesale",
-            timeSaleDiscountRate: newCategory === "timesale" ? rateNum : p.timeSaleDiscountRate,
+            timeSaleDiscountRate: newCategory === "timesale" ? (p.timeSaleDiscountRate || rateNum) : p.timeSaleDiscountRate,
             tags: newTags,
             updated_at: new Date().toISOString(),
           };
@@ -1674,7 +1734,7 @@ export function useProducts({
         }
         const h = parseInt(adminTimeSaleHours) || 24;
         const m = parseInt(adminTimeSaleMinutes) || 0;
-        const rateNum = parseInt(adminTimeSaleDiscount) || 35;
+        const rateNum = targetProd.timeSaleDiscountRate || parseInt(adminTimeSaleDiscount) || 35;
         handleUpdateProductTimeSetting?.(pIdStr, h, m, undefined, rateNum);
       } else {
         const filteredIds = currentIds.filter((pId) => pId !== pIdStr);

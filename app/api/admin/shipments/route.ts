@@ -2,6 +2,40 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { initialShipments } from "@/lib/sfcc/mock/shipments-data";
+import { runSafeSupabaseQuery } from "@/lib/supabase/server";
+import { logAdminActivity } from "@/lib/logging/audit-logger";
+
+function normalizeShipmentForSupabase(s: any) {
+  let itemsStr = "";
+  if (typeof s.items === "string") {
+    itemsStr = s.items;
+  } else if (Array.isArray(s.items)) {
+    itemsStr = s.items.map((i: any) => `${i.name || i.title || "상품"} (${i.quantity || 1}개)`).join(", ");
+  }
+
+  return {
+    id: String(s.id || s.orderId),
+    orderId: String(s.orderId || s.id),
+    recipient: String(s.recipient || s.ordererName || s.customerName || "고객님"),
+    phone: String(s.phone || s.customerPhone || "-"),
+    altPhone: String(s.altPhone || s.alt_phone || ""),
+    zipCode: String(s.zipCode || s.zip_code || s.shippingAddress?.zipCode || ""),
+    address: String(s.address || s.shippingAddress?.address || "-"),
+    detailAddress: String(s.detailAddress || s.detail_address || s.shippingAddress?.detailAddress || ""),
+    items: itemsStr || "-",
+    quantity: Number(s.quantity || 1),
+    carrier: String(s.carrier || "CJ대한통운"),
+    trackingNumber: String(s.trackingNumber || s.tracking_number || "-"),
+    status: String(s.status || "Pending"),
+    shippingMemo: String(s.shippingMemo || s.shipping_memo || ""),
+    orderDate: s.orderDate || s.order_date || s.created_at || new Date().toISOString(),
+    shippedDate: s.shippedDate || s.shipped_date || null,
+    estimatedDelivery: s.estimatedDelivery || s.estimated_delivery || null,
+    packages: Array.isArray(s.packages) ? s.packages : [],
+    created_at: s.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
 
 // Fallback in-memory cache for fast response
 const globalForShipments = global as unknown as { serverShipmentsCache?: any[] };
@@ -230,8 +264,8 @@ export async function GET(req: NextRequest) {
 
   try {
     // 1. Primary Source of Truth: Git JSON file (data/shipments.json)
-    const diskData = readShipmentsDisk();
-    if (Array.isArray(diskData) && diskData.length > 0) {
+    if (fs.existsSync(getShipmentsFilePath())) {
+      const diskData = readShipmentsDisk();
       const sorted = sortShipmentsByNumber(diskData.map(hydrateShipmentMergeData));
       globalForShipments.serverShipmentsCache = sorted;
       return formatResponse(sorted);
@@ -243,7 +277,21 @@ export async function GET(req: NextRequest) {
       return formatResponse(sorted);
     }
 
-    // 3. Fallback: Initial shipments
+    // 3. Supabase 자가 치유 폴백 (로컬 파일 유실 시 복원)
+    try {
+      const { data, error } = await runSafeSupabaseQuery<any[]>(
+        async (supabase) => supabase.from("shipments").select("*"),
+        1500
+      );
+      if (!error && Array.isArray(data) && data.length > 0) {
+        writeShipmentsDisk(data);
+        const sorted = sortShipmentsByNumber(data.map(hydrateShipmentMergeData));
+        globalForShipments.serverShipmentsCache = sorted;
+        return formatResponse(sorted);
+      }
+    } catch {}
+
+    // 4. Fallback: Initial shipments
     const sorted = sortShipmentsByNumber(initialShipments || []);
     globalForShipments.serverShipmentsCache = sorted;
     return formatResponse(sorted);
@@ -257,7 +305,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: 배송 데이터 저장 (data/shipments.json에 원자적 저장)
+// POST: 배송 데이터 저장 (스마트 비파괴 병합 & 원자적 영속화)
 export async function POST(req: NextRequest) {
   try {
     const payload = await req.json();
@@ -270,7 +318,67 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const sorted = sortShipmentsByNumber(shipments);
+    // 1. 현재 서버 디스크 상의 최신 배송 데이터 읽기 (orders.json 크로스체크 자동 포함)
+    const diskShipments = readShipmentsDisk();
+
+    // 2. 클라이언트 전달 수정본 Map 생성 (id 및 orderId 키 매핑)
+    const incomingMap = new Map<string, any>();
+    for (const item of shipments) {
+      if (!item) continue;
+      const key = String(item.id || item.orderId || "").trim();
+      if (key) {
+        incomingMap.set(key, item);
+      }
+    }
+
+    // 3. 스마트 비파괴 병합:
+    //  - 디스크 주문 중 클라이언트 수정본이 있으면 최신 필드로 업데이트
+    //  - 디스크 주문 중 클라이언트 목록에 없는 건(새로 체결된 주문)은 절대 삭제하지 않고 보존!
+    const mergedList: any[] = [];
+    const processedKeys = new Set<string>();
+
+    const modifiedAudits: any[] = [];
+    for (const diskItem of diskShipments) {
+      const diskKey = String(diskItem.id || diskItem.orderId || "").trim();
+      if (incomingMap.has(diskKey)) {
+        const incomingItem = incomingMap.get(diskKey);
+        const statusChanged = incomingItem.status && incomingItem.status !== diskItem.status;
+        const trackingChanged = incomingItem.trackingNumber && incomingItem.trackingNumber !== diskItem.trackingNumber && incomingItem.trackingNumber !== "-";
+        if (statusChanged || trackingChanged) {
+          modifiedAudits.push({
+            orderId: diskItem.orderId || diskItem.id,
+            recipient: diskItem.recipient || "고객",
+            statusChanged,
+            trackingChanged,
+            prevStatus: diskItem.status,
+            newStatus: incomingItem.status || diskItem.status,
+            prevTracking: diskItem.trackingNumber,
+            newTracking: incomingItem.trackingNumber || diskItem.trackingNumber,
+            carrier: incomingItem.carrier || diskItem.carrier || "CJ대한통운",
+          });
+        }
+        mergedList.push({
+          ...diskItem,
+          ...incomingItem,
+          created_at: diskItem.created_at || incomingItem.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+        processedKeys.add(diskKey);
+      } else {
+        // 클라이언트 목록에 없었던 디스크 항목은 신규 주문이므로 안전하게 보존!
+        mergedList.push(diskItem);
+      }
+    }
+
+    // 4. 클라이언트에서 수동 추가한 신규 항목(아직 디스크에 없었던 건)도 추가
+    for (const [key, item] of incomingMap.entries()) {
+      if (!processedKeys.has(key)) {
+        mergedList.unshift(item);
+      }
+    }
+
+    // 5. 번호순 내림차순 정렬 및 합배송 상태 하이드레이션
+    const sorted = sortShipmentsByNumber(mergedList.map(hydrateShipmentMergeData));
 
     // If cache serialized is identical, skip write
     if (globalForShipments.serverShipmentsCache && Array.isArray(globalForShipments.serverShipmentsCache)) {
@@ -284,10 +392,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 1. Git JSON 파일 원자적 영속화
+    // 6. Git JSON 파일 원자적 영속화
     writeShipmentsDisk(sorted);
 
-    // 2. In-memory cache 업데이트
+    // 6-1. Supabase 비동기 듀얼 라이트
+    const supabasePayload = sorted.map(normalizeShipmentForSupabase);
+    runSafeSupabaseQuery(
+      async (supabase) => supabase.from("shipments").upsert(supabasePayload, { onConflict: "id" }),
+      2500
+    ).catch((e) => console.warn("[Supabase Shipments Dual-Write Warning]:", e));
+
+    // 6-2. 관리자 배송/송장 작업 감사 로그 기록
+    for (const m of modifiedAudits.slice(0, 10)) {
+      logAdminActivity({
+        adminId: "admin_master",
+        adminName: "배송/물류 관리자",
+        actionType: "STATUS_CHANGE",
+        domain: "SHIPMENT",
+        targetId: m.orderId,
+        targetName: `${m.recipient}님 주문 (${m.orderId})`,
+        description: m.trackingChanged
+          ? `운송장번호 [${m.newTracking}] 등록 (${m.carrier}) 및 배송 상태 변경 (${m.prevStatus} → ${m.newStatus})`
+          : `배송 상태 변경 (${m.prevStatus} → ${m.newStatus})`,
+        beforeData: { status: m.prevStatus, trackingNumber: m.prevTracking },
+        afterData: { status: m.newStatus, trackingNumber: m.newTracking, carrier: m.carrier },
+      }).catch(() => {});
+    }
+
+    // 7. In-memory cache 업데이트
     globalForShipments.serverShipmentsCache = sorted;
 
     return NextResponse.json(
@@ -307,7 +439,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// DELETE: 배송 목록에서 삭제 (data/shipments.json 반영)
+// DELETE: 배송 목록에서 삭제 (data/shipments.json 및 data/orders.json 반영)
 export async function DELETE(req: NextRequest) {
   try {
     const body = await req.json();
@@ -323,10 +455,30 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: "삭제할 주문 ID가 없습니다." }, { status: 400 });
     }
 
-    // 1. 디스크 데이터 읽기 & 필터링
+    // 1. 디스크 배송 데이터 읽기 & 필터링
     const current = readShipmentsDisk();
     const filtered = current.filter((s: any) => !ids.includes(s.id) && !ids.includes(s.orderId));
     writeShipmentsDisk(filtered);
+
+    // 1-1. data/orders.json에서도 함께 삭제하여 재유입 방지
+    try {
+      const ordersPath = getOrdersFilePath();
+      const currentOrders = readOrdersDisk();
+      const filteredOrders = currentOrders.filter((o: any) => !ids.includes(o.id) && !ids.includes(o.orderNumber));
+      if (filteredOrders.length !== currentOrders.length) {
+        fs.writeFileSync(ordersPath, JSON.stringify(filteredOrders, null, 2), "utf-8");
+      }
+    } catch (err) {}
+
+    // 1-2. Supabase 비동기 듀얼 삭제 (shipments 및 orders 테이블 동시 삭제)
+    runSafeSupabaseQuery(
+      async (supabase) => {
+        const { error: err1 } = await supabase.from("shipments").delete().in("id", ids);
+        const { error: err2 } = await supabase.from("orders").delete().in("id", ids);
+        return { data: null, error: err1 || err2 };
+      },
+      2500
+    ).catch((e) => console.warn("[Supabase Shipments Dual-Delete Warning]:", e));
 
     // 2. In-memory 캐시 업데이트
     if (globalForShipments.serverShipmentsCache && Array.isArray(globalForShipments.serverShipmentsCache)) {

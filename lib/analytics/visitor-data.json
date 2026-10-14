@@ -1,6 +1,1166 @@
 {
   "logs": [
     {
+      "id": "LOG-1791955048970-566",
+      "timestamp": "2026-10-14 14:17:28",
+      "isoDate": "2026-10-14T05:17:28.970Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1790844603819_61bcav7",
+      "sessionId": "s_1791955039261_7uap5",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791955043539-167",
+      "timestamp": "2026-10-14 14:17:23",
+      "isoDate": "2026-10-14T05:17:23.539Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1790844603819_61bcav7",
+      "sessionId": "s_1791955039261_7uap5",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791900479928-978",
+      "timestamp": "2026-10-13 23:07:59",
+      "isoDate": "2026-10-13T14:07:59.928Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791900472647_ui7og",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791900476490-196",
+      "timestamp": "2026-10-13 23:07:56",
+      "isoDate": "2026-10-13T14:07:56.490Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791900472647_ui7og",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791895704027-50",
+      "timestamp": "2026-10-13 21:48:24",
+      "isoDate": "2026-10-13T12:48:24.027Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=coupons",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791892994844-137",
+      "timestamp": "2026-10-13 21:03:14",
+      "isoDate": "2026-10-13T12:03:14.844Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=activity_logs",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791892986399-795",
+      "timestamp": "2026-10-13 21:03:06",
+      "isoDate": "2026-10-13T12:03:06.399Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=activity_logs",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791892638942-216",
+      "timestamp": "2026-10-13 20:57:18",
+      "isoDate": "2026-10-13T11:57:18.942Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=activity_logs",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791892628200-705",
+      "timestamp": "2026-10-13 20:57:08",
+      "isoDate": "2026-10-13T11:57:08.200Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=activity_logs",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791880836096-261",
+      "timestamp": "2026-10-13 17:40:36",
+      "isoDate": "2026-10-13T08:40:36.096Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=visitors",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791880823479-662",
+      "timestamp": "2026-10-13 17:40:23",
+      "isoDate": "2026-10-13T08:40:23.479Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=visitors",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791876941733-310",
+      "timestamp": "2026-10-13 16:35:41",
+      "isoDate": "2026-10-13T07:35:41.733Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=visitors",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791875173580-965",
+      "timestamp": "2026-10-13 16:06:13",
+      "isoDate": "2026-10-13T07:06:13.580Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=sales",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791874865732-294",
+      "timestamp": "2026-10-13 16:01:05",
+      "isoDate": "2026-10-13T07:01:05.732Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791874859630-363",
+      "timestamp": "2026-10-13 16:00:59",
+      "isoDate": "2026-10-13T07:00:59.630Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1791874856671_1sqx8",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791811194459-350",
+      "timestamp": "2026-10-12 22:19:54",
+      "isoDate": "2026-10-12T13:19:54.459Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791811146912_49h8p",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791811181222-908",
+      "timestamp": "2026-10-12 22:19:41",
+      "isoDate": "2026-10-12T13:19:41.222Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791811146912_49h8p",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791811167892-730",
+      "timestamp": "2026-10-12 22:19:27",
+      "isoDate": "2026-10-12T13:19:27.892Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/product/product-463",
+      "landingTitle": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791811146912_49h8p",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791811149679-767",
+      "timestamp": "2026-10-12 22:19:09",
+      "isoDate": "2026-10-12T13:19:09.679Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791811146912_49h8p",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791810475033-705",
+      "timestamp": "2026-10-12 22:07:55",
+      "isoDate": "2026-10-12T13:07:55.033Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791810350034-247",
+      "timestamp": "2026-10-12 22:05:50",
+      "isoDate": "2026-10-12T13:05:50.034Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791810346577-614",
+      "timestamp": "2026-10-12 22:05:46",
+      "isoDate": "2026-10-12T13:05:46.577Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791810344901-504",
+      "timestamp": "2026-10-12 22:05:44",
+      "isoDate": "2026-10-12T13:05:44.901Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791810213316-495",
+      "timestamp": "2026-10-12 22:03:33",
+      "isoDate": "2026-10-12T13:03:33.316Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=popup",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791810206621-159",
+      "timestamp": "2026-10-12 22:03:26",
+      "isoDate": "2026-10-12T13:03:26.621Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=popup",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791810202382-166",
+      "timestamp": "2026-10-12 22:03:22",
+      "isoDate": "2026-10-12T13:03:22.382Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=popup",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791810196379-531",
+      "timestamp": "2026-10-12 22:03:16",
+      "isoDate": "2026-10-12T13:03:16.379Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=popup",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791810179284-773",
+      "timestamp": "2026-10-12 22:02:59",
+      "isoDate": "2026-10-12T13:02:59.284Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=popup",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791809308526-986",
+      "timestamp": "2026-10-12 21:48:28",
+      "isoDate": "2026-10-12T12:48:28.526Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=popup",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791809301142-384",
+      "timestamp": "2026-10-12 21:48:21",
+      "isoDate": "2026-10-12T12:48:21.142Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=popup",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791808915058-617",
+      "timestamp": "2026-10-12 21:41:55",
+      "isoDate": "2026-10-12T12:41:55.058Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=popup",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791808909377-861",
+      "timestamp": "2026-10-12 21:41:49",
+      "isoDate": "2026-10-12T12:41:49.377Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=popup",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791808774293-693",
+      "timestamp": "2026-10-12 21:39:34",
+      "isoDate": "2026-10-12T12:39:34.293Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791808754242-837",
+      "timestamp": "2026-10-12 21:39:14",
+      "isoDate": "2026-10-12T12:39:14.242Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791807858520-327",
+      "timestamp": "2026-10-12 21:24:18",
+      "isoDate": "2026-10-12T12:24:18.520Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/product/product-463",
+      "landingTitle": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791807850561-705",
+      "timestamp": "2026-10-12 21:24:10",
+      "isoDate": "2026-10-12T12:24:10.561Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791807848127-486",
+      "timestamp": "2026-10-12 21:24:08",
+      "isoDate": "2026-10-12T12:24:08.127Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791804765330-825",
+      "timestamp": "2026-10-12 20:32:45",
+      "isoDate": "2026-10-12T11:32:45.330Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=products",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791804547478-733",
+      "timestamp": "2026-10-12 20:29:07",
+      "isoDate": "2026-10-12T11:29:07.478Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=products",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791804490334-308",
+      "timestamp": "2026-10-12 20:28:10",
+      "isoDate": "2026-10-12T11:28:10.334Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=products",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791804316195-117",
+      "timestamp": "2026-10-12 20:25:16",
+      "isoDate": "2026-10-12T11:25:16.195Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=products",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791803619902-347",
+      "timestamp": "2026-10-12 20:13:39",
+      "isoDate": "2026-10-12T11:13:39.902Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791803606755-735",
+      "timestamp": "2026-10-12 20:13:26",
+      "isoDate": "2026-10-12T11:13:26.755Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791803592690-525",
+      "timestamp": "2026-10-12 20:13:12",
+      "isoDate": "2026-10-12T11:13:12.690Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/product/product-468",
+      "landingTitle": "/product/product-468",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791803590671-865",
+      "timestamp": "2026-10-12 20:13:10",
+      "isoDate": "2026-10-12T11:13:10.671Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791803577465-594",
+      "timestamp": "2026-10-12 20:12:57",
+      "isoDate": "2026-10-12T11:12:57.465Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/product/product-463",
+      "landingTitle": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791803540731-717",
+      "timestamp": "2026-10-12 20:12:20",
+      "isoDate": "2026-10-12T11:12:20.731Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791803537304_2chav",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791789902859-86",
+      "timestamp": "2026-10-12 16:25:02",
+      "isoDate": "2026-10-12T07:25:02.859Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791789874192_i77ie",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791789897703-372",
+      "timestamp": "2026-10-12 16:24:57",
+      "isoDate": "2026-10-12T07:24:57.702Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791789874192_i77ie",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791789888229-554",
+      "timestamp": "2026-10-12 16:24:48",
+      "isoDate": "2026-10-12T07:24:48.229Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791789874192_i77ie",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791789875595-433",
+      "timestamp": "2026-10-12 16:24:35",
+      "isoDate": "2026-10-12T07:24:35.595Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/login",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "sessionId": "s_1791789874192_i77ie",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791782756747-660",
+      "timestamp": "2026-10-12 14:25:56",
+      "isoDate": "2026-10-12T05:25:56.747Z",
+      "ip": "127.0.0.1",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin?tab=products",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791782756359_4qtm8i2",
+      "sessionId": "s_1791782756359_cbg8n",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1791782723868-860",
+      "timestamp": "2026-10-12 14:25:23",
+      "isoDate": "2026-10-12T05:25:23.868Z",
+      "ip": "127.0.0.1",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "/",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791782723868_zhathx",
+      "sessionId": "s_1791782723868",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791782709991-111",
+      "timestamp": "2026-10-12 14:25:09",
+      "isoDate": "2026-10-12T05:25:09.991Z",
+      "ip": "127.0.0.1",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791782709943_8bd3n1x",
+      "sessionId": "s_1791782709943_3an9s",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791782658692-395",
+      "timestamp": "2026-10-12 14:24:18",
+      "isoDate": "2026-10-12T05:24:18.692Z",
+      "ip": "127.0.0.1",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/shop",
+      "landingTitle": "choicomma | Shop",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791782658039_r2x9scw",
+      "sessionId": "s_1791782658039_kqyry",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791782595873-680",
+      "timestamp": "2026-10-12 14:23:15",
+      "isoDate": "2026-10-12T05:23:15.873Z",
+      "ip": "127.0.0.1",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/shop",
+      "landingTitle": "choicomma | Shop",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791782595604_vn8nyxe",
+      "sessionId": "s_1791782595604_ggncl",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791782571980-914",
+      "timestamp": "2026-10-12 14:22:51",
+      "isoDate": "2026-10-12T05:22:51.980Z",
+      "ip": "127.0.0.1",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791782571561_3imc4f9",
+      "sessionId": "s_1791782571561_s6dxw",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
+      "id": "LOG-1791782541821-974",
+      "timestamp": "2026-10-12 14:22:21",
+      "isoDate": "2026-10-12T05:22:21.821Z",
+      "ip": "127.0.0.1",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "/",
+      "referrer": "direct",
+      "referrerLabel": "직접 접속 (URL / 북마크)",
+      "visitorId": "v_1791782541821_vjhff1",
+      "sessionId": "s_1791782541821",
+      "isBlocked": false,
+      "isAdmin": false
+    },
+    {
       "id": "LOG-1791714090119-375",
       "timestamp": "2026-10-11 19:21:30",
       "isoDate": "2026-10-11T10:21:30.119Z",
@@ -38,7 +1198,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791710036013_gubia",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791710116189-204",
@@ -78,7 +1238,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791710036013_gubia",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791709181799-876",
@@ -98,7 +1258,7 @@
       "visitorId": "v_1791709181799_3rxtef",
       "sessionId": "s_1791709181799",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791708465571-882",
@@ -118,7 +1278,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791708123368-982",
@@ -138,7 +1298,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791707604079-950",
@@ -158,7 +1318,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791707217249-974",
@@ -198,7 +1358,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791706788846-741",
@@ -218,7 +1378,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791706642454-931",
@@ -258,7 +1418,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791706475716-988",
@@ -318,7 +1478,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791705604579-605",
@@ -338,7 +1498,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791704555562-571",
@@ -358,7 +1518,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791704492498-877",
@@ -398,7 +1558,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791704357418-351",
@@ -438,7 +1598,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791704305669-487",
@@ -458,7 +1618,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791704150160-947",
@@ -478,7 +1638,7 @@
       "visitorId": "v_1791704066927_g0vdbkk",
       "sessionId": "s_1791704066927_7kyw7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791699666629-419",
@@ -498,7 +1658,7 @@
       "visitorId": "v_1791699350048_g88vpxq",
       "sessionId": "s_1791699660230_73kls",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791699364260-652",
@@ -518,7 +1678,7 @@
       "visitorId": "v_1791699350048_g88vpxq",
       "sessionId": "s_1791699350048_7ayns",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791696585471-73",
@@ -618,7 +1778,7 @@
       "visitorId": "v_1791665195103_d4l8dlq",
       "sessionId": "s_1791695022053_mqrfk",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791695104450-514",
@@ -638,7 +1798,7 @@
       "visitorId": "v_1791665195103_d4l8dlq",
       "sessionId": "s_1791695022053_mqrfk",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791692661232-272",
@@ -658,7 +1818,7 @@
       "visitorId": "v_1791692661231_e083xo",
       "sessionId": "s_1791692661232",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791690877418-297",
@@ -678,7 +1838,7 @@
       "visitorId": "v_1791665195103_d4l8dlq",
       "sessionId": "s_1791690863323_26imt",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791690250487-32",
@@ -698,7 +1858,7 @@
       "visitorId": "v_1791690250487_md1z3o",
       "sessionId": "s_1791690250487",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791687508476-0",
@@ -758,7 +1918,7 @@
       "visitorId": "v_1791666226357_719dhxo",
       "sessionId": "s_1791666226357_zek38",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791666251706-55",
@@ -778,7 +1938,7 @@
       "visitorId": "v_1791666226357_719dhxo",
       "sessionId": "s_1791666226357_zek38",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791665421104-559",
@@ -798,7 +1958,7 @@
       "visitorId": "v_1791665195103_d4l8dlq",
       "sessionId": "s_1791665195104_qd1vc",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791657299083-625",
@@ -858,7 +2018,7 @@
       "visitorId": "v_1791556952103_i1gonnk",
       "sessionId": "s_1791655664820_6dc7q",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791655710033-170",
@@ -878,7 +2038,7 @@
       "visitorId": "v_1791556952103_i1gonnk",
       "sessionId": "s_1791655664820_6dc7q",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791558996847-707",
@@ -938,7 +2098,7 @@
       "visitorId": "v_1791556952103_i1gonnk",
       "sessionId": "s_1791556952103_ra72c",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791557962228-103",
@@ -958,7 +2118,7 @@
       "visitorId": "v_1791556952103_i1gonnk",
       "sessionId": "s_1791556952103_ra72c",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791557892146-466",
@@ -978,7 +2138,7 @@
       "visitorId": "v_1791556952103_i1gonnk",
       "sessionId": "s_1791556952103_ra72c",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791557087315-181",
@@ -998,7 +2158,7 @@
       "visitorId": "v_1791556952103_i1gonnk",
       "sessionId": "s_1791556952103_ra72c",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791557017202-154",
@@ -1018,7 +2178,7 @@
       "visitorId": "v_1791556952103_i1gonnk",
       "sessionId": "s_1791556952103_ra72c",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791535080628-721",
@@ -1198,7 +2358,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791468387506_54v1h",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791466961450-410",
@@ -1278,7 +2438,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791466219199-149",
@@ -1298,7 +2458,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791466130142-179",
@@ -1318,7 +2478,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791466126444-557",
@@ -1338,7 +2498,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791466120383-920",
@@ -1358,7 +2518,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791466072435-870",
@@ -1418,7 +2578,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791465975071-26",
@@ -1438,7 +2598,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791465968963-925",
@@ -1458,7 +2618,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791465964609-469",
@@ -1478,7 +2638,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791465665424-533",
@@ -1498,7 +2658,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791465602712-7",
@@ -1518,7 +2678,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791465599258-376",
@@ -1658,7 +2818,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791463854320_yczu7",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791379129762-559",
@@ -1678,7 +2838,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791379128636_kfanb",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791374418015-257",
@@ -1698,7 +2858,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791371818160_15rur",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791374395099-42",
@@ -1718,7 +2878,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791371818160_15rur",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791374365434-52",
@@ -1738,7 +2898,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791371818160_15rur",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791374348213-68",
@@ -1758,7 +2918,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791371818160_15rur",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791374334822-63",
@@ -1778,7 +2938,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791371818160_15rur",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791374324941-574",
@@ -1798,7 +2958,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791371818160_15rur",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791374291610-154",
@@ -1858,7 +3018,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791373540449_xi3t8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791372551325-895",
@@ -1938,7 +3098,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791371818160_15rur",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791371846947-128",
@@ -1998,7 +3158,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791371818160_15rur",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791352726229-45",
@@ -2038,7 +3198,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791347978679_h25iz",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791352675038-950",
@@ -2058,7 +3218,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791347978679_h25iz",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791352665281-785",
@@ -2078,7 +3238,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791347978679_h25iz",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791350826424-568",
@@ -2338,7 +3498,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791347978679_h25iz",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791296783134-981",
@@ -2398,7 +3558,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791295629202_2lg5k",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791296569656-522",
@@ -2418,7 +3578,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791295629202_2lg5k",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791296523363-165",
@@ -2618,7 +3778,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791295629202_2lg5k",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791295587439-836",
@@ -2698,7 +3858,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791294529411_3dgcv",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791295371741-472",
@@ -2798,7 +3958,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791295165148_piki5",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791295132793-407",
@@ -2938,7 +4098,7 @@
       "visitorId": "v_1791294529411_hafq13j",
       "sessionId": "s_1791294529411_3dgcv",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791289168156-748",
@@ -3018,7 +4178,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791287987620-287",
@@ -3038,7 +4198,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791287692856-651",
@@ -3178,7 +4338,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791284448752-865",
@@ -3198,7 +4358,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791284446632-737",
@@ -3218,7 +4378,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791284433374-657",
@@ -3238,7 +4398,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791284429982-703",
@@ -3258,7 +4418,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791284425214-83",
@@ -3278,7 +4438,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791283765712-175",
@@ -3318,7 +4478,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791283304051-502",
@@ -3338,7 +4498,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791282493419-709",
@@ -3378,7 +4538,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791282213402-733",
@@ -3398,7 +4558,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791282211295-315",
@@ -3418,7 +4578,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791282208843-646",
@@ -3438,7 +4598,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791282206940-48",
@@ -3458,7 +4618,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791282148152-891",
@@ -3478,7 +4638,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791282142471-25",
@@ -3498,7 +4658,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791282135791-282",
@@ -3518,7 +4678,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791282098836-11",
@@ -3538,7 +4698,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791282069216-751",
@@ -3598,7 +4758,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791281282461-413",
@@ -3618,7 +4778,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791281279693-192",
@@ -3638,7 +4798,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791280658688-927",
@@ -3658,7 +4818,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791279867980-44",
@@ -3778,7 +4938,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791278647606_xojil",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791278274078-396",
@@ -3838,7 +4998,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791277839356-667",
@@ -3858,7 +5018,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791277835470-131",
@@ -3878,7 +5038,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791277833609-875",
@@ -3898,7 +5058,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791276928427-587",
@@ -3918,7 +5078,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791276928375_1h8cu",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791276861615-560",
@@ -3938,7 +5098,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791276860140_hbbff",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791276760000-220",
@@ -3978,7 +5138,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791276743653-170",
@@ -3998,7 +5158,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791276739613-877",
@@ -4018,7 +5178,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791276737793-511",
@@ -4038,7 +5198,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791276736341-101",
@@ -4058,7 +5218,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791276720061-126",
@@ -4078,7 +5238,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790844603820_u6vw8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791276316947-121",
@@ -4098,7 +5258,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791276314823_im1gg",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791276212758-12",
@@ -4138,7 +5298,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791275957098-283",
@@ -4158,7 +5318,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791275953180-324",
@@ -4178,7 +5338,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791274844980-144",
@@ -4218,7 +5378,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1791274356700-159",
@@ -4238,7 +5398,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1791274353646_magvs",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790861329483-801",
@@ -4258,7 +5418,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790860466903_1zlo4",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790861327237-543",
@@ -4278,7 +5438,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790860466903_1zlo4",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790861312715-17",
@@ -4298,7 +5458,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790844603820_u6vw8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790861310467-808",
@@ -4318,7 +5478,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790844603820_u6vw8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790861308067-362",
@@ -4358,7 +5518,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790844603820_u6vw8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790860469153-418",
@@ -4378,7 +5538,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790860466903_1zlo4",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790849783017-310",
@@ -4418,7 +5578,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790844603820_u6vw8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790849720413-800",
@@ -4438,7 +5598,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790844603820_u6vw8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790849717920-934",
@@ -4458,7 +5618,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790844603820_u6vw8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790844626128-57",
@@ -4498,7 +5658,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790844603820_u6vw8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790844606177-54",
@@ -4518,7 +5678,7 @@
       "visitorId": "v_1790844603819_61bcav7",
       "sessionId": "s_1790844603820_u6vw8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790776473601-751",
@@ -4558,7 +5718,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790776394819_ugkwn",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790776425928-157",
@@ -4578,7 +5738,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790776394819_ugkwn",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790776407610-625",
@@ -4618,7 +5778,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790776394819_ugkwn",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790775501256-183",
@@ -4678,7 +5838,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790772421790_q5q46",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790774310931-637",
@@ -4698,7 +5858,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790771696004_9tyi2",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790774299910-645",
@@ -4718,7 +5878,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790771696004_9tyi2",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790774297319-511",
@@ -4738,7 +5898,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790771696004_9tyi2",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790773730977-952",
@@ -4758,7 +5918,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790772421790_q5q46",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790773728309-9",
@@ -4798,7 +5958,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790772421790_q5q46",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790772424429-784",
@@ -4818,7 +5978,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790772421790_q5q46",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790772041832-635",
@@ -4858,7 +6018,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790771696004_9tyi2",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790771955056-151",
@@ -4878,7 +6038,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790771696004_9tyi2",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790771698679-207",
@@ -4898,7 +6058,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790771696004_9tyi2",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790770772085-89",
@@ -4918,7 +6078,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790770218765_p4hx1",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790770218898-421",
@@ -4938,7 +6098,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790770218765_p4hx1",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790770196047-361",
@@ -4978,7 +6138,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790770182173_tb08f",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790770126625-18",
@@ -5058,7 +6218,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790767038449_wek7v",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790769311533-487",
@@ -5078,7 +6238,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790767038449_wek7v",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790769274365-394",
@@ -5118,7 +6278,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790767038449_wek7v",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790768919000-61",
@@ -5178,7 +6338,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790767038449_wek7v",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790767563934-619",
@@ -5258,7 +6418,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790767038449_wek7v",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790767044147-472",
@@ -5298,7 +6458,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790767038449_wek7v",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790765761768-244",
@@ -5318,7 +6478,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790759431718_upzgb",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790759450663-575",
@@ -5338,7 +6498,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790759431718_upzgb",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790759446177-481",
@@ -5358,7 +6518,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790759431718_upzgb",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790759442125-387",
@@ -5378,7 +6538,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790759431718_upzgb",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790759433874-127",
@@ -5398,7 +6558,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790759431718_upzgb",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790759399453-460",
@@ -5418,7 +6578,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790758453136-859",
@@ -5438,7 +6598,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790758450688-315",
@@ -5458,7 +6618,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790758007688-824",
@@ -5498,7 +6658,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790757985923_61q1g",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757989233-347",
@@ -5518,7 +6678,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790757985923_61q1g",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757660367-518",
@@ -5538,7 +6698,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757658399-357",
@@ -5558,7 +6718,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757656817-617",
@@ -5578,7 +6738,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757655075-927",
@@ -5598,7 +6758,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757511019-272",
@@ -5618,7 +6778,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757508521-751",
@@ -5638,7 +6798,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757506872-330",
@@ -5658,7 +6818,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757502463-177",
@@ -5678,7 +6838,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757497217-613",
@@ -5698,7 +6858,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757479565-443",
@@ -5718,7 +6878,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757475343-476",
@@ -5738,7 +6898,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757465498-334",
@@ -5758,7 +6918,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757463844-614",
@@ -5778,7 +6938,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757459627-202",
@@ -5798,7 +6958,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757456714-634",
@@ -5818,7 +6978,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757452430-850",
@@ -5838,7 +6998,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757448995-259",
@@ -5858,7 +7018,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757446155-360",
@@ -5878,7 +7038,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757444498-727",
@@ -5898,7 +7058,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757442598-309",
@@ -5918,7 +7078,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757439584-420",
@@ -5938,7 +7098,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790757438497-387",
@@ -5958,7 +7118,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790754274149-236",
@@ -5978,7 +7138,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790754268994-746",
@@ -5998,7 +7158,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790754170536-983",
@@ -6018,7 +7178,7 @@
       "visitorId": "v_1790754168087_6vr2xvr",
       "sessionId": "s_1790754168087_j5lho",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790752366321-844",
@@ -6038,7 +7198,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790752357000-488",
@@ -6058,7 +7218,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790752257475-674",
@@ -6078,7 +7238,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790752242471-83",
@@ -6098,7 +7258,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790752235536-460",
@@ -6118,7 +7278,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790752230399-242",
@@ -6138,7 +7298,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790752207337-25",
@@ -6158,7 +7318,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790752203878-895",
@@ -6178,7 +7338,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790750316590-37",
@@ -6198,7 +7358,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790750312554-767",
@@ -6218,7 +7378,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790750300548-820",
@@ -6238,7 +7398,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790750234839-335",
@@ -6258,7 +7418,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790750234433-156",
@@ -6278,7 +7438,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790747930374-563",
@@ -6298,7 +7458,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790746182804-492",
@@ -6318,7 +7478,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790742617309_vb28d",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790746020380-140",
@@ -6338,7 +7498,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790745992892-503",
@@ -6358,7 +7518,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790745980637-682",
@@ -6378,7 +7538,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790745762849-614",
@@ -6398,7 +7558,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790745759803_21lsa",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790745014678-716",
@@ -6418,7 +7578,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790742617309_vb28d",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790744360821-182",
@@ -6438,7 +7598,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790742617309_vb28d",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790743505375-523",
@@ -6458,7 +7618,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790742617309_vb28d",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790743496902-86",
@@ -6478,7 +7638,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790742617309_vb28d",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790743493116-838",
@@ -6498,7 +7658,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790742617309_vb28d",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790743489802-131",
@@ -6538,7 +7698,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790742617309_vb28d",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790743007083-281",
@@ -6558,7 +7718,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790742617309_vb28d",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790743003624-951",
@@ -6598,7 +7758,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790742617309_vb28d",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790690266219-88",
@@ -6618,7 +7778,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790690082795-446",
@@ -6658,7 +7818,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790690037588-80",
@@ -6678,7 +7838,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790690018383-6",
@@ -6698,7 +7858,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689864790-541",
@@ -6718,7 +7878,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689435186-611",
@@ -6738,7 +7898,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689420658-475",
@@ -6758,7 +7918,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689352648-588",
@@ -6778,7 +7938,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689348748-936",
@@ -6798,7 +7958,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689342027-727",
@@ -6818,7 +7978,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689331826-628",
@@ -6838,7 +7998,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689327394-994",
@@ -6858,7 +8018,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689309018-115",
@@ -6878,7 +8038,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689288285-262",
@@ -6898,7 +8058,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790689006151-760",
@@ -6918,7 +8078,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688999926-611",
@@ -6938,7 +8098,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688991178-386",
@@ -6958,7 +8118,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688978385-972",
@@ -6978,7 +8138,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688976531-169",
@@ -6998,7 +8158,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688972292-684",
@@ -7018,7 +8178,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688734526-437",
@@ -7038,7 +8198,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688698259-238",
@@ -7058,7 +8218,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688696633-113",
@@ -7078,7 +8238,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688692687-739",
@@ -7098,7 +8258,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688691318-202",
@@ -7118,7 +8278,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688673080-279",
@@ -7138,7 +8298,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688626604-350",
@@ -7178,7 +8338,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688597934-826",
@@ -7218,7 +8378,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688572725-33",
@@ -7238,7 +8398,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688534480-634",
@@ -7258,7 +8418,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688503183-625",
@@ -7298,7 +8458,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688409944-131",
@@ -7338,7 +8498,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688377758-912",
@@ -7358,7 +8518,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688373413-303",
@@ -7378,7 +8538,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688362205-644",
@@ -7398,7 +8558,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688359737-254",
@@ -7418,7 +8578,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688357851-681",
@@ -7438,7 +8598,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688347822-879",
@@ -7458,7 +8618,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688341758-543",
@@ -7498,7 +8658,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688164777-427",
@@ -7538,7 +8698,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688149609-378",
@@ -7558,7 +8718,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688144363-640",
@@ -7578,7 +8738,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790688112862-633",
@@ -7618,7 +8778,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790687960449-120",
@@ -7638,7 +8798,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790687958466-194",
@@ -7658,7 +8818,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790687859100-777",
@@ -7698,7 +8858,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790687242918-5",
@@ -7718,7 +8878,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790687206867-149",
@@ -7798,7 +8958,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790686737956-43",
@@ -7818,7 +8978,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790686731652-676",
@@ -7838,7 +8998,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790686730725-326",
@@ -7858,7 +9018,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790686725728-996",
@@ -7878,7 +9038,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790686718268-503",
@@ -7898,7 +9058,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790686713827-958",
@@ -7918,7 +9078,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790686568289-45",
@@ -7958,7 +9118,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790686550455-498",
@@ -7978,7 +9138,7 @@
       "visitorId": "v_1790686546927_v7p8z08",
       "sessionId": "s_1790686546927_81ry8",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790681646133-405",
@@ -7998,7 +9158,7 @@
       "visitorId": "v_1790681646133_hgvk5s",
       "sessionId": "s_1790681646133",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790680658823-248",
@@ -8178,7 +9338,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790678705951-680",
@@ -8198,7 +9358,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790678305000-582",
@@ -8218,7 +9378,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790676649358_kfr5m",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790678247297-132",
@@ -8238,7 +9398,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790678244656-756",
@@ -8258,7 +9418,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790678070988-804",
@@ -8278,7 +9438,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790676649358_kfr5m",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790677975405-412",
@@ -8318,7 +9478,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790676649358_kfr5m",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790677382520-20",
@@ -8338,7 +9498,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790676649358_kfr5m",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790677363935-79",
@@ -8358,7 +9518,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790676649358_kfr5m",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790677328806-683",
@@ -8378,7 +9538,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790676649358_kfr5m",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790677326353-268",
@@ -8398,7 +9558,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790676649358_kfr5m",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790677266480-249",
@@ -8418,7 +9578,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676649422-547",
@@ -8438,7 +9598,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790676649358_kfr5m",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676648032-321",
@@ -8458,7 +9618,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676045957-757",
@@ -8478,7 +9638,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676042912-847",
@@ -8498,7 +9658,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676040593-50",
@@ -8518,7 +9678,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676035833-591",
@@ -8538,7 +9698,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676032911-520",
@@ -8558,7 +9718,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676028173-431",
@@ -8578,7 +9738,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676026508-392",
@@ -8598,7 +9758,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676023447-992",
@@ -8618,7 +9778,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790676020981-298",
@@ -8638,7 +9798,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790675498181-317",
@@ -8658,7 +9818,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790675364365-93",
@@ -8678,7 +9838,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790675357711-25",
@@ -8698,7 +9858,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790675354019-791",
@@ -8718,7 +9878,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790675177879-456",
@@ -8778,7 +9938,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790674952629_zoj7p",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790673850110-818",
@@ -8818,7 +9978,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790673783675_xj3xk",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790673630805-513",
@@ -8838,7 +9998,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790671870296_449io",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790673441984-334",
@@ -8858,7 +10018,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790671870296_449io",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790673440422-985",
@@ -8878,7 +10038,7 @@
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790671870296_449io",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790672879716-473",
@@ -8958,7 +10118,7 @@
       "visitorId": "v_admin_browsing_test",
       "sessionId": "s_admin_browsing_test",
       "isBlocked": false,
-      "isAdmin": true
+      "isAdmin": false
     },
     {
       "id": "LOG-1790672391171-907",
@@ -8997,7 +10157,8 @@
       "referrerLabel": "외부 사이트 (172.30.1.74)",
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790671870296_449io",
-      "isBlocked": false
+      "isBlocked": false,
+      "isAdmin": true
     },
     {
       "id": "LOG-1790671900135-439",
@@ -9016,7 +10177,8 @@
       "referrerLabel": "구글 검색 (Organic)",
       "visitorId": "v_user_test_01",
       "sessionId": "s_user_test_01",
-      "isBlocked": false
+      "isBlocked": false,
+      "isAdmin": false
     },
     {
       "id": "LOG-1790671893594-149",
@@ -9035,7 +10197,8 @@
       "referrerLabel": "외부 사이트 (172.30.1.74)",
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790671870296_449io",
-      "isBlocked": false
+      "isBlocked": false,
+      "isAdmin": true
     },
     {
       "id": "LOG-1790671882624-522",
@@ -9054,7 +10217,8 @@
       "referrerLabel": "외부 사이트 (172.30.1.74)",
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790671870296_449io",
-      "isBlocked": false
+      "isBlocked": false,
+      "isAdmin": false
     },
     {
       "id": "LOG-1790671871995-266",
@@ -9073,7 +10237,8 @@
       "referrerLabel": "외부 사이트 (172.30.1.74)",
       "visitorId": "v_1790671870295_aosss7h",
       "sessionId": "s_1790671870296_449io",
-      "isBlocked": false
+      "isBlocked": false,
+      "isAdmin": false
     }
   ],
   "blockedIps": [],
@@ -9082,8 +10247,7 @@
     "127.0.0.1",
     "::1",
     "localhost",
-    "172.30.1.74",
-    "192.168.219.105"
+    "172.30.1.74"
   ],
-  "updatedAt": "2026-10-11T10:21:30.119Z"
+  "updatedAt": "2026-10-14T05:17:28.970Z"
 }

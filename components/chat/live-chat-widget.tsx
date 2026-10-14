@@ -821,11 +821,15 @@ export function LiveChatWidget() {
 
   const registerUserSession = (status: "active" | "online" = "active") => {
     if (typeof window === "undefined") return;
-    const email = localStorage.getItem("membership_user_email");
-    const phone = localStorage.getItem("membership_user_phone");
+    const email = (localStorage.getItem("membership_user_email") || "").trim().toLowerCase();
+    const phone = (localStorage.getItem("membership_user_phone") || "").trim();
     if (!email && !phone) return;
 
-    const rawId = email || phone || "";
+    const rawId = (email || phone || "").trim().toLowerCase();
+    // 관리자 계정은 고객 상담 세션으로 등록하지 않음
+    if (rawId === "admin@choicomma.com" || rawId === "admin" || email === "admin@choicomma.com" || email === "admin") {
+      return;
+    }
     const uEmail = email || `${rawId}@customer.choicomma.com`;
     const uName = localStorage.getItem("membership_user_name") || "회원";
 
@@ -948,7 +952,12 @@ export function LiveChatWidget() {
 
     const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
     const phone = (localStorage.getItem("membership_user_phone") || "").trim();
-    const rawId = email || phone;
+    const rawId = (email || phone || "").toLowerCase().trim();
+
+    // 관리자 계정은 고객 상담 위젯 메시지 조회를 수행하지 않음 (반복 호출 방지)
+    if (rawId === "admin@choicomma.com" || rawId === "admin" || email === "admin@choicomma.com" || email === "admin") {
+      return;
+    }
     const chatKey = getUserChatKey();
     const effectiveWelcome = getEffectiveWelcomeText();
 
@@ -1046,62 +1055,47 @@ export function LiveChatWidget() {
             }
 
             setMessages((prev) => {
-              // If database has 0 messages, the session is brand new or was reset!
-              if (formatted.length === 0) {
-                const now = Date.now();
-                const recentPending = prev.filter((m) => {
-                  if (m.id === "msg-welcome-1") return false;
-                  const match = m.id.match(/\d{10,}/);
-                  if (match) {
-                    return now - parseInt(match[0], 10) < 15000;
-                  }
-                  return false;
-                });
-                const nextList = recentPending.length > 0 ? [defaultWelcome, ...recentPending] : [defaultWelcome];
-                if (typeof window !== "undefined") {
-                  localStorage.setItem(chatKey, JSON.stringify(nextList));
-                }
-                return nextList;
-              }
-
               const msgMap = new Map<string, ChatMessage>();
-              formatted.forEach((m) => msgMap.set(m.id, m));
 
-              // Retain welcome message if no admin reply yet
-              const existingWelcome = prev.find((m) => m.id === "msg-welcome-1") || currentLocal.find((m) => m.id === "msg-welcome-1");
-              const welcome = existingWelcome
-                ? { ...existingWelcome, text: effectiveWelcome }
-                : defaultWelcome;
-              if (welcome && !formatted.some((m) => m.id === "msg-welcome-1" || m.sender === "admin")) {
-                msgMap.set("msg-welcome-1", welcome);
-              }
+              // 1. Welcome message
+              const defaultWelcome: ChatMessage = {
+                id: "msg-welcome-1",
+                sender: "admin",
+                senderName: t.teamName,
+                text: effectiveWelcome,
+                timestamp: "NOW",
+              };
+              const existingWelcome =
+                prev.find((m) => m.id === "msg-welcome-1") ||
+                currentLocal.find((m) => m.id === "msg-welcome-1") ||
+                defaultWelcome;
+              msgMap.set("msg-welcome-1", { ...existingWelcome, text: effectiveWelcome });
 
-              // Retain ANY recent optimistic local messages (user or admin) not yet returned by DB
-              const candidates = [...prev, ...currentLocal];
-              const now = Date.now();
+              // 2. Existing local messages from memory and localStorage (Never drop unless explicitly reset)
+              const candidates = [...currentLocal, ...prev];
               candidates.forEach((m) => {
-                if (!m || !m.id || m.id === "msg-welcome-1") return;
-                if (!msgMap.has(m.id)) {
-                  let isRecent = false;
-                  const matchTime = m.id.match(/\d{10,}/);
-                  if (matchTime) {
-                    const timeVal = parseInt(matchTime[0], 10);
-                    if (!isNaN(timeVal) && now - timeVal < 15000) {
-                      isRecent = true;
-                    }
-                  } else if (m.created_at) {
-                    const timeVal = new Date(m.created_at).getTime();
-                    if (!isNaN(timeVal) && now - timeVal < 15000) {
-                      isRecent = true;
-                    }
-                  }
-                  if (isRecent) {
-                    msgMap.set(m.id, m);
-                  }
+                if (m && m.id && m.id !== "msg-welcome-1") {
+                  msgMap.set(m.id, m);
+                }
+              });
+
+              // 3. Server DB messages (authoritative, overwrite or append)
+              formatted.forEach((m) => {
+                if (m && m.id && m.id !== "msg-welcome-1") {
+                  msgMap.set(m.id, m);
                 }
               });
 
               const merged = Array.from(msgMap.values());
+              // Chronological sort
+              merged.sort((a, b) => {
+                if (a.id === "msg-welcome-1") return -1;
+                if (b.id === "msg-welcome-1") return 1;
+                const timeA = a.created_at ? new Date(a.created_at).getTime() : (parseInt((a.id || "").match(/\d{10,}/)?.[0] || "0", 10) || 0);
+                const timeB = b.created_at ? new Date(b.created_at).getTime() : (parseInt((b.id || "").match(/\d{10,}/)?.[0] || "0", 10) || 0);
+                return timeA - timeB;
+              });
+
               if (typeof window !== "undefined") {
                 localStorage.setItem(chatKey, JSON.stringify(merged));
               }
@@ -1272,6 +1266,10 @@ export function LiveChatWidget() {
     const isAuthed = checkAuth();
     if (!isAuthed) return;
 
+    // 관리자 계정은 고객 위젯 폴링을 수행하지 않음
+    const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
+    if (email === "admin@choicomma.com" || email === "admin") return;
+
     loadMessages();
 
     // 이전 조회가 끝나기 전에는 새로 보내지 않고, 화면에 보이지 않는 탭에서는 조회하지 않는다 (서버 과부하 방지)
@@ -1286,7 +1284,7 @@ export function LiveChatWidget() {
       } finally {
         pollInFlight = false;
       }
-    }, 3000);
+    }, isOpen ? 3000 : 15000);
 
     return () => {
       clearInterval(interval);
@@ -1405,7 +1403,7 @@ export function LiveChatWidget() {
 
     const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
     const phone = (typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") || "" : "").trim();
-    const rawId = email || phone || "";
+    const rawId = (email || phone || "").toLowerCase().trim();
 
     // Register active user to admin chat sessions list with accurate grade/tier & Supabase
     registerUserSession("active");
@@ -1574,7 +1572,7 @@ export function LiveChatWidget() {
 
     const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
     const phone = (typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") || "" : "").trim();
-    const rawId = email || phone;
+    const rawId = (email || phone || "").toLowerCase().trim();
     const chatKey = getUserChatKey();
 
     if (typeof window !== "undefined") {

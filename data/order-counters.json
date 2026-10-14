@@ -1,0 +1,17 @@
+{
+  "20261012": {
+    "lastSeq": 2,
+    "reservations": {
+      "CH20261012-001": {
+        "seq": 1,
+        "reservedAt": "2026-10-12T13:54:59.966Z",
+        "status": "RESERVED"
+      },
+      "CH20261012-002": {
+        "seq": 2,
+        "reservedAt": "2026-10-12T14:01:52.243Z",
+        "status": "RESERVED"
+      }
+    }
+  }
+}
