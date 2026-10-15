@@ -31,10 +31,11 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import * as XLSX from "xlsx";
-import { getProductThumbnail } from "@/lib/products/thumbnail-helper";
+import { getProductThumbnail, getProductInitial, getProductBadgeColor } from "@/lib/products/thumbnail-helper";
 import { explodeOrderToSingleItems, type ExplodedExchangeItem } from "@/lib/shipping/exchange-item-helper";
 import { TossRefundModal } from "@/components/chat/toss-refund-modal";
 import { restoreCouponByOrder } from "@/lib/membership/coupons";
+import { safeSaveShipmentsToStorage, safeSaveOrdersToStorage } from "@/lib/shipping/safe-shipments-storage";
 
 interface TemplateItem {
   id: string;
@@ -320,7 +321,7 @@ export function InquiriesManagement({
             }
             return o;
           });
-          localStorage.setItem("admin_orders", JSON.stringify(updated));
+          safeSaveOrdersToStorage(updated);
         }
       } catch (e) {}
 
@@ -336,7 +337,7 @@ export function InquiriesManagement({
             }
             return s;
           });
-          localStorage.setItem("admin_shipments", JSON.stringify(updated));
+          safeSaveShipmentsToStorage(updated);
         }
       } catch (e) {}
 
@@ -661,7 +662,7 @@ export function InquiriesManagement({
         let shipmentsList = savedShipments ? JSON.parse(savedShipments) : [];
         if (!Array.isArray(shipmentsList)) shipmentsList = [];
         shipmentsList.unshift(newExchangeShipment);
-        localStorage.setItem("admin_shipments", JSON.stringify(shipmentsList));
+        safeSaveShipmentsToStorage(shipmentsList);
 
         // admin_orders에 추가
         const savedOrders = localStorage.getItem("admin_orders");
@@ -676,7 +677,7 @@ export function InquiriesManagement({
           paymentStatus: "PAID",
           shippingStatus: isRefundPickup ? "반품수거접수완료" : "교환수거접수완료",
         });
-        localStorage.setItem("admin_orders", JSON.stringify(ordersList));
+        safeSaveOrdersToStorage(ordersList);
 
         // 주문 및 배송 관리 컴포넌트 실시간 동기화
         window.dispatchEvent(new CustomEvent("admin_shipments_updated"));

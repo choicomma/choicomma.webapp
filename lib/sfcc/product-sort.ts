@@ -41,8 +41,14 @@ export function sortProductsByLatest(products: any[]): any[] {
     }
   }
 
-  // 최신 상품 번호 내림차순 정렬 (높은 번호가 최신)
+  // 관리자 사용자 지정 순서(displayOrder) 우선 정렬, 없을 경우 상품 번호 내림차순(최신순) 정렬
   realProducts.sort((a, b) => {
+    const ordA = a.displayOrder !== undefined && a.displayOrder !== null ? Number(a.displayOrder) : null;
+    const ordB = b.displayOrder !== undefined && b.displayOrder !== null ? Number(b.displayOrder) : null;
+    if (ordA !== null && ordB !== null) return ordA - ordB;
+    if (ordA !== null) return -1;
+    if (ordB !== null) return 1;
+
     const numA = getProductNoNum(a);
     const numB = getProductNoNum(b);
     if (numB !== numA) return numB - numA;

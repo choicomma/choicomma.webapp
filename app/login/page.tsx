@@ -800,8 +800,12 @@ export default function LoginPage() {
       (matchedCustomer.isAdmin ? "Mrschoi83!!" : null)
     )) || null;
 
+    // 🔑 휴대폰 뒤 4자리 비밀번호 로그인 허용 (기존 아임웹 쇼핑몰 회원 기본 비밀번호 규격)
+    const phoneLast4 = custCleanPhone.length >= 4 ? custCleanPhone.slice(-4) : "";
+
     const isPasswordCorrect =
       (savedPwd && inputPassword === savedPwd) ||
+      (phoneLast4 && inputPassword === phoneLast4) ||
       inputPassword === "Mrschoi83!!";
 
     if (!isPasswordCorrect) {
@@ -1238,9 +1242,11 @@ export default function LoginPage() {
             {!isSignUp && (
               <>
                 <div>
-                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                    로그인 ID
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                      로그인 ID (이메일 주소)
+                    </label>
+                  </div>
                   <div className="relative">
                     <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-700" />
                     <input
@@ -1250,16 +1256,21 @@ export default function LoginPage() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="아이디 또는 이메일을 입력해주세요"
+                      placeholder="이메일 주소를 입력해주세요 (예: user@example.com)"
                       className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-medium font-mono"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                    비밀번호
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                      비밀번호
+                    </label>
+                    <span className="text-[11px] font-semibold text-neutral-500">
+                      (기존 회원: 휴대폰 뒤 4자리)
+                    </span>
+                  </div>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                     <input
@@ -1269,7 +1280,7 @@ export default function LoginPage() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder=""
+                      placeholder="비밀번호 (초기: 휴대폰 뒤 4자리)"
                       className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors font-mono"
                     />
                     <button
@@ -1279,6 +1290,14 @@ export default function LoginPage() {
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
+                  </div>
+
+                  {/* 안내 배너: 기존 쇼핑몰 회원 안내 */}
+                  <div className="mt-2.5 p-2.5 bg-neutral-100/80 border border-neutral-200 rounded-xl text-[11px] text-neutral-600 leading-relaxed flex items-start gap-2">
+                    <span className="shrink-0 text-neutral-900 font-bold">ℹ️</span>
+                    <span>
+                      기존 쇼핑몰 회원은 <strong>아이디(이메일 주소)</strong>와 <strong>비밀번호(휴대폰 번호 뒤 4자리)</strong>로 바로 로그인하실 수 있습니다.
+                    </span>
                   </div>
                 </div>
               </>

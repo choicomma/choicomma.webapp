@@ -309,6 +309,15 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
         gridProducts = validHomeProducts;
       }
 
+      gridProducts = [...gridProducts].sort((a: any, b: any) => {
+        const orderA = a.displayOrder !== undefined && a.displayOrder !== null ? Number(a.displayOrder) : null;
+        const orderB = b.displayOrder !== undefined && b.displayOrder !== null ? Number(b.displayOrder) : null;
+        if (orderA !== null && orderB !== null) return orderA - orderB;
+        if (orderA !== null) return -1;
+        if (orderB !== null) return 1;
+        return 0;
+      });
+
       setAllProducts(gridProducts);
 
       // SSR 목록에는 배너/히어로 상품이 포함되지 않으므로, SSR 목록 적용 시에는 히어로를 건드리지 않는다

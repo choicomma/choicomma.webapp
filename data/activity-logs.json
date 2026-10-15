@@ -2,6 +2,313 @@
   "journeyLogs": [],
   "auditLogs": [
     {
+      "id": "adt_1792042891298_l0kvt",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-466",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매] 완전 삭제 처리",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매",
+        "handle": "product-466",
+        "price": "930000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 14:41:31",
+      "created_at": "2026-10-15T05:41:31.298Z"
+    },
+    {
+      "id": "adt_1792042888322_q5skc",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-467",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매] 완전 삭제 처리",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매",
+        "handle": "product-467",
+        "price": "1550000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 14:41:28",
+      "created_at": "2026-10-15T05:41:28.322Z"
+    },
+    {
+      "id": "adt_1791991341336_l5n7j",
+      "adminId": "admin_master",
+      "adminName": "총괄 관리자",
+      "actionType": "UPDATE",
+      "domain": "SETTINGS",
+      "targetId": "admin_coupons_config",
+      "targetName": "스토어 설정 (admin_coupons_config)",
+      "description": "스토어 설정 항목 [admin_coupons_config] 값 수정 저장",
+      "afterData": {
+        "key": "admin_coupons_config",
+        "value": [
+          {
+            "id": "coupon-1791895695492",
+            "code": "CPN-MV6OFJIC",
+            "title": "회원가입 감사 쿠폰",
+            "discount": "30,000원 할인",
+            "discountAmount": 30000,
+            "type": "FIXED",
+            "condition": "전 상품 즉시 할인",
+            "validUntil": "2026.12.31",
+            "badge": "신규혜택",
+            "targetType": "ALL",
+            "targetGrades": [
+              "ALL"
+            ],
+            "targetCustomerEmails": [],
+            "targetCustomerNames": [],
+            "isActive": false,
+            "createdAt": "2026-10-13",
+            "isUsed": false
+          }
+        ]
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 00:22:21",
+      "created_at": "2026-10-14T15:22:21.336Z"
+    },
+    {
+      "id": "adt_1791991340167_oat9v",
+      "adminId": "admin_master",
+      "adminName": "총괄 관리자",
+      "actionType": "UPDATE",
+      "domain": "SETTINGS",
+      "targetId": "admin_coupons_config",
+      "targetName": "스토어 설정 (admin_coupons_config)",
+      "description": "스토어 설정 항목 [admin_coupons_config] 값 수정 저장",
+      "afterData": {
+        "key": "admin_coupons_config",
+        "value": [
+          {
+            "id": "coupon-1791895695492",
+            "code": "CPN-MV6OFJIC",
+            "title": "회원가입 감사 쿠폰",
+            "discount": "30,000원 할인",
+            "discountAmount": 30000,
+            "type": "FIXED",
+            "condition": "전 상품 즉시 할인",
+            "validUntil": "2026.12.31",
+            "badge": "신규혜택",
+            "targetType": "ALL",
+            "targetGrades": [
+              "ALL"
+            ],
+            "targetCustomerEmails": [],
+            "targetCustomerNames": [],
+            "isActive": true,
+            "createdAt": "2026-10-13",
+            "isUsed": false
+          }
+        ]
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 00:22:20",
+      "created_at": "2026-10-14T15:22:20.167Z"
+    },
+    {
+      "id": "adt_1791991338472_9vzum",
+      "adminId": "admin_master",
+      "adminName": "총괄 관리자",
+      "actionType": "UPDATE",
+      "domain": "SETTINGS",
+      "targetId": "admin_coupons_config",
+      "targetName": "스토어 설정 (admin_coupons_config)",
+      "description": "스토어 설정 항목 [admin_coupons_config] 값 수정 저장",
+      "afterData": {
+        "key": "admin_coupons_config",
+        "value": [
+          {
+            "id": "coupon-1791895695492",
+            "code": "CPN-MV6OFJIC",
+            "title": "회원가입 감사 쿠폰",
+            "discount": "30,000원 할인",
+            "discountAmount": 30000,
+            "type": "FIXED",
+            "condition": "전 상품 즉시 할인",
+            "validUntil": "2026.12.31",
+            "badge": "신규혜택",
+            "targetType": "ALL",
+            "targetGrades": [
+              "ALL"
+            ],
+            "targetCustomerEmails": [],
+            "targetCustomerNames": [],
+            "isActive": false,
+            "createdAt": "2026-10-13"
+          }
+        ]
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 00:22:18",
+      "created_at": "2026-10-14T15:22:18.472Z"
+    },
+    {
+      "id": "adt_1791982141234_m7e84",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-467",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매] 정보 수정 (가격: 1550000원, 재고: 88개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매",
+        "price": "1550000",
+        "stock": 88,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 5개 구매",
+        "price": "1550000",
+        "stock": 88,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-14 21:49:01",
+      "created_at": "2026-10-14T12:49:01.234Z"
+    },
+    {
+      "id": "adt_1791982136384_8rh43",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-466",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매] 정보 수정 (가격: 930000원, 재고: 123개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매",
+        "price": "930000",
+        "stock": 123,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 3개 구매",
+        "price": "930000",
+        "stock": 123,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-14 21:48:56",
+      "created_at": "2026-10-14T12:48:56.384Z"
+    },
+    {
+      "id": "adt_1791981388666_okpc6",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-344",
+      "targetName": "럭키박스 20만원",
+      "description": "상품 [럭키박스 20만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 20만원",
+        "handle": "product-344",
+        "price": "200000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-14 21:36:28",
+      "created_at": "2026-10-14T12:36:28.666Z"
+    },
+    {
+      "id": "adt_1791981388663_c4ltq",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-345",
+      "targetName": "럭키박스 30만원",
+      "description": "상품 [럭키박스 30만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 30만원",
+        "handle": "product-345",
+        "price": "300000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-14 21:36:28",
+      "created_at": "2026-10-14T12:36:28.663Z"
+    },
+    {
+      "id": "adt_1791981388660_3o0aj",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-346",
+      "targetName": "럭키박스 50만원",
+      "description": "상품 [럭키박스 50만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 50만원",
+        "handle": "product-346",
+        "price": "500000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-14 21:36:28",
+      "created_at": "2026-10-14T12:36:28.660Z"
+    },
+    {
+      "id": "adt_1791981388657_vkc67",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-347",
+      "targetName": "럭키박스 70만원",
+      "description": "상품 [럭키박스 70만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 70만원",
+        "handle": "product-347",
+        "price": "700000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-14 21:36:28",
+      "created_at": "2026-10-14T12:36:28.658Z"
+    },
+    {
+      "id": "adt_1791981388654_55zek",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-348",
+      "targetName": "럭키박스 100만원",
+      "description": "상품 [럭키박스 100만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 100만원",
+        "handle": "product-348",
+        "price": "1000000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-14 21:36:28",
+      "created_at": "2026-10-14T12:36:28.654Z"
+    },
+    {
+      "id": "adt_1791981388649_4lv32",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-349",
+      "targetName": "럭키박스 200만원",
+      "description": "상품 [럭키박스 200만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 200만원",
+        "handle": "product-349",
+        "price": "2000000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-14 21:36:28",
+      "created_at": "2026-10-14T12:36:28.649Z"
+    },
+    {
       "id": "adt_1791895695593_yly0z",
       "adminId": "admin_master",
       "adminName": "총괄 관리자",
@@ -39,5 +346,5 @@
       "created_at": "2026-10-13T12:48:15.593Z"
     }
   ],
-  "updatedAt": "2026-10-13T12:48:15.594Z"
+  "updatedAt": "2026-10-15T05:41:31.299Z"
 }

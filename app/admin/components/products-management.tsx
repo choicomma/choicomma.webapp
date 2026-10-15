@@ -751,7 +751,14 @@ export function ProductsManagement({
 }: ProductsManagementProps) {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [excelPreviewItems, setExcelPreviewItems] = useState<any[]>([]);
+  const [excelBatchStage, setExcelBatchStage] = useState<number>(0); // 0 = all, 1 = 1~100, 2 = 101~200, 3 = 201~300, 4 = 301~434
   const excelInputRef = useRef<HTMLInputElement | null>(null);
+
+  const displayedExcelItems = useMemo(() => {
+    if (excelBatchStage === 0 || excelPreviewItems.length <= 100) return excelPreviewItems;
+    const start = (excelBatchStage - 1) * 100;
+    return excelPreviewItems.slice(start, start + 100);
+  }, [excelPreviewItems, excelBatchStage]);
 
   // Active Stock Popover Product ID
   const [activeStockPopoverId, setActiveStockPopoverId] = useState<string | null>(null);
@@ -1356,53 +1363,114 @@ export function ProductsManagement({
           const title = String(getVal(["상품명", "title", "name", "상품 이름"])).trim();
           if (!title) return;
 
-          const categoryIdRaw = String(getVal(["카테고리", "category", "categoryId"])).trim();
-          const normalizeCat = (raw: string): string => {
-            const lower = raw.toLowerCase().trim();
-            if (lower.includes("아우터") || lower.includes("outer") || lower.includes("코트") || lower.includes("자켓") || lower.includes("패딩") || lower.includes("점퍼") || lower.includes("가디건")) return "outer";
-            if (lower.includes("상의") || lower.includes("top") || lower.includes("셔츠") || lower.includes("티셔츠") || lower.includes("블라우스") || lower.includes("니트") || lower.includes("맨투맨") || lower.includes("후드")) return "top";
-            if (lower.includes("하의") || lower.includes("bottom") || lower.includes("팬츠") || lower.includes("바지") || lower.includes("스커트") || lower.includes("슬랙스") || lower.includes("청바지") || lower.includes("데님")) return "bottom";
-            if (lower.includes("가방") || lower.includes("bag") || lower.includes("백")) return "bag";
-            if (lower.includes("신발") || lower.includes("shoes") || lower.includes("슈즈") || lower.includes("부츠") || lower.includes("스니커즈") || lower.includes("구두") || lower.includes("로퍼")) return "shoes";
-            if (lower.includes("악세사리") || lower.includes("액세서리") || lower.includes("accessory") || lower.includes("acc") || lower.includes("주얼리") || lower.includes("모자") || lower.includes("머플러") || lower.includes("벨트")) return "accessory";
-            if (lower.includes("타임세일") || lower.includes("timesale") || lower.includes("세일")) return "timesale";
+          const categoryIdRaw = String(getVal(["카테고리ID", "카테고리", "category", "categoryId"])).trim();
+          const normalizeCat = (raw: string, prodTitle: string): string => {
+            const lower = (raw + " " + prodTitle).toLowerCase().trim();
+            if (lower.includes("cate1") || lower.includes("cate13") || lower.includes("아우터") || lower.includes("outer") || lower.includes("코트") || lower.includes("자켓") || lower.includes("패딩") || lower.includes("점퍼") || lower.includes("가디건") || lower.includes("케이프") || lower.includes("베스트") || lower.includes("집업")) return "outer";
+            if (lower.includes("cate2") || lower.includes("상의") || lower.includes("top") || lower.includes("셔츠") || lower.includes("티셔츠") || lower.includes("블라우스") || lower.includes("브라우스") || lower.includes("니트") || lower.includes("맨투맨") || lower.includes("후드") || lower.includes("탑")) return "top";
+            if (lower.includes("cate5") || lower.includes("하의") || lower.includes("bottom") || lower.includes("팬츠") || lower.includes("바지") || lower.includes("스커트") || lower.includes("슬랙스") || lower.includes("청바지") || lower.includes("데님") || lower.includes("쇼츠") || lower.includes("버뮤다")) return "bottom";
+            if (lower.includes("cate6") || lower.includes("가방") || lower.includes("bag") || lower.includes("백") || lower.includes("호보") || lower.includes("캘리")) return "bag";
+            if (lower.includes("cate9") || lower.includes("신발") || lower.includes("shoes") || lower.includes("슈즈") || lower.includes("부츠") || lower.includes("스니커즈") || lower.includes("구두") || lower.includes("로퍼") || lower.includes("슬리퍼")) return "shoes";
+            if (lower.includes("cate11") || lower.includes("악세사리") || lower.includes("액세서리") || lower.includes("accessory") || lower.includes("acc") || lower.includes("주얼리") || lower.includes("모자") || lower.includes("머플러") || lower.includes("스카프") || lower.includes("벨트") || lower.includes("이어링")) return "accessory";
+            if (lower.includes("cate15") || lower.includes("타임세일") || lower.includes("timesale") || lower.includes("세일") || lower.includes("기획")) return "timesale";
             return "outer";
           };
 
           const rawCats = categoryIdRaw ? categoryIdRaw.split(/[,/|]/).map((c) => c.trim()).filter(Boolean) : [];
-          const parsedCats = Array.from(new Set(rawCats.map(normalizeCat)));
-          const categoryId = parsedCats[0] || (categoryIdRaw ? normalizeCat(categoryIdRaw) : "outer");
+          const parsedCats = Array.from(new Set(rawCats.map((c) => normalizeCat(c, title))));
+          const categoryId = parsedCats[0] || normalizeCat(categoryIdRaw, title);
           const categoryIds = parsedCats.length > 0 ? parsedCats : [categoryId];
 
-          const priceRaw = getVal(["판매가(원)", "판매가", "price", "amount", "가격"]);
+          const priceRaw = getVal(["판매가", "판매가(원)", "price", "amount", "가격"]);
           const priceNum = typeof priceRaw === "number" ? priceRaw : parseInt(String(priceRaw).replace(/[^0-9]/g, ""), 10) || 0;
 
           const description = String(getVal(["상품 간단설명", "간단설명", "description", "설명"])).trim();
-          const detailDescription = String(getVal(["상품 상세설명", "상세설명", "detailDescription", "detailedInfo"])).trim();
+          const detailDescription = String(getVal(["상품상세정보", "상품 상세설명", "상세설명", "detailDescription", "detailedInfo"])).trim();
 
-          const imageUrl = String(getVal(["대표 이미지 URL", "image", "imageUrl", "대표이미지"])).trim() || "/product_1.webp";
+          // 본문 HTML 내 이미지 태그 추출
+          const extractedImgs: string[] = [];
+          if (detailDescription) {
+            const regex = /<img[^>]+src=["']([^"']+)["']/gi;
+            let m;
+            while ((m = regex.exec(detailDescription)) !== null) {
+              if (m[1] && !m[1].startsWith("data:")) extractedImgs.push(m[1]);
+            }
+          }
+
+          const imageUrl = String(getVal(["대표이미지URL", "대표 이미지 URL", "image", "imageUrl", "대표이미지"])).trim() || extractedImgs[0] || "/product_1.webp";
           const addImagesRaw = String(getVal(["추가 이미지 URLs", "추가 이미지", "images", "additionalImages"])).trim();
           let allImages: string[] = [imageUrl];
           if (addImagesRaw) {
             const addUrls = addImagesRaw.split(/[,|]/).map((u) => u.trim()).filter(Boolean);
-            allImages = Array.from(new Set([imageUrl, ...addUrls]));
+            allImages = Array.from(new Set([imageUrl, ...addUrls, ...extractedImgs]));
+          } else if (extractedImgs.length > 0) {
+            allImages = Array.from(new Set([imageUrl, ...extractedImgs]));
           }
 
-          const colorsRaw = String(getVal(["색상", "color", "colors"])).trim();
-          const colors = colorsRaw
-            ? colorsRaw.split(/[,/|]/).map((c) => c.trim().toUpperCase()).filter(Boolean)
-            : ["BLACK", "CREAM", "CHARCOAL"];
+          // 아임웹 필수옵션명 / 필수옵션값 파싱
+          const reqOptNamesRaw = String(getVal(["필수옵션명", "optionNames"])).trim();
+          const reqOptValsRaw = String(getVal(["필수옵션값", "optionValues"])).trim();
 
-          const sizesRaw = String(getVal(["사이즈", "size", "sizes"])).trim();
-          const sizes = sizesRaw
-            ? sizesRaw.split(/[,/|]/).map((s) => s.trim()).filter(Boolean)
-            : ["1", "2", "3"];
+          let colors: string[] = [];
+          let sizes: string[] = [];
 
-          const stockRaw = getVal(["총 재고수량", "초기 재고수량", "재고수량", "stock", "quantity", "재고"]);
-          const stockNum = typeof stockRaw === "number" ? stockRaw : parseInt(String(stockRaw).replace(/[^0-9]/g, ""), 10) || 30;
+          if (reqOptNamesRaw) {
+            const names = reqOptNamesRaw.split("\n").map((s) => s.trim()).filter(Boolean);
+            const valLines = reqOptValsRaw.split("\n").map((s) => s.trim()).filter(Boolean);
+
+            names.forEach((name, i) => {
+              const lower = name.toLowerCase();
+              if (lower.includes("안내") || lower.includes("공지") || lower.includes("유의") || lower.includes("배송") || lower.includes("기간") || lower.includes("제작") || lower.includes("동의")) {
+                return;
+              }
+              const vals = (valLines[i] || "")
+                .split(",")
+                .map((v) => v.trim().replace(/^[_-\s]+|[_-\s]+$/g, ""))
+                .filter(Boolean);
+
+              if (lower.includes("색상") || lower.includes("컬러") || lower.includes("color")) {
+                colors = vals;
+              } else if (lower.includes("사이즈") || lower.includes("size")) {
+                sizes = vals;
+              } else {
+                if (vals.some((v) => v.includes("44") || v.includes("55") || v.includes("66") || v.includes("77") || v.includes("88") || v.includes("FREE") || v.includes("S") || v.includes("M") || v.includes("L") || /^[1-3]$/.test(v))) {
+                  sizes = vals;
+                } else {
+                  colors = vals;
+                }
+              }
+            });
+          }
+
+          // 상품명 끝에 슬래시(/)로 컬러가 명시된 경우 자동 추출
+          if (colors.length === 0) {
+            const slashMatch = title.match(/\/s*([^/]+)$/);
+            if (slashMatch && slashMatch[1]) {
+              const extracted = slashMatch[1].trim().replace(/^[_-\s]+|[_-\s]+$/g, "");
+              if (!extracted.includes("구매") && !extracted.includes("개") && !extracted.includes("차")) {
+                colors = [extracted];
+              }
+            }
+          }
+
+          if (colors.length === 0) {
+            const colorsRaw = String(getVal(["색상", "color", "colors"])).trim();
+            colors = colorsRaw ? colorsRaw.split(/[,/|]/).map((c) => c.trim().toUpperCase()).filter(Boolean) : ["ONE COLOR"];
+          }
+          if (sizes.length === 0) {
+            const sizesRaw = String(getVal(["사이즈", "size", "sizes"])).trim();
+            sizes = sizesRaw ? sizesRaw.split(/[,/|]/).map((s) => s.trim()).filter(Boolean) : ["FREE"];
+          }
+
+          const stockRaw = getVal(["현재 재고수량", "필수옵션재고수량합계", "총 재고수량", "초기 재고수량", "재고수량", "stock", "quantity", "재고"]);
+          const stockNum = typeof stockRaw === "number" ? stockRaw : parseInt(String(stockRaw).replace(/[^0-9]/g, ""), 10) || 0;
 
           const labelRaw = String(getVal(["상품 라벨", "label", "productLabel"])).trim().toUpperCase();
-          const label = ["BLACK_LABEL", "PREMIUM", "ESSENTIAL"].includes(labelRaw) ? labelRaw : "PREMIUM";
+          const label = title.includes("[BLACK LABEL]")
+            ? "BLACK_LABEL"
+            : title.includes("[PREMIUM]") || title.includes("[SAGA") || title.includes("프리미엄") || labelRaw === "PREMIUM"
+            ? "PREMIUM"
+            : "ESSENTIAL";
 
           const rawFabricComp = String(getVal(["소재 성분", "소재", "fabricComposition"])).trim() || "COTTON 100% (프리미엄 코튼)";
           const fabricComposition = rawFabricComp.replace(/프리미엄 콤마 코튼/g, "프리미엄 코튼");
@@ -1414,25 +1482,37 @@ export function ProductsManagement({
           const isMainFeaturedRaw = String(getVal(["메인화면 진열여부", "메인진열", "isMainFeatured"])).trim().toUpperCase();
           const isMainFeatured = isMainFeaturedRaw === "N" || isMainFeaturedRaw === "FALSE" ? false : true;
 
-          const isTimeSaleRaw = String(getVal(["타임세일 여부", "타임세일", "isTimeSale"])).trim().toUpperCase();
-          const isTimeSale = isTimeSaleRaw === "Y" || isTimeSaleRaw === "TRUE";
+          // 할인금액 파싱 (타임세일 자동 연동)
+          const discountAmtRaw = getVal(["할인금액", "discountAmount"]);
+          const discountUnit = String(getVal(["할인금액단위", "discountUnit"])).trim();
+          let isTimeSale = false;
+          let timeSaleDiscountRate: number | undefined = undefined;
+          let timeSaleDiscountPrice: string | undefined = undefined;
 
-          const timeSalePriceRaw = getVal(["타임세일 할인가", "timeSaleDiscountPrice"]);
-          const timeSaleDiscountPrice = timeSalePriceRaw ? String(timeSalePriceRaw).trim() : undefined;
-
-          const timeSaleRateRaw = getVal(["타임세일 할인율", "timeSaleDiscountRate"]);
-          const timeSaleDiscountRate = timeSaleRateRaw ? parseInt(String(timeSaleRateRaw).replace(/[^0-9]/g, ""), 10) : undefined;
+          if (discountAmtRaw) {
+            const amtNum = typeof discountAmtRaw === "number" ? discountAmtRaw : parseInt(String(discountAmtRaw).replace(/[^0-9]/g, ""), 10) || 0;
+            if (amtNum > 0) {
+              isTimeSale = true;
+              if (discountUnit === "%" || amtNum <= 90) {
+                timeSaleDiscountRate = amtNum;
+                timeSaleDiscountPrice = String(Math.round(priceNum * (1 - amtNum / 100)));
+              } else {
+                timeSaleDiscountPrice = String(Math.max(0, priceNum - amtNum));
+                timeSaleDiscountRate = Math.round((amtNum / Math.max(1, priceNum)) * 100);
+              }
+            }
+          }
 
           // Preserve existing identifiers if present (prevents ID/code jump on re-import)
           const rawNo = getVal(["상품번호", "productNo", "번호"]);
           const existingNo = rawNo ? parseInt(String(rawNo).replace(/[^0-9]/g, ""), 10) : 0;
           const assignedNo = existingNo > 0 ? existingNo : (++currentNo);
 
-          const rawCode = String(getVal(["자체상품코드", "상품코드", "productCode", "code"])).trim();
+          const rawCode = String(getVal(["자체 상품코드", "자체상품코드", "상품코드", "productCode", "code"])).trim();
           const assignedCode = rawCode || `CC-${String(assignedNo).padStart(3, "0")}`;
 
           const existingId = String(getVal(["id", "ID", "상품ID", "productId"])).trim();
-          const prodId = existingId || `prod-excel-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`;
+          const prodId = existingId || (existingNo > 0 ? `excel-product-${existingNo}` : `prod-excel-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`);
 
           // Check if optionStock string exists (e.g., from exported Excel: "BLACK-1: 15개 | BLACK-2: 15개")
           const optionStockRaw = String(getVal(["옵션별 재고상세", "optionStock"])).trim();
@@ -1448,7 +1528,7 @@ export function ProductsManagement({
             });
           }
           if (Object.keys(sizeStockMap).length === 0) {
-            const perCombo = Math.floor(stockNum / Math.max(1, colors.length * sizes.length)) || 1;
+            const perCombo = Math.floor(stockNum / Math.max(1, colors.length * sizes.length)) || (stockNum > 0 ? 1 : 0);
             colors.forEach((c) => {
               sizes.forEach((s) => {
                 sizeStockMap[`${c}-${s}`] = perCombo;
@@ -1456,9 +1536,11 @@ export function ProductsManagement({
             });
           }
 
-          const statusRaw = String(getVal(["판매상태", "상태", "status", "availableForSale"])).trim();
-          const isSoldOutStatus = statusRaw === "품절" || statusRaw === "OFF" || statusRaw === "구매불가" || statusRaw === "FALSE";
-          const isAvailable = !isSoldOutStatus && stockNum > 0;
+          const statusRaw = String(getVal(["판매상태", "상태", "status"])).trim();
+          const displayRaw = String(getVal(["진열상태", "displayStatus"])).trim().toUpperCase();
+          const isSoldOutStatus = statusRaw === "품절" || stockNum === 0;
+          const isHidden = statusRaw === "숨김" || displayRaw === "N";
+          const isAvailable = (statusRaw === "판매중" || (!statusRaw && stockNum > 0)) && !isSoldOutStatus && !isHidden;
 
           const baseSlug = title
             .trim()
@@ -1843,9 +1925,9 @@ export function ProductsManagement({
               onChange={(e) => setProductSortOrder(e.target.value as any)}
               className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 cursor-pointer"
             >
+              <option value="productNoDesc">상품번호 높은 순 (최신순 / 기본)</option>
+              <option value="productNoAsc">상품번호 낮은 순</option>
               <option value="custom">사용자 지정 순서 (드래그 앤 드롭)</option>
-              <option value="productNoDesc">최신 등록순</option>
-              <option value="productNoAsc">등록번호 순 (낮은 번호순)</option>
               <option value="nameAsc">상품명순 (가나다)</option>
               <option value="priceDesc">높은 가격순</option>
               <option value="priceAsc">낮은 가격순</option>
@@ -1973,8 +2055,8 @@ export function ProductsManagement({
           <table className="w-full text-left text-xs text-neutral-700 min-w-[1080px]">
             <thead className="bg-neutral-50 text-neutral-500 text-[11px] uppercase font-semibold border-b border-neutral-200">
               <tr>
-                <th className="py-3 px-1.5 w-12 text-center whitespace-nowrap text-neutral-400 font-bold" title="드래그 또는 버튼으로 순서 변경">
-                  순서
+                <th className="py-3 px-2 w-16 text-center whitespace-nowrap text-neutral-400 font-bold" title="목록 순번 및 드래그 순서 변경">
+                  순번
                 </th>
                 <th className="py-3 px-2 w-8 text-center whitespace-nowrap">
                   <input
@@ -2026,6 +2108,7 @@ export function ProductsManagement({
               ) : (
                 paginatedProducts.map((p, index) => {
                   const prodNo = getProductNo(p);
+                  const rowNum = pageSize === -1 ? index + 1 : (currentPage - 1) * pageSize + index + 1;
                   const isSelected = selectedProductIds.includes(String(p.id));
                   const isDragging = draggedProductId === String(p.id);
                   const isDropTarget = dropTargetId === String(p.id);
@@ -2059,12 +2142,15 @@ export function ProductsManagement({
                           : ""
                       }`}
                     >
-                      {/* Drag Handle Column */}
+                      {/* Drag Handle & Row Number Column */}
                       <td
                         className="py-2 px-1 text-center whitespace-nowrap select-none"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-center gap-0.5">
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="text-[11px] font-mono font-bold text-neutral-400 w-6 text-right select-none" title={`목록 순번 ${rowNum}번째`}>
+                            {rowNum}
+                          </span>
                           <div
                             className="p-1 rounded cursor-grab active:cursor-grabbing text-neutral-400 hover:text-amber-800 hover:bg-neutral-200/50 transition-colors"
                             title="마우스로 드래그하여 순서를 이동할 수 있습니다."
@@ -2462,9 +2548,51 @@ export function ProductsManagement({
               </button>
             </div>
 
+            {/* Stage Selector for Phased Registration */}
+            {excelPreviewItems.length > 50 && (
+              <div className="px-6 py-2.5 bg-neutral-900 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-neutral-400 font-bold mr-1">단계별 분할 등록 (사이트 과부하 방지):</span>
+                  <button
+                    type="button"
+                    onClick={() => setExcelBatchStage(0)}
+                    className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                      excelBatchStage === 0
+                        ? "bg-emerald-500 text-white shadow-xs"
+                        : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
+                    }`}
+                  >
+                    전체 보기 ({excelPreviewItems.length}개)
+                  </button>
+                  {Array.from({ length: Math.ceil(excelPreviewItems.length / 100) }).map((_, idx) => {
+                    const s = idx * 100 + 1;
+                    const e = Math.min((idx + 1) * 100, excelPreviewItems.length);
+                    const isAct = excelBatchStage === idx + 1;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setExcelBatchStage(idx + 1)}
+                        className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                          isAct
+                            ? "bg-emerald-500 text-white shadow-xs"
+                            : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
+                        }`}
+                      >
+                        {idx + 1}단계 ({s}~{e}번)
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="text-[11px] text-neutral-400 font-mono">
+                  현재 표시: <strong className="text-white">{displayedExcelItems.length}</strong>개
+                </div>
+              </div>
+            )}
+
             {/* Modal Content - Table Preview */}
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
-              {excelPreviewItems.length === 0 ? (
+              {displayedExcelItems.length === 0 ? (
                 <div className="py-12 text-center text-neutral-500 space-y-3">
                   <AlertCircle className="w-10 h-10 mx-auto text-amber-500" />
                   <p className="font-bold">등록할 대상 상품이 없습니다.</p>
@@ -2487,7 +2615,7 @@ export function ProductsManagement({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-200">
-                      {excelPreviewItems.map((item, idx) => (
+                      {displayedExcelItems.map((item, idx) => (
                         <tr key={item.id || idx} className="hover:bg-neutral-50">
                           <td className="py-2.5 px-3 font-mono font-bold text-neutral-900">
                             {item.productCode}
@@ -2599,11 +2727,11 @@ export function ProductsManagement({
 
                 <button
                   type="button"
-                  disabled={excelPreviewItems.length === 0}
+                  disabled={displayedExcelItems.length === 0}
                   onClick={() => {
                     if (handleBulkAddProducts) {
                       const baseNo = getNextBaseProductNo();
-                      const resequencedItems = excelPreviewItems.map((item, idx) => {
+                      const resequencedItems = displayedExcelItems.map((item, idx) => {
                         const pNo = item.productNo || (baseNo + idx + 1);
                         return {
                           ...item,
@@ -2618,7 +2746,9 @@ export function ProductsManagement({
                   className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl transition-all shadow-md text-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  기존 목록에 추가 등록 ({excelPreviewItems.length}개)
+                  {excelBatchStage > 0
+                    ? `${excelBatchStage}단계 상품 추가 등록 (${displayedExcelItems.length}개)`
+                    : `기존 목록에 전체 추가 등록 (${excelPreviewItems.length}개)`}
                 </button>
               </div>
             </div>

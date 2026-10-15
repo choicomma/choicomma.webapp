@@ -1,5 +1,22 @@
 "use client";
-import { Pencil, UserPlus, Shield, Mail, Phone, Crown, Lock as LockIcon, X, Plus, Minus, Coins, ChevronRight } from "lucide-react";
+import {
+  Pencil,
+  UserPlus,
+  Shield,
+  Mail,
+  Phone,
+  Crown,
+  Lock as LockIcon,
+  X,
+  Plus,
+  Minus,
+  Coins,
+  ChevronRight,
+  Users,
+  Sprout,
+  ShoppingBag,
+  AlertCircle,
+} from "lucide-react";
 
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
@@ -280,18 +297,103 @@ export function CustomersManagement({
     return sanitizedCustomersList.filter((c) => c.joinedDate && c.joinedDate.startsWith(currentYM)).length;
   }, [sanitizedCustomersList]);
 
+  const isSproutGrade = (c: any): boolean => {
+    if (!c || c.isAdmin || c.role === "ADMIN") return false;
+    const g = String(c.grade || "").trim();
+    const grp = String(c.group || "").trim();
+    if (g === "새싹고객" || g === "GENERAL" || g === "REGULAR" || g === "SILVER") return true;
+    if (!g && !grp.includes("우수고객")) return true;
+    return false;
+  };
+
+  const isVipGrade = (c: any): boolean => {
+    if (!c) return false;
+    if (c.isAdmin || c.role === "ADMIN") return true;
+    const g = String(c.grade || "").trim();
+    const grp = String(c.group || "").trim();
+    return (
+      g === "우수고객" ||
+      g === "GOLD" ||
+      g === "VVIP" ||
+      g === "PLATINUM" ||
+      g.includes("VIP") ||
+      grp.includes("우수고객")
+    );
+  };
+
+  // 구매 실적 고객 (누적 구매금액 1원 이상 또는 주문 1건 이상)
+  const isBuyerCustomer = (c: any): boolean => {
+    if (!c) return false;
+    const spent = Number(c.totalSpent || 0);
+    const orders = Number(c.totalOrders || c.ordersCount || 0);
+    return spent > 0 || orders > 0;
+  };
+
+  // 특수 관리 회원 (초이콤마 직원, 블랙리스트 등 관리 대상 회원)
+  const isSpecialCustomer = (c: any): boolean => {
+    if (!c) return false;
+    const grp = String(c.group || "").trim().toLowerCase();
+    const g = String(c.grade || "").trim().toLowerCase();
+    const role = String(c.role || "").trim().toUpperCase();
+    return (
+      grp.includes("직원") ||
+      grp.includes("staff") ||
+      grp.includes("블랙리스트") ||
+      grp.includes("blacklist") ||
+      g.includes("블랙") ||
+      role === "STAFF" ||
+      c.isStaff === true ||
+      c.isBlacklist === true
+    );
+  };
+
+  const totalPointsSum = React.useMemo(() => {
+    return sanitizedCustomersList.reduce((sum: number, c: any) => sum + (Number(c.points) || 0), 0);
+  }, [sanitizedCustomersList]);
+
+  const sproutCustomersCount = React.useMemo(() => {
+    return sanitizedCustomersList.filter((c: any) => isSproutGrade(c)).length;
+  }, [sanitizedCustomersList]);
+
+  const vipCustomersCount = React.useMemo(() => {
+    return sanitizedCustomersList.filter((c: any) => isVipGrade(c)).length;
+  }, [sanitizedCustomersList]);
+
+  const buyerCustomersCount = React.useMemo(() => {
+    return sanitizedCustomersList.filter((c: any) => isBuyerCustomer(c)).length;
+  }, [sanitizedCustomersList]);
+
+  const specialCustomersCount = React.useMemo(() => {
+    return sanitizedCustomersList.filter((c: any) => isSpecialCustomer(c)).length;
+  }, [sanitizedCustomersList]);
+
   const filteredCustomers = React.useMemo(() => {
     return sanitizedCustomersList.filter((c) => {
+      const q = customerSearchQuery.trim().toLowerCase();
       const matchesSearch =
-        c.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-        c.email.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-        c.phone.includes(customerSearchQuery) ||
-        (c.address && c.address.toLowerCase().includes(customerSearchQuery.toLowerCase()));
-      const matchesGrade =
-        customerGradeFilter === "all" ||
-        (customerGradeFilter === "GENERAL" && (c.grade === "GENERAL" || c.grade === "REGULAR" || !c.grade)) ||
-        (customerGradeFilter === "VVIP" && (c.grade === "VVIP" || c.grade?.includes("VIP") || c.role === "ADMIN")) ||
-        c.grade === customerGradeFilter;
+        !q ||
+        c.name.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
+        (c.loginId && c.loginId.toLowerCase().includes(q)) ||
+        (c.id && c.id.toLowerCase().includes(q)) ||
+        c.phone.includes(q) ||
+        (c.address && c.address.toLowerCase().includes(q));
+
+      let matchesGrade = true;
+      if (customerGradeFilter === "all") {
+        matchesGrade = true;
+      } else if (customerGradeFilter === "새싹고객" || customerGradeFilter === "GENERAL") {
+        matchesGrade = isSproutGrade(c);
+      } else if (customerGradeFilter === "우수고객" || customerGradeFilter === "GOLD" || customerGradeFilter === "VVIP") {
+        matchesGrade = isVipGrade(c);
+      } else if (customerGradeFilter === "BUYER") {
+        matchesGrade = isBuyerCustomer(c);
+      } else if (customerGradeFilter === "SPECIAL") {
+        matchesGrade = isSpecialCustomer(c);
+      } else {
+        matchesGrade = c.grade === customerGradeFilter;
+      }
+
       return matchesSearch && matchesGrade;
     });
   }, [sanitizedCustomersList, customerSearchQuery, customerGradeFilter]);
@@ -340,17 +442,20 @@ export function CustomersManagement({
         </div>
       </div>
 
-      {/* Metric Summary Cards: General, Silver, Gold, Platinum, VVIP & Overview */}
+      {/* Metric Summary Cards: 아임웹 6대 핵심 세그먼트 (전체, 새싹고객, 우수고객, 카카오, 이메일, 적립금) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-        {/* Total Customers */}
+        {/* 1. 전체 회원 */}
         <div
           onClick={() => setCustomerGradeFilter("all")}
           className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
-            customerGradeFilter === "all" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+            customerGradeFilter === "all" ? "ring-2 ring-neutral-950 border-neutral-950 shadow-md" : "border-neutral-200/80"
           }`}
         >
           <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>전체 회원</span>
+            <span className="flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-neutral-600" />
+              <span>전체 회원</span>
+            </span>
           </div>
           <p className="text-xl font-extrabold text-neutral-950 mt-1.5" suppressHydrationWarning>
             {sanitizedCustomersList.length > 0 || isCustomersLoaded ? `${sanitizedCustomersList.length.toLocaleString()} 명` : "-"}
@@ -358,113 +463,198 @@ export function CustomersManagement({
           <p className="text-[11px] text-neutral-400 mt-0.5">스토어 전체 등록 회원</p>
         </div>
 
-        {/* General (일반) */}
+        {/* 2. 새싹고객 (아임웹 기본 등급) */}
         <div
-          onClick={() => setCustomerGradeFilter("GENERAL")}
-          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
-            customerGradeFilter === "GENERAL" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          onClick={() => setCustomerGradeFilter("새싹고객")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-emerald-600 ${
+            customerGradeFilter === "새싹고객" ? "ring-2 ring-emerald-600 border-emerald-600 bg-emerald-50/40 shadow-md" : "border-neutral-200/80"
           }`}
         >
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>일반 (GENERAL)</span>
+          <div className="flex items-center justify-between text-xs font-bold text-emerald-800 uppercase tracking-wider">
+            <span className="flex items-center gap-1.5">
+              <Sprout className="w-3.5 h-3.5 text-emerald-600" />
+              <span>새싹고객 (기본)</span>
+            </span>
           </div>
-          <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
-            {sanitizedCustomersList.filter((c) => c.grade === "GENERAL" || c.grade === "REGULAR" || !c.grade).length.toLocaleString()} 명
+          <p className="text-xl font-extrabold text-emerald-950 mt-1.5">
+            {sproutCustomersCount.toLocaleString()} 명
           </p>
-          <p className="text-[11px] text-neutral-500 font-bold mt-0.5">기본 회원</p>
+          <p className="text-[11px] text-emerald-700/80 font-bold mt-0.5">아임웹 일반 기본 등급</p>
         </div>
 
-        {/* Silver (실버) */}
+        {/* 3. 우수고객 (아임웹 VIP) */}
         <div
-          onClick={() => setCustomerGradeFilter("SILVER")}
-          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
-            customerGradeFilter === "SILVER" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          onClick={() => setCustomerGradeFilter("우수고객")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-amber-500 ${
+            customerGradeFilter === "우수고객" ? "ring-2 ring-amber-500 border-amber-500 bg-amber-50/40 shadow-md" : "border-neutral-200/80"
           }`}
         >
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>실버 (SILVER)</span>
+          <div className="flex items-center justify-between text-xs font-bold text-amber-900 uppercase tracking-wider">
+            <span className="flex items-center gap-1.5">
+              <Crown className="w-3.5 h-3.5 text-amber-500" />
+              <span>우수고객 (VIP)</span>
+            </span>
           </div>
-          <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
-            {sanitizedCustomersList.filter((c) => c.grade === "SILVER").length.toLocaleString()} 명
+          <p className="text-xl font-extrabold text-amber-950 mt-1.5">
+            {vipCustomersCount.toLocaleString()} 명
           </p>
-          <p className="text-[11px] text-neutral-500 font-bold mt-0.5">실버 등급 회원</p>
+          <p className="text-[11px] text-amber-800/80 font-bold mt-0.5">아임웹 우수 등급 회원</p>
         </div>
 
-        {/* Gold (골드) */}
+        {/* 4. 구매 실적 고객 */}
         <div
-          onClick={() => setCustomerGradeFilter("GOLD")}
-          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
-            customerGradeFilter === "GOLD" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          onClick={() => setCustomerGradeFilter("BUYER")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-blue-600 ${
+            customerGradeFilter === "BUYER" ? "ring-2 ring-blue-600 border-blue-600 bg-blue-50/40 shadow-md" : "border-neutral-200/80"
           }`}
         >
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>골드 (GOLD)</span>
+          <div className="flex items-center justify-between text-xs font-bold text-blue-900 uppercase tracking-wider">
+            <span className="flex items-center gap-1.5">
+              <ShoppingBag className="w-3.5 h-3.5 text-blue-600" />
+              <span>구매 실적 고객</span>
+            </span>
           </div>
-          <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
-            {sanitizedCustomersList.filter((c) => c.grade === "GOLD").length.toLocaleString()} 명
+          <p className="text-xl font-extrabold text-blue-950 mt-1.5">
+            {buyerCustomersCount.toLocaleString()} 명
           </p>
-          <p className="text-[11px] text-neutral-500 font-bold mt-0.5">골드 등급 회원</p>
+          <p className="text-[11px] text-blue-700 font-bold mt-0.5">1건 이상 결제 구매 고객</p>
         </div>
 
-        {/* Platinum (플래티넘) */}
+        {/* 5. 특수 관리 회원 (직원 / 블랙리스트) */}
         <div
-          onClick={() => setCustomerGradeFilter("PLATINUM")}
-          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
-            customerGradeFilter === "PLATINUM" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          onClick={() => setCustomerGradeFilter("SPECIAL")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-rose-500 ${
+            customerGradeFilter === "SPECIAL" ? "ring-2 ring-rose-500 border-rose-500 bg-rose-50/40 shadow-md" : "border-neutral-200/80"
           }`}
         >
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            <span>플래티넘 (PLATINUM)</span>
+          <div className="flex items-center justify-between text-xs font-bold text-rose-900 uppercase tracking-wider">
+            <span className="flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+              <span>특수 관리 회원</span>
+            </span>
           </div>
-          <p className="text-xl font-extrabold text-neutral-950 mt-1.5">
-            {sanitizedCustomersList.filter((c) => c.grade === "PLATINUM").length.toLocaleString()} 명
+          <p className="text-xl font-extrabold text-rose-950 mt-1.5">
+            {specialCustomersCount.toLocaleString()} 명
           </p>
-          <p className="text-[11px] text-neutral-500 font-bold mt-0.5">플래티넘 등급 회원</p>
+          <p className="text-[11px] text-rose-700 font-bold mt-0.5">직원(3명) 및 블랙리스트(2명)</p>
         </div>
 
-        {/* VVIP */}
+        {/* 6. 총 적립금 자산 현황 */}
         <div
-          onClick={() => setCustomerGradeFilter("VVIP")}
-          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
-            customerGradeFilter === "VVIP" ? "ring-2 ring-neutral-950 border-neutral-950" : "border-neutral-200/80"
+          onClick={() => setCustomerGradeFilter("all")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-violet-500 ${
+            customerGradeFilter === "all" ? "border-neutral-200/80 hover:border-violet-500" : "border-neutral-200/80"
           }`}
+          title="클릭 시 전체 회원 목록 표시"
         >
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-950 uppercase tracking-wider">
-            <span className="font-black">VVIP</span>
+          <div className="flex items-center justify-between text-xs font-bold text-violet-900 uppercase tracking-wider">
+            <span className="flex items-center gap-1.5">
+              <Coins className="w-3.5 h-3.5 text-violet-600" />
+              <span>총 적립금 누적액</span>
+            </span>
           </div>
-          <p className="text-xl font-black text-neutral-950 mt-1.5">
-            {sanitizedCustomersList.filter((c) => c.grade === "VVIP" || c.grade?.includes("VIP") || c.role === "ADMIN").length.toLocaleString()} 명
+          <p className="text-xl font-black text-violet-950 mt-1.5 font-mono">
+            {totalPointsSum.toLocaleString()} P
           </p>
-          <p className="text-[11px] text-neutral-900 font-extrabold mt-0.5">최상위 VIP 회원</p>
+          <p className="text-[11px] text-violet-700 font-bold mt-0.5">회원 보유 포인트 합계</p>
         </div>
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-sm space-y-4">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+      <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <input
               type="text"
-              placeholder="회원 이름, 이메일, 전화번호, 주소 검색..."
+              placeholder="회원 이름, 아이디, 이메일, 전화번호, 주소 검색..."
               value={customerSearchQuery}
               onChange={(e) => setCustomerSearchQuery(e.target.value)}
-              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950"
+              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950 transition-colors"
             />
           </div>
 
-          {(customerSearchQuery || customerGradeFilter !== "all") && (
-            <button
-              type="button"
-              onClick={() => {
-                setCustomerSearchQuery("");
-                setCustomerGradeFilter("all");
-              }}
-              className="text-xs font-bold text-rose-600 hover:underline px-2 cursor-pointer"
-            >
-              필터 초기화
-            </button>
-          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Quick Segment Filter Badges */}
+            <div className="flex items-center gap-1 text-xs bg-neutral-100 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setCustomerGradeFilter("all")}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  customerGradeFilter === "all" ? "bg-white text-neutral-950 shadow-xs" : "text-neutral-600 hover:text-neutral-950"
+                }`}
+              >
+                전체 ({sanitizedCustomersList.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomerGradeFilter("새싹고객")}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  customerGradeFilter === "새싹고객" ? "bg-emerald-600 text-white shadow-xs" : "text-emerald-700 hover:text-emerald-950"
+                }`}
+              >
+                새싹 ({sproutCustomersCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomerGradeFilter("우수고객")}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  customerGradeFilter === "우수고객" ? "bg-amber-500 text-white shadow-xs" : "text-amber-800 hover:text-amber-950"
+                }`}
+              >
+                우수 ({vipCustomersCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomerGradeFilter("BUYER")}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  customerGradeFilter === "BUYER" ? "bg-blue-600 text-white shadow-xs" : "text-blue-700 hover:text-blue-950"
+                }`}
+              >
+                구매고객 ({buyerCustomersCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomerGradeFilter("SPECIAL")}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  customerGradeFilter === "SPECIAL" ? "bg-rose-600 text-white shadow-xs" : "text-rose-700 hover:text-rose-950"
+                }`}
+              >
+                특수회원 ({specialCustomersCount})
+              </button>
+            </div>
+
+            {(customerSearchQuery || customerGradeFilter !== "all") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomerSearchQuery("");
+                  setCustomerGradeFilter("all");
+                }}
+                className="text-xs font-bold text-rose-600 hover:text-rose-800 hover:underline px-2 py-1 cursor-pointer transition-colors"
+              >
+                초기화
+              </button>
+            )}
+          </div>
         </div>
+
+        {customerGradeFilter !== "all" && (
+          <div className="flex items-center gap-2 pt-1 text-xs text-neutral-600 animate-in fade-in">
+            <span className="font-semibold text-neutral-500">현재 필터:</span>
+            <span className="inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-md bg-neutral-900 text-white text-[11px]">
+              {customerGradeFilter === "새싹고객"
+                ? "🌱 새싹고객"
+                : customerGradeFilter === "우수고객"
+                ? "👑 우수고객"
+                : customerGradeFilter === "BUYER"
+                ? "🛍️ 구매 실적 고객"
+                : customerGradeFilter === "SPECIAL"
+                ? "⚠️ 특수 관리 회원"
+                : customerGradeFilter}
+            </span>
+            <span className="text-neutral-400">({filteredCustomers.length}명 검색됨)</span>
+          </div>
+        )}
       </div>
 
       {/* Customer Table */}
@@ -473,17 +663,17 @@ export function CustomersManagement({
           <table className="w-full text-left text-sm text-neutral-700">
             <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
               <tr>
-                <th className="py-3.5 px-5">회원 정보</th>
+                <th className="py-3.5 px-5">회원 정보 (아이디/이메일)</th>
                 <th className="py-3.5 px-5">연락처 / 배송지 주소</th>
-                <th className="py-3.5 px-5">회원 등급</th>
-                <th className="py-3.5 px-5">누적 구매금액</th>
+                <th className="py-3.5 px-5">회원 등급 / 그룹</th>
+                <th className="py-3.5 px-5">구매 실적 (금액/건수)</th>
                 <th className="py-3.5 px-5">
                   <span className="flex items-center gap-1">
                     보유 적립금
                     <span className="text-[10px] font-normal normal-case text-neutral-400 font-sans">(클릭 시 내역)</span>
                   </span>
                 </th>
-                <th className="py-3.5 px-5">가입일</th>
+                <th className="py-3.5 px-5">가입일 / 최근접속</th>
                 <th className="py-3.5 px-5 text-right">관리</th>
               </tr>
             </thead>
@@ -499,47 +689,74 @@ export function CustomersManagement({
                   <tr key={`${cust.id || 'cust'}-${cust.email || index}-${index}`} className="hover:bg-neutral-50/70 transition-colors">
                     <td className="py-4 px-5">
                       <div>
-                        <p className="font-extrabold text-neutral-950 text-sm flex items-center gap-1.5">
-                          {cust.name}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-extrabold text-neutral-950 text-sm">{cust.name}</span>
                           {cust.isAdmin && (
-                            <span className="bg-neutral-950 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">
+                            <span className="bg-neutral-950 text-white text-[9px] font-black px-1.5 py-0.5 rounded font-mono">
                               ADMIN
                             </span>
                           )}
-                          <span className="text-[10px] font-mono text-neutral-400 font-normal truncate max-w-[120px]">({cust.id})</span>
+                          {isSpecialCustomer(cust) && !cust.isAdmin && (
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
+                              String(cust.group || '').includes('직원') ? 'bg-indigo-100 text-indigo-800' : 'bg-rose-100 text-rose-800'
+                            }`}>
+                              {String(cust.group || '').includes('직원') ? '직원' : '블랙리스트'}
+                            </span>
+                          )}
+                          {(cust.imwebUid || cust.id) && (
+                            <span className="text-[10px] font-mono text-neutral-400 font-normal">
+                              ({cust.imwebUid || cust.id})
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-neutral-600 font-mono mt-0.5 flex items-center gap-1">
+                          <span className="text-[10px] text-neutral-400 font-sans">ID:</span>
+                          <span className="font-medium text-neutral-900">{cust.email}</span>
                         </p>
-                        <p className="text-xs text-neutral-500">{cust.email}</p>
                       </div>
                     </td>
                     <td className="py-4 px-5">
-                      <p className="font-mono text-xs text-neutral-900 font-bold">{cust.phone}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono text-xs text-neutral-900 font-bold">{cust.phone}</span>
+                        {cust.phone && cust.phone.replace(/[^0-9]/g, '').length >= 4 && (
+                          <span className="text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.2 rounded font-mono" title="초기 로그인 비밀번호">
+                            비번: ****{cust.phone.replace(/[^0-9]/g, '').slice(-4)}
+                          </span>
+                        )}
+                      </div>
                       {cust.address && cust.address !== "-" ? (
-                        <p className="text-[11px] text-neutral-500 font-sans mt-0.5 truncate max-w-[240px]" title={cust.address}>
-                          {cust.address}
+                        <p className="text-[11px] text-neutral-500 font-sans mt-0.5 truncate max-w-[240px]" title={cust.detailAddress ? `${cust.address} ${cust.detailAddress}` : cust.address}>
+                          {cust.address} {cust.detailAddress || ""}
                         </p>
                       ) : (
                         <p className="text-[11px] text-neutral-400 italic mt-0.5">주소 미등록</p>
                       )}
                     </td>
                     <td className="py-4 px-5">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-black uppercase ${
-                          cust.grade === "VVIP" || cust.grade?.includes("BLACK")
-                            ? "bg-neutral-950 text-white border border-neutral-800 shadow-2xs"
-                            : cust.grade === "PLATINUM"
-                            ? "bg-neutral-800 text-white border border-neutral-700 shadow-2xs"
-                            : cust.grade === "GOLD" || cust.grade?.includes("GOLD")
-                            ? "bg-neutral-200 text-neutral-900 border border-neutral-300"
-                            : cust.grade === "SILVER" || cust.grade?.includes("SILVER")
-                            ? "bg-neutral-100 text-neutral-800 border border-neutral-200"
-                            : "bg-white text-neutral-600 border border-neutral-300"
-                        }`}
-                      >
-                        {cust.grade || "GENERAL"}
-                      </span>
+                      <div className="space-y-1">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-black ${
+                            cust.grade === "우수고객" || cust.grade === "GOLD" || cust.grade === "VVIP" || cust.grade === "PLATINUM"
+                              ? "bg-amber-100 text-amber-900 border border-amber-300"
+                              : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                          }`}
+                        >
+                          {cust.grade || "새싹고객"}
+                        </span>
+                        {cust.group && cust.group !== "-" && (
+                          <p className="text-[10px] text-neutral-500 truncate max-w-[130px]" title={cust.group}>
+                            {cust.group}
+                          </p>
+                        )}
+                      </div>
                     </td>
-                    <td className="py-4 px-5 font-bold font-mono text-neutral-950">
-                      ₩ {cust.totalSpent.toLocaleString()}
+                    <td className="py-4 px-5 font-mono text-neutral-950">
+                      <p className="font-bold text-xs">₩ {Number(cust.totalSpent || 0).toLocaleString()}</p>
+                      {cust.totalOrders !== undefined && Number(cust.totalOrders) > 0 && (
+                        <p className="text-[10px] text-neutral-500 mt-0.5 font-sans">
+                          총 {cust.totalOrders}건 구매
+                        </p>
+                      )}
                     </td>
                     <td className="py-4 px-5">
                       <button
@@ -556,7 +773,12 @@ export function CustomersManagement({
                       </button>
                     </td>
                     <td className="py-4 px-5 text-xs text-neutral-500 font-mono">
-                      {cust.joinedDate}
+                      <p>{cust.joinedDate || "-"}</p>
+                      {cust.lastLogin && (
+                        <p className="text-[10px] text-neutral-400 mt-0.5" title="최종 접속일">
+                          접속: {cust.lastLogin.split(" ")[0]}
+                        </p>
+                      )}
                     </td>
                     <td className="py-4 px-5 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -756,6 +978,32 @@ export function CustomersManagement({
             </div>
 
             <form onSubmit={handleSaveEditCustomer} className="space-y-4">
+              {/* 계정 로그인 정책 안내 */}
+              <div className="bg-neutral-50 border border-neutral-200/90 rounded-2xl p-3.5 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-neutral-500">로그인 아이디:</span>
+                  <span className="font-mono font-bold text-neutral-900">{editingCustomer.email || editingCustomer.loginId}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-neutral-500">초기 로그인 비밀번호:</span>
+                  <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                    휴대폰 뒤 4자리 ({editingCustomer.phone ? editingCustomer.phone.replace(/[^0-9]/g, '').slice(-4) || '미등록' : '미등록'})
+                  </span>
+                </div>
+                {(editingCustomer.imwebUid || editingCustomer.id) && (
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-neutral-500">회원 식별번호(UID):</span>
+                    <span className="font-mono text-neutral-600">{editingCustomer.imwebUid || editingCustomer.id}</span>
+                  </div>
+                )}
+                {editingCustomer.group && (
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-neutral-500">회원 그룹:</span>
+                    <span className="font-bold text-neutral-800">{editingCustomer.group}</span>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">회원 등급 변경</label>
                 <select
@@ -763,6 +1011,8 @@ export function CustomersManagement({
                   onChange={(e) => setEditCustGrade(e.target.value)}
                   className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-neutral-950 focus:outline-none focus:border-neutral-950"
                 >
+                  <option value="새싹고객">새싹고객 (일반 기본 등급)</option>
+                  <option value="우수고객">우수고객 (VIP 등급)</option>
                   <option value="GENERAL">일반 (GENERAL)</option>
                   <option value="SILVER">실버 (SILVER)</option>
                   <option value="GOLD">골드 (GOLD)</option>

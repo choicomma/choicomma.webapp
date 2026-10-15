@@ -248,7 +248,7 @@ export function useProducts({
         }
       } catch (e) {}
     }
-    return "custom";
+    return "productNoDesc";
   });
 
   const setProductSortOrder = useCallback((
@@ -262,7 +262,7 @@ export function useProducts({
     }
   }, []);
 
-  // Sync sort order on client mount
+  // Sync sort order on client mount (Default to productNoDesc: 상품번호 높은 순, 사용자 순서 지정 시 custom 유지)
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -272,6 +272,8 @@ export function useProducts({
         ["productNoDesc", "productNoAsc", "nameAsc", "priceDesc", "priceAsc", "custom"].includes(saved)
       ) {
         setProductSortOrderState(saved as any);
+      } else {
+        setProductSortOrderState("productNoDesc");
       }
     } catch (e) {}
   }, []);
@@ -456,17 +458,6 @@ export function useProducts({
                 hasAnyUpdate = true;
               }
 
-              // Ensure newly registered products (CC-468, CC-463) are displayed at the very top of the list
-              const priorityCodes = ["CC-463", "CC-468"];
-              priorityCodes.forEach((code) => {
-                const idx = merged.findIndex((p: any) => p?.productCode === code || String(p?.id).includes(code.replace("CC-", "")));
-                if (idx > 0) {
-                  const [item] = merged.splice(idx, 1);
-                  merged.unshift(item);
-                  hasAnyUpdate = true;
-                }
-              });
-
               setProductsList(keepLocalEdits(merged));
 
               // 저장 대기 표시가 없더라도, 관리자 목록(이 기기)의 순서/품절 상태가 서버(=홈화면 기준)와 다르면 서버로 다시 반영한다.
@@ -589,9 +580,9 @@ export function useProducts({
         const exists = prev.some((p) => String(p.id) === pIdStr);
         let nextList: any[];
         if (exists) {
-          nextList = prev.map((p) => (String(p.id) === pIdStr ? savedItem : p));
+          nextList = prev.map((p) => (String(p.id) === pIdStr ? { ...p, ...savedItem, displayOrder: savedItem.displayOrder ?? p.displayOrder } : p));
         } else {
-          nextList = [savedItem, ...prev];
+          nextList = [{ ...savedItem, displayOrder: 1 }, ...prev.map((p, idx) => ({ ...p, displayOrder: idx + 2 }))];
         }
         try {
           localStorage.setItem("admin_products", JSON.stringify(nextList));
@@ -757,7 +748,16 @@ export function useProducts({
 
   const getSortedBaseList = useCallback(
     (list: any[], order: string) => {
-      if (order === "custom") return [...list];
+      if (order === "custom") {
+        return [...list].sort((a, b) => {
+          const ordA = a.displayOrder !== undefined && a.displayOrder !== null ? Number(a.displayOrder) : null;
+          const ordB = b.displayOrder !== undefined && b.displayOrder !== null ? Number(b.displayOrder) : null;
+          if (ordA !== null && ordB !== null) return ordA - ordB;
+          if (ordA !== null) return -1;
+          if (ordB !== null) return 1;
+          return 0;
+        });
+      }
       return [...list].sort((a, b) => {
         if (order === "productNoDesc") {
           // 최신 등록순 (1순위: 등록번호 높은 순, 2순위: 등록일시 최신순)
@@ -1306,8 +1306,9 @@ export function useProducts({
     const updated = [...baseList];
     const [movedItem] = updated.splice(fromIdx, 1);
     updated.splice(toIdx, 0, movedItem);
-    setProductsList(updated);
-    saveProductsToStorage(updated);
+    const ordered = updated.map((p, idx) => ({ ...p, displayOrder: idx + 1 }));
+    setProductsList(ordered);
+    saveProductsToStorage(ordered, false, "merge");
     if (showToast) {
       triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
     }
@@ -1422,8 +1423,9 @@ export function useProducts({
           const updated = [...baseList];
           const [movedItem] = updated.splice(fromIdx, 1);
           updated.splice(toIdx, 0, movedItem);
-          setProductsList(updated);
-          saveProductsToStorage(updated);
+          const ordered = updated.map((p, pIdx) => ({ ...p, displayOrder: pIdx + 1 }));
+          setProductsList(ordered);
+          saveProductsToStorage(ordered, false, "merge");
           triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
           return;
         }
@@ -1439,9 +1441,10 @@ export function useProducts({
     const temp = newList[idx];
     newList[idx] = newList[targetIdx];
     newList[targetIdx] = temp;
+    const ordered = newList.map((p, pIdx) => ({ ...p, displayOrder: pIdx + 1 }));
 
-    setProductsList(newList);
-    saveProductsToStorage(newList);
+    setProductsList(ordered);
+    saveProductsToStorage(ordered, false, "merge");
     triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
   }, [filteredProducts, getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
@@ -1457,8 +1460,9 @@ export function useProducts({
     const updated = [...baseList];
     const [movedItem] = updated.splice(idx, 1);
     updated.unshift(movedItem);
-    setProductsList(updated);
-    saveProductsToStorage(updated);
+    const ordered = updated.map((p, pIdx) => ({ ...p, displayOrder: pIdx + 1 }));
+    setProductsList(ordered);
+    saveProductsToStorage(ordered, false, "merge");
     triggerToast(`⬆️ '${movedItem.title}' 상품이 목록 최상단으로 이동되었습니다.`);
   }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
@@ -1471,8 +1475,9 @@ export function useProducts({
     const unselected = baseList.filter((p) => !idSet.has(String(p.id)));
     if (selected.length === 0) return;
     const updated = [...selected, ...unselected];
-    setProductsList(updated);
-    saveProductsToStorage(updated);
+    const ordered = updated.map((p, pIdx) => ({ ...p, displayOrder: pIdx + 1 }));
+    setProductsList(ordered);
+    saveProductsToStorage(ordered, false, "merge");
     triggerToast(`⬆️ 선택한 ${selected.length}개 상품이 목록 최상단으로 일괄 이동되었습니다.`);
   }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 

@@ -119,21 +119,23 @@ export function deduplicateCustomers(list: any[]): any[] {
 }
 
 function parseCustomerRow(row: any, idx: number) {
-  const rawGrade = String(row["회원 등급"] || row["회원 그룹"] || "").toUpperCase().trim();
-  let grade = "GENERAL";
-  if (rawGrade.includes("VVIP") || rawGrade.includes("BLACK") || rawGrade.includes("블랙")) grade = "VVIP";
-  else if (rawGrade.includes("PLATINUM") || rawGrade.includes("플래티넘")) grade = "PLATINUM";
-  else if (rawGrade.includes("GOLD") || rawGrade.includes("골드")) grade = "GOLD";
-  else if (rawGrade.includes("SILVER") || rawGrade.includes("실버")) grade = "SILVER";
-  else if (rawGrade.includes("GENERAL") || rawGrade.includes("일반") || rawGrade.includes("REGULAR")) grade = "GENERAL";
-  else if (parseFloat(row["구매금액(KRW)"]) >= 20000000) grade = "VVIP";
-  else if (parseFloat(row["구매금액(KRW)"]) >= 10000000) grade = "PLATINUM";
-  else if (parseFloat(row["구매금액(KRW)"]) >= 5000000) grade = "GOLD";
-  else if (parseFloat(row["구매금액(KRW)"]) >= 1000000) grade = "SILVER";
-  else grade = "GENERAL";
+  const rawGrade = String(row["등급"] || row["회원 등급"] || row["회원 그룹"] || "").trim();
+  let grade = "새싹고객";
+  if (rawGrade.includes("우수고객") || rawGrade.includes("VIP") || rawGrade.includes("GOLD") || rawGrade.includes("VVIP") || rawGrade.includes("PLATINUM")) {
+    grade = "우수고객";
+  } else if (rawGrade.includes("새싹고객") || rawGrade.includes("일반") || rawGrade.includes("GENERAL") || rawGrade.includes("SILVER")) {
+    grade = "새싹고객";
+  } else if (rawGrade) {
+    grade = rawGrade;
+  }
 
-  const rawPhone = String(row["연락처"] || "").trim();
+  const group = String(row["그룹"] || row["회원 그룹"] || "").trim() || "일반회원";
+  const imwebUid = String(row["회원번호"] || row["UID"] || row["고유키"] || "").trim();
+  const email = String(row["이메일"] || row["아이디"] || "-").trim();
+  const loginId = String(row["아이디"] || email).trim();
+  const rawPhone = String(row["연락처"] || row["휴대폰"] || "").trim();
   const rawDate = String(row["가입일"] || "").trim();
+  const lastLogin = String(row["최종접속"] || "").trim();
 
   const rawZip = String(row["우편번호"] || row["받는분우편번호"] || "").trim();
   const rawAddr = String(row["주소"] || row["받는분주소(전체, 분할)"] || row["받는분주소"] || row["배송지주소"] || row["기본주소"] || "").trim();
@@ -143,19 +145,24 @@ function parseCustomerRow(row: any, idx: number) {
   const parsedAddr = splitKoreanAddress(rawAddr, rawZip, rawDetailAddr);
 
   return {
-    id: String(row["고유키"] || `CUST-${Date.now()}-${idx}`),
+    id: imwebUid || String(row["고유키"] || `CUST-${Date.now()}-${idx}`),
+    imwebUid: imwebUid || undefined,
+    loginId: loginId,
     name: String(row["이름"] || row["받는분성명"] || row["고객명"] || "무명 회원").trim(),
-    email: String(row["이메일"] || row["아이디"] || "-").trim(),
+    email: email,
     phone: rawPhone || "-",
     postcode: parsedAddr.postcode,
     address: parsedAddr.baseAddress || "-",
     detailAddress: parsedAddr.detailAddress,
     grade: grade,
     rawGrade: rawGrade,
-    totalSpent: parseFloat(row["구매금액(KRW)"]) || 0,
-    points: parseInt(row["보유 적립금 포인트"]) || 0,
+    group: group,
+    totalSpent: parseFloat(row["구매금액(KRW)"] || row["총결제금액"] || row["총구매금액"] || 0) || 0,
+    totalOrders: parseInt(row["구매건수"] || row["주문건수"] || 0) || 0,
+    points: parseInt(row["보유 적립금 포인트"] || row["적립금"] || 0) || 0,
     couponsCount: 0,
     joinedDate: rawDate ? rawDate.split(" ")[0] : new Date().toISOString().split("T")[0],
+    lastLogin: lastLogin || undefined,
     status: "Active",
   };
 }
@@ -242,7 +249,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         // 2. 로컬 캐시 회원 우선 유지 (최고관리자는 ADMIN-001 단일 키로 병합)
         localCached.forEach((c) => {
           const key = getCustomerKey(c);
-          if (key && (key === "ADMIN-001" || !c.rawGrade)) {
+          if (key) {
             if (key === "ADMIN-001") {
               const existingAdmin = customerMap.get("ADMIN-001") || DEFAULT_ADMIN_CUSTOMER;
               customerMap.set("ADMIN-001", {
@@ -264,7 +271,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         // 3. Supabase 원격 DB 회원 병합 및 주소 정제 (최고관리자는 ADMIN-001 단일 키로 병합)
         serverData.forEach((c) => {
           const key = getCustomerKey(c);
-          if (key && (key === "ADMIN-001" || !c.rawGrade)) {
+          if (key) {
             const existing = customerMap.get(key) || {};
             const parsed = splitKoreanAddress(
               c.address,
@@ -302,7 +309,11 @@ export function useCustomers(triggerToast: (msg: string) => void) {
           setCustomersList(finalList);
           setIsCustomersLoaded(true);
           if (typeof window !== "undefined") {
-            localStorage.setItem("admin_customers", JSON.stringify(finalList));
+            try {
+              localStorage.setItem("admin_customers", JSON.stringify(finalList));
+            } catch (storageErr) {
+              console.warn("Notice: LocalStorage quota reached, using in-memory list:", storageErr);
+            }
           }
 
           // 4. 로컬에만 있고 원격 DB에 누락된 회원은 백그라운드 자동 동기화 (최고관리자 제외)

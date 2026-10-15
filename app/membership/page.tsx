@@ -626,6 +626,40 @@ function MembershipContent() {
     };
   }, []);
 
+  const handleCustomerTrackingClick = async (ord: any, trackingNumber?: string) => {
+    const trk = String(trackingNumber || ord?.trackingNumber || "").replace(/[^0-9]/g, "");
+    if (!trk || trk.length < 8) return;
+    if (ord?.status === "Delivered") return;
+
+    try {
+      const res = await fetch("/api/shipping/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shipmentIds: [String(ord.id || ord.orderId)],
+          trackingNumbers: [trk],
+          applyUpdates: true,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.deliveredCount > 0) {
+          setUserOrders((prev) =>
+            prev.map((o) =>
+              String(o.id) === String(ord.id) || String(o.trackingNumber).replace(/[^0-9]/g, "") === trk
+                ? { ...o, status: "Delivered" }
+                : o
+            )
+          );
+          toast.success("배송이 완료되었습니다. 이용해 주셔서 감사합니다!");
+          window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+        }
+      }
+    } catch (err) {
+      console.warn("Tracking check error:", err);
+    }
+  };
+
   const handleCopyCoupon = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCoupon(code);
@@ -1790,7 +1824,8 @@ function MembershipContent() {
                                       href={`https://trace.cjlogistics.com/next/tracking.html?wblNo=${pkgTrackClean}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 bg-neutral-950 hover:bg-neutral-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-xs shrink-0 self-start sm:self-center"
+                                      onClick={() => handleCustomerTrackingClick(ord, pkgTrackClean)}
+                                      className="inline-flex items-center gap-1 bg-neutral-950 hover:bg-neutral-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-xs shrink-0 self-start sm:self-center cursor-pointer"
                                     >
                                       <span>배송조회</span>
                                       <ExternalLink className="w-3 h-3" />
@@ -1825,7 +1860,8 @@ function MembershipContent() {
                                   href={`https://trace.cjlogistics.com/next/tracking.html?wblNo=${trackingNumClean}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 bg-neutral-950 hover:bg-neutral-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs"
+                                  onClick={() => handleCustomerTrackingClick(ord, trackingNumClean)}
+                                  className="inline-flex items-center gap-1.5 bg-neutral-950 hover:bg-neutral-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer"
                                 >
                                   <span>CJ대한통운 실시간 배송조회</span>
                                   <ExternalLink className="w-3.5 h-3.5" />

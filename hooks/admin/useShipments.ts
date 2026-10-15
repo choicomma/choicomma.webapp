@@ -5,6 +5,11 @@ import * as XLSX from "xlsx";
 
 import { initialShipments as defaultShipments } from "@/lib/sfcc/mock/shipments-data";
 import { generateNextOrderId } from "@/lib/shipping/order-id";
+import {
+  safeSaveShipmentsToStorage,
+  safeSaveOrdersToStorage,
+  cleanBloatedStorageKeys,
+} from "@/lib/shipping/safe-shipments-storage";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Initial Shipment Data (from mock data file)
@@ -39,14 +44,39 @@ export function extractShipmentOrderNumber(str: string): number {
   return match ? parseInt(match[1], 10) : 0;
 }
 
+// 주문 생성 시간 추출 유틸 (초 단위까지 타임스탬프로 변환)
+export function getShipmentOrderTimestamp(s: any): number {
+  if (!s) return 0;
+  const raw = s.orderDate || s.order_date || s.created_at || s.createdAt;
+  if (raw) {
+    const str = String(raw).trim();
+    const match = str.match(/^(\d{4})[-./](\d{2})[-./](\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+    if (match) {
+      const [_, Y, M, D, h, m, sec] = match;
+      return new Date(Number(Y), Number(M) - 1, Number(D), Number(h), Number(m), Number(sec)).getTime();
+    }
+    const t = new Date(str).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  return 0;
+}
+
+// 주문/배송 일시 및 번호 기준 고정 내림차순 정렬 유틸 (가장 최근 주문일시가 최상단에 노출)
 export function sortShipmentsByNumber(list: any[]): any[] {
   if (!Array.isArray(list)) return [];
   return [...list].sort((a: any, b: any) => {
+    // 1순위: 주문 생성 일시 (최신 시간대 우선 내림차순)
+    const timeA = getShipmentOrderTimestamp(a);
+    const timeB = getShipmentOrderTimestamp(b);
+    if (timeB !== timeA) return timeB - timeA;
+
+    // 2순위: 동시간대 주문번호 숫자 기준 정렬
     const keyA = (a.orderId || a.id || "").trim();
     const keyB = (b.orderId || b.id || "").trim();
     const numA = extractShipmentOrderNumber(keyA);
     const numB = extractShipmentOrderNumber(keyB);
-    if (numA !== numB) return numB - numA; // 최신 번호가 상단, 1번이 가장 밑으로 정렬
+    if (numA !== numB) return numB - numA;
+
     return keyB.localeCompare(keyA, undefined, { numeric: true, sensitivity: "base" });
   });
 }
@@ -68,7 +98,7 @@ export function sanitizeShipmentsList(list: any[]): any[] {
       detailAddress: s.detailAddress || s.detail_address || "",
       trackingNumber: sanitizeCjTracking(s.trackingNumber || s.tracking_number || "-"),
       shippingMemo: memo,
-      orderDate: s.orderDate || s.order_date || "",
+      orderDate: s.orderDate || s.order_date || s.created_at || "",
       shippedDate: s.shippedDate || s.shipped_date || null,
       estimatedDelivery: s.estimatedDelivery || s.estimated_delivery || null,
       isMergedParent,
@@ -114,6 +144,7 @@ export function serializeShipmentsForSync(list: any[]): string {
         status: s.status || "Pending",
         shippingMemo: memo,
         packages: s.packages || [],
+        orderDate: s.orderDate || s.order_date || s.created_at || "",
         shippedDate: s.shippedDate || null,
         estimatedDelivery: s.estimatedDelivery || null,
         isMergedParent: Boolean(s.isMergedParent ?? pkg0.isMergedParent ?? memo.includes("[합배송:")),
@@ -143,6 +174,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
     // Load any locally cached edits immediately after client hydration
     if (typeof window !== "undefined") {
+      cleanBloatedStorageKeys();
       const saved = localStorage.getItem("admin_shipments");
       if (saved) {
         try {
@@ -173,8 +205,8 @@ export function useShipments(triggerToast: (msg: string) => void) {
             if (data.length === 0) {
               lastSyncedJsonRef.current = "";
               if (typeof window !== "undefined") {
-                localStorage.setItem("admin_shipments", JSON.stringify([]));
-                localStorage.setItem("admin_orders", JSON.stringify([]));
+                safeSaveShipmentsToStorage([]);
+                safeSaveOrdersToStorage([]);
               }
               setShipmentsList([]);
               return;
@@ -204,10 +236,13 @@ export function useShipments(triggerToast: (msg: string) => void) {
                     mergedPackages = serverItem.packages.map((sp: any, idx: number) => {
                       const lp = localItem.packages.find((p: any) => (p.pkgIndex || idx + 1) === (sp.pkgIndex || idx + 1)) || localItem.packages[idx];
                       if (lp && lp.trackingNumber && lp.trackingNumber !== "-" && (!sp.trackingNumber || sp.trackingNumber === "-")) {
+                        const pkgStatus = sp.status === "Delivered" || lp.status === "Delivered"
+                          ? "Delivered"
+                          : (lp.status !== "Pending" ? lp.status : sp.status);
                         return {
                           ...sp,
                           trackingNumber: lp.trackingNumber,
-                          status: lp.status !== "Pending" ? lp.status : sp.status,
+                          status: pkgStatus,
                         };
                       }
                       return sp;
@@ -226,7 +261,27 @@ export function useShipments(triggerToast: (msg: string) => void) {
                   ? localItem.trackingNumber
                   : (pkgHasTracking || serverItem.trackingNumber || "-");
 
-                const finalStatus = localItem.status !== "Pending" ? localItem.status : serverItem.status;
+                // 배송 상태 병합 규칙:
+                // 1) 서버에 "Delivered"(배송 완료) 또는 환불/반품/교환 등 최종 상태가 있으면 로컬 캐시보다 서버 상태 우선 반영
+                // 2) 서버가 아직 "Pending"인데 로컬에 송장이 발급되어 "In Transit"인 경우에만 로컬 상태 유지
+                let finalStatus = serverItem.status || localItem.status || "Pending";
+                if (serverItem.status === "Delivered" || localItem.status === "Delivered") {
+                  finalStatus = "Delivered";
+                } else if (
+                  serverItem.status === "환불완료" ||
+                  serverItem.status === "환불완료 (토스)" ||
+                  serverItem.status === "반품수거접수완료" ||
+                  serverItem.status === "교환수거접수완료"
+                ) {
+                  finalStatus = serverItem.status;
+                } else if (localItem.status && localItem.status !== "Pending") {
+                  finalStatus = localItem.status;
+                }
+
+                // 배송완료 상태인 경우 하위 패키지 상태도 일괄 배송완료로 정렬
+                const finalPackages = Array.isArray(mergedPackages)
+                  ? mergedPackages.map((p: any) => finalStatus === "Delivered" ? { ...p, status: "Delivered" } : p)
+                  : mergedPackages;
 
                 // 3) 합배송 상태는 서버 최신 데이터를 우선 반영하여 stale 로컬 캐시로 인한 영구 잠김 방지
                 const isMergedParent = Boolean(serverItem.isMergedParent);
@@ -239,10 +294,12 @@ export function useShipments(triggerToast: (msg: string) => void) {
                 return {
                   ...localItem,
                   ...serverItem,
-                  packages: mergedPackages,
+                  packages: finalPackages,
                   trackingNumber: finalTracking,
                   status: finalStatus,
                   shippedDate: localItem.shippedDate || serverItem.shippedDate,
+                  deliveredDate: finalStatus === "Delivered" ? (serverItem.deliveredDate || localItem.deliveredDate || serverItem.orderDate?.slice(0, 10) || null) : (localItem.deliveredDate || null),
+                  delivered_at: finalStatus === "Delivered" ? (serverItem.delivered_at || localItem.delivered_at || serverItem.orderDate || null) : (localItem.delivered_at || null),
                   isMergedParent,
                   isMergedChild,
                   mergedIntoId,
@@ -259,7 +316,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
               lastSyncedJsonRef.current = serializeShipmentsForSync(fullMerged);
               if (typeof window !== "undefined") {
-                localStorage.setItem("admin_shipments", JSON.stringify(fullMerged));
+                safeSaveShipmentsToStorage(fullMerged);
               }
 
               if (JSON.stringify(prev) === JSON.stringify(fullMerged)) return prev;
@@ -317,7 +374,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
     }
 
     const currentJson = JSON.stringify(shipmentsList);
-    localStorage.setItem("admin_shipments", currentJson);
+    safeSaveShipmentsToStorage(shipmentsList);
 
     // Debounce server POST to batch quick consecutive edits and prevent request hammering
     if (syncTimeoutRef.current) {
@@ -341,7 +398,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
               isRemoteUpdateRef.current = true;
               lastSyncedJsonRef.current = serverSerialized;
               setShipmentsList(serverMerged);
-              localStorage.setItem("admin_shipments", JSON.stringify(serverMerged));
+              safeSaveShipmentsToStorage(serverMerged);
             }
           }
         })
@@ -413,7 +470,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
                 }));
               if (newFromOrders.length > 0) {
                 const updated = [...prev, ...newFromOrders];
-                localStorage.setItem("admin_shipments", JSON.stringify(updated));
+                safeSaveShipmentsToStorage(updated);
                 return updated;
               }
               return prev;
@@ -699,7 +756,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
     setShipmentsList(updated);
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("admin_shipments", JSON.stringify(updated));
+      safeSaveShipmentsToStorage(updated);
       try {
         const deletedRaw = localStorage.getItem("admin_deleted_shipment_ids");
         const set = new Set(deletedRaw ? JSON.parse(deletedRaw) : []);
@@ -920,7 +977,7 @@ export function useShipments(triggerToast: (msg: string) => void) {
 
       // 브라우저 캐시 및 서버 API(Supabase)에 영구 저장
       if (typeof window !== "undefined") {
-        localStorage.setItem("admin_shipments", JSON.stringify(currentList));
+        safeSaveShipmentsToStorage(currentList);
       }
       try {
         await fetch("/api/admin/shipments", {

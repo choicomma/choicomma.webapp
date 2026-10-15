@@ -54,7 +54,7 @@ export function normalizeName(name?: string): string {
 export function formatTimeDifference(date1: string, date2: string): string {
   const t1 = new Date(date1).getTime();
   const t2 = new Date(date2).getTime();
-  if (isNaN(t1) || isNaN(t2)) return "1주일 이내 주문";
+  if (isNaN(t1) || isNaN(t2)) return "72시간 이내 주문";
 
   const diffMs = Math.abs(t2 - t1);
   const diffMinutes = Math.round(diffMs / (60 * 1000));
@@ -75,7 +75,7 @@ export function formatTimeDifference(date1: string, date2: string): string {
 }
 
 /**
- * 1주일(7일) 이내 동일 고객/주소지 합배송 가능 대상 감지 유틸리티
+ * 최근 주문 기준 72시간(3일) 이내 동일 고객/주소지 합배송 가능 대상 감지 유틸리티
  */
 export function detectBundleCandidates(
   shipments: any[],
@@ -83,9 +83,33 @@ export function detectBundleCandidates(
 ): BundleGroup[] {
   if (!Array.isArray(shipments) || shipments.length < 2) return [];
 
-  // 1. 배송 대기 중이며 송장이 미발급된 건만 필터링
+  // 기본 72시간 (3일) 윈도우
+  let maxWindowHours = 72;
+  if (typeof window !== "undefined") {
+    try {
+      const saved = localStorage.getItem("shipping_policy") || localStorage.getItem("admin_shipping_policy");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.bundleHours === "number" && parsed.bundleHours > 0) {
+          maxWindowHours = parsed.bundleHours;
+        }
+      }
+    } catch {}
+  }
+  const windowMs = maxWindowHours * 60 * 60 * 1000;
+
+  // 최신 주문 기준 시점 산출 (현재 시간 또는 DB 내 가장 최근 주문 시점)
+  const now = Date.now();
+  let latestOrderTime = 0;
+  shipments.forEach((s) => {
+    const t = new Date(s.orderDate || s.created_at || 0).getTime();
+    if (!isNaN(t) && t > latestOrderTime) latestOrderTime = t;
+  });
+  const referenceTime = Math.max(now, latestOrderTime);
+
+  // 1. 배송 대기 중이며 송장이 미발급된 최근 주문(72시간 이내)만 필터링
   const candidates = shipments.filter((s) => {
-    // 이미 합배송으로 흡수된 자식 주문이거나, 이미 합배송 완료된 부모 주문은 추가 묶음 대상에서 기본 제외 (추후 재통합도 가능)
+    // 이미 합배송으로 흡수된 자식 주문이거나, 이미 합배송 완료된 부모 주문은 추가 묶음 대상에서 기본 제외
     const pkg0 = Array.isArray(s.packages) && s.packages[0] ? s.packages[0] : {};
     const memo = String(s.shippingMemo || s.shipping_memo || "");
     const isMergedChild = Boolean(s.isMergedChild || s.mergedIntoId || pkg0.isMergedChild || pkg0.mergedIntoId || memo.includes("[합배송 완료]"));
@@ -99,7 +123,15 @@ export function detectBundleCandidates(
     // 운송장 번호가 아직 발급되지 않은 건만 대상
     const noTracking = !s.trackingNumber || s.trackingNumber === "-" || s.trackingNumber.trim() === "";
 
-    return isPending && noTracking;
+    if (!isPending || !noTracking) return false;
+
+    // 최근 주문 72시간 이내 주문만 합배송 감지 (2년 전 2024년 등 과거 데이터 방지)
+    const orderTime = new Date(s.orderDate || s.created_at || 0).getTime();
+    if (isNaN(orderTime) || (referenceTime - orderTime) > windowMs) {
+      return false;
+    }
+
+    return true;
   });
 
   if (candidates.length < 2) return [];
@@ -126,7 +158,7 @@ export function detectBundleCandidates(
 
   const bundleGroups: BundleGroup[] = [];
 
-  // 3. 그룹별 1주일(7일) 이내 결제 건 분석 및 묶음 그룹 생성
+  // 3. 그룹별 최근 72시간(3일) 이내 결제 건 분석 및 묶음 그룹 생성
   map.forEach((items, key) => {
     if (items.length < 2) return;
 
@@ -137,8 +169,7 @@ export function detectBundleCandidates(
       return timeA - timeB;
     });
 
-    // 1주일(7일: 7 * 24 * 60 * 60 * 1000 ms) 윈도우 검사
-    const windowMs = 7 * 24 * 60 * 60 * 1000;
+    // 72시간 윈도우 검사
     const matchedClusters: any[][] = [];
     let currentCluster: any[] = [sorted[0]];
 

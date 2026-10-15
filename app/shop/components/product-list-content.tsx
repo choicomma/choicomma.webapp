@@ -390,9 +390,19 @@ export function ProductListContent({
         return getProductNoNum(a) - getProductNoNum(b);
       }
       if (sort === "newest") {
+        const orderA = a.displayOrder !== undefined && a.displayOrder !== null ? Number(a.displayOrder) : null;
+        const orderB = b.displayOrder !== undefined && b.displayOrder !== null ? Number(b.displayOrder) : null;
+        if (orderA !== null && orderB !== null) return orderA - orderB;
+        if (orderA !== null) return -1;
+        if (orderB !== null) return 1;
         return getProductNoNum(b) - getProductNoNum(a);
       }
       // Default: preserve fixed array order (latest products first / admin-saved order)
+      const orderA = a.displayOrder !== undefined && a.displayOrder !== null ? Number(a.displayOrder) : null;
+      const orderB = b.displayOrder !== undefined && b.displayOrder !== null ? Number(b.displayOrder) : null;
+      if (orderA !== null && orderB !== null) return orderA - orderB;
+      if (orderA !== null) return -1;
+      if (orderB !== null) return 1;
       return 0;
     });
 

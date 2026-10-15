@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   Truck,
   RefreshCw,
@@ -29,9 +29,11 @@ import {
   Sparkles,
   Barcode,
   ChevronDown,
+  Clock,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { CjLabelPrint } from "./cj-label-print";
+import { TrackingSyncModal } from "./tracking-sync-modal";
 import { sortShipmentsByNumber } from "@/hooks/admin/useShipments";
 import {
   detectBundleCandidates,
@@ -42,6 +44,36 @@ import {
   type BundleGroup,
 } from "@/lib/shipping/bundle-detector";
 import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
+import { safeSaveShipmentsToStorage } from "@/lib/shipping/safe-shipments-storage";
+import {
+  resolveColorSpecificThumbnail,
+  getProductThumbnail as resolveProductThumbnail,
+  findProductFromCatalog,
+  getProductInitial,
+  getProductBadgeColor,
+} from "@/lib/products/thumbnail-helper";
+
+export function formatOrderDateTime(rawDate?: string | null): string {
+  if (!rawDate) return "";
+  const str = String(rawDate).trim();
+  const match = str.match(/^(\d{4}[-./]\d{2}[-./]\d{2})[ T](\d{2}:\d{2}(?::\d{2})?)/);
+  if (match) {
+    return `${match[1].replace(/[./]/g, "-")} ${match[2]}`;
+  }
+  try {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const Y = d.getFullYear();
+      const M = String(d.getMonth() + 1).padStart(2, "0");
+      const D = String(d.getDate()).padStart(2, "0");
+      const h = String(d.getHours()).padStart(2, "0");
+      const m = String(d.getMinutes()).padStart(2, "0");
+      const s = String(d.getSeconds()).padStart(2, "0");
+      return `${Y}-${M}-${D} ${h}:${m}:${s}`;
+    }
+  } catch {}
+  return str;
+}
 
 interface OrdersManagementProps {
   productsList?: any[];
@@ -242,7 +274,7 @@ export function OrdersManagement({
     );
   }, [selectedOrderSheetShipment, customersList]);
 
-  // ── 📦 동일 고객/주소지 1주일(7일) 이내 합배송 자동 감지 ─────────────────────────
+  // ── 📦 동일 고객/주소지 최근 주문 기준 72시간(3일) 이내 합배송 자동 감지 ─────────────────────────
   const bundleGroups = useMemo(() => {
     return detectBundleCandidates(shipmentsList, customersList);
   }, [shipmentsList, customersList]);
@@ -297,7 +329,7 @@ export function OrdersManagement({
 
     // 로컬 스토리지 및 Supabase 실시간 동기화
     if (typeof window !== "undefined") {
-      localStorage.setItem("admin_shipments", JSON.stringify(updatedShipments));
+      safeSaveShipmentsToStorage(updatedShipments);
       window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
     }
     try {
@@ -453,7 +485,7 @@ export function OrdersManagement({
     setShipmentsList(updated);
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("admin_shipments", JSON.stringify(updated));
+      safeSaveShipmentsToStorage(updated);
       window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
     }
     try {
@@ -571,6 +603,8 @@ export function OrdersManagement({
     name: string;
     qty: number;
     selectedQty: number; // 인라인 빠른 수량 선택용
+    option?: string;
+    raw?: string;
   }
 
   const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
@@ -588,6 +622,229 @@ export function OrdersManagement({
     moveQty: number;
   } | null>(null);
 
+  // 배송현황 실시간 동기화 모달 상태
+  const [isTrackingSyncModalOpen, setIsTrackingSyncModalOpen] = useState(false);
+
+  // 현재 배송 중 건수 카운트
+  const inTransitCount = useMemo(() => {
+    return shipmentsList.filter((s) => {
+      const hasTracking =
+        s.trackingNumber &&
+        s.trackingNumber !== "-" &&
+        s.trackingNumber.replace(/[^0-9]/g, "").length >= 8;
+      return hasTracking && (s.status === "In Transit" || s.status === "Partially Shipped");
+    }).length;
+  }, [shipmentsList]);
+
+  // 배송현황 동기화 완료 적용 핸들러
+  const handleApplyTrackingSync = async (deliveredShipmentIds: string[]) => {
+    if (!deliveredShipmentIds || deliveredShipmentIds.length === 0) return;
+    const idSet = new Set(deliveredShipmentIds.map(String));
+    const nowIso = new Date().toISOString();
+    const todayStr = nowIso.split("T")[0];
+
+    const updatedShipments = shipmentsList.map((s) => {
+      if (idSet.has(String(s.id))) {
+        return {
+          ...s,
+          status: "Delivered",
+          deliveredDate: todayStr,
+          delivered_at: nowIso,
+          updated_at: nowIso,
+        };
+      }
+      return s;
+    });
+
+    setShipmentsList(updatedShipments);
+
+    if (typeof window !== "undefined") {
+      safeSaveShipmentsToStorage(updatedShipments);
+      window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+    }
+
+    try {
+      await fetch("/api/shipping/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          applyUpdates: true,
+          shipmentIds: deliveredShipmentIds,
+        }),
+      });
+    } catch (e) {
+      console.warn("Tracking sync DB update warning:", e);
+    }
+
+    triggerToast(`총 ${deliveredShipmentIds.length}건의 주문이 '배송 완료'로 일괄 변경되었습니다.`);
+  };
+
+  // 운송장번호 클릭 시 CJ 공식 배송조회창 팝업과 동시에 사이트 배송상태 실시간 동기화
+  const handleTrackingClick = useCallback(
+    async (ship: any, trackingNumber?: string) => {
+      const trk = String(trackingNumber || ship?.trackingNumber || "").replace(/[^0-9]/g, "");
+      if (!trk || trk.length < 8) return;
+
+      // 이미 '배송 완료'인 경우 추가 동기화 생략
+      if (ship?.status === "Delivered") return;
+
+      try {
+        const res = await fetch("/api/shipping/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            shipmentIds: [String(ship.id)],
+            trackingNumbers: [trk],
+            applyUpdates: true,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.deliveredCount > 0) {
+            const nowIso = new Date().toISOString();
+            const todayStr = nowIso.split("T")[0];
+
+            setShipmentsList((prev) => {
+              const updated = prev.map((s) => {
+                if (
+                  String(s.id) === String(ship.id) ||
+                  String(s.orderId) === String(ship.orderId) ||
+                  String(s.trackingNumber).replace(/[^0-9]/g, "") === trk
+                ) {
+                  return {
+                    ...s,
+                    status: "Delivered",
+                    deliveredDate: todayStr,
+                    delivered_at: nowIso,
+                    updated_at: nowIso,
+                    packages: Array.isArray(s.packages)
+                      ? s.packages.map((p: any) => ({ ...p, status: "Delivered" }))
+                      : s.packages,
+                  };
+                }
+                return s;
+              });
+
+              if (typeof window !== "undefined") {
+                safeSaveShipmentsToStorage(updated);
+                window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+              }
+              return updated;
+            });
+
+            triggerToast(
+              `🚚 [실시간 배송조회 동기화] ${ship.recipient || "고객"}님의 송장(${trk})이 '배송 완료'로 즉시 반영되었습니다.`
+            );
+          } else if (data.success && Array.isArray(data.results) && data.results[0]) {
+            const result = data.results[0];
+            const stateText = result.stateText || "배송 진행중";
+            const loc = result.location ? ` (${result.location})` : "";
+            triggerToast(`📦 [CJ대한통운 조회] ${trk}: 현재 [${stateText}${loc}] 상태입니다.`);
+          }
+        }
+      } catch (err) {
+        console.warn("[Tracking Click Sync Error]", err);
+      }
+    },
+    [setShipmentsList, triggerToast]
+  );
+
+  // ── 🚚 CJ대한통운 실시간 백그라운드 자동 동기화 ────────────────────────────
+  const [isAutoSyncing, setIsAutoSyncing] = useState(false);
+  const [lastSyncedTime, setLastSyncedTime] = useState<Date | null>(null);
+  const isAutoSyncRunningRef = useRef(false);
+
+  // 백그라운드 무인 자동 동기화 실행 함수 (사용자 클릭 불필요)
+  const runSilentBackgroundSync = useCallback(
+    async (notifyOnDelivered = true) => {
+      if (isAutoSyncRunningRef.current) return;
+      isAutoSyncRunningRef.current = true;
+      setIsAutoSyncing(true);
+
+      try {
+        const res = await fetch("/api/shipping/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            onlyInTransit: true,
+            maxItems: 100,
+            applyUpdates: true,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const now = new Date();
+          setLastSyncedTime(now);
+
+          if (data.deliveredCount > 0 && Array.isArray(data.updatedIds) && data.updatedIds.length > 0) {
+            const deliveredIdSet = new Set(data.updatedIds.map(String));
+            const nowIso = now.toISOString();
+            const todayStr = nowIso.split("T")[0];
+
+            setShipmentsList((prev) => {
+              const updated = prev.map((s) => {
+                if (deliveredIdSet.has(String(s.id))) {
+                  return {
+                    ...s,
+                    status: "Delivered",
+                    deliveredDate: todayStr,
+                    delivered_at: nowIso,
+                    updated_at: nowIso,
+                  };
+                }
+                return s;
+              });
+
+              if (typeof window !== "undefined") {
+                safeSaveShipmentsToStorage(updated);
+                window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
+              }
+              return updated;
+            });
+
+            if (notifyOnDelivered) {
+              triggerToast(
+                `🚚 [CJ대한통운 실시간 연동] ${data.deliveredCount}건의 배송이 완료되어 '배송 완료' 상태로 자동 변경되었습니다.`
+              );
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("[Background Auto-Sync Warning]", err);
+      } finally {
+        isAutoSyncRunningRef.current = false;
+        setIsAutoSyncing(false);
+      }
+    },
+    [setShipmentsList, triggerToast]
+  );
+
+  // 페이지 마운트 직후(1.5초 후) 및 주기적(4분마다) 백그라운드 자동 동기화 활성화
+  useEffect(() => {
+    const initialTimer = setTimeout(() => {
+      runSilentBackgroundSync(true);
+    }, 1500);
+
+    const intervalTimer = setInterval(() => {
+      runSilentBackgroundSync(true);
+    }, 4 * 60 * 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        runSilentBackgroundSync(false);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(intervalTimer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [runSilentBackgroundSync]);
+
   // 문자열 품목 파싱 헬퍼
   const parseItemsToSplitList = (itemsStr: string): SplitItem[] => {
     if (!itemsStr) return [];
@@ -597,75 +854,51 @@ export function OrdersManagement({
       if (!trimmed) return;
       const qtyMatch = trimmed.match(/(\d+)\s*개/) || trimmed.match(/x\s*(\d+)/i);
       const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
-      const cleanName = trimmed.replace(/\s*\d+\s*개$/, "").replace(/\s*x\s*\d+$/i, "").trim();
+      const safeText = trimmed.replace(/f\/w/gi, "F__W").replace(/s\/s/gi, "S__S");
+      let text = safeText.replace(/\s*\d+\s*개$/, "").replace(/\s*x\s*\d+$/i, "").trim();
+
+      // 옵션 추출 (중첩 괄호 안전 탐욕 매칭)
+      let parenOption = "";
+      const parenMatch = text.match(/\((.*)\)$/);
+      if (parenMatch) {
+        parenOption = parenMatch[1].trim();
+        text = text.replace(/\s*\(.*\)$/, "").trim();
+      }
+
+      let name = text;
+      let slashOption = "";
+      if (text.includes("/")) {
+        const parts = text.split(/\s*\/\s*/);
+        name = parts[0].trim();
+        slashOption = parts.slice(1).join(" / ").trim();
+      }
+
+      name = name.replace(/F__W/g, "F/W").replace(/S__S/g, "S/S");
+      slashOption = slashOption.replace(/F__W/g, "F/W").replace(/S__S/g, "S/S");
+      parenOption = parenOption.replace(/F__W/g, "F/W").replace(/S__S/g, "S/S");
+
+      const combinedOption = [slashOption, parenOption].filter(Boolean).join(" / ");
+
       result.push({
         id: `item-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
-        name: cleanName || trimmed,
+        name: name || trimmed,
         qty: qty || 1,
         selectedQty: 1,
+        option: combinedOption || undefined,
+        raw: trimmed,
       });
     });
     return result;
   };
 
-  // 상품명 기반 썸네일 매칭 헬퍼
-  const getProductThumbnail = (rawName: string): string => {
-    if (!rawName) return "/product_1.webp";
-    const clean = rawName
-      .replace(/\s*\([^)]*\)/g, "")
-      .replace(/\s*\d+\s*개$/g, "")
-      .replace(/\s*x\s*\d+$/gi, "")
-      .trim()
-      .toLowerCase();
+  // 상품명 및 색상/옵션 기반 썸네일 매칭 헬퍼 (상품리스트에 없는 상품은 빈 문자열 반환 -> 제품 앞글씨 표시)
+  const getProductThumbnail = (rawName: string, optionOrRaw?: string): string => {
+    return resolveProductThumbnail(rawName, undefined, optionOrRaw, productsList);
+  };
 
-    const allProds: any[] = productsList || [];
-
-    if (allProds.length > 0) {
-      const found = allProds.find((p: any) => {
-        const pTitle = (p.title || p.name || "").toLowerCase();
-        return pTitle && (pTitle.includes(clean) || clean.includes(pTitle));
-      });
-      if (found?.featuredImage?.url) return found.featuredImage.url;
-      if (found?.images?.[0]?.url) return found.images[0].url;
-
-      const keywords = [
-        "블라우스", "blouse", "원피스", "dress", "슬랙스", "slacks",
-        "셔츠", "shirts", "코트", "coat", "재킷", "jacket",
-        "스커트", "skirt", "니트", "knit", "머플러", "muffler",
-        "벨트", "belt", "스카프", "scarf", "로퍼", "loafer", "가방", "bag"
-      ];
-      for (const kw of keywords) {
-        if (clean.includes(kw)) {
-          const kwMatch = allProds.find((p: any) => (p.title || "").toLowerCase().includes(kw));
-          if (kwMatch?.featuredImage?.url) return kwMatch.featuredImage.url;
-        }
-      }
-    }
-
-    const fallbackList = [
-      "/product_1.webp",
-      "/product_2.webp",
-      "/product_3.webp",
-      "/product_4.webp",
-      "/1.jpg",
-      "/2.jpg",
-      "/3.jpg",
-      "/4.jpg",
-      "/5.jpg",
-      "/6.jpg",
-      "/7.jpg",
-      "/8.jpg",
-      "/9.jpg",
-      "/model_1.jpg",
-      "/model_2.jpg",
-    ];
-    let hash = 0;
-    for (let i = 0; i < rawName.length; i++) {
-      hash = (hash << 5) - hash + rawName.charCodeAt(i);
-      hash |= 0;
-    }
-    const idx = Math.abs(hash) % fallbackList.length;
-    return fallbackList[idx];
+  // 상품 연동 정보 조회 헬퍼
+  const getMatchedProduct = (rawName: string, optionOrRaw?: string) => {
+    return findProductFromCatalog(rawName, optionOrRaw, productsList);
   };
 
   // 주문 상품 문자열을 개별 라인 목록으로 파싱 (상품명, 색상/옵션, 수량)
@@ -678,14 +911,15 @@ export function OrdersManagement({
       .map((token) => {
         const qtyMatch = token.match(/(\d+)\s*개$/) || token.match(/x\s*(\d+)$/i);
         const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
-        let text = token.replace(/\s*\d+\s*개$/, "").replace(/\s*x\s*\d+$/i, "").trim();
+        const safeText = token.replace(/f\/w/gi, "F__W").replace(/s\/s/gi, "S__S");
+        let text = safeText.replace(/\s*\d+\s*개$/, "").replace(/\s*x\s*\d+$/i, "").trim();
 
-        // 1) 괄호 안의 옵션 추출 (예: (FREE), (M), (블랙 / L))
+        // 1) 괄호 안의 옵션 추출 (중첩 괄호 안전 탐욕 매칭)
         let parenOption = "";
-        const parenMatch = text.match(/\(([^)]+)\)$/);
+        const parenMatch = text.match(/\((.*)\)$/);
         if (parenMatch) {
           parenOption = parenMatch[1].trim();
-          text = text.replace(/\s*\([^)]+\)$/, "").trim();
+          text = text.replace(/\s*\(.*\)$/, "").trim();
         }
 
         // 2) 슬래시(/) 분리된 색상/옵션 추출 (예: 브라우스 / 아이보리)
@@ -696,6 +930,10 @@ export function OrdersManagement({
           name = parts[0].trim();
           slashOption = parts.slice(1).join(" / ").trim();
         }
+
+        name = name.replace(/F__W/g, "F/W").replace(/S__S/g, "S/S");
+        slashOption = slashOption.replace(/F__W/g, "F/W").replace(/S__S/g, "S/S");
+        parenOption = parenOption.replace(/F__W/g, "F/W").replace(/S__S/g, "S/S");
 
         const combinedOption = [slashOption, parenOption].filter(Boolean).join(" / ");
 
@@ -870,7 +1108,7 @@ export function OrdersManagement({
 
       setShipmentsList(updatedShipments);
       if (typeof window !== "undefined") {
-        localStorage.setItem("admin_shipments", JSON.stringify(updatedShipments));
+        safeSaveShipmentsToStorage(updatedShipments);
         window.dispatchEvent(new CustomEvent("storage"));
       }
       try {
@@ -938,7 +1176,7 @@ export function OrdersManagement({
 
     setShipmentsList(updatedShipments);
     if (typeof window !== "undefined") {
-      localStorage.setItem("admin_shipments", JSON.stringify(updatedShipments));
+      safeSaveShipmentsToStorage(updatedShipments);
       window.dispatchEvent(new CustomEvent("storage"));
     }
     try {
@@ -1026,7 +1264,7 @@ export function OrdersManagement({
         });
 
         if (typeof window !== "undefined") {
-          localStorage.setItem("admin_shipments", JSON.stringify(updatedList));
+          safeSaveShipmentsToStorage(updatedList);
           window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
         }
 
@@ -1299,7 +1537,7 @@ export function OrdersManagement({
 
         setShipmentsList(updatedList);
         if (typeof window !== "undefined") {
-          localStorage.setItem("admin_shipments", JSON.stringify(updatedList));
+          safeSaveShipmentsToStorage(updatedList);
           window.dispatchEvent(new CustomEvent("storage"));
         }
 
@@ -1394,7 +1632,7 @@ export function OrdersManagement({
         </div>
       </div>
 
-      {/* 📦 1주일(7일) 이내 동일 고객/주소지 합배송 자동 감지 안내 배너 */}
+      {/* 📦 72시간(3일) 이내 동일 고객/주소지 합배송 자동 감지 안내 배너 */}
       {bundleGroups.length > 0 && (
         <div className="bg-gradient-to-r from-blue-50 via-indigo-50/70 to-blue-50 border border-blue-200/90 rounded-2xl p-4 shadow-sm transition-all animate-in fade-in duration-300">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1412,7 +1650,7 @@ export function OrdersManagement({
                   </h2>
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100/90 border border-amber-300 px-2 py-0.5 rounded-md">
                     <Sparkles className="w-3 h-3 text-amber-600" />
-                    1주일 이내 복수 결제 감지
+                    72시간 이내 복수 결제 감지
                   </span>
                 </div>
                 <p className="text-xs text-blue-800/80 mt-1">
@@ -1480,27 +1718,29 @@ export function OrdersManagement({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-100">
-          <span className="text-xs font-bold text-neutral-500 mr-1">진행 상태:</span>
-          {[
-            { id: "all", label: "전체 상태" },
-            { id: "Pending", label: "배송 준비 중" },
-            { id: "Partially Shipped", label: "부분배송중" },
-            { id: "In Transit", label: "배송 중" },
-            { id: "Delivered", label: "배송 완료" },
-          ].map((st) => (
-            <button
-              key={st.id}
-              type="button"
-              onClick={() => setShipmentStatusFilter(st.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${shipmentStatusFilter === st.id
-                ? "bg-neutral-950 text-white shadow-xs"
-                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-950"
-                }`}
-            >
-              {st.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-neutral-500 mr-1">진행 상태:</span>
+            {[
+              { id: "all", label: "전체 상태" },
+              { id: "Pending", label: "배송 준비 중" },
+              { id: "Partially Shipped", label: "부분배송중" },
+              { id: "In Transit", label: "배송 중" },
+              { id: "Delivered", label: "배송 완료" },
+            ].map((st) => (
+              <button
+                key={st.id}
+                type="button"
+                onClick={() => setShipmentStatusFilter(st.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${shipmentStatusFilter === st.id
+                  ? "bg-neutral-950 text-white shadow-xs"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-950"
+                  }`}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1537,7 +1777,7 @@ export function OrdersManagement({
                     }}
                   />
                 </th>
-                <th className="py-3.5 px-3 w-[170px] whitespace-nowrap">주문/배송번호</th>
+                <th className="py-3.5 px-3 w-[185px] whitespace-nowrap">주문번호 / 일시</th>
                 <th className="py-3.5 px-3 w-[215px]">수령인 / 배송지 주소</th>
                 <th className="py-3.5 px-3 w-[210px] whitespace-nowrap">주문 상품 (요약)</th>
                 <th className="py-3.5 px-3 w-[155px]">택배사 / 운송장 번호</th>
@@ -1643,7 +1883,7 @@ export function OrdersManagement({
                                   handleOpenBundleModal(bundleGroup);
                                 }}
                                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 hover:border-blue-400 cursor-pointer shadow-2xs transition-all animate-pulse"
-                                title="클릭하여 1주일(7일) 이내 동일 주소지 주문들을 1박스로 합배송"
+                                title="클릭하여 72시간(3일) 이내 동일 주소지 주문들을 1박스로 합배송"
                               >
                                 <Boxes className="w-3 h-3 text-blue-600" />
                                 <span>📦 주문 1개로 합치기 ({bundleGroup.shipmentIds.length}건)</span>
@@ -1689,6 +1929,20 @@ export function OrdersManagement({
                             {ship.id}
                           </span>
                         )}
+                        {/* 주문 생성 일시 표시 (시간 표시) */}
+                        {(() => {
+                          const orderTime = formatOrderDateTime(ship.orderDate || (ship as any).order_date || ship.created_at);
+                          if (!orderTime) return null;
+                          return (
+                            <div 
+                              className="mt-1 inline-flex items-center gap-1 text-[11px] font-mono font-bold text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200/80 shadow-2xs"
+                              title={`주문 생성 일시: ${orderTime}`}
+                            >
+                              <Clock className="w-3 h-3 text-neutral-400 shrink-0" />
+                              <span>{orderTime}</span>
+                            </div>
+                          );
+                        })()}
                         <div className="mt-1.5 flex items-center gap-1.5 min-w-0">
                           <span className="inline-flex items-center text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700 border border-neutral-200 shrink-0">
                             주문자
@@ -1771,32 +2025,57 @@ export function OrdersManagement({
                         <span className="text-xs text-neutral-400 italic">상품 정보 없음</span>
                       ) : (
                         <div data-items-dropdown className="relative flex items-center gap-1.5 flex-nowrap">
-                          {/* 최대 3개 썸네일 노출 */}
-                          {visibleItems.map((item, vIdx) => (
-                            <div
-                              key={vIdx}
-                              className="relative group/thumb shrink-0 cursor-pointer"
-                              title={`${item.name}${item.option ? ` (${item.option})` : ""} × ${item.qty}개 (클릭 시 상세정보)`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenItemsDropdownId(isDropdownOpen ? null : ship.id);
-                              }}
-                            >
-                              <img
-                                src={getProductThumbnail(item.name)}
-                                alt={item.name}
-                                className="w-10 h-10 rounded-xl object-cover border border-neutral-200/90 bg-white shadow-2xs hover:scale-105 hover:border-neutral-400 transition-all"
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).src = "/product_1.webp";
+                          {/* 최대 3개 썸네일 노출 (미등록 상품은 제품 앞글씨 표시) */}
+                          {visibleItems.map((item, vIdx) => {
+                            const thumb = getProductThumbnail(item.name, item.option || item.raw);
+                            const initial = getProductInitial(item.name);
+                            const badgeColor = getProductBadgeColor(item.name);
+                            const matched = getMatchedProduct(item.name, item.option || item.raw);
+                            const productTitle = matched?.product?.title || item.name;
+
+                            return (
+                              <div
+                                key={vIdx}
+                                className="relative group/thumb shrink-0 cursor-pointer"
+                                title={`${productTitle}${item.option ? ` (${item.option})` : ""} × ${item.qty}개 (클릭 시 상세정보)`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenItemsDropdownId(isDropdownOpen ? null : ship.id);
                                 }}
-                              />
-                              {item.qty > 1 && (
-                                <span className="absolute -bottom-1 -right-1 bg-neutral-950 text-white text-[9px] font-black font-mono px-1 rounded-full shadow-xs border border-white leading-tight">
-                                  {item.qty}
-                                </span>
-                              )}
-                            </div>
-                          ))}
+                              >
+                                {thumb ? (
+                                  <>
+                                    <img
+                                      src={thumb}
+                                      alt={item.name}
+                                      className="w-10 h-10 rounded-xl object-cover border border-neutral-200/90 bg-white shadow-2xs hover:scale-105 hover:border-purple-400 transition-all"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                        const fb = e.currentTarget.parentElement?.querySelector(".fallback-badge");
+                                        if (fb) (fb as HTMLElement).style.display = "flex";
+                                      }}
+                                    />
+                                    <div
+                                      className={`fallback-badge hidden w-10 h-10 rounded-xl border shadow-2xs flex items-center justify-center font-black text-xs select-none tracking-tight ${badgeColor}`}
+                                    >
+                                      {initial}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div
+                                    className={`w-10 h-10 rounded-xl border shadow-2xs hover:scale-105 hover:border-neutral-400 transition-all flex items-center justify-center font-black text-xs select-none tracking-tight ${badgeColor}`}
+                                  >
+                                    {initial}
+                                  </div>
+                                )}
+                                {item.qty > 1 && (
+                                  <span className="absolute -bottom-1 -right-1 bg-neutral-950 text-white text-[9px] font-black font-mono px-1 rounded-full shadow-xs border border-white leading-tight">
+                                    {item.qty}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
 
                           {/* 3개 초과 건 +N 드롭다운 메뉴 버튼 및 상세 보기 토글 */}
                           {hasMore ? (
@@ -1870,41 +2149,78 @@ export function OrdersManagement({
                               </div>
 
                               <div className="max-h-72 overflow-y-auto space-y-2.5 pr-1 divide-y divide-neutral-100">
-                                {allItems.map((item, iIdx) => (
-                                  <div
-                                    key={iIdx}
-                                    className={`flex items-start gap-3 ${iIdx > 0 ? "pt-2.5" : ""}`}
-                                  >
-                                    <img
-                                      src={getProductThumbnail(item.name)}
-                                      alt={item.name}
-                                      className="w-12 h-12 rounded-xl object-cover border border-neutral-200 bg-neutral-50 shrink-0 shadow-2xs"
-                                      onError={(e) => {
-                                        (e.currentTarget as HTMLImageElement).src = "/product_1.webp";
-                                      }}
-                                    />
-                                    <div className="min-w-0 flex-1">
-                                      <p className="text-xs font-bold text-neutral-950 leading-snug break-words">
-                                        {item.name}
-                                      </p>
-                                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                                        {item.option && (
-                                          <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 font-mono">
-                                            색상/옵션: {item.option}
+                                {allItems.map((item, iIdx) => {
+                                  const thumb = getProductThumbnail(item.name, item.option || item.raw);
+                                  const initial = getProductInitial(item.name);
+                                  const badgeColor = getProductBadgeColor(item.name);
+                                  const matched = getMatchedProduct(item.name, item.option || item.raw);
+                                  const productHandle = matched?.product?.handle || matched?.product?.id;
+
+                                  return (
+                                    <div
+                                      key={iIdx}
+                                      className={`flex items-start gap-3 ${iIdx > 0 ? "pt-2.5" : ""}`}
+                                    >
+                                      {thumb ? (
+                                        <div className="relative w-12 h-12 shrink-0">
+                                          <img
+                                            src={thumb}
+                                            alt={item.name}
+                                            className="w-12 h-12 rounded-xl object-cover border border-neutral-200 bg-neutral-50 shrink-0 shadow-2xs"
+                                            onError={(e) => {
+                                              e.currentTarget.style.display = "none";
+                                              const fb = e.currentTarget.parentElement?.querySelector(".fallback-badge");
+                                              if (fb) (fb as HTMLElement).style.display = "flex";
+                                            }}
+                                          />
+                                          <div
+                                            className={`fallback-badge hidden w-12 h-12 rounded-xl border shrink-0 shadow-2xs flex items-center justify-center font-black text-sm select-none tracking-tight ${badgeColor}`}
+                                          >
+                                            {initial}
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className={`w-12 h-12 rounded-xl border shrink-0 shadow-2xs flex items-center justify-center font-black text-sm select-none tracking-tight ${badgeColor}`}
+                                        >
+                                          {initial}
+                                        </div>
+                                      )}
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-bold text-neutral-950 leading-snug break-words">
+                                          {item.name}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                          {item.option && (
+                                            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 font-mono">
+                                              색상/옵션: {item.option}
+                                            </span>
+                                          )}
+                                          <span className="text-[11px] font-extrabold text-neutral-800 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200 font-mono">
+                                            수량: {item.qty}개
                                           </span>
-                                        )}
-                                        <span className="text-[11px] font-extrabold text-neutral-800 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200 font-mono">
-                                          수량: {item.qty}개
-                                        </span>
-                                        {item.pkgIndex && (
-                                          <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 font-mono">
-                                            📦 박스 {item.pkgIndex}
-                                          </span>
-                                        )}
+                                          {item.pkgIndex && (
+                                            <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 font-mono">
+                                              📦 박스 {item.pkgIndex}
+                                            </span>
+                                          )}
+                                          {matched?.product && productHandle && (
+                                            <a
+                                              href={`/product/${productHandle}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded-md border border-purple-200 font-mono transition-colors"
+                                            >
+                                              <ExternalLink className="w-2.5 h-2.5" />
+                                              연동 상품 보기
+                                            </a>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
@@ -1934,7 +2250,9 @@ export function OrdersManagement({
                                         href={`https://trace.cjlogistics.com/next/tracking.html?wblNo=${pkg.trackingNumber.replace(/[^0-9]/g, "")}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-xs font-mono text-blue-600 hover:underline font-bold inline-flex items-center gap-0.5"
+                                        onClick={() => handleTrackingClick(ship, pkg.trackingNumber)}
+                                        className="text-xs font-mono text-blue-600 hover:underline font-bold inline-flex items-center gap-0.5 cursor-pointer"
+                                        title="CJ대한통운 공식 배송조회 (클릭 시 사이트 배송완료 자동동기화)"
                                       >
                                         {pkg.trackingNumber}
                                         <ExternalLink className="w-2.5 h-2.5 text-blue-500" />
@@ -1993,8 +2311,9 @@ export function OrdersManagement({
                             href={`https://trace.cjlogistics.com/next/tracking.html?wblNo=${ship.trackingNumber.replace(/[^0-9]/g, "")}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs font-mono text-blue-600 hover:underline font-bold inline-flex items-center gap-1 mt-0.5"
-                            title="CJ대한통운 공식 실시간 배송추적 열기"
+                            onClick={() => handleTrackingClick(ship, ship.trackingNumber)}
+                            className="text-xs font-mono text-blue-600 hover:underline font-bold inline-flex items-center gap-1 mt-0.5 cursor-pointer"
+                            title="CJ대한통운 공식 배송조회 (클릭 시 사이트 배송완료 자동동기화)"
                           >
                             {ship.trackingNumber}
                             <ExternalLink className="w-3 h-3 text-blue-500" />
@@ -2341,7 +2660,7 @@ export function OrdersManagement({
                   setSelectedShipmentIds(new Set());
 
                   if (typeof window !== "undefined") {
-                    localStorage.setItem("admin_shipments", JSON.stringify(updated));
+                    safeSaveShipmentsToStorage(updated);
                     try {
                       const deletedRaw = localStorage.getItem("admin_deleted_shipment_ids");
                       const set = new Set(deletedRaw ? JSON.parse(deletedRaw) : []);
@@ -2516,12 +2835,36 @@ export function OrdersManagement({
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2 flex-1">
                             <GripVertical className="w-4 h-4 text-neutral-300 group-hover:text-purple-500 shrink-0" />
-                            <img
-                              src={getProductThumbnail(item.name)}
-                              alt={item.name}
-                              className="w-8 h-8 rounded-lg object-cover border border-neutral-200 shrink-0 bg-neutral-100 shadow-2xs"
-                              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/product_1.webp"; }}
-                            />
+                            {(() => {
+                              const thumb = getProductThumbnail(item.name, item.option || item.raw);
+                              const initial = getProductInitial(item.name);
+                              const badgeColor = getProductBadgeColor(item.name);
+                              return (
+                                <div className="relative shrink-0">
+                                  {thumb ? (
+                                    <>
+                                      <img
+                                        src={thumb}
+                                        alt={item.name}
+                                        className="w-8 h-8 rounded-lg object-cover border border-neutral-200 shrink-0 bg-neutral-100 shadow-2xs"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = "none";
+                                          const fb = e.currentTarget.parentElement?.querySelector(".fallback-badge");
+                                          if (fb) (fb as HTMLElement).style.display = "flex";
+                                        }}
+                                      />
+                                      <div className={`fallback-badge hidden w-8 h-8 rounded-lg border shrink-0 shadow-2xs flex items-center justify-center font-bold text-[11px] select-none tracking-tight ${badgeColor}`}>
+                                        {initial}
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className={`w-8 h-8 rounded-lg border shrink-0 shadow-2xs flex items-center justify-center font-bold text-[11px] select-none tracking-tight ${badgeColor}`}>
+                                      {initial}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
                             <p className="font-bold text-xs text-neutral-900 leading-snug">{item.name}</p>
                           </div>
                           <span className="shrink-0 px-2 py-0.5 bg-neutral-100 rounded-md text-[11px] font-extrabold text-neutral-700 font-mono border border-neutral-200">
@@ -2676,12 +3019,36 @@ export function OrdersManagement({
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2 flex-1">
                             <GripVertical className="w-4 h-4 text-neutral-300 group-hover:text-purple-500 shrink-0" />
-                            <img
-                              src={getProductThumbnail(item.name)}
-                              alt={item.name}
-                              className="w-8 h-8 rounded-lg object-cover border border-purple-200 shrink-0 bg-white shadow-2xs"
-                              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/product_1.webp"; }}
-                            />
+                            {(() => {
+                              const thumb = getProductThumbnail(item.name, item.option || item.raw);
+                              const initial = getProductInitial(item.name);
+                              const badgeColor = getProductBadgeColor(item.name);
+                              return (
+                                <div className="relative shrink-0">
+                                  {thumb ? (
+                                    <>
+                                      <img
+                                        src={thumb}
+                                        alt={item.name}
+                                        className="w-8 h-8 rounded-lg object-cover border border-purple-200 shrink-0 bg-white shadow-2xs"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = "none";
+                                          const fb = e.currentTarget.parentElement?.querySelector(".fallback-badge");
+                                          if (fb) (fb as HTMLElement).style.display = "flex";
+                                        }}
+                                      />
+                                      <div className={`fallback-badge hidden w-8 h-8 rounded-lg border shrink-0 shadow-2xs flex items-center justify-center font-bold text-[11px] select-none tracking-tight ${badgeColor}`}>
+                                        {initial}
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className={`w-8 h-8 rounded-lg border shrink-0 shadow-2xs flex items-center justify-center font-bold text-[11px] select-none tracking-tight ${badgeColor}`}>
+                                      {initial}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
                             <p className="font-bold text-xs text-neutral-900 leading-snug">{item.name}</p>
                           </div>
                           <span className="shrink-0 px-2 py-0.5 bg-purple-100 rounded-md text-[11px] font-extrabold text-purple-800 font-mono border border-purple-200">
@@ -3127,7 +3494,7 @@ export function OrdersManagement({
                               detailAddress: newDetail,
                             }));
                             if (typeof window !== "undefined") {
-                              localStorage.setItem("admin_shipments", JSON.stringify(updated));
+                              safeSaveShipmentsToStorage(updated);
                               window.dispatchEvent(new CustomEvent("storage"));
                             }
                             alert("회원 정보 관리의 최신 배송지(우편번호, 기본주소, 상세주소)가 주문서에 성공적으로 반영되었습니다.");
@@ -3208,8 +3575,11 @@ export function OrdersManagement({
                           const qty = qtyMatch ? qtyMatch[1] : "1";
                           const cleanName = itemToken.replace(/\s*\d+\s*개$/, "").replace(/\s*x\s*\d+$/i, "").trim();
 
-                          // 실제 상품 카탈로그 썸네일 이미지 매핑
-                          const thumbUrl = getProductThumbnail(cleanName || itemToken);
+                          // 실제 상품 카탈로그 썸네일 이미지 매핑 (색상/옵션 정확 매칭)
+                          const thumbUrl = getProductThumbnail(cleanName || itemToken, itemToken);
+                          const initial = getProductInitial(cleanName || itemToken);
+                          const badgeColor = getProductBadgeColor(cleanName || itemToken);
+                          const matched = getMatchedProduct(cleanName || itemToken, itemToken);
 
                           // 어떤 박스에 포함되어 있는지 확인
                           let assignedBoxText = "기본출고";
@@ -3229,17 +3599,38 @@ export function OrdersManagement({
                               <td className="py-3 px-3.5 text-center font-mono text-neutral-500 font-bold">{i + 1}</td>
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-neutral-100 border border-neutral-200 shrink-0 shadow-2xs">
-                                    <img
-                                      src={thumbUrl}
-                                      alt={cleanName}
-                                      className="w-full h-full object-cover"
-                                      crossOrigin="anonymous"
-                                    />
-                                  </div>
+                                  {thumbUrl ? (
+                                    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-neutral-100 border border-neutral-200 shrink-0 shadow-2xs">
+                                      <img
+                                        src={thumbUrl}
+                                        alt={cleanName}
+                                        className="w-full h-full object-cover"
+                                        crossOrigin="anonymous"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = "none";
+                                          const fb = e.currentTarget.parentElement?.querySelector(".fallback-badge");
+                                          if (fb) (fb as HTMLElement).style.display = "flex";
+                                        }}
+                                      />
+                                      <div className={`fallback-badge hidden w-12 h-12 rounded-xl border shrink-0 shadow-2xs flex items-center justify-center font-black text-sm select-none tracking-tight ${badgeColor}`}>
+                                        {initial}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className={`w-12 h-12 rounded-xl border shrink-0 shadow-2xs flex items-center justify-center font-black text-sm select-none tracking-tight ${badgeColor}`}>
+                                      {initial}
+                                    </div>
+                                  )}
                                   <div>
                                     <p className="font-bold text-neutral-950 text-xs sm:text-sm leading-tight">{cleanName || itemToken}</p>
-                                    <span className="text-[10px] text-neutral-500 font-mono">단품코드: CHOI-ITEM-{String(i + 1).padStart(3, "0")}</span>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="text-[10px] text-neutral-500 font-mono">단품코드: CHOI-ITEM-{String(i + 1).padStart(3, "0")}</span>
+                                      {matched?.product?.id && (
+                                        <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200 font-mono">
+                                          연동코드: {matched.product.id}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </td>
@@ -3748,7 +4139,11 @@ export function OrdersManagement({
                 </div>
                 <div>
                   <h3 className="text-xl font-extrabold text-neutral-950">운송장 / 배송 상태 변경</h3>
-                  <p className="text-xs text-neutral-500 font-mono">{editingShipment.id} ({editingShipment.recipient}님)</p>
+                  <p className="text-xs text-neutral-500 font-mono">
+                    {editingShipment.orderId || editingShipment.id}
+                    {(editingShipment.orderDate || editingShipment.created_at) && ` · 주문일: ${formatOrderDateTime(editingShipment.orderDate || editingShipment.created_at)}`}
+                    {` (${editingShipment.recipient}님)`}
+                  </p>
                 </div>
               </div>
               <button
@@ -3991,6 +4386,15 @@ export function OrdersManagement({
           </div>
         </div>
       )}
+
+      {/* 🚚 CJ대한통운 배송현황 실시간 동기화 모달 */}
+      <TrackingSyncModal
+        isOpen={isTrackingSyncModalOpen}
+        onClose={() => setIsTrackingSyncModalOpen(false)}
+        shipmentsList={shipmentsList}
+        onApplySync={handleApplyTrackingSync}
+        triggerToast={triggerToast}
+      />
     </div>
   );
 }

@@ -39,7 +39,7 @@ export function explodeOrderToSingleItems(orders: any[]): ExplodedExchangeItem[]
         const itemName = typeof item === "string" ? item : (item.name || item.title || "주문 상품");
         const itemOption = typeof item === "object" ? (item.option || item.selectedOption || "") : "";
         const itemQty = typeof item === "object" ? (item.quantity || item.qty || 1) : 1;
-        const itemImage = (typeof item === "object" && item.image) ? item.image : (ord.image || getProductThumbnail(itemName));
+        const itemImage = (typeof item === "object" && item.image) ? item.image : (ord.image || getProductThumbnail(itemName, undefined, itemOption));
         const itemPrice = typeof item === "object" && item.price ? `${Number(item.price).toLocaleString()}원` : (ord.amount || "");
 
         const displayLabel = itemOption ? `${itemName} (${itemOption})` : itemName;
@@ -91,7 +91,7 @@ export function explodeOrderToSingleItems(orders: any[]): ExplodedExchangeItem[]
             items: trimmed,
             itemName: itemName,
             quantity: itemQty,
-            image: getProductThumbnail(itemName, ord.image),
+            image: getProductThumbnail(itemName, ord.image, trimmed),
             amount: ord.amount || "",
             recipient: ord.recipient || ord.customerName,
             phone: ord.phone || ord.customerPhone,
@@ -118,7 +118,7 @@ export function explodeOrderToSingleItems(orders: any[]): ExplodedExchangeItem[]
       items: singleName,
       itemName: singleName,
       quantity: ord.quantity || 1,
-      image: getProductThumbnail(singleName, ord.image),
+      image: getProductThumbnail(singleName, ord.image, typeof (ord as any).option === "string" ? (ord as any).option : undefined),
       amount: ord.amount || "",
       recipient: ord.recipient || ord.customerName,
       phone: ord.phone || ord.customerPhone,

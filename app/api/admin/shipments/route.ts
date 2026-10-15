@@ -58,14 +58,37 @@ function extractShipmentOrderNumber(str: string): number {
   return match ? parseInt(match[1], 10) : 0;
 }
 
+function getShipmentOrderTimestamp(s: any): number {
+  if (!s) return 0;
+  const raw = s.orderDate || s.order_date || s.created_at || s.createdAt;
+  if (raw) {
+    const str = String(raw).trim();
+    const match = str.match(/^(\d{4})[-./](\d{2})[-./](\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+    if (match) {
+      const [_, Y, M, D, h, m, sec] = match;
+      return new Date(Number(Y), Number(M) - 1, Number(D), Number(h), Number(m), Number(sec)).getTime();
+    }
+    const t = new Date(str).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  return 0;
+}
+
 function sortShipmentsByNumber(list: any[]): any[] {
   if (!Array.isArray(list)) return [];
   return [...list].sort((a: any, b: any) => {
+    // 1순위: 주문 생성 일시 (가장 최근 주문일시 내림차순)
+    const timeA = getShipmentOrderTimestamp(a);
+    const timeB = getShipmentOrderTimestamp(b);
+    if (timeB !== timeA) return timeB - timeA;
+
+    // 2순위: 동시간대 주문번호 기준 정렬
     const keyA = (a.orderId || a.id || "").trim();
     const keyB = (b.orderId || b.id || "").trim();
     const numA = extractShipmentOrderNumber(keyA);
     const numB = extractShipmentOrderNumber(keyB);
-    if (numA !== numB) return numB - numA; // 최신 번호가 상단, 1번이 가장 밑으로 정렬
+    if (numA !== numB) return numB - numA;
+
     return keyB.localeCompare(keyA, undefined, { numeric: true, sensitivity: "base" });
   });
 }

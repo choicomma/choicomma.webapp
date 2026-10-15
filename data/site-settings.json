@@ -57,8 +57,9 @@
       ],
       "targetCustomerEmails": [],
       "targetCustomerNames": [],
-      "isActive": true,
-      "createdAt": "2026-10-13"
+      "isActive": false,
+      "createdAt": "2026-10-13",
+      "isUsed": false
     }
   ]
 }

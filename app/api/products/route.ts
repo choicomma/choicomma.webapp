@@ -585,8 +585,10 @@ export async function POST(req: NextRequest) {
       const existingIdx = existingList.findIndex((item: any) => String(item.id) === pId);
       if (existingIdx !== -1) {
         const prevCreatedAt = existingList[existingIdx].created_at || existingList[existingIdx].createdAt;
+        const prevDisplayOrder = existingList[existingIdx].displayOrder;
         existingList[existingIdx] = {
           ...itemToSave,
+          displayOrder: itemToSave.displayOrder !== undefined ? itemToSave.displayOrder : prevDisplayOrder,
           created_at: itemToSave.created_at || prevCreatedAt || new Date().toISOString(),
           createdAt: itemToSave.createdAt || prevCreatedAt || new Date().toISOString(),
           updated_at: itemToSave.updated_at || new Date().toISOString(),
@@ -714,7 +716,7 @@ export async function POST(req: NextRequest) {
         const clientIsStrippedCopy = Boolean(serverItem) && Boolean(p?._lightStripped) && !hasPlaceholderImg(serverItem);
         const clientHasPlaceholderOverReal = Boolean(serverItem) && hasPlaceholderImg(p) && !hasPlaceholderImg(serverItem);
         if (serverItem && (clientIsStrippedCopy || clientHasPlaceholderOverReal || getTime(serverItem) > getTime(p))) {
-          merged.push(serverItem);
+          merged.push({ ...serverItem, displayOrder: p?.displayOrder !== undefined ? p.displayOrder : serverItem.displayOrder });
           keptServerCount++;
         } else {
           merged.push(p);

@@ -10,6 +10,7 @@ import { useCustomers } from "@/hooks/admin/useCustomers";
 import { useTimesale } from "@/hooks/admin/useTimesale";
 import { useProducts, removeDeletedProductIdsFromStorage } from "@/hooks/admin/useProducts";
 import { useShipments } from "@/hooks/admin/useShipments";
+import { cleanBloatedStorageKeys } from "@/lib/shipping/safe-shipments-storage";
 import {
   LayoutDashboard,
   LayoutTemplate,
@@ -296,6 +297,10 @@ export default function AdminPage() {
     return initialOrders;
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    cleanBloatedStorageKeys();
+  }, []);
 
   // Time sale states
   const {
@@ -828,13 +833,20 @@ export default function AdminPage() {
           {/* 6. 회원 관리 */}
           <button
             onClick={() => setActiveTab("customers")}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all ${activeTab === "customers"
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all cursor-pointer ${activeTab === "customers"
                 ? "bg-neutral-100 text-neutral-950 font-extrabold"
                 : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950 font-medium"
               }`}
           >
-            <Users className="w-4 h-4 text-neutral-900" />
-            회원 관리
+            <span className="flex items-center gap-3">
+              <Users className="w-4 h-4 text-neutral-900" />
+              <span>회원 관리</span>
+            </span>
+            {customersList.length > 0 && (
+              <span className="text-[11px] font-mono font-extrabold text-neutral-600 bg-neutral-200/70 px-2 py-0.5 rounded-full">
+                {customersList.length.toLocaleString()}
+              </span>
+            )}
           </button>
 
           {/* (선 추가) */}

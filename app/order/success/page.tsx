@@ -7,6 +7,7 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { recordCouponUsage } from "@/lib/membership/coupons";
 import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
+import { safeSaveShipmentsToStorage, safeSaveOrdersToStorage } from "@/lib/shipping/safe-shipments-storage";
 
 interface SuccessParams {
   paymentKey: string | null;
@@ -299,7 +300,7 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
             const alreadyExists = ordersList.some((o: any) => o.id === orderId || o.orderId === orderId);
             if (!alreadyExists) {
               const updated = [newOrder, ...ordersList];
-              localStorage.setItem("admin_orders", JSON.stringify(updated));
+              safeSaveOrdersToStorage(updated);
               window.dispatchEvent(new CustomEvent("admin_orders_updated"));
 
               // 고객 구매 여정 (PURCHASE_SUCCESS) 실시간 트래킹
@@ -369,7 +370,7 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
               try { shipmentsList = JSON.parse(savedShipmentsRaw); } catch (e) {}
             }
             const updatedShipments = [newShipment, ...shipmentsList.filter((s: any) => s.id !== orderId && s.orderId !== orderId)];
-            localStorage.setItem("admin_shipments", JSON.stringify(updatedShipments));
+            safeSaveShipmentsToStorage(updatedShipments);
             window.dispatchEvent(new CustomEvent("storage"));
             window.dispatchEvent(new CustomEvent("admin_shipments_updated"));
 
