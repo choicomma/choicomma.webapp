@@ -9,6 +9,7 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { translateProductTitle, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 import useEmblaCarousel from "embla-carousel-react";
 import { ProductCard } from "@/app/shop/components/product-card";
+import { HomePopupModal } from "./home-popup-modal";
 
 function HomeProductTitle({ title, lang }: { title: string; lang: string }) {
   const [translated, setTranslated] = useState(() => translateProductTitle(title, lang));
@@ -187,6 +188,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     if (typeof window !== "undefined") {
       const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
       const userRole = localStorage.getItem("user_role") || "";
+      const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || userRole || "").toUpperCase().trim();
       const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
 
       // 1. Check Secret Time Sales first
@@ -208,10 +210,13 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
                 )
             );
             const isGradeTargeted = Boolean(
-              (sale.targetGrades || []).length > 0 &&
+              userGrade &&
+                (sale.targetGrades || []).length > 0 &&
                 (sale.targetGrades.includes("ALL") ||
+                  sale.targetGrades.includes(userGrade) ||
                   sale.targetGrades.includes(userRole?.toUpperCase()) ||
-                  (userRole?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")))
+                  (userGrade.includes("VIP") && sale.targetGrades.includes("VIP")) ||
+                  (userGrade.includes("VVIP") && (sale.targetGrades.includes("VVIP") || sale.targetGrades.includes("VIP"))))
             );
 
             if (isEmailTargeted || isGradeTargeted || isAdmin) {
@@ -488,6 +493,9 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
 
   return (
     <div className="w-full flex flex-col bg-white">
+      {/* Home Popup Modal (Admin Configured & Deployed) */}
+      <HomePopupModal />
+
       {/* SECTION 1: Auto Slider Hero Image (True Infinite Seamless Loop) */}
       {heroImages.length > 0 && (
         <section className="relative w-full h-[80vh] md:h-[105vh] min-h-[500px] md:min-h-[800px] bg-white overflow-hidden">

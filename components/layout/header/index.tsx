@@ -12,6 +12,7 @@ import { Collection } from "@/lib/sfcc/types";
 import { MainNoticeBanner } from "@/components/home/main-client-features";
 import { LanguageSelector } from "./language-selector";
 import { validateCustomerSession } from "@/lib/auth/customer-session";
+import { syncSecretTimesalesFromServer } from "@/lib/membership/timesales";
 
 export const navItems: NavItem[] = [
   {
@@ -60,6 +61,7 @@ export function Header({ collections }: HeaderProps) {
         const name = localStorage.getItem("membership_user_name");
         const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
         const role = localStorage.getItem("user_role") || "";
+        const grade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || role || "").toUpperCase().trim();
         const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
         const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
 
@@ -90,10 +92,13 @@ export function Header({ collections }: HeaderProps) {
                   )
               );
               const isGradeTargeted = Boolean(
-                (sale.targetGrades || []).length > 0 &&
+                grade &&
+                  (sale.targetGrades || []).length > 0 &&
                   (sale.targetGrades.includes("ALL") ||
+                    sale.targetGrades.includes(grade) ||
                     sale.targetGrades.includes(role?.toUpperCase()) ||
-                    (role?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")))
+                    (grade.includes("VIP") && sale.targetGrades.includes("VIP")) ||
+                    (grade.includes("VVIP") && (sale.targetGrades.includes("VVIP") || sale.targetGrades.includes("VIP"))))
               );
               if (isEmailTargeted || isGradeTargeted || isAdm) {
                 hasTargetedSale = true;
@@ -107,6 +112,9 @@ export function Header({ collections }: HeaderProps) {
     };
 
     checkAuth();
+    syncSecretTimesalesFromServer().then(() => {
+      checkAuth();
+    });
 
     // Event listener callback: defer execution with setTimeout(..., 0)
     // to prevent updating Header state synchronously while another component (e.g. AdminPage) is rendering

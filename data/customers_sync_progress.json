@@ -1,0 +1,77 @@
+{
+  "currentStage": 6,
+  "totalStages": 6,
+  "batchSize": 1000,
+  "totalCustomers": 5714,
+  "stage1": {
+    "range": "1 ~ 1000번 회원 (1000명)",
+    "processedCount": 1000,
+    "matchedCount": 999,
+    "buyersCount": 607,
+    "stageTotalSpent": 433349566,
+    "stageTotalOrders": 1571,
+    "completedAt": "2026-10-15T05:51:58.749Z"
+  },
+  "stage2": {
+    "range": "1001 ~ 2000번 회원 (1000명)",
+    "processedCount": 1000,
+    "matchedCount": 1000,
+    "buyersCount": 640,
+    "stageTotalSpent": 393037677,
+    "stageTotalOrders": 1372,
+    "completedAt": "2026-10-15T05:53:40.148Z"
+  },
+  "cumulative": {
+    "processedMembers": 5000,
+    "totalBuyers": 3206,
+    "totalSpent": 2066559244,
+    "totalOrders": 7315,
+    "progressPercentage": "87.5%"
+  },
+  "stage3": {
+    "range": "2001 ~ 3000번 회원 (1000명)",
+    "processedCount": 1000,
+    "matchedCount": 1000,
+    "buyersCount": 658,
+    "stageTotalSpent": 429355639,
+    "stageTotalOrders": 1484,
+    "completedAt": "2026-10-15T05:54:41.083Z"
+  },
+  "stage4": {
+    "range": "3001 ~ 4000번 회원 (1000명)",
+    "processedCount": 1000,
+    "matchedCount": 1000,
+    "buyersCount": 657,
+    "stageTotalSpent": 376049244,
+    "stageTotalOrders": 1405,
+    "completedAt": "2026-10-15T05:55:34.821Z"
+  },
+  "stage5": {
+    "range": "4001 ~ 5000번 회원 (1000명)",
+    "processedCount": 1000,
+    "matchedCount": 1000,
+    "buyersCount": 644,
+    "stageTotalSpent": 434767118,
+    "stageTotalOrders": 1483,
+    "completedAt": "2026-10-15T05:56:28.457Z"
+  },
+  "status": "COMPLETED",
+  "stage6": {
+    "range": "5001 ~ 5714번 회원 (714명)",
+    "processedCount": 714,
+    "matchedCount": 713,
+    "buyersCount": 443,
+    "stageTotalSpent": 303279149,
+    "stageTotalOrders": 939,
+    "completedAt": "2026-10-15T05:57:23.878Z"
+  },
+  "final": {
+    "totalCustomers": 5714,
+    "processedMembers": 5714,
+    "totalBuyers": 3649,
+    "totalSpent": 2369838393,
+    "totalOrders": 8254,
+    "progressPercentage": "100%",
+    "completedAt": "2026-10-15T05:57:23.878Z"
+  }
+}

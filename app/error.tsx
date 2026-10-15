@@ -15,7 +15,8 @@ export default function Error({
     if (
       error?.message?.includes("Loading chunk") ||
       error?.message?.includes("ChunkLoadError") ||
-      error?.name === "ChunkLoadError"
+      error?.name === "ChunkLoadError" ||
+      error?.message?.includes("Failed to fetch")
     ) {
       const lastReload = sessionStorage.getItem("last_chunk_error_reload");
       const now = Date.now();
@@ -44,7 +45,8 @@ export default function Error({
           if (
             error?.message?.includes("Loading chunk") ||
             error?.message?.includes("ChunkLoadError") ||
-            error?.name === "ChunkLoadError"
+            error?.name === "ChunkLoadError" ||
+            error?.message?.includes("Failed to fetch")
           ) {
             window.location.reload();
           } else {

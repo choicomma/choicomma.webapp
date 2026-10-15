@@ -25,20 +25,20 @@
   },
   "popup_config": {
     "id": "",
-    "title": "",
+    "title": "기존 회원 로그인 안내",
     "subtitle": "",
     "imageUrl": "",
     "linkUrl": "",
-    "isActive": false,
-    "showOnHome": false,
-    "showOnMembership": false,
+    "isActive": true,
+    "showOnHome": true,
+    "showOnMembership": true,
     "hideForTodayEnabled": false,
     "popupType": "NOTICE",
-    "noticeMessage": "",
+    "noticeMessage": "초이콤마의 기존 회원은 회원 가입을 하실 필요가 없습니다. \n가입당시에 사용한 이메일주소 / 휴대폰 뒤 4자리로 로그인 가능합니다.\n\n",
     "noticePeriod": "",
-    "description": "",
+    "description": "초이콤마의 기존 회원은 가입당시 이메일주소로 ID로 사용하시고\n패스워드는 가입 당시 휴대폰 번호 뒤 4자리로 로그인 가능합니다.\n이메일 주소가 기억나지 않는 고객님은 로그인 창에 '아이디찾기'를\n클릭하여 찾아주시기 바랍니다.",
     "createdAt": "",
-    "updatedAt": "2026-10-13T11:33:02.106Z"
+    "updatedAt": "2026-10-15T12:02:12.887Z"
   },
   "admin_coupons_config": [
     {

@@ -60,16 +60,19 @@ export function MembershipPopupBanner() {
   }
 
   const handleClick = () => {
-    if (!config.linkUrl) return;
-    if (config.linkUrl.startsWith("http")) {
-      window.open(config.linkUrl, "_blank", "noopener,noreferrer");
+    const target = config?.linkUrl?.trim();
+    if (!target) return;
+    if (target.startsWith("http://") || target.startsWith("https://") || target.startsWith("//")) {
+      window.open(target, "_blank", "noopener,noreferrer");
+    } else if (target.startsWith("www.")) {
+      window.open(`https://${target}`, "_blank", "noopener,noreferrer");
     } else {
-      router.push(config.linkUrl);
+      router.push(target.startsWith("/") ? target : `/${target}`);
     }
   };
 
   return (
-    <div className="w-full my-6 animate-in fade-in duration-300">
+    <div className="w-full animate-in fade-in duration-300">
       {hasImage ? (
         <div
           onClick={handleClick}
@@ -102,30 +105,30 @@ export function MembershipPopupBanner() {
       ) : (
         <div
           onClick={handleClick}
-          className={`relative w-full rounded-2xl border border-neutral-900 bg-neutral-950 text-white p-5 sm:p-6 shadow-md transition-all ${
+          className={`relative w-full rounded-2xl border border-neutral-900 bg-neutral-950 text-white p-6 sm:p-7 shadow-md transition-all ${
             config.linkUrl ? "cursor-pointer hover:border-neutral-700" : ""
           }`}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-1.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2 py-0.5">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded-full">
                   공지사항
                 </span>
                 <span className="text-xs font-bold text-neutral-400">CHOICOMMA MEMBERSHIP</span>
               </div>
-              <h4 className="text-sm sm:text-base font-black text-white">
+              <h4 className="text-base sm:text-lg font-black text-white whitespace-pre-wrap break-keep">
                 {config.title}
               </h4>
               {config.noticeMessage && (
-                <p className="text-xs text-neutral-300 leading-relaxed max-w-2xl">
+                <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed max-w-2xl whitespace-pre-wrap break-keep">
                   {config.noticeMessage}
                 </p>
               )}
             </div>
 
             {config.linkUrl && (
-              <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-colors">
+              <div className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-colors">
                 <span>자세히 보기</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </div>

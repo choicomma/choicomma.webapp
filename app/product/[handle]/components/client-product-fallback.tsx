@@ -154,10 +154,23 @@ export function ClientProductFallback({ handle }: { handle: string }) {
   if (loading) return <div className="min-h-screen w-full bg-white animate-pulse" />;
   
   if (!product) {
-    if (typeof window !== "undefined") {
-      window.location.href = "/404";
-    }
-    return null;
+    return (
+      <PageLayout className="bg-white" hideFooter={false}>
+        <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-24 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">PRODUCT NOT FOUND</p>
+          <h1 className="text-2xl font-black text-neutral-950 mb-3">상품을 찾을 수 없습니다</h1>
+          <p className="text-sm text-neutral-600 max-w-md mb-8">
+            존재하지 않거나 현재 판매가 종료된 상품입니다. 홈 또는 스토어에서 다양한 상품을 확인해 보세요.
+          </p>
+          <a
+            href="/shop"
+            className="px-6 py-3 rounded-xl bg-neutral-950 hover:bg-black text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+          >
+            전체 상품 둘러보기
+          </a>
+        </div>
+      </PageLayout>
+    );
   }
 
   const hasVariants = product.variants && product.variants.length > 1;

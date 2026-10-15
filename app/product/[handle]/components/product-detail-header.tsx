@@ -318,6 +318,7 @@ export function ProductDetailHeader({
 
       const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
       const userRole = localStorage.getItem("user_role") || "";
+      const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || userRole || "").toUpperCase().trim();
       const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
       const isLoggedIn = isAdmin || (localStorage.getItem("is_logged_in") === "true" && Boolean(userEmail));
       setIsLoggedInUser(isLoggedIn);
@@ -369,10 +370,13 @@ export function ProductDetailHeader({
             );
             const isGradeTargeted = Boolean(
               isLoggedIn &&
+                userGrade &&
                 (sale.targetGrades || []).length > 0 &&
                 (sale.targetGrades.includes("ALL") ||
+                  sale.targetGrades.includes(userGrade) ||
                   sale.targetGrades.includes(userRole?.toUpperCase()) ||
-                  (userRole?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")))
+                  (userGrade.includes("VIP") && sale.targetGrades.includes("VIP")) ||
+                  (userGrade.includes("VVIP") && (sale.targetGrades.includes("VVIP") || sale.targetGrades.includes("VIP"))))
             );
 
             if (isEmailTargeted || isGradeTargeted || isAdmin) {

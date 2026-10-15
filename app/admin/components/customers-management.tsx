@@ -16,6 +16,10 @@ import {
   Sprout,
   ShoppingBag,
   AlertCircle,
+  Gem,
+  Award,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 
 import React, { useState } from "react";
@@ -297,31 +301,29 @@ export function CustomersManagement({
     return sanitizedCustomersList.filter((c) => c.joinedDate && c.joinedDate.startsWith(currentYM)).length;
   }, [sanitizedCustomersList]);
 
-  const isSproutGrade = (c: any): boolean => {
-    if (!c || c.isAdmin || c.role === "ADMIN") return false;
-    const g = String(c.grade || "").trim();
-    const grp = String(c.group || "").trim();
-    if (g === "새싹고객" || g === "GENERAL" || g === "REGULAR" || g === "SILVER") return true;
-    if (!g && !grp.includes("우수고객")) return true;
-    return false;
+  // 회원 등급 산정 기준 (누적 구매금액 totalSpent 기준)
+  // - VVIP: 15,000,000원 이상 ('VVIP 전용 시크릿 타임 세일' 권한)
+  // - 플래티넘 (Platinum): 8,000,000원 이상 ('플래티넘 전용 시크릿 타임 세일' 권한)
+  // - 골드 (Gold): 5,000,000원 이상 ('골드 등급 전용 시크릿 타임 세일' 권한)
+  // - 실버 (Silver): 2,000,000원 이상 ('실버 등급 전용 시크릿 타임 세일' 권한)
+  // - 일반 (General / 새싹): 2,000,000원 미만
+  const resolveCustomerGrade = (c: any): "VVIP" | "PLATINUM" | "GOLD" | "SILVER" | "GENERAL" => {
+    if (!c) return "GENERAL";
+    if (c.isAdmin || c.role === "ADMIN") return "VVIP";
+    const spent = Number(c.totalSpent || 0);
+    if (spent >= 15000000) return "VVIP";
+    if (spent >= 8000000) return "PLATINUM";
+    if (spent >= 5000000) return "GOLD";
+    if (spent >= 2000000) return "SILVER";
+
+    const rawG = String(c.grade || "").trim().toUpperCase();
+    if (rawG === "VVIP") return "VVIP";
+    if (rawG === "PLATINUM" || rawG.includes("플래티넘")) return "PLATINUM";
+    if (rawG === "GOLD" || rawG.includes("골드")) return "GOLD";
+    if (rawG === "SILVER" || rawG.includes("실버")) return "SILVER";
+    return "GENERAL";
   };
 
-  const isVipGrade = (c: any): boolean => {
-    if (!c) return false;
-    if (c.isAdmin || c.role === "ADMIN") return true;
-    const g = String(c.grade || "").trim();
-    const grp = String(c.group || "").trim();
-    return (
-      g === "우수고객" ||
-      g === "GOLD" ||
-      g === "VVIP" ||
-      g === "PLATINUM" ||
-      g.includes("VIP") ||
-      grp.includes("우수고객")
-    );
-  };
-
-  // 구매 실적 고객 (누적 구매금액 1원 이상 또는 주문 1건 이상)
   const isBuyerCustomer = (c: any): boolean => {
     if (!c) return false;
     const spent = Number(c.totalSpent || 0);
@@ -329,7 +331,6 @@ export function CustomersManagement({
     return spent > 0 || orders > 0;
   };
 
-  // 특수 관리 회원 (초이콤마 직원, 블랙리스트 등 관리 대상 회원)
   const isSpecialCustomer = (c: any): boolean => {
     if (!c) return false;
     const grp = String(c.group || "").trim().toLowerCase();
@@ -351,12 +352,25 @@ export function CustomersManagement({
     return sanitizedCustomersList.reduce((sum: number, c: any) => sum + (Number(c.points) || 0), 0);
   }, [sanitizedCustomersList]);
 
-  const sproutCustomersCount = React.useMemo(() => {
-    return sanitizedCustomersList.filter((c: any) => isSproutGrade(c)).length;
+  // 4단계 회원 등급별 인원 수 집계
+  const vvipCustomersCount = React.useMemo(() => {
+    return sanitizedCustomersList.filter((c: any) => resolveCustomerGrade(c) === "VVIP").length;
   }, [sanitizedCustomersList]);
 
-  const vipCustomersCount = React.useMemo(() => {
-    return sanitizedCustomersList.filter((c: any) => isVipGrade(c)).length;
+  const platinumCustomersCount = React.useMemo(() => {
+    return sanitizedCustomersList.filter((c: any) => resolveCustomerGrade(c) === "PLATINUM").length;
+  }, [sanitizedCustomersList]);
+
+  const goldCustomersCount = React.useMemo(() => {
+    return sanitizedCustomersList.filter((c: any) => resolveCustomerGrade(c) === "GOLD").length;
+  }, [sanitizedCustomersList]);
+
+  const silverCustomersCount = React.useMemo(() => {
+    return sanitizedCustomersList.filter((c: any) => resolveCustomerGrade(c) === "SILVER").length;
+  }, [sanitizedCustomersList]);
+
+  const generalCustomersCount = React.useMemo(() => {
+    return sanitizedCustomersList.filter((c: any) => resolveCustomerGrade(c) === "GENERAL").length;
   }, [sanitizedCustomersList]);
 
   const buyerCustomersCount = React.useMemo(() => {
@@ -382,16 +396,24 @@ export function CustomersManagement({
       let matchesGrade = true;
       if (customerGradeFilter === "all") {
         matchesGrade = true;
-      } else if (customerGradeFilter === "새싹고객" || customerGradeFilter === "GENERAL") {
-        matchesGrade = isSproutGrade(c);
-      } else if (customerGradeFilter === "우수고객" || customerGradeFilter === "GOLD" || customerGradeFilter === "VVIP") {
-        matchesGrade = isVipGrade(c);
+      } else if (customerGradeFilter === "VVIP") {
+        matchesGrade = resolveCustomerGrade(c) === "VVIP";
+      } else if (customerGradeFilter === "PLATINUM") {
+        matchesGrade = resolveCustomerGrade(c) === "PLATINUM";
+      } else if (customerGradeFilter === "GOLD") {
+        matchesGrade = resolveCustomerGrade(c) === "GOLD";
+      } else if (customerGradeFilter === "SILVER") {
+        matchesGrade = resolveCustomerGrade(c) === "SILVER";
+      } else if (customerGradeFilter === "GENERAL" || customerGradeFilter === "새싹고객") {
+        matchesGrade = resolveCustomerGrade(c) === "GENERAL";
+      } else if (customerGradeFilter === "우수고객") {
+        matchesGrade = ["VVIP", "PLATINUM", "GOLD"].includes(resolveCustomerGrade(c));
       } else if (customerGradeFilter === "BUYER") {
         matchesGrade = isBuyerCustomer(c);
       } else if (customerGradeFilter === "SPECIAL") {
         matchesGrade = isSpecialCustomer(c);
       } else {
-        matchesGrade = c.grade === customerGradeFilter;
+        matchesGrade = resolveCustomerGrade(c) === customerGradeFilter || c.grade === customerGradeFilter;
       }
 
       return matchesSearch && matchesGrade;
@@ -442,7 +464,7 @@ export function CustomersManagement({
         </div>
       </div>
 
-      {/* Metric Summary Cards: 아임웹 6대 핵심 세그먼트 (전체, 새싹고객, 우수고객, 카카오, 이메일, 적립금) */}
+      {/* Metric Summary Cards: 4단계 회원 등급 체계 (전체, VVIP, 플래티넘, 골드, 실버, 일반) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
         {/* 1. 전체 회원 */}
         <div
@@ -463,100 +485,213 @@ export function CustomersManagement({
           <p className="text-[11px] text-neutral-400 mt-0.5">스토어 전체 등록 회원</p>
         </div>
 
-        {/* 2. 새싹고객 (아임웹 기본 등급) */}
+        {/* 2. VVIP (1,500만원 이상) */}
         <div
-          onClick={() => setCustomerGradeFilter("새싹고객")}
-          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-emerald-600 ${
-            customerGradeFilter === "새싹고객" ? "ring-2 ring-emerald-600 border-emerald-600 bg-emerald-50/40 shadow-md" : "border-neutral-200/80"
+          onClick={() => setCustomerGradeFilter("VVIP")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
+            customerGradeFilter === "VVIP" ? "ring-2 ring-amber-500 border-neutral-950 bg-neutral-950 text-white shadow-md" : "border-neutral-200/80"
           }`}
         >
-          <div className="flex items-center justify-between text-xs font-bold text-emerald-800 uppercase tracking-wider">
-            <span className="flex items-center gap-1.5">
-              <Sprout className="w-3.5 h-3.5 text-emerald-600" />
-              <span>새싹고객 (기본)</span>
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+            <span className={`flex items-center gap-1.5 ${customerGradeFilter === "VVIP" ? "text-amber-400" : "text-amber-600"}`}>
+              <Crown className="w-3.5 h-3.5 text-amber-500" />
+              <span>VVIP</span>
             </span>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-500 font-black">1,500만↑</span>
           </div>
-          <p className="text-xl font-extrabold text-emerald-950 mt-1.5">
-            {sproutCustomersCount.toLocaleString()} 명
+          <p className={`text-xl font-extrabold mt-1.5 ${customerGradeFilter === "VVIP" ? "text-amber-300" : "text-neutral-950"}`}>
+            {vvipCustomersCount.toLocaleString()} 명
           </p>
-          <p className="text-[11px] text-emerald-700/80 font-bold mt-0.5">아임웹 일반 기본 등급</p>
+          <p className={`text-[11px] font-medium mt-0.5 ${customerGradeFilter === "VVIP" ? "text-amber-200/80" : "text-neutral-500"}`}>
+            VVIP 시크릿 세일 권한
+          </p>
         </div>
 
-        {/* 3. 우수고객 (아임웹 VIP) */}
+        {/* 3. 플래티넘 (800만원 이상) */}
         <div
-          onClick={() => setCustomerGradeFilter("우수고객")}
+          onClick={() => setCustomerGradeFilter("PLATINUM")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-purple-600 ${
+            customerGradeFilter === "PLATINUM" ? "ring-2 ring-purple-600 border-purple-600 bg-purple-50/60 shadow-md" : "border-neutral-200/80"
+          }`}
+        >
+          <div className="flex items-center justify-between text-xs font-bold text-purple-900 uppercase tracking-wider">
+            <span className="flex items-center gap-1.5">
+              <Gem className="w-3.5 h-3.5 text-purple-600" />
+              <span>플래티넘</span>
+            </span>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-bold">800만↑</span>
+          </div>
+          <p className="text-xl font-extrabold text-purple-950 mt-1.5">
+            {platinumCustomersCount.toLocaleString()} 명
+          </p>
+          <p className="text-[11px] text-purple-700 font-medium mt-0.5">플래티넘 전용 세일 권한</p>
+        </div>
+
+        {/* 4. 골드 (500만원 이상) */}
+        <div
+          onClick={() => setCustomerGradeFilter("GOLD")}
           className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-amber-500 ${
-            customerGradeFilter === "우수고객" ? "ring-2 ring-amber-500 border-amber-500 bg-amber-50/40 shadow-md" : "border-neutral-200/80"
+            customerGradeFilter === "GOLD" ? "ring-2 ring-amber-500 border-amber-500 bg-amber-50/60 shadow-md" : "border-neutral-200/80"
           }`}
         >
           <div className="flex items-center justify-between text-xs font-bold text-amber-900 uppercase tracking-wider">
             <span className="flex items-center gap-1.5">
-              <Crown className="w-3.5 h-3.5 text-amber-500" />
-              <span>우수고객 (VIP)</span>
+              <Award className="w-3.5 h-3.5 text-amber-600" />
+              <span>골드</span>
             </span>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold">500만↑</span>
           </div>
           <p className="text-xl font-extrabold text-amber-950 mt-1.5">
-            {vipCustomersCount.toLocaleString()} 명
+            {goldCustomersCount.toLocaleString()} 명
           </p>
-          <p className="text-[11px] text-amber-800/80 font-bold mt-0.5">아임웹 우수 등급 회원</p>
+          <p className="text-[11px] text-amber-700 font-medium mt-0.5">골드 전용 세일 권한</p>
         </div>
 
-        {/* 4. 구매 실적 고객 */}
+        {/* 5. 실버 (200만원 이상) */}
         <div
-          onClick={() => setCustomerGradeFilter("BUYER")}
-          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-blue-600 ${
-            customerGradeFilter === "BUYER" ? "ring-2 ring-blue-600 border-blue-600 bg-blue-50/40 shadow-md" : "border-neutral-200/80"
+          onClick={() => setCustomerGradeFilter("SILVER")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-slate-500 ${
+            customerGradeFilter === "SILVER" ? "ring-2 ring-slate-600 border-slate-600 bg-slate-50/80 shadow-md" : "border-neutral-200/80"
           }`}
         >
-          <div className="flex items-center justify-between text-xs font-bold text-blue-900 uppercase tracking-wider">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-800 uppercase tracking-wider">
             <span className="flex items-center gap-1.5">
-              <ShoppingBag className="w-3.5 h-3.5 text-blue-600" />
-              <span>구매 실적 고객</span>
+              <Shield className="w-3.5 h-3.5 text-slate-600" />
+              <span>실버</span>
             </span>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-200 text-slate-800 font-bold">200만↑</span>
           </div>
-          <p className="text-xl font-extrabold text-blue-950 mt-1.5">
-            {buyerCustomersCount.toLocaleString()} 명
+          <p className="text-xl font-extrabold text-slate-950 mt-1.5">
+            {silverCustomersCount.toLocaleString()} 명
           </p>
-          <p className="text-[11px] text-blue-700 font-bold mt-0.5">1건 이상 결제 구매 고객</p>
+          <p className="text-[11px] text-slate-600 font-medium mt-0.5">실버 전용 세일 권한</p>
         </div>
 
-        {/* 5. 특수 관리 회원 (직원 / 블랙리스트) */}
+        {/* 6. 일반 / 새싹 (200만원 미만) */}
         <div
-          onClick={() => setCustomerGradeFilter("SPECIAL")}
-          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-rose-500 ${
-            customerGradeFilter === "SPECIAL" ? "ring-2 ring-rose-500 border-rose-500 bg-rose-50/40 shadow-md" : "border-neutral-200/80"
+          onClick={() => setCustomerGradeFilter("GENERAL")}
+          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-400 ${
+            customerGradeFilter === "GENERAL" ? "ring-2 ring-neutral-700 border-neutral-700 bg-neutral-50 shadow-md" : "border-neutral-200/80"
           }`}
         >
-          <div className="flex items-center justify-between text-xs font-bold text-rose-900 uppercase tracking-wider">
+          <div className="flex items-center justify-between text-xs font-bold text-neutral-700 uppercase tracking-wider">
             <span className="flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
-              <span>특수 관리 회원</span>
+              <Sprout className="w-3.5 h-3.5 text-emerald-600" />
+              <span>일반 (새싹)</span>
             </span>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-neutral-100 text-neutral-600 font-bold">200만 미만</span>
           </div>
-          <p className="text-xl font-extrabold text-rose-950 mt-1.5">
-            {specialCustomersCount.toLocaleString()} 명
+          <p className="text-xl font-extrabold text-neutral-900 mt-1.5">
+            {generalCustomersCount.toLocaleString()} 명
           </p>
-          <p className="text-[11px] text-rose-700 font-bold mt-0.5">직원(3명) 및 블랙리스트(2명)</p>
+          <p className="text-[11px] text-neutral-500 font-medium mt-0.5">기본 쇼핑 및 적립</p>
+        </div>
+      </div>
+
+      {/* 회원 등급 기준 및 전용 혜택 가이드 배너 */}
+      <div className="bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 text-white rounded-2xl p-4 sm:p-5 shadow-sm border border-neutral-800">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <h2 className="text-sm font-extrabold text-white tracking-wide">
+                초이콤마 4단계 회원 등급 기준 & 시크릿 타임 세일 혜택 안내
+              </h2>
+            </div>
+            <p className="text-xs text-neutral-400">
+              누적 실결제액(totalSpent)을 기준으로 등급이 자동 연동되며, 각 등급에 해당하는 '전용 시크릿 타임 세일' 권한이 부여됩니다.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                if (!window.confirm("현재 누적 구매실적(totalSpent)을 기준으로 전 회원의 등급을 4단계(VVIP/플래티넘/골드/실버/일반)로 일괄 적용하시겠습니까?")) return;
+                const updated = sanitizedCustomersList.map((c) => ({
+                  ...c,
+                  grade: resolveCustomerGrade(c),
+                }));
+                setCustomersList(updated);
+                try {
+                  localStorage.setItem("admin_customers", JSON.stringify(updated));
+                } catch (e) {}
+                fetch("/api/admin/customers", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(updated),
+                }).catch(() => {});
+                alert(`✅ 총 ${updated.length}명 회원의 등급이 누적 실적 기준(VVIP: ${vvipCustomersCount}명, 플래티넘: ${platinumCustomersCount}명, 골드: ${goldCustomersCount}명, 실버: ${silverCustomersCount}명)으로 일괄 반영되었습니다.`);
+              }}
+              className="bg-amber-500 hover:bg-amber-400 text-neutral-950 font-extrabold px-3.5 py-2 rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>구매실적 기준 등급 일괄 재산정/반영</span>
+            </button>
+          </div>
         </div>
 
-        {/* 6. 총 적립금 자산 현황 */}
-        <div
-          onClick={() => setCustomerGradeFilter("all")}
-          className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-violet-500 ${
-            customerGradeFilter === "all" ? "border-neutral-200/80 hover:border-violet-500" : "border-neutral-200/80"
-          }`}
-          title="클릭 시 전체 회원 목록 표시"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-violet-900 uppercase tracking-wider">
-            <span className="flex items-center gap-1.5">
-              <Coins className="w-3.5 h-3.5 text-violet-600" />
-              <span>총 적립금 누적액</span>
-            </span>
+        {/* 4단계 등급 혜택 카드 그리드 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 mt-3.5 pt-3.5 border-t border-neutral-800/80">
+          <div className="bg-neutral-900/90 border border-amber-500/30 rounded-xl p-3 flex items-center gap-3">
+            <div className="p-2 bg-amber-500/20 text-amber-400 rounded-lg">
+              <Crown className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-amber-300 text-xs">VVIP</span>
+                <span className="text-[10px] font-mono text-neutral-400">1,500만 원 이상</span>
+              </div>
+              <p className="text-[11px] text-amber-200/90 font-medium mt-0.5">
+                VVIP 전용 시크릿 타임 세일 권한
+              </p>
+            </div>
           </div>
-          <p className="text-xl font-black text-violet-950 mt-1.5 font-mono">
-            {totalPointsSum.toLocaleString()} P
-          </p>
-          <p className="text-[11px] text-violet-700 font-bold mt-0.5">회원 보유 포인트 합계</p>
+
+          <div className="bg-neutral-900/90 border border-purple-500/30 rounded-xl p-3 flex items-center gap-3">
+            <div className="p-2 bg-purple-500/20 text-purple-300 rounded-lg">
+              <Gem className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-purple-300 text-xs">플래티넘</span>
+                <span className="text-[10px] font-mono text-neutral-400">800만 원 이상</span>
+              </div>
+              <p className="text-[11px] text-purple-200/90 font-medium mt-0.5">
+                플래티넘 전용 시크릿 타임 세일 권한
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-neutral-900/90 border border-amber-500/20 rounded-xl p-3 flex items-center gap-3">
+            <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
+              <Award className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-amber-400 text-xs">골드</span>
+                <span className="text-[10px] font-mono text-neutral-400">500만 원 이상</span>
+              </div>
+              <p className="text-[11px] text-amber-200/80 font-medium mt-0.5">
+                골드 등급 전용 시크릿 타임 세일 권한
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-neutral-900/90 border border-slate-500/30 rounded-xl p-3 flex items-center gap-3">
+            <div className="p-2 bg-slate-500/20 text-slate-300 rounded-lg">
+              <Shield className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-slate-200 text-xs">실버</span>
+                <span className="text-[10px] font-mono text-neutral-400">200만 원 이상</span>
+              </div>
+              <p className="text-[11px] text-slate-300/90 font-medium mt-0.5">
+                실버 등급 전용 시크릿 타임 세일 권한
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -575,7 +710,7 @@ export function CustomersManagement({
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* Quick Segment Filter Badges */}
-            <div className="flex items-center gap-1 text-xs bg-neutral-100 p-1 rounded-xl">
+            <div className="flex items-center gap-1 text-xs bg-neutral-100 p-1 rounded-xl flex-wrap">
               <button
                 type="button"
                 onClick={() => setCustomerGradeFilter("all")}
@@ -587,21 +722,48 @@ export function CustomersManagement({
               </button>
               <button
                 type="button"
-                onClick={() => setCustomerGradeFilter("새싹고객")}
+                onClick={() => setCustomerGradeFilter("VVIP")}
                 className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                  customerGradeFilter === "새싹고객" ? "bg-emerald-600 text-white shadow-xs" : "text-emerald-700 hover:text-emerald-950"
+                  customerGradeFilter === "VVIP" ? "bg-neutral-950 text-amber-300 shadow-xs" : "text-amber-800 hover:text-neutral-950"
                 }`}
               >
-                새싹 ({sproutCustomersCount})
+                👑 VVIP ({vvipCustomersCount})
               </button>
               <button
                 type="button"
-                onClick={() => setCustomerGradeFilter("우수고객")}
+                onClick={() => setCustomerGradeFilter("PLATINUM")}
                 className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                  customerGradeFilter === "우수고객" ? "bg-amber-500 text-white shadow-xs" : "text-amber-800 hover:text-amber-950"
+                  customerGradeFilter === "PLATINUM" ? "bg-purple-900 text-white shadow-xs" : "text-purple-700 hover:text-purple-950"
                 }`}
               >
-                우수 ({vipCustomersCount})
+                💎 플래티넘 ({platinumCustomersCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomerGradeFilter("GOLD")}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  customerGradeFilter === "GOLD" ? "bg-amber-500 text-white shadow-xs" : "text-amber-800 hover:text-amber-950"
+                }`}
+              >
+                🥇 골드 ({goldCustomersCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomerGradeFilter("SILVER")}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  customerGradeFilter === "SILVER" ? "bg-slate-700 text-white shadow-xs" : "text-slate-700 hover:text-slate-950"
+                }`}
+              >
+                🥈 실버 ({silverCustomersCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomerGradeFilter("GENERAL")}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  customerGradeFilter === "GENERAL" || customerGradeFilter === "새싹고객" ? "bg-emerald-600 text-white shadow-xs" : "text-emerald-700 hover:text-emerald-950"
+                }`}
+              >
+                🌱 일반 ({generalCustomersCount})
               </button>
               <button
                 type="button"
@@ -642,10 +804,16 @@ export function CustomersManagement({
           <div className="flex items-center gap-2 pt-1 text-xs text-neutral-600 animate-in fade-in">
             <span className="font-semibold text-neutral-500">현재 필터:</span>
             <span className="inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-md bg-neutral-900 text-white text-[11px]">
-              {customerGradeFilter === "새싹고객"
-                ? "🌱 새싹고객"
-                : customerGradeFilter === "우수고객"
-                ? "👑 우수고객"
+              {customerGradeFilter === "VVIP"
+                ? "👑 VVIP (1,500만원 이상)"
+                : customerGradeFilter === "PLATINUM"
+                ? "💎 플래티넘 (800만원 이상)"
+                : customerGradeFilter === "GOLD"
+                ? "🥇 골드 (500만원 이상)"
+                : customerGradeFilter === "SILVER"
+                ? "🥈 실버 (200만원 이상)"
+                : customerGradeFilter === "GENERAL" || customerGradeFilter === "새싹고객"
+                ? "🌱 일반/새싹 (200만원 미만)"
                 : customerGradeFilter === "BUYER"
                 ? "🛍️ 구매 실적 고객"
                 : customerGradeFilter === "SPECIAL"
@@ -665,7 +833,7 @@ export function CustomersManagement({
               <tr>
                 <th className="py-3.5 px-5">회원 정보 (아이디/이메일)</th>
                 <th className="py-3.5 px-5">연락처 / 배송지 주소</th>
-                <th className="py-3.5 px-5">회원 등급 / 그룹</th>
+                <th className="py-3.5 px-5">회원 등급 / 전용 혜택</th>
                 <th className="py-3.5 px-5">구매 실적 (금액/건수)</th>
                 <th className="py-3.5 px-5">
                   <span className="flex items-center gap-1">
@@ -733,22 +901,50 @@ export function CustomersManagement({
                       )}
                     </td>
                     <td className="py-4 px-5">
-                      <div className="space-y-1">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-black ${
-                            cust.grade === "우수고객" || cust.grade === "GOLD" || cust.grade === "VVIP" || cust.grade === "PLATINUM"
-                              ? "bg-amber-100 text-amber-900 border border-amber-300"
-                              : "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                          }`}
-                        >
-                          {cust.grade || "새싹고객"}
-                        </span>
-                        {cust.group && cust.group !== "-" && (
-                          <p className="text-[10px] text-neutral-500 truncate max-w-[130px]" title={cust.group}>
-                            {cust.group}
-                          </p>
-                        )}
-                      </div>
+                      {(() => {
+                        const gradeKey = resolveCustomerGrade(cust);
+                        let badgeStyle = "bg-neutral-100 text-neutral-700 border-neutral-200";
+                        let gradeIcon = <Sprout className="w-3.5 h-3.5 text-emerald-600" />;
+                        let gradeTitle = "일반 (새싹)";
+                        let benefitLabel = "기본 쇼핑 및 적립";
+
+                        if (gradeKey === "VVIP") {
+                          badgeStyle = "bg-neutral-950 text-amber-300 border-amber-400/50 shadow-xs";
+                          gradeIcon = <Crown className="w-3.5 h-3.5 text-amber-400" />;
+                          gradeTitle = "VVIP";
+                          benefitLabel = "VVIP 전용 시크릿 세일 권한";
+                        } else if (gradeKey === "PLATINUM") {
+                          badgeStyle = "bg-purple-950 text-purple-200 border-purple-400/50 shadow-xs";
+                          gradeIcon = <Gem className="w-3.5 h-3.5 text-purple-300" />;
+                          gradeTitle = "플래티넘";
+                          benefitLabel = "플래티넘 전용 시크릿 세일 권한";
+                        } else if (gradeKey === "GOLD") {
+                          badgeStyle = "bg-amber-100 text-amber-900 border-amber-400 shadow-xs";
+                          gradeIcon = <Award className="w-3.5 h-3.5 text-amber-600" />;
+                          gradeTitle = "골드";
+                          benefitLabel = "골드 등급 전용 시크릿 세일 권한";
+                        } else if (gradeKey === "SILVER") {
+                          badgeStyle = "bg-slate-100 text-slate-800 border-slate-300 shadow-xs";
+                          gradeIcon = <Shield className="w-3.5 h-3.5 text-slate-600" />;
+                          gradeTitle = "실버";
+                          benefitLabel = "실버 등급 전용 시크릿 세일 권한";
+                        }
+
+                        return (
+                          <div className="space-y-1">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black border ${badgeStyle}`}
+                            >
+                              {gradeIcon}
+                              <span>{gradeTitle}</span>
+                            </span>
+                            <div className="flex items-center gap-1 text-[10.5px] text-neutral-500 font-medium">
+                              <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+                              <span className="truncate max-w-[150px]" title={benefitLabel}>{benefitLabel}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="py-4 px-5 font-mono text-neutral-950">
                       <p className="font-bold text-xs">₩ {Number(cust.totalSpent || 0).toLocaleString()}</p>

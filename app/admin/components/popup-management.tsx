@@ -50,7 +50,7 @@ export function PopupManagement({
 
   // Load from remote API / data file on mount
   useEffect(() => {
-    fetch("/api/admin/popup")
+    fetch("/api/admin/popup", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.config) {
@@ -450,13 +450,16 @@ export function PopupManagement({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-neutral-700 block">공지 제목 *</label>
-                <input
-                  type="text"
+                <label className="text-xs font-bold text-neutral-700 block flex items-center justify-between">
+                  <span>공지 제목 *</span>
+                  <span className="text-[10px] text-neutral-400">Enter로 줄바꿈 지원</span>
+                </label>
+                <textarea
+                  rows={2}
                   value={config.title}
                   onChange={(e) => setConfig((prev) => ({ ...prev, title: e.target.value }))}
-                  placeholder="예: 초이콤마 시즌 오프 세일 안내"
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 font-bold focus:outline-none focus:border-neutral-950"
+                  placeholder="예: 초이콤마 시즌 오프 세일 안내 (Enter로 줄바꿈 가능)"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 font-bold focus:outline-none focus:border-neutral-950 resize-y"
                 />
               </div>
 
@@ -474,14 +477,14 @@ export function PopupManagement({
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-neutral-700 block flex items-center justify-between">
                   <span>핵심 요약 안내 문구 (강조 박스)</span>
-                  <span className="text-[10px] text-amber-600 font-semibold">노란 강조 박스에 노출</span>
+                  <span className="text-[10px] text-amber-600 font-semibold">Enter로 줄바꿈 지원</span>
                 </label>
                 <textarea
-                  rows={2}
+                  rows={3}
                   value={config.noticeMessage || ""}
                   onChange={(e) => setConfig((prev) => ({ ...prev, noticeMessage: e.target.value }))}
-                  placeholder="예: 봄 신상품 오픈 및 기간 한정 특별 프로모션을 진행합니다."
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-none font-medium"
+                  placeholder="예: 초이콤마의 기존 회원은 회원 가입을 하실 필요가 없습니다.&#10;가입당시에 사용한 이메일주소 / 휴대폰 뒤 4자리로 로그인 가능합니다."
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-y font-medium"
                 />
               </div>
 
@@ -502,14 +505,14 @@ export function PopupManagement({
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-neutral-700 block flex items-center justify-between">
                   <span>고객 안내 상세 본문 (줄바꿈 지원)</span>
-                  <span className="text-[10px] text-neutral-400">입력한 본문이 그대로 노출됩니다</span>
+                  <span className="text-[10px] text-neutral-400">Enter로 줄바꿈 및 문단 구분 가능</span>
                 </label>
                 <textarea
-                  rows={4}
+                  rows={5}
                   value={config.description || ""}
                   onChange={(e) => setConfig((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder="예: 초이콤마를 찾아주신 고객 여러분께 감사드립니다. 상세한 공지 내용 및 혜택 안내를 자유롭게 입력해 주세요."
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-none font-medium"
+                  placeholder="예: 초이콤마를 찾아주신 고객 여러분께 감사드립니다.&#10;&#10;상세한 공지 내용 및 혜택 안내를 자유롭게 입력해 주세요."
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-xs text-neutral-950 focus:outline-none focus:border-neutral-950 resize-y font-medium"
                 />
               </div>
             </div>
@@ -746,37 +749,48 @@ export function PopupManagement({
               </div>
             </div>
 
-            {/* Preview Display Stage */}
-            <div className="min-h-[480px] bg-neutral-100/90 rounded-2xl p-4 sm:p-6 flex items-center justify-center border border-neutral-200 relative overflow-hidden">
+            {/* Preview Display Stage (실제 홈화면과 1:1 동일한 비율 및 오버레이 연출) */}
+            <div className="min-h-[620px] bg-neutral-900/80 backdrop-blur-xs rounded-2xl p-4 sm:p-8 flex items-center justify-center border border-neutral-800 relative overflow-hidden shadow-inner">
               {/* TAB 1: Home Popup Preview */}
               {previewTab === "home" ? (
                 !hasAnyContent ? (
-                  <div className="text-center p-8 space-y-3 max-w-sm">
-                    <div className="w-14 h-14 rounded-2xl bg-neutral-200/70 mx-auto flex items-center justify-center text-neutral-400">
+                  <div className="text-center p-8 space-y-3 max-w-sm bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 text-white">
+                    <div className="w-14 h-14 rounded-2xl bg-white/10 mx-auto flex items-center justify-center text-white/60">
                       <EyeOff className="w-7 h-7 stroke-1" />
                     </div>
-                    <h4 className="font-bold text-sm text-neutral-800">등록된 팝업이 없습니다</h4>
-                    <p className="text-xs text-neutral-500">
+                    <h4 className="font-bold text-sm text-white">등록된 팝업이 없습니다</h4>
+                    <p className="text-xs text-neutral-400">
                       현재 등록되거나 활성화된 팝업이 없습니다. 왼쪽 패널에서 공지 내용 또는 이미지를 입력하시면 실시간 미리보기가 표시됩니다.
                     </p>
                   </div>
                 ) : isNoticeType || (!config.imageUrl && Boolean(config.noticeMessage || config.title)) ? (
-                  /* ── Notice Modal Preview (정돈된 공지 팝업) ── */
-                  <div className="relative w-full max-w-[440px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-200 flex flex-col text-left">
-                    <div className="h-1.5 w-full bg-gradient-to-r from-neutral-950 via-amber-600 to-neutral-900" />
-                    <div className="p-5 sm:p-6 space-y-3.5">
-                      {/* Badge Header */}
-                      <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                  /* ── Notice Modal Preview (실제 홈화면과 100% 동일한 비율/크기/폰트) ── */
+                  <div className="relative w-full max-w-[520px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200/90 animate-in zoom-in-95 duration-200 flex flex-col text-center">
+                    {/* Floating Close Button Preview */}
+                    <div
+                      title="팝업 닫기 (미리보기)"
+                      className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                    >
+                      <X className="w-4 h-4" />
+                    </div>
+
+                    {/* Top Gradient Bar */}
+                    <div className="h-2 w-full bg-gradient-to-r from-neutral-950 via-amber-600 to-neutral-900" />
+                    <div className="p-7 sm:p-8 space-y-5 sm:space-y-6 text-center">
+                      {/* 1. Official Header Badge & Brand Label */}
+                      <div className="flex flex-col items-center justify-center gap-2 py-0.5 text-center">
+                        <span className="text-[11px] sm:text-xs font-extrabold text-neutral-400 tracking-widest uppercase">
+                          CHOICOMMA OFFICIAL
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black bg-rose-50 text-rose-700 border border-rose-200/90 shadow-2xs">
+                          <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
                           공지 및 안내
                         </span>
-                        <span className="text-[10px] font-bold text-neutral-400">CHOICOMMA</span>
                       </div>
 
-                      {/* Attached Image if present */}
+                      {/* Optional Header Image for Notice Mode */}
                       {config.imageUrl && (
-                        <div className="relative w-full rounded-2xl overflow-hidden border border-neutral-200/80 aspect-16/7 bg-neutral-100">
+                        <div className="relative w-full rounded-2xl overflow-hidden border border-neutral-200/80 aspect-16/7 bg-neutral-100 my-1 mx-auto">
                           <img
                             src={config.imageUrl}
                             alt={config.title || "공지 이미지"}
@@ -785,77 +799,87 @@ export function PopupManagement({
                         </div>
                       )}
 
-                      {/* Title & Subtitle */}
-                      <div className="space-y-0.5">
-                        <h4 className="text-sm sm:text-base font-black text-neutral-950 leading-snug break-keep">
-                          {config.title || "공지사항"}
-                        </h4>
+                      {/* 2. Main Large Headline (홈화면과 동일한 크기 및 여백) */}
+                      <div className="space-y-2 pt-1 pb-2.5 sm:pb-3.5 mb-1 text-center">
+                        <h2 className="text-2xl sm:text-3xl font-black text-neutral-950 tracking-tight leading-snug break-keep text-center whitespace-pre-wrap">
+                          {config.title || "초이콤마 공지사항"}
+                        </h2>
                         {config.subtitle && (
-                          <p className="text-[10px] font-bold text-neutral-400 tracking-wider uppercase">
+                          <p className="text-xs sm:text-sm font-bold text-neutral-400 tracking-wider uppercase text-center whitespace-pre-wrap">
                             {config.subtitle}
                           </p>
                         )}
                       </div>
 
-                      {/* Core Highlight Box */}
+                      {/* 3. Core Highlight Box (홈화면과 동일한 크기 및 패딩) */}
                       {(config.noticeMessage || config.noticePeriod) && (
-                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-400/40 space-y-2">
+                        <div className="p-5 sm:p-6 rounded-2xl bg-amber-500/10 border-2 border-amber-400/40 space-y-3.5 text-center flex flex-col items-center justify-center">
                           {config.noticeMessage && (
-                            <div className="flex items-start gap-1.5">
-                              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                              <p className="text-xs font-black text-neutral-900 leading-relaxed break-keep">
-                                "{config.noticeMessage}"
+                            <div className="flex flex-col items-center justify-center gap-2.5 py-0.5 text-center w-full">
+                              <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0" />
+                              <p className="text-sm sm:text-base font-black text-neutral-950 leading-relaxed break-keep text-center whitespace-pre-wrap">
+                                {config.noticeMessage}
                               </p>
                             </div>
                           )}
                           {config.noticePeriod && (
-                            <div className="flex items-center justify-between pt-1 border-t border-amber-300/40 text-[11px] font-bold">
-                              <span className="text-amber-950">기한 안내:</span>
-                              <span className="text-rose-600 font-black">{config.noticePeriod}</span>
+                            <div className="flex items-center justify-center flex-wrap gap-2 pt-3 border-t border-amber-300/60 text-xs sm:text-sm font-bold text-neutral-800 text-center w-full">
+                              <div className="flex items-center gap-1.5 text-amber-950">
+                                <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
+                                <span>안내 기한:</span>
+                              </div>
+                              <span className="px-3.5 py-1 rounded-xl bg-white border border-amber-300 font-black text-rose-600 text-xs sm:text-sm shadow-2xs whitespace-pre-wrap">
+                                {config.noticePeriod}
+                              </span>
                             </div>
                           )}
                         </div>
                       )}
 
-                      {/* Customer Care Body (오직 입력된 본문이 있을 때만 렌더링) */}
+                      {/* 4. Customer Care Body (홈화면과 동일한 줄간격 및 여백) */}
                       {config.description && (
-                        <div className="space-y-1.5 text-xs text-neutral-700 leading-relaxed break-keep">
-                          <p className="whitespace-pre-line text-neutral-800 font-medium">
+                        <div className="py-2 text-sm sm:text-base text-neutral-700 leading-relaxed break-keep text-center">
+                          <div className="whitespace-pre-wrap text-neutral-800 font-medium leading-relaxed text-center">
                             {config.description}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Link Button Preview */}
-                      {config.linkUrl && (
-                        <div className="pt-0.5">
-                          <div className="w-full py-2 px-3 rounded-xl bg-neutral-100 text-neutral-900 font-bold text-[11px] flex items-center justify-center gap-1.5">
-                            <span>관련 안내 페이지로 이동</span>
-                            <ExternalLink className="w-3 h-3" />
                           </div>
                         </div>
                       )}
 
-                      {/* Footer */}
-                      <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500 font-bold">
-                        <span>☑ 오늘 하루 동안 열지 않기</span>
-                        <span className="px-3 py-1 bg-neutral-950 text-white rounded-lg font-black text-[11px]">확인 및 닫기</span>
+                      {/* 5. Link Button Preview */}
+                      {config.linkUrl && (
+                        <div className="pt-1.5 flex justify-center">
+                          <div className="w-full py-3.5 px-5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors text-center cursor-pointer">
+                            <span>관련 안내 페이지로 이동</span>
+                            <ExternalLink className="w-4 h-4" />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 6. Footer Controls (홈화면과 동일한 전폭 버튼 & 중앙 체크박스) */}
+                      <div className="pt-5 pb-1 border-t border-neutral-100 flex flex-col items-center justify-center gap-3.5 w-full">
+                        <span className="w-full sm:w-auto min-w-[200px] px-8 py-3.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs sm:text-sm font-black transition-all shadow-md text-center flex items-center justify-center cursor-pointer">
+                          확인 및 닫기
+                        </span>
+                        <span className="flex items-center justify-center gap-2.5 select-none text-xs sm:text-sm font-bold text-neutral-500 py-0.5">
+                          <span className="w-4 h-4 rounded border border-neutral-300 flex items-center justify-center text-[10px] text-neutral-900">☑</span>
+                          <span>오늘 하루 동안 열지 않기</span>
+                        </span>
                       </div>
                     </div>
                   </div>
                 ) : !config.imageUrl ? (
-                  <div className="text-center p-8 space-y-3 max-w-sm">
-                    <div className="w-14 h-14 rounded-2xl bg-neutral-200/70 mx-auto flex items-center justify-center text-neutral-400">
+                  <div className="text-center p-8 space-y-3 max-w-sm bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 text-white">
+                    <div className="w-14 h-14 rounded-2xl bg-white/10 mx-auto flex items-center justify-center text-white/60">
                       <ImageIcon className="w-7 h-7 stroke-1" />
                     </div>
-                    <h4 className="font-bold text-sm text-neutral-800">등록된 팝업 이미지가 없습니다</h4>
-                    <p className="text-xs text-neutral-500">
+                    <h4 className="font-bold text-sm text-white">등록된 팝업 이미지가 없습니다</h4>
+                    <p className="text-xs text-neutral-400">
                       왼쪽 패널에서 팝업 이미지 파일을 업로드하시면 실제 방문자 화면에 표시될 팝업을 여기서 실시간으로 확인하실 수 있습니다.
                     </p>
                   </div>
                 ) : (
-                  /* ── Image Modal Preview ── */
-                  <div className="relative w-full max-w-[360px] sm:max-w-[400px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+                  /* ── Image Modal Preview (홈화면과 동일한 max-w-[520px]) ── */
+                  <div className="relative w-full max-w-[520px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-200 flex flex-col">
                     <div
                       title="팝업 닫기 (상단 X)"
                       className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center backdrop-blur-md transition-all shadow-md cursor-pointer"
@@ -878,9 +902,11 @@ export function PopupManagement({
                     </div>
 
                     {/* Bottom Bar for Image Preview */}
-                    <div className="p-3 bg-white border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500 font-bold">
-                      <span>☑ 오늘 하루 열지 않기</span>
-                      <span className="px-3 py-1 bg-neutral-950 text-white rounded-lg font-black text-[11px]">닫기</span>
+                    <div className="p-4 bg-white border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-600 font-bold gap-3">
+                      <span>☑ 오늘 하루 동안 열지 않기</span>
+                      <span className="px-5 py-2.5 bg-neutral-950 text-white rounded-xl font-black text-xs shadow-sm cursor-pointer">
+                        확인 및 닫기
+                      </span>
                     </div>
                   </div>
                 )
@@ -899,7 +925,7 @@ export function PopupManagement({
                 ) : (
                   <div className="w-full max-w-[560px] space-y-3">
                     <div className="flex items-center justify-between text-[11px] text-neutral-500 font-bold px-1">
-                      <span>📍 멤버십 페이지 시크릿 세일 바로 위 고정 배너 위치</span>
+                      <span>📍 멤버십 페이지 상단 (아이디/비밀번호 설정 안내 바로 위 위치)</span>
                       <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                         {config.showOnMembership ? "배너 노출 활성" : "배너 미노출 설정"}
                       </span>
@@ -935,11 +961,11 @@ export function PopupManagement({
                               </span>
                               <span className="text-xs font-bold text-neutral-400">CHOICOMMA MEMBERSHIP</span>
                             </div>
-                            <h4 className="text-sm font-black text-white">
+                            <h4 className="text-sm font-black text-white whitespace-pre-wrap break-keep">
                               {config.title || "초이콤마 공지사항"}
                             </h4>
                             {config.noticeMessage && (
-                              <p className="text-xs text-neutral-300 leading-relaxed max-w-lg">
+                              <p className="text-xs text-neutral-300 leading-relaxed max-w-lg whitespace-pre-wrap break-keep">
                                 {config.noticeMessage}
                               </p>
                             )}
@@ -956,7 +982,7 @@ export function PopupManagement({
 
                     {/* Mock of what is underneath in membership */}
                     <div className="p-4 rounded-2xl bg-white/60 border border-neutral-200/60 opacity-60 text-center text-xs text-neutral-400">
-                      ▼ [시크릿 타임 세일 섹션] (이 배너 바로 아래에 배치됩니다)
+                      ▼ [아이디 및 비밀번호 설정 안내 섹션] (이 공지 배너 바로 아래에 배치됩니다)
                     </div>
                   </div>
                 )

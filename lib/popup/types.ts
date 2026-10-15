@@ -67,6 +67,11 @@ export function saveLocalPopupConfig(config: PopupConfig): void {
       updatedAt: new Date().toISOString(),
     };
     localStorage.setItem(POPUP_STORAGE_KEY, JSON.stringify(updated));
+    // 배포 시 기존에 설정되어 있던 '오늘 하루 열지 않기' 임시 플래그를 초기화하여 즉시 확인 가능하도록 보장
+    localStorage.removeItem(POPUP_HIDE_UNTIL_KEY);
+    localStorage.removeItem("choicomma_popup_hide_set_at");
+    const popupId = config.id || "default";
+    localStorage.removeItem(`choicomma_hide_home_popup_${popupId}_until`);
     window.dispatchEvent(new CustomEvent(POPUP_UPDATED_EVENT, { detail: updated }));
     window.dispatchEvent(new CustomEvent("storage"));
   } catch (e) {}

@@ -43,6 +43,8 @@ export function useTimesale(triggerToast: (msg: string) => void) {
 
   // Secret Time Sale states (Member Target Specific)
   const [secretSalesList, setSecretSalesList] = useState<any[]>([]);
+  const isInitializedRef = useRef(false);
+  const lastSyncedJsonRef = useRef<string>("");
 
 // Load from Git File API and localStorage on mount
   useEffect(() => {
@@ -54,7 +56,7 @@ export function useTimesale(triggerToast: (msg: string) => void) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            const cleaned = parsed.filter((item: any) => item?.id !== "SECRET-TS-001");
+            const cleaned = parsed.filter((item: any) => item && item.id);
             setSecretSalesList(cleaned);
           }
         } catch (e) {}
@@ -77,7 +79,8 @@ export function useTimesale(triggerToast: (msg: string) => void) {
         if (res.ok) {
           const json = await res.json();
           if (json.success && Array.isArray(json.data) && isMounted) {
-            const cleaned = json.data.filter((t: any) => t.id !== "SECRET-TS-001");
+            const cleaned = json.data.filter((t: any) => t && t.id);
+            lastSyncedJsonRef.current = JSON.stringify(cleaned);
             setSecretSalesList(cleaned);
             if (typeof window !== "undefined") {
               localStorage.setItem("admin_secret_timesales", JSON.stringify(cleaned));
@@ -86,6 +89,10 @@ export function useTimesale(triggerToast: (msg: string) => void) {
         }
       } catch (err) {
         console.warn("Timesale API fetch notice:", err);
+      } finally {
+        if (isMounted) {
+          isInitializedRef.current = true;
+        }
       }
     };
     fetchTimesales();
@@ -95,7 +102,9 @@ export function useTimesale(triggerToast: (msg: string) => void) {
         try {
           const parsed = JSON.parse(e.newValue);
           if (Array.isArray(parsed)) {
-            setSecretSalesList(parsed.filter((t: any) => t?.id !== "SECRET-TS-001"));
+            const cleaned = parsed.filter((t: any) => t && t.id);
+            lastSyncedJsonRef.current = JSON.stringify(cleaned);
+            setSecretSalesList(cleaned);
           }
         } catch (err) {}
       }
@@ -132,24 +141,32 @@ export function useTimesale(triggerToast: (msg: string) => void) {
     };
   }, []);
 
-  const isFirstMountRef = useRef(true);
   useEffect(() => {
-    if (isFirstMountRef.current) {
-      isFirstMountRef.current = false;
+    // 초기 서버 데이터 로드 완료 전에는 절대로 서버로 덮어쓰기 POST를 전송하지 않음 (레이스 컨디션 및 롤백 완전 차단)
+    if (!isInitializedRef.current) {
       return;
     }
 
+    const currentJson = JSON.stringify(secretSalesList);
+    // 서버에서 방금 받아온 데이터와 동일한 경우 중복 POST 방지
+    if (currentJson === lastSyncedJsonRef.current) {
+      return;
+    }
+
+    lastSyncedJsonRef.current = currentJson;
+
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("admin_secret_timesales", JSON.stringify(secretSalesList));
+        localStorage.setItem("admin_secret_timesales", currentJson);
+        window.dispatchEvent(new CustomEvent("secret_timesales_updated"));
       } catch (e) {}
     }
-    // Sync to Git File API
+    // 관리자 수정/추가/삭제에 의한 실제 변경 발생 시에만 서버 API 및 Supabase에 안전하게 갱신
     if (Array.isArray(secretSalesList)) {
       fetch("/api/admin/timesale", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(secretSalesList),
+        body: currentJson,
       }).catch((err) => console.warn("Timesale API save notice:", err));
     }
   }, [secretSalesList]);

@@ -40,7 +40,7 @@ if (fs.existsSync(timesalesFilePath)) {
   try {
     const parsed = JSON.parse(fs.readFileSync(timesalesFilePath, 'utf-8'));
     if (Array.isArray(parsed)) {
-      localTimesales = parsed.filter(t => t && t.id !== 'SECRET-TS-001');
+      localTimesales = parsed.filter(t => t && t.id);
     }
   } catch (err) {
     console.error('❌ data/timesales.json 파싱 실패:', err.message);
@@ -78,7 +78,7 @@ async function runMigration() {
       return;
     }
 
-    const filteredRemote = (remoteTimesales || []).filter(t => t && t.id !== 'SECRET-TS-001');
+    const filteredRemote = (remoteTimesales || []).filter(t => t && t.id);
     console.log(`☁️ Supabase 원격 timesales 테이블 프로모션 수: ${filteredRemote.length}개`);
 
     // 4. 양방향 스마트 병합 (ID 기준 단일화)

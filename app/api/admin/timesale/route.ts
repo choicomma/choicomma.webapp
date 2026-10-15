@@ -35,7 +35,7 @@ function readTimesaleFile(): any[] {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
       if (Array.isArray(data)) {
-        return data.filter((t: any) => t && t.id !== "SECRET-TS-001");
+        return data.filter((t: any) => t && t.id);
       }
     }
   } catch (err) {
@@ -107,17 +107,19 @@ const NO_CACHE_HEADERS = {
 // GET: 타임세일 목록 조회 (Git data/timesales.json 기준 + Supabase 자가 치유 폴백)
 export async function GET() {
   try {
+    const filePath = getTimesaleFilePath();
+    const fileExists = fs.existsSync(filePath);
     let list = readTimesaleFile();
 
-    // 자가 치유 폴백(Self-Healing Fallback): 로컬 파일이 비어있는 경우 Supabase에서 복구 시도
-    if (list.length === 0) {
+    // 자가 치유 폴백(Self-Healing Fallback): 로컬 파일이 아예 디스크에 존재하지 않는 경우에만 Supabase에서 복구 시도
+    if (!fileExists) {
       try {
         const { data, error } = await runSafeSupabaseQuery<any[]>(
           async (supabase) => supabase.from("timesales").select("*").order("created_at", { ascending: false }),
           1500
         );
         if (!error && Array.isArray(data) && data.length > 0) {
-          const valid = data.filter((t: any) => t && t.id !== "SECRET-TS-001").map((t: any) => ({
+          const valid = data.filter((t: any) => t && t.id).map((t: any) => ({
             ...t,
             createdAt: t.created_at || t.createdAt || new Date().toISOString(),
           }));
@@ -145,8 +147,15 @@ export async function POST(req: NextRequest) {
       let itemsToUpsertToSupabase: any[] = [];
 
       if (Array.isArray(body)) {
+        // 비정상적인 빈 배열([]) POST로 인한 기존 등록 프로모션 무단 초기화 방지
+        // (개별 프로모션 삭제는 명시적인 DELETE 엔드포인트를 통해서만 수행)
+        if (body.length === 0 && current.length > 0) {
+          console.warn("[Timesale Protection]: 빈 배열 전송 감지됨. 기존 등록 프로모션 보존.");
+          return NextResponse.json({ success: true, count: current.length, data: current }, { headers: NO_CACHE_HEADERS });
+        }
+
         current = body
-          .filter((t: any) => t && t.id && t.id !== "SECRET-TS-001")
+          .filter((t: any) => t && t.id)
           .map((t: any) => ({
             ...t,
             createdAt: t.createdAt || t.created_at || new Date().toISOString(),
@@ -154,9 +163,6 @@ export async function POST(req: NextRequest) {
           }));
         itemsToUpsertToSupabase = current.map(normalizeTimesaleForSupabase);
       } else if (body && body.id) {
-        if (body.id === "SECRET-TS-001") {
-          return NextResponse.json({ success: true, data: current }, { headers: NO_CACHE_HEADERS });
-        }
         const idx = current.findIndex((item) => String(item.id) === String(body.id));
         const prevItem = idx !== -1 ? current[idx] : undefined;
         const updatedItem = {
@@ -231,21 +237,16 @@ export async function DELETE(req: NextRequest) {
       // 1. 로컬 파일 저장
       writeTimesaleFile(filtered);
 
-      // 2. Supabase 비동기 듀얼 삭제
-      runSafeSupabaseQuery(
-        async (supabase) => supabase.from("timesales").delete().eq("id", id),
-        2500
-      )
-        .then((res) => {
-          if (res.error) {
-            console.warn("[Timesale Supabase Dual-Delete Notice]:", res.error.message || res.error);
-          } else {
-            console.log(`[Timesale Supabase Dual-Delete Success] Target ID: ${id}`);
-          }
-        })
-        .catch((err) => {
-          console.warn("[Timesale Supabase Dual-Delete Warning]:", err);
-        });
+      // 2. Supabase 듀얼 삭제 (await로 안전하게 완료 보장)
+      try {
+        await runSafeSupabaseQuery(
+          async (supabase) => supabase.from("timesales").delete().eq("id", id),
+          3000
+        );
+        console.log(`[Timesale Supabase Dual-Delete Success] Target ID: ${id}`);
+      } catch (err) {
+        console.warn("[Timesale Supabase Dual-Delete Warning]:", err);
+      }
 
       return NextResponse.json({ success: true, count: filtered.length, data: filtered }, { headers: NO_CACHE_HEADERS });
     } catch (err: any) {

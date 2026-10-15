@@ -1,6 +1,611 @@
 {
-  "journeyLogs": [],
+  "journeyLogs": [
+    {
+      "id": "jnl_1792053797903_yaynz",
+      "sessionId": "s_1792051452795_z6pa7",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트)",
+      "path": "/product/product-465",
+      "referrer": "http://172.30.1.74:3001/admin?tab=products",
+      "device": "Mobile",
+      "metadata": {
+        "productId": "excel-product-465",
+        "handle": "product-465",
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-15 17:43:17",
+      "created_at": "2026-10-15T08:43:17.903Z"
+    },
+    {
+      "id": "jnl_1792051455045_auy2t",
+      "sessionId": "s_1792051452795_z6pa7",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트)",
+      "path": "/product/product-465",
+      "referrer": "http://172.30.1.74:3001/admin?tab=products",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-465",
+        "handle": "product-465",
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-15 17:04:15",
+      "created_at": "2026-10-15T08:04:15.045Z"
+    }
+  ],
   "auditLogs": [
+    {
+      "id": "adt_1792065732897_qkuq8",
+      "adminId": "admin_master",
+      "adminName": "스토어 관리자",
+      "actionType": "UPDATE",
+      "domain": "POPUP",
+      "targetId": "popup_config",
+      "targetName": "기존 회원 로그인 안내",
+      "description": "팝업 설정 저장 (활성화: ON, 제목: 기존 회원 로그인 안내)",
+      "beforeData": {
+        "isActive": true,
+        "title": "기존 회원 로그인 안내"
+      },
+      "afterData": {
+        "isActive": true,
+        "title": "기존 회원 로그인 안내"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 21:02:12",
+      "created_at": "2026-10-15T12:02:12.897Z"
+    },
+    {
+      "id": "adt_1792064774106_p4ihj",
+      "adminId": "admin_master",
+      "adminName": "스토어 관리자",
+      "actionType": "UPDATE",
+      "domain": "POPUP",
+      "targetId": "popup_config",
+      "targetName": "기존 회원 로그인 안내",
+      "description": "팝업 설정 저장 (활성화: ON, 제목: 기존 회원 로그인 안내)",
+      "beforeData": {
+        "isActive": true,
+        "title": "기존 회원 로그인 안내"
+      },
+      "afterData": {
+        "isActive": true,
+        "title": "기존 회원 로그인 안내"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:46:14",
+      "created_at": "2026-10-15T11:46:14.106Z"
+    },
+    {
+      "id": "adt_1792064124948_xb6mt",
+      "adminId": "admin_master",
+      "adminName": "배송/물류 관리자",
+      "actionType": "STATUS_CHANGE",
+      "domain": "SHIPMENT",
+      "targetId": "202610135636845",
+      "targetName": "유희님 주문 (202610135636845)",
+      "description": "운송장번호 [5227-9713-7825] 등록 (CJ대한통운) 및 배송 상태 변경 (Delivered → Delivered)",
+      "beforeData": {
+        "status": "Delivered",
+        "trackingNumber": "522797137825"
+      },
+      "afterData": {
+        "status": "Delivered",
+        "trackingNumber": "5227-9713-7825",
+        "carrier": "CJ대한통운"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:35:24",
+      "created_at": "2026-10-15T11:35:24.948Z"
+    },
+    {
+      "id": "adt_1792064124946_xtvta",
+      "adminId": "admin_master",
+      "adminName": "배송/물류 관리자",
+      "actionType": "STATUS_CHANGE",
+      "domain": "SHIPMENT",
+      "targetId": "202610132186948",
+      "targetName": "이훈상님 주문 (202610132186948)",
+      "description": "운송장번호 [5227-9713-7836] 등록 (CJ대한통운) 및 배송 상태 변경 (Delivered → Delivered)",
+      "beforeData": {
+        "status": "Delivered",
+        "trackingNumber": "522797137836"
+      },
+      "afterData": {
+        "status": "Delivered",
+        "trackingNumber": "5227-9713-7836",
+        "carrier": "CJ대한통운"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:35:24",
+      "created_at": "2026-10-15T11:35:24.946Z"
+    },
+    {
+      "id": "adt_1792064124945_qdcbi",
+      "adminId": "admin_master",
+      "adminName": "배송/물류 관리자",
+      "actionType": "STATUS_CHANGE",
+      "domain": "SHIPMENT",
+      "targetId": "202610135415604",
+      "targetName": "지혜님 주문 (202610135415604)",
+      "description": "운송장번호 [5227-9713-7840] 등록 (CJ대한통운) 및 배송 상태 변경 (Delivered → Delivered)",
+      "beforeData": {
+        "status": "Delivered",
+        "trackingNumber": "522797137840"
+      },
+      "afterData": {
+        "status": "Delivered",
+        "trackingNumber": "5227-9713-7840",
+        "carrier": "CJ대한통운"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:35:24",
+      "created_at": "2026-10-15T11:35:24.945Z"
+    },
+    {
+      "id": "adt_1792064124942_5qsky",
+      "adminId": "admin_master",
+      "adminName": "배송/물류 관리자",
+      "actionType": "STATUS_CHANGE",
+      "domain": "SHIPMENT",
+      "targetId": "202610130974449",
+      "targetName": "최나란님 주문 (202610130974449)",
+      "description": "운송장번호 [5227-9713-7534] 등록 (CJ대한통운) 및 배송 상태 변경 (Delivered → Delivered)",
+      "beforeData": {
+        "status": "Delivered",
+        "trackingNumber": "522797137534"
+      },
+      "afterData": {
+        "status": "Delivered",
+        "trackingNumber": "5227-9713-7534",
+        "carrier": "CJ대한통운"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:35:24",
+      "created_at": "2026-10-15T11:35:24.942Z"
+    },
+    {
+      "id": "adt_1792064124941_piqc0",
+      "adminId": "admin_master",
+      "adminName": "배송/물류 관리자",
+      "actionType": "STATUS_CHANGE",
+      "domain": "SHIPMENT",
+      "targetId": "202610139916314",
+      "targetName": "양영숙님 주문 (202610139916314)",
+      "description": "운송장번호 [5121-6201-5052] 등록 (CJ대한통운) 및 배송 상태 변경 (Delivered → Delivered)",
+      "beforeData": {
+        "status": "Delivered",
+        "trackingNumber": "512162015052"
+      },
+      "afterData": {
+        "status": "Delivered",
+        "trackingNumber": "5121-6201-5052",
+        "carrier": "CJ대한통운"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:35:24",
+      "created_at": "2026-10-15T11:35:24.941Z"
+    },
+    {
+      "id": "adt_1792064124940_zfj21",
+      "adminId": "admin_master",
+      "adminName": "배송/물류 관리자",
+      "actionType": "STATUS_CHANGE",
+      "domain": "SHIPMENT",
+      "targetId": "202610137864294",
+      "targetName": "조해리님 주문 (202610137864294)",
+      "description": "운송장번호 [5227-9951-2203] 등록 (CJ대한통운) 및 배송 상태 변경 (Delivered → Delivered)",
+      "beforeData": {
+        "status": "Delivered",
+        "trackingNumber": "522799512203"
+      },
+      "afterData": {
+        "status": "Delivered",
+        "trackingNumber": "5227-9951-2203",
+        "carrier": "CJ대한통운"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:35:24",
+      "created_at": "2026-10-15T11:35:24.940Z"
+    },
+    {
+      "id": "adt_1792064124938_39v6i",
+      "adminId": "admin_master",
+      "adminName": "배송/물류 관리자",
+      "actionType": "STATUS_CHANGE",
+      "domain": "SHIPMENT",
+      "targetId": "202610139124454",
+      "targetName": "조윤경님 주문 (202610139124454)",
+      "description": "운송장번호 [5227-9951-0685] 등록 (CJ대한통운) 및 배송 상태 변경 (Delivered → Delivered)",
+      "beforeData": {
+        "status": "Delivered",
+        "trackingNumber": "522799510685"
+      },
+      "afterData": {
+        "status": "Delivered",
+        "trackingNumber": "5227-9951-0685",
+        "carrier": "CJ대한통운"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:35:24",
+      "created_at": "2026-10-15T11:35:24.938Z"
+    },
+    {
+      "id": "adt_1792064124936_4jpi9",
+      "adminId": "admin_master",
+      "adminName": "배송/물류 관리자",
+      "actionType": "STATUS_CHANGE",
+      "domain": "SHIPMENT",
+      "targetId": "202610139367512",
+      "targetName": "이은서님 주문 (202610139367512)",
+      "description": "운송장번호 [5227-9951-2192] 등록 (CJ대한통운) 및 배송 상태 변경 (Delivered → Delivered)",
+      "beforeData": {
+        "status": "Delivered",
+        "trackingNumber": "522799512192"
+      },
+      "afterData": {
+        "status": "Delivered",
+        "trackingNumber": "5227-9951-2192",
+        "carrier": "CJ대한통운"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:35:24",
+      "created_at": "2026-10-15T11:35:24.936Z"
+    },
+    {
+      "id": "adt_1792064124934_46vhx",
+      "adminId": "admin_master",
+      "adminName": "배송/물류 관리자",
+      "actionType": "STATUS_CHANGE",
+      "domain": "SHIPMENT",
+      "targetId": "202610138778260",
+      "targetName": "진혜련님 주문 (202610138778260)",
+      "description": "운송장번호 [5228-0623-1584] 등록 (CJ대한통운) 및 배송 상태 변경 (In Transit → In Transit)",
+      "beforeData": {
+        "status": "In Transit",
+        "trackingNumber": "522806231584"
+      },
+      "afterData": {
+        "status": "In Transit",
+        "trackingNumber": "5228-0623-1584",
+        "carrier": "CJ대한통운"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:35:24",
+      "created_at": "2026-10-15T11:35:24.934Z"
+    },
+    {
+      "id": "adt_1792064124930_ypo1t",
+      "adminId": "admin_master",
+      "adminName": "배송/물류 관리자",
+      "actionType": "STATUS_CHANGE",
+      "domain": "SHIPMENT",
+      "targetId": "202610135266882",
+      "targetName": "백은경님 주문 (202610135266882)",
+      "description": "운송장번호 [5228-0623-1573] 등록 (CJ대한통운) 및 배송 상태 변경 (In Transit → In Transit)",
+      "beforeData": {
+        "status": "In Transit",
+        "trackingNumber": "522806231573"
+      },
+      "afterData": {
+        "status": "In Transit",
+        "trackingNumber": "5228-0623-1573",
+        "carrier": "CJ대한통운"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:35:24",
+      "created_at": "2026-10-15T11:35:24.930Z"
+    },
+    {
+      "id": "adt_1792063789479_sqjnx",
+      "adminId": "admin_master",
+      "adminName": "스토어 관리자",
+      "actionType": "UPDATE",
+      "domain": "POPUP",
+      "targetId": "popup_config",
+      "targetName": "기존 회원 로그인 안내",
+      "description": "팝업 설정 저장 (활성화: ON, 제목: 기존 회원 로그인 안내)",
+      "beforeData": {
+        "isActive": true,
+        "title": "기존 회원 로그인 안내"
+      },
+      "afterData": {
+        "isActive": true,
+        "title": "기존 회원 로그인 안내"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 20:29:49",
+      "created_at": "2026-10-15T11:29:49.479Z"
+    },
+    {
+      "id": "adt_1792055856119_wzlgk",
+      "adminId": "admin_master",
+      "adminName": "스토어 관리자",
+      "actionType": "UPDATE",
+      "domain": "POPUP",
+      "targetId": "popup_config",
+      "targetName": "기존 회원 로그인 안내",
+      "description": "팝업 설정 저장 (활성화: ON, 제목: 기존 회원 로그인 안내)",
+      "beforeData": {
+        "isActive": false,
+        "title": ""
+      },
+      "afterData": {
+        "isActive": true,
+        "title": "기존 회원 로그인 안내"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 18:17:36",
+      "created_at": "2026-10-15T09:17:36.119Z"
+    },
+    {
+      "id": "adt_1792053778614_0u93g",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-459",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이] 정보 수정 (가격: 310000원, 재고: 35개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이",
+        "price": "310000",
+        "stock": 35,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이",
+        "price": "310000",
+        "stock": 35,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:42:58",
+      "created_at": "2026-10-15T08:42:58.614Z"
+    },
+    {
+      "id": "adt_1792053773488_g66s7",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-460",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 블랙",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 블랙] 정보 수정 (가격: 310000원, 재고: 21개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 블랙",
+        "price": "310000",
+        "stock": 21,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 / 블랙",
+        "price": "310000",
+        "stock": 21,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:42:53",
+      "created_at": "2026-10-15T08:42:53.488Z"
+    },
+    {
+      "id": "adt_1792051732776_qszfw",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-344",
+      "targetName": "럭키박스 20만원",
+      "description": "상품 [럭키박스 20만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 20만원",
+        "handle": "product-344",
+        "price": "200000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:08:52",
+      "created_at": "2026-10-15T08:08:52.776Z"
+    },
+    {
+      "id": "adt_1792051732774_2u3x4",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-345",
+      "targetName": "럭키박스 30만원",
+      "description": "상품 [럭키박스 30만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 30만원",
+        "handle": "product-345",
+        "price": "300000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:08:52",
+      "created_at": "2026-10-15T08:08:52.774Z"
+    },
+    {
+      "id": "adt_1792051732769_dpjz2",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-346",
+      "targetName": "럭키박스 50만원",
+      "description": "상품 [럭키박스 50만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 50만원",
+        "handle": "product-346",
+        "price": "500000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:08:52",
+      "created_at": "2026-10-15T08:08:52.769Z"
+    },
+    {
+      "id": "adt_1792051732766_8nkoq",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-347",
+      "targetName": "럭키박스 70만원",
+      "description": "상품 [럭키박스 70만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 70만원",
+        "handle": "product-347",
+        "price": "700000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:08:52",
+      "created_at": "2026-10-15T08:08:52.766Z"
+    },
+    {
+      "id": "adt_1792051732763_9jzj5",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-348",
+      "targetName": "럭키박스 100만원",
+      "description": "상품 [럭키박스 100만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 100만원",
+        "handle": "product-348",
+        "price": "1000000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:08:52",
+      "created_at": "2026-10-15T08:08:52.763Z"
+    },
+    {
+      "id": "adt_1792051732754_1advd",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-349",
+      "targetName": "럭키박스 200만원",
+      "description": "상품 [럭키박스 200만원] 완전 삭제 처리",
+      "beforeData": {
+        "title": "럭키박스 200만원",
+        "handle": "product-349",
+        "price": "2000000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:08:52",
+      "created_at": "2026-10-15T08:08:52.754Z"
+    },
+    {
+      "id": "adt_1792051611035_ou98k",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:06:51",
+      "created_at": "2026-10-15T08:06:51.035Z"
+    },
+    {
+      "id": "adt_1792051602151_kq5re",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:06:42",
+      "created_at": "2026-10-15T08:06:42.151Z"
+    },
+    {
+      "id": "adt_1792051560560_4jzb2",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:06:00",
+      "created_at": "2026-10-15T08:06:00.561Z"
+    },
+    {
+      "id": "adt_1792051550565_0otax",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 17:05:50",
+      "created_at": "2026-10-15T08:05:50.565Z"
+    },
     {
       "id": "adt_1792042891298_l0kvt",
       "adminId": "admin_master",
@@ -346,5 +951,5 @@
       "created_at": "2026-10-13T12:48:15.593Z"
     }
   ],
-  "updatedAt": "2026-10-15T05:41:31.299Z"
+  "updatedAt": "2026-10-15T12:02:12.900Z"
 }

@@ -26,7 +26,9 @@
     ],
     "orderMemo": "",
     "created_at": "2026-10-13T14:00:52.000Z",
-    "updated_at": "2026-10-14T09:29:32.581Z"
+    "updated_at": "2026-10-15T11:39:20.173Z",
+    "status": "Delivered",
+    "shippingStatus": "Delivered"
   },
   {
     "id": "202610138778260",
@@ -55,7 +57,9 @@
     ],
     "orderMemo": "",
     "created_at": "2026-10-13T13:34:25.000Z",
-    "updated_at": "2026-10-14T09:29:32.581Z"
+    "updated_at": "2026-10-15T11:39:21.027Z",
+    "status": "Delivered",
+    "shippingStatus": "Delivered"
   },
   {
     "id": "202610139367512",

@@ -40,6 +40,7 @@ import {
   Menu,
   X,
   Ruler,
+  UserCog,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { SetBundleSection } from "@/components/products/set-bundle-section";
 import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
 import { getAllUserCoupons, getUserCoupons, isLegacyCoupon, syncAdminCouponsFromSupabase } from "@/lib/membership/coupons";
+import { syncSecretTimesalesFromServer, getCachedSecretTimesales } from "@/lib/membership/timesales";
 import { MembershipPopupBanner } from "@/components/membership/membership-popup-banner";
 import { SizeRecommendationTab } from "./components/size-recommendation-tab";
 
@@ -168,31 +170,29 @@ function MembershipContent() {
   const [userOrders, setUserOrders] = useState<any[]>([]);
 
   // Secret Time Sales State
-  const [secretSalesList, setSecretSalesList] = useState<any[]>([]);
+  const [secretSalesList, setSecretSalesList] = useState<any[]>(() => getCachedSecretTimesales());
   const [nowTick, setNowTick] = useState(Date.now());
 
   const loadSecretSales = () => {
-    if (typeof window !== "undefined") {
-      const raw = localStorage.getItem("admin_secret_timesales");
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            setSecretSalesList(parsed);
-            return;
-          }
-        } catch (e) {}
-      }
-      setSecretSalesList([]);
-    }
+    setSecretSalesList(getCachedSecretTimesales());
   };
 
   useEffect(() => {
+    let isMounted = true;
     loadSecretSales();
+
+    // Supabase 및 서버 API(/api/admin/timesale)로부터 최신 시크릿 타임세일 실시간 동기화
+    syncSecretTimesalesFromServer().then((remoteList) => {
+      if (isMounted && Array.isArray(remoteList)) {
+        setSecretSalesList(remoteList);
+      }
+    });
+
     const interval = setInterval(() => setNowTick(Date.now()), 1000);
     window.addEventListener("storage", loadSecretSales);
     window.addEventListener("secret_timesales_updated", loadSecretSales);
     return () => {
+      isMounted = false;
       clearInterval(interval);
       window.removeEventListener("storage", loadSecretSales);
       window.removeEventListener("secret_timesales_updated", loadSecretSales);
@@ -220,10 +220,12 @@ function MembershipContent() {
           )
       );
       const isGradeTargeted = Boolean(
-        (sale.targetGrades || []).length > 0 &&
+        userGrade &&
+          (sale.targetGrades || []).length > 0 &&
           (sale.targetGrades.includes("ALL") ||
             sale.targetGrades.includes(userGrade?.toUpperCase()) ||
-            (userGrade?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")))
+            (userGrade?.toUpperCase().includes("VIP") && sale.targetGrades.includes("VIP")) ||
+            (userGrade?.toUpperCase().includes("VVIP") && (sale.targetGrades.includes("VVIP") || sale.targetGrades.includes("VIP"))))
       );
       return isEmailTargeted || isGradeTargeted;
     });
@@ -426,6 +428,11 @@ function MembershipContent() {
               return (syncEmail && cEmail === syncEmail) || (syncPhone && cPhone === syncPhone);
             });
             if (freshCust) {
+              if (freshCust.loginId || freshCust.login_id) {
+                const freshLoginId = freshCust.loginId || freshCust.login_id;
+                setUserLoginId(freshLoginId);
+                localStorage.setItem("membership_user_login_id", freshLoginId);
+              }
               if (freshCust.points !== undefined && freshCust.points !== null) {
                 const freshPts = Number(freshCust.points);
                 setUserPoints(freshPts);
@@ -710,6 +717,229 @@ function MembershipContent() {
     } catch (e) {}
 
     toast.success(`${userName} 회원님의 기본 배송지 주소가 안전하게 저장되었습니다.`);
+  };
+
+  // 4-1. 가입 아이디 (Login ID) 변경 상태 및 처리 함수
+  const [showLoginIdSection, setShowLoginIdSection] = useState(false);
+  const [newLoginId, setNewLoginId] = useState("");
+  const [loginIdError, setLoginIdError] = useState("");
+  const [loginIdSuccess, setLoginIdSuccess] = useState("");
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
+  const [isChangingLoginId, setIsChangingLoginId] = useState(false);
+  const [isIdChecked, setIsIdChecked] = useState(false);
+
+  const currentEffectiveLoginId = (
+    userLoginId || (userEmail ? userEmail.split("@")[0] : "")
+  ).trim().toLowerCase();
+
+  const handleCheckLoginIdDuplicate = async () => {
+    const trimmed = newLoginId.trim().toLowerCase();
+    setLoginIdError("");
+    setLoginIdSuccess("");
+
+    if (!trimmed) {
+      setLoginIdError("아이디를 입력해 주세요.");
+      return false;
+    }
+    if (trimmed.length < 4 || trimmed.length > 20) {
+      setLoginIdError("아이디는 4자 이상 20자 이하로 입력해 주세요.");
+      return false;
+    }
+    if (!/^[a-z0-9_-]+$/.test(trimmed)) {
+      setLoginIdError("아이디는 영문 소문자, 숫자, 특수기호(-, _)만 사용 가능합니다.");
+      return false;
+    }
+    if (trimmed === currentEffectiveLoginId) {
+      setLoginIdError("현재 사용 중인 아이디와 동일합니다.");
+      return false;
+    }
+
+    setIsCheckingDuplicate(true);
+    let isTaken = false;
+
+    // 1) 로컬 admin_customers 확인
+    try {
+      const raw = localStorage.getItem("admin_customers");
+      if (raw) {
+        const list: any[] = JSON.parse(raw);
+        isTaken = list.some((c: any) => {
+          const cLoginId = (c.loginId || c.login_id || "").trim().toLowerCase();
+          const cId = (c.id || "").trim().toLowerCase();
+          const cEmail = (c.email || "").trim().toLowerCase();
+          const isSelf =
+            (userId && cId === userId.toLowerCase()) ||
+            (userEmail && cEmail === userEmail.toLowerCase()) ||
+            (currentEffectiveLoginId && (cLoginId === currentEffectiveLoginId || cId === currentEffectiveLoginId));
+          if (isSelf) return false;
+          return cLoginId === trimmed || cId === trimmed || cEmail === trimmed;
+        });
+      }
+    } catch (e) {}
+
+    // 2) 서버 API(data/customers.json) 실시간 중복 확인
+    if (!isTaken) {
+      try {
+        const res = await fetch("/api/admin/customers", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          const list: any[] = data.customers || [];
+          isTaken = list.some((c: any) => {
+            const cLoginId = (c.loginId || c.login_id || "").trim().toLowerCase();
+            const cId = (c.id || "").trim().toLowerCase();
+            const cEmail = (c.email || "").trim().toLowerCase();
+            const isSelf =
+              (userId && cId === userId.toLowerCase()) ||
+              (userEmail && cEmail === userEmail.toLowerCase()) ||
+              (currentEffectiveLoginId && (cLoginId === currentEffectiveLoginId || cId === currentEffectiveLoginId));
+            if (isSelf) return false;
+            return cLoginId === trimmed || cId === trimmed || cEmail === trimmed;
+          });
+        }
+      } catch (e) {}
+    }
+
+    // 3) 예약어 보호 (일반 회원이 admin 아이디를 선점하지 못하도록 보호)
+    const isCurrentAdmin =
+      isAdmin ||
+      userEmail === "admin@choicomma.com" ||
+      sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+    if (!isCurrentAdmin && (trimmed === "admin" || trimmed === "root" || trimmed === "administrator")) {
+      isTaken = true;
+    }
+
+    setIsCheckingDuplicate(false);
+    if (isTaken) {
+      setLoginIdError("이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.");
+      setIsIdChecked(false);
+      return false;
+    } else {
+      setLoginIdSuccess("사용 가능한 아이디입니다.");
+      setIsIdChecked(true);
+      return true;
+    }
+  };
+
+  const handleSaveLoginId = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginIdError("");
+    setLoginIdSuccess("");
+
+    const trimmed = newLoginId.trim().toLowerCase();
+    if (!trimmed) {
+      setLoginIdError("새 아이디를 입력해 주세요.");
+      return;
+    }
+    if (trimmed.length < 4 || trimmed.length > 20) {
+      setLoginIdError("아이디는 4자 이상 20자 이하로 입력해 주세요.");
+      return;
+    }
+    if (!/^[a-z0-9_-]+$/.test(trimmed)) {
+      setLoginIdError("아이디는 영문 소문자, 숫자, 특수기호(-, _)만 사용 가능합니다.");
+      return;
+    }
+    if (trimmed === currentEffectiveLoginId) {
+      setLoginIdError("현재 사용 중인 아이디와 동일합니다.");
+      return;
+    }
+
+    // 중복 확인 미수행 시 즉시 검증
+    if (!isIdChecked) {
+      const isAvailable = await handleCheckLoginIdDuplicate();
+      if (!isAvailable) return;
+    }
+
+    setIsChangingLoginId(true);
+
+    try {
+      const isCurrentAdmin =
+        isAdmin ||
+        userEmail === "admin@choicomma.com" ||
+        sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+      const targetId = userId || (isCurrentAdmin ? "ADMIN-001" : undefined);
+      const targetEmail = (userEmail || "").trim().toLowerCase();
+      const targetPhone = (userPhone || "").replace(/[^0-9]/g, "");
+
+      // 1) 상태 및 localStorage 세션 업데이트
+      setUserLoginId(trimmed);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("membership_user_login_id", trimmed);
+        if (isCurrentAdmin) {
+          localStorage.setItem("admin_login_id", trimmed);
+        }
+
+        // 2) 비밀번호 연동 키 마이그레이션 (기존 아이디로 로그인하던 비밀번호를 새 아이디 키에도 보존)
+        const existingPwd =
+          (currentEffectiveLoginId ? localStorage.getItem(`user_pwd_${currentEffectiveLoginId}`) : null) ||
+          (targetEmail ? localStorage.getItem(`user_pwd_${targetEmail}`) : null) ||
+          (targetPhone ? localStorage.getItem(`user_pwd_${targetPhone}`) : null) ||
+          (isCurrentAdmin ? localStorage.getItem("user_pwd_admin") || "Mrschoi83!!" : null);
+
+        if (existingPwd) {
+          localStorage.setItem(`user_pwd_${trimmed}`, existingPwd);
+        }
+
+        // 3) admin_customers 로컬 캐시 업데이트
+        const rawCustomers = localStorage.getItem("admin_customers");
+        if (rawCustomers) {
+          try {
+            const list: any[] = JSON.parse(rawCustomers);
+            const updated = list.map((c: any) => {
+              const cId = (c.id || "").trim().toLowerCase();
+              const cLoginId = (c.loginId || c.login_id || "").trim().toLowerCase();
+              const cEmail = (c.email || "").trim().toLowerCase();
+              const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
+
+              const isMatch =
+                (targetId && cId === targetId.toLowerCase()) ||
+                (currentEffectiveLoginId && (cLoginId === currentEffectiveLoginId || cId === currentEffectiveLoginId)) ||
+                (targetEmail && cEmail === targetEmail) ||
+                (targetPhone && cPhone === targetPhone);
+
+              if (isMatch) {
+                return {
+                  ...c,
+                  loginId: trimmed,
+                  login_id: trimmed,
+                };
+              }
+              return c;
+            });
+            localStorage.setItem("admin_customers", JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent("storage"));
+            window.dispatchEvent(new CustomEvent("admin_customers_updated"));
+          } catch (e) {}
+        }
+      }
+
+      // 4) 서버 API(data/customers.json 및 Supabase) 동기화
+      try {
+        await fetch("/api/admin/customers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: targetId || undefined,
+            email: targetEmail || undefined,
+            name: userName || undefined,
+            loginId: trimmed,
+            login_id: trimmed,
+          }),
+        });
+      } catch (err) {
+        console.warn("Notice: Customer login ID server sync:", err);
+      }
+
+      setIsChangingLoginId(false);
+      setShowLoginIdSection(false);
+      setLoginIdError("");
+      setLoginIdSuccess("");
+      setIsIdChecked(false);
+      toast.success(`가입 아이디가 [${trimmed}] 로 안전하게 변경되었습니다.`);
+    } catch (err) {
+      console.error("Login ID change error:", err);
+      setIsChangingLoginId(false);
+      setLoginIdError("아이디 변경 처리 중 오류가 발생했습니다. 다시 시도해 주세요.");
+    }
   };
 
   // 5. 비밀번호 재설정 상태 및 처리 함수
@@ -1527,154 +1757,94 @@ function MembershipContent() {
               </div>
             </div>
 
-            {/* Quick Banner: 맞춤 사이즈 추천 바로가기 */}
+            {/* Membership Popup Banner (공지사항 - 아이디 설정 안내 위로 배치) */}
+            <MembershipPopupBanner />
+
+            {/* 기존 회원 아이디 설정 안내 카드 (흰 배경에 검은 글씨) */}
             <div
-              onClick={() => setActiveTab("size")}
-              className="bg-gradient-to-r from-neutral-900 via-neutral-950 to-neutral-900 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-neutral-800 shadow-sm transition-all hover:border-amber-400/70 hover:shadow-md cursor-pointer flex items-center justify-between gap-4 group"
+              onClick={() => {
+                setActiveTab("profile");
+                setShowLoginIdSection(true);
+                setNewLoginId(userLoginId || (userEmail ? userEmail.split("@")[0] : ""));
+                setLoginIdError("");
+                setLoginIdSuccess("");
+                setIsIdChecked(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="group relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white text-neutral-950 p-5 sm:p-6 border border-neutral-200/90 hover:border-neutral-950 shadow-xs hover:shadow-md transition-all duration-300 cursor-pointer block"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 text-amber-300 flex items-center justify-center shrink-0 border border-white/10 group-hover:scale-105 transition-transform">
-                  <Ruler className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-extrabold text-white tracking-tight">
-                      나만의 맞춤 사이즈 추천
-                    </span>
-                    <span className="text-[10px] font-black uppercase text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-400/40">
-                      AI 핏 어드바이저
-                    </span>
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200/80 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-amber-100 transition-all shadow-xs">
+                    <UserCog className="w-6 h-6 text-amber-600" />
                   </div>
-                  <p className="text-[11px] sm:text-xs text-neutral-400 mt-0.5">
-                    키, 몸무게, 가슴·허리둘레를 등록하고 모든 상품에서 딱 맞는 추천 사이즈를 확인해 보세요.
-                  </p>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/70 px-2.5 py-0.5 rounded-full border border-amber-300/80">
+                        LOGIN ID 설정 안내
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-400">
+                        기존 회원 필수 권장
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-neutral-950 tracking-tight group-hover:text-black transition-colors">
+                      기존 회원은 아이디를 설정해 주세요
+                    </h3>
+                    <p className="text-xs text-neutral-600 font-medium leading-relaxed">
+                      기존 쇼핑몰 이전 회원은 더욱 편리하고 안전한 로그인을 위해 나만의 전용 아이디를 설정해 주세요.
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1 text-xs font-bold text-amber-400 shrink-0 group-hover:translate-x-1 transition-transform">
-                <span>설정하기</span>
-                <ChevronRight className="w-4 h-4" />
+
+                <div className="self-end sm:self-center shrink-0 flex items-center gap-1.5 text-xs font-black text-neutral-950 bg-amber-400 hover:bg-amber-300 px-4 py-2.5 rounded-xl shadow-xs group-hover:translate-x-1 transition-all">
+                  <span>아이디 설정하기</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
               </div>
             </div>
 
-            {/* Membership Popup Banner (Fixed directly above Secret Time Sale) */}
-            <MembershipPopupBanner />
-
-            {/* Secret Time Sale Section in Dashboard Home - Banner Only, Links to /shop/timesale */}
-            {applicableSecretSales.length > 0 ? (
-              <div className="space-y-4">
-                {applicableSecretSales.map((sale) => {
-                  const timer = getRemainingTime(sale);
-                  return (
-                    <Link
-                      key={sale.id}
-                      href="/shop/timesale"
-                      className="group relative overflow-hidden rounded-3xl bg-neutral-950 text-white p-5 sm:p-7 border border-neutral-800 hover:border-amber-400/80 transition-all duration-300 hover:shadow-xl block cursor-pointer"
-                    >
-                      {/* Background luxury gradient glow */}
-                      <div className="absolute -right-8 -top-8 w-48 h-48 bg-amber-500/15 rounded-full blur-3xl pointer-events-none group-hover:bg-amber-500/25 transition-all duration-500" />
-                      <div className="absolute right-10 bottom-0 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
-
-                      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-                        {/* Left Column: Badges & Titles */}
-                        <div className="space-y-2.5 max-w-xl">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-400/40">
-                              SECRET PRIVATE SALE
-                            </span>
-                            <span className="text-[10px] font-extrabold text-emerald-400 flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                              실시간 단독 특가 진행중
-                            </span>
-                            <span className="text-[10px] font-bold text-neutral-400">
-                              {userGrade} 전용
-                            </span>
-                          </div>
-
-                          <div className="flex items-baseline gap-3 flex-wrap">
-                            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight group-hover:text-amber-300 transition-colors">
-                              {sale.title}
-                            </h3>
-                            <span className="text-sm sm:text-base font-black text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-lg border border-amber-400/20 font-mono">
-                              최대 {sale.discountRate}% OFF
-                            </span>
-                          </div>
-
-                          <p className="text-xs text-neutral-300 font-medium leading-relaxed">
-                            <strong className="text-amber-300 font-bold">{userName} 회원님</strong>만을 위해 오픈된 비공개 단독 게릴라 특가전입니다. 클릭하여 전용 세일 상품 리스트를 확인하세요.
-                          </p>
-                        </div>
-
-                        {/* Right Column: Timer & CTA Button */}
-                        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-3 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-neutral-800/80">
-                          {timer && (
-                            <div className="flex items-center gap-2 bg-neutral-900/90 text-white px-3.5 py-2 rounded-2xl border border-neutral-800 shadow-inner">
-                              <Clock className="w-4 h-4 text-amber-400 animate-spin [animation-duration:8s]" />
-                              <div className="text-left">
-                                <span className="text-[9px] font-bold text-neutral-400 block leading-none">남은 세일 시간</span>
-                                <span className="text-xs sm:text-sm font-black font-mono tracking-wider text-amber-400">
-                                  {timer.text}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-amber-400 text-neutral-950 font-extrabold text-xs shadow-md group-hover:bg-amber-300 group-hover:translate-x-0.5 transition-all">
-                            <span>타임세일 상품 보러가기</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              /* When no secret sale currently active: Clean banner linking to time sale page */
-              <div className="relative bg-transparent border border-neutral-200/80 rounded-3xl p-6 sm:p-7 transition-all duration-300 overflow-hidden text-neutral-950">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
-                  <div className="flex items-start sm:items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-800 flex items-center justify-center border border-neutral-200 shrink-0 shadow-2xs">
-                      <Lock className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-300/80">
-                          SECRET TIME SALE
-                        </span>
-                        <span className="text-[10px] font-bold text-neutral-500">
-                          {userGrade} 전용 시크릿 할인관
-                        </span>
-                      </div>
-                      <h4 className="text-base sm:text-lg font-black text-neutral-950 tracking-tight">
-                        회원 전용 시크릿 타임세일
-                      </h4>
-                      <p className="text-xs text-neutral-500 font-medium">
-                        현재 진행 중인 시크릿 특가가 없습니다. 지정된 VIP 회원님만을 위해 오픈되는 비공개 단독 게릴라 특가가 등록되면 여기에 지정 상품이 실시간으로 공개됩니다.
-                      </p>
-                    </div>
+            {/* 기존 회원 비밀번호 설정 안내 카드 (흰 배경에 검은 글씨) */}
+            <div
+              onClick={() => {
+                setActiveTab("profile");
+                setShowPasswordSection(true);
+                setPasswordChangeError("");
+                setCurrentPassword("");
+                setNewPassword("");
+                setConfirmPassword("");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="group relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white text-neutral-950 p-5 sm:p-6 border border-neutral-200/90 hover:border-neutral-950 shadow-xs hover:shadow-md transition-all duration-300 cursor-pointer block"
+            >
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200/80 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-amber-100 transition-all shadow-xs">
+                    <KeyRound className="w-6 h-6 text-amber-600" />
                   </div>
-
-                  <div className="self-end sm:self-center shrink-0 flex items-center gap-2">
-                    <Link
-                      href="/shop/timesale"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold transition-all border border-neutral-300"
-                    >
-                      <span>타임세일 메뉴 보기</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                    {isAdmin && (
-                      <Link
-                        href="/admin"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold transition-all border border-neutral-900 cursor-pointer"
-                      >
-                        <span>⚙️ 관리자에서 타임세일 개설</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
-                    )}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/70 px-2.5 py-0.5 rounded-full border border-amber-300/80">
+                        PASSWORD 설정 안내
+                      </span>
+                      <span className="text-[10px] font-bold text-neutral-400">
+                        기존 회원 필수 권장
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-neutral-950 tracking-tight group-hover:text-black transition-colors">
+                      기존 회원은 비밀번호를 설정해 주세요
+                    </h3>
+                    <p className="text-xs text-neutral-600 font-medium leading-relaxed">
+                      기존 쇼핑몰 이전 회원은 초기 임시 비밀번호 대신 안전한 나만의 새 비밀번호로 변경해 주세요.
+                    </p>
                   </div>
                 </div>
+
+                <div className="self-end sm:self-center shrink-0 flex items-center gap-1.5 text-xs font-black text-neutral-950 bg-amber-400 hover:bg-amber-300 px-4 py-2.5 rounded-xl shadow-xs group-hover:translate-x-1 transition-all">
+                  <span>비밀번호 설정하기</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
               </div>
-            )}
+            </div>
 
             {/* Set Bundle / Recommended Products Section */}
             <SetBundleSection products={popularCollection} />
@@ -2078,14 +2248,131 @@ function MembershipContent() {
                 <div className="py-2.5 flex items-center justify-between border-b border-neutral-100">
                   <div>
                     <label className="text-xs font-bold text-neutral-400 block mb-0.5">가입 아이디 (Login ID)</label>
-                    <p className="text-sm font-black text-neutral-950 font-mono tracking-tight">
-                      {userLoginId || (userEmail ? userEmail.split("@")[0] : "-")}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-black text-neutral-950 font-mono tracking-tight">
+                        {userLoginId || (userEmail ? userEmail.split("@")[0] : "-")}
+                      </p>
+                      <span className="text-[10px] font-bold text-neutral-600 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-full">
+                        회원 고유 ID
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[10px] font-bold text-neutral-700 bg-neutral-100 border border-neutral-200 px-2.5 py-1 rounded-full">
-                    회원 고유 ID
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !showLoginIdSection;
+                      setShowLoginIdSection(next);
+                      if (next) {
+                        setNewLoginId(userLoginId || (userEmail ? userEmail.split("@")[0] : ""));
+                        setLoginIdError("");
+                        setLoginIdSuccess("");
+                        setIsIdChecked(false);
+                      }
+                    }}
+                    className="text-xs font-bold text-neutral-900 hover:text-black underline underline-offset-4 cursor-pointer flex items-center gap-1 transition-colors"
+                  >
+                    <UserCog className="w-3.5 h-3.5 text-neutral-700" />
+                    <span>{showLoginIdSection ? "아이디 변경 취소" : "아이디 변경"}</span>
+                    <span className="text-[10px] text-neutral-400">→</span>
+                  </button>
                 </div>
+
+                {/* 가입 아이디(Login ID) 변경 인라인 폼 */}
+                {showLoginIdSection && (
+                  <form onSubmit={handleSaveLoginId} className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200/90 space-y-3 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between pb-2 border-b border-neutral-200/60">
+                      <span className="text-xs font-extrabold text-neutral-900 flex items-center gap-1.5">
+                        <UserCog className="w-3.5 h-3.5 text-neutral-800" />
+                        가입 아이디 (Login ID) 변경
+                      </span>
+                      <span className="text-[10px] text-neutral-400 font-medium">영문 소문자/숫자 4~20자</span>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-neutral-700 mb-1">새 가입 아이디</label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <User2 className="w-3.5 h-3.5 absolute left-3 top-2.5 text-neutral-400" />
+                          <input
+                            type="text"
+                            required
+                            value={newLoginId}
+                            onChange={(e) => {
+                              const clean = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+                              setNewLoginId(clean);
+                              setIsIdChecked(false);
+                              setLoginIdError("");
+                              setLoginIdSuccess("");
+                            }}
+                            placeholder="새 아이디 (영문 소문자, 숫자 4~20자)"
+                            maxLength={20}
+                            className="w-full bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl pl-8 pr-3 py-1.5 text-xs font-mono text-neutral-900 focus:outline-none transition-colors"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleCheckLoginIdDuplicate}
+                          disabled={
+                            isCheckingDuplicate ||
+                            !newLoginId ||
+                            newLoginId.trim() === currentEffectiveLoginId ||
+                            newLoginId.trim().length < 4
+                          }
+                          variant="outline"
+                          className="border-neutral-300 text-xs font-bold py-1.5 px-3 h-auto whitespace-nowrap bg-white hover:bg-neutral-100 text-neutral-800 cursor-pointer disabled:opacity-50"
+                        >
+                          {isCheckingDuplicate ? "확인 중..." : "중복 확인"}
+                        </Button>
+                      </div>
+
+                      {loginIdError && (
+                        <p className="text-[11px] font-bold text-rose-600 mt-1.5 flex items-center gap-1 animate-in fade-in">
+                          <span className="font-extrabold">✕</span>
+                          <span>{loginIdError}</span>
+                        </p>
+                      )}
+                      {loginIdSuccess && (
+                        <p className="text-[11px] font-bold text-emerald-600 mt-1.5 flex items-center gap-1 animate-in fade-in">
+                          <span className="font-extrabold">✓</span>
+                          <span>{loginIdSuccess}</span>
+                        </p>
+                      )}
+                      {!loginIdError && !loginIdSuccess && (
+                        <p className="text-[10px] text-neutral-400 mt-1 pl-0.5">
+                          아이디를 변경하면 다음 로그인부터 변경된 새 아이디로 로그인하셔야 합니다.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        type="submit"
+                        disabled={
+                          isChangingLoginId ||
+                          !newLoginId ||
+                          newLoginId.trim().length < 4 ||
+                          newLoginId.trim() === currentEffectiveLoginId
+                        }
+                        className="flex-1 bg-neutral-950 hover:bg-black text-white font-bold py-2 rounded-xl text-xs cursor-pointer disabled:opacity-50"
+                      >
+                        {isChangingLoginId ? "변경 중..." : "새 아이디로 변경 완료"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowLoginIdSection(false);
+                          setLoginIdError("");
+                          setLoginIdSuccess("");
+                          setIsIdChecked(false);
+                        }}
+                        className="border-neutral-200 text-neutral-600 hover:bg-neutral-100 font-bold py-2 px-3 rounded-xl text-xs cursor-pointer"
+                      >
+                        취소
+                      </Button>
+                    </div>
+                  </form>
+                )}
 
                 {/* 2. 비밀번호 (텍스트 클릭 방식으로 재설정 폼 열기) */}
                 <div className="py-2.5 flex items-center justify-between border-b border-neutral-100">

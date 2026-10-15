@@ -389,18 +389,162 @@ export default function LoginPage() {
     }
   };
 
-  // Password Reset Modal state
-  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const [resetInputEmail, setResetInputEmail] = useState("");
-  const [resetNewPassword, setResetNewPassword] = useState("");
-  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
-  const [resetErrorMsg, setResetErrorMsg] = useState("");
+  // Find ID Modal states
+  const [isFindIdModalOpen, setIsFindIdModalOpen] = useState(false);
+  const [findIdName, setFindIdName] = useState("");
+  const [findIdPhone, setFindIdPhone] = useState("");
+  const [findIdErrorMsg, setFindIdErrorMsg] = useState("");
+  const [isFindingId, setIsFindingId] = useState(false);
+  const [foundCustomer, setFoundCustomer] = useState<{
+    name: string;
+    loginId?: string;
+    email: string;
+    phone?: string;
+    joinedDate?: string;
+  } | null>(null);
 
-  const handleOpenResetModal = () => {
-    setResetInputEmail(email || "");
+  const handleOpenFindIdModal = () => {
+    setFindIdName("");
+    setFindIdPhone("");
+    setFindIdErrorMsg("");
+    setFoundCustomer(null);
+    setIsFindIdModalOpen(true);
+  };
+
+  const handleFindIdSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const targetName = findIdName.trim();
+    const targetPhoneDigits = findIdPhone.replace(/[^0-9]/g, "");
+
+    if (!targetName) {
+      setFindIdErrorMsg("이름(성함)을 입력해 주세요.");
+      return;
+    }
+    if (!targetPhoneDigits || targetPhoneDigits.length < 4) {
+      setFindIdErrorMsg("휴대폰 번호를 정확히 입력해 주세요.");
+      return;
+    }
+
+    setIsFindingId(true);
+    setFindIdErrorMsg("");
+
+    try {
+      let matchedCust: any = null;
+      const normTargetName = targetName.replace(/\s+/g, "").toLowerCase();
+
+      // 1. Check local storage admin_customers first
+      if (typeof window !== "undefined") {
+        const savedCustomers = localStorage.getItem("admin_customers");
+        if (savedCustomers) {
+          try {
+            const list: any[] = JSON.parse(savedCustomers);
+            matchedCust = list.find((c) => {
+              const custName = (c.name || "").replace(/\s+/g, "").toLowerCase();
+              const custPhone = (c.phone || "").replace(/[^0-9]/g, "");
+              const isNameMatch = custName === normTargetName;
+              const isPhoneMatch =
+                custPhone === targetPhoneDigits ||
+                (targetPhoneDigits.length >= 7 && custPhone.endsWith(targetPhoneDigits)) ||
+                (targetPhoneDigits.length === 4 && custPhone.endsWith(targetPhoneDigits));
+              return isNameMatch && isPhoneMatch;
+            });
+          } catch (e) {}
+        }
+      }
+
+      // 2. If not found locally, query /api/admin/customers
+      if (!matchedCust) {
+        try {
+          const res = await fetch("/api/admin/customers", { cache: "no-store" });
+          if (res.ok) {
+            const json = await res.json();
+            const list: any[] = json.customers || [];
+            matchedCust = list.find((c) => {
+              const custName = (c.name || "").replace(/\s+/g, "").toLowerCase();
+              const custPhone = (c.phone || "").replace(/[^0-9]/g, "");
+              const isNameMatch = custName === normTargetName;
+              const isPhoneMatch =
+                custPhone === targetPhoneDigits ||
+                (targetPhoneDigits.length >= 7 && custPhone.endsWith(targetPhoneDigits)) ||
+                (targetPhoneDigits.length === 4 && custPhone.endsWith(targetPhoneDigits));
+              return isNameMatch && isPhoneMatch;
+            });
+          }
+        } catch (err) {}
+      }
+
+      // 3. Admin fallback
+      if (!matchedCust && (normTargetName.includes("관리자") || normTargetName.includes("admin"))) {
+        if (targetPhoneDigits === "025791171" || targetPhoneDigits.endsWith("1171")) {
+          matchedCust = {
+            name: "최고관리자 (Admin)",
+            loginId: "admin",
+            email: "admin@choicomma.com",
+            phone: "02-579-1171",
+          };
+        }
+      }
+
+      if (matchedCust) {
+        setFoundCustomer({
+          name: matchedCust.name || targetName,
+          loginId: matchedCust.loginId || matchedCust.login_id || "",
+          email: matchedCust.email || "",
+          phone: matchedCust.phone || "",
+          joinedDate: matchedCust.joinedDate || matchedCust.created_at || "",
+        });
+      } else {
+        setFindIdErrorMsg("입력하신 정보와 일치하는 회원 아이디를 찾을 수 없습니다. 이름과 휴대폰 번호를 다시 확인해 주세요.");
+      }
+    } finally {
+      setIsFindingId(false);
+    }
+  };
+
+  const handleUseFoundIdToLogin = () => {
+    if (!foundCustomer) return;
+    const chosenId = foundCustomer.loginId || foundCustomer.email;
+    setEmail(chosenId);
+    setIsFindIdModalOpen(false);
+    setIsSignUp(false);
+    setToastMsg(`아이디(${chosenId})가 입력되었습니다. 비밀번호를 입력해 주세요.`);
+    setTimeout(() => {
+      const pwdInput = document.querySelector('input[name="password"]') as HTMLInputElement;
+      if (pwdInput) pwdInput.focus();
+    }, 150);
+  };
+
+  const handleGoToResetPasswordFromFindId = () => {
+    if (!foundCustomer) return;
+    const chosenId = foundCustomer.loginId || foundCustomer.email;
+    setIsFindIdModalOpen(false);
+    setResetInputEmail(chosenId);
     setResetNewPassword("");
     setResetConfirmPassword("");
     setResetErrorMsg("");
+    setIsResetModalOpen(true);
+  };
+
+  // Password Reset Modal state
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetInputEmail, setResetInputEmail] = useState("");
+  const [resetCurrentPassword, setResetCurrentPassword] = useState("");
+  const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
+  const [resetErrorMsg, setResetErrorMsg] = useState("");
+  const [showResetCurrentPassword, setShowResetCurrentPassword] = useState(false);
+  const [showResetNewPassword, setShowResetNewPassword] = useState(false);
+  const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
+
+  const handleOpenResetModal = () => {
+    setResetInputEmail(email || "");
+    setResetCurrentPassword("");
+    setResetNewPassword("");
+    setResetConfirmPassword("");
+    setResetErrorMsg("");
+    setShowResetCurrentPassword(false);
+    setShowResetNewPassword(false);
+    setShowResetConfirmPassword(false);
     setIsResetModalOpen(true);
   };
 
@@ -408,9 +552,14 @@ export default function LoginPage() {
     e.preventDefault();
     const targetEmail = resetInputEmail.trim().toLowerCase();
     const cleanPhoneTarget = targetEmail.replace(/[^0-9]/g, "");
+    const curPwd = resetCurrentPassword.trim();
 
     if (!targetEmail) {
       setResetErrorMsg("아이디 또는 이메일 주소를 입력해 주세요.");
+      return;
+    }
+    if (!curPwd) {
+      setResetErrorMsg("현재 비밀번호를 입력해 주세요. (기존 회원의 초기 비밀번호는 휴대폰 뒤 4자리입니다)");
       return;
     }
     if (!resetNewPassword) {
@@ -419,7 +568,11 @@ export default function LoginPage() {
     }
     const resetPwdCheck = validatePasswordComplexity(resetNewPassword);
     if (!resetPwdCheck.isValid) {
-      setResetErrorMsg("비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.");
+      setResetErrorMsg("새 비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.");
+      return;
+    }
+    if (resetNewPassword === curPwd) {
+      setResetErrorMsg("새 비밀번호가 현재 비밀번호와 동일합니다. 다른 비밀번호를 입력해 주세요.");
       return;
     }
     if (resetNewPassword !== resetConfirmPassword) {
@@ -427,46 +580,87 @@ export default function LoginPage() {
       return;
     }
 
-    // 등록된 회원 여부 검증
-    let customerExists = false;
+    // 등록된 회원 여부 및 현재 비밀번호 검증
+    let matchedCustomer: any = null;
     if (typeof window !== "undefined") {
       const savedCustomers = localStorage.getItem("admin_customers");
       if (savedCustomers) {
         try {
           const list: any[] = JSON.parse(savedCustomers);
-          customerExists = list.some(
+          matchedCustomer = list.find(
             (c) =>
               (c.email && c.email.trim().toLowerCase() === targetEmail) ||
+              (c.loginId && c.loginId.trim().toLowerCase() === targetEmail) ||
+              (c.login_id && c.login_id.trim().toLowerCase() === targetEmail) ||
+              (c.id && c.id.trim().toLowerCase() === targetEmail) ||
               (cleanPhoneTarget.length >= 8 && c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhoneTarget)
           );
         } catch (err) {}
       }
     }
 
-    if (!customerExists && (targetEmail === "admin" || targetEmail === "admin@choicomma.com")) {
-      customerExists = true;
+    if (!matchedCustomer && (targetEmail === "admin" || targetEmail === "admin@choicomma.com")) {
+      matchedCustomer = {
+        name: "최고관리자 (Admin)",
+        loginId: "admin",
+        email: "admin@choicomma.com",
+        phone: "02-579-1171",
+        isAdmin: true,
+      };
     }
 
-    if (!customerExists) {
+    if (!matchedCustomer) {
       try {
         const res = await fetch("/api/admin/customers", { cache: "no-store" });
         if (res.ok) {
           const json = await res.json();
           const list = json.customers || [];
-          if (list.some((c: any) => c.email && c.email.trim().toLowerCase() === targetEmail)) {
-            customerExists = true;
-          }
+          matchedCustomer = list.find(
+            (c: any) =>
+              (c.email && c.email.trim().toLowerCase() === targetEmail) ||
+              (c.loginId && c.loginId.trim().toLowerCase() === targetEmail) ||
+              (c.login_id && c.login_id.trim().toLowerCase() === targetEmail) ||
+              (c.id && c.id.trim().toLowerCase() === targetEmail) ||
+              (cleanPhoneTarget.length >= 8 && c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhoneTarget)
+          );
         }
       } catch (err) {}
     }
 
-    if (!customerExists) {
+    if (!matchedCustomer) {
       setResetErrorMsg("등록되지 않은 회원 정보입니다. 아이디(이메일)를 확인해 주세요.");
+      return;
+    }
+
+    // 현재 비밀번호 일치 검증
+    const custLoginId = (matchedCustomer.loginId || matchedCustomer.login_id || "").trim().toLowerCase();
+    const custEmail = (matchedCustomer.email || "").trim().toLowerCase();
+    const custCleanPhone = (matchedCustomer.phone || "").replace(/[^0-9]/g, "");
+    const phoneLast4 = custCleanPhone.length >= 4 ? custCleanPhone.slice(-4) : "";
+
+    const validPasswords: (string | null | undefined)[] = [
+      custLoginId ? localStorage.getItem(`user_pwd_${custLoginId}`) : null,
+      custEmail ? localStorage.getItem(`user_pwd_${custEmail}`) : null,
+      custCleanPhone ? localStorage.getItem(`user_pwd_${custCleanPhone}`) : null,
+      targetEmail ? localStorage.getItem(`user_pwd_${targetEmail}`) : null,
+      cleanPhoneTarget.length >= 8 ? localStorage.getItem(`user_pwd_${cleanPhoneTarget}`) : null,
+      matchedCustomer.password,
+      phoneLast4, // 아임웹 기존 회원 초기 비밀번호
+      (matchedCustomer.isAdmin || targetEmail === "admin" || targetEmail === "admin@choicomma.com") ? "Mrschoi83!!" : null,
+      "Mrschoi83!!",
+    ];
+
+    const isCurrentCorrect = validPasswords.some((pwd) => pwd && pwd.trim() === curPwd);
+    if (!isCurrentCorrect) {
+      setResetErrorMsg("현재 비밀번호가 일치하지 않습니다. (기존 회원의 초기 비밀번호는 가입 당시 휴대폰 뒤 4자리입니다)");
       return;
     }
 
     if (typeof window !== "undefined") {
       localStorage.setItem(`user_pwd_${targetEmail}`, resetNewPassword);
+      if (custLoginId) localStorage.setItem(`user_pwd_${custLoginId}`, resetNewPassword);
+      if (custEmail) localStorage.setItem(`user_pwd_${custEmail}`, resetNewPassword);
+      if (custCleanPhone.length >= 8) localStorage.setItem(`user_pwd_${custCleanPhone}`, resetNewPassword);
       if (cleanPhoneTarget.length >= 8) {
         localStorage.setItem(`user_pwd_${cleanPhoneTarget}`, resetNewPassword);
       }
@@ -575,10 +769,19 @@ export default function LoginPage() {
     const inputPassword = password.trim();
 
     // 1. 관리자(Admin) 전용 계정 로그인 분기
-    const isAdmin = !isSignUp && (inputLoginId === "admin" || inputLoginId === "admin@choicomma.com");
+    const savedAdminLoginId = (typeof window !== "undefined" && localStorage.getItem("admin_login_id")) || null;
+    const isAdmin = !isSignUp && (
+      inputLoginId === "admin" ||
+      inputLoginId === "admin@choicomma.com" ||
+      Boolean(savedAdminLoginId && inputLoginId === savedAdminLoginId.toLowerCase())
+    );
 
     if (isAdmin) {
-      const savedAdminPwd = (typeof window !== "undefined" && localStorage.getItem("user_pwd_admin")) || "Mrschoi83!!";
+      const savedAdminPwd = (typeof window !== "undefined" && (
+        (savedAdminLoginId && localStorage.getItem(`user_pwd_${savedAdminLoginId.toLowerCase()}`)) ||
+        localStorage.getItem(`user_pwd_${inputLoginId}`) ||
+        localStorage.getItem("user_pwd_admin")
+      )) || "Mrschoi83!!";
       if (inputPassword !== savedAdminPwd && inputPassword !== "Mrschoi83!!") {
         setIsLoading(false);
         setToastMsg("비밀번호가 일치하지 않습니다. 비밀번호를 확인해 주세요.");
@@ -589,6 +792,7 @@ export default function LoginPage() {
         sessionStorage.setItem("choicomma_admin_authenticated", "true");
         localStorage.setItem("membership_user_name", "최고관리자 (Admin)");
         localStorage.setItem("membership_user_email", "admin@choicomma.com");
+        localStorage.setItem("membership_user_login_id", savedAdminLoginId || (inputLoginId !== "admin@choicomma.com" ? inputLoginId : "admin"));
         localStorage.setItem("user_role", "admin");
         localStorage.setItem("is_logged_in", "true");
         window.dispatchEvent(new CustomEvent("storage"));
@@ -1241,6 +1445,14 @@ export default function LoginPage() {
 
             {!isSignUp && (
               <>
+                {/* 안내 배너: 기존 쇼핑몰 회원 안내 */}
+                <div className="p-2.5 bg-neutral-100/80 border border-neutral-200 rounded-xl text-[11px] text-neutral-600 leading-relaxed flex items-start gap-2">
+                  <span className="shrink-0 text-neutral-900 font-bold">ℹ️</span>
+                  <span>
+                    기존 쇼핑몰 회원은 <strong>아이디(이메일 주소)</strong>와 <strong>비밀번호(휴대폰 번호 뒤 4자리)</strong>로 바로 로그인하실 수 있습니다.
+                  </span>
+                </div>
+
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
@@ -1290,14 +1502,6 @@ export default function LoginPage() {
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
-                  </div>
-
-                  {/* 안내 배너: 기존 쇼핑몰 회원 안내 */}
-                  <div className="mt-2.5 p-2.5 bg-neutral-100/80 border border-neutral-200 rounded-xl text-[11px] text-neutral-600 leading-relaxed flex items-start gap-2">
-                    <span className="shrink-0 text-neutral-900 font-bold">ℹ️</span>
-                    <span>
-                      기존 쇼핑몰 회원은 <strong>아이디(이메일 주소)</strong>와 <strong>비밀번호(휴대폰 번호 뒤 4자리)</strong>로 바로 로그인하실 수 있습니다.
-                    </span>
                   </div>
                 </div>
               </>
@@ -1378,13 +1582,23 @@ export default function LoginPage() {
                   />
                   <span>로그인 상태 유지</span>
                 </label>
-                <button
-                  type="button"
-                  onClick={handleOpenResetModal}
-                  className="text-neutral-900 hover:underline font-bold cursor-pointer"
-                >
-                  비밀번호 찾기
-                </button>
+                <div className="flex items-center gap-2 text-neutral-400">
+                  <button
+                    type="button"
+                    onClick={handleOpenFindIdModal}
+                    className="text-neutral-700 hover:text-neutral-950 hover:underline font-bold cursor-pointer transition-colors"
+                  >
+                    아이디 찾기
+                  </button>
+                  <span className="text-neutral-300 text-[10px] select-none">|</span>
+                  <button
+                    type="button"
+                    onClick={handleOpenResetModal}
+                    className="text-neutral-700 hover:text-neutral-950 hover:underline font-bold cursor-pointer transition-colors"
+                  >
+                    비밀번호 찾기
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1405,6 +1619,183 @@ export default function LoginPage() {
           </form>
         </div>
       </div>
+
+      {/* Internal Find ID Modal */}
+      {isFindIdModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 text-neutral-900 animate-in fade-in duration-200 font-sans">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-neutral-200 animate-in zoom-in-95 duration-200 space-y-5 relative">
+            <button
+              onClick={() => setIsFindIdModalOpen(false)}
+              className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-900 rounded-full hover:bg-neutral-100 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {foundCustomer ? (
+              /* ── Found Result View ── */
+              <div className="space-y-5 pt-1 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-neutral-950 text-white flex items-center justify-center mx-auto shadow-md">
+                  <CheckCircle2 className="w-6 h-6 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-extrabold text-neutral-950 tracking-tight">
+                    아이디를 찾았습니다!
+                  </h3>
+                  <p className="text-xs text-neutral-500 mt-1">
+                    <strong className="text-neutral-900 font-bold">{foundCustomer.name}</strong> 회원님의 가입 정보입니다.
+                  </p>
+                </div>
+
+                <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4 sm:p-5 text-left space-y-3 shadow-inner">
+                  <div>
+                    <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider block mb-1">
+                      로그인 아이디 (ID)
+                    </label>
+                    <div className="bg-white border border-neutral-200 rounded-xl px-3.5 py-2.5 flex items-center justify-between shadow-2xs select-all">
+                      <span className="text-base font-black text-neutral-950 tracking-tight font-mono">
+                        {foundCustomer.loginId || foundCustomer.email}
+                      </span>
+                      <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        확인 완료
+                      </span>
+                    </div>
+                  </div>
+
+                  {foundCustomer.loginId && foundCustomer.loginId !== foundCustomer.email && (
+                    <div>
+                      <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider block mb-1">
+                        가입 이메일 주소
+                      </label>
+                      <div className="text-xs font-semibold text-neutral-700 bg-white/70 border border-neutral-200/80 rounded-xl px-3 py-2">
+                        {foundCustomer.email}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-neutral-200/80 text-[11px] text-neutral-500 leading-relaxed">
+                    💡 <strong>기존 회원 안내</strong>: 가입 당시 이메일 주소 또는 위 아이디로 로그인하실 수 있으며, 비밀번호는 <strong>휴대폰 번호 뒤 4자리</strong>입니다.
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleUseFoundIdToLogin}
+                    className="w-full py-3.5 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold rounded-xl text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>이 아이디로 로그인하기</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+
+                  <div className="flex items-center justify-between text-xs pt-1 px-1">
+                    <button
+                      type="button"
+                      onClick={() => setFoundCustomer(null)}
+                      className="text-neutral-500 hover:text-neutral-900 underline font-medium cursor-pointer"
+                    >
+                      다른 정보로 다시 찾기
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleGoToResetPasswordFromFindId}
+                      className="text-neutral-900 hover:underline font-bold cursor-pointer"
+                    >
+                      비밀번호 재설정하기 →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* ── Find ID Search Form ── */
+              <div className="space-y-5 pt-1">
+                <div className="text-center space-y-1.5">
+                  <div className="w-12 h-12 rounded-2xl bg-neutral-950 text-white flex items-center justify-center mx-auto shadow-md mb-2">
+                    <User2 className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-xl font-extrabold text-neutral-950 tracking-tight">
+                    아이디 찾기
+                  </h3>
+                  <p className="text-xs text-neutral-500">
+                    가입 시 등록하신 성함과 휴대폰 번호를 입력해 주세요.
+                  </p>
+                </div>
+
+                <form onSubmit={handleFindIdSubmit} className="space-y-4 pt-1">
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                      이름 (성함)
+                    </label>
+                    <div className="relative">
+                      <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                      <input
+                        type="text"
+                        required
+                        value={findIdName}
+                        onChange={(e) => {
+                          setFindIdName(e.target.value);
+                          setFindIdErrorMsg("");
+                        }}
+                        placeholder="가입 시 등록한 성함 입력 (예: 홍길동)"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                      휴대폰 번호
+                    </label>
+                    <div className="relative">
+                      <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                      <input
+                        type="tel"
+                        required
+                        value={findIdPhone}
+                        onChange={(e) => {
+                          setFindIdPhone(e.target.value);
+                          setFindIdErrorMsg("");
+                        }}
+                        placeholder="가입 시 등록한 휴대폰 번호 (예: 010-1234-5678)"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                      />
+                    </div>
+                    <p className="text-[10px] text-neutral-400 mt-1 pl-1">
+                      하이픈(-) 없이 숫자만 입력하셔도 정상 확인됩니다.
+                    </p>
+                  </div>
+
+                  {findIdErrorMsg && (
+                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 text-center animate-in fade-in">
+                      ✕ {findIdErrorMsg}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsFindIdModalOpen(false)}
+                      className="flex-1 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isFindingId}
+                      className="flex-1 py-3 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {isFindingId ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <span>아이디 찾기</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Internal Password Reset Modal */}
       {isResetModalOpen && (
@@ -1448,8 +1839,58 @@ export default function LoginPage() {
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
                   />
                 </div>
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsResetModalOpen(false);
+                      handleOpenFindIdModal();
+                    }}
+                    className="text-[11px] text-neutral-500 hover:text-neutral-950 underline font-semibold cursor-pointer"
+                  >
+                    아이디가 기억나지 않으시나요? 아이디 찾기
+                  </button>
+                </div>
               </div>
 
+              {/* 현재 비밀번호 (Current Password) */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                    현재 비밀번호
+                  </label>
+                  <span className="text-[10px] text-neutral-400">
+                    초기: 휴대폰 번호 뒤 4자리
+                  </span>
+                </div>
+                <div className="relative">
+                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                  <input
+                    type={showResetCurrentPassword ? "text" : "password"}
+                    required
+                    value={resetCurrentPassword}
+                    onChange={(e) => {
+                      setResetCurrentPassword(e.target.value);
+                      setResetErrorMsg("");
+                    }}
+                    placeholder="현재 비밀번호 입력"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetCurrentPassword(!showResetCurrentPassword)}
+                    className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                    tabIndex={-1}
+                  >
+                    {showResetCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-neutral-400 mt-1 pl-1">
+                  기존 쇼핑몰 이전 회원의 초기 비밀번호는 휴대폰 번호 뒤 4자리입니다.
+                </p>
+              </div>
+
+              {/* 새 비밀번호 */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
@@ -1462,22 +1903,31 @@ export default function LoginPage() {
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                   <input
-                    type="password"
+                    type={showResetNewPassword ? "text" : "password"}
                     required
                     value={resetNewPassword}
                     onChange={(e) => {
                       setResetNewPassword(e.target.value);
                       setResetErrorMsg("");
                     }}
-                    placeholder="영문, 숫자, 특수문자 포함 8자 이상"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                    placeholder="새 비밀번호 입력 (영문, 숫자, 특수문자 8자 이상)"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetNewPassword(!showResetNewPassword)}
+                    className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                    tabIndex={-1}
+                  >
+                    {showResetNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 <p className="text-[10px] text-neutral-400 mt-1 pl-1">
                   영문, 숫자, 특수문자를 포함하여 8자 이상 입력해 주세요.
                 </p>
               </div>
 
+              {/* 새 비밀번호 확인 */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
@@ -1490,7 +1940,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                   <input
-                    type="password"
+                    type={showResetConfirmPassword ? "text" : "password"}
                     required
                     value={resetConfirmPassword}
                     onChange={(e) => {
@@ -1498,8 +1948,16 @@ export default function LoginPage() {
                       setResetErrorMsg("");
                     }}
                     placeholder="새 비밀번호 다시 입력"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetConfirmPassword(!showResetConfirmPassword)}
+                    className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                    tabIndex={-1}
+                  >
+                    {showResetConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 {resetConfirmPassword.length === 0 ? (
                   <p className="text-[10px] text-neutral-400 mt-1 pl-1">

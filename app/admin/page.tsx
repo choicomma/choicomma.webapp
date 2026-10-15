@@ -141,14 +141,15 @@ export default function AdminPage() {
           "sales", "popup", "visitors", "revenue", "main",
           "customers", "coupons", "inquiries", "settings", "global_sales", "activity_logs"
         ];
+        // 1. URL 파라미터(?tab=...)가 명시된 경우: 다른 탭으로 이동 후 새로고침(F5) 시 해당 탭 유지
         if (tabFromUrl && validTabs.includes(tabFromUrl)) {
           return tabFromUrl as any;
         }
 
-        const savedTab = localStorage.getItem("admin_active_tab");
-        if (savedTab && validTabs.includes(savedTab)) {
-          return savedTab as any;
-        }
+        // 2. URL 파라미터가 없는 첫 진입(/admin) 시: 브라우저 캐시 기억을 초기화하고 항상 기본 화면인 "orders" (주문 및 배송 관리)로 진입
+        try {
+          localStorage.removeItem("admin_active_tab");
+        } catch (e) {}
       } catch (e) {}
     }
     return "orders";
@@ -158,7 +159,6 @@ export default function AdminPage() {
     setActiveTabState(newTab);
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("admin_active_tab", newTab);
         const url = new URL(window.location.href);
         url.searchParams.set("tab", newTab);
         window.history.replaceState({}, "", url.toString());
@@ -178,6 +178,8 @@ export default function AdminPage() {
         ];
         if (tabFromUrl && validTabs.includes(tabFromUrl)) {
           setActiveTabState(tabFromUrl as any);
+        } else {
+          setActiveTabState("orders");
         }
       } catch (e) {}
     };
@@ -698,23 +700,18 @@ export default function AdminPage() {
       {/* Top Header */}
       <header className="h-16 border-b border-neutral-200/80 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-4">
-          <Link
+          <a
             href="/"
-            onClick={(e) => {
-              if (typeof window !== "undefined") {
-                window.location.href = "/";
-              }
-            }}
             className="flex items-center gap-2 text-xs font-semibold text-neutral-600 hover:text-neutral-950 transition-colors bg-neutral-100 px-3 py-1.5 rounded-full border border-neutral-200 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             스토어 바로가기
-          </Link>
+          </a>
           <div className="h-4 w-px bg-neutral-200" />
           <div className="flex items-center gap-3">
-            <Link href="/" onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }} className="font-extrabold text-base tracking-tight text-neutral-950 hover:text-black">
+            <a href="/" className="font-extrabold text-base tracking-tight text-neutral-950 hover:text-black">
               CHOICOMMA
-            </Link>
+            </a>
             <span className="text-[10px] uppercase font-bold tracking-widest bg-neutral-100 text-neutral-800 border border-neutral-200 px-2 py-0.5 rounded-full">
               ADMIN v1.0
             </span>
