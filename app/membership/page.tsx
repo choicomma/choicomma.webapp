@@ -48,6 +48,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { validateCustomerSession, clearCustomerSession } from "@/lib/auth/customer-session";
 import { validatePasswordComplexity } from "@/lib/auth/password";
+import { calculateTierBySpend } from "@/lib/membership/tiers";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -401,7 +402,10 @@ function MembershipContent() {
             if (found.postcode) setUserPostcode(found.postcode);
           }
           if (found.points !== undefined) setUserPoints(found.points);
-          if (found.grade) {
+          const spent = Number(found.totalSpent || found.total_spent || 0);
+          if (spent > 0) {
+            currentGrade = calculateTierBySpend(spent);
+          } else if (found.grade) {
             const fg = String(found.grade).toUpperCase();
             if (fg.includes("VVIP") || fg.includes("BLACK")) currentGrade = "VVIP";
             else if (fg.includes("PLATINUM") || fg.includes("플래티넘")) currentGrade = "PLATINUM";
@@ -438,9 +442,14 @@ function MembershipContent() {
                 setUserPoints(freshPts);
                 localStorage.setItem("membership_user_points", String(freshPts));
               }
-              if (freshCust.grade) {
+              const sbSpent = Number(freshCust.totalSpent || freshCust.total_spent || 0);
+              let sbGrade: "GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP" = "GENERAL";
+              if (sbSpent > 0) {
+                sbGrade = calculateTierBySpend(sbSpent);
+                setUserGrade(sbGrade);
+                localStorage.setItem("user_grade", sbGrade);
+              } else if (freshCust.grade) {
                 const fg = String(freshCust.grade).toUpperCase();
-                let sbGrade: "GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP" = "GENERAL";
                 if (fg.includes("VVIP") || fg.includes("BLACK")) sbGrade = "VVIP";
                 else if (fg.includes("PLATINUM") || fg.includes("플래티넘")) sbGrade = "PLATINUM";
                 else if (fg.includes("GOLD") || fg.includes("골드")) sbGrade = "GOLD";

@@ -568,7 +568,14 @@ export function ProductDetailHeader({
 
     const updateTime = () => {
       let expiryTime = 0;
-      if (typeof window !== "undefined") {
+      if (product.timeSaleEndDate) {
+        const parsed = new Date(product.timeSaleEndDate).getTime();
+        if (!isNaN(parsed) && parsed > Date.now()) {
+          expiryTime = parsed;
+        }
+      }
+
+      if (!expiryTime && typeof window !== "undefined") {
         try {
           const expiriesSaved = localStorage.getItem("secret_timesale_item_expiries");
           if (expiriesSaved) {

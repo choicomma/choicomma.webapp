@@ -486,7 +486,7 @@ export function CustomersManagement({
           <p className="text-[11px] text-neutral-400 mt-0.5">스토어 전체 등록 회원</p>
         </div>
 
-        {/* 2. VVIP (1,500만원 이상) */}
+        {/* 2. VVIP (2,000만원 이상) */}
         <div
           onClick={() => setCustomerGradeFilter("VVIP")}
           className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
@@ -498,7 +498,7 @@ export function CustomersManagement({
               <Crown className="w-3.5 h-3.5 text-amber-500" />
               <span>VVIP</span>
             </span>
-            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-500 font-black">1,500만↑</span>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-500 font-black">2,000만↑</span>
           </div>
           <p className={`text-xl font-extrabold mt-1.5 ${customerGradeFilter === "VVIP" ? "text-amber-300" : "text-neutral-950"}`}>
             {vvipCustomersCount.toLocaleString()} 명
@@ -508,7 +508,7 @@ export function CustomersManagement({
           </p>
         </div>
 
-        {/* 3. 플래티넘 (800만원 이상) */}
+        {/* 3. 플래티넘 (1,000만원 이상) */}
         <div
           onClick={() => setCustomerGradeFilter("PLATINUM")}
           className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-purple-600 ${
@@ -520,7 +520,7 @@ export function CustomersManagement({
               <Gem className="w-3.5 h-3.5 text-purple-600" />
               <span>플래티넘</span>
             </span>
-            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-bold">800만↑</span>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-bold">1,000만↑</span>
           </div>
           <p className="text-xl font-extrabold text-purple-950 mt-1.5">
             {platinumCustomersCount.toLocaleString()} 명
@@ -641,7 +641,7 @@ export function CustomersManagement({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-amber-300 text-xs">VVIP</span>
-                <span className="text-[10px] font-mono text-neutral-400">1,500만 원 이상</span>
+                <span className="text-[10px] font-mono text-neutral-400">2,000만 원 이상</span>
               </div>
               <p className="text-[11px] text-amber-200/90 font-medium mt-0.5">
                 VVIP 전용 시크릿 타임 세일 권한
@@ -656,7 +656,7 @@ export function CustomersManagement({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-purple-300 text-xs">플래티넘</span>
-                <span className="text-[10px] font-mono text-neutral-400">800만 원 이상</span>
+                <span className="text-[10px] font-mono text-neutral-400">1,000만 원 이상</span>
               </div>
               <p className="text-[11px] text-purple-200/90 font-medium mt-0.5">
                 플래티넘 전용 시크릿 타임 세일 권한
@@ -806,9 +806,9 @@ export function CustomersManagement({
             <span className="font-semibold text-neutral-500">현재 필터:</span>
             <span className="inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-md bg-neutral-900 text-white text-[11px]">
               {customerGradeFilter === "VVIP"
-                ? "👑 VVIP (1,500만원 이상)"
+                ? "👑 VVIP (2,000만원 이상)"
                 : customerGradeFilter === "PLATINUM"
-                ? "💎 플래티넘 (800만원 이상)"
+                ? "💎 플래티넘 (1,000만원 이상)"
                 : customerGradeFilter === "GOLD"
                 ? "🥇 골드 (500만원 이상)"
                 : customerGradeFilter === "SILVER"

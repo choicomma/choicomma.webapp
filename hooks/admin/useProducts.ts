@@ -590,7 +590,17 @@ export function useProducts({
           try {
             const light = sanitizeProductsForLocalStorage(nextList);
             localStorage.setItem("admin_products", JSON.stringify(light));
-          } catch {}
+          } catch (lightErr) {
+            try {
+              const minimal = sanitizeProductsForLocalStorage(nextList).map((p: any) => ({
+                ...p,
+                detailDescription: "",
+                descriptionHtml: "",
+                description: p.title || "",
+              }));
+              localStorage.setItem("admin_products", JSON.stringify(minimal));
+            } catch {}
+          }
         }
         return nextList;
       });

@@ -28,6 +28,7 @@ import {
   normalizeUserGrade,
   getTierPointRate,
   DEFAULT_TIER_POLICIES,
+  calculateTierBySpend,
 } from "@/lib/membership/tiers";
 import {
   AvailableCoupon,
@@ -353,6 +354,10 @@ export default function CheckoutClientWrapper() {
       const currentName = (formData.ordererName || localStorage.getItem("membership_user_name") || "").trim();
 
       let determinedGrade: string = localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || "";
+      const localSpent = localStorage.getItem("membership_user_spent");
+      if (localSpent && !isNaN(Number(localSpent))) {
+        determinedGrade = calculateTierBySpend(Number(localSpent));
+      }
       let foundPoints: number | null = null;
 
       const savedPoints = localStorage.getItem("membership_user_points");
@@ -376,7 +381,11 @@ export default function CheckoutClientWrapper() {
             );
           });
           if (matched) {
-            if (matched.grade) determinedGrade = matched.grade;
+            if (matched.totalSpent !== undefined && matched.totalSpent !== null) {
+              determinedGrade = calculateTierBySpend(Number(matched.totalSpent));
+            } else if (matched.grade) {
+              determinedGrade = matched.grade;
+            }
             if (matched.points !== undefined && !isNaN(Number(matched.points))) {
               foundPoints = Number(matched.points);
             }
@@ -400,7 +409,11 @@ export default function CheckoutClientWrapper() {
               );
             });
             if (matched && isMounted) {
-              if (matched.grade) determinedGrade = matched.grade;
+              if (matched.totalSpent !== undefined && matched.totalSpent !== null) {
+                determinedGrade = calculateTierBySpend(Number(matched.totalSpent));
+              } else if (matched.grade) {
+                determinedGrade = matched.grade;
+              }
               if (matched.points !== undefined && !isNaN(Number(matched.points))) {
                 foundPoints = Number(matched.points);
               }
