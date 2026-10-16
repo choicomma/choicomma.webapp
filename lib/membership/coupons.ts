@@ -702,8 +702,6 @@ export function restoreCouponByOrder(
   return { restored: restoredAny, couponTitle: restoredTitle, discountAmount: restoredDiscount };
 }
 
-export const cancelCouponUsage = restoreCouponByOrder;
-
 export interface CouponRecipientStatus {
   customerId: string;
   name: string;
