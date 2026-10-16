@@ -8,10 +8,12 @@ git config user.email "choicomma@users.noreply.github.com"
 echo "=== 2. 원격 최신 정보 가져오기 ==="
 git fetch origin main
 
-echo "=== 3. 변경 사항 스테이징 및 커밋 ==="
+echo "=== 3. pnpm-lock.yaml 정리 및 변경 사항 스테이징 ==="
+rm -f pnpm-lock.yaml
+git rm -f pnpm-lock.yaml 2>/dev/null || true
 git add .
 if [ -n "$(git status --porcelain)" ]; then
-  COMMIT_MSG="${1:-261016 -8 회원관리 검색창 엔터(Enter) 키 및 검색 버튼 클릭 시 결과 반영 방식으로 개편}"
+  COMMIT_MSG="${1:-261016 -9 pnpm에서 npm으로 완전 전환 및 Vercel 빌드 불일치 해결}"
   git commit -m "$COMMIT_MSG" --author="choicomma <choicomma@users.noreply.github.com>"
   echo "✅ 커밋 완료: $COMMIT_MSG"
 else
