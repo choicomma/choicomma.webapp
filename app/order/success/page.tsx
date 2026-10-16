@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { recordCouponUsage } from "@/lib/membership/coupons";
 import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 import { safeSaveShipmentsToStorage, safeSaveOrdersToStorage } from "@/lib/shipping/safe-shipments-storage";
+import { calculateTierBySpend } from "@/lib/membership/tiers";
 
 interface SuccessParams {
   paymentKey: string | null;
@@ -280,7 +281,7 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
               date: new Date().toISOString().slice(0, 10),
               totalAmount: isZeroPayment ? 0 : Number(amount),
               shippingFee: pendingOrder?.shippingFee || 0,
-              discountAmount: pendingOrder?.appliedDiscount || 0,
+              discountAmount: Number(pendingOrder?.appliedDiscount || 0) + Number(pendingOrder?.vvipDiscountAmount || 0),
               pointsUsed: Number(pendingOrder?.appliedPoints || 0),
               pointsEarned: pendingOrder?.earnedPoints !== undefined 
                 ? Number(pendingOrder.earnedPoints) 
@@ -528,15 +529,19 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
                 // 세션 최신 보유 적립금과 일치시키거나, 기존 포인트에서 사용 적립금 차감 + 획득 적립금 가산
                 cust.points = updatedUserPoints;
 
-                // 구매금액 누적에 따른 자동 승급 (2000만: VVIP, 1000만: PLATINUM, 300만: GOLD, 100만: SILVER)
-                if (newSpent >= 20000000 && cust.grade !== "VVIP") {
-                  cust.grade = "VVIP";
-                } else if (newSpent >= 10000000 && !["VVIP", "PLATINUM"].includes(cust.grade)) {
-                  cust.grade = "PLATINUM";
-                } else if (newSpent >= 3000000 && !["VVIP", "PLATINUM", "GOLD"].includes(cust.grade)) {
-                  cust.grade = "GOLD";
-                } else if (newSpent >= 1000000 && !["VVIP", "PLATINUM", "GOLD", "SILVER"].includes(cust.grade)) {
-                  cust.grade = "SILVER";
+                // 구매금액 누적에 따른 자동 승급 (2000만: VVIP, 1000만: PLATINUM, 500만: GOLD, 200만: SILVER)
+                const upgradedGrade = calculateTierBySpend(newSpent);
+                if (cust.grade !== "VVIP" || upgradedGrade === "VVIP") {
+                  cust.grade = upgradedGrade;
+                }
+
+                // 현재 세션의 고객이 승급된 경우 브라우저 스토리지 즉시 동기화 (새 등급 쿠폰 즉시 활성화)
+                const currentSessionEmail = (customerEmail || (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") : "") || "").toLowerCase().trim();
+                if (cust.email && cust.email.toLowerCase().trim() === currentSessionEmail) {
+                  localStorage.setItem("user_grade", cust.grade);
+                  localStorage.setItem("membership_user_grade", cust.grade);
+                  window.dispatchEvent(new CustomEvent("user_grade_updated", { detail: { grade: cust.grade } }));
+                  window.dispatchEvent(new CustomEvent("coupons_updated"));
                 }
 
                 localStorage.setItem("admin_customers", JSON.stringify(custList));
@@ -558,11 +563,13 @@ function OrderSuccessContentInner({ params }: { params: SuccessParams | null }) 
                       if (json?.customers && json.customers.length > 0) {
                         const dbCust = json.customers[0];
                         const updatedDbSpent = (Number(dbCust.totalSpent) || 0) + (isZeroPayment ? 0 : Number(amount));
+                        const dbUpgradedGrade = calculateTierBySpend(updatedDbSpent);
                         fetch("/api/admin/customers", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({
                             ...dbCust,
+                            grade: dbCust.isAdmin ? "VVIP" : dbUpgradedGrade,
                             points: updatedUserPoints,
                             totalSpent: updatedDbSpent,
                           }),

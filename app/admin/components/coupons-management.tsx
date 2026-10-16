@@ -37,8 +37,10 @@ import {
   getCouponUsageHistory,
   cancelCouponUsage,
   resetCouponUsageHistory,
+  getCouponDistributionStatus,
 } from "@/lib/membership/coupons";
 import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
+import { CouponRecipientsModal } from "./coupon-recipients-modal";
 
 interface CouponsManagementProps {
   customersList?: any[];
@@ -103,14 +105,33 @@ export function CouponsManagement({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<AvailableCoupon | null>(null);
 
+  // Modal State for Viewing Recipients & Remaining Status
+  const [isRecipientsModalOpen, setIsRecipientsModalOpen] = useState(false);
+  const [selectedRecipientCoupon, setSelectedRecipientCoupon] = useState<AvailableCoupon | null>(null);
+
+  const handleOpenRecipientsModal = (coupon: AvailableCoupon) => {
+    setSelectedRecipientCoupon(coupon);
+    setIsRecipientsModalOpen(true);
+  };
+
+  const handleCloseRecipientsModal = () => {
+    setIsRecipientsModalOpen(false);
+    setSelectedRecipientCoupon(null);
+  };
+
   // Form State (쿠폰 코드 입력 부분 완전 제거)
   const [formTitle, setFormTitle] = useState("");
   const [formDiscountAmount, setFormDiscountAmount] = useState<number>(10000);
-  const [formType, setFormType] = useState<"FIXED" | "SHIPPING">("FIXED");
+  const [formDiscountPercent, setFormDiscountPercent] = useState<number>(5);
+  const [formMaxDiscountAmount, setFormMaxDiscountAmount] = useState<number>(0);
+  const [formType, setFormType] = useState<"FIXED" | "PERCENT" | "SHIPPING">("FIXED");
   const [formCondition, setFormCondition] = useState("");
   const [formValidUntil, setFormValidUntil] = useState("2026.12.31");
   const [formBadge, setFormBadge] = useState("특별할인");
   const [formIsActive, setFormIsActive] = useState<boolean>(true);
+  const [formRefreshCycle, setFormRefreshCycle] = useState<"NONE" | "MONTHLY">("NONE");
+  const [formUsageLimitPerMonth, setFormUsageLimitPerMonth] = useState<number>(1);
+  const [formIsUnlimited, setFormIsUnlimited] = useState<boolean>(false);
 
   // Target Designation Form State
   const [formTargetType, setFormTargetType] = useState<"ALL" | "GRADE" | "CUSTOMER">("ALL");
@@ -199,11 +220,16 @@ export function CouponsManagement({
     setEditingCoupon(null);
     setFormTitle("");
     setFormDiscountAmount(5000);
-    setFormType("FIXED");
-    setFormCondition("전 상품 즉시 할인");
+    setFormDiscountPercent(5);
+    setFormMaxDiscountAmount(0);
+    setFormType("PERCENT");
+    setFormCondition("전 상품 즉시 5% 할인");
     setFormValidUntil("2026.12.31");
-    setFormBadge("신규혜택");
+    setFormBadge("등급혜택");
     setFormIsActive(true);
+    setFormRefreshCycle("NONE");
+    setFormUsageLimitPerMonth(1);
+    setFormIsUnlimited(false);
     setFormTargetType("ALL");
     setFormTargetGrades([]);
     setFormSelectedCustomerEmails([]);
@@ -216,11 +242,16 @@ export function CouponsManagement({
     setEditingCoupon(coupon);
     setFormTitle(coupon.title);
     setFormDiscountAmount(coupon.discountAmount);
+    setFormDiscountPercent(coupon.discountPercent || (coupon.type === "PERCENT" ? coupon.discountAmount : 5));
+    setFormMaxDiscountAmount(coupon.maxDiscountAmount || 0);
     setFormType(coupon.type);
     setFormCondition(coupon.condition);
     setFormValidUntil(coupon.validUntil || "2026.12.31");
     setFormBadge(coupon.badge || "특별할인");
     setFormIsActive(coupon.isActive !== false);
+    setFormRefreshCycle(coupon.refreshCycle || "NONE");
+    setFormUsageLimitPerMonth(coupon.usageLimitPerMonth || 1);
+    setFormIsUnlimited(Boolean(coupon.isUnlimited));
 
     // Target restoration
     const tType = coupon.targetType || "ALL";
@@ -258,7 +289,13 @@ export function CouponsManagement({
       notify("⚠️ 쿠폰명을 입력해 주세요.");
       return;
     }
-    if (formDiscountAmount <= 0) {
+
+    if (formType === "PERCENT") {
+      if (formDiscountPercent <= 0 || formDiscountPercent >= 100) {
+        notify("⚠️ 할인율은 1%에서 99% 사이로 입력해 주세요.");
+        return;
+      }
+    } else if (formDiscountAmount <= 0) {
       notify("⚠️ 할인 금액은 0원보다 커야 합니다.");
       return;
     }
@@ -276,6 +313,8 @@ export function CouponsManagement({
     const discountText =
       formType === "SHIPPING"
         ? `배송비 ${formDiscountAmount.toLocaleString()}원 지원`
+        : formType === "PERCENT"
+        ? `${formDiscountPercent}% 할인`
         : `${formDiscountAmount.toLocaleString()}원 할인`;
 
     // Map customer names for display
@@ -294,7 +333,9 @@ export function CouponsManagement({
               ...c,
               title: formTitle.trim(),
               discount: discountText,
-              discountAmount: formDiscountAmount,
+              discountAmount: formType === "PERCENT" ? formDiscountPercent : formDiscountAmount,
+              discountPercent: formType === "PERCENT" ? formDiscountPercent : undefined,
+              maxDiscountAmount: formType === "PERCENT" && formMaxDiscountAmount > 0 ? formMaxDiscountAmount : undefined,
               type: formType,
               condition: formCondition.trim() || `${discountText} 즉시 적용`,
               validUntil: formValidUntil.trim() || "2026.12.31",
@@ -303,6 +344,9 @@ export function CouponsManagement({
               targetGrades: formTargetType === "GRADE" ? formTargetGrades : ["ALL"],
               targetCustomerEmails: formTargetType === "CUSTOMER" ? formSelectedCustomerEmails : [],
               targetCustomerNames: formTargetType === "CUSTOMER" ? targetNames : [],
+              refreshCycle: formRefreshCycle,
+              usageLimitPerMonth: formRefreshCycle === "MONTHLY" ? formUsageLimitPerMonth : undefined,
+              isUnlimited: formIsUnlimited,
               isActive: formIsActive,
             }
           : c
@@ -317,7 +361,9 @@ export function CouponsManagement({
         code: generatedCode,
         title: formTitle.trim(),
         discount: discountText,
-        discountAmount: formDiscountAmount,
+        discountAmount: formType === "PERCENT" ? formDiscountPercent : formDiscountAmount,
+        discountPercent: formType === "PERCENT" ? formDiscountPercent : undefined,
+        maxDiscountAmount: formType === "PERCENT" && formMaxDiscountAmount > 0 ? formMaxDiscountAmount : undefined,
         type: formType,
         condition: formCondition.trim() || `${discountText} 즉시 적용`,
         validUntil: formValidUntil.trim() || "2026.12.31",
@@ -326,6 +372,9 @@ export function CouponsManagement({
         targetGrades: formTargetType === "GRADE" ? formTargetGrades : ["ALL"],
         targetCustomerEmails: formTargetType === "CUSTOMER" ? formSelectedCustomerEmails : [],
         targetCustomerNames: formTargetType === "CUSTOMER" ? targetNames : [],
+        refreshCycle: formRefreshCycle,
+        usageLimitPerMonth: formRefreshCycle === "MONTHLY" ? formUsageLimitPerMonth : undefined,
+        isUnlimited: formIsUnlimited,
         isActive: formIsActive,
         createdAt: new Date().toISOString().split("T")[0],
       };
@@ -475,8 +524,8 @@ export function CouponsManagement({
           "번호": index + 1,
           "쿠폰코드": c.code || c.id,
           "쿠폰명": c.title,
-          "혜택유형": c.type === "SHIPPING" ? "배송비지원" : "일반할인",
-          "할인금액": Number(c.discountAmount || 0),
+          "혜택유형": c.type === "SHIPPING" ? "배송비지원" : c.type === "PERCENT" ? "비율할인(%)" : "금액할인",
+          "할인수치": c.type === "PERCENT" ? `${c.discountPercent || c.discountAmount}%` : `${Number(c.discountAmount || 0)}원`,
           "적용조건": c.condition,
           "발급대상": targetText,
           "유효기간": c.validUntil,
@@ -532,6 +581,7 @@ export function CouponsManagement({
       const matchType =
         typeFilter === "all" ||
         (typeFilter === "FIXED" && c.type === "FIXED") ||
+        (typeFilter === "PERCENT" && c.type === "PERCENT") ||
         (typeFilter === "SHIPPING" && c.type === "SHIPPING");
 
       // Status Filter
@@ -565,9 +615,9 @@ export function CouponsManagement({
 
     if (tType === "ALL") {
       return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-xl">
-          <Globe className="w-3 h-3 text-neutral-500" />
-          전체 회원 발급
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-md">
+          <Globe className="w-2.5 h-2.5 text-neutral-500" />
+          전체 회원
         </span>
       );
     }
@@ -575,9 +625,9 @@ export function CouponsManagement({
     if (tType === "GRADE") {
       const grades = coupon.targetGrades || [];
       return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 px-2.5 py-1 rounded-xl">
-          <ShieldCheck className="w-3 h-3 text-blue-600" />
-          등급: {grades.join(", ")}
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 px-2 py-0.5 rounded-md">
+          <ShieldCheck className="w-2.5 h-2.5 text-blue-600" />
+          {grades.join(", ")}
         </span>
       );
     }
@@ -586,9 +636,9 @@ export function CouponsManagement({
       const count = coupon.targetCustomerEmails?.length || 0;
       const firstCustomer = coupon.targetCustomerNames?.[0] || coupon.targetCustomerEmails?.[0] || "";
       return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900 px-2.5 py-1 rounded-xl">
-          <UserCheck className="w-3 h-3 text-purple-600" />
-          지정 회원: {firstCustomer} {count > 1 ? `외 ${count - 1}명` : ""}
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900 px-2 py-0.5 rounded-md">
+          <UserCheck className="w-2.5 h-2.5 text-purple-600" />
+          {firstCustomer} {count > 1 ? `외 ${count - 1}명` : ""}
         </span>
       );
     }
@@ -888,6 +938,7 @@ export function CouponsManagement({
                 className="px-3 py-2 rounded-xl text-xs font-bold border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 cursor-pointer"
               >
                 <option value="all">모든 할인 유형</option>
+                <option value="PERCENT">% 비율 할인</option>
                 <option value="FIXED">금액 할인 (원)</option>
                 <option value="SHIPPING">배송비 지원</option>
               </select>
@@ -905,134 +956,183 @@ export function CouponsManagement({
           </div>
 
           {/* Coupons Table / Cards */}
-          {filteredCoupons.length === 0 ? (
-            <div className="bg-white dark:bg-neutral-900 p-12 text-center rounded-3xl border border-neutral-200/80 dark:border-neutral-800 space-y-3">
-              <Ticket className="w-10 h-10 text-neutral-300 mx-auto" />
-              <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
-                조건에 일치하는 쿠폰이 없습니다.
-              </p>
-              <p className="text-xs text-neutral-400">
-                새 쿠폰을 발급하거나 검색 필터를 조정해 보세요.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredCoupons.map((coupon, idx) => {
-                const isActive = coupon.isActive !== false;
-                const isAutoTop = idx === 0 && isActive;
+          {(() => {
+            return filteredCoupons.length === 0 ? (
+              <div className="bg-white dark:bg-neutral-900 p-12 text-center rounded-3xl border border-neutral-200/80 dark:border-neutral-800 space-y-3">
+                <Ticket className="w-10 h-10 text-neutral-300 mx-auto" />
+                <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
+                  조건에 일치하는 쿠폰이 없습니다.
+                </p>
+                <p className="text-xs text-neutral-400">
+                  새 쿠폰을 발급하거나 검색 필터를 조정해 보세요.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                {filteredCoupons.map((coupon, idx) => {
+                  const isActive = coupon.isActive !== false;
+                  const isAutoTop = idx === 0 && isActive;
+                  const summary = getCouponDistributionStatus(coupon, allCustomers, usageHistory);
+                  const totalRecipients = summary.totalRecipientsCount;
+                  const availableRecipients = coupon.isUnlimited ? summary.unlimitedCount : summary.availableCount;
 
-                return (
-                  <div
-                    key={coupon.id}
-                    className={`bg-white dark:bg-neutral-900 rounded-3xl p-5 border transition-all flex flex-col justify-between space-y-4 hover:shadow-md ${
-                      !isActive
-                        ? "border-neutral-200/50 opacity-60 bg-neutral-50/50 dark:bg-neutral-900/50"
-                        : isAutoTop
-                        ? "border-neutral-900 dark:border-neutral-700 shadow-xs ring-1 ring-neutral-900/10"
-                        : "border-neutral-200/80 dark:border-neutral-800"
-                    }`}
-                  >
-                    {/* Top Row: Badges */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {isAutoTop && (
-                            <span className="bg-amber-400 text-neutral-950 font-black text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <Sparkles className="w-2.5 h-2.5" />
-                              주문서 최우선 추천
+                  return (
+                    <div
+                      key={coupon.id}
+                      onClick={() => handleOpenRecipientsModal(coupon)}
+                      className={`bg-white dark:bg-neutral-900 rounded-2xl p-4 border transition-all flex flex-col justify-between space-y-3 cursor-pointer group hover:shadow-lg hover:-translate-y-0.5 ${
+                        !isActive
+                          ? "border-neutral-200/50 opacity-60 bg-neutral-50/50 dark:bg-neutral-900/50 hover:border-neutral-300"
+                          : isAutoTop
+                          ? "border-neutral-900 dark:border-neutral-700 shadow-xs ring-1 ring-neutral-900/10 hover:border-neutral-950"
+                          : "border-neutral-200/80 dark:border-neutral-800 hover:border-neutral-900 dark:hover:border-neutral-600"
+                      }`}
+                    >
+                      {/* Top Row: Badges */}
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {isAutoTop && (
+                              <span className="bg-amber-400 text-neutral-950 font-black text-[9px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                추천
+                              </span>
+                            )}
+                            {coupon.badge && (
+                              <span className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-bold text-[9px] px-1.5 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-700">
+                                {coupon.badge}
+                              </span>
+                            )}
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                                coupon.type === "SHIPPING"
+                                  ? "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
+                                  : coupon.type === "PERCENT"
+                                  ? "bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300"
+                                  : "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300"
+                              }`}
+                            >
+                              {coupon.type === "SHIPPING" ? "배송비" : coupon.type === "PERCENT" ? "%할인" : "금액할인"}
                             </span>
-                          )}
-                          {coupon.badge && (
-                            <span className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-bold text-[10px] px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-700">
-                              {coupon.badge}
-                            </span>
-                          )}
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              coupon.type === "SHIPPING"
-                                ? "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300"
-                                : "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300"
+                            {coupon.refreshCycle === "MONTHLY" && (
+                              <span className="bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">
+                                매월 1일{coupon.usageLimitPerMonth && coupon.usageLimitPerMonth > 1 ? ` (월 ${coupon.usageLimitPerMonth}회)` : ""}
+                              </span>
+                            )}
+                            {coupon.isUnlimited && (
+                              <span className="bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">
+                                무제한
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Status Toggle Switch */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleActive(coupon.id);
+                            }}
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                              isActive
+                                ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                                : "bg-neutral-200 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800 dark:text-neutral-400"
                             }`}
                           >
-                            {coupon.type === "SHIPPING" ? "배송비지원" : "금액할인"}
-                          </span>
+                            {isActive ? <Eye className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
+                            {isActive ? "활성" : "정지"}
+                          </button>
                         </div>
 
-                        {/* Status Toggle Switch */}
+                        {/* Title & Discount */}
+                        <div>
+                          <div className="flex items-center justify-between gap-1">
+                            <h3 className="font-black text-sm text-neutral-950 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" title={coupon.title}>
+                              {coupon.title}
+                            </h3>
+                          </div>
+                          <p className="text-xl font-black text-neutral-900 dark:text-white font-mono mt-0.5">
+                            {coupon.discount}
+                          </p>
+                          <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-1" title={coupon.condition}>
+                            {coupon.condition}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Middle Info Details */}
+                      <div className="pt-2.5 border-t border-neutral-100 dark:border-neutral-800 space-y-1.5 text-[11px]">
+                        <div className="flex items-center justify-between text-neutral-500">
+                          <span>유효 기간</span>
+                          <span className="font-mono font-bold text-neutral-900 dark:text-white text-[11px]">
+                            ~ {coupon.validUntil}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-neutral-500 gap-1">
+                          <span className="shrink-0">발급 대상</span>
+                          <div className="truncate text-right">{renderTargetBadge(coupon)}</div>
+                        </div>
+                        <div className="flex items-center justify-between text-neutral-500 pt-0.5">
+                          <span className="shrink-0">발급·잔여 현황</span>
+                          <div className="font-mono text-[11px] font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
+                            <span className="bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded text-neutral-700 dark:text-neutral-300">
+                              총 {totalRecipients}명
+                            </span>
+                            <span className="text-neutral-300 dark:text-neutral-600">/</span>
+                            <span className={coupon.isUnlimited ? "text-purple-600 dark:text-purple-400 font-black" : "text-emerald-600 dark:text-emerald-400 font-bold"}>
+                              {coupon.isUnlimited ? "무제한" : `잔여 ${availableRecipients}명`}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom Actions: Target Summary, Recipients Viewer Button & Edit/Delete */}
+                      <div className="pt-2.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-1">
                         <button
                           type="button"
-                          onClick={() => handleToggleActive(coupon.id)}
-                          className={`text-[11px] font-bold px-2.5 py-1 rounded-xl transition-all cursor-pointer flex items-center gap-1 ${
-                            isActive
-                              ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
-                              : "bg-neutral-200 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800 dark:text-neutral-400"
-                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenRecipientsModal(coupon);
+                          }}
+                          className="text-[10px] font-bold text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white flex items-center gap-1 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                          title="발급 대상 회원 및 실시간 잔여 수량 확인"
                         >
-                          {isActive ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                          {isActive ? "활성" : "정지"}
+                          <Users className="w-3 h-3 text-neutral-500" />
+                          <span>발급 현황</span>
                         </button>
-                      </div>
 
-                      {/* Title & Discount */}
-                      <div>
-                        <h3 className="font-black text-base text-neutral-950 dark:text-white">
-                          {coupon.title}
-                        </h3>
-                        <p className="text-2xl font-black text-neutral-900 dark:text-white font-mono mt-1">
-                          {coupon.discount}
-                        </p>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                          {coupon.condition}
-                        </p>
+                        {/* Edit & Delete Buttons */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEditModal(coupon);
+                            }}
+                            className="p-1.5 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800 rounded-lg transition-all cursor-pointer"
+                            title="쿠폰 수정"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCoupon(coupon.id, coupon.title);
+                            }}
+                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all cursor-pointer"
+                            title="쿠폰 삭제"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    {/* Middle Info Details */}
-                    <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 space-y-2 text-xs">
-                      <div className="flex items-center justify-between text-neutral-500">
-                        <span>유효 기간</span>
-                        <span className="font-mono font-bold text-neutral-900 dark:text-white">
-                          ~ {coupon.validUntil}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-neutral-500">
-                        <span>발급 지정 대상</span>
-                        <div>{renderTargetBadge(coupon)}</div>
-                      </div>
-                    </div>
-
-                    {/* Bottom Actions: Target Summary & Edit/Delete */}
-                    <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-bold text-neutral-500 flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        주문서 자동 적용 지원
-                      </div>
-
-                      {/* Edit & Delete Buttons */}
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditModal(coupon)}
-                          className="p-2 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800 rounded-xl transition-all cursor-pointer"
-                          title="쿠폰 수정"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCoupon(coupon.id, coupon.title)}
-                          className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-all cursor-pointer"
-                          title="쿠폰 삭제"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {/* 쿠폰 관리 하단: 회원 쿠폰 사용 내역 실시간 연동 */}
           {renderUsageSection()}
@@ -1107,26 +1207,75 @@ export function CouponsManagement({
                     <select
                       value={formType}
                       onChange={(e) => setFormType(e.target.value as any)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-xs cursor-pointer"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-xs cursor-pointer font-bold"
                     >
+                      <option value="PERCENT">% 비율 할인 (퍼센트)</option>
                       <option value="FIXED">금액 즉시 할인 (원)</option>
                       <option value="SHIPPING">배송비 전액/일부 지원</option>
                     </select>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-neutral-700 dark:text-neutral-300">할인 금액 (KRW)</label>
-                    <input
-                      type="number"
-                      value={formDiscountAmount}
-                      onChange={(e) => setFormDiscountAmount(parseInt(e.target.value) || 0)}
-                      placeholder="10000"
-                      step="500"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                      required
-                    />
-                  </div>
+                  {formType === "PERCENT" ? (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-neutral-700 dark:text-neutral-300">할인율 (%)</label>
+                        <span className="text-[10px] text-purple-600 dark:text-purple-400 font-black">주문금액 비례 할인</span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={formDiscountPercent}
+                          onChange={(e) => setFormDiscountPercent(Math.max(1, Math.min(99, parseInt(e.target.value) || 0)))}
+                          placeholder="5"
+                          min="1"
+                          max="99"
+                          step="1"
+                          className="w-full px-3.5 py-2.5 pr-8 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/40 dark:bg-purple-950/20 font-mono text-xs font-black text-purple-950 dark:text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                          required
+                        />
+                        <span className="absolute right-3 top-2.5 text-xs font-black text-purple-700 dark:text-purple-400">%</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <label className="text-neutral-700 dark:text-neutral-300">
+                        {formType === "SHIPPING" ? "배송비 지원 금액 (KRW)" : "할인 금액 (KRW)"}
+                      </label>
+                      <input
+                        type="number"
+                        value={formDiscountAmount}
+                        onChange={(e) => setFormDiscountAmount(parseInt(e.target.value) || 0)}
+                        placeholder="10000"
+                        step="500"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                        required
+                      />
+                    </div>
+                  )}
                 </div>
+
+                {/* % 비율 할인 시 최대 할인 한도 옵션 */}
+                {formType === "PERCENT" && (
+                  <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-neutral-700 dark:text-neutral-300 text-[11px]">
+                        최대 할인 한도 금액 (선택사항)
+                      </label>
+                      <span className="text-[10px] text-neutral-400">0 또는 비워둘 시 한도 없이 적용</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={formMaxDiscountAmount === 0 ? "" : formMaxDiscountAmount}
+                        onChange={(e) => setFormMaxDiscountAmount(Math.max(0, parseInt(e.target.value) || 0))}
+                        placeholder="제한 없음 (0원)"
+                        step="1000"
+                        className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                      />
+                      <span className="absolute right-3 top-2 text-xs font-bold text-neutral-400">원</span>
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
@@ -1366,6 +1515,57 @@ export function CouponsManagement({
                 )}
               </div>
 
+              {/* Section 2.5: 갱신 주기 및 무제한 설정 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                  <input
+                    type="checkbox"
+                    checked={formRefreshCycle === "MONTHLY"}
+                    onChange={(e) => setFormRefreshCycle(e.target.checked ? "MONTHLY" : "NONE")}
+                    className="w-4 h-4 rounded text-neutral-950 focus:ring-neutral-900"
+                  />
+                  <div className="text-xs">
+                    <span className="text-neutral-800 dark:text-neutral-200 font-bold block">
+                      매월 1일 자동 갱신 (월간 정기 쿠폰)
+                    </span>
+                    <span className="text-neutral-400 block text-[10px]">
+                      골드/플래티넘 등 매월 1일 사용 상태가 자동 리셋됩니다.
+                    </span>
+                  </div>
+                </label>
+                {formRefreshCycle === "MONTHLY" && (
+                  <div className="col-span-1 sm:col-span-2 p-3 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-200/80 dark:border-amber-900/60 flex items-center gap-3">
+                    <span className="text-xs text-amber-950 dark:text-amber-200 font-bold">월 제공 횟수:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={formUsageLimitPerMonth}
+                      onChange={(e) => setFormUsageLimitPerMonth(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-16 px-2.5 py-1.5 bg-white dark:bg-neutral-900 border border-amber-300 dark:border-amber-800 rounded-lg text-xs font-black text-center"
+                    />
+                    <span className="text-xs text-amber-900 dark:text-amber-300 font-medium">회 (골드는 1회, 플래티넘은 3회 제공)</span>
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                  <input
+                    type="checkbox"
+                    checked={formIsUnlimited}
+                    onChange={(e) => setFormIsUnlimited(e.target.checked)}
+                    className="w-4 h-4 rounded text-neutral-950 focus:ring-neutral-900"
+                  />
+                  <div className="text-xs">
+                    <span className="text-neutral-800 dark:text-neutral-200 font-bold block">
+                      무제한 사용 쿠폰 (결제 후 소멸 없음)
+                    </span>
+                    <span className="text-neutral-400 block text-[10px]">
+                      VVIP 상시 할인 등 몇 번을 결제해도 유지됩니다.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
               {/* Section 3: 활성화 스위치 */}
               <div className="pt-2">
                 <label className="flex items-center gap-2 cursor-pointer p-3 bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700">
@@ -1401,6 +1601,17 @@ export function CouponsManagement({
           </div>
         </div>
       )}
+
+      {/* 5. Modal: Coupon Recipients & Remaining Status */}
+      <CouponRecipientsModal
+        isOpen={isRecipientsModalOpen}
+        onClose={handleCloseRecipientsModal}
+        coupon={selectedRecipientCoupon}
+        customersList={allCustomers}
+        usageHistory={usageHistory}
+        triggerToast={notify}
+        onUsageHistoryUpdated={loadData}
+      />
     </div>
   );
 }

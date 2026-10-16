@@ -25,7 +25,7 @@
   },
   "popup_config": {
     "id": "",
-    "title": "기존 회원 로그인 안내",
+    "title": "기존 회원 및 카카오톡 로그인 안내",
     "subtitle": "",
     "imageUrl": "",
     "linkUrl": "",
@@ -34,31 +34,100 @@
     "showOnMembership": true,
     "hideForTodayEnabled": false,
     "popupType": "NOTICE",
-    "noticeMessage": "초이콤마의 기존 회원은 회원 가입을 하실 필요가 없습니다. \n가입당시에 사용한 이메일주소 / 휴대폰 뒤 4자리로 로그인 가능합니다.\n\n",
+    "noticeMessage": "초이콤마의 기존 회원 및 카카오톡 로그인 고객은 회원 가입을 하실\n필요가 없습니다. 가입당시에 사용한 이메일주소 (카카오톡 ID) /\n휴대폰 뒤 4자리로 로그인 가능합니다.",
     "noticePeriod": "",
-    "description": "초이콤마의 기존 회원은 가입당시 이메일주소로 ID로 사용하시고\n패스워드는 가입 당시 휴대폰 번호 뒤 4자리로 로그인 가능합니다.\n이메일 주소가 기억나지 않는 고객님은 로그인 창에 '아이디찾기'를\n클릭하여 찾아주시기 바랍니다.",
+    "description": "초이콤마의 기존 회원은 가입당시 이메일주소를 ID로 사용하시고\n카카오톡 로그인 고객은 카카오톡 이메일 주소를 ID로 사용하시면됩니다.\n패스워드는 가입 당시 휴대폰 번호 뒤 4자리로 로그인 가능합니다.\n이메일 주소가 기억나지 않는 고객님은 로그인 창에 '아이디찾기'를\n클릭하여 찾아주시기 바랍니다.",
     "createdAt": "",
-    "updatedAt": "2026-10-15T12:02:12.887Z"
+    "updatedAt": "2026-10-15T20:55:00.000Z"
   },
   "admin_coupons_config": [
     {
-      "id": "coupon-1791895695492",
-      "code": "CPN-MV6OFJIC",
-      "title": "회원가입 감사 쿠폰",
-      "discount": "30,000원 할인",
-      "discountAmount": 30000,
-      "type": "FIXED",
-      "condition": "전 상품 즉시 할인",
+      "id": "coupon-silver-5pct",
+      "code": "SILVER-5PCT",
+      "title": "실버 등급 5% 할인 쿠폰 (1장)",
+      "discount": "5% 할인",
+      "discountAmount": 5,
+      "discountPercent": 5,
+      "type": "PERCENT",
+      "condition": "실버 등급 달성 시 1회 제공 · 전 상품 5% 즉시 할인",
       "validUntil": "2026.12.31",
-      "badge": "신규혜택",
-      "targetType": "ALL",
+      "badge": "SILVER 승급 혜택",
+      "targetType": "GRADE",
       "targetGrades": [
-        "ALL"
+        "SILVER"
       ],
       "targetCustomerEmails": [],
       "targetCustomerNames": [],
-      "isActive": false,
-      "createdAt": "2026-10-13",
+      "isActive": true,
+      "createdAt": "2026-10-16",
+      "isUsed": false
+    },
+    {
+      "id": "coupon-gold-5pct",
+      "code": "GOLD-5PCT",
+      "title": "골드 등급 월 5% 할인 쿠폰 (1장)",
+      "discount": "5% 할인",
+      "discountAmount": 5,
+      "discountPercent": 5,
+      "type": "PERCENT",
+      "condition": "골드 등급 전용 전 상품 5% 즉시 할인 (매월 1일 자동 갱신)",
+      "validUntil": "매월 말일까지 (익월 1일 갱신)",
+      "badge": "GOLD 월간 혜택",
+      "targetType": "GRADE",
+      "targetGrades": [
+        "GOLD"
+      ],
+      "targetCustomerEmails": [],
+      "targetCustomerNames": [],
+      "refreshCycle": "MONTHLY",
+      "usageLimitPerMonth": 1,
+      "isActive": true,
+      "createdAt": "2026-10-16",
+      "isUsed": false
+    },
+    {
+      "id": "coupon-platinum-5pct",
+      "code": "PLATINUM-5PCT",
+      "title": "플래티넘 등급 월 5% 할인 쿠폰 (월 3회)",
+      "discount": "5% 할인",
+      "discountAmount": 5,
+      "discountPercent": 5,
+      "type": "PERCENT",
+      "condition": "플래티넘 등급 전용 전 상품 5% 즉시 할인 (매월 1일 3회 자동 갱신)",
+      "validUntil": "매월 말일까지 (익월 1일 3회 재충전)",
+      "badge": "PLATINUM 월간 혜택",
+      "targetType": "GRADE",
+      "targetGrades": [
+        "PLATINUM"
+      ],
+      "targetCustomerEmails": [],
+      "targetCustomerNames": [],
+      "refreshCycle": "MONTHLY",
+      "usageLimitPerMonth": 3,
+      "isActive": true,
+      "createdAt": "2026-10-16",
+      "isUsed": false
+    },
+    {
+      "id": "coupon-vvip-unlimited-5pct",
+      "code": "VVIP-UNLIMITED-5PCT",
+      "title": "VVIP 전용 모든 품목 5% 추가 할인 무제한 쿠폰",
+      "discount": "5% 상시 할인",
+      "discountAmount": 5,
+      "discountPercent": 5,
+      "type": "PERCENT",
+      "condition": "VVIP 회원 전용 · 모든 품목 상시 5% 추가 할인 (무제한 사용 가능)",
+      "validUntil": "상시 적용 (무제한)",
+      "badge": "VVIP 프리미엄 혜택",
+      "targetType": "GRADE",
+      "targetGrades": [
+        "VVIP"
+      ],
+      "targetCustomerEmails": [],
+      "targetCustomerNames": [],
+      "isUnlimited": true,
+      "isActive": true,
+      "createdAt": "2026-10-16",
       "isUsed": false
     }
   ]

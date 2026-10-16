@@ -98,7 +98,7 @@ export function TimesaleManagement({
     setDurationMinutes("0");
     setSelectedProductIds([]);
     setSelectedCustomerEmails([]);
-    setSelectedGrades(["VIP", "VVIP"]);
+    setSelectedGrades(["VVIP"]);
     setEditingSecretSale(null);
     setIsCreateModalOpen(true);
   };
@@ -848,7 +848,7 @@ export function TimesaleManagement({
                   🎯 대상 등급 일괄 지정 (선택)
                 </label>
                 <div className="flex flex-wrap items-center gap-2">
-                  {["VVIP", "VIP", "GOLD", "SILVER", "GENERAL"].map((grade) => {
+                  {["VVIP", "PLATINUM", "GOLD", "SILVER", "GENERAL"].map((grade) => {
                     const isChecked = selectedGrades.includes(grade);
                     return (
                       <button

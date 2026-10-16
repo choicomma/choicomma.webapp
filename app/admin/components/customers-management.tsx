@@ -25,6 +25,7 @@ import {
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
+import { calculateTierBySpend } from "@/lib/membership/tiers";
 
 interface CustomersManagementProps {
   customersList: any[];
@@ -302,19 +303,19 @@ export function CustomersManagement({
   }, [sanitizedCustomersList]);
 
   // 회원 등급 산정 기준 (누적 구매금액 totalSpent 기준)
-  // - VVIP: 15,000,000원 이상 ('VVIP 전용 시크릿 타임 세일' 권한)
-  // - 플래티넘 (Platinum): 8,000,000원 이상 ('플래티넘 전용 시크릿 타임 세일' 권한)
-  // - 골드 (Gold): 5,000,000원 이상 ('골드 등급 전용 시크릿 타임 세일' 권한)
-  // - 실버 (Silver): 2,000,000원 이상 ('실버 등급 전용 시크릿 타임 세일' 권한)
+  // 등급 자동 산정 기준 (신규 등급 기준표 준수):
+  // - VVIP: 20,000,000원 이상 ('VVIP 전용 시크릿 타임 세일' 권한, 전 품목 상시 5% 추가 할인)
+  // - 플래티넘 (Platinum): 10,000,000원 이상 ('플래티넘 전용 시크릿 타임 세일' 권한, 월 5% 쿠폰 3장)
+  // - 골드 (Gold): 5,000,000원 이상 ('골드 등급 전용 시크릿 타임 세일' 권한, 월 5% 쿠폰 1장)
+  // - 실버 (Silver): 2,000,000원 이상 ('실버 등급 전용 시크릿 타임 세일' 권한, 5% 쿠폰 1장)
   // - 일반 (General / 새싹): 2,000,000원 미만
   const resolveCustomerGrade = (c: any): "VVIP" | "PLATINUM" | "GOLD" | "SILVER" | "GENERAL" => {
     if (!c) return "GENERAL";
     if (c.isAdmin || c.role === "ADMIN") return "VVIP";
     const spent = Number(c.totalSpent || 0);
-    if (spent >= 15000000) return "VVIP";
-    if (spent >= 8000000) return "PLATINUM";
-    if (spent >= 5000000) return "GOLD";
-    if (spent >= 2000000) return "SILVER";
+    if (spent > 0) {
+      return calculateTierBySpend(spent);
+    }
 
     const rawG = String(c.grade || "").trim().toUpperCase();
     if (rawG === "VVIP") return "VVIP";

@@ -2868,7 +2868,7 @@
     "address": "서울 양천구 오목로 300",
     "detailAddress": "(목동, 현대하이페리온2)",
     "fullAddress": "(08004) 서울 양천구 오목로 300 (목동, 현대하이페리온2) | 201동2701호",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "기존고객 / 이메일 로그인 회원, 우수고객",
     "totalSpent": 9158205,
@@ -2879,7 +2879,8 @@
     "lastLogin": "2026-09-23 / 07:26:39",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.003Z"
   },
   {
     "id": "m20240207d6619ffb84cdd",
@@ -5041,7 +5042,7 @@
     "phoneLast4": "2946",
     "address": "-",
     "fullAddress": "-",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 9389757,
@@ -5054,7 +5055,8 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "postcode": "",
-    "detailAddress": ""
+    "detailAddress": "",
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m20250902ae75b5a11cbf3",
@@ -8866,7 +8868,7 @@
     "phoneLast4": "6249",
     "address": "-",
     "fullAddress": "-",
-    "grade": "VVIP",
+    "grade": "PLATINUM",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 17312472,
@@ -8879,7 +8881,8 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "postcode": "",
-    "detailAddress": ""
+    "detailAddress": "",
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m20240802b8d71060bdeed",
@@ -10243,7 +10246,7 @@
     "address": "서울 강남구 봉은사로 645",
     "detailAddress": "(삼성동, 라테라스)",
     "fullAddress": "(06083) 서울 강남구 봉은사로 645 (삼성동, 라테라스) | 801호",
-    "grade": "VVIP",
+    "grade": "PLATINUM",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 15235632,
@@ -10254,7 +10257,8 @@
     "lastLogin": "2026-10-12 / 23:04:20",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m2025090263c418c0cacb0",
@@ -16866,7 +16870,7 @@
     "phoneLast4": "5334",
     "address": "-",
     "fullAddress": "-",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "기존고객 / 이메일 로그인 회원, 우수고객",
     "totalSpent": 8695500,
@@ -16879,7 +16883,8 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "postcode": "",
-    "detailAddress": ""
+    "detailAddress": "",
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m202502192bd0308297eb1",
@@ -26218,7 +26223,7 @@
     "address": "서울 종로구 평창8길 43",
     "detailAddress": "(평창동)",
     "fullAddress": "(03011) 서울 종로구 평창8길 43 (평창동) | 251-1",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 9548935,
@@ -26229,7 +26234,8 @@
     "lastLogin": "2026-10-06 / 12:36:37",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m20250905ca03e9362f8c7",
@@ -33543,7 +33549,7 @@
     "address": "경기 화성시 탄요1길 98",
     "detailAddress": "(반송동, 내뜰애 타운하우스)",
     "fullAddress": "(18441) 경기 화성시 탄요1길 98 (반송동, 내뜰애 타운하우스) | 8동2호",
-    "grade": "VVIP",
+    "grade": "PLATINUM",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 16178308,
@@ -33554,7 +33560,8 @@
     "lastLogin": "2026-10-05 / 22:54:40",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m20260204168fde6b97a1c",
@@ -41743,7 +41750,7 @@
     "address": "서울 강남구 언주로 117",
     "detailAddress": "(도곡동, 개포4차우성아파트)",
     "fullAddress": "(06299) 서울 강남구 언주로 117 (도곡동, 개포4차우성아파트) | 8동603호",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 9679156,
@@ -41754,7 +41761,8 @@
     "lastLogin": "2026-10-14 / 07:08:08",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m202509025839f3d6526dd",
@@ -47743,7 +47751,7 @@
     "address": "대전 유성구 어은로 57",
     "detailAddress": "(어은동, 한빛아파트)",
     "fullAddress": "(34140) 대전 유성구 어은로 57 (어은동, 한빛아파트) | 105동 901호",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 9560678,
@@ -47754,7 +47762,8 @@
     "lastLogin": "2025-04-29 / 10:00:28",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m20241217d833cfcede14b",
@@ -55016,7 +55025,7 @@
     "phoneLast4": "5190",
     "address": "-",
     "fullAddress": "-",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "기존고객 / 이메일 로그인 회원, 우수고객",
     "totalSpent": 8382599,
@@ -55029,7 +55038,8 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "postcode": "",
-    "detailAddress": ""
+    "detailAddress": "",
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m202509045cedac3368c0f",
@@ -60541,7 +60551,7 @@
     "phoneLast4": "7372",
     "address": "-",
     "fullAddress": "-",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "기존고객 / 이메일 로그인 회원, 우수고객",
     "totalSpent": 8859977,
@@ -60554,7 +60564,8 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "postcode": "",
-    "detailAddress": ""
+    "detailAddress": "",
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m20251113e3a15356bbc3f",
@@ -62043,7 +62054,7 @@
     "address": "경기 성남시 분당구 정자로 2",
     "detailAddress": "(정자동, 분당 정자동 푸르지오시티)",
     "fullAddress": "(13560) 경기 성남시 분당구 정자로 2 (정자동, 분당 정자동 푸르지오시티) | 푸르지오 1 차 1501호",
-    "grade": "VVIP",
+    "grade": "PLATINUM",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 15648370,
@@ -62054,7 +62065,8 @@
     "lastLogin": "2026-10-04 / 18:41:10",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.005Z"
   },
   {
     "id": "m2025090240b4434d7d689",
@@ -69968,7 +69980,7 @@
     "address": "강원특별자치도 원주시 늘품로 199",
     "detailAddress": "(반곡동, 원주반곡아이파크)",
     "fullAddress": "(26458) 강원특별자치도 원주시 늘품로 199 (반곡동, 원주반곡아이파크) | 102동 601호 문앞",
-    "grade": "VVIP",
+    "grade": "PLATINUM",
     "rawGrade": "우수고객",
     "group": "기존고객 / 이메일 로그인 회원, 우수고객",
     "totalSpent": 19362857,
@@ -69979,7 +69991,8 @@
     "lastLogin": "2026-10-12 / 23:07:04",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.006Z"
   },
   {
     "id": "m2025090252823da970c71",
@@ -72468,7 +72481,7 @@
     "address": "전북 전주시 완산구 여울로 161",
     "detailAddress": "(서신동, 서신 이편한세상)",
     "fullAddress": "(54942) 전북 전주시 완산구 여울로 161 (서신동, 서신 이편한세상) | 104동601호",
-    "grade": "VVIP",
+    "grade": "PLATINUM",
     "rawGrade": "우수고객",
     "group": "기존고객 / 이메일 로그인 회원, 우수고객",
     "totalSpent": 19594619,
@@ -72479,7 +72492,8 @@
     "lastLogin": "2026-10-13 / 15:06:50",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.006Z"
   },
   {
     "id": "m2025092911866f22af440",
@@ -72966,7 +72980,7 @@
     "phoneLast4": "",
     "address": "-",
     "fullAddress": "-",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "기존고객 / 이메일 로그인 회원, 우수고객",
     "totalSpent": 8658860,
@@ -72979,7 +72993,8 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "postcode": "",
-    "detailAddress": ""
+    "detailAddress": "",
+    "updated_at": "2026-10-15T21:11:19.006Z"
   },
   {
     "id": "m20250905a508202aee694",
@@ -73518,7 +73533,7 @@
     "address": "경북 포항시 남구 지곡로379번길 5",
     "detailAddress": "(지곡동)",
     "fullAddress": "(37672) 경북 포항시 남구 지곡로379번길 5 (지곡동) | 82호",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "기존고객 / 이메일 로그인 회원, 우수고객",
     "totalSpent": 8056974,
@@ -73529,7 +73544,8 @@
     "lastLogin": "2026-09-27 / 17:44:29",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.006Z"
   },
   {
     "id": "m20250905dfd6b4dfef744",
@@ -76491,7 +76507,7 @@
     "phoneLast4": "4865",
     "address": "-",
     "fullAddress": "-",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 9487939,
@@ -76504,7 +76520,8 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "postcode": "",
-    "detailAddress": ""
+    "detailAddress": "",
+    "updated_at": "2026-10-15T21:11:19.006Z"
   },
   {
     "id": "m202604075b397059d2053",
@@ -79143,7 +79160,7 @@
     "address": "서울 동작구 현충로 52",
     "detailAddress": "(흑석동, 아크로리버하임)",
     "fullAddress": "(06909) 서울 동작구 현충로 52 (흑석동, 아크로리버하임) | 119동103호",
-    "grade": "VVIP",
+    "grade": "PLATINUM",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 16546446,
@@ -79154,7 +79171,8 @@
     "lastLogin": "2026-10-06 / 14:43:03",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.006Z"
   },
   {
     "id": "m20250929d6dd7b6010640",
@@ -80793,7 +80811,7 @@
     "address": "서울 성동구 독서당로 377",
     "detailAddress": "(응봉동, 금호현대아파트)",
     "fullAddress": "(04720) 서울 성동구 독서당로 377 (응봉동, 금호현대아파트) | 108동 1301호",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "기존고객 / 이메일 로그인 회원, 우수고객",
     "totalSpent": 9859232,
@@ -80804,7 +80822,8 @@
     "lastLogin": "2026-10-13 / 01:50:53",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.006Z"
   },
   {
     "id": "m20250902efbc51724cb7c",
@@ -90468,7 +90487,7 @@
     "address": "서울 은평구 진관3로 11",
     "detailAddress": "(진관동, 은평뉴타운 힐데스하임)",
     "fullAddress": "(03300) 서울 은평구 진관3로 11 (진관동, 은평뉴타운 힐데스하임) | 101-507",
-    "grade": "VVIP",
+    "grade": "PLATINUM",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 18830137,
@@ -90479,7 +90498,8 @@
     "lastLogin": "2026-10-12 / 22:58:53",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.006Z"
   },
   {
     "id": "m2025091741d6b56f224af",
@@ -93143,7 +93163,7 @@
     "address": "부산 해운대구 세실로 174",
     "detailAddress": "(좌동, 삼성아파트)",
     "fullAddress": "(48076) 부산 해운대구 세실로 174 (좌동, 삼성아파트) | 109동 2302호",
-    "grade": "VVIP",
+    "grade": "PLATINUM",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 15990997,
@@ -93154,7 +93174,8 @@
     "lastLogin": "2026-10-13 / 18:31:44",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.006Z"
   },
   {
     "id": "m202408132c0c8ecc6d4d4",
@@ -95618,7 +95639,7 @@
     "address": "대구 동구 동부로30길 79",
     "detailAddress": "(신천동, 동양빌딩)",
     "fullAddress": "(41252) 대구 동구 동부로30길 79 (신천동, 동양빌딩) | 3층 맵인코리아",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 9152050,
@@ -95629,7 +95650,8 @@
     "lastLogin": "2026-09-29 / 08:01:24",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.006Z"
   },
   {
     "id": "m202410310d2302df8e238",
@@ -109668,7 +109690,7 @@
     "address": "경기 용인시 수지구 성복1로 35",
     "detailAddress": "(성복동, 성복역 롯데캐슬 클라시엘)",
     "fullAddress": "(16856) 경기 용인시 수지구 성복1로 35 (성복동, 성복역 롯데캐슬 클라시엘) | 214동403호",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 9529890,
@@ -109679,7 +109701,8 @@
     "lastLogin": "2026-09-29 / 15:26:04",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.007Z"
   },
   {
     "id": "m20250904c5c9385b0cce1",
@@ -116366,7 +116389,7 @@
     "phoneLast4": "",
     "address": "-",
     "fullAddress": "-",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "기존고객 / 이메일 로그인 회원, 우수고객",
     "totalSpent": 8997608,
@@ -116379,7 +116402,8 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "postcode": "",
-    "detailAddress": ""
+    "detailAddress": "",
+    "updated_at": "2026-10-15T21:11:19.007Z"
   },
   {
     "id": "m20260122841704445a002",
@@ -123868,7 +123892,7 @@
     "address": "서울 서초구 서초대로34길 34",
     "detailAddress": "(방배동, 방배이편한세상)",
     "fullAddress": "(06661) 서울 서초구 서초대로34길 34 (방배동, 방배이편한세상) | 방배대림1차아파트102-1102",
-    "grade": "VVIP",
+    "grade": "PLATINUM",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원",
     "totalSpent": 15565503,
@@ -123879,7 +123903,8 @@
     "lastLogin": "2026-10-03 / 19:12:02",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.007Z"
   },
   {
     "id": "m202509023424466cee25a",
@@ -137368,7 +137393,7 @@
     "address": "경기 용인시 기흥구 보정로 88",
     "detailAddress": "(보정동, 죽현마을 엘지자이)",
     "fullAddress": "(16902) 경기 용인시 기흥구 보정로 88 (보정동, 죽현마을 엘지자이) | 101동2101호",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 8044783,
@@ -137379,7 +137404,8 @@
     "lastLogin": "2026-06-08 / 07:31:03",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.007Z"
   },
   {
     "id": "m20250114b3d2baf7d474d",
@@ -141968,7 +141994,7 @@
     "address": "서울 영등포구 당산로 214",
     "detailAddress": "(당산동5가, 당산 삼성 래미안)",
     "fullAddress": "(07214) 서울 영등포구 당산로 214 (당산동5가, 당산 삼성 래미안) | 401동1801",
-    "grade": "PLATINUM",
+    "grade": "GOLD",
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalSpent": 9146236,
@@ -141979,7 +142005,8 @@
     "lastLogin": "2026-09-29 / 20:30:59",
     "status": "Active",
     "role": "CUSTOMER",
-    "isAdmin": false
+    "isAdmin": false,
+    "updated_at": "2026-10-15T21:11:19.007Z"
   },
   {
     "id": "m20240523763b4eea46476",

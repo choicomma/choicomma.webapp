@@ -615,6 +615,10 @@ function MembershipContent() {
     const onPolicyUpdated = () => loadPolicyFromLocal();
     const onCustomersUpdated = () => loadProfileFromLocal();
     const onCouponsUpdated = () => loadCouponsFromLocal();
+    const onGradeUpdated = () => {
+      loadProfileFromLocal();
+      loadCouponsFromLocal();
+    };
 
     window.addEventListener("storage", handleStorageEvent);
     window.addEventListener("shipping_policy_updated", onPolicyUpdated);
@@ -622,6 +626,7 @@ function MembershipContent() {
     window.addEventListener("admin_customers_updated", onCustomersUpdated);
     window.addEventListener("membership_points_updated", onCustomersUpdated);
     window.addEventListener("coupons_updated", onCouponsUpdated);
+    window.addEventListener("user_grade_updated", onGradeUpdated);
 
     return () => {
       window.removeEventListener("storage", handleStorageEvent);
@@ -630,6 +635,7 @@ function MembershipContent() {
       window.removeEventListener("admin_customers_updated", onCustomersUpdated);
       window.removeEventListener("membership_points_updated", onCustomersUpdated);
       window.removeEventListener("coupons_updated", onCouponsUpdated);
+      window.removeEventListener("user_grade_updated", onGradeUpdated);
     };
   }, []);
 
@@ -1760,6 +1766,113 @@ function MembershipContent() {
             {/* Membership Popup Banner (공지사항 - 아이디 설정 안내 위로 배치) */}
             <MembershipPopupBanner />
 
+            {/* 회원 등급별 혜택 안내 카드 (회원 등급 혜택 안내표) */}
+            <div className="bg-gradient-to-br from-[#8C7A6B] to-[#6E5E52] rounded-3xl p-6 sm:p-8 text-[#FAF7F2] shadow-md space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/15">
+                <div>
+                  <h3 className="text-lg sm:text-xl font-serif font-black tracking-wide text-white">
+                    CHOICOMMA MEMBERSHIP BENEFITS
+                  </h3>
+                  <p className="text-xs text-white/75 mt-0.5 font-medium">
+                    회원 등급별 구매 실적 및 프라이빗 혜택 안내
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 self-start sm:self-auto bg-white/15 px-3 py-1.5 rounded-full backdrop-blur-xs text-xs font-bold text-white border border-white/20">
+                  <Award className="w-3.5 h-3.5 text-amber-300" />
+                  <span>현재 회원님: <strong>{userGrade} 등급</strong></span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+                {/* 1. SILVER */}
+                <div className={`relative rounded-2xl p-4 sm:p-5 transition-all ${
+                  userGrade === "SILVER"
+                    ? "bg-[#FAF7F2] text-[#3D312A] shadow-md ring-2 ring-white"
+                    : "bg-[#FAF7F2]/95 text-[#4A3D34] hover:bg-[#FAF7F2]"
+                }`}>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="font-serif text-lg font-black tracking-widest text-[#2E241E]">SILVER</span>
+                    {userGrade === "SILVER" && (
+                      <span className="bg-[#8C7A6B] text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                        내 등급
+                      </span>
+                    )}
+                  </div>
+                  <ul className="text-xs space-y-1 font-medium text-neutral-800">
+                    <li className="font-bold text-[#8C7A6B]">• 누적금액 2,000,000원 이상</li>
+                    <li>• 실버 등급 시크릿 타임 세일 품목 추가</li>
+                    <li className="font-extrabold text-[#9E3524]">• 5% 할인 쿠폰 1장 증정</li>
+                  </ul>
+                </div>
+
+                {/* 2. GOLD */}
+                <div className={`relative rounded-2xl p-4 sm:p-5 transition-all ${
+                  userGrade === "GOLD"
+                    ? "bg-[#FAF7F2] text-[#3D312A] shadow-md ring-2 ring-white"
+                    : "bg-[#FAF7F2]/95 text-[#4A3D34] hover:bg-[#FAF7F2]"
+                }`}>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="font-serif text-lg font-black tracking-widest text-[#2E241E]">GOLD</span>
+                    {userGrade === "GOLD" && (
+                      <span className="bg-[#8C7A6B] text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                        내 등급
+                      </span>
+                    )}
+                  </div>
+                  <ul className="text-xs space-y-1 font-medium text-neutral-800">
+                    <li className="font-bold text-[#8C7A6B]">• 누적금액 5,000,000원 이상</li>
+                    <li>• 골드 등급 시크릿 타임 세일 품목 추가</li>
+                    <li className="font-extrabold text-[#9E3524]">• 월 5% 할인 쿠폰 1장 증정</li>
+                  </ul>
+                </div>
+
+                {/* 3. PLATINUM */}
+                <div className={`relative rounded-2xl p-4 sm:p-5 transition-all ${
+                  userGrade === "PLATINUM"
+                    ? "bg-[#FAF7F2] text-[#3D312A] shadow-md ring-2 ring-white"
+                    : "bg-[#FAF7F2]/95 text-[#4A3D34] hover:bg-[#FAF7F2]"
+                }`}>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="font-serif text-lg font-black tracking-widest text-[#2E241E]">PLATINUM</span>
+                    {userGrade === "PLATINUM" && (
+                      <span className="bg-[#8C7A6B] text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                        내 등급
+                      </span>
+                    )}
+                  </div>
+                  <ul className="text-xs space-y-1 font-medium text-neutral-800">
+                    <li className="font-bold text-[#8C7A6B]">• 누적금액 10,000,000원 이상</li>
+                    <li>• 플래티넘 등급 시크릿 타임 세일 품목 추가</li>
+                    <li className="font-extrabold text-[#9E3524]">• 월 5% 할인 쿠폰 3장 증정</li>
+                  </ul>
+                </div>
+
+                {/* 4. VVIP */}
+                <div className={`relative rounded-2xl p-4 sm:p-5 transition-all ${
+                  userGrade === "VVIP"
+                    ? "bg-[#FAF7F2] text-[#3D312A] shadow-md ring-2 ring-white"
+                    : "bg-[#FAF7F2]/95 text-[#4A3D34] hover:bg-[#FAF7F2]"
+                }`}>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="font-serif text-lg font-black tracking-widest text-[#2E241E]">VVIP</span>
+                    {userGrade === "VVIP" && (
+                      <span className="bg-[#8C7A6B] text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                        내 등급
+                      </span>
+                    )}
+                  </div>
+                  <ul className="text-xs space-y-1 font-medium text-neutral-800">
+                    <li className="font-bold text-[#8C7A6B]">• 누적금액 20,000,000원 이상</li>
+                    <li>• VVIP 등급 시크릿 타임 세일 품목 추가</li>
+                    <li className="font-extrabold text-[#9E3524]">
+                      • 모든 품목 상시 5% 추가 할인
+                      <span className="block text-[10px] font-normal text-neutral-500 mt-0.5">(일부 시크릿 타임 세일 항목 제외)</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             {/* 기존 회원 아이디 설정 안내 카드 (흰 배경에 검은 글씨) */}
             <div
               onClick={() => {
@@ -2095,13 +2208,23 @@ function MembershipContent() {
                             className={`text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
                               coupon.isUsed
                                 ? "bg-neutral-200 text-neutral-600"
+                                : coupon.isUnlimited
+                                ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-2xs"
+                                : coupon.type === "PERCENT"
+                                ? "bg-purple-950 text-purple-200 border border-purple-800"
                                 : "bg-neutral-950 text-white"
                             }`}
                           >
-                            {coupon.isUsed ? "USED (사용완료)" : "DISCOUNT COUPON"}
+                            {coupon.isUsed
+                              ? "USED (사용완료)"
+                              : coupon.isUnlimited
+                              ? "👑 VVIP UNLIMITED"
+                              : coupon.type === "PERCENT"
+                              ? "% RATE DISCOUNT"
+                              : "DISCOUNT COUPON"}
                           </span>
                           <span className="text-[11px] text-neutral-400 font-mono">
-                            ~ {coupon.validUntil}
+                            {coupon.isUnlimited ? "상시 유효" : `~ ${coupon.validUntil}`}
                           </span>
                         </div>
                         <h3 className="font-extrabold text-base text-neutral-950">{coupon.title}</h3>
@@ -2111,16 +2234,30 @@ function MembershipContent() {
 
                       <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
                         {coupon.isUsed ? (
-                          <span className="text-xs font-bold text-neutral-400 px-3 py-1.5 bg-neutral-100 rounded-xl">
-                            사용 완료
+                          <span className="text-xs font-bold text-neutral-500 px-3 py-1.5 bg-neutral-100 rounded-xl">
+                            {coupon.refreshCycle === "MONTHLY"
+                              ? (coupon.usageLimitPerMonth && coupon.usageLimitPerMonth > 1
+                                  ? `이번 달 ${coupon.usageLimitPerMonth}회 모두 사용 (익월 1일 재발급)`
+                                  : "이번 달 사용 완료 (익월 1일 재발급)")
+                              : "사용 완료"}
                           </span>
                         ) : (
                           <div className="flex items-center gap-1.5 w-full justify-between">
                             <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
                               ✨ 주문서 자동 적용
                             </span>
-                            <span className="text-[11px] font-bold text-neutral-600 bg-neutral-100 px-2.5 py-1 rounded-lg border border-neutral-200">
-                              사용 가능
+                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${
+                              coupon.isUnlimited
+                                ? "text-amber-800 bg-amber-50 border-amber-300 font-black"
+                                : coupon.usageLimitPerMonth && coupon.usageLimitPerMonth > 1
+                                ? "text-purple-800 bg-purple-50 border-purple-200 font-black"
+                                : "text-neutral-600 bg-neutral-100 border-neutral-200"
+                            }`}>
+                              {coupon.isUnlimited
+                                ? "무제한 사용"
+                                : coupon.usageLimitPerMonth && coupon.usageLimitPerMonth > 1
+                                ? `잔여 ${coupon.remainingCountInMonth ?? coupon.usageLimitPerMonth}회 / 월 ${coupon.usageLimitPerMonth}회`
+                                : "사용 가능"}
                             </span>
                           </div>
                         )}

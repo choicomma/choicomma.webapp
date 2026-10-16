@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -16,6 +16,7 @@ import {
   Zap,
   Ticket,
   Sparkles,
+  Crown,
 } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice } from "@/lib/sfcc/utils";
@@ -35,6 +36,7 @@ import {
   recordCouponUsage,
   restoreCouponByOrder,
   syncAdminCouponsFromSupabase,
+  calculateCouponDiscount,
 } from "@/lib/membership/coupons";
 import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 
@@ -195,6 +197,12 @@ export default function CheckoutClientWrapper() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Order Lines & Total Item Amount
+  const orderLines = directOrder ? [directOrder] : (cart?.lines || []);
+  const totalItemAmount = directOrder
+    ? Number(directOrder.cost?.totalAmount?.amount || 0)
+    : Number(cart?.cost?.totalAmount?.amount || 0);
+
   // Coupon / Discount State
   const [availableCoupons, setAvailableCoupons] = useState<AvailableCoupon[]>([]);
   const [selectedCouponId, setSelectedCouponId] = useState<string>("");
@@ -233,9 +241,10 @@ export default function CheckoutClientWrapper() {
 
         const manualFound = list.find((c) => c.id === userSelectedCouponRef.current);
         if (manualFound) {
+          const disc = calculateCouponDiscount(manualFound, totalItemAmount);
           setSelectedCouponId(manualFound.id);
-          setAppliedDiscount(manualFound.discountAmount);
-          setCouponMessage(`🎟️ ${manualFound.title}이 선택 적용되었습니다! (-${manualFound.discountAmount.toLocaleString()}원)`);
+          setAppliedDiscount(disc);
+          setCouponMessage(`🎟️ ${manualFound.title}이 선택 적용되었습니다! (-${disc.toLocaleString()}원)`);
           return;
         } else {
           setSelectedCouponId("NONE");
@@ -247,13 +256,16 @@ export default function CheckoutClientWrapper() {
       }
 
       if (list.length > 0) {
-        // 할인 금액이 가장 큰 쿠폰을 우선 정렬하여 최우선 쿠폰 자동 선택
-        const sorted = [...list].sort((a, b) => b.discountAmount - a.discountAmount);
+        // 주문 대상 상품금액 기준 실제 할인 금액이 가장 큰 쿠폰을 우선 정렬하여 최우선 쿠폰 자동 선택
+        const sorted = [...list].sort(
+          (a, b) => calculateCouponDiscount(b, totalItemAmount) - calculateCouponDiscount(a, totalItemAmount)
+        );
         const bestCoupon = sorted[0];
+        const bestDisc = calculateCouponDiscount(bestCoupon, totalItemAmount);
 
         setSelectedCouponId(bestCoupon.id);
-        setAppliedDiscount(bestCoupon.discountAmount);
-        setCouponMessage(`✨ [자동 적용] ${bestCoupon.title}이 자동 적용되었습니다! (-${bestCoupon.discountAmount.toLocaleString()}원)`);
+        setAppliedDiscount(bestDisc);
+        setCouponMessage(`✨ [자동 적용] ${bestCoupon.title}이 자동 적용되었습니다! (-${bestDisc.toLocaleString()}원)`);
       } else {
         setSelectedCouponId("NONE");
         setAppliedDiscount(0);
@@ -269,7 +281,21 @@ export default function CheckoutClientWrapper() {
       isSubscribed = false;
       window.removeEventListener("coupons_updated", loadAndApplyCoupons);
     };
-  }, [formData.ordererEmail, userGrade]);
+  }, [formData.ordererEmail, userGrade, totalItemAmount]);
+
+  // 주문 상품 금액(totalItemAmount) 변경 시 현재 선택된 쿠폰(특히 % 비율 할인 쿠폰) 할인액 동적 재계산
+  useEffect(() => {
+    if (!selectedCouponId || selectedCouponId === "NONE") return;
+    const found = availableCoupons.find((c) => c.id === selectedCouponId);
+    if (found) {
+      const disc = calculateCouponDiscount(found, totalItemAmount);
+      setAppliedDiscount(disc);
+      const isPercent = found.type === "PERCENT";
+      setCouponMessage(
+        `🎟️ ${found.title}이 적용되었습니다! (${isPercent ? `${found.discount} -> ` : ""}-${disc.toLocaleString()}원)`
+      );
+    }
+  }, [totalItemAmount, selectedCouponId, availableCoupons]);
 
   const handleSelectCoupon = (couponId: string) => {
     // 사용자의 명시적인 선택(또는 사용 안 함)을 기록하여 비동기 동기화 시 덮어쓰기 방지
@@ -297,12 +323,13 @@ export default function CheckoutClientWrapper() {
 
     const found = availableCoupons.find((c) => c.id === couponId);
     if (found) {
-      setAppliedDiscount(found.discountAmount);
-      setCouponMessage(`🎉 ${found.title}이 선택 적용되었습니다! (-${found.discountAmount.toLocaleString()}원)`);
+      const disc = calculateCouponDiscount(found, totalItemAmount);
+      setAppliedDiscount(disc);
+      setCouponMessage(`🎉 ${found.title}이 선택 적용되었습니다! (-${disc.toLocaleString()}원)`);
 
       // 쿠폰 할인 적용 시 적립금 사용 한도 조정 (배송비 포함 총 결제금액 기준)
       const totalOrderAmount = totalItemAmount + shippingFee;
-      const maxUsable = Math.max(0, totalOrderAmount - found.discountAmount);
+      const maxUsable = Math.max(0, totalOrderAmount - disc);
       if (appliedPoints > maxUsable) {
         setAppliedPoints(maxUsable);
         if (maxUsable === 0) {
@@ -443,11 +470,6 @@ export default function CheckoutClientWrapper() {
     };
   }, []);
 
-  const orderLines = directOrder ? [directOrder] : (cart?.lines || []);
-  const totalItemAmount = directOrder
-    ? Number(directOrder.cost?.totalAmount?.amount || 0)
-    : Number(cart?.cost?.totalAmount?.amount || 0);
-
   // 고객 구매 여정 (BEGIN_CHECKOUT) 실시간 트래킹
   useEffect(() => {
     if (orderLines.length > 0 && !hasTrackedCheckoutRef.current) {
@@ -479,11 +501,29 @@ export default function CheckoutClientWrapper() {
   const freeThreshold = shippingPolicy.freeShippingThreshold !== undefined ? shippingPolicy.freeShippingThreshold : 100000;
   const baseShippingFee = shippingPolicy.baseFee !== undefined ? shippingPolicy.baseFee : 4000;
 
-  // 실 상품 결제 대상 금액 (총 상품금액에서 쿠폰 할인 및 적립금 사용을 차감한 금액)
-  const netProductAmount = Math.max(0, totalItemAmount - appliedDiscount - appliedPoints);
+  // VVIP 회원 여부 및 상시 5% 추가 할인 계산 (시크릿 타임세일 특가 품목 제외)
+  const isVVIP = userGrade === "VVIP";
+  const vvipDiscountAmount = useMemo(() => {
+    if (!isVVIP) return 0;
+    // VVIP 무제한 5% 쿠폰이 쿠폰 할인으로 직접 적용된 경우 중복(5%+5%) 방지
+    if (selectedCouponId === "coupon-vvip-unlimited-5pct") return 0;
+
+    const eligibleAmount = orderLines.reduce((sum, line: any) => {
+      const isSecretSale =
+        line.merchandise?.id?.includes("-secret-") ||
+        line.merchandise?.title?.includes("시크릿") ||
+        line.id?.includes("-secret-");
+      if (isSecretSale) return sum;
+      return sum + Number(line.cost?.totalAmount?.amount || 0);
+    }, 0);
+    return Math.floor(eligibleAmount * 0.05);
+  }, [isVVIP, orderLines, selectedCouponId]);
+
+  // 실 상품 결제 대상 금액 (총 상품금액에서 VVIP 상시 할인, 쿠폰 할인 및 적립금 사용을 차감한 금액)
+  const netProductAmount = Math.max(0, totalItemAmount - vvipDiscountAmount - appliedDiscount - appliedPoints);
 
   // 적립금 또는 할인으로 인해 결제금액이 10만원 미만이 되었는지 확인 (배송비 부과 트리거)
-  const isDiscountedUnderThreshold = (appliedDiscount > 0 || appliedPoints > 0) && netProductAmount < freeThreshold;
+  const isDiscountedUnderThreshold = (vvipDiscountAmount > 0 || appliedDiscount > 0 || appliedPoints > 0) && netProductAmount < freeThreshold;
 
   // 등급별 상시 무료배송 혜택 여부 (PLATINUM, VVIP)
   const isTierFreeShipping = userGrade === "PLATINUM" || userGrade === "VVIP";
@@ -517,11 +557,11 @@ export default function CheckoutClientWrapper() {
     }
 
     const totalOrderAmount = totalItemAmount + shippingFee;
-    let effectiveDiscount = appliedDiscount;
+    let effectiveDiscount = vvipDiscountAmount + appliedDiscount;
 
-    // 만약 입력한 적립금이 (주문총액 - 쿠폰할인)보다 크다면, 적립금 전액/우선 사용을 위해 쿠폰 자동 해제
-    if (amount > totalOrderAmount - effectiveDiscount && effectiveDiscount > 0) {
-      effectiveDiscount = 0;
+    // 만약 입력한 적립금이 (주문총액 - 할인액)보다 크다면, 적립금 전액/우선 사용을 위해 쿠폰 자동 해제
+    if (amount > totalOrderAmount - effectiveDiscount && appliedDiscount > 0) {
+      effectiveDiscount = vvipDiscountAmount;
       setAppliedDiscount(0);
       setSelectedCouponId("NONE");
       userSelectedCouponRef.current = "NONE";
@@ -544,16 +584,15 @@ export default function CheckoutClientWrapper() {
 
   const handleUseAllPoints = () => {
     const totalOrderAmount = totalItemAmount + shippingFee;
-    // 쿠폰이 적용되어 있다면 쿠폰 할인 후 남은 실 결제 금액(배송비 포함 0원 결제)을 채우고,
-    // 쿠폰이 없다면 주문 총액 전체 또는 보유 적립금 전액을 적용
-    const remainingWithCoupon = Math.max(0, totalOrderAmount - appliedDiscount);
-    const targetAmount = appliedDiscount > 0 ? remainingWithCoupon : totalOrderAmount;
+    const totalDiscounts = vvipDiscountAmount + appliedDiscount;
+    const remainingWithCoupon = Math.max(0, totalOrderAmount - totalDiscounts);
+    const targetAmount = totalDiscounts > 0 ? remainingWithCoupon : totalOrderAmount;
     const finalUse = Math.min(availablePoints, targetAmount);
     setUsedPointsInput(String(finalUse));
     handleApplyPoints(finalUse);
   };
 
-  const finalTotalAmount = Math.max(0, totalItemAmount + shippingFee - appliedDiscount - appliedPoints);
+  const finalTotalAmount = Math.max(0, totalItemAmount + shippingFee - vvipDiscountAmount - appliedDiscount - appliedPoints);
   const earnedPoints = Math.floor(finalTotalAmount * (pointRate / 100));
 
 
@@ -695,6 +734,7 @@ export default function CheckoutClientWrapper() {
           userGrade,
           appliedPoints,
           appliedDiscount,
+          vvipDiscountAmount,
           isDirectOrder: !!directOrder,
           selectedCouponId: selectedCouponId && selectedCouponId !== "NONE" ? selectedCouponId : null,
           selectedCouponTitle: foundCoupon?.title || null,
@@ -1324,12 +1364,23 @@ export default function CheckoutClientWrapper() {
                   >
                     {availableCoupons.length > 0 ? (
                       <>
-                        {availableCoupons.map((coupon, idx) => (
-                          <option key={coupon.id} value={coupon.id}>
-                            {idx === 0 && !isUserManualCoupon ? "✨ [자동 적용] " : "🎟️ "}
-                            {coupon.title} (-{coupon.discountAmount.toLocaleString()}원)
-                          </option>
-                        ))}
+                        {availableCoupons.map((coupon, idx) => {
+                          const currentDisc = calculateCouponDiscount(coupon, totalItemAmount);
+                          const discountText =
+                            coupon.type === "PERCENT"
+                              ? `${coupon.discount} (-${currentDisc.toLocaleString()}원)`
+                              : `-${coupon.discountAmount.toLocaleString()}원`;
+                          const limitNotice =
+                            coupon.usageLimitPerMonth && coupon.usageLimitPerMonth > 1
+                              ? ` [잔여 ${coupon.remainingCountInMonth ?? coupon.usageLimitPerMonth}회]`
+                              : "";
+                          return (
+                            <option key={coupon.id} value={coupon.id}>
+                              {idx === 0 && !isUserManualCoupon ? "✨ [자동 적용] " : "🎟️ "}
+                              {coupon.title}{limitNotice} ({discountText})
+                            </option>
+                          );
+                        })}
                         <option value="NONE">❌ 쿠폰 사용 안 함 (적용 해제)</option>
                       </>
                     ) : (
@@ -1416,6 +1467,15 @@ export default function CheckoutClientWrapper() {
                   {shippingFee === 0 ? "무료배송 (0원)" : formatPrice(shippingFee)}
                 </span>
               </div>
+              {vvipDiscountAmount > 0 && (
+                <div className="flex justify-between text-purple-700 dark:text-purple-300 font-bold">
+                  <span className="flex items-center gap-1.5">
+                    <Crown className="w-3.5 h-3.5" />
+                    VVIP 전 품목 상시 5% 추가 할인
+                  </span>
+                  <span className="font-black text-purple-700 dark:text-purple-300">-{formatPrice(vvipDiscountAmount)}</span>
+                </div>
+              )}
               {appliedDiscount > 0 && (
                 <div className="flex justify-between text-neutral-900 dark:text-white font-bold">
                   <span>쿠폰 할인</span>

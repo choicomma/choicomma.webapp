@@ -1,14 +1,18 @@
 
 
+export type CouponType = "FIXED" | "PERCENT" | "SHIPPING";
+
 export interface AvailableCoupon {
   id: string;
   code?: string;
   title: string;
   discount: string;
-  discountAmount: number;
+  discountAmount: number; // FIXED인 경우 고정 할인액, PERCENT인 경우 기본 할인액 또는 호환용
+  discountPercent?: number; // PERCENT인 경우 퍼센트 수치 (예: 5는 5%)
+  maxDiscountAmount?: number; // PERCENT인 경우 최대 할인 상한 금액 (선택사항)
   condition: string;
   validUntil: string;
-  type: "FIXED" | "SHIPPING";
+  type: CouponType;
   badge?: string;
   isUsed?: boolean;
   isActive?: boolean;
@@ -17,18 +21,71 @@ export interface AvailableCoupon {
   targetCustomerEmails?: string[]; // e.g. ["customer@choicomma.com"]
   targetCustomerNames?: string[]; // e.g. ["홍길동"]
   minOrderAmount?: number;
+  refreshCycle?: "NONE" | "MONTHLY"; // "MONTHLY"인 경우 매월 1일 자동 재발급/갱신
+  usageLimitPerMonth?: number; // "MONTHLY"인 경우 월간 사용 가능 횟수 (e.g. 1회, 3회)
+  usedCountInMonth?: number; // 이번 달 사용한 횟수
+  remainingCountInMonth?: number; // 이번 달 남은 횟수
+  isUnlimited?: boolean; // VVIP 무제한 쿠폰 등 사용 후 소멸되지 않는 쿠폰
   createdAt?: string;
+}
+
+/**
+ * 주문 대상 금액(상품 금액)에 따라 쿠폰의 실제 할인액을 안전하게 계산합니다.
+ */
+export function calculateCouponDiscount(coupon: AvailableCoupon, baseAmount: number): number {
+  if (!coupon || coupon.isActive === false || coupon.isUsed) return 0;
+  const numBase = Number(baseAmount) || 0;
+  if (numBase <= 0) return 0;
+
+  if (coupon.minOrderAmount && numBase < coupon.minOrderAmount) {
+    return 0;
+  }
+
+  // 1. 퍼센트(%) 비율 할인
+  if (coupon.type === "PERCENT") {
+    let percent = Number(coupon.discountPercent || 0);
+    // discountPercent가 없는 레거시 또는 호환 형식(예: discountAmount가 1~99 사이인 경우) 보정
+    if (percent <= 0 && coupon.discountAmount > 0 && coupon.discountAmount <= 99) {
+      percent = coupon.discountAmount;
+    }
+    if (percent <= 0) return 0;
+
+    let discount = Math.floor(numBase * (percent / 100));
+    if (coupon.maxDiscountAmount && coupon.maxDiscountAmount > 0) {
+      discount = Math.min(discount, coupon.maxDiscountAmount);
+    }
+    return Math.min(numBase, Math.max(0, discount));
+  }
+
+  // 2. 정액(원) 금액 할인
+  if (coupon.type === "FIXED") {
+    const fixedAmount = Number(coupon.discountAmount || 0);
+    return Math.min(numBase, Math.max(0, fixedAmount));
+  }
+
+  // 3. 배송비 지원 쿠폰 (상품 금액 할인은 0)
+  return 0;
 }
 
 export const DEFAULT_AVAILABLE_COUPONS: AvailableCoupon[] = [];
 
-// 삭제 대상 레거시 기본 3대 쿠폰 식별자 및 코드
+// 삭제 대상 레거시 기본 쿠폰 및 분할되었던 구 플래티넘 분할 쿠폰 식별자
 export const LEGACY_COUPON_IDS = [
   "coupon-special-10k",
   "coupon-welcome-5k",
   "coupon-freeship",
+  "coupon-platinum-5pct-1",
+  "coupon-platinum-5pct-2",
+  "coupon-platinum-5pct-3",
 ];
-export const LEGACY_COUPON_CODES = ["CHOI10", "WELCOME", "FREESHIP"];
+export const LEGACY_COUPON_CODES = [
+  "CHOI10",
+  "WELCOME",
+  "FREESHIP",
+  "PLATINUM-5PCT-1",
+  "PLATINUM-5PCT-2",
+  "PLATINUM-5PCT-3",
+];
 
 export function isLegacyCoupon(c: any): boolean {
   if (!c) return false;
@@ -54,10 +111,44 @@ export function setMemoryCouponsCache(coupons: AvailableCoupon[]): void {
   memoryCouponsCache = coupons.filter((c) => !isLegacyCoupon(c));
 }
 
+export function getCurrentYearMonth(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+/**
+ * 매월 1일(월 변경 시) 월간 정기 갱신 쿠폰들의 used_coupon_codes 캐시를 자동 리셋합니다.
+ */
+export function syncMonthlyCouponRefresh(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const currentYm = getCurrentYearMonth();
+    const lastYm = localStorage.getItem("last_monthly_coupon_refresh_month");
+    if (lastYm !== currentYm) {
+      const usedRaw = localStorage.getItem("used_coupon_codes") || "[]";
+      let usedCodes: string[] = JSON.parse(usedRaw);
+      const monthlyCouponIds = [
+        "coupon-gold-5pct",
+        "coupon-platinum-5pct",
+        "coupon-platinum-5pct-1",
+        "coupon-platinum-5pct-2",
+        "coupon-platinum-5pct-3",
+      ];
+      const filtered = usedCodes.filter((id) => !monthlyCouponIds.includes(id));
+      localStorage.setItem("used_coupon_codes", JSON.stringify(filtered));
+      localStorage.setItem("last_monthly_coupon_refresh_month", currentYm);
+      window.dispatchEvent(new CustomEvent("coupons_updated"));
+    }
+  } catch (e) {}
+}
+
 /**
  * 모든 쿠폰 목록(사용 완료 여부 포함)을 반환합니다. 마이페이지 쿠폰함 및 관리자용.
  */
 export function getAllUserCoupons(): AvailableCoupon[] {
+  syncMonthlyCouponRefresh();
   const usedCouponsRaw = typeof window !== "undefined" ? localStorage.getItem("used_coupon_codes") || "[]" : "[]";
   let usedCoupons: string[] = [];
   try {
@@ -172,9 +263,46 @@ export function getUserCoupons(userEmail?: string, userGrade?: string): Availabl
       : "GENERAL";
 
   const history = getCouponUsageHistory();
+  const currentYm = getCurrentYearMonth();
 
   return all
     .map((c) => {
+      // 1. 무제한 쿠폰 (VVIP 상시 등)은 절대 사용 완료되지 않음
+      if (c.isUnlimited) {
+        return { ...c, isUsed: false };
+      }
+
+      // 2. 매월 1일 자동 갱신형 쿠폰 (GOLD: 월 1회, PLATINUM: 월 3회 등)
+      if (c.refreshCycle === "MONTHLY") {
+        const monthlyLimit = Number(c.usageLimitPerMonth || 1);
+        const usageCountThisMonth = currentEmail
+          ? history.filter(
+              (h) =>
+                (h.couponId === c.id || (c.code && h.couponId === c.code)) &&
+                (h.customerEmail || "").toLowerCase().trim() === currentEmail &&
+                (h.usedAt || "").startsWith(currentYm)
+            ).length
+          : 0;
+
+        const isUsed = usageCountThisMonth >= monthlyLimit;
+        const remainingCount = Math.max(0, monthlyLimit - usageCountThisMonth);
+
+        const now = new Date();
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const monthlyValidUntil = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(lastDay)} (매월 1일 ${monthlyLimit}회 재충전)`;
+
+        return {
+          ...c,
+          validUntil: monthlyValidUntil,
+          usageLimitPerMonth: monthlyLimit,
+          usedCountInMonth: usageCountThisMonth,
+          remainingCountInMonth: remainingCount,
+          isUsed,
+        };
+      }
+
+      // 3. 일반 1회성 쿠폰 (SILVER 등)
       const hasUsedInHistory = Boolean(
         currentEmail &&
         history.some(
@@ -361,7 +489,7 @@ export interface CouponUsageRecord {
   orderId: string;
   couponId: string;
   couponTitle: string;
-  couponType: "FIXED" | "SHIPPING";
+  couponType: CouponType;
   discountAmount: number;
   customerName: string;
   customerEmail: string;
@@ -450,19 +578,34 @@ export function recordCouponUsage(
   const updated = [newRecord, ...current];
   saveCouponUsageHistory(updated);
 
-  // 고객 보유 쿠폰 재사용 방지 목록에 자동 등록
-  if (typeof window !== "undefined") {
+  // 고객 보유 쿠폰 재사용 방지 목록에 자동 등록 (단, isUnlimited 무제한 쿠폰은 영구 사용 가능하므로 등록 제외)
+  const isUnlimitedCoupon = usage.couponId?.includes("unlimited") || usage.couponId?.includes("vvip");
+  if (!isUnlimitedCoupon && typeof window !== "undefined") {
     try {
-      const usedRaw = localStorage.getItem("used_coupon_codes") || "[]";
-      let usedCodes: string[] = [];
-      try {
-        usedCodes = JSON.parse(usedRaw);
-      } catch (e) {}
-      if (!usedCodes.includes(newRecord.couponId)) {
-        usedCodes.push(newRecord.couponId);
-        localStorage.setItem("used_coupon_codes", JSON.stringify(usedCodes));
-        window.dispatchEvent(new CustomEvent("coupons_updated"));
+      const allCoupons = getAllUserCoupons();
+      const targetCoupon = allCoupons.find((c) => c.id === newRecord.couponId || c.code === newRecord.couponId);
+      const monthlyLimit = Number(targetCoupon?.usageLimitPerMonth || 1);
+      const currentYm = getCurrentYearMonth();
+      const thisMonthCount = updated.filter(
+        (h) =>
+          (h.couponId === newRecord.couponId || (targetCoupon?.code && h.couponId === targetCoupon.code)) &&
+          h.customerEmail === newRecord.customerEmail &&
+          (h.usedAt || "").startsWith(currentYm)
+      ).length;
+
+      // 월간 한도에 완전히 도달했거나 1회성 쿠폰인 경우에만 used_coupon_codes에 추가
+      if (thisMonthCount >= monthlyLimit) {
+        const usedRaw = localStorage.getItem("used_coupon_codes") || "[]";
+        let usedCodes: string[] = [];
+        try {
+          usedCodes = JSON.parse(usedRaw);
+        } catch (e) {}
+        if (!usedCodes.includes(newRecord.couponId)) {
+          usedCodes.push(newRecord.couponId);
+          localStorage.setItem("used_coupon_codes", JSON.stringify(usedCodes));
+        }
       }
+      window.dispatchEvent(new CustomEvent("coupons_updated"));
     } catch (e) {}
   }
 
@@ -558,4 +701,215 @@ export function restoreCouponByOrder(
 
   return { restored: restoredAny, couponTitle: restoredTitle, discountAmount: restoredDiscount };
 }
+
+export const cancelCouponUsage = restoreCouponByOrder;
+
+export interface CouponRecipientStatus {
+  customerId: string;
+  name: string;
+  email: string;
+  phone: string;
+  grade: string;
+  joinedDate: string;
+  totalLimitText: string;
+  isUnlimited: boolean;
+  totalUsageCount: number;
+  usedCountInMonth: number;
+  remainingCount: number | null;
+  status: "AVAILABLE" | "EXHAUSTED" | "UNLIMITED";
+  statusText: string;
+  lastUsedAt?: string;
+  lastOrderId?: string;
+  usageRecords?: CouponUsageRecord[];
+}
+
+export interface CouponDistributionSummary {
+  couponId: string;
+  couponTitle: string;
+  couponDiscount: string;
+  targetType: "ALL" | "GRADE" | "CUSTOMER";
+  targetGrades?: string[];
+  totalRecipientsCount: number;
+  availableCount: number;
+  exhaustedCount: number;
+  unlimitedCount: number;
+  totalUsedCount: number;
+  recipients: CouponRecipientStatus[];
+}
+
+/**
+ * 특정 쿠폰에 대해 발급 대상 회원 목록과 각 회원별 사용/잔여 수량을 실시간 계산합니다.
+ */
+export function getCouponDistributionStatus(
+  coupon: AvailableCoupon,
+  customers: any[],
+  usageHistory: CouponUsageRecord[] = []
+): CouponDistributionSummary {
+  if (!coupon) {
+    return {
+      couponId: "",
+      couponTitle: "",
+      couponDiscount: "",
+      targetType: "ALL",
+      totalRecipientsCount: 0,
+      availableCount: 0,
+      exhaustedCount: 0,
+      unlimitedCount: 0,
+      totalUsedCount: 0,
+      recipients: [],
+    };
+  }
+
+  const currentYm = getCurrentYearMonth();
+  const tType = coupon.targetType || "ALL";
+
+  const normalizeGrade = (raw: any): string => {
+    const s = String(raw || "GENERAL").toUpperCase().trim();
+    if (s.includes("VVIP") || s.includes("BLACK")) return "VVIP";
+    if (s.includes("PLATINUM")) return "PLATINUM";
+    if (s.includes("GOLD")) return "GOLD";
+    if (s.includes("SILVER")) return "SILVER";
+    return "GENERAL";
+  };
+
+  // 1. 발급 대상 회원 필터링
+  const eligibleCustomers = (customers || []).filter((cust) => {
+    if (!cust) return false;
+    const grade = normalizeGrade(cust.grade);
+    const email = String(cust.email || "").toLowerCase().trim();
+    const name = String(cust.name || "").trim();
+
+    if (tType === "ALL") return true;
+
+    if (tType === "GRADE") {
+      const grades = (coupon.targetGrades || []).map((g) => {
+        const gu = String(g).toUpperCase().trim();
+        if (gu === "ALL") return "ALL";
+        return normalizeGrade(gu);
+      });
+      if (grades.includes("ALL")) return true;
+      return grades.includes(grade);
+    }
+
+    if (tType === "CUSTOMER") {
+      const targetEmails = (coupon.targetCustomerEmails || []).map((e) => String(e).toLowerCase().trim());
+      const targetNames = (coupon.targetCustomerNames || []).map((n) => String(n).trim());
+      return (email && targetEmails.includes(email)) || (name && targetNames.includes(name));
+    }
+
+    return true;
+  });
+
+  // 2. 회원별 사용 내역 및 잔여 수량 계산
+  const recipients: CouponRecipientStatus[] = eligibleCustomers.map((cust) => {
+    const email = String(cust.email || "").toLowerCase().trim();
+    const phone = String(cust.phone || "").replace(/[^0-9]/g, "");
+
+    const matchedRecords = (usageHistory || []).filter((h) => {
+      const isCouponMatch =
+        h.couponId === coupon.id ||
+        (coupon.code && h.couponId === coupon.code) ||
+        h.couponTitle === coupon.title;
+      if (!isCouponMatch) return false;
+
+      const hEmail = (h.customerEmail || "").toLowerCase().trim();
+      const hPhone = (h.customerPhone || "").replace(/[^0-9]/g, "");
+      const isEmailMatch = email && hEmail && hEmail !== "-" && hEmail === email;
+      const isPhoneMatch = phone && hPhone && phone.length >= 8 && hPhone.length >= 8 && phone === hPhone;
+      return isEmailMatch || isPhoneMatch;
+    });
+
+    const totalUsageCount = matchedRecords.length;
+    const monthlyRecords = matchedRecords.filter((r) => (r.usedAt || "").startsWith(currentYm));
+    const usedCountInMonth = monthlyRecords.length;
+
+    // 최근 사용 정보
+    const lastRecord = matchedRecords.length > 0 ? matchedRecords[0] : undefined;
+
+    const isUnlimited = Boolean(coupon.isUnlimited);
+    let totalLimitText = "1회 발급";
+    let remainingCount: number | null = 1;
+    let status: "AVAILABLE" | "EXHAUSTED" | "UNLIMITED" = "AVAILABLE";
+    let statusText = "사용 가능 (1회)";
+
+    if (isUnlimited) {
+      totalLimitText = "무제한";
+      remainingCount = null;
+      status = "UNLIMITED";
+      statusText = "무제한 이용 가능";
+    } else if (coupon.refreshCycle === "MONTHLY") {
+      const limit = Number(coupon.usageLimitPerMonth || 1);
+      totalLimitText = `월 ${limit}회`;
+      const rem = Math.max(0, limit - usedCountInMonth);
+      remainingCount = rem;
+      if (rem > 0) {
+        status = "AVAILABLE";
+        statusText = `잔여 ${rem}회 / 월 ${limit}회`;
+      } else {
+        status = "EXHAUSTED";
+        statusText = `당월 ${limit}회 모두 사용`;
+      }
+    } else {
+      const limit = 1;
+      totalLimitText = "1회 발급";
+      const rem = Math.max(0, limit - totalUsageCount);
+      remainingCount = rem;
+      if (rem > 0) {
+        status = "AVAILABLE";
+        statusText = "사용 가능 (잔여 1회)";
+      } else {
+        status = "EXHAUSTED";
+        statusText = "사용 완료 (0회)";
+      }
+    }
+
+    return {
+      customerId: cust.id || cust.loginId || cust.email || "-",
+      name: cust.name || "고객",
+      email: cust.email || "-",
+      phone: cust.phone || "-",
+      grade: cust.grade || "GENERAL",
+      joinedDate: cust.joinedDate || (cust.created_at ? cust.created_at.split("T")[0] : "-"),
+      totalLimitText,
+      isUnlimited,
+      totalUsageCount,
+      usedCountInMonth,
+      remainingCount,
+      status,
+      statusText,
+      lastUsedAt: lastRecord?.usedAt,
+      lastOrderId: lastRecord?.orderId,
+      usageRecords: matchedRecords,
+    };
+  });
+
+  // 정렬: 사용 가능(잔여 보유/무제한) 회원 우선 -> 이름순(한국어 가나다)
+  recipients.sort((a, b) => {
+    const aActive = a.status === "AVAILABLE" || a.status === "UNLIMITED";
+    const bActive = b.status === "AVAILABLE" || b.status === "UNLIMITED";
+    if (aActive && !bActive) return -1;
+    if (!aActive && bActive) return 1;
+    return a.name.localeCompare(b.name, "ko");
+  });
+
+  const availableCount = recipients.filter((r) => r.status === "AVAILABLE").length;
+  const exhaustedCount = recipients.filter((r) => r.status === "EXHAUSTED").length;
+  const unlimitedCount = recipients.filter((r) => r.status === "UNLIMITED").length;
+  const totalUsedCount = recipients.reduce((sum, r) => sum + r.totalUsageCount, 0);
+
+  return {
+    couponId: coupon.id,
+    couponTitle: coupon.title,
+    couponDiscount: coupon.discount,
+    targetType: tType,
+    targetGrades: coupon.targetGrades,
+    totalRecipientsCount: recipients.length,
+    availableCount,
+    exhaustedCount,
+    unlimitedCount,
+    totalUsedCount,
+    recipients,
+  };
+}
+
 

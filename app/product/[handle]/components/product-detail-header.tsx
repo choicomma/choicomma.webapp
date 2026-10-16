@@ -404,6 +404,13 @@ export function ProductDetailHeader({
         baseForBenefits = regPrice;
       }
 
+      // 3-1. VVIP 등급 상시 5% 추가 할인 적용 (시크릿 타임세일 특가 품목 제외)
+      const isVVIPUser = userRole?.toUpperCase().includes("VVIP");
+      if (isLoggedIn && isVVIPUser && !isSecretTargeted) {
+        const vvipDisc = Math.floor(baseForBenefits * 0.05);
+        baseForBenefits = Math.max(0, baseForBenefits - vvipDisc);
+      }
+
       // 4. Coupon Discount Check (비회원은 쿠폰 미적용)
       let maxDisc = 0;
       let bestTitle = "";
@@ -417,9 +424,17 @@ export function ProductDetailHeader({
             for (const c of availableCoupons) {
               if (c.minOrderAmount && baseForBenefits < c.minOrderAmount) continue;
               let d = 0;
-              const isPercent = (c.discount && c.discount.includes("%")) || (c.discountAmount > 0 && c.discountAmount <= 99 && (c as any).discountType === "RATE");
+              const isPercent =
+                c.type === "PERCENT" ||
+                (c.discount && c.discount.includes("%")) ||
+                (c.discountAmount > 0 && c.discountAmount <= 99 && (c as any).discountType === "RATE");
+
               if (isPercent) {
-                d = Math.round(baseForBenefits * (c.discountAmount / 100));
+                const percent = Number(c.discountPercent || c.discountAmount || 0);
+                d = Math.round(baseForBenefits * (percent / 100));
+                if (c.maxDiscountAmount && c.maxDiscountAmount > 0) {
+                  d = Math.min(d, c.maxDiscountAmount);
+                }
               } else {
                 d = c.discountAmount || 0;
               }
