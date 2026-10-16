@@ -1,6 +1,20 @@
 {
   "journeyLogs": [
     {
+      "id": "jnl_1792154797583_fl4m9",
+      "sessionId": "s_1792154795431_4z3tn",
+      "visitorId": "v_1792154795431_s4sw9gx",
+      "eventType": "PAGE_VIEW",
+      "eventLabel": "페이지 탐색 (choicomma)",
+      "path": "/login",
+      "referrer": "http://192.168.219.106:3001/",
+      "device": "PC",
+      "metadata": {},
+      "ip": "::ffff:192.168.219.106",
+      "timestamp": "2026-10-16 21:46:37",
+      "created_at": "2026-10-16T12:46:37.583Z"
+    },
+    {
       "id": "jnl_1792096837595_hkkip",
       "sessionId": "s_1792096808185_69prz",
       "visitorId": "v_1792096808185_t687kg8",
@@ -72,6 +86,206 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "adt_1792155118504_d85at",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-16 21:51:58",
+      "created_at": "2026-10-16T12:51:58.504Z"
+    },
+    {
+      "id": "adt_1792155104480_oahi5",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-16 21:51:44",
+      "created_at": "2026-10-16T12:51:44.480Z"
+    },
+    {
+      "id": "adt_1792155052062_ro3gi",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-16 21:50:52",
+      "created_at": "2026-10-16T12:50:52.062Z"
+    },
+    {
+      "id": "adt_1792155045770_whmmy",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-16 21:50:45",
+      "created_at": "2026-10-16T12:50:45.770Z"
+    },
+    {
+      "id": "adt_1792155005208_dsy2j",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-16 21:50:05",
+      "created_at": "2026-10-16T12:50:05.208Z"
+    },
+    {
+      "id": "adt_1792154986224_42zyl",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-468",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입] 정보 수정 (가격: 490000원, 재고: 30개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-16 21:49:46",
+      "created_at": "2026-10-16T12:49:46.224Z"
+    },
+    {
+      "id": "adt_1792154974057_rg9tj",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-16 21:49:34",
+      "created_at": "2026-10-16T12:49:34.057Z"
+    },
+    {
+      "id": "adt_1792154952712_tvx0x",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-468",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입] 정보 수정 (가격: 490000원, 재고: 30개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-16 21:49:12",
+      "created_at": "2026-10-16T12:49:12.712Z"
+    },
     {
       "id": "adt_1792065732897_qkuq8",
       "adminId": "admin_master",
@@ -979,5 +1193,5 @@
       "created_at": "2026-10-13T12:48:15.593Z"
     }
   ],
-  "updatedAt": "2026-10-15T20:40:37.597Z"
+  "updatedAt": "2026-10-16T12:51:58.505Z"
 }

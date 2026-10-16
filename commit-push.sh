@@ -11,7 +11,7 @@ git fetch origin main
 echo "=== 3. 변경 사항 스테이징 및 커밋 ==="
 git add .
 if [ -n "$(git status --porcelain)" ]; then
-  COMMIT_MSG="${1:-261016 -3 coupons 빌드오류 수정}"
+  COMMIT_MSG="${1:-261016 -8 회원관리 검색창 엔터(Enter) 키 및 검색 버튼 클릭 시 결과 반영 방식으로 개편}"
   git commit -m "$COMMIT_MSG" --author="choicomma <choicomma@users.noreply.github.com>"
   echo "✅ 커밋 완료: $COMMIT_MSG"
 else

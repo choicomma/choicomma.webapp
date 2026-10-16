@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { runSafeSupabaseQuery } from "@/lib/supabase/server";
+import seedCustomers from "@/data/customers.json";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -33,11 +34,17 @@ function readCustomersFile(): any[] {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf-8");
       const data = JSON.parse(raw);
-      if (Array.isArray(data)) return data;
+      if (Array.isArray(data) && data.length > 0) return data;
     }
   } catch (err) {
     console.warn("[Customers File Read Warning]:", err);
   }
+
+  // Vercel Serverless Function 배포 환경 번들 fallback
+  if (Array.isArray(seedCustomers) && seedCustomers.length > 0) {
+    return seedCustomers;
+  }
+
   return [];
 }
 
@@ -126,13 +133,34 @@ export async function GET(req: NextRequest) {
     }
 
     if (query) {
-      list = list.filter(
-        (c) =>
-          c.name?.toLowerCase().includes(query) ||
-          c.email?.toLowerCase().includes(query) ||
-          c.phone?.includes(query) ||
-          c.id?.toLowerCase().includes(query)
-      );
+      const qClean = query.trim().toLowerCase();
+      const qNoSpace = qClean.replace(/\s+/g, "");
+      const qDigits = qClean.replace(/[^0-9]/g, "");
+
+      list = list.filter((c) => {
+        const cName = String(c.name || "").toLowerCase();
+        const cEmail = String(c.email || "").toLowerCase();
+        const cPhone = String(c.phone || "").toLowerCase();
+        const cPhoneDigits = cPhone.replace(/[^0-9]/g, "");
+        const cId = String(c.id || "").toLowerCase();
+        const cImwebUid = String(c.imwebUid || "").toLowerCase();
+        const cLoginId = String(c.loginId || "").toLowerCase();
+        const cAddr = String(c.address || "").toLowerCase();
+        const cDetailAddr = String(c.detailAddress || "").toLowerCase();
+
+        return (
+          cName.includes(qClean) ||
+          (qNoSpace.length > 0 && cName.replace(/\s+/g, "").includes(qNoSpace)) ||
+          cEmail.includes(qClean) ||
+          cLoginId.includes(qClean) ||
+          cId.includes(qClean) ||
+          cImwebUid.includes(qClean) ||
+          cPhone.includes(qClean) ||
+          (qDigits.length >= 2 && cPhoneDigits.includes(qDigits)) ||
+          cAddr.includes(qClean) ||
+          cDetailAddr.includes(qClean)
+        );
+      });
     }
 
     return NextResponse.json({ success: true, count: list.length, customers: list }, { headers: NO_CACHE_HEADERS });

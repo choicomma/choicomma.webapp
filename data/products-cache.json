@@ -1,5 +1,30 @@
 [
   {
+    "customTitles": {
+      "productImages": "제품 이미지 등록 (최대 10개)",
+      "price": "판매가 (KRW)",
+      "variantCutImages": "컬러등록",
+      "productNo": "상품번호",
+      "title": "상품명",
+      "description": "상품 간단설명 (상단 제목 밑 노출)",
+      "detailImages": "추가 상세 이미지",
+      "previewScreen": "상세페이지 미리보기 화면",
+      "categories": "카테고리 선택",
+      "mainFeatured": "메인 전시 여부 (메인 슬라이더/추천 노출)",
+      "saleStatus": "상품 판매 상태 (즉시 구매 On/Off)",
+      "scheduledRelease": "판매 시작 시간 지정 (예약 오픈)",
+      "productLabel": "상품 라벨",
+      "fabricInfo": "소재 및 원단 정보",
+      "fabricComposition": "혼용률 성분",
+      "fabricImage": "원단 확대 이미지",
+      "sizeOptions": "사이즈 옵션",
+      "sizeGuide": "실측 사이즈 가이드",
+      "sizeStock": "사이즈별 재고 수량",
+      "timeSale": "타임세일 프로모션",
+      "bulkDiscount": "대량 구매 구간별 할인 규칙 (수량 할인)",
+      "option1Name": "Color",
+      "option2Name": "Size"
+    },
     "id": "excel-product-465",
     "tags": [
       "NEW",
@@ -7,7 +32,8 @@
       "pno:465",
       "pcode:CC-465",
       "TIMESALE",
-      "tsrate:25"
+      "tsrate:25",
+      "top-seller"
     ],
     "price": {
       "amount": "510000",
@@ -25,9 +51,9 @@
     "images": [
       {
         "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
+        "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 1",
         "width": 1200,
-        "height": 1600,
-        "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트"
+        "height": 1600
       }
     ],
     "lining": "없음",
@@ -36,33 +62,36 @@
         "id": "color",
         "name": "Color",
         "values": [
-          {
-            "id": "W 퓨어캐시미어 100 체인 하프넥 니트",
-            "name": "W 퓨어캐시미어 100 체인 하프넥 니트"
-          }
+          "W 퓨어캐시미어 100 체인 하프넥 니트"
+        ]
+      },
+      {
+        "id": "size",
+        "name": "Size",
+        "values": [
+          "FREE"
         ]
       }
     ],
     "variants": [
       {
-        "id": "var-465-W-퓨어캐시미어-100-체인-하프넥-니트-FREE",
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
-          "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - W 퓨어캐시미어 100 체인 하프넥 니트"
-        },
+        "id": "var-W 퓨어캐시미어 100 체인 하프넥 니트-FREE-1792155104119",
+        "title": "W 퓨어캐시미어 100 체인 하프넥 니트 / FREE",
         "price": {
           "amount": "510000",
           "currencyCode": "KRW"
         },
-        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - W 퓨어캐시미어 100 체인 하프넥 니트",
+        "availableForSale": true,
         "selectedOptions": [
           {
             "name": "Color",
             "value": "W 퓨어캐시미어 100 체인 하프넥 니트"
+          },
+          {
+            "name": "Size",
+            "value": "FREE"
           }
-        ],
-        "availableForSale": true,
-        "inventoryQuantity": 10
+        ]
       }
     ],
     "createdAt": "2026-10-08T14:17:15.537Z",
@@ -72,7 +101,7 @@
       "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
     },
     "thickness": "적당함",
-    "updatedAt": "2026-10-12T07:20:35.965Z",
+    "updatedAt": "2026-10-16T12:51:44.119Z",
     "categoryId": "top",
     "created_at": "2026-10-08T14:17:15.537Z",
     "elasticity": "보통",
@@ -87,22 +116,23 @@
         "currencyCode": "KRW"
       }
     },
-    "updated_at": "2026-10-12T07:20:35.876Z",
+    "updated_at": "2026-10-16T12:51:44.425Z",
     "categoryIds": [
       "top"
     ],
     "colorHexMap": {
+      "BLACK": "#000000",
+      "CREAM": "#FDFBF7",
+      "CHARCOAL": "#36454F",
+      "NAVY": "#000080",
+      "BEIGE": "#F5F5DC",
+      "WHITE": "#FFFFFF",
+      "BROWN": "#8B4513",
       "RED": "#DC2626",
       "BLUE": "#2563EB",
-      "NAVY": "#000080",
-      "PINK": "#EC4899",
-      "BEIGE": "#F5F5DC",
-      "BLACK": "#000000",
-      "BROWN": "#8B4513",
-      "CREAM": "#FDFBF7",
       "GREEN": "#16A34A",
       "KHAKI": "#708090",
-      "WHITE": "#FFFFFF",
+      "PINK": "#EC4899",
       "모카": "#8B5A2B",
       "블랙": "#000000",
       "차콜": "#36454F",
@@ -110,7 +140,6 @@
       "토프": "#483C32",
       "A타입": "#1C1C1C",
       "B타입": "#2B2B2B",
-      "CHARCOAL": "#36454F",
       "베이지": "#F5F5DC",
       "오트밀": "#D8C7B5",
       "화이트": "#FFFFFF",
@@ -139,30 +168,110 @@
     "description": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
     "productCode": "CC-465",
     "bulkDiscount": {
-      "rules": [],
       "enabled": false,
-      "productNo": 465,
-      "isTimeSale": true,
-      "productCode": "CC-465",
-      "releaseDate": "",
-      "timeSaleDiscountRate": 25
+      "rules": [],
+      "fabricImage": "",
+      "fabricTextureImage": "",
+      "fabricComposition": "CASHMERE 100%",
+      "showFabricInfo": false
     },
     "displayOrder": 1,
     "productLabel": "BLACK_LABEL",
     "featuredImage": {
       "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
+      "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
       "width": 1200,
-      "height": 1600,
-      "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트"
+      "height": 1600
     },
     "isMainFeatured": true,
     "descriptionHtml": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
     "availableForSale": true,
     "detailDescription": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
     "fabricComposition": "CASHMERE 100%",
-    "timeSaleDiscountRate": 25
+    "timeSaleDiscountRate": 30,
+    "stockMap": {
+      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
+    },
+    "releaseDate": "2026-10-27T10:00",
+    "colorImages": {},
+    "sizeMeasurements": [
+      {
+        "name": "어깨단면",
+        "values": {
+          "1": "50",
+          "2": "52",
+          "3": "54",
+          "FREE": "56"
+        }
+      },
+      {
+        "name": "가슴단면",
+        "values": {
+          "1": "56.5",
+          "2": "58.5",
+          "3": "60.5",
+          "FREE": "62.5"
+        }
+      },
+      {
+        "name": "팔길이",
+        "values": {
+          "1": "59",
+          "2": "60",
+          "3": "61",
+          "FREE": "61.5"
+        }
+      },
+      {
+        "name": "총장",
+        "values": {
+          "1": "58/62.5",
+          "2": "60/64.5",
+          "3": "62/66.5",
+          "FREE": "63/67.5"
+        }
+      }
+    ],
+    "showFabricBadge": false,
+    "showFabricInfo": false,
+    "showSizeGuide": false,
+    "showSizeRecommendation": false,
+    "fabricImage": "",
+    "fabricTextureImage": "",
+    "optionNames": {
+      "color": "Color",
+      "size": "Size"
+    },
+    "timeSaleAllowCoupon": true,
+    "timeSaleStartDate": "2026-08-20T09:00:00+09:00",
+    "timeSaleEndDate": "2026-08-27T23:59:00+09:00"
   },
   {
+    "customTitles": {
+      "price": "판매가 (KRW)",
+      "title": "상품명",
+      "timeSale": "타임세일 프로모션",
+      "productNo": "상품번호",
+      "sizeGuide": "실측 사이즈 가이드",
+      "sizeStock": "사이즈별 재고 수량",
+      "categories": "카테고리 선택",
+      "fabricInfo": "소재 및 원단 정보",
+      "saleStatus": "상품 판매 상태 (즉시 구매 On/Off)",
+      "description": "상품 간단설명 (상단 제목 밑 노출)",
+      "fabricImage": "원단 확대 이미지",
+      "option1Name": "Color",
+      "option2Name": "Size",
+      "sizeOptions": "사이즈 옵션",
+      "bulkDiscount": "대량 구매 구간별 할인 규칙 (수량 할인)",
+      "detailImages": "추가 상세 이미지",
+      "mainFeatured": "메인 전시 여부 (메인 슬라이더/추천 노출)",
+      "productLabel": "상품 라벨",
+      "previewScreen": "상세페이지 미리보기 화면",
+      "productImages": "제품 이미지 등록 (최대 10개)",
+      "scheduledRelease": "판매 시작 시간 지정 (예약 오픈)",
+      "variantCutImages": "컬러등록",
+      "fabricComposition": "혼용률 성분"
+    },
     "id": "excel-product-464",
     "tags": [
       "NEW",
@@ -189,9 +298,9 @@
     "images": [
       {
         "url": "https://cdn.imweb.me/thumbnail/20260923/5f6b738e79304b21.jpg",
+        "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 1",
         "width": 1200,
-        "height": 1600,
-        "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 1"
+        "height": 1600
       }
     ],
     "lining": "없음",
@@ -216,12 +325,13 @@
     },
     "variants": [
       {
-        "id": "var-W 퓨어캐시미어 100 체인 하프넥 니트-FREE-1792051546778",
+        "id": "var-W 퓨어캐시미어 100 체인 하프넥 니트-FREE-1792155118216",
+        "title": "W 퓨어캐시미어 100 체인 하프넥 니트 / FREE",
         "price": {
           "amount": "510000",
           "currencyCode": "KRW"
         },
-        "title": "W 퓨어캐시미어 100 체인 하프넥 니트 / FREE",
+        "availableForSale": true,
         "selectedOptions": [
           {
             "name": "Color",
@@ -231,8 +341,7 @@
             "name": "Size",
             "value": "FREE"
           }
-        ],
-        "availableForSale": true
+        ]
       }
     ],
     "createdAt": "2026-10-08T14:17:16.537Z",
@@ -242,7 +351,7 @@
       "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
     },
     "thickness": "적당함",
-    "updatedAt": "2026-10-15T08:05:46.778Z",
+    "updatedAt": "2026-10-16T12:51:58.216Z",
     "categoryId": "top",
     "created_at": "2026-10-08T14:17:16.537Z",
     "elasticity": "보통",
@@ -257,22 +366,23 @@
         "currencyCode": "KRW"
       }
     },
-    "updated_at": "2026-10-15T08:05:49.034Z",
+    "updated_at": "2026-10-16T12:51:58.435Z",
     "categoryIds": [
       "top"
     ],
     "colorHexMap": {
+      "BLACK": "#000000",
+      "CREAM": "#FDFBF7",
+      "CHARCOAL": "#36454F",
+      "NAVY": "#000080",
+      "BEIGE": "#F5F5DC",
+      "WHITE": "#FFFFFF",
+      "BROWN": "#8B4513",
       "RED": "#DC2626",
       "BLUE": "#2563EB",
-      "NAVY": "#000080",
-      "PINK": "#EC4899",
-      "BEIGE": "#F5F5DC",
-      "BLACK": "#000000",
-      "BROWN": "#8B4513",
-      "CREAM": "#FDFBF7",
       "GREEN": "#16A34A",
       "KHAKI": "#708090",
-      "WHITE": "#FFFFFF",
+      "PINK": "#EC4899",
       "모카": "#8B5A2B",
       "블랙": "#000000",
       "차콜": "#36454F",
@@ -280,7 +390,6 @@
       "토프": "#483C32",
       "A타입": "#1C1C1C",
       "B타입": "#2B2B2B",
-      "CHARCOAL": "#36454F",
       "베이지": "#F5F5DC",
       "오트밀": "#D8C7B5",
       "화이트": "#FFFFFF",
@@ -311,52 +420,27 @@
     "fabricImage": "",
     "productCode": "CC-464",
     "bulkDiscount": {
-      "rules": [],
       "enabled": false,
+      "rules": [],
       "fabricImage": "",
-      "showFabricInfo": false,
+      "fabricTextureImage": "",
       "fabricComposition": "CASHMERE 100%",
-      "fabricTextureImage": ""
-    },
-    "customTitles": {
-      "price": "판매가 (KRW)",
-      "title": "상품명",
-      "timeSale": "타임세일 프로모션",
-      "productNo": "상품번호",
-      "sizeGuide": "실측 사이즈 가이드",
-      "sizeStock": "사이즈별 재고 수량",
-      "categories": "카테고리 선택",
-      "fabricInfo": "소재 및 원단 정보",
-      "saleStatus": "상품 판매 상태 (즉시 구매 On/Off)",
-      "description": "상품 간단설명 (상단 제목 밑 노출)",
-      "fabricImage": "원단 확대 이미지",
-      "option1Name": "Color",
-      "option2Name": "Size",
-      "sizeOptions": "사이즈 옵션",
-      "bulkDiscount": "대량 구매 구간별 할인 규칙 (수량 할인)",
-      "detailImages": "추가 상세 이미지",
-      "mainFeatured": "메인 전시 여부 (메인 슬라이더/추천 노출)",
-      "productLabel": "상품 라벨",
-      "previewScreen": "상세페이지 미리보기 화면",
-      "productImages": "제품 이미지 등록 (최대 10개)",
-      "scheduledRelease": "판매 시작 시간 지정 (예약 오픈)",
-      "variantCutImages": "컬러등록",
-      "fabricComposition": "혼용률 성분"
+      "showFabricInfo": false
     },
     "displayOrder": 2,
     "productLabel": "BLACK_LABEL",
     "featuredImage": {
       "url": "https://cdn.imweb.me/thumbnail/20260923/5f6b738e79304b21.jpg",
+      "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
       "width": 1200,
-      "height": 1600,
-      "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트"
+      "height": 1600
     },
     "showSizeGuide": false,
     "isMainFeatured": true,
     "showFabricInfo": false,
     "descriptionHtml": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
     "showFabricBadge": false,
-    "timeSaleEndDate": "2026-08-27T23:59:00",
+    "timeSaleEndDate": "2026-08-27T23:59:00+09:00",
     "availableForSale": true,
     "sizeMeasurements": [
       {
@@ -398,11 +482,224 @@
     ],
     "detailDescription": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
     "fabricComposition": "CASHMERE 100%",
-    "timeSaleStartDate": "2026-08-20T09:00:00",
+    "timeSaleStartDate": "2026-08-20T09:00:00+09:00",
     "fabricTextureImage": "",
     "timeSaleAllowCoupon": true,
-    "timeSaleDiscountRate": 35,
-    "showSizeRecommendation": false
+    "timeSaleDiscountRate": 30,
+    "showSizeRecommendation": false,
+    "releaseDate": "2026-10-27T10:00",
+    "optionNames": {
+      "color": "Color",
+      "size": "Size"
+    }
+  },
+  {
+    "id": "excel-product-468",
+    "tags": [
+      "NEW",
+      "BLACK_LABEL",
+      "pno:468",
+      "pcode:CC-468",
+      "tsrate:25"
+    ],
+    "price": {
+      "amount": "490000",
+      "currencyCode": "KRW"
+    },
+    "sizes": [
+      "1(44-55)",
+      "2(66-88)"
+    ],
+    "stock": 30,
+    "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+    "colors": [
+      "B타입"
+    ],
+    "handle": "product-468",
+    "images": [
+      {
+        "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/08922bea77e5f.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/1edaafdc7d0c8.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/44acbf4187532.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
+      },
+      {
+        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7c285ecacc052.jpg",
+        "width": 1200,
+        "height": 1600,
+        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
+      }
+    ],
+    "lining": "없음",
+    "options": [
+      {
+        "id": "color",
+        "name": "Color",
+        "values": [
+          {
+            "id": "B타입",
+            "name": "B타입"
+          }
+        ]
+      },
+      {
+        "id": "size",
+        "name": "Size",
+        "values": [
+          {
+            "id": "1(44-55)",
+            "name": "1(44-55)"
+          },
+          {
+            "id": "2(66-88)",
+            "name": "2(66-88)"
+          }
+        ]
+      }
+    ],
+    "stockMap": {
+      "B타입-1(44-55)": 15,
+      "B타입-2(66-88)": 15
+    },
+    "variants": [
+      {
+        "id": "var-468-B타입-1-44-55-",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 1(44-55)"
+        },
+        "price": {
+          "amount": "490000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 1(44-55)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "B타입"
+          },
+          {
+            "name": "Size",
+            "value": "1(44-55)"
+          }
+        ],
+        "availableForSale": true,
+        "inventoryQuantity": 15
+      },
+      {
+        "id": "var-468-B타입-2-66-88-",
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 2(66-88)"
+        },
+        "price": {
+          "amount": "490000",
+          "currencyCode": "KRW"
+        },
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 2(66-88)",
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "B타입"
+          },
+          {
+            "name": "Size",
+            "value": "2(66-88)"
+          }
+        ],
+        "availableForSale": true,
+        "inventoryQuantity": 15
+      }
+    ],
+    "createdAt": "2026-10-12T07:29:03.842Z",
+    "productNo": 468,
+    "sheerness": "없음",
+    "sizeStock": {
+      "B타입-1(44-55)": 15,
+      "B타입-2(66-88)": 15
+    },
+    "thickness": "적당함",
+    "updatedAt": "2026-10-12T07:29:03.842Z",
+    "categoryId": "top",
+    "created_at": "2026-10-12T07:29:03.842Z",
+    "elasticity": "보통",
+    "isTimeSale": true,
+    "priceRange": {
+      "maxVariantPrice": {
+        "amount": "490000",
+        "currencyCode": "KRW"
+      },
+      "minVariantPrice": {
+        "amount": "490000",
+        "currencyCode": "KRW"
+      }
+    },
+    "updated_at": "2026-10-16T12:49:46.176Z",
+    "categoryIds": [
+      "top"
+    ],
+    "colorHexMap": {
+      "RED": "#DC2626",
+      "BLUE": "#2563EB",
+      "NAVY": "#000080",
+      "PINK": "#EC4899",
+      "BEIGE": "#F5F5DC",
+      "BLACK": "#000000",
+      "BROWN": "#8B4513",
+      "CREAM": "#FDFBF7",
+      "GREEN": "#16A34A",
+      "KHAKI": "#708090",
+      "WHITE": "#FFFFFF",
+      "모카": "#8B5A2B",
+      "블랙": "#000000",
+      "차콜": "#36454F",
+      "A타입": "#1C1C1C",
+      "B타입": "#2B2B2B",
+      "CHARCOAL": "#36454F",
+      "아이보리": "#FFFFF0",
+      "쿨그레이": "#8E9CA3"
+    },
+    "description": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+    "productCode": "CC-468",
+    "bulkDiscount": {
+      "rules": [],
+      "enabled": false,
+      "productNo": 468,
+      "productCode": "CC-468",
+      "releaseDate": ""
+    },
+    "displayOrder": 3,
+    "productLabel": "BLACK_LABEL",
+    "featuredImage": {
+      "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
+      "width": 1200,
+      "height": 1600,
+      "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
+    },
+    "isMainFeatured": true,
+    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/08922bea77e5f.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/1edaafdc7d0c8.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/44acbf4187532.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7c285ecacc052.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p>",
+    "availableForSale": true,
+    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/08922bea77e5f.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/1edaafdc7d0c8.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/44acbf4187532.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7c285ecacc052.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p>",
+    "fabricComposition": "SILK 100%",
+    "timeSaleDiscountRate": 25
   },
   {
     "id": "excel-product-463",
@@ -597,7 +894,7 @@
       "productCode": "CC-463",
       "releaseDate": ""
     },
-    "displayOrder": 3,
+    "displayOrder": 4,
     "productLabel": "BLACK_LABEL",
     "featuredImage": {
       "url": "https://cdn.imweb.me/thumbnail/20261008/fed1806f5d8c4687.jpg",
@@ -609,214 +906,6 @@
     "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/40a0b8060fac2.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/996479957bb42.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/bd4e74baeb6ba.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/f2fe4624cf5bc.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><br></p><p><br></p><p><br></p>",
     "availableForSale": true,
     "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/40a0b8060fac2.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/996479957bb42.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/bd4e74baeb6ba.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/f2fe4624cf5bc.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입\"></p><p><br></p><p><br></p><p><br></p>",
-    "fabricComposition": "SILK 100%",
-    "timeSaleDiscountRate": 25
-  },
-  {
-    "id": "excel-product-468",
-    "tags": [
-      "NEW",
-      "BLACK_LABEL",
-      "pno:468",
-      "pcode:CC-468",
-      "tsrate:25"
-    ],
-    "price": {
-      "amount": "490000",
-      "currencyCode": "KRW"
-    },
-    "sizes": [
-      "1(44-55)",
-      "2(66-88)"
-    ],
-    "stock": 30,
-    "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
-    "colors": [
-      "B타입"
-    ],
-    "handle": "product-468",
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
-        "width": 1200,
-        "height": 1600,
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/08922bea77e5f.jpg",
-        "width": 1200,
-        "height": 1600,
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/1edaafdc7d0c8.jpg",
-        "width": 1200,
-        "height": 1600,
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/44acbf4187532.jpg",
-        "width": 1200,
-        "height": 1600,
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
-      },
-      {
-        "url": "https://cdn.imweb.me/upload/S2024012207385124238d5/7c285ecacc052.jpg",
-        "width": 1200,
-        "height": 1600,
-        "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
-      }
-    ],
-    "lining": "없음",
-    "options": [
-      {
-        "id": "color",
-        "name": "Color",
-        "values": [
-          {
-            "id": "B타입",
-            "name": "B타입"
-          }
-        ]
-      },
-      {
-        "id": "size",
-        "name": "Size",
-        "values": [
-          {
-            "id": "1(44-55)",
-            "name": "1(44-55)"
-          },
-          {
-            "id": "2(66-88)",
-            "name": "2(66-88)"
-          }
-        ]
-      }
-    ],
-    "stockMap": {
-      "B타입-1(44-55)": 15,
-      "B타입-2(66-88)": 15
-    },
-    "variants": [
-      {
-        "id": "var-468-B타입-1-44-55-",
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
-          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 1(44-55)"
-        },
-        "price": {
-          "amount": "490000",
-          "currencyCode": "KRW"
-        },
-        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 1(44-55)",
-        "selectedOptions": [
-          {
-            "name": "Color",
-            "value": "B타입"
-          },
-          {
-            "name": "Size",
-            "value": "1(44-55)"
-          }
-        ],
-        "availableForSale": true,
-        "inventoryQuantity": 15
-      },
-      {
-        "id": "var-468-B타입-2-66-88-",
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
-          "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 2(66-88)"
-        },
-        "price": {
-          "amount": "490000",
-          "currencyCode": "KRW"
-        },
-        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입 - B타입 / 2(66-88)",
-        "selectedOptions": [
-          {
-            "name": "Color",
-            "value": "B타입"
-          },
-          {
-            "name": "Size",
-            "value": "2(66-88)"
-          }
-        ],
-        "availableForSale": true,
-        "inventoryQuantity": 15
-      }
-    ],
-    "createdAt": "2026-10-12T07:29:03.842Z",
-    "productNo": 468,
-    "sheerness": "없음",
-    "sizeStock": {
-      "B타입-1(44-55)": 15,
-      "B타입-2(66-88)": 15
-    },
-    "thickness": "적당함",
-    "updatedAt": "2026-10-12T07:29:03.842Z",
-    "categoryId": "top",
-    "created_at": "2026-10-12T07:29:03.842Z",
-    "elasticity": "보통",
-    "isTimeSale": true,
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "490000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "490000",
-        "currencyCode": "KRW"
-      }
-    },
-    "updated_at": "2026-10-12T13:10:18.757Z",
-    "categoryIds": [
-      "top"
-    ],
-    "colorHexMap": {
-      "RED": "#DC2626",
-      "BLUE": "#2563EB",
-      "NAVY": "#000080",
-      "PINK": "#EC4899",
-      "BEIGE": "#F5F5DC",
-      "BLACK": "#000000",
-      "BROWN": "#8B4513",
-      "CREAM": "#FDFBF7",
-      "GREEN": "#16A34A",
-      "KHAKI": "#708090",
-      "WHITE": "#FFFFFF",
-      "모카": "#8B5A2B",
-      "블랙": "#000000",
-      "차콜": "#36454F",
-      "A타입": "#1C1C1C",
-      "B타입": "#2B2B2B",
-      "CHARCOAL": "#36454F",
-      "아이보리": "#FFFFF0",
-      "쿨그레이": "#8E9CA3"
-    },
-    "description": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
-    "productCode": "CC-468",
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false,
-      "productNo": 468,
-      "productCode": "CC-468",
-      "releaseDate": ""
-    },
-    "displayOrder": 4,
-    "productLabel": "BLACK_LABEL",
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20261008/246254dc38f04062.jpg",
-      "width": 1200,
-      "height": 1600,
-      "altText": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입"
-    },
-    "isMainFeatured": true,
-    "descriptionHtml": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/08922bea77e5f.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/1edaafdc7d0c8.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/44acbf4187532.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7c285ecacc052.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p>",
-    "availableForSale": true,
-    "detailDescription": "<p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/08922bea77e5f.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/1edaafdc7d0c8.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/44acbf4187532.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><img class=\"fr-dib\" src=\"https://cdn.imweb.me/upload/S2024012207385124238d5/7c285ecacc052.jpg\" alt=\"[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입\"></p><p><br></p><p><br></p><p><br></p><p><br></p><p><br></p>",
     "fabricComposition": "SILK 100%",
     "timeSaleDiscountRate": 25
   },
