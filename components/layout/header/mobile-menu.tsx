@@ -12,8 +12,9 @@ import { Collection } from "@/lib/sfcc/types";
 import { useCart } from "@/components/cart/cart-context";
 import CartModal from "@/components/cart/modal";
 import { LanguageSelector } from "./language-selector";
-import { ShoppingBag, Menu, Search, X } from "lucide-react";
-import { validateCustomerSession } from "@/lib/auth/customer-session";
+import { cn } from "@/lib/utils";
+import { ShoppingBag, Menu, Search, X, LogOut } from "lucide-react";
+import { validateCustomerSession, clearCustomerSession } from "@/lib/auth/customer-session";
 
 interface MobileMenuProps {
   collections: Collection[];
@@ -55,6 +56,32 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
     setSearchTerm("");
     closeMobileMenu();
     router.push("/shop");
+  };
+
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      clearCustomerSession(false);
+      sessionStorage.removeItem("choicomma_admin_authenticated");
+      sessionStorage.removeItem("choicomma_session_active");
+      localStorage.removeItem("choicomma_session_expires_at");
+      localStorage.removeItem("membership_user_name");
+      localStorage.removeItem("membership_user_email");
+      localStorage.removeItem("membership_user_phone");
+      localStorage.removeItem("membership_user_postcode");
+      localStorage.removeItem("membership_user_address");
+      localStorage.removeItem("membership_user_address_detail");
+      localStorage.removeItem("membership_user_points");
+      localStorage.removeItem("user_grade");
+      localStorage.removeItem("user_role");
+      localStorage.removeItem("is_logged_in");
+      window.dispatchEvent(new CustomEvent("storage"));
+      window.dispatchEvent(new CustomEvent("auth_changed"));
+    }
+    setIsLoggedIn(false);
+    setIsAdmin(false);
+    setUserName("");
+    closeMobileMenu();
+    router.push("/login");
   };
 
   useEffect(() => {
@@ -162,7 +189,34 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
 
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Top Quick Actions Grid: 로그인 / MY PAGE + 주문내역/배송조회 + 장바구니 */}
+                {/* User Greeting Bar when Logged In */}
+                {isLoggedIn && (
+                  <div className="flex items-center justify-between p-3.5 bg-neutral-50 border border-neutral-200/80 rounded-2xl shadow-2xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-neutral-950 text-white flex items-center justify-center font-black text-xs shrink-0">
+                        {userName ? userName.slice(0, 1) : "MY"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-black text-neutral-950 truncate">
+                          {userName ? `${userName} 님` : "회원님"}
+                        </p>
+                        <p className="text-[10px] font-bold text-neutral-400">
+                          {isAdmin ? "관리자 (Admin)" : "로그인 중"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold text-neutral-600 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer border border-neutral-200/80 hover:border-rose-200"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>로그아웃</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Top Quick Actions Grid: 로그인 / MY PAGE + 주문내역/배송조회 + 장바구니 (+ 로그아웃) */}
                 <nav className="grid grid-cols-2 gap-2.5">
                   <Button
                     size="lg"
@@ -198,11 +252,27 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
                         window.dispatchEvent(new CustomEvent("choicomma_open_cart"));
                       }, 100);
                     }}
-                    className="col-span-2 w-full bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer"
+                    className={cn(
+                      "bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer",
+                      isLoggedIn ? "col-span-1" : "col-span-2 w-full"
+                    )}
                   >
                     <ShoppingBag className="w-4 h-4 shrink-0" />
                     <span>장바구니 ({cart?.totalQuantity || 0})</span>
                   </Button>
+
+                  {/* Logout Button in Grid when Logged In */}
+                  {isLoggedIn && (
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      onClick={handleLogout}
+                      className="col-span-1 bg-neutral-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-neutral-700 border border-neutral-200 justify-center font-bold py-5 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer transition-colors"
+                    >
+                      <LogOut className="w-4 h-4 shrink-0" />
+                      <span>로그아웃</span>
+                    </Button>
+                  )}
                 </nav>
 
                 {/* Mobile Search Bar */}
