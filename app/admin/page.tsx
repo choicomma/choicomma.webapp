@@ -95,6 +95,7 @@ import { StoreSettingsManagement } from "./components/store-settings-management"
 import { ActivityLogsManagement } from "./components/activity-logs-management";
 import { LanguageSelector } from "@/components/layout/header/language-selector";
 import { getAllUserCoupons, syncAdminCouponsFromSupabase } from "@/lib/membership/coupons";
+import { logoutUser } from "@/lib/auth/customer-session";
 
 // Initial orders data
 const initialOrders: any[] = [];
@@ -665,16 +666,7 @@ export default function AdminPage() {
   };
 
   const handleAdminLogout = () => {
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("choicomma_admin_authenticated");
-      localStorage.removeItem("user_role");
-      localStorage.removeItem("membership_user_email");
-      localStorage.removeItem("membership_user_name");
-      localStorage.removeItem("is_logged_in");
-      window.dispatchEvent(new CustomEvent("storage"));
-      window.dispatchEvent(new CustomEvent("auth_changed"));
-      window.location.replace("/");
-    }
+    logoutUser({ redirectUrl: "/" });
   };
 
   return (

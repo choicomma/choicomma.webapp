@@ -45,7 +45,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { validateCustomerSession, clearCustomerSession } from "@/lib/auth/customer-session";
+import { validateCustomerSession, clearCustomerSession, logoutUser } from "@/lib/auth/customer-session";
 import { validatePasswordComplexity } from "@/lib/auth/password";
 import { calculateTierBySpend } from "@/lib/membership/tiers";
 import { Separator } from "@/components/ui/separator";
@@ -1259,22 +1259,10 @@ function MembershipContent() {
   };
 
   const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      clearCustomerSession();
-      localStorage.removeItem("membership_user_name");
-      localStorage.removeItem("membership_user_email");
-      localStorage.removeItem("membership_user_phone");
-      localStorage.removeItem("membership_user_postcode");
-      localStorage.removeItem("membership_user_address");
-      localStorage.removeItem("membership_user_address_detail");
-      localStorage.removeItem("membership_user_points");
-      localStorage.removeItem("user_grade");
-      localStorage.removeItem("user_role");
-      localStorage.removeItem("is_logged_in");
-      sessionStorage.removeItem("choicomma_admin_authenticated");
-      window.dispatchEvent(new CustomEvent("storage"));
-      window.dispatchEvent(new CustomEvent("auth_changed"));
+    if (clearCart) {
+      clearCart();
     }
+    logoutUser();
     toast.info("성공적으로 로그아웃되었습니다.");
     window.location.href = "/login";
   };

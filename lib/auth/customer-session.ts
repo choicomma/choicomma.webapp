@@ -22,7 +22,27 @@ export const STORAGE_KEYS = {
   USER_ADDRESS_DETAIL: "membership_user_address_detail",
   USER_POINTS: "membership_user_points",
   USER_GRADE: "user_grade",
+  CART: "choicomma_cart",
 } as const;
+
+/**
+ * 브라우저 장바구니 데이터 및 관련 쿠키/이벤트 완전 초기화
+ */
+export function clearCartData(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(STORAGE_KEYS.CART);
+    try {
+      document.cookie = "cartId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
+      document.cookie = "mock_cart=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
+    } catch {}
+    window.dispatchEvent(
+      new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } })
+    );
+  } catch (err) {
+    console.error("Failed to clear cart data:", err);
+  }
+}
 
 /**
  * 관리자 계정 여부 판별 (관리자는 세션 만료 대상에서 제외)
@@ -70,16 +90,22 @@ export function initCustomerSession(): void {
 }
 
 /**
- * 일반 고객 세션 정리 (자동/수동 로그아웃)
+ * 일반 고객 세션 정리 (자동/수동 세션 만료)
  */
-export function clearCustomerSession(triggerEvents = true): void {
+export function clearCustomerSession(triggerEvents = true, clearCart = true): void {
   if (typeof window === "undefined") return;
   try {
+    if (clearCart) {
+      clearCartData();
+    }
+
     // 관리자 세션은 보존
     if (isCurrentUserAdmin()) return;
 
     sessionStorage.removeItem(STORAGE_KEYS.SESSION_ACTIVE);
+    sessionStorage.removeItem("choicomma_session_active");
     localStorage.removeItem(STORAGE_KEYS.SESSION_EXPIRES_AT);
+    localStorage.removeItem("choicomma_session_expires_at");
     localStorage.removeItem(STORAGE_KEYS.IS_LOGGED_IN);
     localStorage.removeItem(STORAGE_KEYS.USER_ID);
     localStorage.removeItem(STORAGE_KEYS.USER_LOGIN_ID);
@@ -99,6 +125,48 @@ export function clearCustomerSession(triggerEvents = true): void {
     }
   } catch (err) {
     console.error("Failed to clear customer session:", err);
+  }
+}
+
+/**
+ * 완전한 로그아웃 처리 (고객/관리자 공통, 장바구니 및 모든 세션/스토리지 데이터 초기화)
+ */
+export function logoutUser(options?: { redirectUrl?: string; clearCart?: boolean }): void {
+  if (typeof window === "undefined") return;
+  const shouldClearCart = options?.clearCart ?? true;
+
+  try {
+    if (shouldClearCart) {
+      clearCartData();
+    }
+
+    sessionStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
+    sessionStorage.removeItem(STORAGE_KEYS.SESSION_ACTIVE);
+    sessionStorage.removeItem("choicomma_session_active");
+
+    localStorage.removeItem(STORAGE_KEYS.SESSION_EXPIRES_AT);
+    localStorage.removeItem("choicomma_session_expires_at");
+    localStorage.removeItem(STORAGE_KEYS.IS_LOGGED_IN);
+    localStorage.removeItem(STORAGE_KEYS.USER_ID);
+    localStorage.removeItem(STORAGE_KEYS.USER_LOGIN_ID);
+    localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+    localStorage.removeItem(STORAGE_KEYS.USER_EMAIL);
+    localStorage.removeItem(STORAGE_KEYS.USER_PHONE);
+    localStorage.removeItem(STORAGE_KEYS.USER_POSTCODE);
+    localStorage.removeItem(STORAGE_KEYS.USER_ADDRESS);
+    localStorage.removeItem(STORAGE_KEYS.USER_ADDRESS_DETAIL);
+    localStorage.removeItem(STORAGE_KEYS.USER_POINTS);
+    localStorage.removeItem(STORAGE_KEYS.USER_GRADE);
+    localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
+
+    window.dispatchEvent(new CustomEvent("storage"));
+    window.dispatchEvent(new CustomEvent("auth_changed", { detail: { reason: "logout" } }));
+
+    if (options?.redirectUrl) {
+      window.location.href = options.redirectUrl;
+    }
+  } catch (err) {
+    console.error("Failed to logout user:", err);
   }
 }
 

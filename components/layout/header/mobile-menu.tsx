@@ -14,7 +14,7 @@ import CartModal from "@/components/cart/modal";
 import { LanguageSelector } from "./language-selector";
 import { cn } from "@/lib/utils";
 import { ShoppingBag, Menu, Search, X, LogOut } from "lucide-react";
-import { validateCustomerSession, clearCustomerSession } from "@/lib/auth/customer-session";
+import { validateCustomerSession, logoutUser } from "@/lib/auth/customer-session";
 
 interface MobileMenuProps {
   collections: Collection[];
@@ -30,7 +30,7 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
   const searchParams = useSearchParams();
   const queryVal = searchParams?.get("q") || "";
   const [searchTerm, setSearchTerm] = useState(queryVal);
-  const { cart } = useCart();
+  const { cart, clearCart } = useCart();
 
   const openMobileMenu = () => setIsOpen(true);
   const closeMobileMenu = () => setIsOpen(false);
@@ -59,24 +59,10 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
   };
 
   const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      clearCustomerSession(false);
-      sessionStorage.removeItem("choicomma_admin_authenticated");
-      sessionStorage.removeItem("choicomma_session_active");
-      localStorage.removeItem("choicomma_session_expires_at");
-      localStorage.removeItem("membership_user_name");
-      localStorage.removeItem("membership_user_email");
-      localStorage.removeItem("membership_user_phone");
-      localStorage.removeItem("membership_user_postcode");
-      localStorage.removeItem("membership_user_address");
-      localStorage.removeItem("membership_user_address_detail");
-      localStorage.removeItem("membership_user_points");
-      localStorage.removeItem("user_grade");
-      localStorage.removeItem("user_role");
-      localStorage.removeItem("is_logged_in");
-      window.dispatchEvent(new CustomEvent("storage"));
-      window.dispatchEvent(new CustomEvent("auth_changed"));
+    if (clearCart) {
+      clearCart();
     }
+    logoutUser();
     setIsLoggedIn(false);
     setIsAdmin(false);
     setUserName("");

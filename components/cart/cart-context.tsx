@@ -306,6 +306,10 @@ export function CartProvider({
     const empty = createEmptyCart();
     setCartState(empty);
     localStorage.removeItem("choicomma_cart");
+    try {
+      document.cookie = "cartId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
+      document.cookie = "mock_cart=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
+    } catch (e) {}
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent("choicomma_cart_updated", { detail: { action: "clear" } }));
     }, 0);

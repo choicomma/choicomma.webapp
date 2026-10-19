@@ -111,3 +111,15 @@ export async function createCartAndSetCookie() {
     return "Error creating cart";
   }
 }
+
+export async function clearCartCookieAction() {
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete("cartId");
+    cookieStore.delete("mock_cart");
+    revalidateTag(TAGS.cart);
+  } catch (e) {
+    console.error("Failed to clear cart cookies:", e);
+  }
+}
+
