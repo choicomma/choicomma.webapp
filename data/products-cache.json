@@ -1,75 +1,102 @@
 [
   {
-    "id": "excel-product-453",
+    "id": "excel-product-464",
     "tags": [
       "NEW",
-      "ESSENTIAL",
-      "pno:453",
-      "pcode:CC-453"
+      "BLACK_LABEL",
+      "pno:464",
+      "pcode:CC-464",
+      "TIMESALE",
+      "tsrate:25",
+      "top-seller"
     ],
     "price": {
-      "amount": "1950000",
+      "amount": "510000",
       "currencyCode": "KRW"
     },
     "sizes": [
       "FREE"
     ],
-    "stock": 0,
-    "title": "리얼퍼 견장",
+    "stock": 10,
+    "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
     "colors": [
-      "ONE COLOR"
+      "W 퓨어캐시미어 100 체인 하프넥 니트"
     ],
-    "handle": "product-453",
+    "handle": "product-464",
     "images": [
       {
-        "url": "https://cdn.imweb.me/thumbnail/20260826/d533d52a52ae4cab.jpg",
+        "url": "https://cdn.imweb.me/thumbnail/20260923/5f6b738e79304b21.jpg",
         "width": 1200,
         "height": 1600,
-        "altText": "리얼퍼 견장"
+        "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 1"
       }
     ],
-    "options": [],
+    "lining": "없음",
+    "options": [
+      {
+        "id": "color",
+        "name": "Color",
+        "values": [
+          "W 퓨어캐시미어 100 체인 하프넥 니트"
+        ]
+      },
+      {
+        "id": "size",
+        "name": "Size",
+        "values": [
+          "FREE"
+        ]
+      }
+    ],
+    "stockMap": {
+      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
+    },
     "variants": [
       {
-        "id": "var-453-ONE-COLOR-FREE",
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260826/d533d52a52ae4cab.jpg",
-          "altText": "리얼퍼 견장"
-        },
+        "id": "var-W 퓨어캐시미어 100 체인 하프넥 니트-FREE-1792051546778",
         "price": {
-          "amount": "1950000",
+          "amount": "510000",
           "currencyCode": "KRW"
         },
-        "title": "리얼퍼 견장",
+        "title": "W 퓨어캐시미어 100 체인 하프넥 니트 / FREE",
         "selectedOptions": [
           {
-            "name": "Default",
-            "value": "Default"
+            "name": "Color",
+            "value": "W 퓨어캐시미어 100 체인 하프넥 니트"
+          },
+          {
+            "name": "Size",
+            "value": "FREE"
           }
         ],
-        "availableForSale": false
+        "availableForSale": true
       }
     ],
-    "createdAt": "2026-10-14T05:28:08.676Z",
-    "productNo": 453,
+    "createdAt": "2026-10-08T14:17:16.537Z",
+    "productNo": 464,
+    "sheerness": "없음",
     "sizeStock": {
-      "ONE COLOR-FREE": 0
+      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
     },
-    "categoryId": "shoes",
-    "created_at": "2026-10-14T05:28:08.676Z",
-    "isTimeSale": false,
+    "thickness": "적당함",
+    "updatedAt": "2026-10-19T13:15:29.705Z",
+    "categoryId": "top",
+    "created_at": "2026-10-08T14:17:16.537Z",
+    "elasticity": "보통",
+    "isTimeSale": true,
     "priceRange": {
       "maxVariantPrice": {
-        "amount": "1950000",
+        "amount": "510000",
         "currencyCode": "KRW"
       },
       "minVariantPrice": {
-        "amount": "1950000",
+        "amount": "510000",
         "currencyCode": "KRW"
       }
     },
+    "updated_at": "2026-10-19T13:15:29.705Z",
     "categoryIds": [
-      "shoes"
+      "top"
     ],
     "colorHexMap": {
       "RED": "#DC2626",
@@ -93,6 +120,7 @@
       "CHARCOAL": "#36454F",
       "베이지": "#F5F5DC",
       "오트밀": "#D8C7B5",
+      "화이트": "#FFFFFF",
       "브릭로즈": "#C08081",
       "아이보리": "#FFFFF0",
       "쿨그레이": "#8E9CA3",
@@ -103,48 +131,277 @@
       "와인브라운": "#5C2C35",
       "초코브라운": "#3D2314",
       "카멜베이지": "#D4A373",
+      "멜란지 모카": "#8B5A2B",
+      "멜란지 차콜": "#36454F",
       "다크쿨그레이": "#4A5056",
       "라이트그레이": "#D3D3D3",
+      "라이트메로나": "#C8E6C9",
       "라이트스카이": "#87CEFA",
       "라이트 메로나": "#C8E6C9",
       "라이트웜그레이": "#BFB8AF",
+      "멜란지 쿨그레이": "#8E9CA3",
+      "라이트옐로우베이지": "#F6F0D8",
       "라이트 옐로우 베이지": "#F6F0D8"
     },
-    "description": "리얼퍼 견장",
-    "productCode": "CC-453",
+    "colorImages": {},
+    "description": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+    "fabricImage": "",
+    "productCode": "CC-464",
     "bulkDiscount": {
       "rules": [],
       "enabled": false,
-      "productNo": 453,
       "fabricImage": "",
-      "productCode": "CC-453",
-      "releaseDate": "",
-      "showSizeGuide": false,
       "showFabricInfo": false,
-      "sizeChartImage": "",
-      "sizeGuideImage": "",
-      "timeSaleEndDate": "",
-      "sizeMeasurements": [],
-      "fabricComposition": "COTTON 100% (프리미엄 코튼)",
-      "timeSaleStartDate": "",
-      "fabricTextureImage": "",
-      "timeSaleAllowCoupon": true,
-      "timeSaleAllowPoints": true,
-      "timeSaleDiscountPrice": "",
-      "isTimeSale": false
+      "fabricComposition": "CASHMERE 100%",
+      "fabricTextureImage": ""
     },
-    "displayOrder": 16,
-    "productLabel": "ESSENTIAL",
+    "customTitles": {
+      "price": "판매가 (KRW)",
+      "title": "상품명",
+      "timeSale": "타임세일 프로모션",
+      "productNo": "상품번호",
+      "sizeGuide": "실측 사이즈 가이드",
+      "sizeStock": "사이즈별 재고 수량",
+      "categories": "카테고리 선택",
+      "fabricInfo": "소재 및 원단 정보",
+      "saleStatus": "상품 판매 상태 (즉시 구매 On/Off)",
+      "description": "상품 간단설명 (상단 제목 밑 노출)",
+      "fabricImage": "원단 확대 이미지",
+      "option1Name": "Color",
+      "option2Name": "Size",
+      "sizeOptions": "사이즈 옵션",
+      "bulkDiscount": "대량 구매 구간별 할인 규칙 (수량 할인)",
+      "detailImages": "추가 상세 이미지",
+      "mainFeatured": "메인 전시 여부 (메인 슬라이더/추천 노출)",
+      "productLabel": "상품 라벨",
+      "previewScreen": "상세페이지 미리보기 화면",
+      "productImages": "제품 이미지 등록 (최대 10개)",
+      "scheduledRelease": "판매 시작 시간 지정 (예약 오픈)",
+      "variantCutImages": "컬러등록",
+      "fabricComposition": "혼용률 성분"
+    },
+    "displayOrder": 2,
+    "productLabel": "BLACK_LABEL",
     "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260826/d533d52a52ae4cab.jpg",
+      "url": "https://cdn.imweb.me/thumbnail/20260923/5f6b738e79304b21.jpg",
       "width": 1200,
       "height": 1600,
-      "altText": "리얼퍼 견장"
+      "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트"
     },
-    "isMainFeatured": false,
-    "descriptionHtml": "",
-    "availableForSale": false,
-    "detailDescription": ""
+    "showSizeGuide": false,
+    "isMainFeatured": true,
+    "showFabricInfo": false,
+    "descriptionHtml": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
+    "showFabricBadge": false,
+    "timeSaleEndDate": "2026-08-27T23:59:00",
+    "availableForSale": true,
+    "sizeMeasurements": [
+      {
+        "name": "어깨단면",
+        "values": {
+          "1": "50",
+          "2": "52",
+          "3": "54",
+          "FREE": "56"
+        }
+      },
+      {
+        "name": "가슴단면",
+        "values": {
+          "1": "56.5",
+          "2": "58.5",
+          "3": "60.5",
+          "FREE": "62.5"
+        }
+      },
+      {
+        "name": "팔길이",
+        "values": {
+          "1": "59",
+          "2": "60",
+          "3": "61",
+          "FREE": "61.5"
+        }
+      },
+      {
+        "name": "총장",
+        "values": {
+          "1": "58/62.5",
+          "2": "60/64.5",
+          "3": "62/66.5",
+          "FREE": "63/67.5"
+        }
+      }
+    ],
+    "detailDescription": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
+    "fabricComposition": "CASHMERE 100%",
+    "timeSaleStartDate": "2026-08-20T09:00:00",
+    "fabricTextureImage": "",
+    "timeSaleAllowCoupon": true,
+    "timeSaleDiscountRate": 35,
+    "showSizeRecommendation": false
+  },
+  {
+    "id": "excel-product-465",
+    "productNo": 465,
+    "productCode": "CC-465",
+    "created_at": "2026-10-08T14:17:15.537Z",
+    "createdAt": "2026-10-08T14:17:15.537Z",
+    "handle": "product-465",
+    "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+    "categoryId": "top",
+    "categoryIds": [
+      "top"
+    ],
+    "description": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+    "detailDescription": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
+    "descriptionHtml": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
+    "priceRange": {
+      "minVariantPrice": {
+        "amount": "510000",
+        "currencyCode": "KRW"
+      },
+      "maxVariantPrice": {
+        "amount": "510000",
+        "currencyCode": "KRW"
+      }
+    },
+    "price": {
+      "amount": "510000",
+      "currencyCode": "KRW"
+    },
+    "featuredImage": {
+      "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
+      "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "width": 1200,
+      "height": 1600
+    },
+    "images": [
+      {
+        "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
+        "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "width": 1200,
+        "height": 1600
+      }
+    ],
+    "colors": [
+      "W 퓨어캐시미어 100 체인 하프넥 니트"
+    ],
+    "colorHexMap": {
+      "RED": "#DC2626",
+      "BLUE": "#2563EB",
+      "NAVY": "#000080",
+      "PINK": "#EC4899",
+      "BEIGE": "#F5F5DC",
+      "BLACK": "#000000",
+      "BROWN": "#8B4513",
+      "CREAM": "#FDFBF7",
+      "GREEN": "#16A34A",
+      "KHAKI": "#708090",
+      "WHITE": "#FFFFFF",
+      "모카": "#8B5A2B",
+      "블랙": "#000000",
+      "차콜": "#36454F",
+      "A타입": "#1C1C1C",
+      "B타입": "#2B2B2B",
+      "CHARCOAL": "#36454F",
+      "베이지": "#F5F5DC",
+      "오트밀": "#D8C7B5",
+      "아이보리": "#FFFFF0",
+      "쿨그레이": "#8E9CA3",
+      "카멜": "#C19A6B",
+      "라이트그레이": "#D3D3D3",
+      "토프": "#483C32",
+      "소프트핑크": "#FFB6C1",
+      "라이트스카이": "#87CEFA",
+      "브릭로즈": "#C08081",
+      "와인브라운": "#5C2C35",
+      "모카브라운": "#6E4D3E",
+      "라이트웜그레이": "#BFB8AF",
+      "다크쿨그레이": "#4A5056",
+      "라이트 옐로우 베이지": "#F6F0D8",
+      "라이트옐로우베이지": "#F6F0D8",
+      "라이트 메로나": "#C8E6C9",
+      "라이트메로나": "#C8E6C9",
+      "초코브라운": "#3D2314",
+      "모카베이지": "#C8B6A6",
+      "모카그레이": "#8C827A",
+      "카멜베이지": "#D4A373",
+      "멜란지 모카": "#8B5A2B",
+      "멜란지 차콜": "#36454F",
+      "멜란지 쿨그레이": "#8E9CA3",
+      "화이트": "#FFFFFF"
+    },
+    "sizes": [
+      "FREE"
+    ],
+    "stock": 10,
+    "sizeStock": {
+      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
+    },
+    "availableForSale": true,
+    "isMainFeatured": true,
+    "productLabel": "BLACK_LABEL",
+    "options": [
+      {
+        "id": "color",
+        "name": "Color",
+        "values": [
+          {
+            "id": "W 퓨어캐시미어 100 체인 하프넥 니트",
+            "name": "W 퓨어캐시미어 100 체인 하프넥 니트"
+          }
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "id": "var-465-W-퓨어캐시미어-100-체인-하프넥-니트-FREE",
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - W 퓨어캐시미어 100 체인 하프넥 니트",
+        "availableForSale": true,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "W 퓨어캐시미어 100 체인 하프넥 니트"
+          }
+        ],
+        "price": {
+          "amount": "510000",
+          "currencyCode": "KRW"
+        },
+        "image": {
+          "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
+          "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - W 퓨어캐시미어 100 체인 하프넥 니트"
+        },
+        "inventoryQuantity": 10
+      }
+    ],
+    "tags": [
+      "NEW",
+      "BLACK_LABEL",
+      "pno:465",
+      "pcode:CC-465",
+      "TIMESALE",
+      "tsrate:25"
+    ],
+    "isTimeSale": true,
+    "bulkDiscount": {
+      "enabled": false,
+      "rules": [],
+      "productNo": 465,
+      "productCode": "CC-465",
+      "releaseDate": "",
+      "timeSaleDiscountRate": 25,
+      "isTimeSale": true
+    },
+    "fabricComposition": "CASHMERE 100%",
+    "elasticity": "보통",
+    "sheerness": "없음",
+    "thickness": "적당함",
+    "lining": "없음",
+    "timeSaleDiscountRate": 25,
+    "updated_at": "2026-10-19T13:15:29.705Z",
+    "updatedAt": "2026-10-19T13:15:29.705Z"
   },
   {
     "id": "excel-product-440",
@@ -94145,410 +94402,6 @@
     "timeSaleAllowCoupon": true,
     "timeSaleDiscountRate": 20,
     "showSizeRecommendation": false
-  },
-  {
-    "id": "excel-product-464",
-    "tags": [
-      "NEW",
-      "BLACK_LABEL",
-      "pno:464",
-      "pcode:CC-464",
-      "TIMESALE",
-      "tsrate:25",
-      "top-seller"
-    ],
-    "price": {
-      "amount": "510000",
-      "currencyCode": "KRW"
-    },
-    "sizes": [
-      "FREE"
-    ],
-    "stock": 10,
-    "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
-    "colors": [
-      "W 퓨어캐시미어 100 체인 하프넥 니트"
-    ],
-    "handle": "product-464",
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260923/5f6b738e79304b21.jpg",
-        "width": 1200,
-        "height": 1600,
-        "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 1"
-      }
-    ],
-    "lining": "없음",
-    "options": [
-      {
-        "id": "color",
-        "name": "Color",
-        "values": [
-          "W 퓨어캐시미어 100 체인 하프넥 니트"
-        ]
-      },
-      {
-        "id": "size",
-        "name": "Size",
-        "values": [
-          "FREE"
-        ]
-      }
-    ],
-    "stockMap": {
-      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
-    },
-    "variants": [
-      {
-        "id": "var-W 퓨어캐시미어 100 체인 하프넥 니트-FREE-1792051546778",
-        "price": {
-          "amount": "510000",
-          "currencyCode": "KRW"
-        },
-        "title": "W 퓨어캐시미어 100 체인 하프넥 니트 / FREE",
-        "selectedOptions": [
-          {
-            "name": "Color",
-            "value": "W 퓨어캐시미어 100 체인 하프넥 니트"
-          },
-          {
-            "name": "Size",
-            "value": "FREE"
-          }
-        ],
-        "availableForSale": true
-      }
-    ],
-    "createdAt": "2026-10-08T14:17:16.537Z",
-    "productNo": 464,
-    "sheerness": "없음",
-    "sizeStock": {
-      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
-    },
-    "thickness": "적당함",
-    "updatedAt": "2026-10-15T08:05:46.778Z",
-    "categoryId": "top",
-    "created_at": "2026-10-08T14:17:16.537Z",
-    "elasticity": "보통",
-    "isTimeSale": true,
-    "priceRange": {
-      "maxVariantPrice": {
-        "amount": "510000",
-        "currencyCode": "KRW"
-      },
-      "minVariantPrice": {
-        "amount": "510000",
-        "currencyCode": "KRW"
-      }
-    },
-    "updated_at": "2026-10-19T12:15:00.695Z",
-    "categoryIds": [
-      "top"
-    ],
-    "colorHexMap": {
-      "RED": "#DC2626",
-      "BLUE": "#2563EB",
-      "NAVY": "#000080",
-      "PINK": "#EC4899",
-      "BEIGE": "#F5F5DC",
-      "BLACK": "#000000",
-      "BROWN": "#8B4513",
-      "CREAM": "#FDFBF7",
-      "GREEN": "#16A34A",
-      "KHAKI": "#708090",
-      "WHITE": "#FFFFFF",
-      "모카": "#8B5A2B",
-      "블랙": "#000000",
-      "차콜": "#36454F",
-      "카멜": "#C19A6B",
-      "토프": "#483C32",
-      "A타입": "#1C1C1C",
-      "B타입": "#2B2B2B",
-      "CHARCOAL": "#36454F",
-      "베이지": "#F5F5DC",
-      "오트밀": "#D8C7B5",
-      "화이트": "#FFFFFF",
-      "브릭로즈": "#C08081",
-      "아이보리": "#FFFFF0",
-      "쿨그레이": "#8E9CA3",
-      "모카그레이": "#8C827A",
-      "모카베이지": "#C8B6A6",
-      "모카브라운": "#6E4D3E",
-      "소프트핑크": "#FFB6C1",
-      "와인브라운": "#5C2C35",
-      "초코브라운": "#3D2314",
-      "카멜베이지": "#D4A373",
-      "멜란지 모카": "#8B5A2B",
-      "멜란지 차콜": "#36454F",
-      "다크쿨그레이": "#4A5056",
-      "라이트그레이": "#D3D3D3",
-      "라이트메로나": "#C8E6C9",
-      "라이트스카이": "#87CEFA",
-      "라이트 메로나": "#C8E6C9",
-      "라이트웜그레이": "#BFB8AF",
-      "멜란지 쿨그레이": "#8E9CA3",
-      "라이트옐로우베이지": "#F6F0D8",
-      "라이트 옐로우 베이지": "#F6F0D8"
-    },
-    "colorImages": {},
-    "description": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
-    "fabricImage": "",
-    "productCode": "CC-464",
-    "bulkDiscount": {
-      "rules": [],
-      "enabled": false,
-      "fabricImage": "",
-      "showFabricInfo": false,
-      "fabricComposition": "CASHMERE 100%",
-      "fabricTextureImage": ""
-    },
-    "customTitles": {
-      "price": "판매가 (KRW)",
-      "title": "상품명",
-      "timeSale": "타임세일 프로모션",
-      "productNo": "상품번호",
-      "sizeGuide": "실측 사이즈 가이드",
-      "sizeStock": "사이즈별 재고 수량",
-      "categories": "카테고리 선택",
-      "fabricInfo": "소재 및 원단 정보",
-      "saleStatus": "상품 판매 상태 (즉시 구매 On/Off)",
-      "description": "상품 간단설명 (상단 제목 밑 노출)",
-      "fabricImage": "원단 확대 이미지",
-      "option1Name": "Color",
-      "option2Name": "Size",
-      "sizeOptions": "사이즈 옵션",
-      "bulkDiscount": "대량 구매 구간별 할인 규칙 (수량 할인)",
-      "detailImages": "추가 상세 이미지",
-      "mainFeatured": "메인 전시 여부 (메인 슬라이더/추천 노출)",
-      "productLabel": "상품 라벨",
-      "previewScreen": "상세페이지 미리보기 화면",
-      "productImages": "제품 이미지 등록 (최대 10개)",
-      "scheduledRelease": "판매 시작 시간 지정 (예약 오픈)",
-      "variantCutImages": "컬러등록",
-      "fabricComposition": "혼용률 성분"
-    },
-    "displayOrder": 2,
-    "productLabel": "BLACK_LABEL",
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260923/5f6b738e79304b21.jpg",
-      "width": 1200,
-      "height": 1600,
-      "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트"
-    },
-    "showSizeGuide": false,
-    "isMainFeatured": true,
-    "showFabricInfo": false,
-    "descriptionHtml": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
-    "showFabricBadge": false,
-    "timeSaleEndDate": "2026-08-27T23:59:00",
-    "availableForSale": true,
-    "sizeMeasurements": [
-      {
-        "name": "어깨단면",
-        "values": {
-          "1": "50",
-          "2": "52",
-          "3": "54",
-          "FREE": "56"
-        }
-      },
-      {
-        "name": "가슴단면",
-        "values": {
-          "1": "56.5",
-          "2": "58.5",
-          "3": "60.5",
-          "FREE": "62.5"
-        }
-      },
-      {
-        "name": "팔길이",
-        "values": {
-          "1": "59",
-          "2": "60",
-          "3": "61",
-          "FREE": "61.5"
-        }
-      },
-      {
-        "name": "총장",
-        "values": {
-          "1": "58/62.5",
-          "2": "60/64.5",
-          "3": "62/66.5",
-          "FREE": "63/67.5"
-        }
-      }
-    ],
-    "detailDescription": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
-    "fabricComposition": "CASHMERE 100%",
-    "timeSaleStartDate": "2026-08-20T09:00:00",
-    "fabricTextureImage": "",
-    "timeSaleAllowCoupon": true,
-    "timeSaleDiscountRate": 35,
-    "showSizeRecommendation": false
-  },
-  {
-    "id": "excel-product-465",
-    "productNo": 465,
-    "productCode": "CC-465",
-    "created_at": "2026-10-08T14:17:15.537Z",
-    "createdAt": "2026-10-08T14:17:15.537Z",
-    "handle": "product-465",
-    "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
-    "categoryId": "top",
-    "categoryIds": [
-      "top"
-    ],
-    "description": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
-    "detailDescription": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
-    "descriptionHtml": "<p style=\"text-align: center;\"><strong><span style=\"font-size: 18px;\">상세 페이지 업데이트 중입니다 </span></strong></p>",
-    "priceRange": {
-      "minVariantPrice": {
-        "amount": "510000",
-        "currencyCode": "KRW"
-      },
-      "maxVariantPrice": {
-        "amount": "510000",
-        "currencyCode": "KRW"
-      }
-    },
-    "price": {
-      "amount": "510000",
-      "currencyCode": "KRW"
-    },
-    "featuredImage": {
-      "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
-      "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
-      "width": 1200,
-      "height": 1600
-    },
-    "images": [
-      {
-        "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
-        "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
-        "width": 1200,
-        "height": 1600
-      }
-    ],
-    "colors": [
-      "W 퓨어캐시미어 100 체인 하프넥 니트"
-    ],
-    "colorHexMap": {
-      "RED": "#DC2626",
-      "BLUE": "#2563EB",
-      "NAVY": "#000080",
-      "PINK": "#EC4899",
-      "BEIGE": "#F5F5DC",
-      "BLACK": "#000000",
-      "BROWN": "#8B4513",
-      "CREAM": "#FDFBF7",
-      "GREEN": "#16A34A",
-      "KHAKI": "#708090",
-      "WHITE": "#FFFFFF",
-      "모카": "#8B5A2B",
-      "블랙": "#000000",
-      "차콜": "#36454F",
-      "A타입": "#1C1C1C",
-      "B타입": "#2B2B2B",
-      "CHARCOAL": "#36454F",
-      "베이지": "#F5F5DC",
-      "오트밀": "#D8C7B5",
-      "아이보리": "#FFFFF0",
-      "쿨그레이": "#8E9CA3",
-      "카멜": "#C19A6B",
-      "라이트그레이": "#D3D3D3",
-      "토프": "#483C32",
-      "소프트핑크": "#FFB6C1",
-      "라이트스카이": "#87CEFA",
-      "브릭로즈": "#C08081",
-      "와인브라운": "#5C2C35",
-      "모카브라운": "#6E4D3E",
-      "라이트웜그레이": "#BFB8AF",
-      "다크쿨그레이": "#4A5056",
-      "라이트 옐로우 베이지": "#F6F0D8",
-      "라이트옐로우베이지": "#F6F0D8",
-      "라이트 메로나": "#C8E6C9",
-      "라이트메로나": "#C8E6C9",
-      "초코브라운": "#3D2314",
-      "모카베이지": "#C8B6A6",
-      "모카그레이": "#8C827A",
-      "카멜베이지": "#D4A373",
-      "멜란지 모카": "#8B5A2B",
-      "멜란지 차콜": "#36454F",
-      "멜란지 쿨그레이": "#8E9CA3",
-      "화이트": "#FFFFFF"
-    },
-    "sizes": [
-      "FREE"
-    ],
-    "stock": 10,
-    "sizeStock": {
-      "W 퓨어캐시미어 100 체인 하프넥 니트-FREE": 10
-    },
-    "availableForSale": true,
-    "isMainFeatured": true,
-    "productLabel": "BLACK_LABEL",
-    "options": [
-      {
-        "id": "color",
-        "name": "Color",
-        "values": [
-          {
-            "id": "W 퓨어캐시미어 100 체인 하프넥 니트",
-            "name": "W 퓨어캐시미어 100 체인 하프넥 니트"
-          }
-        ]
-      }
-    ],
-    "variants": [
-      {
-        "id": "var-465-W-퓨어캐시미어-100-체인-하프넥-니트-FREE",
-        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - W 퓨어캐시미어 100 체인 하프넥 니트",
-        "availableForSale": true,
-        "selectedOptions": [
-          {
-            "name": "Color",
-            "value": "W 퓨어캐시미어 100 체인 하프넥 니트"
-          }
-        ],
-        "price": {
-          "amount": "510000",
-          "currencyCode": "KRW"
-        },
-        "image": {
-          "url": "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg",
-          "altText": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트 - W 퓨어캐시미어 100 체인 하프넥 니트"
-        },
-        "inventoryQuantity": 10
-      }
-    ],
-    "tags": [
-      "NEW",
-      "BLACK_LABEL",
-      "pno:465",
-      "pcode:CC-465",
-      "TIMESALE",
-      "tsrate:25"
-    ],
-    "isTimeSale": true,
-    "bulkDiscount": {
-      "enabled": false,
-      "rules": [],
-      "productNo": 465,
-      "productCode": "CC-465",
-      "releaseDate": "",
-      "timeSaleDiscountRate": 25,
-      "isTimeSale": true
-    },
-    "fabricComposition": "CASHMERE 100%",
-    "elasticity": "보통",
-    "sheerness": "없음",
-    "thickness": "적당함",
-    "lining": "없음",
-    "timeSaleDiscountRate": 25,
-    "updated_at": "2026-10-19T12:15:00.695Z",
-    "updatedAt": "2026-10-12T07:20:35.965Z"
   },
   {
     "id": "excel-product-275",
