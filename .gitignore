@@ -30,3 +30,4 @@ next-env.d.ts
 *.log
 scratch/
 tools/print-bridge/*.log
+kakao-login/

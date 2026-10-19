@@ -1,6 +1,46 @@
 {
   "logs": [
     {
+      "id": "LOG-1792398089621-817",
+      "timestamp": "2026-10-19 17:21:29",
+      "isoDate": "2026-10-19T08:21:29.621Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/login",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1790844603819_61bcav7",
+      "sessionId": "s_1792397161520_ccyj3",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
+      "id": "LOG-1792398081892-398",
+      "timestamp": "2026-10-19 17:21:21",
+      "isoDate": "2026-10-19T08:21:21.892Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1790844603819_61bcav7",
+      "sessionId": "s_1792397161520_ccyj3",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
       "id": "LOG-1792398040085-887",
       "timestamp": "2026-10-19 17:20:40",
       "isoDate": "2026-10-19T08:20:40.085Z",
@@ -14854,5 +14894,5 @@
     "182.218.169.90",
     "106.101.10.125"
   ],
-  "updatedAt": "2026-10-19T08:20:40.085Z"
+  "updatedAt": "2026-10-19T08:21:29.621Z"
 }
