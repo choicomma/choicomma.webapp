@@ -219,6 +219,194 @@
   ],
   "auditLogs": [
     {
+      "id": "adt_1792416066871_13ncl",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:21:06",
+      "created_at": "2026-10-19T13:21:06.871Z"
+    },
+    {
+      "id": "adt_1792416062387_yjfi7",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:21:02",
+      "created_at": "2026-10-19T13:21:02.387Z"
+    },
+    {
+      "id": "adt_1792416058041_b36a8",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:20:58",
+      "created_at": "2026-10-19T13:20:58.041Z"
+    },
+    {
+      "id": "adt_1792416009860_lk32m",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:20:09",
+      "created_at": "2026-10-19T13:20:09.860Z"
+    },
+    {
+      "id": "adt_1792416003108_vfvis",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:20:03",
+      "created_at": "2026-10-19T13:20:03.108Z"
+    },
+    {
+      "id": "adt_1792415965342_qkjl6",
+      "adminId": "admin_master",
+      "adminName": "스토어 관리자",
+      "actionType": "UPDATE",
+      "domain": "POPUP",
+      "targetId": "popup_config",
+      "targetName": "기존 회원 로그인 안내",
+      "description": "팝업 설정 저장 (활성화: ON, 제목: 기존 회원 로그인 안내)",
+      "beforeData": {
+        "isActive": true,
+        "title": "기존 회원 및 카카오톡 로그인 안내"
+      },
+      "afterData": {
+        "isActive": true,
+        "title": "기존 회원 로그인 안내"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:19:25",
+      "created_at": "2026-10-19T13:19:25.342Z"
+    },
+    {
+      "id": "adt_1792415946689_wqq13",
+      "adminId": "admin_master",
+      "adminName": "스토어 관리자",
+      "actionType": "UPDATE",
+      "domain": "POPUP",
+      "targetId": "popup_config",
+      "targetName": "기존 회원 및 카카오톡 로그인 안내",
+      "description": "팝업 설정 저장 (활성화: ON, 제목: 기존 회원 및 카카오톡 로그인 안내)",
+      "beforeData": {
+        "isActive": true,
+        "title": "기존 회원 및 카카오톡 로그인 안내"
+      },
+      "afterData": {
+        "isActive": true,
+        "title": "기존 회원 및 카카오톡 로그인 안내"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:19:06",
+      "created_at": "2026-10-19T13:19:06.689Z"
+    },
+    {
+      "id": "adt_1792415936446_xefky",
+      "adminId": "admin_master",
+      "adminName": "스토어 관리자",
+      "actionType": "UPDATE",
+      "domain": "POPUP",
+      "targetId": "popup_config",
+      "targetName": "기존 회원 및 카카오톡 로그인 안내",
+      "description": "팝업 설정 저장 (활성화: ON, 제목: 기존 회원 및 카카오톡 로그인 안내)",
+      "beforeData": {
+        "isActive": true,
+        "title": "기존 회원 및 카카오톡 로그인 안내"
+      },
+      "afterData": {
+        "isActive": true,
+        "title": "기존 회원 및 카카오톡 로그인 안내"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:18:56",
+      "created_at": "2026-10-19T13:18:56.446Z"
+    },
+    {
       "id": "adt_1792072590124_i2eyo",
       "adminId": "admin_master",
       "adminName": "스토어 관리자",
@@ -1167,5 +1355,5 @@
       "created_at": "2026-10-13T12:48:15.593Z"
     }
   ],
-  "updatedAt": "2026-10-19T09:02:37.118Z"
+  "updatedAt": "2026-10-19T13:21:06.874Z"
 }
