@@ -56,11 +56,15 @@ export function getNaverConfig(req?: Request) {
     "";
 
   if (!redirectUri && req) {
-    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3001";
-    const proto =
-      req.headers.get("x-forwarded-proto") ||
-      (host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https");
-    redirectUri = `${proto}://${host}/api/auth/naver/callback`;
+    const rawHost = (req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3001").trim();
+    const proto = req.headers.get("x-forwarded-proto") || (rawHost.includes("localhost") ? "http" : "https");
+
+    const isIpAddress = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(rawHost);
+    if (isIpAddress || rawHost.includes("localhost") || rawHost.includes("127.0.0.1")) {
+      redirectUri = "http://localhost:3001/api/auth/naver/callback";
+    } else {
+      redirectUri = `${proto}://${rawHost}/api/auth/naver/callback`;
+    }
   } else if (!redirectUri) {
     redirectUri = "http://localhost:3001/api/auth/naver/callback";
   }

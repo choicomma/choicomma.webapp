@@ -66,11 +66,15 @@ export function getKakaoConfig(req?: Request) {
 
   // 설정된 Redirect URI가 없을 경우 요청 헤더(Host)를 기반으로 동적 생성
   if (!redirectUri && req) {
-    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3001";
-    const proto =
-      req.headers.get("x-forwarded-proto") ||
-      (host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https");
-    redirectUri = `${proto}://${host}/api/auth/kakao/callback`;
+    const rawHost = (req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3001").trim();
+    const proto = req.headers.get("x-forwarded-proto") || (rawHost.includes("localhost") ? "http" : "https");
+
+    const isIpAddress = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(rawHost);
+    if (isIpAddress || rawHost.includes("localhost") || rawHost.includes("127.0.0.1")) {
+      redirectUri = "http://localhost:3001/api/auth/kakao/callback";
+    } else {
+      redirectUri = `${proto}://${rawHost}/api/auth/kakao/callback`;
+    }
   } else if (!redirectUri) {
     redirectUri = "http://localhost:3001/api/auth/kakao/callback";
   }

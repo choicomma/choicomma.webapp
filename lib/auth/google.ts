@@ -64,11 +64,16 @@ export function getGoogleConfig(req?: Request) {
     "";
 
   if (!redirectUri && req) {
-    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3001";
-    const proto =
-      req.headers.get("x-forwarded-proto") ||
-      (host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https");
-    redirectUri = `${proto}://${host}/api/auth/google/callback`;
+    const rawHost = (req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3001").trim();
+    const proto = req.headers.get("x-forwarded-proto") || (rawHost.includes("localhost") ? "http" : "https");
+
+    // 구글 OAuth 정책: 사설 IP(172.x, 192.168.x 등)는 차단되므로 로컬에서는 localhost로 고정
+    const isIpAddress = /^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(rawHost);
+    if (isIpAddress || rawHost.includes("localhost") || rawHost.includes("127.0.0.1")) {
+      redirectUri = "http://localhost:3001/api/auth/google/callback";
+    } else {
+      redirectUri = `${proto}://${rawHost}/api/auth/google/callback`;
+    }
   } else if (!redirectUri) {
     redirectUri = "http://localhost:3001/api/auth/google/callback";
   }
