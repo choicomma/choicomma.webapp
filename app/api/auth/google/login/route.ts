@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
     }
 
     const googleAuthUrl = buildGoogleAuthUrl(req, redirectParam);
-    return NextResponse.redirect(googleAuthUrl);
+    const res = NextResponse.redirect(googleAuthUrl);
+    res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    return res;
   } catch (err: any) {
     console.error("[Google Login Route Error]:", err);
     return NextResponse.json(

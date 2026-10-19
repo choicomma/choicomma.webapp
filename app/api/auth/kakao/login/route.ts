@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
     }
 
     const kakaoAuthUrl = buildKakaoAuthUrl(req, redirectParam);
-    return NextResponse.redirect(kakaoAuthUrl);
+    const res = NextResponse.redirect(kakaoAuthUrl);
+    res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    return res;
   } catch (err: any) {
     console.error("[Kakao Login Route Error]:", err);
     return NextResponse.json(

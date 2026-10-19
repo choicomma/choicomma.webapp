@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
     }
 
     const naverAuthUrl = buildNaverAuthUrl(req, redirectParam);
-    return NextResponse.redirect(naverAuthUrl);
+    const res = NextResponse.redirect(naverAuthUrl);
+    res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    return res;
   } catch (err: any) {
     console.error("[Naver Login Route Error]:", err);
     return NextResponse.json(

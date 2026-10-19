@@ -28,12 +28,19 @@ export interface KakaoUserAccount {
 
 function readEnvLocal(key: string): string {
   try {
-    const envPath = path.join(process.cwd(), ".env.local");
-    if (fs.existsSync(envPath)) {
-      const content = fs.readFileSync(envPath, "utf-8");
-      const match = content.match(new RegExp(`^${key}=(.*)$`, "m"));
-      if (match && match[1]) {
-        return match[1].trim().replace(/^['"]|['"]$/g, "");
+    const candidatePaths = [
+      path.join(process.cwd(), ".env.local"),
+      path.join(process.cwd(), ".env"),
+      path.resolve(".env.local"),
+      path.resolve(".env"),
+    ];
+    for (const envPath of candidatePaths) {
+      if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, "utf-8");
+        const match = content.match(new RegExp(`^\\s*${key}\\s*=\\s*(.*)$`, "m"));
+        if (match && match[1]) {
+          return match[1].trim().replace(/^['"]|['"]$/g, "");
+        }
       }
     }
   } catch (e) {}

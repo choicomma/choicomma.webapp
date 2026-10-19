@@ -130,7 +130,7 @@ export default function LoginPage() {
     setIsKakaoLoading(true);
     const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
     const redirectTarget = searchParams?.get("redirect") || "/membership";
-    window.location.href = `/api/auth/kakao/login?redirect=${encodeURIComponent(redirectTarget)}`;
+    window.location.href = `/api/auth/kakao/login?redirect=${encodeURIComponent(redirectTarget)}&t=${Date.now()}`;
   };
 
   // Handle Google Login Redirect
@@ -138,7 +138,7 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
     const redirectTarget = searchParams?.get("redirect") || "/membership";
-    window.location.href = `/api/auth/google/login?redirect=${encodeURIComponent(redirectTarget)}`;
+    window.location.href = `/api/auth/google/login?redirect=${encodeURIComponent(redirectTarget)}&t=${Date.now()}`;
   };
 
   // Handle Naver Login Redirect
@@ -146,7 +146,7 @@ export default function LoginPage() {
     setIsNaverLoading(true);
     const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
     const redirectTarget = searchParams?.get("redirect") || "/membership";
-    window.location.href = `/api/auth/naver/login?redirect=${encodeURIComponent(redirectTarget)}`;
+    window.location.href = `/api/auth/naver/login?redirect=${encodeURIComponent(redirectTarget)}&t=${Date.now()}`;
   };
 
   // Git 원격 파일(data/customers.json)과 로컬 캐시 안전 병합 동기화
