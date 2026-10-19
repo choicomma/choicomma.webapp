@@ -123,17 +123,9 @@ function StockInputItem({
     const parsed = parseInt(valStr, 10);
     const validVal = isNaN(parsed) || parsed < 0 ? 0 : parsed;
     if (validVal !== currentStock) {
-      const isConfirmed = window.confirm(
-        `[사이즈: ${size}] 재고 수량을 ${currentStock}개 ➡️ ${validVal}개로 변경하시겠습니까?`
-      );
-      if (isConfirmed) {
-        onConfirmStock(size, validVal);
-      } else {
-        setValStr(String(currentStock));
-      }
-    } else {
-      setValStr(String(validVal));
+      onConfirmStock(size, validVal);
     }
+    setValStr(String(validVal));
   };
 
   return (
@@ -178,14 +170,7 @@ function MeasurementInputItem({
   const commitValue = () => {
     const trimmed = val.trim();
     if (trimmed !== (currentVal || "")) {
-      const isConfirmed = window.confirm(
-        `[${rowName} / ${size}] 실측 수치를 '${currentVal || "미입력"}' ➡️ '${trimmed || "미입력"}' (으)로 변경하시겠습니까?`
-      );
-      if (isConfirmed) {
-        onConfirmVal(trimmed);
-      } else {
-        setVal(currentVal || "");
-      }
+      onConfirmVal(trimmed);
     }
   };
 
@@ -533,7 +518,7 @@ export function ProductFormModal({
       const reader = new FileReader();
       reader.onload = async (evt) => {
         const rawResult = evt.target?.result as string;
-        const compressed = await compressImageDataUrl(rawResult, 1280, 0.82);
+        const compressed = await compressImageDataUrl(rawResult, 1000, 0.76);
         setImageUrl(compressed);
         if (!images.includes(compressed)) {
           setImages([compressed, ...images]);
@@ -562,7 +547,7 @@ export function ProductFormModal({
         reader.onload = async (evt) => {
           const raw = evt.target?.result as string;
           if (raw) {
-            const compressed = await compressImageDataUrl(raw, 1280, 0.82);
+            const compressed = await compressImageDataUrl(raw, 1000, 0.76);
             resolve(compressed);
           } else {
             resolve("");
@@ -627,7 +612,7 @@ export function ProductFormModal({
         reader.onload = async (evt) => {
           const raw = evt.target?.result as string;
           if (raw) {
-            const compressed = await compressImageDataUrl(raw, 860, 0.72);
+            const compressed = await compressImageDataUrl(raw, 800, 0.70);
             resolve(compressed);
           } else {
             resolve("");
@@ -727,7 +712,10 @@ export function ProductFormModal({
       finalProductCode = `CC-${String(finalProdNo).padStart(3, "0")}`;
     }
 
-    // Build variants
+    // Build variants with dynamic option names
+    const finalOption1 = (formTitles.option1Name || option1Name || "Color").trim() || "Color";
+    const finalOption2 = (formTitles.option2Name || option2Name || "Size").trim() || "Size";
+
     const effectiveColors = colors.length > 0 ? colors : ["Default"];
     const effectiveSizes = sizes.length > 0 ? sizes : ["FREE"];
 
@@ -742,8 +730,8 @@ export function ProductFormModal({
           price: { amount: numPrice || "0", currencyCode: "KRW" },
           availableForSale: availableForSale && vStock > 0,
           selectedOptions: [
-            { name: "Color", value: c },
-            { name: "Size", value: s },
+            { name: finalOption1, value: c },
+            { name: finalOption2, value: s },
           ],
         });
       });
@@ -819,9 +807,13 @@ export function ProductFormModal({
         showFabricInfo: Boolean(fabricImage && fabricImage.trim() !== ""),
       },
       options: [
-        { id: "color", name: "Color", values: colors },
-        { id: "size", name: "Size", values: sizes },
+        { id: "color", name: finalOption1, values: colors },
+        { id: "size", name: finalOption2, values: sizes },
       ],
+      optionNames: {
+        color: finalOption1,
+        size: finalOption2,
+      },
       price: { amount: numPrice || "0", currencyCode: "KRW" },
       priceRange: {
         maxVariantPrice: { amount: numPrice || "0", currencyCode: "KRW" },
@@ -844,10 +836,30 @@ export function ProductFormModal({
       timeSaleDiscountRate: parsedRate,
       timeSaleAllowCoupon: isTimeSale ? timeSaleAllowCoupon : true,
       timeSaleStartDate: isTimeSale
-        ? `${new Date().getFullYear()}-${(timeSaleStartMonth || "1").padStart(2, "0")}-${(timeSaleStartDay || "1").padStart(2, "0")}T${timeSaleStartAmpm === "오후" ? String(((parseInt(timeSaleStartHour, 10) || 12) % 12) + 12).padStart(2, "0") : String((parseInt(timeSaleStartHour, 10) || 12) % 12).padStart(2, "0")}:${(timeSaleStartMinute || "0").padStart(2, "0")}:00`
+        ? (() => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const m = parseInt(timeSaleStartMonth, 10) || (now.getMonth() + 1);
+            const d = parseInt(timeSaleStartDay, 10) || now.getDate();
+            let h = parseInt(timeSaleStartHour, 10) || 12;
+            h = h % 12;
+            if (timeSaleStartAmpm === "오후") h += 12;
+            const min = parseInt(timeSaleStartMinute, 10) || 0;
+            return `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}T${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}:00+09:00`;
+          })()
         : undefined,
       timeSaleEndDate: isTimeSale
-        ? `${new Date().getFullYear()}-${(timeSaleEndMonth || "1").padStart(2, "0")}-${(timeSaleEndDay || "1").padStart(2, "0")}T${timeSaleEndAmpm === "오후" ? String(((parseInt(timeSaleEndHour, 10) || 12) % 12) + 12).padStart(2, "0") : String((parseInt(timeSaleEndHour, 10) || 12) % 12).padStart(2, "0")}:${(timeSaleEndMinute || "0").padStart(2, "0")}:00`
+        ? (() => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const m = parseInt(timeSaleEndMonth, 10) || (now.getMonth() + 1);
+            const d = parseInt(timeSaleEndDay, 10) || now.getDate();
+            let h = parseInt(timeSaleEndHour, 10) || 12;
+            h = h % 12;
+            if (timeSaleEndAmpm === "오후") h += 12;
+            const min = parseInt(timeSaleEndMinute, 10) || 0;
+            return `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}T${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}:00+09:00`;
+          })()
         : undefined,
     };
 
@@ -1787,7 +1799,7 @@ export function ProductFormModal({
                               reader.onload = async (evt) => {
                                 const raw = evt.target?.result as string;
                                 if (raw) {
-                                  const compressed = await compressImageDataUrl(raw, 1280, 0.82);
+                                  const compressed = await compressImageDataUrl(raw, 800, 0.72);
                                   setFabricImage(compressed);
                                 }
                               };
@@ -1862,7 +1874,7 @@ export function ProductFormModal({
                                 reader.onload = async (evt) => {
                                   const raw = evt.target?.result as string;
                                   if (raw) {
-                                    const compressed = await compressImageDataUrl(raw, 1280, 0.82);
+                                    const compressed = await compressImageDataUrl(raw, 800, 0.72);
                                     setCustomColorImg(compressed);
                                   }
                                 };
@@ -1911,7 +1923,7 @@ export function ProductFormModal({
                                       reader.onload = async (evt) => {
                                         const raw = evt.target?.result as string;
                                         if (raw) {
-                                          const compressed = await compressImageDataUrl(raw, 1280, 0.82);
+                                          const compressed = await compressImageDataUrl(raw, 800, 0.72);
                                           setColorImages((prev) => ({ ...prev, [color]: compressed }));
                                         }
                                       };
@@ -2083,7 +2095,7 @@ export function ProductFormModal({
                                   reader.onload = async (evt) => {
                                     const raw = evt.target?.result as string;
                                     if (raw) {
-                                      const compressed = await compressImageDataUrl(raw, 1280, 0.82);
+                                      const compressed = await compressImageDataUrl(raw, 900, 0.72);
                                       setSizeGuideImage(compressed);
                                       triggerToast("사이즈 가이드 이미지가 변경되었습니다.");
                                     }
@@ -2125,7 +2137,7 @@ export function ProductFormModal({
                               reader.onload = async (evt) => {
                                 const raw = evt.target?.result as string;
                                 if (raw) {
-                                  const compressed = await compressImageDataUrl(raw, 1280, 0.82);
+                                  const compressed = await compressImageDataUrl(raw, 900, 0.72);
                                   setSizeGuideImage(compressed);
                                   triggerToast("사이즈 가이드 이미지가 등록되었습니다.");
                                 }

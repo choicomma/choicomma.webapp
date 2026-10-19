@@ -62,9 +62,11 @@ export function isSuperAdmin(c: any): boolean {
 
 export function getCustomerKey(c: any): string {
   if (isSuperAdmin(c)) return "ADMIN-001";
-  const id = String(c.id || "").trim().toLowerCase();
-  const email = String(c.email || "").trim().toLowerCase();
-  return id || email || "";
+  const id = String(c?.id || c?.imwebUid || "").trim().toLowerCase();
+  const email = String(c?.email || "").trim().toLowerCase();
+  const phone = String(c?.phone || "").trim().replace(/[^0-9]/g, "");
+  const name = String(c?.name || "").trim().toLowerCase();
+  return id || (email && email !== "-" ? email : "") || (phone && phone.length >= 7 ? phone : "") || name || "";
 }
 
 /**
@@ -246,7 +248,45 @@ export function useCustomers(triggerToast: (msg: string) => void) {
           }
         });
 
-        // 2. 로컬 캐시 회원 우선 유지 (최고관리자는 ADMIN-001 단일 키로 병합)
+        // 2. 서버 최신 회원 데이터(data/customers.json 전체)를 기준 데이터로 등록
+        if (serverData.length > 0) {
+          serverData.forEach((c) => {
+            const key = getCustomerKey(c);
+            if (key) {
+              const existing = customerMap.get(key) || {};
+              const parsed = splitKoreanAddress(
+                c.address,
+                c.postcode || c.zipCode || existing.postcode || "",
+                c.detailAddress || c.addressDetail || existing.detailAddress || ""
+              );
+              if (key === "ADMIN-001") {
+                customerMap.set("ADMIN-001", {
+                  ...DEFAULT_ADMIN_CUSTOMER,
+                  ...existing,
+                  ...c,
+                  id: "ADMIN-001",
+                  name: "최고관리자 (Admin)",
+                  email: "admin@choicomma.com",
+                  role: "ADMIN",
+                  isAdmin: true,
+                  postcode: parsed.postcode,
+                  address: parsed.baseAddress,
+                  detailAddress: parsed.detailAddress,
+                });
+              } else {
+                customerMap.set(key, {
+                  ...existing,
+                  ...c,
+                  postcode: parsed.postcode,
+                  address: parsed.baseAddress,
+                  detailAddress: parsed.detailAddress,
+                });
+              }
+            }
+          });
+        }
+
+        // 3. 로컬 캐시에서 수정된 정보(임의 변경된 적립금/주소 등)가 있으면 안전하게 오버레이
         localCached.forEach((c) => {
           const key = getCustomerKey(c);
           if (key) {
@@ -262,44 +302,16 @@ export function useCustomers(triggerToast: (msg: string) => void) {
                 role: "ADMIN",
                 isAdmin: true,
               });
-            } else {
-              customerMap.set(key, c);
-            }
-          }
-        });
-
-        // 3. Supabase 원격 DB 회원 병합 및 주소 정제 (최고관리자는 ADMIN-001 단일 키로 병합)
-        serverData.forEach((c) => {
-          const key = getCustomerKey(c);
-          if (key) {
-            const existing = customerMap.get(key) || {};
-            const parsed = splitKoreanAddress(
-              c.address,
-              c.postcode || c.zipCode || existing.postcode || "",
-              c.detailAddress || c.addressDetail || existing.detailAddress || ""
-            );
-            if (key === "ADMIN-001") {
-              customerMap.set("ADMIN-001", {
-                ...DEFAULT_ADMIN_CUSTOMER,
-                ...existing,
-                ...c,
-                id: "ADMIN-001",
-                name: "최고관리자 (Admin)",
-                email: "admin@choicomma.com",
-                role: "ADMIN",
-                isAdmin: true,
-                postcode: parsed.postcode,
-                address: parsed.baseAddress,
-                detailAddress: parsed.detailAddress,
-              });
-            } else {
+            } else if (customerMap.has(key)) {
+              // 서버에도 존재하는 회원이면 로컬의 부분 수정사항만 병합
+              const existing = customerMap.get(key);
               customerMap.set(key, {
                 ...existing,
                 ...c,
-                postcode: parsed.postcode,
-                address: parsed.baseAddress,
-                detailAddress: parsed.detailAddress,
               });
+            } else if (serverData.length === 0) {
+              // 서버 데이터를 못 가져온 비상 시에만 로컬 캐시 단독 사용
+              customerMap.set(key, c);
             }
           }
         });
@@ -811,13 +823,47 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     return customersList.filter((c) => c.joinedDate && c.joinedDate.startsWith(currentYM)).length;
   }, [customersList]);
 
+  // 실시간 서버 DB 자동 보완 검색: 브라우저 캐시에 없는 회원이라도 검색어 입력 시 서버 DB에서 즉시 조회하여 화면에 자동 표시
+  useEffect(() => {
+    const q = customerSearchQuery.trim();
+    if (!q || q.length < 1) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admin/customers?q=${encodeURIComponent(q)}`, { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.customers) && json.customers.length > 0) {
+            setCustomersList((prev) => {
+              const prevKeys = new Set(prev.map((c) => getCustomerKey(c)));
+              const newItems = json.customers.filter((c: any) => !prevKeys.has(getCustomerKey(c)));
+              if (newItems.length > 0) {
+                return [...newItems, ...prev];
+              }
+              return prev;
+            });
+          }
+        }
+      } catch (e) {}
+    }, 150);
+
+    return () => clearTimeout(timeoutId);
+  }, [customerSearchQuery]);
+
   const filteredCustomers = useMemo(() => {
     return customersList.filter((c) => {
+      const q = customerSearchQuery.trim().toLowerCase();
+      const name = String(c?.name || "").toLowerCase();
+      const email = String(c?.email || "").toLowerCase();
+      const phone = String(c?.phone || "").toLowerCase();
+      const address = String(c?.address || "").toLowerCase();
+
       const matchesSearch =
-        c.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-        c.email.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-        c.phone.includes(customerSearchQuery) ||
-        (c.address && c.address.toLowerCase().includes(customerSearchQuery.toLowerCase()));
+        !q ||
+        name.includes(q) ||
+        email.includes(q) ||
+        phone.includes(q) ||
+        address.includes(q);
       const matchesGrade = customerGradeFilter === "all" || c.grade === customerGradeFilter;
       const matchesStatus = customerStatusFilter === "all" || c.status === customerStatusFilter;
       return matchesSearch && matchesGrade && matchesStatus;

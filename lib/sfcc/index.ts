@@ -247,10 +247,7 @@ export async function getProduct(handle: string) {
         return null;
       }
 
-      // 미진열 설정된 상품(isMainFeatured === false)은 쇼핑몰 상세페이지에서도 노출 차단
-      if ((product as any).isMainFeatured === false) {
-        return null;
-      }
+      // isMainFeatured는 홈 화면 메인 슬라이더/추천 노출 여부이므로, 상세페이지 접근을 차단하지 않습니다.
 
       if (!product.tags || !Array.isArray(product.tags)) {
         (product as any).tags = [];

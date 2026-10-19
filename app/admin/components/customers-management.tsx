@@ -20,11 +20,13 @@ import {
   Award,
   Sparkles,
   CheckCircle2,
+  Search,
 } from "lucide-react";
 
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import { deduplicateCustomers } from "@/hooks/admin/useCustomers";
+import { calculateTierBySpend } from "@/lib/membership/tiers";
 
 interface CustomersManagementProps {
   customersList: any[];
@@ -111,6 +113,23 @@ export function CustomersManagement({
 }: CustomersManagementProps) {
   const [customerPage, setCustomerPage] = useState(1);
   const CUSTOMERS_PER_PAGE = 25;
+
+  // 검색어 또는 등급 필터 변경 시 자동으로 1페이지로 리셋 (2페이지 이상에서 검색 시 빈 화면으로 보이는 버그 원천 해결)
+  React.useEffect(() => {
+    setCustomerPage(1);
+  }, [customerSearchQuery, customerGradeFilter]);
+
+  // 검색창 입력 상태: 타이핑 중에는 목록이 흔들리지 않고 엔터(Enter)나 검색 버튼을 눌렀을 때만 실제 검색 실행
+  const [searchInput, setSearchInput] = useState(customerSearchQuery);
+
+  React.useEffect(() => {
+    setSearchInput(customerSearchQuery);
+  }, [customerSearchQuery]);
+
+  const handleExecuteSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setCustomerSearchQuery(searchInput.trim());
+  };
 
   const [pointsHistoryCustomer, setPointsHistoryCustomer] = useState<any | null>(null);
   const [pointsHistoryFilter, setPointsHistoryFilter] = useState<"all" | "earn" | "use">("all");
@@ -302,19 +321,19 @@ export function CustomersManagement({
   }, [sanitizedCustomersList]);
 
   // 회원 등급 산정 기준 (누적 구매금액 totalSpent 기준)
-  // - VVIP: 15,000,000원 이상 ('VVIP 전용 시크릿 타임 세일' 권한)
-  // - 플래티넘 (Platinum): 8,000,000원 이상 ('플래티넘 전용 시크릿 타임 세일' 권한)
-  // - 골드 (Gold): 5,000,000원 이상 ('골드 등급 전용 시크릿 타임 세일' 권한)
-  // - 실버 (Silver): 2,000,000원 이상 ('실버 등급 전용 시크릿 타임 세일' 권한)
+  // 등급 자동 산정 기준 (신규 등급 기준표 준수):
+  // - VVIP: 20,000,000원 이상 ('VVIP 전용 시크릿 타임 세일' 권한, 전 품목 상시 5% 추가 할인)
+  // - 플래티넘 (Platinum): 10,000,000원 이상 ('플래티넘 전용 시크릿 타임 세일' 권한, 월 5% 쿠폰 3장)
+  // - 골드 (Gold): 5,000,000원 이상 ('골드 등급 전용 시크릿 타임 세일' 권한, 월 5% 쿠폰 1장)
+  // - 실버 (Silver): 2,000,000원 이상 ('실버 등급 전용 시크릿 타임 세일' 권한, 5% 쿠폰 1장)
   // - 일반 (General / 새싹): 2,000,000원 미만
   const resolveCustomerGrade = (c: any): "VVIP" | "PLATINUM" | "GOLD" | "SILVER" | "GENERAL" => {
     if (!c) return "GENERAL";
     if (c.isAdmin || c.role === "ADMIN") return "VVIP";
     const spent = Number(c.totalSpent || 0);
-    if (spent >= 15000000) return "VVIP";
-    if (spent >= 8000000) return "PLATINUM";
-    if (spent >= 5000000) return "GOLD";
-    if (spent >= 2000000) return "SILVER";
+    if (spent > 0) {
+      return calculateTierBySpend(spent);
+    }
 
     const rawG = String(c.grade || "").trim().toUpperCase();
     if (rawG === "VVIP") return "VVIP";
@@ -382,41 +401,64 @@ export function CustomersManagement({
   }, [sanitizedCustomersList]);
 
   const filteredCustomers = React.useMemo(() => {
-    return sanitizedCustomersList.filter((c) => {
-      const q = customerSearchQuery.trim().toLowerCase();
-      const matchesSearch =
-        !q ||
-        c.name.toLowerCase().includes(q) ||
-        c.email.toLowerCase().includes(q) ||
-        (c.loginId && c.loginId.toLowerCase().includes(q)) ||
-        (c.id && c.id.toLowerCase().includes(q)) ||
-        c.phone.includes(q) ||
-        (c.address && c.address.toLowerCase().includes(q));
+    const rawQ = customerSearchQuery.trim().toLowerCase();
+    const qNoSpace = rawQ.replace(/\s+/g, "");
+    const qDigits = rawQ.replace(/[^0-9]/g, "");
 
-      let matchesGrade = true;
-      if (customerGradeFilter === "all") {
-        matchesGrade = true;
-      } else if (customerGradeFilter === "VVIP") {
-        matchesGrade = resolveCustomerGrade(c) === "VVIP";
-      } else if (customerGradeFilter === "PLATINUM") {
-        matchesGrade = resolveCustomerGrade(c) === "PLATINUM";
-      } else if (customerGradeFilter === "GOLD") {
-        matchesGrade = resolveCustomerGrade(c) === "GOLD";
-      } else if (customerGradeFilter === "SILVER") {
-        matchesGrade = resolveCustomerGrade(c) === "SILVER";
-      } else if (customerGradeFilter === "GENERAL" || customerGradeFilter === "새싹고객") {
-        matchesGrade = resolveCustomerGrade(c) === "GENERAL";
-      } else if (customerGradeFilter === "우수고객") {
-        matchesGrade = ["VVIP", "PLATINUM", "GOLD"].includes(resolveCustomerGrade(c));
-      } else if (customerGradeFilter === "BUYER") {
-        matchesGrade = isBuyerCustomer(c);
-      } else if (customerGradeFilter === "SPECIAL") {
-        matchesGrade = isSpecialCustomer(c);
-      } else {
-        matchesGrade = resolveCustomerGrade(c) === customerGradeFilter || c.grade === customerGradeFilter;
+    return sanitizedCustomersList.filter((c) => {
+      // 1. 검색어 일치 여부 (공백 무시, 하이픈 무시, 이름/이메일/아이디/전화번호/상세주소 전수 매칭)
+      let matchesSearch = true;
+      if (rawQ) {
+        const cName = String(c?.name || "").toLowerCase();
+        const cNameNoSpace = cName.replace(/\s+/g, "");
+        const cEmail = String(c?.email || "").toLowerCase();
+        const cLoginId = String(c?.loginId || "").toLowerCase();
+        const cId = String(c?.id || "").toLowerCase();
+        const cImwebUid = String(c?.imwebUid || "").toLowerCase();
+        const cRawPhone = String(c?.phone || "").toLowerCase();
+        const cPhoneDigits = String(c?.phone || "").replace(/[^0-9]/g, "");
+        const cAddress = String(c?.address || "").toLowerCase();
+        const cDetailAddress = String(c?.detailAddress || "").toLowerCase();
+        const cFullAddress = String(c?.fullAddress || "").toLowerCase();
+
+        matchesSearch =
+          cName.includes(rawQ) ||
+          (qNoSpace.length > 0 && cNameNoSpace.includes(qNoSpace)) ||
+          cEmail.includes(rawQ) ||
+          cLoginId.includes(rawQ) ||
+          cId.includes(rawQ) ||
+          cImwebUid.includes(rawQ) ||
+          cRawPhone.includes(rawQ) ||
+          (qDigits.length >= 2 && cPhoneDigits.includes(qDigits)) ||
+          cAddress.includes(rawQ) ||
+          cDetailAddress.includes(rawQ) ||
+          cFullAddress.includes(rawQ);
       }
 
-      return matchesSearch && matchesGrade;
+      if (!matchesSearch) return false;
+
+      // 2. 등급 및 세그먼트 필터 판정
+      if (customerGradeFilter === "all") {
+        return true;
+      } else if (customerGradeFilter === "VVIP") {
+        return resolveCustomerGrade(c) === "VVIP";
+      } else if (customerGradeFilter === "PLATINUM") {
+        return resolveCustomerGrade(c) === "PLATINUM";
+      } else if (customerGradeFilter === "GOLD") {
+        return resolveCustomerGrade(c) === "GOLD";
+      } else if (customerGradeFilter === "SILVER") {
+        return resolveCustomerGrade(c) === "SILVER";
+      } else if (customerGradeFilter === "GENERAL" || customerGradeFilter === "새싹고객") {
+        return resolveCustomerGrade(c) === "GENERAL";
+      } else if (customerGradeFilter === "우수고객") {
+        return ["VVIP", "PLATINUM", "GOLD"].includes(resolveCustomerGrade(c));
+      } else if (customerGradeFilter === "BUYER") {
+        return isBuyerCustomer(c);
+      } else if (customerGradeFilter === "SPECIAL") {
+        return isSpecialCustomer(c);
+      } else {
+        return resolveCustomerGrade(c) === customerGradeFilter || c.grade === customerGradeFilter;
+      }
     });
   }, [sanitizedCustomersList, customerSearchQuery, customerGradeFilter]);
 
@@ -485,7 +527,7 @@ export function CustomersManagement({
           <p className="text-[11px] text-neutral-400 mt-0.5">스토어 전체 등록 회원</p>
         </div>
 
-        {/* 2. VVIP (1,500만원 이상) */}
+        {/* 2. VVIP (2,000만원 이상) */}
         <div
           onClick={() => setCustomerGradeFilter("VVIP")}
           className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-neutral-950 ${
@@ -497,7 +539,7 @@ export function CustomersManagement({
               <Crown className="w-3.5 h-3.5 text-amber-500" />
               <span>VVIP</span>
             </span>
-            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-500 font-black">1,500만↑</span>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-500 font-black">2,000만↑</span>
           </div>
           <p className={`text-xl font-extrabold mt-1.5 ${customerGradeFilter === "VVIP" ? "text-amber-300" : "text-neutral-950"}`}>
             {vvipCustomersCount.toLocaleString()} 명
@@ -507,7 +549,7 @@ export function CustomersManagement({
           </p>
         </div>
 
-        {/* 3. 플래티넘 (800만원 이상) */}
+        {/* 3. 플래티넘 (1,000만원 이상) */}
         <div
           onClick={() => setCustomerGradeFilter("PLATINUM")}
           className={`bg-white border rounded-2xl p-4 shadow-sm transition-all cursor-pointer hover:border-purple-600 ${
@@ -519,7 +561,7 @@ export function CustomersManagement({
               <Gem className="w-3.5 h-3.5 text-purple-600" />
               <span>플래티넘</span>
             </span>
-            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-bold">800만↑</span>
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 font-bold">1,000만↑</span>
           </div>
           <p className="text-xl font-extrabold text-purple-950 mt-1.5">
             {platinumCustomersCount.toLocaleString()} 명
@@ -640,7 +682,7 @@ export function CustomersManagement({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-amber-300 text-xs">VVIP</span>
-                <span className="text-[10px] font-mono text-neutral-400">1,500만 원 이상</span>
+                <span className="text-[10px] font-mono text-neutral-400">2,000만 원 이상</span>
               </div>
               <p className="text-[11px] text-amber-200/90 font-medium mt-0.5">
                 VVIP 전용 시크릿 타임 세일 권한
@@ -655,7 +697,7 @@ export function CustomersManagement({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-purple-300 text-xs">플래티넘</span>
-                <span className="text-[10px] font-mono text-neutral-400">800만 원 이상</span>
+                <span className="text-[10px] font-mono text-neutral-400">1,000만 원 이상</span>
               </div>
               <p className="text-[11px] text-purple-200/90 font-medium mt-0.5">
                 플래티넘 전용 시크릿 타임 세일 권한
@@ -698,15 +740,45 @@ export function CustomersManagement({
       {/* Filters & Search */}
       <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <input
-              type="text"
-              placeholder="회원 이름, 아이디, 이메일, 전화번호, 주소 검색..."
-              value={customerSearchQuery}
-              onChange={(e) => setCustomerSearchQuery(e.target.value)}
-              className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950 transition-colors"
-            />
-          </div>
+          <form onSubmit={handleExecuteSearch} className="flex items-center gap-2 flex-1 max-w-md">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+                <Search className="w-4 h-4" />
+              </div>
+              <input
+                type="text"
+                placeholder="회원 검색 (입력 후 Enter)..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleExecuteSearch();
+                  }
+                }}
+                className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-9 py-2.5 text-sm text-neutral-950 focus:outline-none focus:border-neutral-950 transition-colors"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchInput("");
+                    setCustomerSearchQuery("");
+                  }}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                  title="검색어 지우기"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition-colors shrink-0 cursor-pointer flex items-center gap-1.5 shadow-xs"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>검색</span>
+            </button>
+          </form>
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* Quick Segment Filter Badges */}
@@ -789,6 +861,7 @@ export function CustomersManagement({
               <button
                 type="button"
                 onClick={() => {
+                  setSearchInput("");
                   setCustomerSearchQuery("");
                   setCustomerGradeFilter("all");
                 }}
@@ -800,14 +873,34 @@ export function CustomersManagement({
           </div>
         </div>
 
+        {customerSearchQuery && (
+          <div className="flex items-center gap-2 pt-1 text-xs text-neutral-600 animate-in fade-in">
+            <span className="font-semibold text-neutral-500">현재 검색어:</span>
+            <span className="inline-flex items-center gap-1.5 font-bold px-2.5 py-1 rounded-md bg-neutral-900 text-white text-[11px]">
+              &quot;{customerSearchQuery}&quot; (검색 결과: {filteredCustomers.length.toLocaleString()}명)
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput("");
+                  setCustomerSearchQuery("");
+                }}
+                className="text-neutral-400 hover:text-white ml-1 cursor-pointer"
+                title="검색 해제"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          </div>
+        )}
+
         {customerGradeFilter !== "all" && (
           <div className="flex items-center gap-2 pt-1 text-xs text-neutral-600 animate-in fade-in">
             <span className="font-semibold text-neutral-500">현재 필터:</span>
             <span className="inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-md bg-neutral-900 text-white text-[11px]">
               {customerGradeFilter === "VVIP"
-                ? "👑 VVIP (1,500만원 이상)"
+                ? "👑 VVIP (2,000만원 이상)"
                 : customerGradeFilter === "PLATINUM"
-                ? "💎 플래티넘 (800만원 이상)"
+                ? "💎 플래티넘 (1,000만원 이상)"
                 : customerGradeFilter === "GOLD"
                 ? "🥇 골드 (500만원 이상)"
                 : customerGradeFilter === "SILVER"
@@ -831,6 +924,7 @@ export function CustomersManagement({
           <table className="w-full text-left text-sm text-neutral-700">
             <thead className="bg-neutral-50 text-neutral-500 text-xs uppercase font-semibold border-b border-neutral-200">
               <tr>
+                <th className="py-3.5 px-4 text-center w-14 font-mono text-neutral-500">NO</th>
                 <th className="py-3.5 px-5">회원 정보 (아이디/이메일)</th>
                 <th className="py-3.5 px-5">연락처 / 배송지 주소</th>
                 <th className="py-3.5 px-5">회원 등급 / 전용 혜택</th>
@@ -848,13 +942,18 @@ export function CustomersManagement({
             <tbody suppressHydrationWarning className="divide-y divide-neutral-200/60">
               {filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-neutral-500">
+                  <td colSpan={8} className="py-12 text-center text-neutral-500">
                     검색 조건에 해당되는 회원 정보가 존재하지 않습니다.
                   </td>
                 </tr>
               ) : (
-                paginatedCustomers.map((cust, index) => (
+                paginatedCustomers.map((cust, index) => {
+                  const rowNumber = (customerPage - 1) * CUSTOMERS_PER_PAGE + index + 1;
+                  return (
                   <tr key={`${cust.id || 'cust'}-${cust.email || index}-${index}`} className="hover:bg-neutral-50/70 transition-colors">
+                    <td className="py-4 px-4 text-center font-mono text-xs font-bold text-neutral-400">
+                      {rowNumber}
+                    </td>
                     <td className="py-4 px-5">
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -995,7 +1094,8 @@ export function CustomersManagement({
                       </div>
                     </td>
                   </tr>
-                ))
+                );
+              })
               )}
             </tbody>
           </table>

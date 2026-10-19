@@ -9,6 +9,13 @@ export interface TierPolicy {
   specialBenefit: string;
 }
 
+export const TIER_THRESHOLDS = {
+  VVIP: 20000000,
+  PLATINUM: 10000000,
+  GOLD: 5000000,
+  SILVER: 2000000,
+} as const;
+
 export const DEFAULT_TIER_POLICIES: TierPolicy[] = [
   {
     key: "GENERAL",
@@ -23,22 +30,22 @@ export const DEFAULT_TIER_POLICIES: TierPolicy[] = [
   {
     key: "SILVER",
     name: "SILVER (실버)",
-    minSpend: 1000000,
+    minSpend: 2000000,
     discountRate: 0,
     pointRate: 1,
     freeShipping: false,
     minFreeShippingSpend: 100000,
-    specialBenefit: "우수 회원 혜택, 1% 적립금, 10만원 이상 무료배송",
+    specialBenefit: "실버 등급 시크릿 타임 세일 품목 추가, 5% 할인 쿠폰 1장 증정",
   },
   {
     key: "GOLD",
     name: "GOLD (골드)",
-    minSpend: 3000000,
+    minSpend: 5000000,
     discountRate: 0,
     pointRate: 1,
     freeShipping: false,
     minFreeShippingSpend: 50000,
-    specialBenefit: "우수 회원 혜택, 1% 적립금, 5만원 이상 무료배송",
+    specialBenefit: "골드 등급 시크릿 타임 세일 품목 추가, 월 5% 할인 쿠폰 1장 증정",
   },
   {
     key: "PLATINUM",
@@ -48,19 +55,28 @@ export const DEFAULT_TIER_POLICIES: TierPolicy[] = [
     pointRate: 1,
     freeShipping: true,
     minFreeShippingSpend: 0,
-    specialBenefit: "플래티넘 회원 혜택, 1% 적립금, 상시 무료배송",
+    specialBenefit: "플래티넘 등급 시크릿 타임 세일 품목 추가, 월 5% 할인 쿠폰 3장 증정",
   },
   {
     key: "VVIP",
     name: "VVIP (최상위)",
     minSpend: 20000000,
-    discountRate: 0,
+    discountRate: 5,
     pointRate: 1,
     freeShipping: true,
     minFreeShippingSpend: 0,
-    specialBenefit: "최상위 VVIP 혜택, 1% 적립금, 상시 무료배송 및 전용 빠른 출고",
+    specialBenefit: "VVIP 등급 시크릿 타임 세일 품목 추가, 모든 품목 상시 5% 추가 할인 (일부 시크릿 타임 세일 항목 제외)",
   },
 ];
+
+export function calculateTierBySpend(spent: number): "GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP" {
+  const numSpent = Number(spent) || 0;
+  if (numSpent >= TIER_THRESHOLDS.VVIP) return "VVIP";
+  if (numSpent >= TIER_THRESHOLDS.PLATINUM) return "PLATINUM";
+  if (numSpent >= TIER_THRESHOLDS.GOLD) return "GOLD";
+  if (numSpent >= TIER_THRESHOLDS.SILVER) return "SILVER";
+  return "GENERAL";
+}
 
 export function normalizeUserGrade(rawGrade: any): "GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP" {
   if (!rawGrade) return "GENERAL";

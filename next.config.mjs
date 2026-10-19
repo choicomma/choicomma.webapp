@@ -3,6 +3,9 @@ const nextConfig = {
   experimental: {
     useCache: true,
   },
+  outputFileTracingIncludes: {
+    "/api/**/*": ["./data/**/*"],
+  },
 
   eslint: {
     ignoreDuringBuilds: true,
