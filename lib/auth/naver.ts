@@ -52,8 +52,11 @@ export function getNaverConfig(req?: Request) {
 
   const clientSecret =
     process.env.NAVER_CLIENT_SECRET ||
+    process.env.NEXT_PUBLIC_NAVER_CLIENT_SECRET ||
     process.env.NAVER_SECRET ||
+    process.env.NEXT_PUBLIC_NAVER_SECRET ||
     readEnvLocal("NAVER_CLIENT_SECRET") ||
+    readEnvLocal("NEXT_PUBLIC_NAVER_CLIENT_SECRET") ||
     readEnvLocal("NAVER_SECRET") ||
     "";
 

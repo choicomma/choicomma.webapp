@@ -58,10 +58,13 @@ export function getGoogleConfig(req?: Request) {
 
   const clientSecret =
     process.env.GOOGLE_CLIENT_SECRET ||
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET ||
     process.env.GOOGLE_SECRET ||
+    process.env.NEXT_PUBLIC_GOOGLE_SECRET ||
     process.env.GOOGLE_PASSWORD ||
     process.env.GOOGLE_OAUTH_CLIENT_SECRET ||
     readEnvLocal("GOOGLE_CLIENT_SECRET") ||
+    readEnvLocal("NEXT_PUBLIC_GOOGLE_CLIENT_SECRET") ||
     readEnvLocal("GOOGLE_SECRET") ||
     "";
 
