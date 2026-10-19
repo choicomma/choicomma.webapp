@@ -72,7 +72,9 @@ function getAllServerProducts(): Product[] {
         : (meta.timeSaleDiscountRate !== undefined
           ? Number(meta.timeSaleDiscountRate)
           : (tagRate && !isNaN(Number(tagRate)) ? Number(tagRate) : undefined));
-      const isTs = Boolean(p.isTimeSale || meta.isTimeSale || (Array.isArray(p.tags) && p.tags.includes("TIMESALE")));
+      const isTs = p.isTimeSale !== undefined
+        ? Boolean(p.isTimeSale)
+        : Boolean(meta.isTimeSale || (Array.isArray(p.tags) && p.tags.includes("TIMESALE")) || p.categoryId === "timesale");
       return {
         ...p,
         timeSaleDiscountRate: rate,

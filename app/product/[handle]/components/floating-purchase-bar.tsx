@@ -257,7 +257,11 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
       const isDirectSelected = savedSelectedIds.includes(activeProd.id) || savedSelectedIds.includes(activeProd.handle) || savedSelectedIds.includes((activeProd as any).productCode);
       const isSet = activeProd.tags?.includes("SET_SALE") || activeProd.id.startsWith("set-product-");
       const isCategorySale = activeProd.categoryId === "timesale" || activeProd.tags?.includes("TIMESALE");
-      const isSaleActive = !isGlobalOff && !isProductOff && (isDirectSelected || isSet || isCategorySale || (activeProd as any).isTimeSale === true);
+      const hasSpecificSavedIds = savedSelectedIds.length > 0;
+      const isTargetSale = hasSpecificSavedIds
+        ? (isDirectSelected || isSet || isCategorySale)
+        : (isSet || isCategorySale || (activeProd as any).isTimeSale === true);
+      const isSaleActive = !isGlobalOff && !isProductOff && isTargetSale;
 
       if (isSet || activeProd.tags?.includes("SALE") || activeProd.tags?.some((t: string) => t.includes("% OFF"))) {
         const calcTag = activeProd.tags?.find((t: string) => t.includes("% OFF"));

@@ -240,9 +240,11 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       const isSelected = timeSaleSettings.savedIds.some(
         (id: any) => String(id) === prodId || String(id) === handle || String(id) === pCode
       );
-      if (!isSelected && product.isTimeSale !== true) return null;
+      const isCategoryOrTag = product.categoryId === "timesale" || product.tags?.includes("TIMESALE");
+      if (!isSelected && !isCategoryOrTag) return null;
     } else {
-      if (!product.isTimeSale && product.categoryId !== "timesale" && !product.tags?.includes("TIMESALE")) {
+      const isCategoryOrTag = product.categoryId === "timesale" || product.tags?.includes("TIMESALE");
+      if (!product.isTimeSale && !isCategoryOrTag) {
         return null;
       }
     }

@@ -111,12 +111,12 @@ export async function GET() {
     const fileExists = fs.existsSync(filePath);
     let list = readTimesaleFile();
 
-    // 자가 치유 폴백(Self-Healing Fallback): 로컬 파일이 아예 디스크에 존재하지 않는 경우에만 Supabase에서 복구 시도
-    if (!fileExists) {
+    // 자가 치유 폴백(Self-Healing Fallback): 로컬 파일에 항목이 없거나 디스크에 존재하지 않는 경우 Supabase에서 복구 시도
+    if (list.length === 0) {
       try {
         const { data, error } = await runSafeSupabaseQuery<any[]>(
           async (supabase) => supabase.from("timesales").select("*").order("created_at", { ascending: false }),
-          1500
+          3000
         );
         if (!error && Array.isArray(data) && data.length > 0) {
           const valid = data.filter((t: any) => t && t.id).map((t: any) => ({

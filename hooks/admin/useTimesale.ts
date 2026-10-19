@@ -80,10 +80,30 @@ export function useTimesale(triggerToast: (msg: string) => void) {
           const json = await res.json();
           if (json.success && Array.isArray(json.data) && isMounted) {
             const cleaned = json.data.filter((t: any) => t && t.id);
-            lastSyncedJsonRef.current = JSON.stringify(cleaned);
-            setSecretSalesList(cleaned);
-            if (typeof window !== "undefined") {
-              localStorage.setItem("admin_secret_timesales", JSON.stringify(cleaned));
+            if (cleaned.length > 0) {
+              lastSyncedJsonRef.current = JSON.stringify(cleaned);
+              setSecretSalesList(cleaned);
+              if (typeof window !== "undefined") {
+                localStorage.setItem("admin_secret_timesales", JSON.stringify(cleaned));
+              }
+            } else if (typeof window !== "undefined") {
+              const saved = localStorage.getItem("admin_secret_timesales");
+              if (saved) {
+                try {
+                  const parsed = JSON.parse(saved);
+                  if (Array.isArray(parsed) && parsed.length > 0) {
+                    const localCleaned = parsed.filter((t: any) => t && t.id);
+                    if (localCleaned.length > 0) {
+                      setSecretSalesList(localCleaned);
+                      fetch("/api/admin/timesale", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(localCleaned),
+                      }).catch(() => {});
+                    }
+                  }
+                } catch (e) {}
+              }
             }
           }
         }

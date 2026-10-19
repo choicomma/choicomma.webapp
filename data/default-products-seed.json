@@ -187,7 +187,8 @@
       "BLACK_LABEL",
       "pno:468",
       "pcode:CC-468",
-      "tsrate:25"
+      "tsrate:25",
+      "TIMESALE"
     ],
     "isTimeSale": true,
     "timeSaleDiscountRate": 25,
@@ -787,7 +788,8 @@
       "rules": [],
       "productNo": 467,
       "productCode": "CC-467",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -1376,7 +1378,8 @@
       "rules": [],
       "productNo": 466,
       "productCode": "CC-466",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -1896,7 +1899,8 @@
       "BLACK_LABEL",
       "pno:463",
       "pcode:CC-463",
-      "tsrate:25"
+      "tsrate:25",
+      "TIMESALE"
     ],
     "isTimeSale": true,
     "timeSaleDiscountRate": 25,
@@ -2157,7 +2161,8 @@
       "rules": [],
       "productNo": 462,
       "productCode": "CC-462",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -2408,7 +2413,8 @@
       "rules": [],
       "productNo": 461,
       "productCode": "CC-461",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -2659,7 +2665,8 @@
       "rules": [],
       "productNo": 460,
       "productCode": "CC-460",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -2864,7 +2871,8 @@
       "rules": [],
       "productNo": 459,
       "productCode": "CC-459",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -3116,7 +3124,8 @@
       "rules": [],
       "productNo": 458,
       "productCode": "CC-458",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -3352,7 +3361,8 @@
       "rules": [],
       "productNo": 457,
       "productCode": "CC-457",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "SILK 100%",
     "elasticity": "보통",
@@ -3587,7 +3597,8 @@
       "rules": [],
       "productNo": 456,
       "productCode": "CC-456",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "SILK 100%",
     "elasticity": "보통",
@@ -3821,7 +3832,8 @@
       "rules": [],
       "productNo": 455,
       "productCode": "CC-455",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "SILK 100%",
     "elasticity": "보통",
@@ -4055,7 +4067,8 @@
       "rules": [],
       "productNo": 454,
       "productCode": "CC-454",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "SILK 100%",
     "elasticity": "보통",
@@ -4222,7 +4235,8 @@
       "rules": [],
       "productNo": 452,
       "productCode": "CC-452",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -4389,7 +4403,8 @@
       "rules": [],
       "productNo": 451,
       "productCode": "CC-451",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -4556,7 +4571,8 @@
       "rules": [],
       "productNo": 450,
       "productCode": "CC-450",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -4748,7 +4764,8 @@
       "rules": [],
       "productNo": 449,
       "productCode": "CC-449",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "ITALY LAMBSKIN SUEDE 100%",
     "elasticity": "보통",
@@ -4915,7 +4932,8 @@
       "rules": [],
       "productNo": 448,
       "productCode": "CC-448",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -5082,7 +5100,8 @@
       "rules": [],
       "productNo": 447,
       "productCode": "CC-447",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -5249,7 +5268,8 @@
       "rules": [],
       "productNo": 446,
       "productCode": "CC-446",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -5422,7 +5442,8 @@
       "rules": [],
       "productNo": 445,
       "productCode": "CC-445",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -5595,7 +5616,8 @@
       "rules": [],
       "productNo": 444,
       "productCode": "CC-444",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -5762,7 +5784,8 @@
       "rules": [],
       "productNo": 443,
       "productCode": "CC-443",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -5935,7 +5958,8 @@
       "rules": [],
       "productNo": 442,
       "productCode": "CC-442",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -6102,7 +6126,8 @@
       "rules": [],
       "productNo": 441,
       "productCode": "CC-441",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",
@@ -6288,7 +6313,8 @@
       "rules": [],
       "productNo": 437,
       "productCode": "CC-437",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "COTTON 100% (프리미엄 코튼)",
     "elasticity": "보통",
@@ -6847,7 +6873,8 @@
       "rules": [],
       "productNo": 436,
       "productCode": "CC-436",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -7287,7 +7314,8 @@
       "rules": [],
       "productNo": 435,
       "productCode": "CC-435",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "LINEN 100%",
     "elasticity": "보통",
@@ -7768,7 +7796,8 @@
       "rules": [],
       "productNo": 434,
       "productCode": "CC-434",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -8249,7 +8278,8 @@
       "rules": [],
       "productNo": 433,
       "productCode": "CC-433",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -8444,9 +8474,10 @@
       "NEW",
       "BLACK_LABEL",
       "pno:430",
-      "pcode:CC-430"
+      "pcode:CC-430",
+      "TIMESALE"
     ],
-    "isTimeSale": false,
+    "isTimeSale": true,
     "releaseDate": "",
     "bulkDiscount": {
       "enabled": false,
@@ -8934,7 +8965,8 @@
       "rules": [],
       "productNo": 425,
       "productCode": "CC-425",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -9144,7 +9176,8 @@
       "rules": [],
       "productNo": 424,
       "productCode": "CC-424",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "SILK 100%",
     "elasticity": "보통",
@@ -9377,7 +9410,8 @@
       "rules": [],
       "productNo": 423,
       "productCode": "CC-423",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -9610,7 +9644,8 @@
       "rules": [],
       "productNo": 422,
       "productCode": "CC-422",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -9843,7 +9878,8 @@
       "rules": [],
       "productNo": 421,
       "productCode": "CC-421",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MERINO WOOL 100%",
     "elasticity": "보통",
@@ -10038,9 +10074,10 @@
       "NEW",
       "BLACK_LABEL",
       "pno:419",
-      "pcode:CC-419"
+      "pcode:CC-419",
+      "TIMESALE"
     ],
-    "isTimeSale": false,
+    "isTimeSale": true,
     "releaseDate": "",
     "bulkDiscount": {
       "enabled": false,
@@ -10281,7 +10318,8 @@
       "rules": [],
       "productNo": 411,
       "productCode": "CC-411",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "SILK 100%",
     "elasticity": "보통",
@@ -10515,7 +10553,8 @@
       "rules": [],
       "productNo": 410,
       "productCode": "CC-410",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "SILK 100%",
     "elasticity": "보통",
@@ -10743,7 +10782,8 @@
       "rules": [],
       "productNo": 409,
       "productCode": "CC-409",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "COTTON 100% (프리미엄 코튼)",
     "elasticity": "보통",
@@ -11159,7 +11199,8 @@
       "rules": [],
       "productNo": 327,
       "productCode": "CC-327",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "WOOL BLEND",
     "elasticity": "보통",
@@ -11320,7 +11361,8 @@
       "rules": [],
       "productNo": 326,
       "productCode": "CC-326",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "CASHMERE 100%",
     "elasticity": "보통",
@@ -11660,7 +11702,8 @@
       "rules": [],
       "productNo": 275,
       "productCode": "CC-275",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "WOOL BLEND",
     "elasticity": "보통",
@@ -11870,7 +11913,8 @@
       "rules": [],
       "productNo": 266,
       "productCode": "CC-266",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "WOOL BLEND",
     "elasticity": "보통",
@@ -12080,7 +12124,8 @@
       "rules": [],
       "productNo": 265,
       "productCode": "CC-265",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "WOOL BLEND",
     "elasticity": "보통",
@@ -12290,7 +12335,8 @@
       "rules": [],
       "productNo": 264,
       "productCode": "CC-264",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "JAPAN TWEED BLEND",
     "elasticity": "보통",
@@ -12500,7 +12546,8 @@
       "rules": [],
       "productNo": 263,
       "productCode": "CC-263",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "JAPAN TWEED BLEND",
     "elasticity": "보통",
@@ -12675,7 +12722,8 @@
       "rules": [],
       "productNo": 122,
       "productCode": "CC-122",
-      "releaseDate": ""
+      "releaseDate": "",
+      "isTimeSale": false
     },
     "fabricComposition": "MINK 100% (SAGA ROYAL FUR / 프리미엄 휘메일 밍크)",
     "elasticity": "보통",

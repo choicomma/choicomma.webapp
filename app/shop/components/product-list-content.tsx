@@ -255,8 +255,12 @@ export function ProductListContent({
         setDisplayProducts(finalProducts);
         setProducts(finalProducts);
       } else {
+        const hasSaved = savedSelectedIds.length > 0;
         const updatedProducts = categoryFilteredProducts.map((p: any) => {
-          if (savedSelectedIds.includes(p.id) || p.isTimeSale === true || (Array.isArray(p.tags) && p.tags.includes("TIMESALE"))) {
+          const isSelected = hasSaved
+            ? savedSelectedIds.includes(p.id)
+            : (p.isTimeSale === true || (Array.isArray(p.tags) && p.tags.includes("TIMESALE")));
+          if (isSelected) {
             const itemRate = p.timeSaleDiscountRate || itemSettings[p.id]?.discountRate || savedDiscountNum || 35;
             const minP = parseFloat(p.priceRange?.minVariantPrice?.amount || "0");
             const maxP = parseFloat(p.priceRange?.maxVariantPrice?.amount || "0");

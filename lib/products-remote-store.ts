@@ -58,7 +58,7 @@ export function setRemoteDeletedListInMemory(ids: string[]) {
   g.__remoteDeleted = Array.from(new Set(ids.map(String)));
 }
 
-function withTimeout<T>(promise: PromiseLike<T>, ms: number = 1200): Promise<T> {
+function withTimeout<T>(promise: PromiseLike<T>, ms: number = 8000): Promise<T> {
   return Promise.race([
     Promise.resolve(promise),
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Supabase request timeout")), ms)),
@@ -75,7 +75,7 @@ async function upsertRow(key: string, value: any): Promise<string | null> {
           { onConflict: "key" }
         )
         .select("updated_at"),
-      1200
+      10000
     );
     if (error) {
       g.__remoteBroken = true;
@@ -138,7 +138,7 @@ async function doSync() {
         .from("site_settings")
         .select("key, updated_at")
         .in("key", [PRODUCTS_KEY, DELETED_KEY]),
-      1200
+      3000
     );
     if (error) {
       g.__remoteBroken = true;
@@ -162,7 +162,7 @@ async function doSync() {
     } else if (prodRow.updated_at !== g.__remoteProductsStamp) {
       const { data, error: e2 } = await withTimeout(
         supabaseServer.from("site_settings").select("value, updated_at").eq("key", PRODUCTS_KEY).maybeSingle(),
-        1200
+        10000
       );
       if (!e2 && data && Array.isArray(data.value) && data.value.length > 0) {
         g.serverProductsCache = data.value;

@@ -331,7 +331,12 @@ export function ProductDetailHeader({
       const isSet = activeProd.tags?.includes("SET_SALE") || activeProd.id.startsWith("set-product-");
       const isCategorySale = activeProd.categoryId === "timesale" || activeProd.tags?.includes("TIMESALE");
 
-      const isRegularSaleActive = (!isGlobalOff && !isProductOff && (isDirectSelected || isSet || isCategorySale || (activeProd as any).isTimeSale === true));
+      const hasSpecificSavedIds = savedSelectedIds.length > 0;
+      const isTargetSale = hasSpecificSavedIds
+        ? (isDirectSelected || isSet || isCategorySale)
+        : (isSet || isCategorySale || (activeProd as any).isTimeSale === true);
+
+      const isRegularSaleActive = (!isGlobalOff && !isProductOff && isTargetSale);
 
       let regPrice = origPrice;
       if (isSet) {

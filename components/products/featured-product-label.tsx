@@ -122,7 +122,7 @@ export function FeaturedProductLabel({
             );
           } catch (e) {}
         } else {
-          isSelected = (product as any).isTimeSale === true || product.categoryId === "timesale" || product.tags?.includes("TIMESALE");
+          isSelected = (product as any).isTimeSale === true || product.categoryId === "timesale" || product.tags?.includes("TIMESALE") || (linked as any)?.isTimeSale === true || linked?.categoryId === "timesale" || linked?.tags?.includes("TIMESALE");
         }
 
         let itemDiscount: number | null = null;
@@ -139,7 +139,7 @@ export function FeaturedProductLabel({
           } catch (e) {}
         }
 
-        const isTimeSale = isSelected || (product as any).isTimeSale === true || (linked as any)?.isTimeSale === true;
+        const isTimeSale = isSelected;
 
         if (isTimeSale) {
           const tagRate = Array.isArray(product.tags)
