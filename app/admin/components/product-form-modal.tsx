@@ -221,6 +221,8 @@ export function ProductFormModal({
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [detailDescription, setDetailDescription] = useState("");
+  const [draggedDetailIdx, setDraggedDetailIdx] = useState<number | null>(null);
+  const [dragOverDetailIdx, setDragOverDetailIdx] = useState<number | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [urlInput, setUrlInput] = useState("");
@@ -585,6 +587,58 @@ export function ProductFormModal({
       }
     }
     return srcs;
+  };
+
+  // Reorder detail images in detailDescription
+  const moveDetailImage = (fromIdx: number, toIdx: number) => {
+    if (!detailDescription) return;
+    const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    const matches: { full: string; src: string; index: number; length: number }[] = [];
+    let m;
+    while ((m = imgRegex.exec(detailDescription)) !== null) {
+      matches.push({ full: m[0], src: m[1], index: m.index, length: m[0].length });
+    }
+
+    if (matches.length === 0) {
+      const lines = detailDescription.split("\n");
+      const imgLines: { line: string; lineIdx: number }[] = [];
+      lines.forEach((l, idx) => {
+        const t = l.trim();
+        if (t.startsWith("data:image/") || /^https?:\/\//i.test(t) || /^\//.test(t)) {
+          imgLines.push({ line: l, lineIdx: idx });
+        }
+      });
+      if (imgLines.length >= 2 && fromIdx >= 0 && toIdx >= 0 && fromIdx < imgLines.length && toIdx < imgLines.length) {
+        const targetFrom = imgLines[fromIdx];
+        const targetTo = imgLines[toIdx];
+        const temp = lines[targetFrom.lineIdx];
+        lines[targetFrom.lineIdx] = lines[targetTo.lineIdx];
+        lines[targetTo.lineIdx] = temp;
+        setDetailDescription(lines.join("\n"));
+        triggerToast(`상세 사진 순서가 #${toIdx + 1}번으로 변경되었습니다.`);
+      }
+      return;
+    }
+
+    if (matches.length < 2 || fromIdx === toIdx || fromIdx < 0 || toIdx < 0 || fromIdx >= matches.length || toIdx >= matches.length) {
+      return;
+    }
+
+    const reordered = [...matches];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+
+    let result = "";
+    let lastPos = 0;
+    for (let i = 0; i < matches.length; i++) {
+      const orig = matches[i];
+      result += detailDescription.substring(lastPos, orig.index);
+      result += reordered[i].full;
+      lastPos = orig.index + orig.length;
+    }
+    result += detailDescription.substring(lastPos);
+    setDetailDescription(result);
+    triggerToast(`상세 사진 순서가 #${toIdx + 1}번으로 변경되었습니다.`);
   };
 
   // Remove specific image from detailDescription
@@ -1143,29 +1197,104 @@ export function ProductFormModal({
 
                   {/* Thumbnail List of registered detail images */}
                   {extractImagesFromHtml(detailDescription).length > 0 && (
-                    <div className="space-y-1.5 bg-white p-3 rounded-xl border border-neutral-200/80">
+                    <div className="space-y-2 bg-white p-3.5 rounded-xl border border-neutral-200/80 shadow-2xs">
                       <div className="flex items-center justify-between text-[11px] font-bold text-neutral-700">
-                        <span>등록된 상세 사진 ({extractImagesFromHtml(detailDescription).length}개)</span>
-                        <span className="text-[10px] text-neutral-400">마우스 호버 시 삭제</span>
+                        <span className="flex items-center gap-1.5 flex-wrap">
+                          <span>등록된 상세 사진 ({extractImagesFromHtml(detailDescription).length}개)</span>
+                          <span className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/70 font-semibold">
+                            드래그 또는 화살표(←/→)로 이동
+                          </span>
+                        </span>
+                        <span className="text-[10px] text-neutral-400">마우스 호버 시 삭제/이동</span>
                       </div>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {extractImagesFromHtml(detailDescription).map((src, idx) => (
+                      <div className="flex flex-wrap gap-2.5 pt-1">
+                        {extractImagesFromHtml(detailDescription).map((src, idx, arr) => (
                           <div
                             key={`${src.slice(0, 30)}-${idx}`}
-                            className="relative w-16 h-20 rounded-xl overflow-hidden border-2 border-neutral-200 bg-neutral-50 group shadow-2xs shrink-0"
+                            draggable={true}
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData("text/plain", String(idx));
+                              setDraggedDetailIdx(idx);
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = "move";
+                              if (dragOverDetailIdx !== idx) setDragOverDetailIdx(idx);
+                            }}
+                            onDragLeave={() => {
+                              if (dragOverDetailIdx === idx) setDragOverDetailIdx(null);
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              const fromStr = e.dataTransfer.getData("text/plain");
+                              const from = fromStr !== "" ? parseInt(fromStr, 10) : draggedDetailIdx;
+                              if (from !== null && !isNaN(from) && from !== idx) {
+                                moveDetailImage(from, idx);
+                              }
+                              setDraggedDetailIdx(null);
+                              setDragOverDetailIdx(null);
+                            }}
+                            onDragEnd={() => {
+                              setDraggedDetailIdx(null);
+                              setDragOverDetailIdx(null);
+                            }}
+                            className={`relative w-20 h-24 rounded-xl overflow-hidden border-2 transition-all group shadow-2xs shrink-0 cursor-grab active:cursor-grabbing select-none ${
+                              draggedDetailIdx === idx
+                                ? "opacity-40 scale-95 border-amber-500 ring-2 ring-amber-300"
+                                : dragOverDetailIdx === idx
+                                ? "border-amber-500 scale-105 ring-2 ring-amber-400 shadow-md"
+                                : "border-neutral-200 hover:border-neutral-400 bg-neutral-50"
+                            }`}
                           >
-                            <img src={src} alt={`상세컷 ${idx + 1}`} className="w-full h-full object-cover" />
-                            <span className="absolute top-1 left-1 text-[8px] font-bold bg-black/60 text-white px-1 py-0.2 rounded">
+                            <img src={src} alt={`상세컷 ${idx + 1}`} className="w-full h-full object-cover pointer-events-none" />
+                            <span className="absolute top-1 left-1 text-[9px] font-black bg-black/75 text-white px-1.5 py-0.5 rounded-md backdrop-blur-xs pointer-events-none shadow-xs">
                               #{idx + 1}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => removeImageFromDetailDescription(src)}
-                              className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white cursor-pointer"
-                              title="상세 사진 삭제"
-                            >
-                              <Trash2 className="w-4 h-4 text-rose-400 hover:text-rose-200" />
-                            </button>
+                            <div className="absolute inset-0 bg-black/65 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1.5">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeImageFromDetailDescription(src);
+                                }}
+                                className="self-end bg-rose-600/90 hover:bg-rose-600 text-white rounded-md p-1 transition-colors cursor-pointer shadow-xs"
+                                title="상세 사진 삭제"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                              <div className="flex justify-between items-center gap-1 w-full mt-auto">
+                                {idx > 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      moveDetailImage(idx, idx - 1);
+                                    }}
+                                    className="bg-white/95 hover:bg-white text-neutral-900 text-xs font-black px-2 py-0.5 rounded-md transition-all shadow-xs active:scale-95 cursor-pointer"
+                                    title="앞으로 이동 (←)"
+                                  >
+                                    ←
+                                  </button>
+                                ) : (
+                                  <div className="w-6" />
+                                )}
+                                {idx < arr.length - 1 ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      moveDetailImage(idx, idx + 1);
+                                    }}
+                                    className="ml-auto bg-white/95 hover:bg-white text-neutral-900 text-xs font-black px-2 py-0.5 rounded-md transition-all shadow-xs active:scale-95 cursor-pointer"
+                                    title="뒤로 이동 (→)"
+                                  >
+                                    →
+                                  </button>
+                                ) : (
+                                  <div className="w-6" />
+                                )}
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
