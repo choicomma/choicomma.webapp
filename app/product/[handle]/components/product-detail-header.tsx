@@ -568,8 +568,8 @@ export function ProductDetailHeader({
 
     const updateTime = () => {
       let expiryTime = 0;
-      if (product.timeSaleEndDate) {
-        const parsed = new Date(product.timeSaleEndDate).getTime();
+      if ((product as any).timeSaleEndDate) {
+        const parsed = new Date((product as any).timeSaleEndDate).getTime();
         if (!isNaN(parsed) && parsed > Date.now()) {
           expiryTime = parsed;
         }

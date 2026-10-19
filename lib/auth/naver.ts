@@ -17,16 +17,37 @@ export interface NaverUserProfile {
   mobile?: string;
 }
 
+import fs from "fs";
+import path from "path";
+
+function readEnvLocal(key: string): string {
+  try {
+    const envPath = path.join(process.cwd(), ".env.local");
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      const match = content.match(new RegExp(`^${key}=(.*)$`, "m"));
+      if (match && match[1]) {
+        return match[1].trim().replace(/^['"]|['"]$/g, "");
+      }
+    }
+  } catch (e) {}
+  return "";
+}
+
 export function getNaverConfig(req?: Request) {
   const clientId =
     process.env.NAVER_CLIENT_ID ||
     process.env.NEXT_PUBLIC_NAVER_CLIENT_ID ||
     process.env.NAVER_ID ||
+    readEnvLocal("NAVER_CLIENT_ID") ||
+    readEnvLocal("NEXT_PUBLIC_NAVER_CLIENT_ID") ||
     "";
 
   const clientSecret =
     process.env.NAVER_CLIENT_SECRET ||
     process.env.NAVER_SECRET ||
+    readEnvLocal("NAVER_CLIENT_SECRET") ||
+    readEnvLocal("NAVER_SECRET") ||
     "";
 
   let redirectUri =

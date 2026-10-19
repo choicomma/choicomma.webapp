@@ -15,20 +15,47 @@ export interface GoogleUserProfile {
   locale?: string;
 }
 
+import fs from "fs";
+import path from "path";
+
+function readEnvLocal(key: string): string {
+  try {
+    const envPath = path.join(process.cwd(), ".env.local");
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      const match = content.match(new RegExp(`^${key}=(.*)$`, "m"));
+      if (match && match[1]) {
+        return match[1].trim().replace(/^['"]|['"]$/g, "");
+      }
+    }
+  } catch (e) {}
+  return "";
+}
+
 export function getGoogleConfig(req?: Request) {
-  const clientId =
+  let clientId =
     process.env.GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.GOOGLE_ID ||
     process.env.NEXT_PUBLIC_GOOGLE_ID ||
     process.env.GOOGLE_OAUTH_CLIENT_ID ||
+    readEnvLocal("GOOGLE_CLIENT_ID") ||
+    readEnvLocal("NEXT_PUBLIC_GOOGLE_CLIENT_ID") ||
+    readEnvLocal("GOOGLE_ID") ||
     "";
+
+  // 혹시 클라이언트 ID 뒤에 _ID.apps... 가 중복 붙었을 경우 자동 보정
+  if (clientId.includes(".apps.googleusercontent.com_")) {
+    clientId = clientId.split("_")[0];
+  }
 
   const clientSecret =
     process.env.GOOGLE_CLIENT_SECRET ||
     process.env.GOOGLE_SECRET ||
     process.env.GOOGLE_PASSWORD ||
     process.env.GOOGLE_OAUTH_CLIENT_SECRET ||
+    readEnvLocal("GOOGLE_CLIENT_SECRET") ||
+    readEnvLocal("GOOGLE_SECRET") ||
     "";
 
   let redirectUri =

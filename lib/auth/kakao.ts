@@ -1,8 +1,5 @@
-/**
- * [카카오 OAuth 2.0 인증 유틸리티]
- * - 다양한 환경변수 이름 유연 지원 (KAKAO_REST_API_KEY, NEXT_PUBLIC_KAKAO_REST_API_KEY, KAKAO_CLIENT_ID 등)
- * - 로컬/배포 환경에 따른 동적 Redirect URI 자동 판별
- */
+import fs from "fs";
+import path from "path";
 
 export interface KakaoUserAccount {
   id: number;
@@ -29,8 +26,22 @@ export interface KakaoUserAccount {
   };
 }
 
+function readEnvLocal(key: string): string {
+  try {
+    const envPath = path.join(process.cwd(), ".env.local");
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      const match = content.match(new RegExp(`^${key}=(.*)$`, "m"));
+      if (match && match[1]) {
+        return match[1].trim().replace(/^['"]|['"]$/g, "");
+      }
+    }
+  } catch (e) {}
+  return "";
+}
+
 export function getKakaoConfig(req?: Request) {
-  // 사용자가 입력할 수 있는 다양한 환경변수 키 이름 지원
+  // 사용자가 입력할 수 있는 다양한 환경변수 키 이름 지원 + 파일 직접 읽기 안전망
   const restApiKey =
     process.env.KAKAO_REST_API_KEY ||
     process.env.NEXT_PUBLIC_KAKAO_REST_API_KEY ||
@@ -38,6 +49,9 @@ export function getKakaoConfig(req?: Request) {
     process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID ||
     process.env.KAKAO_API_KEY ||
     process.env.NEXT_PUBLIC_KAKAO_API_KEY ||
+    readEnvLocal("KAKAO_REST_API_KEY") ||
+    readEnvLocal("NEXT_PUBLIC_KAKAO_REST_API_KEY") ||
+    readEnvLocal("KAKAO_CLIENT_ID") ||
     "";
 
   const clientSecret =
