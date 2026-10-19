@@ -1161,9 +1161,8 @@ export default function LoginPage() {
         </Link>
       </div>
 
-      {/* Main Login Card */}
-      <div className="w-full max-w-md mx-auto my-auto z-10 py-8">
-        <div className="bg-white border border-neutral-200/80 rounded-3xl p-8 shadow-xl space-y-6">
+      <div className="w-full max-w-md mx-auto my-auto z-10 py-6 sm:py-8">
+        <div className="bg-white border border-neutral-200/80 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
           {/* Login Card Header */}
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-extrabold text-neutral-950 tracking-tight">
