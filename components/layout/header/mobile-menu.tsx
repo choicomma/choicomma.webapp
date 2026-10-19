@@ -216,8 +216,8 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
 
                 {/* 3가지 SNS 빠른 간편 로그인 (장바구니 바로 아래) */}
                 {!isLoggedIn ? (
-                  <div className="space-y-2 pt-0.5">
-                    <div className="flex items-center justify-between px-0.5">
+                  <div className="space-y-2.5 pt-0.5 pb-1">
+                    <div className="flex items-center justify-between px-1">
                       <span className="text-[11px] font-extrabold text-neutral-400 tracking-wider uppercase">
                         SNS 1초 간편 로그인
                       </span>
@@ -230,57 +230,60 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
                       </Link>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-7 pt-1">
                       {/* 카카오 */}
-                      <button
-                        type="button"
-                        onClick={() => handleSocialLogin("kakao")}
-                        disabled={Boolean(socialLoading)}
-                        className="w-full bg-[#FEE500] hover:bg-[#FDD835] active:scale-[0.99] text-[#191919] font-extrabold py-3 px-4 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2.5 text-xs cursor-pointer border border-[#FEE500] disabled:opacity-60"
-                      >
-                        {socialLoading === "kakao" ? (
-                          <div className="w-4 h-4 border-2 border-[#191919] border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSocialLogin("kakao")}
+                          disabled={Boolean(socialLoading)}
+                          className="w-12 h-12 rounded-full bg-[#FEE500] hover:bg-[#FDD835] active:scale-95 flex items-center justify-center transition-all shadow-xs hover:shadow-md cursor-pointer disabled:opacity-60 border border-[#FEE500]"
+                          title="카카오 로그인"
+                        >
+                          {socialLoading === "kakao" ? (
+                            <div className="w-4 h-4 border-2 border-[#191919] border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg className="w-5 h-5 fill-[#191919] shrink-0" viewBox="0 0 24 24">
                               <path d="M12 3c-5.523 0-10 3.582-10 8 0 2.85 1.862 5.347 4.678 6.744l-1.188 4.356c-.104.381.282.697.604.496l5.127-3.204c.256.026.516.039.779.039 5.523 0 10-3.582 10-8s-4.477-8-10-8z" />
                             </svg>
-                            <span>카카오로 1초 시작하기</span>
-                          </>
-                        )}
-                      </button>
+                          )}
+                        </button>
+                        <span className="text-[10px] font-semibold text-neutral-600">카카오</span>
+                      </div>
 
                       {/* 네이버 */}
-                      <button
-                        type="button"
-                        onClick={() => handleSocialLogin("naver")}
-                        disabled={Boolean(socialLoading)}
-                        className="w-full bg-[#03C75A] hover:bg-[#02b350] active:scale-[0.99] text-white font-extrabold py-3 px-4 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2.5 text-xs cursor-pointer border border-[#03C75A] disabled:opacity-60"
-                      >
-                        {socialLoading === "naver" ? (
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <>
+                      <div className="flex flex-col items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSocialLogin("naver")}
+                          disabled={Boolean(socialLoading)}
+                          className="w-12 h-12 rounded-full bg-[#03C75A] hover:bg-[#02b350] active:scale-95 flex items-center justify-center transition-all shadow-xs hover:shadow-md cursor-pointer disabled:opacity-60 border border-[#03C75A]"
+                          title="네이버 로그인"
+                        >
+                          {socialLoading === "naver" ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
                             <svg className="w-3.5 h-3.5 fill-white shrink-0" viewBox="0 0 24 24">
                               <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z" />
                             </svg>
-                            <span>네이버로 시작하기</span>
-                          </>
-                        )}
-                      </button>
+                          )}
+                        </button>
+                        <span className="text-[10px] font-semibold text-neutral-600">네이버</span>
+                      </div>
 
                       {/* 구글 */}
-                      <button
-                        type="button"
-                        onClick={() => handleSocialLogin("google")}
-                        disabled={Boolean(socialLoading)}
-                        className="w-full bg-white hover:bg-neutral-50 active:scale-[0.99] text-neutral-800 font-bold py-3 px-4 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2.5 text-xs cursor-pointer border border-neutral-200 disabled:opacity-60"
-                      >
-                        {socialLoading === "google" ? (
-                          <div className="w-4 h-4 border-2 border-neutral-800 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <>
-                            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSocialLogin("google")}
+                          disabled={Boolean(socialLoading)}
+                          className="w-12 h-12 rounded-full bg-white hover:bg-neutral-50 active:scale-95 flex items-center justify-center transition-all shadow-xs hover:shadow-md cursor-pointer disabled:opacity-60 border border-neutral-200"
+                          title="Google 로그인"
+                        >
+                          {socialLoading === "google" ? (
+                            <div className="w-4 h-4 border-2 border-neutral-800 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                               <path
                                 fill="#4285F4"
                                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -298,10 +301,10 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
                                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                               />
                             </svg>
-                            <span>Google로 시작하기</span>
-                          </>
-                        )}
-                      </button>
+                          )}
+                        </button>
+                        <span className="text-[10px] font-semibold text-neutral-600">구글</span>
+                      </div>
                     </div>
                   </div>
                 ) : (
