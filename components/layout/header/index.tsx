@@ -165,19 +165,19 @@ export function Header({ collections }: HeaderProps) {
         {/* Header Content Bar */}
         <div
           className={cn(
-            "relative z-10 w-full pl-2 sm:pl-4 md:pl-6 pr-sides flex items-center justify-between md:grid md:grid-cols-12 md:gap-sides transition-colors duration-400 pt-0.5 pb-1 md:py-1",
+            "relative z-10 w-full pl-3 sm:pl-4 md:pl-6 pr-sides flex items-center justify-between md:grid md:grid-cols-12 md:gap-sides transition-colors duration-400 py-2.5 md:py-3.5",
             "text-neutral-900"
           )}
         >
           {/* Mobile: Logo on far left / Desktop: col-span-5 */}
-          <Link href="/" className="md:col-span-5 flex items-center justify-start py-0 -ml-1 sm:ml-0" prefetch>
+          <Link href="/" className="md:col-span-5 flex items-center justify-start py-0.5" prefetch>
             <LogoSvg
               className="cursor-pointer justify-start"
             />
           </Link>
 
           {/* Desktop Navigation & Cart (Single Unified Pill Bar) */}
-          <nav className="hidden md:flex items-center md:col-span-7 justify-end gap-2.5 -mt-6 md:-mt-8">
+          <nav className="hidden md:flex items-center md:col-span-7 justify-end gap-2.5">
             <div
               className={cn(
                 "items-center gap-1.5 md:gap-2 h-10 md:h-11 px-2.5 md:px-4 rounded-full backdrop-blur-md flex transition-colors duration-400 shadow-sm shrink-0",
