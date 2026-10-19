@@ -59,6 +59,7 @@ import { splitKoreanAddress, formatKoreanAddress } from "@/lib/address";
 import { getAllUserCoupons, getUserCoupons, isLegacyCoupon, syncAdminCouponsFromSupabase } from "@/lib/membership/coupons";
 import { syncSecretTimesalesFromServer, getCachedSecretTimesales } from "@/lib/membership/timesales";
 import { MembershipPopupBanner } from "@/components/membership/membership-popup-banner";
+import { MembershipShopCard } from "@/components/membership/membership-shop-card";
 import { SizeRecommendationTab } from "./components/size-recommendation-tab";
 
 function MembershipContent() {
@@ -1732,6 +1733,9 @@ function MembershipContent() {
 
             {/* Membership Popup Banner (공지사항 - 아이디 설정 안내 위로 배치) */}
             <MembershipPopupBanner />
+
+            {/* 쇼핑홈 바로가기 카드 (메인 슬라이드 이미지 활용) */}
+            <MembershipShopCard />
 
             {/* 회원 등급별 혜택 안내 카드 (회원 등급 혜택 안내표) */}
             <div className="bg-gradient-to-br from-[#8C7A6B] to-[#6E5E52] rounded-3xl p-6 sm:p-8 text-[#FAF7F2] shadow-md space-y-4">
