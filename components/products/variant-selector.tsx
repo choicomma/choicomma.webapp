@@ -256,15 +256,14 @@ export const useProductImages = (
     }
 
     const detailHtml = (product as any)?.detailDescription || (product as any)?.descriptionHtml || "";
-    // If multiple images are present and all additional images exist in detailDescription, exclude them from gallery
+    // 상세페이지(detailDescription) 본문에 포함된 이미지는 상단 제품 이미지 갤러리에서 제외
     if (rawImages.length > 1 && detailHtml) {
-      const extraImages = rawImages.slice(1);
-      const allExtrasInDetail = extraImages.every(
-        (img) => img.url && detailHtml.includes(img.url)
-      );
-      if (allExtrasInDetail) {
-        return [rawImages[0]];
-      }
+      const filtered = rawImages.filter((img, idx) => {
+        if (idx === 0) return true; // 대표 이미지는 항상 유지
+        const u = typeof img === "string" ? img : img?.url;
+        return !u || !detailHtml.includes(u);
+      });
+      return filtered.length > 0 ? filtered : [rawImages[0]];
     }
 
     return rawImages;

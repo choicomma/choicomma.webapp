@@ -340,12 +340,20 @@ export function ProductFormModal({
       setTempTitles(loadedTitles);
       setOption1Name(op1);
       setOption2Name(op2);
-      setDetailDescription(initialProduct.detailDescription || initialProduct.descriptionHtml || initialProduct.detailedInfo || "");
-      const initImgs = Array.isArray(initialProduct.images) && initialProduct.images.length > 0
+      const detailText = initialProduct.detailDescription || initialProduct.descriptionHtml || initialProduct.detailedInfo || "";
+      setDetailDescription(detailText);
+      const allProductImgs = Array.isArray(initialProduct.images) && initialProduct.images.length > 0
         ? initialProduct.images.map((img: any) => (typeof img === "string" ? img : img.url))
         : (initialProduct.featuredImage?.url ? [initialProduct.featuredImage.url] : []);
-      setImages(initImgs);
-      setImageUrl(initImgs[0] || "");
+      // 상세페이지(detailDescription) 본문에 등록된 사진은 '제품 이미지' 목록에서 제외
+      const cleanImgs = detailText
+        ? allProductImgs.filter((url: string, idx: number) => {
+            if (idx === 0) return true; // 대표 이미지는 항상 유지
+            return !detailText.includes(url);
+          })
+        : allProductImgs;
+      setImages(cleanImgs);
+      setImageUrl(cleanImgs[0] || "");
 
       setStock(initialProduct.stock !== undefined ? Number(initialProduct.stock) : 50);
       setAvailableForSale(initialProduct.availableForSale !== false);
@@ -728,7 +736,13 @@ export function ProductFormModal({
 
     const totalStockCalc = calculateTotalStock(colors, sizes, sizeStock);
     const detailFirstImage = extractImagesFromHtml(detailDescription)[0];
-    const finalImages = images.length > 0 ? images : [detailFirstImage || "/product_1.webp"];
+    const cleanImages = detailDescription
+      ? images.filter((url: string, idx: number) => {
+          if (idx === 0) return true; // 대표 이미지는 유지
+          return !detailDescription.includes(url);
+        })
+      : images;
+    const finalImages = cleanImages.length > 0 ? cleanImages : [detailFirstImage || "/product_1.webp"];
 
     // Product sequence number & code (상품 등록 순서로 순차 자동 부여)
     let finalProdNo: number;

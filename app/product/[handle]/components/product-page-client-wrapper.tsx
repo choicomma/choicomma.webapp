@@ -51,11 +51,13 @@ export function ProductPageClientWrapper({ initialProduct }: { initialProduct: P
             if (found) {
               const detail = found.detailDescription || found.descriptionHtml || "";
               if (found.images && found.images.length > 1 && detail) {
-                const extras = found.images.slice(1);
-                if (extras.every((img: any) => detail.includes(img.url || img))) {
-                  const rep = found.featuredImage || found.images[0];
-                  found.images = [rep];
-                }
+                const rep = found.featuredImage || found.images[0];
+                const cleanImages = found.images.filter((img: any, idx: number) => {
+                  if (idx === 0) return true;
+                  const u = typeof img === "string" ? img : img?.url;
+                  return !u || !detail.includes(u);
+                });
+                found.images = cleanImages.length > 0 ? cleanImages : [rep];
               }
 
               setProduct(found);
