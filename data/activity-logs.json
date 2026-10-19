@@ -1,6 +1,48 @@
 {
   "journeyLogs": [
     {
+      "id": "jnl_1792400557116_aw556",
+      "sessionId": "s_1792400538148_fqxir",
+      "visitorId": "v_1792400538148_27vttyw",
+      "eventType": "PAGE_VIEW",
+      "eventLabel": "페이지 탐색 (choicomma)",
+      "path": "/login",
+      "referrer": "직접 유입",
+      "device": "PC",
+      "metadata": {},
+      "ip": "::1",
+      "timestamp": "2026-10-19 18:02:37",
+      "created_at": "2026-10-19T09:02:37.116Z"
+    },
+    {
+      "id": "jnl_1792400549675_ad210",
+      "sessionId": "s_1792400538148_fqxir",
+      "visitorId": "v_1792400538148_27vttyw",
+      "eventType": "PAGE_VIEW",
+      "eventLabel": "페이지 탐색 (choicomma)",
+      "path": "/login",
+      "referrer": "직접 유입",
+      "device": "PC",
+      "metadata": {},
+      "ip": "::1",
+      "timestamp": "2026-10-19 18:02:29",
+      "created_at": "2026-10-19T09:02:29.675Z"
+    },
+    {
+      "id": "jnl_1792400540061_atm0c",
+      "sessionId": "s_1792400538148_fqxir",
+      "visitorId": "v_1792400538148_27vttyw",
+      "eventType": "PAGE_VIEW",
+      "eventLabel": "홈페이지 메인 방문",
+      "path": "/",
+      "referrer": "직접 유입",
+      "device": "PC",
+      "metadata": {},
+      "ip": "::1",
+      "timestamp": "2026-10-19 18:02:20",
+      "created_at": "2026-10-19T09:02:20.061Z"
+    },
+    {
       "id": "jnl_1792399564107_z5ejr",
       "sessionId": "s_1792399187142_p0j9e",
       "visitorId": "v_1792392811003_gotzhqt",
@@ -1125,5 +1167,5 @@
       "created_at": "2026-10-13T12:48:15.593Z"
     }
   ],
-  "updatedAt": "2026-10-19T08:46:04.110Z"
+  "updatedAt": "2026-10-19T09:02:37.118Z"
 }
