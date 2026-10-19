@@ -38,6 +38,7 @@ export default function LoginPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isKakaoLoading, setIsKakaoLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const [postcode, setPostcode] = useState("");
@@ -65,7 +66,7 @@ export default function LoginPage() {
     return () => clearTimeout(timer);
   }, [toastMsg]);
 
-  // Load Daum Postcode script dynamically & check session expiration notice
+  // Load Daum Postcode script dynamically & check session expiration / Kakao notice
   useEffect(() => {
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
@@ -74,13 +75,29 @@ export default function LoginPage() {
       }
       if (searchParams.get("expired") === "true") {
         setToastMsg("안전한 쇼핑을 위해 로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
-        // URL에서 ?expired=true 파라미터를 정리하여 새로고침 시 무한 반복 표시 방지
-        try {
-          const url = new URL(window.location.href);
-          url.searchParams.delete("expired");
-          window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
-        } catch (e) {}
       }
+      if (searchParams.get("kakao") === "cancelled") {
+        setToastMsg("카카오 로그인이 취소되었습니다.");
+      }
+      if (searchParams.get("error") === "kakao_failed") {
+        const msg = searchParams.get("msg");
+        setToastMsg(msg ? decodeURIComponent(msg) : "카카오 로그인 중 오류가 발생했습니다. 다시 시도해 주세요.");
+      }
+
+      // URL 파라미터 정리
+      try {
+        const url = new URL(window.location.href);
+        let changed = false;
+        ["expired", "kakao", "error", "msg"].forEach((p) => {
+          if (url.searchParams.has(p)) {
+            url.searchParams.delete(p);
+            changed = true;
+          }
+        });
+        if (changed) {
+          window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
+        }
+      } catch (e) {}
 
       if (!(window as any).daum) {
         const script = document.createElement("script");
@@ -91,6 +108,14 @@ export default function LoginPage() {
       }
     }
   }, []);
+
+  // Handle Kakao Login Redirect
+  const handleKakaoLogin = () => {
+    setIsKakaoLoading(true);
+    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const redirectTarget = searchParams?.get("redirect") || "/membership";
+    window.location.href = `/api/auth/kakao/login?redirect=${encodeURIComponent(redirectTarget)}`;
+  };
 
   // Git 원격 파일(data/customers.json)과 로컬 캐시 안전 병합 동기화
   useEffect(() => {
@@ -1141,6 +1166,35 @@ export default function LoginPage() {
             </button>
           </div>
 
+          {/* Kakao 1-Sec Quick Auth Button */}
+          <div className="space-y-3 pt-1">
+            <button
+              type="button"
+              onClick={handleKakaoLogin}
+              disabled={isKakaoLoading}
+              className="w-full bg-[#FEE500] hover:bg-[#FDD835] active:scale-[0.99] text-[#191919] font-extrabold py-3.5 px-4 rounded-xl transition-all shadow-xs hover:shadow-md flex items-center justify-center gap-2.5 text-sm cursor-pointer disabled:opacity-60 border border-[#FEE500]"
+            >
+              {isKakaoLoading ? (
+                <div className="w-5 h-5 border-2 border-[#191919] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d="M12 3c-5.523 0-10 3.582-10 8 0 2.85 1.862 5.347 4.678 6.744l-1.188 4.356c-.104.381.282.697.604.496l5.127-3.204c.256.026.516.039.779.039 5.523 0 10-3.582 10-8s-4.477-8-10-8z" />
+                  </svg>
+                  <span>{isSignUp ? "카카오로 1초 만에 회원가입" : "카카오로 1초 만에 시작하기"}</span>
+                </>
+              )}
+            </button>
+
+            {/* Divider */}
+            <div className="relative flex items-center justify-center pt-1">
+              <div className="w-full border-t border-neutral-200" />
+              <span className="absolute bg-white px-3 text-[11px] text-neutral-400 font-semibold tracking-wide select-none">
+                또는 아이디로 {isSignUp ? "가입하기" : "로그인"}
+              </span>
+            </div>
+          </div>
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
@@ -1447,10 +1501,12 @@ export default function LoginPage() {
               <>
                 {/* 안내 배너: 기존 쇼핑몰 회원 안내 */}
                 <div className="p-2.5 bg-neutral-100/80 border border-neutral-200 rounded-xl text-[11px] text-neutral-600 leading-relaxed flex items-start gap-2">
-                  <span className="shrink-0 text-neutral-900 font-bold">ℹ️</span>
-                  <span>
-                    기존 쇼핑몰 회원은 <strong>아이디(이메일 주소)</strong>와 <strong>비밀번호(휴대폰 번호 뒤 4자리)</strong>로 바로 로그인하실 수 있습니다.
-                  </span>
+                  <span className="shrink-0 text-neutral-900 font-bold mt-0.5">ℹ️</span>
+                  <div>
+                    <p>
+                      기존 쇼핑몰 일반 회원은 <strong>아이디(이메일 주소)</strong>와 <strong>비밀번호(휴대폰 번호 뒤 4자리)</strong>로 로그인하실 수 있습니다.
+                    </p>
+                  </div>
                 </div>
 
                 <div>

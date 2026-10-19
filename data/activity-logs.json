@@ -1,6 +1,48 @@
 {
   "journeyLogs": [
     {
+      "id": "jnl_1792392835707_2qko5",
+      "sessionId": "s_1792392835423_6shsn",
+      "visitorId": "v_1792392811003_gotzhqt",
+      "eventType": "PAGE_VIEW",
+      "eventLabel": "페이지 탐색 (choicomma)",
+      "path": "/login",
+      "referrer": "직접 유입",
+      "device": "PC",
+      "metadata": {},
+      "ip": "::1",
+      "timestamp": "2026-10-19 15:53:55",
+      "created_at": "2026-10-19T06:53:55.707Z"
+    },
+    {
+      "id": "jnl_1792392822276_9sc52",
+      "sessionId": "s_1792392811003_8jgw6",
+      "visitorId": "v_1792392811003_gotzhqt",
+      "eventType": "PAGE_VIEW",
+      "eventLabel": "페이지 탐색 (choicomma)",
+      "path": "/login",
+      "referrer": "직접 유입",
+      "device": "PC",
+      "metadata": {},
+      "ip": "::1",
+      "timestamp": "2026-10-19 15:53:42",
+      "created_at": "2026-10-19T06:53:42.276Z"
+    },
+    {
+      "id": "jnl_1792392814942_q8ht4",
+      "sessionId": "s_1792392811003_8jgw6",
+      "visitorId": "v_1792392811003_gotzhqt",
+      "eventType": "PAGE_VIEW",
+      "eventLabel": "페이지 탐색 (choicomma)",
+      "path": "/login",
+      "referrer": "직접 유입",
+      "device": "PC",
+      "metadata": {},
+      "ip": "::1",
+      "timestamp": "2026-10-19 15:53:34",
+      "created_at": "2026-10-19T06:53:34.942Z"
+    },
+    {
       "id": "jnl_1792053797903_yaynz",
       "sessionId": "s_1792051452795_z6pa7",
       "visitorId": "v_1791789874192_rcg7pp1",
@@ -44,6 +86,48 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "adt_1792072590124_i2eyo",
+      "adminId": "admin_master",
+      "adminName": "스토어 관리자",
+      "actionType": "UPDATE",
+      "domain": "POPUP",
+      "targetId": "popup_config",
+      "targetName": "기존 회원 및 카카오톡 로그인 안내",
+      "description": "팝업 설정 저장 (활성화: ON, 제목: 기존 회원 및 카카오톡 로그인 안내)",
+      "beforeData": {
+        "isActive": true,
+        "title": "기존 회원 및 카카오톡 로그인 안내"
+      },
+      "afterData": {
+        "isActive": true,
+        "title": "기존 회원 및 카카오톡 로그인 안내"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 22:56:30",
+      "created_at": "2026-10-15T13:56:30.124Z"
+    },
+    {
+      "id": "adt_1792072587649_gs491",
+      "adminId": "admin_master",
+      "adminName": "스토어 관리자",
+      "actionType": "UPDATE",
+      "domain": "POPUP",
+      "targetId": "popup_config",
+      "targetName": "기존 회원 및 카카오톡 로그인 안내",
+      "description": "팝업 설정 저장 (활성화: ON, 제목: 기존 회원 및 카카오톡 로그인 안내)",
+      "beforeData": {
+        "isActive": true,
+        "title": "기존 회원 로그인 안내"
+      },
+      "afterData": {
+        "isActive": true,
+        "title": "기존 회원 및 카카오톡 로그인 안내"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-15 22:56:27",
+      "created_at": "2026-10-15T13:56:27.649Z"
+    },
     {
       "id": "adt_1792065732897_qkuq8",
       "adminId": "admin_master",
@@ -951,5 +1035,5 @@
       "created_at": "2026-10-13T12:48:15.593Z"
     }
   ],
-  "updatedAt": "2026-10-15T12:02:12.900Z"
+  "updatedAt": "2026-10-19T06:53:55.710Z"
 }

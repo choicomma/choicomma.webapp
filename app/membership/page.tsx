@@ -39,7 +39,6 @@ import {
   EyeOff,
   Menu,
   X,
-  Ruler,
   UserCog,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -1396,25 +1395,6 @@ function MembershipContent() {
             </button>
 
             <button
-              onClick={() => setActiveTab("size")}
-              className={`w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-xs xl:text-sm font-bold transition-all cursor-pointer ${
-                activeTab === "size"
-                  ? "bg-neutral-950 text-white shadow-sm"
-                  : "text-neutral-600 hover:bg-neutral-100/80 hover:text-black"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Ruler className="h-4 w-4 shrink-0 text-amber-500" />
-                <span>사이즈 추천</span>
-              </div>
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                activeTab === "size" ? "bg-white text-neutral-950" : "bg-amber-100/80 text-amber-900"
-              }`}>
-                맞춤핏
-              </span>
-            </button>
-
-            <button
               onClick={() => setActiveTab("profile")}
               className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs xl:text-sm font-bold transition-all cursor-pointer ${
                 activeTab === "profile"
@@ -1571,28 +1551,6 @@ function MembershipContent() {
                     activeTab === "points" ? "bg-white text-neutral-950" : "bg-neutral-200 text-neutral-700"
                   }`}>
                     {userPoints.toLocaleString()} P
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setActiveTab("size");
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-bold transition-all cursor-pointer ${
-                    activeTab === "size"
-                      ? "bg-neutral-950 text-white shadow-sm"
-                      : "text-neutral-700 hover:bg-neutral-200/70"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Ruler className="h-4 w-4 shrink-0 text-amber-500" />
-                    <span>맞춤 사이즈 추천</span>
-                  </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    activeTab === "size" ? "bg-white text-neutral-950" : "bg-amber-100 text-amber-900"
-                  }`}>
-                    AI 추천
                   </span>
                 </button>
 
