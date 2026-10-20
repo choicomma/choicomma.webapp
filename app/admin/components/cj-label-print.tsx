@@ -96,18 +96,37 @@ export function CjLabelPrint({
   };
 
   const checkBridgeStatus = useCallback(async (targetHost?: string) => {
-    const host = (targetHost !== undefined ? targetHost : (bridgeHost || "localhost")).trim();
+    let host = (targetHost !== undefined ? targetHost : (bridgeHost || "localhost")).trim();
+    host = host.replace(/^https?:\/\//i, "").replace(/:18080.*$/, "").replace(/\/.*$/, "").trim() || "localhost";
     setBridgeStatus("checking");
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`http://${host || "localhost"}:18080/health`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        signal: controller.signal,
-      });
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      let res: Response | null = null;
+      try {
+        res = await fetch(`http://${host}:18080/health`, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+      } catch (fetchErr) {
+        if (!host.includes(".") && host !== "localhost" && host !== "127.0.0.1") {
+          try {
+            res = await fetch(`http://${host}.local:18080/health`, {
+              method: "GET",
+              headers: { Accept: "application/json" },
+              signal: controller.signal,
+            });
+            host = `${host}.local`;
+          } catch {
+            throw fetchErr;
+          }
+        } else {
+          throw fetchErr;
+        }
+      }
       clearTimeout(timeoutId);
-      if (!res.ok) throw new Error("HTTP error");
+      if (!res || !res.ok) throw new Error("HTTP error");
       const json = await res.json();
       if (json?.status === "ok" && (json?.xprinterDetected || json?.found)) {
         setBridgeStatus("connected");
@@ -125,20 +144,44 @@ export function CjLabelPrint({
   }, [bridgeHost, registerSavedHost]);
 
   const handleSaveHost = async (hostToTest?: string) => {
-    const target = (hostToTest || tempHost || "localhost").trim();
-    if (hostToTest) setTempHost(hostToTest);
+    let target = (hostToTest || tempHost || "localhost").trim();
+    target = target.replace(/^https?:\/\//i, "").replace(/:18080.*$/, "").replace(/\/.*$/, "").trim() || "localhost";
+    setTempHost(target);
     setTestingHost(true);
     setTestError(null);
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(`http://${target}:18080/health`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        signal: controller.signal,
-      });
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      let res: Response | null = null;
+      let errorThrown: any = null;
+
+      try {
+        res = await fetch(`http://${target}:18080/health`, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+      } catch (e) {
+        errorThrown = e;
+        if (!target.includes(".") && target !== "localhost" && target !== "127.0.0.1") {
+          try {
+            res = await fetch(`http://${target}.local:18080/health`, {
+              method: "GET",
+              headers: { Accept: "application/json" },
+              signal: controller.signal,
+            });
+            target = `${target}.local`;
+            setTempHost(target);
+            errorThrown = null;
+          } catch {}
+        }
+      }
+
       clearTimeout(timeoutId);
-      if (!res.ok) throw new Error("HTTP " + res.status);
+      if (errorThrown || !res || !res.ok) {
+        throw errorThrown || new Error(res ? `HTTP ${res.status}` : "Fetch failed");
+      }
+
       const json = await res.json();
       if (json?.status === "ok" && (json?.xprinterDetected || json?.found)) {
         setBridgeHost(target);
@@ -152,10 +195,19 @@ export function CjLabelPrint({
         toast.success(`프린터 PC (${target}) 연결에 성공했습니다!`);
         setIsHostModalOpen(false);
       } else {
-        setTestError("프린터 브릿지는 응답하였으나 Xprinter 라벨 프린터가 감지되지 않았습니다.");
+        setTestError("프린터 브릿지는 응답하였으나 Xprinter 라벨 프린터가 감지되지 않았습니다. 프린터 전원 및 USB 연결을 확인해주세요.");
       }
     } catch {
-      setTestError(`IP '${target}' (포트 18080)에 연결할 수 없습니다. IP 주소와 프린터 PC의 브릿지 실행 여부, 방화벽을 확인해주세요.`);
+      const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+      if (isHttps) {
+        setTestError(
+          `현재 브라우저가 보안(HTTPS) 사이트로 접속 중이어서, 브라우저 정책상 사설망 HTTP(포트 18080) 연결이 차단되었습니다.\n\n[해결 방법]\n1. 브라우저 주소창 왼쪽 자물쇠(또는 튜닝 아이콘) 클릭 ➔ [사이트 설정]\n2. [안전하지 않은 콘텐츠]를 '허용'으로 변경 후 페이지 새로고침\n3. 또는 로컬(http://) 접속 주소로 사용해주세요.`
+        );
+      } else {
+        setTestError(
+          `IP '${target}' (포트 18080)에 연결할 수 없습니다. IP 주소와 프린터 PC의 브릿지 실행 여부, 방화벽을 확인해주세요.`
+        );
+      }
     } finally {
       setTestingHost(false);
     }
@@ -1084,11 +1136,15 @@ export function CjLabelPrint({
               )}
 
               {testError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-[11px] leading-relaxed">
-                  <div className="font-bold mb-0.5">연결 실패</div>
-                  <div>{testError}</div>
-                  <div className="mt-1 text-rose-600 text-[10px]">
-                    ※ 다른 컴퓨터에서 접속할 경우 프린터 컴퓨터의 방화벽에서 포트 18080 허용 또는 <code>node-bridge.js</code>가 실행 중인지 확인하세요.
+                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-[11px] leading-relaxed">
+                  <div className="font-bold mb-1 text-rose-900 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                    <span>연결 실패</span>
+                  </div>
+                  <div className="whitespace-pre-line text-neutral-800 font-sans">{testError}</div>
+                  <div className="mt-2.5 pt-2 border-t border-rose-200/70 text-[10.5px] text-rose-700 space-y-1 font-sans">
+                    <div>• <strong>브릿지 확인</strong>: 프린터 PC에서 윈도우 우측 하단 시계 옆 트레이의 초이콤마 아이콘(<code>ChoicommaPrintBridge.exe</code>)이 켜져 있는지 확인하세요.</div>
+                    <div>• <strong>방화벽 확인</strong>: <code>tools\print-bridge\방화벽_허용_관리자권한.bat</code>을 관리자 권한으로 실행하세요.</div>
                   </div>
                 </div>
               )}

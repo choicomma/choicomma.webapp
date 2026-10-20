@@ -142,8 +142,38 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, count: sessions.length, sessions }, { headers: NO_CACHE_HEADERS });
   }
 
-  const sessions = readJsonFile(getSessionsFilePath());
+  let sessions = readJsonFile(getSessionsFilePath());
   const messages = readJsonFile(getMessagesFilePath());
+
+  // 메시지는 있으나 세션 목록에 누락된 경우 자동 복구/보정
+  const sessionMap = new Map<string, any>();
+  sessions.forEach((s) => {
+    if (s && s.id) sessionMap.set(String(s.id).trim().toLowerCase(), s);
+  });
+  let sessionsUpdated = false;
+  messages.forEach((m) => {
+    const sId = String(m?.sessionId || "").trim().toLowerCase();
+    if (sId && !sessionMap.has(sId)) {
+      const syn = {
+        id: sId,
+        customerName: sId.includes("@") ? sId.split("@")[0] : sId,
+        customerEmail: sId.includes("@") ? sId : "",
+        customerPhone: "",
+        status: "active",
+        lastMessage: m.content || m.text || "",
+        lastMessageAt: m.created_at,
+        created_at: m.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      sessionMap.set(sId, syn);
+      sessions.unshift(syn);
+      sessionsUpdated = true;
+    }
+  });
+  if (sessionsUpdated) {
+    safeAtomicWriteJson(getSessionsFilePath(), sessions);
+  }
+
   return NextResponse.json({ success: true, sessions, messages }, { headers: NO_CACHE_HEADERS });
 }
 
@@ -157,12 +187,6 @@ export async function POST(req: NextRequest) {
 
       if (type === "session") {
         const normId = String(body.id || "").trim().toLowerCase();
-        if (normId === "admin@choicomma.com" || normId === "admin") {
-          return NextResponse.json(
-            { success: true, message: "Admin account excluded from customer chat sessions" },
-            { headers: NO_CACHE_HEADERS }
-          );
-        }
         const sessions = readJsonFile(getSessionsFilePath());
         const idx = sessions.findIndex((s) => String(s.id || "").trim().toLowerCase() === normId);
         const sessionRecord = {
@@ -237,13 +261,28 @@ export async function POST(req: NextRequest) {
       // 1. 로컬 메시지 파일 저장
       safeAtomicWriteJson(getMessagesFilePath(), messages);
 
-      // 2. 부모 세션 최신 메시지 갱신
+      // 2. 부모 세션 최신 메시지 갱신 (없으면 신규 세션 자동 등록)
       const sessions = readJsonFile(getSessionsFilePath());
       const sIdx = sessions.findIndex((s) => String(s.id || "").trim().toLowerCase() === normSessionId);
       if (sIdx !== -1) {
         sessions[sIdx].lastMessage = newMsg.content;
         sessions[sIdx].lastMessageAt = newMsg.created_at;
+        sessions[sIdx].status = "active";
         sessions[sIdx].updated_at = new Date().toISOString();
+        safeAtomicWriteJson(getSessionsFilePath(), sessions);
+      } else {
+        const autoSession = {
+          id: normSessionId,
+          customerName: body.customerName || body.senderName || (normSessionId.includes("@") ? normSessionId.split("@")[0] : normSessionId),
+          customerEmail: body.customerEmail || (normSessionId.includes("@") ? normSessionId : ""),
+          customerPhone: body.customerPhone || "",
+          status: "active",
+          lastMessage: newMsg.content,
+          lastMessageAt: newMsg.created_at,
+          created_at: newMsg.created_at,
+          updated_at: new Date().toISOString(),
+        };
+        sessions.unshift(autoSession);
         safeAtomicWriteJson(getSessionsFilePath(), sessions);
       }
 

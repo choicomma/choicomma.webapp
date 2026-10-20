@@ -304,6 +304,8 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
     typeof window !== "undefined" &&
     !(
       localStorage.getItem("user_role") === "admin" ||
+      localStorage.getItem("user_role") === "staff" ||
+      (localStorage.getItem("user_grade") || "").toUpperCase() === "STAFF" ||
       sessionStorage.getItem("choicomma_admin_authenticated") === "true" ||
       (localStorage.getItem("is_logged_in") === "true" &&
         Boolean(localStorage.getItem("membership_user_email")?.trim()))

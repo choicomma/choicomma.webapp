@@ -290,13 +290,19 @@ export function ProductFormModal({
   const [timeSaleDiscountRate, setTimeSaleDiscountRate] = useState<string>("35");
   const [timeSaleAllowCoupon, setTimeSaleAllowCoupon] = useState<boolean>(true);
   const [timeSaleAllowPoints, setTimeSaleAllowPoints] = useState<boolean>(true);
-  const [timeSaleStartMonth, setTimeSaleStartMonth] = useState("8");
-  const [timeSaleStartDay, setTimeSaleStartDay] = useState("20");
+  const [timeSaleStartMonth, setTimeSaleStartMonth] = useState(() => String(new Date().getMonth() + 1));
+  const [timeSaleStartDay, setTimeSaleStartDay] = useState(() => String(new Date().getDate()));
   const [timeSaleStartAmpm, setTimeSaleStartAmpm] = useState("오전");
   const [timeSaleStartHour, setTimeSaleStartHour] = useState("09");
   const [timeSaleStartMinute, setTimeSaleStartMinute] = useState("00");
-  const [timeSaleEndMonth, setTimeSaleEndMonth] = useState("8");
-  const [timeSaleEndDay, setTimeSaleEndDay] = useState("27");
+  const [timeSaleEndMonth, setTimeSaleEndMonth] = useState(() => {
+    const fut = new Date(Date.now() + 7 * 24 * 3600 * 1000);
+    return String(fut.getMonth() + 1);
+  });
+  const [timeSaleEndDay, setTimeSaleEndDay] = useState(() => {
+    const fut = new Date(Date.now() + 7 * 24 * 3600 * 1000);
+    return String(fut.getDate());
+  });
   const [timeSaleEndAmpm, setTimeSaleEndAmpm] = useState("오후");
   const [timeSaleEndHour, setTimeSaleEndHour] = useState("11");
   const [timeSaleEndMinute, setTimeSaleEndMinute] = useState("59");
@@ -432,21 +438,39 @@ export function ProductFormModal({
       setTimeSaleAllowPoints(initialProduct.timeSaleAllowPoints !== false);
       if (initialProduct.timeSaleStartDate) {
         const d = new Date(initialProduct.timeSaleStartDate);
-        setTimeSaleStartMonth(String(d.getMonth() + 1));
-        setTimeSaleStartDay(String(d.getDate()));
-        setTimeSaleStartAmpm(d.getHours() >= 12 ? "오후" : "오전");
-        const h = d.getHours() % 12 || 12;
-        setTimeSaleStartHour(String(h).padStart(2, "0"));
-        setTimeSaleStartMinute(String(d.getMinutes()).padStart(2, "0"));
+        if (!isNaN(d.getTime())) {
+          setTimeSaleStartMonth(String(d.getMonth() + 1));
+          setTimeSaleStartDay(String(d.getDate()));
+          setTimeSaleStartAmpm(d.getHours() >= 12 ? "오후" : "오전");
+          const h = d.getHours() % 12 || 12;
+          setTimeSaleStartHour(String(h).padStart(2, "0"));
+          setTimeSaleStartMinute(String(d.getMinutes()).padStart(2, "0"));
+        }
+      } else {
+        const nowD = new Date();
+        setTimeSaleStartMonth(String(nowD.getMonth() + 1));
+        setTimeSaleStartDay(String(nowD.getDate()));
+        setTimeSaleStartAmpm("오전");
+        setTimeSaleStartHour("09");
+        setTimeSaleStartMinute("00");
       }
       if (initialProduct.timeSaleEndDate) {
         const d = new Date(initialProduct.timeSaleEndDate);
-        setTimeSaleEndMonth(String(d.getMonth() + 1));
-        setTimeSaleEndDay(String(d.getDate()));
-        setTimeSaleEndAmpm(d.getHours() >= 12 ? "오후" : "오전");
-        const h = d.getHours() % 12 || 12;
-        setTimeSaleEndHour(String(h).padStart(2, "0"));
-        setTimeSaleEndMinute(String(d.getMinutes()).padStart(2, "0"));
+        if (!isNaN(d.getTime())) {
+          setTimeSaleEndMonth(String(d.getMonth() + 1));
+          setTimeSaleEndDay(String(d.getDate()));
+          setTimeSaleEndAmpm(d.getHours() >= 12 ? "오후" : "오전");
+          const h = d.getHours() % 12 || 12;
+          setTimeSaleEndHour(String(h).padStart(2, "0"));
+          setTimeSaleEndMinute(String(d.getMinutes()).padStart(2, "0"));
+        }
+      } else {
+        const fut = new Date(Date.now() + 7 * 24 * 3600 * 1000);
+        setTimeSaleEndMonth(String(fut.getMonth() + 1));
+        setTimeSaleEndDay(String(fut.getDate()));
+        setTimeSaleEndAmpm("오후");
+        setTimeSaleEndHour("11");
+        setTimeSaleEndMinute("59");
       }
     } else {
       // Add mode defaults
@@ -506,13 +530,15 @@ export function ProductFormModal({
       setBulkRules([{ qty: 2, rate: 5 }]);
       setIsTimeSale(false);
       setTimeSaleDiscountRate("35");
-      setTimeSaleStartMonth("8");
-      setTimeSaleStartDay("20");
+      const nowD = new Date();
+      const futD = new Date(Date.now() + 7 * 24 * 3600 * 1000);
+      setTimeSaleStartMonth(String(nowD.getMonth() + 1));
+      setTimeSaleStartDay(String(nowD.getDate()));
       setTimeSaleStartAmpm("오전");
       setTimeSaleStartHour("09");
       setTimeSaleStartMinute("00");
-      setTimeSaleEndMonth("8");
-      setTimeSaleEndDay("27");
+      setTimeSaleEndMonth(String(futD.getMonth() + 1));
+      setTimeSaleEndDay(String(futD.getDate()));
       setTimeSaleEndAmpm("오후");
       setTimeSaleEndHour("11");
       setTimeSaleEndMinute("59");
@@ -904,17 +930,7 @@ export function ProductFormModal({
       timeSaleDiscountRate: parsedRate,
       timeSaleAllowCoupon: isTimeSale ? timeSaleAllowCoupon : true,
       timeSaleStartDate: isTimeSale
-        ? (() => {
-            const now = new Date();
-            const year = now.getFullYear();
-            const m = parseInt(timeSaleStartMonth, 10) || (now.getMonth() + 1);
-            const d = parseInt(timeSaleStartDay, 10) || now.getDate();
-            let h = parseInt(timeSaleStartHour, 10) || 12;
-            h = h % 12;
-            if (timeSaleStartAmpm === "오후") h += 12;
-            const min = parseInt(timeSaleStartMinute, 10) || 0;
-            return `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}T${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}:00+09:00`;
-          })()
+        ? (isScheduledRelease && releaseDate ? releaseDate : (initialProduct?.timeSaleStartDate || new Date().toISOString()))
         : undefined,
       timeSaleEndDate: isTimeSale
         ? (() => {
@@ -1428,397 +1444,40 @@ export function ProductFormModal({
                   </p>
                 </div>
 
-                {/* 3. 판매 시작 시간 지정 (예약 오픈) - 독립된 깔끔한 카드 */}
+                {/* 메인 진열 여부 토글 (홈화면 메인진열 노출 ON / OFF) */}
                 <div>
                   <label className="block text-xs font-bold text-neutral-800 mb-2">
-                    {formTitles.scheduledRelease || "판매 시작 시간 지정 (예약 오픈)"}
+                    홈화면 메인 진열 상태 (쇼핑몰 메인 및 전체 노출)
                   </label>
-                  <div
-                    className={`rounded-2xl border transition-all select-none p-4 ${
-                      isScheduledRelease
-                        ? "bg-neutral-50/80 border-neutral-300 shadow-2xs"
-                        : "bg-white border-neutral-200 hover:border-neutral-300"
-                    }`}
-                  >
-                    {/* 상단 클릭 행 (토글 컨트롤) */}
-                    <div
-                      onClick={() => {
-                        const next = !isScheduledRelease;
-                        setIsScheduledRelease(next);
-                        if (next && !releaseDate) {
-                          const d = new Date();
-                          d.setDate(d.getDate() + 1);
-                          d.setHours(10, 0, 0, 0);
-                          const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-                          setReleaseDate(iso);
-                        }
-                      }}
-                      className="flex items-center justify-between cursor-pointer"
+                  <div className="flex items-center gap-2 p-3 bg-neutral-50 rounded-2xl border border-neutral-200">
+                    <button
+                      type="button"
+                      onClick={() => setIsMainFeatured(true)}
+                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+                        isMainFeatured
+                          ? "bg-neutral-950 text-white border-neutral-950 shadow-xs"
+                          : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
+                      }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all shrink-0 ${
-                            isScheduledRelease
-                              ? "bg-neutral-950 border-neutral-950 text-white"
-                              : "border-neutral-300 bg-white"
-                          }`}
-                        >
-                          {isScheduledRelease && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                        </div>
-                        <div className="text-left">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="block font-black text-xs text-neutral-950">
-                              ⏰ 판매 시작 시간 예약 (오픈 예정 기능)
-                            </span>
-                            <span className="text-[10px] text-neutral-600 font-extrabold bg-white border border-neutral-200 px-2 py-0.5 rounded-full shadow-2xs">
-                              지정 시간 도달 시 자동 구매 오픈
-                            </span>
-                          </div>
-                          <span className="block text-[11px] font-medium text-neutral-500 mt-0.5">
-                            지정 시간 전까지 '오픈 예정'으로 전시되며, 설정한 시간에 자동으로 구매가 열립니다.
-                          </span>
-                        </div>
-                      </div>
-
-                      <span
-                        className={`text-[11px] font-black px-2.5 py-1 rounded-full border transition-all shrink-0 ${
-                          isScheduledRelease
-                            ? "bg-amber-500 text-neutral-950 border-amber-400 font-black shadow-2xs"
-                            : "bg-neutral-100 text-neutral-500 border-neutral-200 font-bold"
-                        }`}
-                      >
-                        {isScheduledRelease ? "예약 설정 중" : "상시 판매 (미설정)"}
-                      </span>
-                    </div>
-
-                    {/* 활성화 시 부드럽게 나타나는 프리미엄 일시 선택 커스텀 UI */}
-                    {isScheduledRelease && (() => {
-                      const d = releaseDate ? new Date(releaseDate) : new Date();
-                      const validDate = isNaN(d.getTime()) ? new Date() : d;
-
-                      const currentYear = validDate.getFullYear();
-                      const currentMonth = validDate.getMonth() + 1; // 1 ~ 12
-                      const currentDay = validDate.getDate(); // 1 ~ 31
-                      const currentHours24 = validDate.getHours(); // 0 ~ 23
-                      const currentMinutes = validDate.getMinutes(); // 0 ~ 59
-
-                      const isPM = currentHours24 >= 12;
-                      const ampm: "오전" | "오후" = isPM ? "오후" : "오전";
-                      const displayHour12 = currentHours24 === 0 ? 12 : currentHours24 > 12 ? currentHours24 - 12 : currentHours24;
-
-                      const pad = (n: number) => String(n).padStart(2, "0");
-
-                      const handleUpdate = (updates: {
-                        year?: number;
-                        month?: number;
-                        day?: number;
-                        ampm?: "오전" | "오후";
-                        hour12?: number;
-                        minutes?: number;
-                      }) => {
-                        const y = updates.year ?? currentYear;
-                        const m = updates.month ?? currentMonth;
-                        let dVal = updates.day ?? currentDay;
-                        const targetAmpm = updates.ampm ?? ampm;
-                        const targetHour12 = updates.hour12 ?? displayHour12;
-                        const min = updates.minutes ?? currentMinutes;
-
-                        let h24 = targetHour12;
-                        if (targetAmpm === "오후" && targetHour12 < 12) {
-                          h24 = targetHour12 + 12;
-                        } else if (targetAmpm === "오전" && targetHour12 === 12) {
-                          h24 = 0;
-                        }
-
-                        const lastDayOfMonth = new Date(y, m, 0).getDate();
-                        if (dVal > lastDayOfMonth) dVal = lastDayOfMonth;
-
-                        const newIso = `${y}-${pad(m)}-${pad(dVal)}T${pad(h24)}:${pad(min)}`;
-                        setReleaseDate(newIso);
-                      };
-
-                      const handlePreset = (offsetDays: number, hour24: number, min: number = 0) => {
-                        const target = new Date();
-                        target.setDate(target.getDate() + offsetDays);
-                        target.setHours(hour24, min, 0, 0);
-                        const newIso = `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())}T${pad(target.getHours())}:${pad(target.getMinutes())}`;
-                        setReleaseDate(newIso);
-                      };
-
-                      const now = Date.now();
-                      const diffMs = validDate.getTime() - now;
-                      const isFuture = diffMs > 0;
-
-                      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-                      let countdownText = "";
-                      if (isFuture) {
-                        if (diffDays > 0) {
-                          countdownText = `D-${diffDays} (${diffDays}일 ${diffHours}시간 뒤)`;
-                        } else if (diffHours > 0) {
-                          countdownText = `${diffHours}시간 ${diffMinutes}분 뒤 오픈`;
-                        } else {
-                          countdownText = `${Math.max(1, diffMinutes)}분 뒤 오픈 예정`;
-                        }
-                      }
-
-                      const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
-                      const dayOfWeek = weekDays[validDate.getDay()];
-                      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-
-                      return (
-                        <div className="mt-3.5 pt-3.5 border-t border-neutral-200/80 space-y-3.5 animate-in fade-in duration-200">
-                          {/* 1. 실시간 일정 요약 카드 (블랙 & 앰버 테마) */}
-                          <div className="bg-neutral-950 text-white rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-neutral-800">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10">
-                                <Calendar className="w-5 h-5 text-amber-400" />
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-neutral-400 font-bold block uppercase tracking-wider">
-                                  예약 오픈 지정 일시
-                                </span>
-                                <span className="text-sm font-black text-white tracking-tight">
-                                  {currentYear}년 {currentMonth}월 {currentDay}일 ({dayOfWeek}) {ampm} {displayHour12}시 {pad(currentMinutes)}분
-                                </span>
-                              </div>
-                            </div>
-                            <div className="self-start sm:self-center">
-                              {isFuture ? (
-                                <span className="inline-flex items-center gap-1.5 text-xs font-black bg-amber-500 text-neutral-950 px-3 py-1.5 rounded-full shadow-2xs">
-                                  <span className="w-2 h-2 rounded-full bg-neutral-950 inline-block animate-ping"></span>
-                                  {countdownText}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-neutral-800 text-emerald-400 px-3 py-1.5 rounded-full border border-neutral-700">
-                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                  시간 경과 (현재 구매 가능 상태)
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* 2. 빠른 간편 프리셋 버튼들 */}
-                          <div className="bg-neutral-50/90 rounded-2xl p-3.5 border border-neutral-200/80 space-y-2">
-                            <span className="text-[11px] font-bold text-neutral-600 flex items-center gap-1.5">
-                              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                              자주 쓰는 오픈 일정 빠른 선택
-                            </span>
-                            <div className="flex flex-wrap gap-2">
-                              {(() => {
-                                const getPreset = (title: string, days: number, h: number, timeStr: string) => {
-                                  const target = new Date();
-                                  target.setDate(target.getDate() + days);
-                                  const dayName = weekDays[target.getDay()];
-                                  return {
-                                    label: `${title}(${dayName}) ${timeStr}`,
-                                    days,
-                                    h,
-                                  };
-                                };
-
-                                const presets = [
-                                  getPreset("오늘", 0, 20, "저녁 8시"),
-                                  getPreset("내일", 1, 10, "오전 10시"),
-                                  getPreset("내일", 1, 20, "저녁 8시"),
-                                  getPreset("3일 뒤", 3, 10, "오전 10시"),
-                                  getPreset("1주일 뒤", 7, 10, "오전 10시"),
-                                ];
-
-                                return presets.map((preset) => (
-                                  <button
-                                    key={preset.label}
-                                    type="button"
-                                    onClick={() => handlePreset(preset.days, preset.h)}
-                                    className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-white hover:bg-neutral-950 hover:text-white border border-neutral-200 hover:border-neutral-950 text-neutral-800 transition-all cursor-pointer shadow-2xs"
-                                  >
-                                    {preset.label}
-                                  </button>
-                                ));
-                              })()}
-                            </div>
-                          </div>
-
-                          {/* 3. 모던 커스텀 셀렉트 패널 (날짜 + 시간) */}
-                          <div className="bg-white rounded-2xl p-4 border border-neutral-200 shadow-2xs space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {/* 좌측: 날짜 선택 */}
-                              <div className="space-y-2">
-                                {(() => {
-                                  const todayDate = new Date();
-                                  const isSelectedToday =
-                                    todayDate.getFullYear() === currentYear &&
-                                    todayDate.getMonth() + 1 === currentMonth &&
-                                    todayDate.getDate() === currentDay;
-
-                                  return (
-                                    <div className="flex items-center justify-between">
-                                      <label className="text-xs font-black text-neutral-900 flex items-center gap-1.5">
-                                        <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                                        <span>날짜 지정</span>
-                                        {isSelectedToday && (
-                                          <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
-                                            오늘
-                                          </span>
-                                        )}
-                                      </label>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const now = new Date();
-                                          handleUpdate({
-                                            year: now.getFullYear(),
-                                            month: now.getMonth() + 1,
-                                            day: now.getDate(),
-                                          });
-                                        }}
-                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-neutral-600 hover:text-neutral-950 bg-neutral-100 hover:bg-neutral-200/90 border border-neutral-200 px-2 py-0.5 rounded-md transition-all cursor-pointer shadow-2xs"
-                                        title="오늘 날짜로 즉시 설정"
-                                      >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                                        <span>오늘 ({todayDate.getMonth() + 1}월 {todayDate.getDate()}일)</span>
-                                      </button>
-                                    </div>
-                                  );
-                                })()}
-                                <div className="grid grid-cols-3 gap-2">
-                                  {/* 년도 */}
-                                  <div>
-                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">연도</span>
-                                    <select
-                                      value={currentYear}
-                                      onChange={(e) => handleUpdate({ year: parseInt(e.target.value, 10) })}
-                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer"
-                                    >
-                                      {[2026, 2027, 2028].map((y) => (
-                                        <option key={y} value={y}>{y}년</option>
-                                      ))}
-                                    </select>
-                                  </div>
-
-                                  {/* 월 */}
-                                  <div>
-                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">월</span>
-                                    <select
-                                      value={currentMonth}
-                                      onChange={(e) => handleUpdate({ month: parseInt(e.target.value, 10) })}
-                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer"
-                                    >
-                                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                                        <option key={m} value={m}>{m}월</option>
-                                      ))}
-                                    </select>
-                                  </div>
-
-                                  {/* 일 (요일 및 오늘 표시 포함) */}
-                                  <div>
-                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">일 (요일)</span>
-                                    <select
-                                      value={currentDay}
-                                      onChange={(e) => handleUpdate({ day: parseInt(e.target.value, 10) })}
-                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer"
-                                    >
-                                      {(() => {
-                                        const now = new Date();
-                                        return Array.from({ length: daysInMonth }, (_, i) => {
-                                          const dayNum = i + 1;
-                                          const targetDate = new Date(currentYear, currentMonth - 1, dayNum);
-                                          const dayName = weekDays[targetDate.getDay()];
-                                          const isTodayDay =
-                                            now.getFullYear() === currentYear &&
-                                            now.getMonth() + 1 === currentMonth &&
-                                            now.getDate() === dayNum;
-
-                                          return (
-                                            <option key={dayNum} value={dayNum}>
-                                              {dayNum}일 ({dayName}){isTodayDay ? " • 오늘" : ""}
-                                            </option>
-                                          );
-                                        });
-                                      })()}
-                                    </select>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* 우측: 시간 선택 */}
-                              <div className="space-y-2">
-                                <label className="text-xs font-black text-neutral-900 flex items-center gap-1.5">
-                                  <Clock className="w-3.5 h-3.5 text-amber-500" />
-                                  시간 지정
-                                </label>
-                                <div className="grid grid-cols-3 gap-2">
-                                  {/* 오전/오후 세그먼트 */}
-                                  <div>
-                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">구분</span>
-                                    <div className="h-10 bg-neutral-100 p-1 rounded-xl flex items-center gap-1 border border-neutral-200/80">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleUpdate({ ampm: "오전" })}
-                                        className={`flex-1 h-full rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                          ampm === "오전"
-                                            ? "bg-neutral-950 text-white shadow-2xs font-black"
-                                            : "text-neutral-500 hover:text-neutral-900"
-                                        }`}
-                                      >
-                                        오전
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleUpdate({ ampm: "오후" })}
-                                        className={`flex-1 h-full rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                          ampm === "오후"
-                                            ? "bg-neutral-950 text-white shadow-2xs font-black"
-                                            : "text-neutral-500 hover:text-neutral-900"
-                                        }`}
-                                      >
-                                        오후
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {/* 시 */}
-                                  <div>
-                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">시 (Hour)</span>
-                                    <select
-                                      value={displayHour12}
-                                      onChange={(e) => handleUpdate({ hour12: parseInt(e.target.value, 10) })}
-                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer font-mono"
-                                    >
-                                      {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                                        <option key={h} value={h}>{h}시</option>
-                                      ))}
-                                    </select>
-                                  </div>
-
-                                  {/* 분 */}
-                                  <div>
-                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">분 (Minute)</span>
-                                    <select
-                                      value={currentMinutes}
-                                      onChange={(e) => handleUpdate({ minutes: parseInt(e.target.value, 10) })}
-                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer font-mono"
-                                    >
-                                      {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 59].map((m) => (
-                                        <option key={m} value={m}>{pad(m)}분</option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* 부가 안내 문구 */}
-                            <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500 leading-relaxed font-medium">
-                              <span>* 설정된 오픈 일시 도달 전에는 상품 상세에 "오픈 예정" 배지가 노출되며 장바구니/구매 버튼이 비활성화됩니다.</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                      <span className={`w-2 h-2 rounded-full ${isMainFeatured ? "bg-amber-400" : "bg-neutral-400"}`} />
+                      <span>🌟 메인진열 ON (홈화면 전체 노출)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsMainFeatured(false)}
+                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+                        !isMainFeatured
+                          ? "bg-neutral-950 text-white border-neutral-950 shadow-xs"
+                          : "bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${!isMainFeatured ? "bg-rose-400" : "bg-neutral-400"}`} />
+                      <span>⚙️ 미진열 OFF (전체 숨김)</span>
+                    </button>
                   </div>
+                  <p className="text-[10px] text-neutral-400 mt-1 pl-1">
+                    * 메인진열 ON 설정 시 쇼핑몰 홈화면 및 카탈로그에 상품이 정상 노출됩니다.
+                  </p>
                 </div>
               </div>
 
@@ -2511,6 +2170,399 @@ export function ProductFormModal({
                   </span>
                 </div>
 
+                {/* 판매 시작 시간 지정 (예약 오픈) - 독립된 깔끔한 카드 */}
+                <div>
+                  <label className="block text-xs font-bold text-neutral-800 mb-2">
+                    {formTitles.scheduledRelease || "판매 시작 시간 지정 (예약 오픈)"}
+                  </label>
+                  <div
+                    className={`rounded-2xl border transition-all select-none p-4 ${
+                      isScheduledRelease
+                        ? "bg-neutral-50/80 border-neutral-300 shadow-2xs"
+                        : "bg-white border-neutral-200 hover:border-neutral-300"
+                    }`}
+                  >
+                    {/* 상단 클릭 행 (토글 컨트롤) */}
+                    <div
+                      onClick={() => {
+                        const next = !isScheduledRelease;
+                        setIsScheduledRelease(next);
+                        if (next && !releaseDate) {
+                          const d = new Date();
+                          d.setDate(d.getDate() + 1);
+                          d.setHours(10, 0, 0, 0);
+                          const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                          setReleaseDate(iso);
+                        }
+                      }}
+                      className="flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all shrink-0 ${
+                            isScheduledRelease
+                              ? "bg-neutral-950 border-neutral-950 text-white"
+                              : "border-neutral-300 bg-white"
+                          }`}
+                        >
+                          {isScheduledRelease && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </div>
+                        <div className="text-left">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="block font-black text-xs text-neutral-950">
+                              ⏰ 판매 시작 시간 예약 (오픈 예정 기능)
+                            </span>
+                            <span className="text-[10px] text-neutral-600 font-extrabold bg-white border border-neutral-200 px-2 py-0.5 rounded-full shadow-2xs">
+                              지정 시간 도달 시 자동 구매 오픈
+                            </span>
+                          </div>
+                          <span className="block text-[11px] font-medium text-neutral-500 mt-0.5">
+                            지정 시간 전까지 '오픈 예정'으로 전시되며, 설정한 시간에 자동으로 구매가 열립니다.
+                          </span>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`text-[11px] font-black px-2.5 py-1 rounded-full border transition-all shrink-0 ${
+                          isScheduledRelease
+                            ? "bg-amber-500 text-neutral-950 border-amber-400 font-black shadow-2xs"
+                            : "bg-neutral-100 text-neutral-500 border-neutral-200 font-bold"
+                        }`}
+                      >
+                        {isScheduledRelease ? "예약 설정 중" : "상시 판매 (미설정)"}
+                      </span>
+                    </div>
+
+                    {/* 활성화 시 부드럽게 나타나는 프리미엄 일시 선택 커스텀 UI */}
+                    {isScheduledRelease && (() => {
+                      const d = releaseDate ? new Date(releaseDate) : new Date();
+                      const validDate = isNaN(d.getTime()) ? new Date() : d;
+
+                      const currentYear = validDate.getFullYear();
+                      const currentMonth = validDate.getMonth() + 1; // 1 ~ 12
+                      const currentDay = validDate.getDate(); // 1 ~ 31
+                      const currentHours24 = validDate.getHours(); // 0 ~ 23
+                      const currentMinutes = validDate.getMinutes(); // 0 ~ 59
+
+                      const isPM = currentHours24 >= 12;
+                      const ampm: "오전" | "오후" = isPM ? "오후" : "오전";
+                      const displayHour12 = currentHours24 === 0 ? 12 : currentHours24 > 12 ? currentHours24 - 12 : currentHours24;
+
+                      const pad = (n: number) => String(n).padStart(2, "0");
+
+                      const handleUpdate = (updates: {
+                        year?: number;
+                        month?: number;
+                        day?: number;
+                        ampm?: "오전" | "오후";
+                        hour12?: number;
+                        minutes?: number;
+                      }) => {
+                        const y = updates.year ?? currentYear;
+                        const m = updates.month ?? currentMonth;
+                        let dVal = updates.day ?? currentDay;
+                        const targetAmpm = updates.ampm ?? ampm;
+                        const targetHour12 = updates.hour12 ?? displayHour12;
+                        const min = updates.minutes ?? currentMinutes;
+
+                        let h24 = targetHour12;
+                        if (targetAmpm === "오후" && targetHour12 < 12) {
+                          h24 = targetHour12 + 12;
+                        } else if (targetAmpm === "오전" && targetHour12 === 12) {
+                          h24 = 0;
+                        }
+
+                        const lastDayOfMonth = new Date(y, m, 0).getDate();
+                        if (dVal > lastDayOfMonth) dVal = lastDayOfMonth;
+
+                        const newIso = `${y}-${pad(m)}-${pad(dVal)}T${pad(h24)}:${pad(min)}`;
+                        setReleaseDate(newIso);
+                      };
+
+                      const handlePreset = (offsetDays: number, hour24: number, min: number = 0) => {
+                        const target = new Date();
+                        target.setDate(target.getDate() + offsetDays);
+                        target.setHours(hour24, min, 0, 0);
+                        const newIso = `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())}T${pad(target.getHours())}:${pad(target.getMinutes())}`;
+                        setReleaseDate(newIso);
+                      };
+
+                      const now = Date.now();
+                      const diffMs = validDate.getTime() - now;
+                      const isFuture = diffMs > 0;
+
+                      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                      let countdownText = "";
+                      if (isFuture) {
+                        if (diffDays > 0) {
+                          countdownText = `D-${diffDays} (${diffDays}일 ${diffHours}시간 뒤)`;
+                        } else if (diffHours > 0) {
+                          countdownText = `${diffHours}시간 ${diffMinutes}분 뒤 오픈`;
+                        } else {
+                          countdownText = `${Math.max(1, diffMinutes)}분 뒤 오픈 예정`;
+                        }
+                      }
+
+                      const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
+                      const dayOfWeek = weekDays[validDate.getDay()];
+                      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+                      return (
+                        <div className="mt-3.5 pt-3.5 border-t border-neutral-200/80 space-y-3.5 animate-in fade-in duration-200">
+                          {/* 1. 실시간 일정 요약 카드 (블랙 & 앰버 테마) */}
+                          <div className="bg-neutral-950 text-white rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-neutral-800">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10">
+                                <Calendar className="w-5 h-5 text-amber-400" />
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-neutral-400 font-bold block uppercase tracking-wider">
+                                  예약 오픈 지정 일시
+                                </span>
+                                <span className="text-sm font-black text-white tracking-tight">
+                                  {currentYear}년 {currentMonth}월 {currentDay}일 ({dayOfWeek}) {ampm} {displayHour12}시 {pad(currentMinutes)}분
+                                </span>
+                              </div>
+                            </div>
+                            <div className="self-start sm:self-center">
+                              {isFuture ? (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-black bg-amber-500 text-neutral-950 px-3 py-1.5 rounded-full shadow-2xs">
+                                  <span className="w-2 h-2 rounded-full bg-neutral-950 inline-block animate-ping"></span>
+                                  {countdownText}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-neutral-800 text-emerald-400 px-3 py-1.5 rounded-full border border-neutral-700">
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  시간 경과 (현재 구매 가능 상태)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 2. 빠른 간편 프리셋 버튼들 */}
+                          <div className="bg-neutral-50/90 rounded-2xl p-3.5 border border-neutral-200/80 space-y-2">
+                            <span className="text-[11px] font-bold text-neutral-600 flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                              자주 쓰는 오픈 일정 빠른 선택
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {(() => {
+                                const getPreset = (title: string, days: number, h: number, timeStr: string) => {
+                                  const target = new Date();
+                                  target.setDate(target.getDate() + days);
+                                  const dayName = weekDays[target.getDay()];
+                                  return {
+                                    label: `${title}(${dayName}) ${timeStr}`,
+                                    days,
+                                    h,
+                                  };
+                                };
+
+                                const presets = [
+                                  getPreset("오늘", 0, 20, "저녁 8시"),
+                                  getPreset("내일", 1, 10, "오전 10시"),
+                                  getPreset("내일", 1, 20, "저녁 8시"),
+                                  getPreset("3일 뒤", 3, 10, "오전 10시"),
+                                  getPreset("1주일 뒤", 7, 10, "오전 10시"),
+                                ];
+
+                                return presets.map((preset) => (
+                                  <button
+                                    key={preset.label}
+                                    type="button"
+                                    onClick={() => handlePreset(preset.days, preset.h)}
+                                    className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-white hover:bg-neutral-950 hover:text-white border border-neutral-200 hover:border-neutral-950 text-neutral-800 transition-all cursor-pointer shadow-2xs"
+                                  >
+                                    {preset.label}
+                                  </button>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+
+                          {/* 3. 모던 커스텀 셀렉트 패널 (날짜 + 시간) */}
+                          <div className="bg-white rounded-2xl p-4 border border-neutral-200 shadow-2xs space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* 좌측: 날짜 선택 */}
+                              <div className="space-y-2">
+                                {(() => {
+                                  const todayDate = new Date();
+                                  const isSelectedToday =
+                                    todayDate.getFullYear() === currentYear &&
+                                    todayDate.getMonth() + 1 === currentMonth &&
+                                    todayDate.getDate() === currentDay;
+
+                                  return (
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-xs font-black text-neutral-900 flex items-center gap-1.5">
+                                        <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                                        <span>날짜 지정</span>
+                                        {isSelectedToday && (
+                                          <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
+                                            오늘
+                                          </span>
+                                        )}
+                                      </label>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const now = new Date();
+                                          handleUpdate({
+                                            year: now.getFullYear(),
+                                            month: now.getMonth() + 1,
+                                            day: now.getDate(),
+                                          });
+                                        }}
+                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-neutral-600 hover:text-neutral-950 bg-neutral-100 hover:bg-neutral-200/90 border border-neutral-200 px-2 py-0.5 rounded-md transition-all cursor-pointer shadow-2xs"
+                                        title="오늘 날짜로 즉시 설정"
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                                        <span>오늘 ({todayDate.getMonth() + 1}월 {todayDate.getDate()}일)</span>
+                                      </button>
+                                    </div>
+                                  );
+                                })()}
+                                <div className="grid grid-cols-3 gap-2">
+                                  {/* 년도 */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">연도</span>
+                                    <select
+                                      value={currentYear}
+                                      onChange={(e) => handleUpdate({ year: parseInt(e.target.value, 10) })}
+                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer"
+                                    >
+                                      {[2026, 2027, 2028].map((y) => (
+                                        <option key={y} value={y}>{y}년</option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* 월 */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">월</span>
+                                    <select
+                                      value={currentMonth}
+                                      onChange={(e) => handleUpdate({ month: parseInt(e.target.value, 10) })}
+                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer"
+                                    >
+                                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                                        <option key={m} value={m}>{m}월</option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* 일 (요일 및 오늘 표시 포함) */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">일 (요일)</span>
+                                    <select
+                                      value={currentDay}
+                                      onChange={(e) => handleUpdate({ day: parseInt(e.target.value, 10) })}
+                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer"
+                                    >
+                                      {(() => {
+                                        const now = new Date();
+                                        return Array.from({ length: daysInMonth }, (_, i) => {
+                                          const dayNum = i + 1;
+                                          const targetDate = new Date(currentYear, currentMonth - 1, dayNum);
+                                          const dayName = weekDays[targetDate.getDay()];
+                                          const isTodayDay =
+                                            now.getFullYear() === currentYear &&
+                                            now.getMonth() + 1 === currentMonth &&
+                                            now.getDate() === dayNum;
+
+                                          return (
+                                            <option key={dayNum} value={dayNum}>
+                                              {dayNum}일 ({dayName}){isTodayDay ? " • 오늘" : ""}
+                                            </option>
+                                          );
+                                        });
+                                      })()}
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* 우측: 시간 선택 */}
+                              <div className="space-y-2">
+                                <label className="text-xs font-black text-neutral-900 flex items-center gap-1.5">
+                                  <Clock className="w-3.5 h-3.5 text-amber-500" />
+                                  시간 지정
+                                </label>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {/* 오전/오후 세그먼트 */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">구분</span>
+                                    <div className="h-10 bg-neutral-100 p-1 rounded-xl flex items-center gap-1 border border-neutral-200/80">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdate({ ampm: "오전" })}
+                                        className={`flex-1 h-full rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                          ampm === "오전"
+                                            ? "bg-neutral-950 text-white shadow-2xs font-black"
+                                            : "text-neutral-500 hover:text-neutral-900"
+                                        }`}
+                                      >
+                                        오전
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdate({ ampm: "오후" })}
+                                        className={`flex-1 h-full rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                          ampm === "오후"
+                                            ? "bg-neutral-950 text-white shadow-2xs font-black"
+                                            : "text-neutral-500 hover:text-neutral-900"
+                                        }`}
+                                      >
+                                        오후
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* 시 */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">시 (Hour)</span>
+                                    <select
+                                      value={displayHour12}
+                                      onChange={(e) => handleUpdate({ hour12: parseInt(e.target.value, 10) })}
+                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer font-mono"
+                                    >
+                                      {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                                        <option key={h} value={h}>{h}시</option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* 분 */}
+                                  <div>
+                                    <span className="text-[10px] text-neutral-400 font-bold block mb-1">분 (Minute)</span>
+                                    <select
+                                      value={currentMinutes}
+                                      onChange={(e) => handleUpdate({ minutes: parseInt(e.target.value, 10) })}
+                                      className="w-full h-10 bg-neutral-50 hover:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl px-2.5 text-xs font-bold text-neutral-950 focus:outline-none transition-all cursor-pointer font-mono"
+                                    >
+                                      {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 59].map((m) => (
+                                        <option key={m} value={m}>{pad(m)}분</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 부가 안내 문구 */}
+                            <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500 leading-relaxed font-medium">
+                              <span>* 설정된 오픈 일시 도달 전에는 상품 상세에 "오픈 예정" 배지가 노출되며 장바구니/구매 버튼이 비활성화됩니다.</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
                 {/* 1. TIME SALE CONFIGURATION */}
                 <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
                   <div className="flex items-center justify-between">
@@ -2618,67 +2670,57 @@ export function ProductFormModal({
 
                       <div className="space-y-3">
                         <div>
-                          <label className="text-[11px] font-extrabold text-neutral-800 flex items-center gap-1 mb-1.5">
-                            <Clock className="w-3.5 h-3.5 text-amber-500" />
-                            타임세일 시작 일정 (00월 00일 00시 00분)
-                          </label>
-                          <div className="grid grid-cols-5 gap-1.5">
-                            <select
-                              value={timeSaleStartMonth}
-                              onChange={(e) => setTimeSaleStartMonth(e.target.value)}
-                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
-                            >
-                              {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((m) => (
-                                <option key={m} value={m}>{m}월</option>
-                              ))}
-                            </select>
-
-                            <select
-                              value={timeSaleStartDay}
-                              onChange={(e) => setTimeSaleStartDay(e.target.value)}
-                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
-                            >
-                              {Array.from({ length: 31 }, (_, i) => String(i + 1)).map((d) => (
-                                <option key={d} value={d}>{d}일</option>
-                              ))}
-                            </select>
-
-                            <select
-                              value={timeSaleStartAmpm}
-                              onChange={(e) => setTimeSaleStartAmpm(e.target.value)}
-                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold text-neutral-950 focus:outline-none focus:border-amber-500"
-                            >
-                              <option value="오전">오전</option>
-                              <option value="오후">오후</option>
-                            </select>
-
-                            <select
-                              value={timeSaleStartHour}
-                              onChange={(e) => setTimeSaleStartHour(e.target.value)}
-                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
-                            >
-                              {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((h) => (
-                                <option key={h} value={h}>{h}시</option>
-                              ))}
-                            </select>
-
-                            <select
-                              value={timeSaleStartMinute}
-                              onChange={(e) => setTimeSaleStartMinute(e.target.value)}
-                              className="h-9 bg-white border border-neutral-200 rounded-xl px-2 text-xs font-bold font-sans text-neutral-950 focus:outline-none focus:border-amber-500"
-                            >
-                              {["00", "10", "20", "30", "40", "50", "59"].map((m) => (
-                                <option key={m} value={m}>{m}분</option>
-                              ))}
-                            </select>
+                          <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
+                            <label className="text-[11px] font-extrabold text-neutral-800 flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-rose-500" />
+                              타임세일 종료 일정 (00월 00일 00시 00분)
+                            </label>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] text-neutral-400 font-bold hidden sm:inline">빠른 설정:</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const now = new Date();
+                                  setTimeSaleEndMonth(String(now.getMonth() + 1));
+                                  setTimeSaleEndDay(String(now.getDate()));
+                                  setTimeSaleEndAmpm("오후");
+                                  setTimeSaleEndHour("11");
+                                  setTimeSaleEndMinute("59");
+                                }}
+                                className="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded text-[10px] font-bold transition-colors cursor-pointer border border-neutral-200"
+                              >
+                                오늘 자정
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const t = new Date(Date.now() + 3 * 86400000);
+                                  setTimeSaleEndMonth(String(t.getMonth() + 1));
+                                  setTimeSaleEndDay(String(t.getDate()));
+                                  setTimeSaleEndAmpm("오후");
+                                  setTimeSaleEndHour("11");
+                                  setTimeSaleEndMinute("59");
+                                }}
+                                className="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded text-[10px] font-bold transition-colors cursor-pointer border border-neutral-200"
+                              >
+                                +3일
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const t = new Date(Date.now() + 7 * 86400000);
+                                  setTimeSaleEndMonth(String(t.getMonth() + 1));
+                                  setTimeSaleEndDay(String(t.getDate()));
+                                  setTimeSaleEndAmpm("오후");
+                                  setTimeSaleEndHour("11");
+                                  setTimeSaleEndMinute("59");
+                                }}
+                                className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded text-[10px] font-black transition-colors cursor-pointer"
+                              >
+                                +7일 (추천)
+                              </button>
+                            </div>
                           </div>
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-extrabold text-neutral-800 flex items-center gap-1 mb-1.5">
-                            <Clock className="w-3.5 h-3.5 text-rose-500" />
-                            타임세일 종료 일정 (00월 00일 00시 00분)
-                          </label>
                           <div className="grid grid-cols-5 gap-1.5">
                             <select
                               value={timeSaleEndMonth}
@@ -2733,19 +2775,18 @@ export function ProductFormModal({
 
                         {/* Real-time Ticking Remaining Time Display Box */}
                         {(() => {
-                          const year = new Date().getFullYear();
-                          let startH = parseInt(timeSaleStartHour, 10) || 9;
-                          if (timeSaleStartAmpm === "오후" && startH < 12) startH += 12;
-                          if (timeSaleStartAmpm === "오전" && startH === 12) startH = 0;
-                          const startDate = new Date(year, (parseInt(timeSaleStartMonth, 10) || 8) - 1, parseInt(timeSaleStartDay, 10) || 20, startH, parseInt(timeSaleStartMinute, 10) || 0);
+                          const now = new Date(nowTick);
+                          const year = now.getFullYear();
 
                           let endH = parseInt(timeSaleEndHour, 10) || 11;
                           if (timeSaleEndAmpm === "오후" && endH < 12) endH += 12;
                           if (timeSaleEndAmpm === "오전" && endH === 12) endH = 0;
-                          const endDate = new Date(year, (parseInt(timeSaleEndMonth, 10) || 8) - 1, parseInt(timeSaleEndDay, 10) || 27, endH, parseInt(timeSaleEndMinute, 10) || 59);
+                          const endDate = new Date(year, (parseInt(timeSaleEndMonth, 10) || (now.getMonth() + 1)) - 1, parseInt(timeSaleEndDay, 10) || now.getDate(), endH, parseInt(timeSaleEndMinute, 10) || 59);
 
-                          const diffMs = Math.max(0, endDate.getTime() - nowTick);
-                          const totalSec = Math.floor(diffMs / 1000);
+                          const diffMs = endDate.getTime() - nowTick;
+                          const isEnded = diffMs <= 0;
+                          const positiveDiffMs = Math.max(0, diffMs);
+                          const totalSec = Math.floor(positiveDiffMs / 1000);
                           const days = Math.floor(totalSec / 86400);
                           const hours = Math.floor((totalSec % 86400) / 3600);
                           const mins = Math.floor((totalSec % 3600) / 60);
@@ -2757,37 +2798,95 @@ export function ProductFormModal({
                           const formattedSS = String(secs).padStart(2, "0");
 
                           const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
-                          const startFormatted = `${year}-${String(startDate.getMonth() + 1).padStart(2, "0")}-${String(startDate.getDate()).padStart(2, "0")} ${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")} (${weekDays[startDate.getDay()]}요일)`;
                           const expiryFormatted = `${year}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")} ${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")} (${weekDays[endDate.getDay()]}요일)`;
 
                           return (
-                            <div className="bg-neutral-950 text-white p-3.5 rounded-2xl border border-neutral-800 space-y-2 mt-2">
-                              <div className="flex items-center justify-between text-xs font-black text-white">
+                            <div className={`p-3.5 rounded-2xl border space-y-2 mt-2 transition-all ${
+                              isEnded
+                                ? "bg-rose-950/90 text-rose-100 border-rose-800/80"
+                                : "bg-neutral-950 text-white border-neutral-800"
+                            }`}>
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-black">
                                 <span className="flex items-center gap-1.5 text-xs text-amber-400">
                                   <Clock className="w-4 h-4 text-amber-400" /> 실시간 잔여 남은 시간:
+                                  {isEnded && (
+                                    <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full ml-1 animate-pulse">
+                                      마감됨 (기간 만료)
+                                    </span>
+                                  )}
                                 </span>
                                 <div className="flex items-center gap-1 font-sans">
-                                  <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
+                                  <span className={`text-xs font-black px-2 py-0.5 rounded-md shadow-2xs ${
+                                    isEnded ? "bg-rose-900 text-rose-200" : "bg-white text-neutral-950"
+                                  }`}>
                                     {formattedDD}일
                                   </span>
-                                  <span className="text-white font-black text-xs">:</span>
-                                  <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
+                                  <span className="font-black text-xs">:</span>
+                                  <span className={`text-xs font-black px-2 py-0.5 rounded-md shadow-2xs ${
+                                    isEnded ? "bg-rose-900 text-rose-200" : "bg-white text-neutral-950"
+                                  }`}>
                                     {formattedHH}시
                                   </span>
-                                  <span className="text-white font-black text-xs">:</span>
-                                  <span className="bg-white text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs">
+                                  <span className="font-black text-xs">:</span>
+                                  <span className={`text-xs font-black px-2 py-0.5 rounded-md shadow-2xs ${
+                                    isEnded ? "bg-rose-900 text-rose-200" : "bg-white text-neutral-950"
+                                  }`}>
                                     {formattedMM}분
                                   </span>
-                                  <span className="text-white font-black text-xs">:</span>
-                                  <span className="bg-amber-500 text-neutral-950 text-xs font-black px-2 py-0.5 rounded-md shadow-2xs animate-pulse">
+                                  <span className="font-black text-xs">:</span>
+                                  <span className={`text-xs font-black px-2 py-0.5 rounded-md shadow-2xs ${
+                                    isEnded ? "bg-rose-700 text-white" : "bg-amber-500 text-neutral-950 animate-pulse"
+                                  }`}>
                                     {formattedSS}초
                                   </span>
                                 </div>
                               </div>
                               <div className="text-[11px] font-bold text-neutral-300 flex items-center justify-between font-sans pt-1.5 border-t border-neutral-800">
-                                <span>타임세일 시작/종료 일시:</span>
-                                <span className="text-amber-300 font-black bg-neutral-900 px-2 py-0.5 rounded-md border border-neutral-800">{startFormatted} ~ {expiryFormatted}</span>
+                                <span>타임세일 종료(마감) 일시:</span>
+                                <span className={`font-black px-2 py-0.5 rounded-md border ${
+                                  isEnded 
+                                    ? "text-rose-300 bg-rose-900/60 border-rose-700" 
+                                    : "text-amber-300 bg-neutral-900 border-neutral-800"
+                                }`}>{expiryFormatted} 까지</span>
                               </div>
+                              {isEnded && (
+                                <div className="bg-rose-900/40 border border-rose-700/60 rounded-xl p-2.5 text-[11px] text-rose-200 space-y-1.5">
+                                  <p className="font-semibold">
+                                    ⚠️ 현재 설정된 종료일자({expiryFormatted})는 <span className="font-black underline text-white">이미 지난 과거 시점</span>이므로 잔여 시간이 0초로 계산되었습니다.
+                                  </p>
+                                  <div className="flex items-center gap-1.5 pt-0.5">
+                                    <span className="text-[10px] text-rose-300">⚡ 빠른 연장:</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const t = new Date(Date.now() + 3 * 86400000);
+                                        setTimeSaleEndMonth(String(t.getMonth() + 1));
+                                        setTimeSaleEndDay(String(t.getDate()));
+                                        setTimeSaleEndAmpm("오후");
+                                        setTimeSaleEndHour("11");
+                                        setTimeSaleEndMinute("59");
+                                      }}
+                                      className="px-2 py-0.5 bg-rose-800 hover:bg-rose-700 text-white rounded text-[10px] font-bold transition-colors cursor-pointer"
+                                    >
+                                      +3일 연장
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const t = new Date(Date.now() + 7 * 86400000);
+                                        setTimeSaleEndMonth(String(t.getMonth() + 1));
+                                        setTimeSaleEndDay(String(t.getDate()));
+                                        setTimeSaleEndAmpm("오후");
+                                        setTimeSaleEndHour("11");
+                                        setTimeSaleEndMinute("59");
+                                      }}
+                                      className="px-2 py-0.5 bg-amber-500 hover:bg-amber-400 text-neutral-950 rounded text-[10px] font-black transition-colors cursor-pointer shadow-2xs"
+                                    >
+                                      +7일 연장 (추천)
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })()}

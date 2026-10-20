@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { RotateCcw, Package, Check, AlertCircle, FileText } from "lucide-react";
 import { getProductThumbnail } from "@/lib/products/thumbnail-helper";
 import { explodeOrderToSingleItems, type ExplodedExchangeItem } from "@/lib/shipping/exchange-item-helper";
+import { filterOrdersForCustomer } from "@/lib/shipping/customer-order-filter";
 
 interface RefundFormBubbleProps {
   onSubmitRefund: (refundData: {
@@ -62,27 +63,10 @@ export function RefundFormBubble({ onSubmitRefund }: RefundFormBubbleProps) {
         } catch (e) {}
       }
 
-      const currentEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-      const currentPhone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
-      const currentName = (localStorage.getItem("membership_user_name") || "").toLowerCase().trim();
-      const normalize = (v: any) => String(v || "").toLowerCase().trim();
+      // 고객 본인의 주문만 엄격 매칭 (비로그인은 빈 배열, 관리자는 본인 테스트 주문만)
+      const userOrders = filterOrdersForCustomer(list);
 
-      const filtered = list.filter((s: any) => {
-        if (localStorage.getItem("user_role") === "admin") return true;
-        const sEmail = (s.recipientEmail || s.customerEmail || s.email || "").toLowerCase().trim();
-        const sPhone = (s.phone || s.customerPhone || "").replace(/[^0-9]/g, "");
-        const sAltPhone = (s.altPhone || "").replace(/[^0-9]/g, "");
-        const sRecipient = normalize(s.recipient || s.customerName);
-        const sOrderer = normalize(s.ordererName);
-
-        if (currentEmail && sEmail && currentEmail === sEmail) return true;
-        if (currentPhone && currentPhone.length >= 8) {
-          const phoneTail = currentPhone.slice(-8);
-          if (sPhone.endsWith(phoneTail) || sAltPhone.endsWith(phoneTail)) return true;
-        }
-        if (currentName && (sRecipient.includes(currentName) || sOrderer.includes(currentName))) return true;
-        return false;
-      }).map((s: any) => ({
+      const filtered = userOrders.map((s: any) => ({
         id: s.id,
         orderNumber: s.orderId || s.orderNumber || s.id,
         items: typeof s.items === "string" ? s.items : (Array.isArray(s.items) ? s.items.map((i: any) => i.name).join(", ") : "주문 상품"),

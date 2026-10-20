@@ -1,6 +1,216 @@
 {
   "journeyLogs": [
     {
+      "id": "jnl_1792498408788_glpsg",
+      "sessionId": "s_1792483662795_xxxqb",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜)",
+      "path": "/product/premium%ED%95%B8%EB%93%9C%EB%A9%94%EC%9D%B4%EB%93%9C-%EC%BA%90%EC%8B%9C%EC%9A%B8-%ED%8F%AD%EC%8A%A4%ED%8D%BC-%EC%BC%80%EC%9D%B4%ED%94%84-%EB%94%A5-%EC%B0%A8%EC%BD%9C-excel-product-469",
+      "referrer": "http://172.30.1.74:3001/",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-469",
+        "handle": "premium핸드메이드-캐시울-폭스퍼-케이프-딥-차콜-excel-product-469",
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "650000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-20 21:13:28",
+      "created_at": "2026-10-20T12:13:28.788Z"
+    },
+    {
+      "id": "jnl_1792494518727_chhm2",
+      "sessionId": "s_1792483662795_xxxqb",
+      "visitorId": "v_1791789874192_rcg7pp1",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES)",
+      "path": "/product/premium-%EB%B0%B4%EB%94%A9-%ED%94%8C%EB%A0%88%EC%96%B4-%EC%84%B8%EB%AF%B8-%EC%99%80%EC%9D%B4%EB%93%9C-%EC%8A%AC%EB%9E%99%EC%8A%A4-4colors-3sizes-excel-product-471",
+      "referrer": "http://172.30.1.74:3001/admin?tab=products",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-471",
+        "handle": "premium-밴딩-플레어-세미-와이드-슬랙스-4colors-3sizes-excel-product-471",
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-20 20:08:38",
+      "created_at": "2026-10-20T11:08:38.727Z"
+    },
+    {
+      "id": "jnl_1792482959165_ry5ny",
+      "sessionId": "s_1792475714860_fykbf",
+      "visitorId": "v_1791294529411_hafq13j",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입)",
+      "path": "/product/product-468",
+      "referrer": "http://172.30.1.74:3001/",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-468",
+        "handle": "product-468",
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "367500"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-20 16:55:59",
+      "created_at": "2026-10-20T07:55:59.165Z"
+    },
+    {
+      "id": "jnl_1792482945549_0u2yd",
+      "sessionId": "s_1792475714860_fykbf",
+      "visitorId": "v_1791294529411_hafq13j",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트)",
+      "path": "/product/product-464",
+      "referrer": "http://172.30.1.74:3001/",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-464",
+        "handle": "product-464",
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "357000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-20 16:55:45",
+      "created_at": "2026-10-20T07:55:45.549Z"
+    },
+    {
+      "id": "jnl_1792482525274_8pyt3",
+      "sessionId": "s_1792475545311_syhtv",
+      "visitorId": "v_1791294529411_hafq13j",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트)",
+      "path": "/product/product-465",
+      "referrer": "http://172.30.1.74:3001/admin?tab=products",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-465",
+        "handle": "product-465",
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "357000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-20 16:48:45",
+      "created_at": "2026-10-20T07:48:45.274Z"
+    },
+    {
+      "id": "jnl_1792482430930_tl8xz",
+      "sessionId": "s_1792475714860_fykbf",
+      "visitorId": "v_1791294529411_hafq13j",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES)",
+      "path": "/product/premium-%EB%B0%B4%EB%94%A9-%ED%94%8C%EB%A0%88%EC%96%B4-%EC%84%B8%EB%AF%B8-%EC%99%80%EC%9D%B4%EB%93%9C-%EC%8A%AC%EB%9E%99%EC%8A%A4-4colors-3sizes-excel-product-471",
+      "referrer": "http://172.30.1.74:3001/",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-471",
+        "handle": "premium-밴딩-플레어-세미-와이드-슬랙스-4colors-3sizes-excel-product-471",
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-20 16:47:10",
+      "created_at": "2026-10-20T07:47:10.930Z"
+    },
+    {
+      "id": "jnl_1792476837953_ibqhs",
+      "sessionId": "s_1792475545311_syhtv",
+      "visitorId": "v_1791294529411_hafq13j",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트)",
+      "path": "/product/product-465",
+      "referrer": "http://172.30.1.74:3001/admin?tab=products",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-465",
+        "handle": "product-465",
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-20 15:13:57",
+      "created_at": "2026-10-20T06:13:57.953Z"
+    },
+    {
+      "id": "jnl_1792475717469_10z36",
+      "sessionId": "s_1792475714860_fykbf",
+      "visitorId": "v_1791294529411_hafq13j",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트)",
+      "path": "/product/product-464",
+      "referrer": "http://172.30.1.74:3001/admin?tab=products",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-464",
+        "handle": "product-464",
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-20 14:55:17",
+      "created_at": "2026-10-20T05:55:17.469Z"
+    },
+    {
+      "id": "jnl_1792417179925_4iv9m",
+      "sessionId": "s_1792415836898_qanub",
+      "visitorId": "v_1790844603819_61bcav7",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트)",
+      "path": "/product/product-464",
+      "referrer": "http://172.30.1.74:3001/admin?tab=products",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-464",
+        "handle": "product-464",
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-19 22:39:39",
+      "created_at": "2026-10-19T13:39:39.925Z"
+    },
+    {
+      "id": "jnl_1792416431456_grolg",
+      "sessionId": "s_1792415836898_qanub",
+      "visitorId": "v_1790844603819_61bcav7",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트)",
+      "path": "/product/product-464",
+      "referrer": "http://172.30.1.74:3001/admin?tab=products",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-464",
+        "handle": "product-464",
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-19 22:27:11",
+      "created_at": "2026-10-19T13:27:11.456Z"
+    },
+    {
       "id": "jnl_1792400557116_aw556",
       "sessionId": "s_1792400538148_fqxir",
       "visitorId": "v_1792400538148_27vttyw",
@@ -218,6 +428,1517 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "adt_1792506202861_gv9fh",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-468",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입] 정보 수정 (가격: 490000원, 재고: 30개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 23:23:22",
+      "created_at": "2026-10-20T14:23:22.861Z"
+    },
+    {
+      "id": "adt_1792506198326_cqf3z",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-468",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입] 정보 수정 (가격: 490000원, 재고: 30개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 23:23:18",
+      "created_at": "2026-10-20T14:23:18.326Z"
+    },
+    {
+      "id": "adt_1792506193097_d0a7r",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-463",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입] 정보 수정 (가격: 490000원, 재고: 30개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 23:23:13",
+      "created_at": "2026-10-20T14:23:13.097Z"
+    },
+    {
+      "id": "adt_1792500547232_smjnk",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-419",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입] 정보 수정 (가격: 580000원, 재고: 17개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 21:49:07",
+      "created_at": "2026-10-20T12:49:07.232Z"
+    },
+    {
+      "id": "adt_1792500545621_s3me3",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-419",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입] 정보 수정 (가격: 580000원, 재고: 17개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 21:49:05",
+      "created_at": "2026-10-20T12:49:05.621Z"
+    },
+    {
+      "id": "adt_1792500543858_zhf1o",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-419",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입] 정보 수정 (가격: 580000원, 재고: 17개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 21:49:03",
+      "created_at": "2026-10-20T12:49:03.858Z"
+    },
+    {
+      "id": "adt_1792500537336_a00lh",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-419",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입] 정보 수정 (가격: 580000원, 재고: 17개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 21:48:57",
+      "created_at": "2026-10-20T12:48:57.336Z"
+    },
+    {
+      "id": "adt_1792496806136_xugir",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-438",
+      "targetName": "[BLACK LABEL] 썸머 메리노울 카프리 팬츠/3개이상",
+      "description": "상품 [[BLACK LABEL] 썸머 메리노울 카프리 팬츠/3개이상] 완전 삭제 처리",
+      "beforeData": {
+        "title": "[BLACK LABEL] 썸머 메리노울 카프리 팬츠/3개이상",
+        "handle": "product-438",
+        "price": "305000"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 20:46:46",
+      "created_at": "2026-10-20T11:46:46.136Z"
+    },
+    {
+      "id": "adt_1792494618734_evf6r",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 20:10:18",
+      "created_at": "2026-10-20T11:10:18.734Z"
+    },
+    {
+      "id": "adt_1792494401879_7tjzp",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 20:06:41",
+      "created_at": "2026-10-20T11:06:41.879Z"
+    },
+    {
+      "id": "adt_1792493629993_oy01f",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-469",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜] 정보 수정 (가격: 650000원, 재고: 2개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "650000",
+        "stock": 2,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "650000",
+        "stock": 2,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 19:53:49",
+      "created_at": "2026-10-20T10:53:49.993Z"
+    },
+    {
+      "id": "adt_1792493620903_uymql",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-470",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지] 정보 수정 (가격: 650000원, 재고: 3개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "650000",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "650000",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 19:53:40",
+      "created_at": "2026-10-20T10:53:40.903Z"
+    },
+    {
+      "id": "adt_1792493001900_hv478",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-468",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입] 정보 수정 (가격: 490000원, 재고: 30개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 19:43:21",
+      "created_at": "2026-10-20T10:43:21.900Z"
+    },
+    {
+      "id": "adt_1792492992857_7yuly",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-463",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입] 정보 수정 (가격: 490000원, 재고: 30개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 19:43:12",
+      "created_at": "2026-10-20T10:43:12.857Z"
+    },
+    {
+      "id": "adt_1792490020686_fbjyg",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 18:53:40",
+      "created_at": "2026-10-20T09:53:40.686Z"
+    },
+    {
+      "id": "adt_1792490010374_fmpko",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 18:53:30",
+      "created_at": "2026-10-20T09:53:30.374Z"
+    },
+    {
+      "id": "adt_1792489800323_ua5h2",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-440",
+      "targetName": "[PREMIUM] 오간자 레이어드 호보백 /ALL",
+      "description": "상품 [[PREMIUM] 오간자 레이어드 호보백 /ALL] 정보 수정 (가격: 300000원, 재고: 0개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[PREMIUM] 오간자 레이어드 호보백 /ALL",
+        "price": "300000",
+        "stock": 0,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[PREMIUM] 오간자 레이어드 호보백 /ALL",
+        "price": "300000",
+        "stock": 0,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 18:50:00",
+      "created_at": "2026-10-20T09:50:00.323Z"
+    },
+    {
+      "id": "adt_1792486682792_qnjj0",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-430",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입] 정보 수정 (가격: 580000원, 재고: 32개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+        "price": "580000",
+        "stock": 32,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+        "price": "580000",
+        "stock": 32,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 17:58:02",
+      "created_at": "2026-10-20T08:58:02.792Z"
+    },
+    {
+      "id": "adt_1792486672195_lio9j",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-419",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입] 정보 수정 (가격: 580000원, 재고: 17개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 17:57:52",
+      "created_at": "2026-10-20T08:57:52.195Z"
+    },
+    {
+      "id": "adt_1792486648406_sji9w",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 17:57:28",
+      "created_at": "2026-10-20T08:57:28.406Z"
+    },
+    {
+      "id": "adt_1792486477321_qvas5",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 17:54:37",
+      "created_at": "2026-10-20T08:54:37.321Z"
+    },
+    {
+      "id": "adt_1792485795682_hnz1b",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-430",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입] 정보 수정 (가격: 580000원, 재고: 32개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+        "price": "580000",
+        "stock": 32,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+        "price": "580000",
+        "stock": 32,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 17:43:15",
+      "created_at": "2026-10-20T08:43:15.682Z"
+    },
+    {
+      "id": "adt_1792482418890_267sd",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:46:58",
+      "created_at": "2026-10-20T07:46:58.890Z"
+    },
+    {
+      "id": "adt_1792482370906_xko47",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 189000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "189000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "189000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:46:10",
+      "created_at": "2026-10-20T07:46:10.906Z"
+    },
+    {
+      "id": "adt_1792482317760_6cqsw",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 189000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "189000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "189000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:45:17",
+      "created_at": "2026-10-20T07:45:17.760Z"
+    },
+    {
+      "id": "adt_1792482220106_nzjzx",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "DELETE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-473",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 완전 삭제 처리",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "handle": "premium-밴딩-플레어-세미-와이드-슬랙스-4colors-3sizes-excel-product-473",
+        "price": "167400"
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:43:40",
+      "created_at": "2026-10-20T07:43:40.106Z"
+    },
+    {
+      "id": "adt_1792482212795_q1wq2",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-473",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 167400원, 재고: 100개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "167400",
+        "stock": 100,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "167400",
+        "stock": 100,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:43:32",
+      "created_at": "2026-10-20T07:43:32.795Z"
+    },
+    {
+      "id": "adt_1792482191821_ov36x",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 189000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "189000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "189000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:43:11",
+      "created_at": "2026-10-20T07:43:11.821Z"
+    },
+    {
+      "id": "adt_1792481918348_ussq3",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-469",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜] 정보 수정 (가격: 487500원, 재고: 2개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "487500",
+        "stock": 2,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "487500",
+        "stock": 2,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:38:38",
+      "created_at": "2026-10-20T07:38:38.348Z"
+    },
+    {
+      "id": "adt_1792481909360_hehgv",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-470",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지] 정보 수정 (가격: 487500원, 재고: 3개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "487500",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "487500",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:38:29",
+      "created_at": "2026-10-20T07:38:29.360Z"
+    },
+    {
+      "id": "adt_1792479728604_8x058",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-473",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 167400원, 재고: 100개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "167400",
+        "stock": 100,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "167400",
+        "stock": 100,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:02:08",
+      "created_at": "2026-10-20T07:02:08.604Z"
+    },
+    {
+      "id": "adt_1792479721919_fm8wy",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 189000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "189000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "189000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:02:01",
+      "created_at": "2026-10-20T07:02:01.919Z"
+    },
+    {
+      "id": "adt_1792479716537_vedzm",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-469",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜] 정보 수정 (가격: 487500원, 재고: 2개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "487500",
+        "stock": 2,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "487500",
+        "stock": 2,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:01:56",
+      "created_at": "2026-10-20T07:01:56.537Z"
+    },
+    {
+      "id": "adt_1792479708389_2mh12",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-470",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지] 정보 수정 (가격: 487500원, 재고: 3개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "487500",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "487500",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:01:48",
+      "created_at": "2026-10-20T07:01:48.389Z"
+    },
+    {
+      "id": "adt_1792479630129_xtjvn",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-419",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입] 정보 수정 (가격: 464000원, 재고: 17개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "464000",
+        "stock": 17,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "464000",
+        "stock": 17,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:00:30",
+      "created_at": "2026-10-20T07:00:30.129Z"
+    },
+    {
+      "id": "adt_1792479627007_ixjnr",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-430",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입] 정보 수정 (가격: 464000원, 재고: 32개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+        "price": "464000",
+        "stock": 32,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+        "price": "464000",
+        "stock": 32,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:00:27",
+      "created_at": "2026-10-20T07:00:27.007Z"
+    },
+    {
+      "id": "adt_1792479624453_z0hyt",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-463",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입] 정보 수정 (가격: 367500원, 재고: 30개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "price": "367500",
+        "stock": 30,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "price": "367500",
+        "stock": 30,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:00:24",
+      "created_at": "2026-10-20T07:00:24.453Z"
+    },
+    {
+      "id": "adt_1792479619923_ppj1k",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-468",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입] 정보 수정 (가격: 367500원, 재고: 30개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "367500",
+        "stock": 30,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "367500",
+        "stock": 30,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:00:19",
+      "created_at": "2026-10-20T07:00:19.923Z"
+    },
+    {
+      "id": "adt_1792479614566_x7ze9",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 357000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "357000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "357000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:00:14",
+      "created_at": "2026-10-20T07:00:14.566Z"
+    },
+    {
+      "id": "adt_1792479608978_8vxst",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 357000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "357000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "357000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:00:08",
+      "created_at": "2026-10-20T07:00:08.978Z"
+    },
+    {
+      "id": "adt_1792479600283_iq16s",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-473",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 167400원, 재고: 100개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "167400",
+        "stock": 100,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "167400",
+        "stock": 100,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 16:00:00",
+      "created_at": "2026-10-20T07:00:00.283Z"
+    },
+    {
+      "id": "adt_1792479593618_62w96",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 189000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "189000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "189000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:59:53",
+      "created_at": "2026-10-20T06:59:53.618Z"
+    },
+    {
+      "id": "adt_1792479590226_qoukr",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-469",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜] 정보 수정 (가격: 650000원, 재고: 2개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "650000",
+        "stock": 2,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "650000",
+        "stock": 2,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:59:50",
+      "created_at": "2026-10-20T06:59:50.226Z"
+    },
+    {
+      "id": "adt_1792479584250_2c795",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-469",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜] 정보 수정 (가격: 487500원, 재고: 2개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "487500",
+        "stock": 2,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 딥 차콜",
+        "price": "487500",
+        "stock": 2,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:59:44",
+      "created_at": "2026-10-20T06:59:44.250Z"
+    },
+    {
+      "id": "adt_1792479578579_ejsdu",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-470",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지] 정보 수정 (가격: 650000원, 재고: 3개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "650000",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "650000",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:59:38",
+      "created_at": "2026-10-20T06:59:38.579Z"
+    },
+    {
+      "id": "adt_1792479573995_8lnrg",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-470",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지] 정보 수정 (가격: 487500원, 재고: 3개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "487500",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "487500",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:59:33",
+      "created_at": "2026-10-20T06:59:33.995Z"
+    },
+    {
+      "id": "adt_1792479409968_jxc4u",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-418",
+      "targetName": "Roll Neck Half Sleeve T-SHIRT",
+      "description": "상품 [Roll Neck Half Sleeve T-SHIRT] 정보 수정 (가격: 42700원, 재고: 488개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "Roll Neck Half Sleeve T-SHIRT",
+        "price": "42700",
+        "stock": 488,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "Roll Neck Half Sleeve T-SHIRT",
+        "price": "42700",
+        "stock": 488,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:56:49",
+      "created_at": "2026-10-20T06:56:49.968Z"
+    },
+    {
+      "id": "adt_1792479024405_vmjcf",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-473",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 270000원, 재고: 100개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000",
+        "stock": 100,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000",
+        "stock": 100,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:50:24",
+      "created_at": "2026-10-20T06:50:24.405Z"
+    },
+    {
+      "id": "adt_1792479018893_qxixc",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-419",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입] 정보 수정 (가격: 580000원, 재고: 17개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ A타입",
+        "price": "580000",
+        "stock": 17,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:50:18",
+      "created_at": "2026-10-20T06:50:18.893Z"
+    },
+    {
+      "id": "adt_1792479013894_ypr7x",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-463",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입] 정보 수정 (가격: 490000원, 재고: 30개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / A타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:50:13",
+      "created_at": "2026-10-20T06:50:13.894Z"
+    },
+    {
+      "id": "adt_1792479008285_0h0ay",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-468",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입] 정보 수정 (가격: 490000원, 재고: 30개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱슬리브 니트 / B타입",
+        "price": "490000",
+        "stock": 30,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:50:08",
+      "created_at": "2026-10-20T06:50:08.285Z"
+    },
+    {
+      "id": "adt_1792478993602_t29qb",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-430",
+      "targetName": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+      "description": "상품 [[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입] 정보 수정 (가격: 580000원, 재고: 32개, 상태: 품절/중지)",
+      "beforeData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+        "price": "580000",
+        "stock": 32,
+        "availableForSale": false
+      },
+      "afterData": {
+        "title": "[BLACK LABEL] 실크100 헤리티지 아트워크 롱 가디건/ B타입",
+        "price": "580000",
+        "stock": 32,
+        "availableForSale": false
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:49:53",
+      "created_at": "2026-10-20T06:49:53.602Z"
+    },
+    {
+      "id": "adt_1792478507627_2xz4f",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:41:47",
+      "created_at": "2026-10-20T06:41:47.627Z"
+    },
+    {
+      "id": "adt_1792478476823_5vj9a",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스 / 4COLORS / 3SIZES",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:41:16",
+      "created_at": "2026-10-20T06:41:16.823Z"
+    },
+    {
+      "id": "adt_1792478118057_ljw28",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-470",
+      "targetName": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+      "description": "상품 [[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지] 정보 수정 (가격: 650000원, 재고: 3개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "650000",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM]핸드메이드 캐시울 폭스퍼 케이프 / 오트밀베이지",
+        "price": "650000",
+        "stock": 3,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 15:35:18",
+      "created_at": "2026-10-20T06:35:18.057Z"
+    },
+    {
+      "id": "adt_1792475681640_8wqd9",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 14:54:41",
+      "created_at": "2026-10-20T05:54:41.640Z"
+    },
+    {
+      "id": "adt_1792475672649_tdbw5",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-20 14:54:32",
+      "created_at": "2026-10-20T05:54:32.649Z"
+    },
+    {
+      "id": "adt_1792417164362_26na6",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-465",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:39:24",
+      "created_at": "2026-10-19T13:39:24.362Z"
+    },
+    {
+      "id": "adt_1792417136338_7o6cp",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:38:56",
+      "created_at": "2026-10-19T13:38:56.338Z"
+    },
+    {
+      "id": "adt_1792416643329_ct0gw",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:30:43",
+      "created_at": "2026-10-19T13:30:43.329Z"
+    },
+    {
+      "id": "adt_1792416405812_18ace",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-464",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트] 정보 수정 (가격: 510000원, 재고: 10개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 퓨어캐시미어 100 체인 하프넥 니트",
+        "price": "510000",
+        "stock": 10,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-19 22:26:45",
+      "created_at": "2026-10-19T13:26:45.812Z"
+    },
     {
       "id": "adt_1792416066871_13ncl",
       "adminId": "admin_master",
@@ -1355,5 +3076,5 @@
       "created_at": "2026-10-13T12:48:15.593Z"
     }
   ],
-  "updatedAt": "2026-10-19T13:21:06.874Z"
+  "updatedAt": "2026-10-20T14:23:22.863Z"
 }

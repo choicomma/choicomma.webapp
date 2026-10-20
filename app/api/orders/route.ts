@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { runSafeSupabaseQuery } from "@/lib/supabase/server";
+import { filterOrdersForCustomer } from "@/lib/shipping/customer-order-filter";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -197,6 +198,21 @@ export async function GET(req: NextRequest) {
       } catch (fallbackErr) {
         console.warn("[Orders Remote Fallback Warning]:", fallbackErr);
       }
+    }
+
+    const forCustomer = url.searchParams.get("forCustomer") === "true";
+    const customerEmail = (url.searchParams.get("email") || url.searchParams.get("customerEmail") || "").toLowerCase().trim();
+    const customerPhone = (url.searchParams.get("phone") || url.searchParams.get("customerPhone") || "").replace(/[^0-9]/g, "");
+    const customerName = (url.searchParams.get("name") || url.searchParams.get("customerName") || "").trim();
+    const isAdminParam = url.searchParams.get("isAdmin") === "true";
+
+    if (forCustomer) {
+      list = filterOrdersForCustomer(list, {
+        email: customerEmail,
+        phone: customerPhone,
+        name: customerName,
+        isAdmin: isAdminParam,
+      });
     }
 
     if (orderNumber) {

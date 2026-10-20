@@ -200,10 +200,12 @@ export async function POST(req: NextRequest) {
       const current = readCustomersFile();
       const targetId = body.id ? String(body.id).trim() : "";
       const targetEmail = body.email ? String(body.email).trim().toLowerCase() : "";
+      const targetUid = body.imwebUid ? String(body.imwebUid).trim() : "";
 
       const idx = current.findIndex(
         (c) =>
-          (targetId && (c.id === targetId || c.loginId === targetId)) ||
+          (targetId && (c.id === targetId || c.loginId === targetId || c.imwebUid === targetId)) ||
+          (targetUid && (c.imwebUid === targetUid || c.id === targetUid)) ||
           (targetEmail && c.email?.toLowerCase() === targetEmail)
       );
 

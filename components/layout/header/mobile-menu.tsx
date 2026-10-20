@@ -81,10 +81,16 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
         const name = localStorage.getItem("membership_user_name");
         const email = localStorage.getItem("membership_user_email");
         const role = localStorage.getItem("user_role");
+        const grade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || role || "").toUpperCase().trim();
         const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
         const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
 
-        const isAdm = role === "admin" || (email === "admin" && isLoggedInFlag) || isAdminSession;
+        const isAdm =
+          role === "admin" ||
+          role === "staff" ||
+          grade === "STAFF" ||
+          (email === "admin" && isLoggedInFlag) ||
+          isAdminSession;
         const isLogged = isLoggedInFlag || Boolean(name && name.trim().length > 0);
 
         setIsAdmin(isAdm);
@@ -191,75 +197,114 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
                         </p>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold text-neutral-600 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer border border-neutral-200/80 hover:border-rose-200"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>로그아웃</span>
-                    </button>
+                    <span className="text-[11px] font-bold text-neutral-600 bg-white border border-neutral-200/80 px-2.5 py-1 rounded-xl shadow-2xs shrink-0 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      {isAdmin ? "관리자" : "회원"}
+                    </span>
                   </div>
                 )}
 
-                {/* Top Quick Actions Grid: 로그인 / MY PAGE + 주문내역/배송조회 + 장바구니 (+ 로그아웃) */}
-                <nav className="grid grid-cols-2 gap-2.5">
-                  <Button
-                    size="lg"
-                    variant="secondary"
-                    onClick={closeMobileMenu}
-                    className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm truncate shadow-2xs rounded-xl"
-                    asChild
-                  >
-                    <Link href={isLoggedIn ? (isAdmin ? "/admin" : "/membership") : "/login"} prefetch>
-                      {isLoggedIn ? "마이페이지" : "로그인"}
-                    </Link>
-                  </Button>
+                {/* Top Quick Actions Grid: 로그인 / MY PAGE + 로그아웃 + 주문내역 + 장바구니 */}
+                {isLoggedIn ? (
+                  <nav className="grid grid-cols-3 gap-2">
+                    {/* 1. 마이페이지 */}
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      onClick={closeMobileMenu}
+                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm truncate shadow-2xs rounded-xl px-1.5"
+                      asChild
+                    >
+                      <Link href={isAdmin ? "/admin" : "/membership"} prefetch>
+                        마이페이지
+                      </Link>
+                    </Button>
 
-                  <Button
-                    size="lg"
-                    variant="secondary"
-                    onClick={closeMobileMenu}
-                    className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm truncate shadow-2xs rounded-xl"
-                    asChild
-                  >
-                    <Link href="/membership?tab=orders" prefetch>
-                      <span>주문내역 / 배송조회</span>
-                    </Link>
-                  </Button>
-
-                  {/* Cart Item inside Menu Drawer with Korean Label */}
-                  <Button
-                    size="lg"
-                    variant="secondary"
-                    onClick={() => {
-                      closeMobileMenu();
-                      setTimeout(() => {
-                        window.dispatchEvent(new CustomEvent("choicomma_open_cart"));
-                      }, 100);
-                    }}
-                    className={cn(
-                      "bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer",
-                      isLoggedIn ? "col-span-1" : "col-span-2 w-full"
-                    )}
-                  >
-                    <ShoppingBag className="w-4 h-4 shrink-0" />
-                    <span>장바구니 ({cart?.totalQuantity || 0})</span>
-                  </Button>
-
-                  {/* Logout Button in Grid when Logged In */}
-                  {isLoggedIn && (
+                    {/* 2. 로그아웃 (마이페이지와 주문내역 사이) */}
                     <Button
                       size="lg"
                       variant="secondary"
                       onClick={handleLogout}
-                      className="col-span-1 bg-neutral-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-neutral-700 border border-neutral-200 justify-center font-bold py-5 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer transition-colors"
+                      className="bg-neutral-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-neutral-700 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm shadow-2xs rounded-xl gap-1 px-1.5 cursor-pointer transition-colors"
                     >
-                      <LogOut className="w-4 h-4 shrink-0" />
+                      <LogOut className="w-3.5 h-3.5 shrink-0" />
                       <span>로그아웃</span>
                     </Button>
-                  )}
-                </nav>
+
+                    {/* 3. 주문내역 */}
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      onClick={closeMobileMenu}
+                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm truncate shadow-2xs rounded-xl px-1.5"
+                      asChild
+                    >
+                      <Link href="/membership?tab=orders" prefetch>
+                        <span>주문내역</span>
+                      </Link>
+                    </Button>
+
+                    {/* 4. 장바구니 */}
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      onClick={() => {
+                        closeMobileMenu();
+                        setTimeout(() => {
+                          window.dispatchEvent(new CustomEvent("choicomma_open_cart"));
+                        }, 100);
+                      }}
+                      className="col-span-3 w-full bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-4 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer"
+                    >
+                      <ShoppingBag className="w-4 h-4 shrink-0" />
+                      <span>장바구니 ({cart?.totalQuantity || 0})</span>
+                    </Button>
+                  </nav>
+                ) : (
+                  <nav className="grid grid-cols-2 gap-2.5">
+                    {/* 1. 로그인 */}
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      onClick={closeMobileMenu}
+                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm truncate shadow-2xs rounded-xl"
+                      asChild
+                    >
+                      <Link href="/login" prefetch>
+                        로그인
+                      </Link>
+                    </Button>
+
+                    {/* 2. 주문내역 / 배송조회 */}
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      onClick={closeMobileMenu}
+                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm truncate shadow-2xs rounded-xl"
+                      asChild
+                    >
+                      <Link href="/membership?tab=orders" prefetch>
+                        <span>주문내역 / 배송조회</span>
+                      </Link>
+                    </Button>
+
+                    {/* 3. 장바구니 */}
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      onClick={() => {
+                        closeMobileMenu();
+                        setTimeout(() => {
+                          window.dispatchEvent(new CustomEvent("choicomma_open_cart"));
+                        }, 100);
+                      }}
+                      className="col-span-2 w-full bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer"
+                    >
+                      <ShoppingBag className="w-4 h-4 shrink-0" />
+                      <span>장바구니 ({cart?.totalQuantity || 0})</span>
+                    </Button>
+                  </nav>
+                )}
 
                 {/* Mobile Search Bar */}
                 <div className="pt-2">

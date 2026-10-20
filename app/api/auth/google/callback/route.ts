@@ -167,8 +167,14 @@ export async function GET(req: NextRequest) {
       console.warn("[Google Auth - Supabase Sync Notice]:", dbErr);
     }
 
-    // 6. 브라우저 세션 스토리지 주입 및 최종 화면 이동 HTML 렌더링
-    const targetRedirect = state.startsWith("/") ? state : "/membership";
+    const isStaffOrAdmin = Boolean(
+      finalCustomer.isAdmin ||
+      finalCustomer.role === "ADMIN" ||
+      finalCustomer.role === "STAFF" ||
+      finalCustomer.grade === "STAFF" ||
+      finalCustomer.isStaff === true
+    );
+    const targetRedirect = state.startsWith("/") ? state : (isStaffOrAdmin ? "/admin" : "/membership");
     const customerJsonForClient = JSON.stringify({
       id: finalCustomer.id,
       loginId: finalCustomer.loginId || finalCustomer.email || "",
@@ -241,8 +247,13 @@ export async function GET(req: NextRequest) {
         var customer = ${customerJsonForClient};
         var expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
-        sessionStorage.setItem("customer_session_active", "true");
-        sessionStorage.removeItem("choicomma_admin_authenticated");
+        var isStaffOrAdmin = Boolean(customer.isAdmin || customer.role === "ADMIN" || customer.role === "STAFF" || customer.grade === "STAFF" || customer.isStaff === true);
+        if (isStaffOrAdmin) {
+          sessionStorage.setItem("choicomma_admin_authenticated", "true");
+        } else {
+          sessionStorage.setItem("customer_session_active", "true");
+          sessionStorage.removeItem("choicomma_admin_authenticated");
+        }
 
         localStorage.setItem("customer_session_expires_at", String(expiresAt));
         localStorage.setItem("is_logged_in", "true");

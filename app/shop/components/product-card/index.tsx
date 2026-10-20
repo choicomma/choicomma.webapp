@@ -2,21 +2,93 @@
 
 import React, { Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Product } from "@/lib/sfcc/types";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { ProductImage } from "./product-image";
 import { QuickOptionModal } from "@/components/products/quick-option-modal";
 import { FeaturedProductLabel } from "@/components/products/featured-product-label";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles, Plus, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, Plus, Clock, ChevronLeft, ChevronRight, Lock, Sliders, Edit3, ExternalLink, X } from "lucide-react";
 
 import { translateProductTitle, translateProductDescription, translateUiText, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
+import { ProductCardImageSlider, extractProductImages } from "@/components/products/product-card-image-slider";
+import { reorderProduct } from "@/lib/products/reorder-helper";
+import { toast } from "sonner";
 
-export const ProductCard = ({ product }: { product: Product }) => {
+export interface ProductCardProps {
+  product: Product;
+  onAdminClick?: (product: Product) => void;
+  onAdminEdit?: (product: Product) => void;
+  isAdminOverlayOpen?: boolean;
+  onAdminOverlayClose?: () => void;
+  onMoveOrder?: (product: Product, direction: "prev" | "next") => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+}
+
+export const ProductCard = ({
+  product,
+  onAdminClick,
+  onAdminEdit,
+  isAdminOverlayOpen,
+  onAdminOverlayClose,
+  onMoveOrder,
+  isFirst = false,
+  isLast = false,
+}: ProductCardProps) => {
+  const router = useRouter();
+  const [internalOverlayOpen, setInternalOverlayOpen] = React.useState(false);
+  const isOverlayActive = Boolean(isAdminOverlayOpen !== undefined ? isAdminOverlayOpen : internalOverlayOpen);
+  const [isMoving, setIsMoving] = React.useState(false);
+
+  const handleMoveOrder = async (direction: "prev" | "next") => {
+    if (isMoving) return;
+    if (onMoveOrder) {
+      onMoveOrder(product, direction);
+      return;
+    }
+    try {
+      setIsMoving(true);
+      const res = await reorderProduct(String(product.id), direction);
+      if (res.success) {
+        toast.success(
+          direction === "prev"
+            ? `'${product.title}' 상품이 앞으로 이동되었습니다.`
+            : `'${product.title}' 상품이 뒤로 이동되었습니다.`
+        );
+      } else if (res.error) {
+        toast.info(res.error);
+      }
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  const handleCloseOverlay = () => {
+    if (onAdminOverlayClose) {
+      onAdminOverlayClose();
+    } else {
+      setInternalOverlayOpen(false);
+    }
+  };
   const [currentLang, setCurrentLang] = React.useState("ko");
   const [timeSaleDiscount, setTimeSaleDiscount] = React.useState<number | null>(null);
   const [secretSaleInfo, setSecretSaleInfo] = React.useState<{ discount: number; title?: string } | null>(null);
+  const [isAdminUser, setIsAdminUser] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const userRole = (localStorage.getItem("user_role") || "").toLowerCase().trim();
+      const userGrade = (localStorage.getItem("user_grade") || "").toUpperCase().trim();
+      const isAdmin =
+        userRole === "admin" ||
+        userRole === "staff" ||
+        userGrade === "STAFF" ||
+        sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+      setIsAdminUser(isAdmin);
+    }
+  }, []);
 
   React.useEffect(() => {
     setCurrentLang(getCurrentLanguage());
@@ -32,7 +104,11 @@ export const ProductCard = ({ product }: { product: Product }) => {
         const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
         const userRole = localStorage.getItem("user_role") || "";
         const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || userRole || "").toUpperCase().trim();
-        const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+        const isAdmin =
+          userRole === "admin" ||
+          userRole === "staff" ||
+          userGrade === "STAFF" ||
+          sessionStorage.getItem("choicomma_admin_authenticated") === "true";
 
         // Check active Secret Time Sales
         const secretSalesRaw = localStorage.getItem("admin_secret_timesales");
@@ -190,10 +266,26 @@ export const ProductCard = ({ product }: { product: Product }) => {
 
   const currCode = product.currencyCode || product.priceRange?.minVariantPrice?.currencyCode || "KRW";
 
+  const productImages = React.useMemo(() => extractProductImages(product), [product]);
+
   return (
-    <Link
-      href={`/product/${product.handle || "item"}`}
-      className="group relative flex flex-col items-center justify-between aspect-[4/5] overflow-hidden border-b border-r border-neutral-200 bg-white w-full"
+    <div
+      onClick={(e) => {
+        if (isAdminUser && (onAdminClick || onAdminEdit)) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (onAdminClick) {
+            onAdminClick(product);
+          } else {
+            setInternalOverlayOpen(true);
+          }
+        } else {
+          router.push(`/product/${product.handle || "item"}`);
+        }
+      }}
+      className={`group relative flex flex-col items-center justify-between aspect-[4/5] overflow-hidden border-b border-r border-neutral-200 bg-white w-full cursor-pointer select-none ${
+        isOverlayActive ? "z-30 ring-2 ring-blue-600 shadow-xl" : ""
+      }`}
     >
       {/* 1. Badges: Moved to Top (상단으로 위치 변경) */}
       <div className="absolute top-2 inset-x-2 sm:top-3 sm:inset-x-3 md:top-4 md:inset-x-4 flex items-center gap-1 sm:gap-1.5 flex-wrap z-20 pointer-events-none">
@@ -211,11 +303,21 @@ export const ProductCard = ({ product }: { product: Product }) => {
           </span>
         )}
 
-        {/* 타임세일 할인율 Badge */}
+        {/* 타임세일 할인율 Badge: 시크릿 VIP 세일과 일반 타임세일 구분 */}
         {isTimeSaleActive && timeSaleDiscount && (
-          <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-red-600 text-white shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
-            <span>🔥 {timeSaleDiscount}% OFF</span>
-          </span>
+          secretSaleInfo ? (
+            <span
+              className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-950 text-amber-300 border border-neutral-700 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1"
+              title={secretSaleInfo.title ? `[시크릿 VIP 특가] ${secretSaleInfo.title}` : "[시크릿 VIP 특가]"}
+            >
+              <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 shrink-0" />
+              <span>SECRET VIP {timeSaleDiscount}% OFF</span>
+            </span>
+          ) : (
+            <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-red-600 text-white shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
+              <span>🔥 TIME SALE {timeSaleDiscount}% OFF</span>
+            </span>
+          )
         )}
 
         {/* 오픈 예정 / 품절 Badge: 가장 마지막에 배치 */}
@@ -234,15 +336,114 @@ export const ProductCard = ({ product }: { product: Product }) => {
         ) : null}
       </div>
 
-      {/* 1:1 Square Product Image Area with White Background */}
-      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-3 sm:p-5 md:p-7 mt-6 sm:mt-8 md:mt-10">
-        <Image
-          src={product.featuredImage?.url || "/product_1.webp"}
+      {/* 1:1 Square Product Image Area with White Background (Element-free slider when multiple images exist) */}
+      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-3 sm:p-5 md:p-7 mt-6 sm:mt-8 md:mt-10 overflow-hidden">
+        <ProductCardImageSlider
+          images={productImages}
           alt={product.title || "Product"}
-          fill
-          unoptimized={true}
-          className="object-contain transition-transform duration-700 group-hover:scale-105"
+          paddingClass="p-0"
+          imageClassName="object-contain transition-transform duration-700 group-hover:scale-105"
         />
+
+        {/* 관리자 상품 액션 오버레이 (제품 이미지 바로 위에 노출) */}
+        {isOverlayActive && (
+          <div
+            className="absolute inset-0 z-30 bg-neutral-950/85 backdrop-blur-xs flex flex-col justify-between p-3 sm:p-4 text-white animate-in fade-in zoom-in-95 duration-150 select-none"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            {/* 상단: 관리자 라벨 & 닫기 버튼 */}
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                <Sliders className="w-2.5 h-2.5" />
+                <span>관리자</span>
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCloseOverlay();
+                }}
+                className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-colors cursor-pointer"
+                title="닫기"
+              >
+                <X className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </button>
+            </div>
+
+            {/* 중앙: 상품 수정 / 상세페이지 / 순서 변경 버튼 */}
+            <div className="flex flex-col gap-1.5 sm:gap-2 w-full my-auto">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCloseOverlay();
+                  onAdminEdit?.(product);
+                }}
+                className="w-full flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-2 bg-white text-neutral-950 hover:bg-neutral-100 rounded-lg sm:rounded-xl font-black text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span>상품 수정</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCloseOverlay();
+                  router.push(`/product/${product.handle || product.id}`);
+                }}
+                className="w-full flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-2 bg-neutral-900/90 hover:bg-neutral-800 text-white border border-white/20 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-neutral-300 shrink-0" />
+                <span>상세페이지</span>
+              </button>
+
+              {/* 순서 변경 버튼: 앞으로 가기 / 뒤로 가기 */}
+              <div className="grid grid-cols-2 gap-1.5 w-full pt-0.5">
+                <button
+                  type="button"
+                  disabled={isFirst || isMoving}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleMoveOrder("prev");
+                  }}
+                  title={isFirst ? "이미 목록의 첫 번째 상품입니다." : "상품 순서를 한 칸 앞으로 이동합니다."}
+                  className="w-full flex items-center justify-center gap-1 py-2 sm:py-2 px-1 bg-neutral-900/90 hover:bg-neutral-800 text-white border border-white/20 rounded-lg sm:rounded-xl font-bold text-[11px] sm:text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>앞으로 가기</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isLast || isMoving}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleMoveOrder("next");
+                  }}
+                  title={isLast ? "이미 목록의 마지막 상품입니다." : "상품 순서를 한 칸 뒤로 이동합니다."}
+                  className="w-full flex items-center justify-center gap-1 py-2 sm:py-2 px-1 bg-neutral-900/90 hover:bg-neutral-800 text-white border border-white/20 rounded-lg sm:rounded-xl font-bold text-[11px] sm:text-xs transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <span>뒤로 가기</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                </button>
+              </div>
+            </div>
+
+            {/* 하단: 안내 텍스트 */}
+            <div className="text-center text-[9px] sm:text-[10px] text-white/50 font-medium">
+              순서 이동 또는 작업을 선택하세요
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Bar: Title on Top & Price on Bottom */}
@@ -269,6 +470,6 @@ export const ProductCard = ({ product }: { product: Product }) => {
           </span>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };

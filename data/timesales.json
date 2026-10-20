@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "id": "SECRET-TS-1792486864492",
+    "title": "시크릿 타임세일 - 핸드메이드 캐시울 폭스퍼 폭스퍼 케이프 특별 할인",
+    "discountRate": 30,
+    "productIds": [
+      "excel-product-470",
+      "excel-product-469"
+    ],
+    "targetCustomerEmails": [],
+    "targetGrades": [
+      "VVIP",
+      "PLATINUM"
+    ],
+    "durationHours": 24,
+    "durationMinutes": 0,
+    "status": "active",
+    "createdAt": "2026-10-20T09:01:04.492Z",
+    "updated_at": "2026-10-20T09:01:05.249Z"
+  }
+]

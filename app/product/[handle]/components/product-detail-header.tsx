@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Product, ProductVariant } from "@/lib/sfcc/types";
 import { formatPrice } from "@/lib/sfcc/utils";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles, Check, Clock, Ticket, ShoppingBag } from "lucide-react";
+import { Sparkles, Check, Clock, Ticket, ShoppingBag, Lock, Flame } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/cart/cart-context";
@@ -319,7 +318,11 @@ export function ProductDetailHeader({
       const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
       const userRole = localStorage.getItem("user_role") || "";
       const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || userRole || "").toUpperCase().trim();
-      const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+      const isAdmin =
+        userRole === "admin" ||
+        userRole === "staff" ||
+        userGrade === "STAFF" ||
+        sessionStorage.getItem("choicomma_admin_authenticated") === "true";
       const isLoggedIn = isAdmin || (localStorage.getItem("is_logged_in") === "true" && Boolean(userEmail));
       setIsLoggedInUser(isLoggedIn);
 
@@ -775,10 +778,17 @@ export function ProductDetailHeader({
           {/* TimeSale Badge & Countdown */}
           {isTimeSaleItem && (
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-950 text-white flex items-center gap-1 shadow-2xs shrink-0 whitespace-nowrap">
-                <Sparkles className="w-3.5 h-3.5 text-white fill-white" />
-                {t.timeSale} {timeSaleDiscount}% OFF
-              </span>
+              {hasSecretTimeSale ? (
+                <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-950 text-amber-300 border border-neutral-700 flex items-center gap-1.5 shadow-2xs shrink-0 whitespace-nowrap">
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>SECRET VIP {secretTimeSaleRate || timeSaleDiscount}% OFF</span>
+                </span>
+              ) : (
+                <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-rose-600 text-white flex items-center gap-1 shadow-2xs shrink-0 whitespace-nowrap">
+                  <Flame className="w-3.5 h-3.5 text-white fill-white" />
+                  <span>{t.timeSale} {timeSaleDiscount}% OFF</span>
+                </span>
+              )}
 
               {!isSetProduct && (
                 <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-950 text-white flex items-center gap-1 shadow-2xs shrink-0 whitespace-nowrap">
@@ -848,18 +858,19 @@ export function ProductDetailHeader({
             <div className="flex items-center justify-between w-full text-xs sm:text-[13px]">
               <div className="flex items-center gap-1.5">
                 <span className={cn(
-                  "whitespace-nowrap",
+                  "whitespace-nowrap flex items-center gap-1",
                   !isLoggedInUser || (couponDiscountAmount === 0 && pointsDiscountAmount === 0)
                     ? "font-extrabold text-neutral-950"
                     : "font-bold text-neutral-700"
                 )}>
-                  타임세일 적용가
+                  <Flame className="w-3.5 h-3.5 text-rose-500 fill-rose-500 shrink-0" />
+                  <span>일반 타임세일 적용가</span>
                 </span>
                 {quantity > 1 && (
                   <span className="text-[11px] text-neutral-500 font-medium whitespace-nowrap">({quantity}개)</span>
                 )}
                 {timeSaleDiscount > 0 && (
-                  <span className="text-[10px] font-black text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 whitespace-nowrap">
+                  <span className="text-[10px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 whitespace-nowrap">
                     {timeSaleDiscount}% OFF
                   </span>
                 )}
@@ -886,12 +897,15 @@ export function ProductDetailHeader({
           {hasSecretTimeSale && (
             <div className="flex items-center justify-between w-full text-xs sm:text-[13px]">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-neutral-700 whitespace-nowrap">시크릿 타임 세일 적용가</span>
+                <span className="font-extrabold text-indigo-700 whitespace-nowrap flex items-center gap-1">
+                  <Lock className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span>시크릿 회원 전용가 (VIP)</span>
+                </span>
                 {quantity > 1 && (
                   <span className="text-[11px] text-neutral-500 font-medium whitespace-nowrap">({quantity}개)</span>
                 )}
                 {secretTimeSaleRate > 0 && (
-                  <span className="text-[10px] font-black text-neutral-900 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-300 whitespace-nowrap">
+                  <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 whitespace-nowrap">
                     VIP {secretTimeSaleRate}%
                   </span>
                 )}

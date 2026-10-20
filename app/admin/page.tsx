@@ -189,6 +189,17 @@ export default function AdminPage() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  // Scroll to Top Floating Button State
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 250);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   // Admin Coupons Count State
   const [adminCouponsCount, setAdminCouponsCount] = useState<number>(() => {
     if (typeof window !== "undefined") {
@@ -228,15 +239,35 @@ export default function AdminPage() {
     };
   }, []);
 
-  // Scroll to Top Floating Button State
-  const [showScrollTop, setShowScrollTop] = useState(false);
+  // Admin User Profile State (Admin or Staff)
+  const [adminDisplayName, setAdminDisplayName] = useState<string>("Admin Manager");
+  const [adminRoleBadge, setAdminRoleBadge] = useState<string>("ADMIN");
 
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 250);
+    const checkAdminProfile = () => {
+      if (typeof window !== "undefined") {
+        const name = (localStorage.getItem("membership_user_name") || "").trim();
+        const role = (localStorage.getItem("user_role") || "").toLowerCase().trim();
+        const grade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || "").toUpperCase().trim();
+        if (role === "staff" || grade === "STAFF") {
+          setAdminDisplayName(name || "Staff Manager");
+          setAdminRoleBadge("STAFF");
+        } else if (name) {
+          setAdminDisplayName(name);
+          setAdminRoleBadge("ADMIN");
+        } else {
+          setAdminDisplayName("Admin Manager");
+          setAdminRoleBadge("ADMIN");
+        }
+      }
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    checkAdminProfile();
+    window.addEventListener("storage", checkAdminProfile);
+    window.addEventListener("auth_changed", checkAdminProfile);
+    return () => {
+      window.removeEventListener("storage", checkAdminProfile);
+      window.removeEventListener("auth_changed", checkAdminProfile);
+    };
   }, []);
 
   // VIP Customer Inquiry State
@@ -424,6 +455,7 @@ export default function AdminPage() {
     adminTimeSaleMinutes,
     adminTimeSaleDiscount,
     handleUpdateProductTimeSetting,
+    secretSalesList,
   });
 
   // Edit Product Modal State
@@ -431,6 +463,25 @@ export default function AdminPage() {
   const handleOpenEditModal = (product: any) => {
     setEditingProduct(product);
   };
+
+  // Open edit modal if URL has ?editProductId=... or ?edit=...
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const targetId = params.get("editProductId") || params.get("edit");
+    if (targetId && productsList.length > 0) {
+      const found = productsList.find(
+        (p) =>
+          String(p.id) === targetId ||
+          String(p.productCode) === targetId ||
+          String(p.handle) === targetId
+      );
+      if (found) {
+        setActiveTabState("products");
+        setEditingProduct(found);
+      }
+    }
+  }, [productsList]);
 
   // Set Item Sale Admin State
   const [setSalesList, setSetSalesList] = useState<any[]>(initialSetSales);
@@ -496,9 +547,40 @@ export default function AdminPage() {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+  // Top Header Notification Center State
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const notificationRef = React.useRef<HTMLDivElement>(null);
 
-  
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+        setIsNotificationOpen(false);
+      }
+    };
+    if (isNotificationOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isNotificationOpen]);
 
+  // 알림(새로운 소식) 상태 계산
+  const pendingInquiriesCount = (inquiriesList || []).filter(
+    (i: any) => i.status === "대기" || i.status === "미답변" || i.status === "답변대기"
+  ).length;
+
+  const unreadChatCount = (chatSessionsList || []).reduce(
+    (acc: number, s: any) => acc + (Number(s.unreadCount) || (s.unread ? 1 : 0)),
+    0
+  );
+
+  const pendingOrdersCount = (ordersList || []).filter(
+    (o: any) => o.status === "결제완료" || o.status === "주문접수" || o.status === "배송준비"
+  ).length;
+
+  const totalNotificationCount = pendingInquiriesCount + unreadChatCount + pendingOrdersCount;
+  const hasNewNotifications = totalNotificationCount > 0;
 
   // Main Home Page Admin Control State
   const [mainBadgeText, setMainBadgeText] = useState("latest drop");
@@ -625,7 +707,7 @@ export default function AdminPage() {
     if (savedProductIds) {
       try {
         const parsed = JSON.parse(savedProductIds);
-        if (Array.isArray(parsed)) setAdminTimeSaleProductIds(parsed);
+        if (Array.isArray(parsed) && parsed.length < 50) setAdminTimeSaleProductIds(parsed);
       } catch (e) { }
     }
 
@@ -716,20 +798,146 @@ export default function AdminPage() {
             <LanguageSelector />
           </div>
 
-          <button
-            onClick={() => triggerToast("새로운 알림이 없습니다.")}
-            className="p-2 text-neutral-500 hover:text-neutral-950 hover:bg-neutral-100 rounded-lg transition-colors relative"
-            title="Notifications"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-neutral-950 rounded-full" />
-          </button>
+          {/* Notification Center */}
+          <div className="relative" ref={notificationRef}>
+            <button
+              type="button"
+              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              className="p-2 text-neutral-500 hover:text-neutral-950 hover:bg-neutral-100 rounded-lg transition-colors relative cursor-pointer"
+              title="알림 센터"
+            >
+              <Bell className="w-5 h-5" />
+              {hasNewNotifications && (
+                <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
+                </span>
+              )}
+            </button>
+
+            {isNotificationOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white border border-neutral-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-4 py-3 bg-neutral-50 border-b border-neutral-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-neutral-700" />
+                    <span className="text-xs font-black text-neutral-900">알림 센터</span>
+                  </div>
+                  {hasNewNotifications ? (
+                    <span className="text-[10px] font-black bg-rose-500 text-white px-2 py-0.5 rounded-full">
+                      {totalNotificationCount}건의 새로운 소식
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-neutral-500 bg-neutral-200/70 px-2 py-0.5 rounded-full">
+                      모두 확인됨
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-3 space-y-2 max-h-[360px] overflow-y-auto">
+                  {!hasNewNotifications ? (
+                    <div className="py-6 text-center">
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2 border border-emerald-100">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-neutral-800">새로운 알림이 없습니다</p>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                        고객 문의, 실시간 상담, 신규 주문이 모두 처리되었습니다.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {pendingInquiriesCount > 0 && (
+                        <div
+                          onClick={() => {
+                            setActiveTab("inquiries");
+                            setIsNotificationOpen(false);
+                          }}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer border border-neutral-100"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                              <Mail className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-neutral-900">1:1 고객 문의 답변 대기</p>
+                              <p className="text-[10px] text-neutral-500">답변 대기 중인 문의 {pendingInquiriesCount}건</p>
+                            </div>
+                          </div>
+                          <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+                            {pendingInquiriesCount}건
+                          </span>
+                        </div>
+                      )}
+
+                      {unreadChatCount > 0 && (
+                        <div
+                          onClick={() => {
+                            setActiveTab("chat");
+                            setIsNotificationOpen(false);
+                          }}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer border border-neutral-100"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                              <Send className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-neutral-900">실시간 상담 대기</p>
+                              <p className="text-[10px] text-neutral-500">미확인 고객 메시지 {unreadChatCount}건</p>
+                            </div>
+                          </div>
+                          <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                            {unreadChatCount}건
+                          </span>
+                        </div>
+                      )}
+
+                      {pendingOrdersCount > 0 && (
+                        <div
+                          onClick={() => {
+                            setActiveTab("orders");
+                            setIsNotificationOpen(false);
+                          }}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer border border-neutral-100"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                              <Package className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-neutral-900">신규 주문 처리 대기</p>
+                              <p className="text-[10px] text-neutral-500">배송 준비 필요 주문 {pendingOrdersCount}건</p>
+                            </div>
+                          </div>
+                          <span className="text-xs font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
+                            {pendingOrdersCount}건
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-3 pl-2 border-l border-neutral-200">
-            <div className="w-8 h-8 rounded-full bg-neutral-950 text-white flex items-center justify-center font-bold text-xs shadow-sm">
-              CC
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-sm ${
+              adminRoleBadge === "STAFF" ? "bg-indigo-600 text-white" : "bg-neutral-950 text-white"
+            }`}>
+              {adminRoleBadge === "STAFF" ? "ST" : "CC"}
             </div>
             <div className="hidden sm:block text-xs">
-              <p className="font-bold text-neutral-950 leading-tight">Admin Manager</p>
+              <p className="font-bold text-neutral-950 leading-tight flex items-center gap-1.5">
+                <span>{adminDisplayName}</span>
+                {adminRoleBadge === "STAFF" && (
+                  <span className="bg-indigo-100 text-indigo-800 text-[9px] font-black px-1.5 py-0.2 rounded font-mono">
+                    STAFF
+                  </span>
+                )}
+              </p>
+              <p className="text-[10px] text-neutral-500 font-medium">
+                {adminRoleBadge === "STAFF" ? "스태프 (관리자 동등 권한)" : "최고 관리자"}
+              </p>
             </div>
             <button
               onClick={handleAdminLogout}
@@ -921,20 +1129,23 @@ export default function AdminPage() {
               href="/membership"
               onClick={() => {
                 if (typeof window !== "undefined") {
-                  localStorage.setItem("membership_user_name", "최고관리자 (Admin)");
-                  localStorage.setItem("membership_user_email", "admin@choicomma.com");
-                  localStorage.setItem("membership_user_phone", "010-1234-5678");
-                  localStorage.setItem("membership_user_postcode", "06306");
-                  localStorage.setItem("membership_user_address", "서울특별시 강남구 개포로22길 12");
-                  localStorage.setItem("membership_user_address_detail", "6층 (주)초이콤마 본사");
-                  localStorage.setItem("user_grade", "VVIP");
-                  localStorage.setItem("user_role", "admin");
-                  localStorage.setItem("is_logged_in", "true");
-                  const adminCust = customersList.find((c: any) => c.id === "ADMIN-001");
-                  const currentAdminPts = adminCust?.points !== undefined ? String(adminCust.points) : (localStorage.getItem("membership_user_points") || "100000");
-                  localStorage.setItem("membership_user_points", currentAdminPts);
-                  window.dispatchEvent(new CustomEvent("storage"));
-                  window.dispatchEvent(new CustomEvent("auth_changed"));
+                  const currentEmail = localStorage.getItem("membership_user_email");
+                  if (!currentEmail || currentEmail === "admin@choicomma.com") {
+                    localStorage.setItem("membership_user_name", "최고관리자 (Admin)");
+                    localStorage.setItem("membership_user_email", "admin@choicomma.com");
+                    localStorage.setItem("membership_user_phone", "010-1234-5678");
+                    localStorage.setItem("membership_user_postcode", "06306");
+                    localStorage.setItem("membership_user_address", "서울특별시 강남구 개포로22길 12");
+                    localStorage.setItem("membership_user_address_detail", "6층 (주)초이콤마 본사");
+                    localStorage.setItem("user_grade", "VVIP");
+                    localStorage.setItem("user_role", "admin");
+                    localStorage.setItem("is_logged_in", "true");
+                    const adminCust = customersList.find((c: any) => c.id === "ADMIN-001");
+                    const currentAdminPts = adminCust?.points !== undefined ? String(adminCust.points) : (localStorage.getItem("membership_user_points") || "100000");
+                    localStorage.setItem("membership_user_points", currentAdminPts);
+                    window.dispatchEvent(new CustomEvent("storage"));
+                    window.dispatchEvent(new CustomEvent("auth_changed"));
+                  }
                 }
               }}
               className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950 transition-all border border-neutral-200/80 bg-white"
@@ -975,7 +1186,7 @@ export default function AdminPage() {
 
         {/* Main Content Area */}
         <main className={`flex-1 p-4 md:p-6 lg:p-8 mx-auto w-full ${
-          activeTab === "products" || activeTab === "orders" || activeTab === "inbound" || activeTab === "revenue" || activeTab === "global_sales" || activeTab === "visitors" || activeTab === "activity_logs"
+          activeTab === "products" || activeTab === "orders" || activeTab === "inbound" || activeTab === "revenue" || activeTab === "global_sales" || activeTab === "visitors" || activeTab === "activity_logs" || activeTab === "inquiries"
             ? "max-w-[1850px]"
             : "max-w-7xl"
         }`}>
@@ -1118,6 +1329,8 @@ export default function AdminPage() {
               handleQuickUpdateReleaseSchedule={handleQuickUpdateReleaseSchedule}
               handleQuickUpdateTimeSale={handleQuickUpdateTimeSale}
               adminTimeSaleProductIds={adminTimeSaleProductIds}
+              secretSalesList={secretSalesList}
+              setSalesList={setSalesList}
               handleQuickUpdateCategory={handleQuickUpdateCategory}
               handleQuickUpdatePrice={handleQuickUpdatePrice}
               handleQuickUpdateStock={handleQuickUpdateStock}
@@ -1128,6 +1341,8 @@ export default function AdminPage() {
           {activeTab === "sales" && (
             <TimesaleManagement
               productsList={productsList}
+              setProductsList={setProductsList}
+              saveSingleProduct={saveSingleProduct}
               customersList={customersList}
               secretSalesList={secretSalesList}
               setSecretSalesList={setSecretSalesList}
@@ -1135,6 +1350,8 @@ export default function AdminPage() {
               setSetSalesList={setSetSalesList}
               onOpenSetBundleModal={() => setIsSetModalOpen(true)}
               setAdminTimeSaleProductIds={setAdminTimeSaleProductIds}
+              adminTimeSaleProductIds={adminTimeSaleProductIds}
+              onOpenEditModal={handleOpenEditModal}
               triggerToast={triggerToast}
             />
           )}

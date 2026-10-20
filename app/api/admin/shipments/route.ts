@@ -4,6 +4,7 @@ import path from "path";
 import { initialShipments } from "@/lib/sfcc/mock/shipments-data";
 import { runSafeSupabaseQuery } from "@/lib/supabase/server";
 import { logAdminActivity } from "@/lib/logging/audit-logger";
+import { filterOrdersForCustomer } from "@/lib/shipping/customer-order-filter";
 
 function normalizeShipmentForSupabase(s: any) {
   let itemsStr = "";
@@ -266,9 +267,27 @@ export async function GET(req: NextRequest) {
   }
   lastShipmentHitMap.set(clientKey, now);
 
+  const url = new URL(req.url);
+  const forCustomer = url.searchParams.get("forCustomer") === "true";
+  const customerEmail = (url.searchParams.get("email") || url.searchParams.get("customerEmail") || "").toLowerCase().trim();
+  const customerPhone = (url.searchParams.get("phone") || url.searchParams.get("customerPhone") || "").replace(/[^0-9]/g, "");
+  const customerName = (url.searchParams.get("name") || url.searchParams.get("customerName") || "").trim();
+  const isAdminParam = url.searchParams.get("isAdmin") === "true";
+
   function formatResponse(list: any[]) {
+    let outputList = list;
+    // 고객단 요청 또는 마이페이지인 경우 본인 주문만 서버에서 엄격 필터링
+    if (forCustomer || referer.includes("/membership")) {
+      outputList = filterOrdersForCustomer(list, {
+        email: customerEmail,
+        phone: customerPhone,
+        name: customerName,
+        isAdmin: isAdminParam,
+      });
+    }
+
     if (referer.includes("/membership")) {
-      return NextResponse.json({ success: true, shipments: list }, {
+      return NextResponse.json({ success: true, shipments: outputList }, {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
           Pragma: "no-cache",
@@ -276,7 +295,7 @@ export async function GET(req: NextRequest) {
         },
       });
     }
-    return NextResponse.json(list, {
+    return NextResponse.json(outputList, {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
         Pragma: "no-cache",

@@ -3,13 +3,27 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Clock } from "lucide-react";
+import { Clock, Sliders, Edit3, ExternalLink, ChevronRight, X } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { translateProductTitle, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 import useEmblaCarousel from "embla-carousel-react";
 import { ProductCard } from "@/app/shop/components/product-card";
 import { HomePopupModal } from "./home-popup-modal";
+import { ProductFormModal } from "@/app/admin/components/product-form-modal";
+import { reorderProduct } from "@/lib/products/reorder-helper";
+import { toast } from "sonner";
+
+const categoriesList = [
+  { id: "timesale", name: "TIMESALE", count: 8, description: "신상품 & 타임세일 컬렉션" },
+  { id: "outer", name: "OUTER", count: 12, description: "아우터 & 재킷" },
+  { id: "top", name: "TOP", count: 24, description: "상의 & 니트웨어" },
+  { id: "bottom", name: "BOTTOM", count: 16, description: "팬츠 & 스커트" },
+  { id: "bag", name: "BAG", count: 6, description: "가방 & 래더 굿즈" },
+  { id: "shoes", name: "SHOES", count: 9, description: "슈즈 & 슈케어" },
+  { id: "accessory", name: "ACCESSORY", count: 15, description: "액세서리 & 잡화" },
+];
 
 function HomeProductTitle({ title, lang }: { title: string; lang: string }) {
   const [translated, setTranslated] = useState(() => translateProductTitle(title, lang));
@@ -99,20 +113,105 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   const [heroImages, setHeroImages] = React.useState<string[]>(heroUrlsFiltered);
   const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
 
-  // Initial Grid Products: Strictly require products not marked as unfeatured (isMainFeatured !== false)
+  // Initial Grid Products: 메인진열(isMainFeatured === true) 처리된 제품이면 홈화면에 전부 노출
   const initialValidCandidates = (products || []).filter(
-    (p: any) => p.isMainFeatured !== false && p.categoryId !== "main_banner" && !String(p.id).startsWith("hero-slide-")
+    (p: any) =>
+      p &&
+      p.isMainFeatured !== false &&
+      p.categoryId !== "main_banner" &&
+      !String(p.id).startsWith("hero-slide-")
   );
-  let initialGrid = initialValidCandidates.filter((p: any) => p.isBottomFeatured || (p.isMainFeatured === true && !p.isHeroFeatured));
-  if (initialGrid.length === 0) {
-    initialGrid = initialValidCandidates.filter((p: any) => p.isMainFeatured === true);
-  }
+  let initialGrid = initialValidCandidates.filter((p: any) => p.isMainFeatured === true);
   if (initialGrid.length === 0) {
     initialGrid = initialValidCandidates;
   }
   const [allProducts, setAllProducts] = React.useState<any[]>(initialGrid);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(12);
+
+  const router = useRouter();
+  const [adminOverlayProductId, setAdminOverlayProductId] = useState<string | null>(null);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = () => {
+      if (typeof window !== "undefined") {
+        const userRole = (localStorage.getItem("user_role") || "").toLowerCase().trim();
+        const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || "").toUpperCase().trim();
+        const isAdmin =
+          userRole === "admin" ||
+          userRole === "staff" ||
+          userGrade === "STAFF" ||
+          sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+        setIsAdminUser(isAdmin);
+      }
+    };
+    checkAdmin();
+    window.addEventListener("storage", checkAdmin);
+    return () => window.removeEventListener("storage", checkAdmin);
+  }, []);
+
+  const handleSaveProduct = async (savedProduct: any, isNew: boolean) => {
+    try {
+      const nowIso = new Date().toISOString();
+      const finalProduct: any = {
+        ...savedProduct,
+        updated_at: nowIso,
+        updatedAt: nowIso,
+      };
+
+      // 1. 로컬스토리지 admin_products 즉시 동기화
+      if (typeof window !== "undefined") {
+        const currentSaved = localStorage.getItem("admin_products");
+        let list: any[] = [];
+        if (currentSaved) {
+          try {
+            list = JSON.parse(currentSaved);
+          } catch (e) {}
+        }
+        if (!Array.isArray(list) || list.length === 0) {
+          list = allProducts;
+        }
+        list = list.map((p: any) =>
+          String(p.id) === String(finalProduct.id) || String(p.productCode) === String(finalProduct.productCode)
+            ? finalProduct
+            : p
+        );
+        localStorage.setItem("admin_products", JSON.stringify(list));
+      }
+
+      // 2. 서버 영구 저장 API (POST /api/products)
+      try {
+        await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(finalProduct),
+        });
+      } catch (err) {}
+
+      // 3. 홈화면 실시간 반영
+      setAllProducts((prev) =>
+        prev.map((p) =>
+          String(p.id) === String(finalProduct.id) || String(p.productCode) === String(finalProduct.productCode)
+            ? finalProduct
+            : p
+        )
+      );
+
+      setEditingProduct(null);
+      toast.success(`'${finalProduct.title}' 상품 정보가 성공적으로 수정되었습니다.`);
+
+      // 4. 실시간 동기화 이벤트 브로드캐스트
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("admin_products_updated"));
+        window.dispatchEvent(new CustomEvent("products_updated"));
+        window.dispatchEvent(new CustomEvent("storage"));
+      }
+    } catch (err) {
+      toast.error("상품 정보 저장 중 오류가 발생했습니다.");
+    }
+  };
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -189,7 +288,11 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
       const userRole = localStorage.getItem("user_role") || "";
       const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || userRole || "").toUpperCase().trim();
-      const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+      const isAdmin =
+        userRole === "admin" ||
+        userRole === "staff" ||
+        userGrade === "STAFF" ||
+        sessionStorage.getItem("choicomma_admin_authenticated") === "true";
 
       // 1. Check Secret Time Sales first
       const secretSalesRaw = localStorage.getItem("admin_secret_timesales");
@@ -287,8 +390,42 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       if (!isSubscribed) return;
       const deletedSet = getDeletedSet();
 
+      // 로컬스토리지 admin_products 에서 관리자가 방금 수정한 메인진열 상태 및 상품 오버레이 병합
+      let mergedList = rawList || [];
+      if (typeof window !== "undefined") {
+        try {
+          const localAdminRaw = localStorage.getItem("admin_products");
+          if (localAdminRaw) {
+            const localAdminList: any[] = JSON.parse(localAdminRaw);
+            if (Array.isArray(localAdminList) && localAdminList.length > 0) {
+              const localMap = new Map(localAdminList.map((p) => [String(p.id), p]));
+              mergedList = mergedList.map((p: any) => {
+                const localItem = localMap.get(String(p.id));
+                if (!localItem) return p;
+                const localTime = localItem.updated_at ? new Date(localItem.updated_at).getTime() : 0;
+                const serverTime = p.updated_at ? new Date(p.updated_at).getTime() : 0;
+                // 로컬에 더 최신이거나 메인진열 상태가 명시되어 있다면 로컬 오버레이 적용
+                if (localTime >= serverTime && localItem.isMainFeatured !== undefined) {
+                  return { ...p, ...localItem };
+                }
+                return p;
+              });
+
+              // 로컬에 새로 등록된 상품이 있다면 앞쪽에 병합
+              const existingIds = new Set(mergedList.map((p: any) => String(p.id)));
+              const newLocalItems = localAdminList.filter((p: any) => p && !existingIds.has(String(p.id)));
+              if (newLocalItems.length > 0) {
+                mergedList = [...newLocalItems, ...mergedList];
+              }
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
       // 1. 삭제된 상품 블랙리스트 필터링
-      const notDeleted = rawList.filter(
+      const notDeleted = mergedList.filter(
         (p: any) =>
           p &&
           !deletedSet.has(String(p.id)) &&
@@ -299,19 +436,17 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       // 2. ⭐ 핵심: 미진열 상품(isMainFeatured === false)은 홈화면 추천/카탈로그에서 원천 차단
       const validHomeProducts = notDeleted.filter(
         (p: any) =>
+          p &&
           p.isMainFeatured !== false &&
           p.categoryId !== "main_banner" &&
           !String(p.id).startsWith("hero-slide-")
       );
 
-      // 1순위: 메인 진열 설정된 상품 (isMainFeatured === true)
+      // ⭐ 상품리스트에서 메인진열(isMainFeatured === true) 처리된 제품이면 홈화면에 전부 노출
       let gridProducts = validHomeProducts.filter(
-        (p: any) => p.isBottomFeatured || (p.isMainFeatured === true && !p.isHeroFeatured)
+        (p: any) => p.isMainFeatured === true
       );
-      if (gridProducts.length === 0) {
-        gridProducts = validHomeProducts.filter((p: any) => p.isMainFeatured === true);
-      }
-      // 2순위 (안전 폴백): 0개일 때도 미진열(isMainFeatured === false) 상품은 절대 제외하고 정상 진열 상품들만 노출
+      // 안전 폴백: 메인진열 플래그가 하나도 없는 경우 미진열(false) 제외한 유효 상품 노출
       if (gridProducts.length === 0) {
         gridProducts = validHomeProducts;
       }
@@ -322,7 +457,11 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
         if (orderA !== null && orderB !== null) return orderA - orderB;
         if (orderA !== null) return -1;
         if (orderB !== null) return 1;
-        return 0;
+
+        // displayOrder가 둘 다 없거나 동일한 경우 최신 수정/생성순 정렬
+        const timeA = a.updated_at ? new Date(a.updated_at).getTime() : (a.created_at ? new Date(a.created_at).getTime() : 0);
+        const timeB = b.updated_at ? new Date(b.updated_at).getTime() : (b.created_at ? new Date(b.created_at).getTime() : 0);
+        return timeB - timeA;
       });
 
       setAllProducts(gridProducts);
@@ -390,22 +529,25 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         debounceTimer = null;
+        applyProductsToList(authoritativeProducts);
         syncFromServer();
       }, 250);
     };
 
-    // 어드민 상품 저장/수정 이벤트: 즉시 서버에서 최신 데이터를 가져온다
+    // 어드민 상품 저장/수정 이벤트: 로컬 상태 즉시 반영 후 서버에서 최신 데이터 가져온다
     const handleAdminProductsUpdated = () => {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
         debounceTimer = null;
       }
+      applyProductsToList(authoritativeProducts);
       syncFromServer();
     };
 
     // 관리자가 다른 탭에서 설정을 바꾼 뒤 홈 화면 탭으로 전환(포커스)할 때 즉시 최신 데이터 반영
     const handleTabFocus = () => {
       if (typeof document !== "undefined" && !document.hidden) {
+        applyProductsToList(authoritativeProducts);
         syncFromServer();
       }
     };
@@ -531,13 +673,52 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       <section className="w-full bg-white">
         {allProducts.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
-              {allProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((product, idx) => (
-                <ProductCard
-                  key={`${product.id || idx}-${currentPage}-${product.updated_at || ""}-${product.availableForSale}-${product.releaseDate || ""}-${product.stock ?? ""}`}
-                  product={product}
-                />
-              ))}
+            {/* 투명 배경 클릭 시 활성화된 상품의 관리자 오버레이 닫기 */}
+            {adminOverlayProductId && (
+              <div
+                className="fixed inset-0 z-20 bg-black/10 cursor-default"
+                onClick={() => setAdminOverlayProductId(null)}
+              />
+            )}
+
+            <div className="grid grid-cols-2 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full relative">
+              {allProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((product, idx) => {
+                const globalIndex = (currentPage - 1) * pageSize + idx;
+                const isFirst = globalIndex === 0;
+                const isLast = globalIndex === allProducts.length - 1;
+                return (
+                  <ProductCard
+                    key={`${product.id || idx}-${currentPage}-${product.updated_at || ""}-${product.availableForSale}-${product.releaseDate || ""}-${product.stock ?? ""}`}
+                    product={product}
+                    isFirst={isFirst}
+                    isLast={isLast}
+                    isAdminOverlayOpen={adminOverlayProductId === String(product.id)}
+                    onAdminClick={isAdminUser ? (p) => setAdminOverlayProductId(String(p.id)) : undefined}
+                    onAdminOverlayClose={() => setAdminOverlayProductId(null)}
+                    onAdminEdit={(p) => {
+                      setAdminOverlayProductId(null);
+                      setEditingProduct(p);
+                    }}
+                    onMoveOrder={async (p, direction) => {
+                      const res = await reorderProduct(String(p.id), direction, allProducts);
+                      if (res.success) {
+                        toast.success(
+                          direction === "prev"
+                            ? `'${p.title}' 상품이 앞으로 이동되었습니다.`
+                            : `'${p.title}' 상품이 뒤로 이동되었습니다.`
+                        );
+                        if (res.updatedList) {
+                          const updatedIds = new Set(allProducts.map((it) => String(it.id)));
+                          const nextVisible = res.updatedList.filter((it) => updatedIds.has(String(it.id)));
+                          setAllProducts(nextVisible);
+                        }
+                      } else if (res.error) {
+                        toast.info(res.error);
+                      }
+                    }}
+                  />
+                );
+              })}
             </div>
 
             {/* Pagination Controls (Matching Shop Page Layout: < Prev  X / Y  Next >) */}
@@ -582,6 +763,21 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
           </div>
         )}
       </section>
+
+
+      {/* Unified Product Form Modal (상품 수정 모달) */}
+      {editingProduct && (
+        <ProductFormModal
+          isOpen={Boolean(editingProduct)}
+          mode="edit"
+          initialProduct={editingProduct}
+          categoriesList={categoriesList}
+          productsList={allProducts}
+          onClose={() => setEditingProduct(null)}
+          onSave={handleSaveProduct}
+          triggerToast={(msg) => toast.success(msg)}
+        />
+      )}
     </div>
   );
 }

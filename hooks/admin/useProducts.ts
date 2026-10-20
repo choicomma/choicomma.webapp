@@ -18,6 +18,7 @@ interface UseProductsOptions {
     discountPrice?: string,
     discountRate?: number
   ) => void;
+  secretSalesList?: any[];
 }
 
 // 전체 목록 서버 저장 방식: merge(기본, 서버의 더 최신 값 유지) | add(merge + 삭제 목록 해제) | replace(전체 교체)
@@ -200,6 +201,7 @@ export function useProducts({
   adminTimeSaleMinutes = "0",
   adminTimeSaleDiscount = "35",
   handleUpdateProductTimeSetting,
+  secretSalesList = [],
 }: UseProductsOptions) {
   const isProductsLoadedRef = useRef(false);
   const [productsList, setProductsList] = useState<any[]>(() => {
@@ -248,7 +250,7 @@ export function useProducts({
         }
       } catch (e) {}
     }
-    return "productNoDesc";
+    return "custom";
   });
 
   const setProductSortOrder = useCallback((
@@ -262,7 +264,7 @@ export function useProducts({
     }
   }, []);
 
-  // Sync sort order on client mount (Default to productNoDesc: 상품번호 높은 순, 사용자 순서 지정 시 custom 유지)
+  // Sync sort order on client mount (Default to custom: 사용자 지정 순서 및 홈/전체보기 순서 일치)
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -273,9 +275,40 @@ export function useProducts({
       ) {
         setProductSortOrderState(saved as any);
       } else {
-        setProductSortOrderState("productNoDesc");
+        setProductSortOrderState("custom");
       }
     } catch (e) {}
+  }, []);
+
+  // 외부(홈화면, 전체보기 카드 오버레이 등)에서 상품 순서 변경 시 관리자 화면 즉시 실시간 동기화
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleSync = () => {
+      try {
+        const saved = localStorage.getItem("admin_products");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const deletedSet = getDeletedProductIdsFromStorage();
+            const filtered = filterOutDeletedProducts(parsed, deletedSet);
+            setProductsList(filtered);
+            const savedOrder = localStorage.getItem("admin_product_sort_order");
+            if (savedOrder === "custom") {
+              setProductSortOrderState("custom");
+            }
+          }
+        }
+      } catch (e) {}
+    };
+
+    window.addEventListener("admin_products_updated", handleSync);
+    window.addEventListener("products_updated", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      window.removeEventListener("admin_products_updated", handleSync);
+      window.removeEventListener("products_updated", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
   }, []);
 
   // One-time legacy local storage cleanup on admin mount
@@ -709,6 +742,9 @@ export function useProducts({
       }
     }
 
+    window.dispatchEvent(new CustomEvent("admin_products_updated"));
+    window.dispatchEvent(new CustomEvent("storage"));
+
     if (skipServerSync) {
       return;
     }
@@ -870,14 +906,46 @@ export function useProducts({
       // 2. Category Filter (Case-insensitive, supports categoryIds array and time-sale tags)
       if (selectedCategoryFilter !== "all") {
         const filterLower = selectedCategoryFilter.toLowerCase();
-        if (filterLower === "timesale") {
-          const isTimeSale =
-            (p.categoryId && String(p.categoryId).toLowerCase() === "timesale") ||
-            (Array.isArray(p.categoryIds) && p.categoryIds.some((c: string) => String(c).toLowerCase() === "timesale")) ||
-            p.isTimeSale === true ||
-            adminTimeSaleProductIds.includes(String(p.id)) ||
-            (p.timeSaleDiscountRate !== undefined && Number(p.timeSaleDiscountRate) > 0);
-          if (!isTimeSale) return false;
+        const pId = String(p.id);
+        const pHandle = p.handle ? String(p.handle) : "";
+
+        const isDirectTimeSale =
+          (p.categoryId && String(p.categoryId).toLowerCase() === "timesale") ||
+          (Array.isArray(p.categoryIds) && p.categoryIds.some((c: string) => String(c).toLowerCase() === "timesale")) ||
+          p.isTimeSale === true ||
+          (Array.isArray(adminTimeSaleProductIds) && (adminTimeSaleProductIds.includes(pId) || (pHandle && adminTimeSaleProductIds.includes(pHandle)))) ||
+          (p.timeSaleDiscountRate !== undefined && Number(p.timeSaleDiscountRate) > 0);
+
+        let isSecretSale = false;
+        if (Array.isArray(secretSalesList)) {
+          isSecretSale = secretSalesList.some((s) =>
+            s && s.id !== "SECRET-TS-1792479678673" &&
+            s.status !== "ended" && s.status !== "paused" &&
+            Array.isArray(s.productIds) && (s.productIds.includes(pId) || (pHandle && s.productIds.includes(pHandle)))
+          );
+        }
+        if (!isSecretSale && typeof window !== "undefined") {
+          try {
+            const raw = localStorage.getItem("admin_secret_timesales");
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) {
+                isSecretSale = parsed.some((s: any) =>
+                  s && s.id !== "SECRET-TS-1792479678673" &&
+                  s.status !== "ended" && s.status !== "paused" &&
+                  Array.isArray(s.productIds) && (s.productIds.includes(pId) || (pHandle && s.productIds.includes(pHandle)))
+                );
+              }
+            }
+          } catch {}
+        }
+
+        if (filterLower === "timesale_public") {
+          if (!isDirectTimeSale) return false;
+        } else if (filterLower === "timesale_secret") {
+          if (!isSecretSale) return false;
+        } else if (filterLower === "timesale") {
+          if (!isDirectTimeSale && !isSecretSale) return false;
         } else {
           const prodCat = p.categoryId ? String(p.categoryId).toLowerCase() : "";
           const prodCats = Array.isArray(p.categoryIds) ? p.categoryIds.map((c: any) => String(c).toLowerCase()) : [];
@@ -890,7 +958,7 @@ export function useProducts({
     });
 
     return getSortedBaseList(filtered, productSortOrder);
-  }, [productsList, searchQuery, selectedCategoryFilter, productSortOrder, adminTimeSaleProductIds, getProductNo, getSortedBaseList]);
+  }, [productsList, searchQuery, selectedCategoryFilter, productSortOrder, adminTimeSaleProductIds, secretSalesList, getProductNo, getSortedBaseList]);
 
   const categoryProducts = useMemo(() => {
     if (!selectedCategoryForProducts) return [];
@@ -1318,7 +1386,7 @@ export function useProducts({
     updated.splice(toIdx, 0, movedItem);
     const ordered = updated.map((p, idx) => ({ ...p, displayOrder: idx + 1 }));
     setProductsList(ordered);
-    saveProductsToStorage(ordered, false, "merge");
+    saveProductsToStorage(ordered, false, "replace");
     if (showToast) {
       triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
     }
@@ -1435,7 +1503,7 @@ export function useProducts({
           updated.splice(toIdx, 0, movedItem);
           const ordered = updated.map((p, pIdx) => ({ ...p, displayOrder: pIdx + 1 }));
           setProductsList(ordered);
-          saveProductsToStorage(ordered, false, "merge");
+          saveProductsToStorage(ordered, false, "replace");
           triggerToast(`'${movedItem.title}' 상품 순서가 이동되었습니다.`);
           return;
         }
@@ -1454,7 +1522,7 @@ export function useProducts({
     const ordered = newList.map((p, pIdx) => ({ ...p, displayOrder: pIdx + 1 }));
 
     setProductsList(ordered);
-    saveProductsToStorage(ordered, false, "merge");
+    saveProductsToStorage(ordered, false, "replace");
     triggerToast(`'${temp.title}' 상품 순서가 이동되었습니다.`);
   }, [filteredProducts, getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
@@ -1472,7 +1540,7 @@ export function useProducts({
     updated.unshift(movedItem);
     const ordered = updated.map((p, pIdx) => ({ ...p, displayOrder: pIdx + 1 }));
     setProductsList(ordered);
-    saveProductsToStorage(ordered, false, "merge");
+    saveProductsToStorage(ordered, false, "replace");
     triggerToast(`⬆️ '${movedItem.title}' 상품이 목록 최상단으로 이동되었습니다.`);
   }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 
@@ -1487,7 +1555,7 @@ export function useProducts({
     const updated = [...selected, ...unselected];
     const ordered = updated.map((p, pIdx) => ({ ...p, displayOrder: pIdx + 1 }));
     setProductsList(ordered);
-    saveProductsToStorage(ordered, false, "merge");
+    saveProductsToStorage(ordered, false, "replace");
     triggerToast(`⬆️ 선택한 ${selected.length}개 상품이 목록 최상단으로 일괄 이동되었습니다.`);
   }, [getSortedBaseList, productSortOrder, productsList, saveProductsToStorage, setProductSortOrder, triggerToast]);
 

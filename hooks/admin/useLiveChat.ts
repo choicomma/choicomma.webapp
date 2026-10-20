@@ -60,7 +60,6 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
         const sid = String(s.id).toLowerCase().trim();
         if (s.status === "closed") return false;
         if (sid === "vip@choicomma.com" && !dbMsgSessionIds.has(sid)) return false;
-        if (sid === "admin@choicomma.com" || sid === "admin") return false;
         return true;
       };
 
@@ -107,6 +106,43 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       const sessionsMap = new Map<string, any>();
       dbMappedSessions.forEach((s) => sessionsMap.set(s.id, s));
 
+      // C. 메시지는 존재하나 세션 목록에 없는 경우 자동 매핑 추가
+      if (Array.isArray(dbMsgRows)) {
+        dbMsgRows.forEach((r: any) => {
+          const sid = String(r?.sessionId || "").toLowerCase().trim();
+          if (sid && !sessionsMap.has(sid)) {
+            const foundCust = adminCustomers.find(
+              (c: any) =>
+                (c.email && c.email.toLowerCase().trim() === sid) ||
+                (c.phone && c.phone.replace(/[^0-9]/g, "") === sid.replace(/[^0-9]/g, "")) ||
+                (c.name && c.name === r.senderName)
+            );
+            const grade = (foundCust?.grade || (sid.includes("admin") ? "VVIP" : "GENERAL")).toUpperCase();
+            const uName = foundCust?.name || (sid.includes("@") ? sid.split("@")[0] : sid);
+            let badgeColor = "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300";
+            if (grade.includes("VVIP") || grade.includes("BLACK") || foundCust?.role === "ADMIN" || sid.includes("admin")) {
+              badgeColor = "bg-neutral-950 text-white font-black border border-neutral-950";
+            } else if (grade.includes("PLATINUM")) {
+              badgeColor = "bg-neutral-800 text-white font-black border border-neutral-800";
+            } else if (grade.includes("GOLD")) {
+              badgeColor = "bg-neutral-200 text-neutral-900 border border-neutral-300";
+            } else if (grade.includes("SILVER")) {
+              badgeColor = "bg-neutral-100 text-neutral-800 border border-neutral-200";
+            }
+
+            sessionsMap.set(sid, {
+              id: sid,
+              name: uName.endsWith("님") ? uName : `${uName}님`,
+              email: sid.includes("@") ? sid : (foundCust?.email || ""),
+              phone: foundCust?.phone || "",
+              tier: sid.includes("admin") ? "관리자" : grade,
+              badgeColor,
+              status: "online",
+            });
+          }
+        });
+      }
+
       const savedLocal = localStorage.getItem("admin_chat_sessions");
       if (savedLocal) {
         try {
@@ -115,7 +151,6 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
             parsed.forEach((s: any) => {
               if (s?.id && s.status !== "closed") {
                 const normId = String(s.id).toLowerCase().trim();
-                if (normId === "admin@choicomma.com" || normId === "admin") return;
                 if (!sessionsMap.has(normId)) {
                   sessionsMap.set(normId, { ...s, id: normId });
                 }
@@ -142,10 +177,10 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       });
       localStorage.setItem("admin_chat_sessions", JSON.stringify(finalList));
 
-      // Update activeSessionId with robust preservation (관리자 계정은 활성 세션에서 영구 제외)
+      // Update activeSessionId with robust preservation
       setActiveSessionId((prev) => {
         const normPrev = (prev || "").toLowerCase().trim();
-        if (!normPrev || normPrev === "admin@choicomma.com" || normPrev === "admin") {
+        if (!normPrev) {
           return finalList.length > 0 ? finalList[0].id : "";
         }
         const match = finalList.find((s) => s.id.toLowerCase().trim() === normPrev);
@@ -167,11 +202,6 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     }
 
     const currentId = rawId.trim().toLowerCase();
-    // 관리자 계정은 상담 메시지 API를 호출하지 않음
-    if (currentId === "admin@choicomma.com" || currentId === "admin") {
-      setAdminLiveChatMessages([]);
-      return;
-    }
     const sessionKey = `site_live_chat_messages_${currentId}`;
 
     // Read existing local messages for optimistic retention
@@ -276,14 +306,17 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       try {
         bc = new BroadcastChannel("choicomma_live_chat_sync");
         bc.onmessage = (event) => {
-          if (event.data?.type === "USER_MESSAGE") {
+          if (event.data?.type === "USER_MESSAGE" || event.data?.type === "SESSION_REGISTERED") {
             const sid = (event.data.sessionId || "").toLowerCase().trim();
             loadSessions();
             if (activeSessionIdRef.current.toLowerCase().trim() === sid) {
-              setAdminLiveChatMessages((prev) => {
-                if (prev.some((m) => m.id === event.data.message.id)) return prev;
-                return [...prev, event.data.message];
-              });
+              syncAdminLiveChat();
+              if (event.data?.message) {
+                setAdminLiveChatMessages((prev) => {
+                  if (prev.some((m) => m.id === event.data.message.id)) return prev;
+                  return [...prev, event.data.message];
+                });
+              }
             }
           } else if (event.data?.type === "CHAT_RESET" || event.data?.type === "CHAT_CLEARED") {
             const sid = (event.data.sessionId || "").toLowerCase().trim();

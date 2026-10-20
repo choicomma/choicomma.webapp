@@ -37,6 +37,7 @@ import { getProductThumbnail } from "@/lib/products/thumbnail-helper";
 import { ExchangeFormBubble } from "./exchange-form-bubble";
 import { ExchangePayRequestBubble } from "./exchange-pay-request-bubble";
 import { RefundFormBubble } from "./refund-form-bubble";
+import { filterOrdersForCustomer } from "@/lib/shipping/customer-order-filter";
 
 export interface ChatMessage {
   id: string;
@@ -273,25 +274,9 @@ function getCustomerOrdersFromLocal(): any[] {
     } catch (e) {}
   }
 
-  const filtered = list.filter((s: any) => {
-    if (localStorage.getItem("user_role") === "admin") return true;
+  const userOrders = filterOrdersForCustomer(list);
 
-    const sEmail = (s.recipientEmail || s.customerEmail || s.email || "").toLowerCase().trim();
-    const sPhone = (s.phone || s.customerPhone || "").replace(/[^0-9]/g, "");
-    const sAltPhone = (s.altPhone || "").replace(/[^0-9]/g, "");
-    const sRecipient = normalize(s.recipient || s.customerName);
-    const sOrderer = normalize(s.ordererName);
-
-    if (currentEmail && sEmail && currentEmail === sEmail) return true;
-    if (currentPhone && currentPhone.length >= 8) {
-      const phoneTail = currentPhone.slice(-8);
-      if (sPhone.endsWith(phoneTail) || sAltPhone.endsWith(phoneTail)) return true;
-    }
-    if (currentName && (sRecipient.includes(currentName) || sOrderer.includes(currentName))) return true;
-    return false;
-  });
-
-  return filtered.map((s: any) => ({
+  return userOrders.map((s: any) => ({
     id: s.id,
     orderNumber: s.orderId || s.orderNumber || s.id,
     items: typeof s.items === "string" ? s.items : (Array.isArray(s.items) ? s.items.map((i: any) => i.name).join(", ") : "주문 상품"),
@@ -313,32 +298,43 @@ function OrderSelectorBubble({
 
   useEffect(() => {
     if (orders.length === 0) {
-      fetch("/api/admin/shipments")
+      const currentEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+      const currentPhone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
+      const currentName = (localStorage.getItem("membership_user_name") || "").trim();
+      const role = (localStorage.getItem("user_role") || "").toLowerCase().trim();
+      const grade = (localStorage.getItem("user_grade") || "").toUpperCase().trim();
+      const isAdmin =
+        role === "admin" ||
+        role === "staff" ||
+        grade === "STAFF" ||
+        sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+      if (!isAdmin && !currentEmail && (!currentPhone || currentPhone.length < 8) && !currentName) {
+        setOrders([]);
+        return;
+      }
+
+      const queryParams = new URLSearchParams({
+        forCustomer: "true",
+        email: currentEmail,
+        phone: currentPhone,
+        name: currentName,
+        isAdmin: isAdmin ? "true" : "false",
+      });
+
+      fetch(`/api/admin/shipments?${queryParams.toString()}`)
         .then((res) => res.json())
         .then((data) => {
           const list = Array.isArray(data) ? data : (Array.isArray(data?.shipments) ? data.shipments : []);
           if (list.length > 0) {
-            const currentEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-            const currentPhone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
-            const currentName = (localStorage.getItem("membership_user_name") || "").toLowerCase().trim();
-            const normalize = (v: any) => String(v || "").toLowerCase().trim();
+            const userOrders = filterOrdersForCustomer(list, {
+              email: currentEmail,
+              phone: currentPhone,
+              name: currentName,
+              isAdmin,
+            });
 
-            const filtered = list.filter((s: any) => {
-              if (localStorage.getItem("user_role") === "admin") return true;
-              const sEmail = (s.recipientEmail || s.customerEmail || s.email || "").toLowerCase().trim();
-              const sPhone = (s.phone || s.customerPhone || "").replace(/[^0-9]/g, "");
-              const sAltPhone = (s.altPhone || "").replace(/[^0-9]/g, "");
-              const sRecipient = normalize(s.recipient || s.customerName);
-              const sOrderer = normalize(s.ordererName);
-
-              if (currentEmail && sEmail && currentEmail === sEmail) return true;
-              if (currentPhone && currentPhone.length >= 8) {
-                const phoneTail = currentPhone.slice(-8);
-                if (sPhone.endsWith(phoneTail) || sAltPhone.endsWith(phoneTail)) return true;
-              }
-              if (currentName && (sRecipient.includes(currentName) || sOrderer.includes(currentName))) return true;
-              return false;
-            }).map((s: any) => ({
+            const formatted = userOrders.map((s: any) => ({
               id: s.id,
               orderNumber: s.orderId || s.orderNumber || s.id,
               items: typeof s.items === "string" ? s.items : (Array.isArray(s.items) ? s.items.map((i: any) => i.name).join(", ") : "주문 상품"),
@@ -349,7 +345,7 @@ function OrderSelectorBubble({
               image: s.image || s.productImage || s.packages?.[0]?.image || "",
             }));
 
-            if (filtered.length > 0) setOrders(filtered);
+            if (formatted.length > 0) setOrders(formatted);
           }
         })
         .catch(() => {});
@@ -600,6 +596,7 @@ export function LiveChatWidget() {
         (email && email.length > 0) ||
         (name && name.length > 0) ||
         role === "admin" ||
+        role === "staff" ||
         isAdminSession
       );
 
@@ -765,10 +762,20 @@ export function LiveChatWidget() {
 
       // 5. 로그인 성공 및 세션 저장
       if (typeof window !== "undefined") {
-        const isCustAdmin = matchedCustomer.isAdmin || matchedCustomer.role === "ADMIN" || matchedCustomer.email === "admin@choicomma.com";
+        const isCustStaff =
+          matchedCustomer.role === "STAFF" ||
+          matchedCustomer.grade === "STAFF" ||
+          matchedCustomer.isStaff === true ||
+          String(matchedCustomer.group || "").includes("직원");
+        const isCustAdmin =
+          matchedCustomer.isAdmin ||
+          matchedCustomer.role === "ADMIN" ||
+          isCustStaff ||
+          matchedCustomer.email === "admin@choicomma.com";
+
         if (isCustAdmin) {
           sessionStorage.setItem("choicomma_admin_authenticated", "true");
-          localStorage.setItem("user_role", "admin");
+          localStorage.setItem("user_role", isCustStaff ? "staff" : "admin");
         } else {
           sessionStorage.removeItem("choicomma_admin_authenticated");
           localStorage.setItem("user_role", matchedCustomer.role || "CUSTOMER");
@@ -821,20 +828,33 @@ export function LiveChatWidget() {
 
   const registerUserSession = (status: "active" | "online" = "active") => {
     if (typeof window === "undefined") return;
-    const email = (localStorage.getItem("membership_user_email") || "").trim().toLowerCase();
-    const phone = (localStorage.getItem("membership_user_phone") || "").trim();
-    if (!email && !phone) return;
+    let email = (localStorage.getItem("membership_user_email") || "").trim().toLowerCase();
+    let phone = (localStorage.getItem("membership_user_phone") || "").trim();
+    let uName = (localStorage.getItem("membership_user_name") || "").trim();
 
-    const rawId = (email || phone || "").trim().toLowerCase();
-    // 관리자 계정은 고객 상담 세션으로 등록하지 않음
-    if (rawId === "admin@choicomma.com" || rawId === "admin" || email === "admin@choicomma.com" || email === "admin") {
-      return;
+    if (!email && !phone) {
+      const loginId = (localStorage.getItem("membership_user_login_id") || "").trim();
+      const userId = (localStorage.getItem("membership_user_id") || "").trim();
+      if (loginId) {
+        email = loginId.includes("@") ? loginId.toLowerCase() : `${loginId}@customer.choicomma.com`;
+      } else if (userId) {
+        email = `${userId}@customer.choicomma.com`;
+      } else if (uName) {
+        email = `${encodeURIComponent(uName)}@customer.choicomma.com`;
+      } else {
+        email = "guest@customer.choicomma.com";
+        uName = "실시간 방문 고객";
+      }
     }
-    const uEmail = email || `${rawId}@customer.choicomma.com`;
-    const uName = localStorage.getItem("membership_user_name") || "회원";
 
-    let userTier = "GENERAL";
-    let badgeColor = "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300";
+    const rawId = (email || phone || "guest").trim().toLowerCase();
+    const uEmail = email || `${rawId}@customer.choicomma.com`;
+    const finalName = uName || (rawId.includes("@") ? rawId.split("@")[0] : "고객");
+
+    let userTier = rawId.includes("admin") ? "관리자" : "GENERAL";
+    let badgeColor = rawId.includes("admin")
+      ? "bg-neutral-950 text-white font-black border border-neutral-950"
+      : "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300";
 
     const savedCustomers = localStorage.getItem("admin_customers");
     if (savedCustomers) {
@@ -843,7 +863,7 @@ export function LiveChatWidget() {
         const found = list.find((c: any) =>
           (c.email && c.email.toLowerCase() === uEmail.toLowerCase()) ||
           (c.phone && phone && c.phone.replace(/[^0-9]/g, "") === phone.replace(/[^0-9]/g, "")) ||
-          (c.name && c.name === uName)
+          (c.name && c.name === finalName)
         );
         if (found && (found.grade || found.tier)) {
           userTier = (found.grade || found.tier).toUpperCase();
@@ -851,7 +871,7 @@ export function LiveChatWidget() {
       } catch (e) {}
     }
 
-    if (userTier.includes("VVIP") || userTier.includes("BLACK")) {
+    if (userTier.includes("VVIP") || userTier.includes("BLACK") || rawId.includes("admin")) {
       badgeColor = "bg-neutral-950 text-white font-black border border-neutral-950";
     } else if (userTier.includes("PLATINUM")) {
       badgeColor = "bg-neutral-800 text-white font-black border border-neutral-800";
@@ -869,8 +889,9 @@ export function LiveChatWidget() {
 
     const updatedSession = {
       id: rawId,
-      name: uName.endsWith("님") ? uName : `${uName}님`,
+      name: finalName.endsWith("님") ? finalName : `${finalName}님`,
       email: uEmail,
+      phone: phone || "",
       tier: userTier,
       badgeColor: badgeColor,
       status: status,
@@ -890,13 +911,26 @@ export function LiveChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: rawId,
-          customerName: uName,
+          customerName: finalName,
           customerEmail: uEmail,
           customerPhone: phone || "",
           status: status,
         }),
       }).catch(() => {});
     } catch (e) {}
+
+    // Broadcast across tabs (Admin CS console) immediately
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        const sendBc = new BroadcastChannel("choicomma_live_chat_sync");
+        sendBc.postMessage({
+          type: "SESSION_REGISTERED",
+          sessionId: rawId,
+          session: updatedSession,
+        });
+        sendBc.close();
+      } catch (e) {}
+    }
 
     window.dispatchEvent(new CustomEvent("live_chat_updated"));
   };
@@ -952,12 +986,7 @@ export function LiveChatWidget() {
 
     const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
     const phone = (localStorage.getItem("membership_user_phone") || "").trim();
-    const rawId = (email || phone || "").toLowerCase().trim();
-
-    // 관리자 계정은 고객 상담 위젯 메시지 조회를 수행하지 않음 (반복 호출 방지)
-    if (rawId === "admin@choicomma.com" || rawId === "admin" || email === "admin@choicomma.com" || email === "admin") {
-      return;
-    }
+    const rawId = (email || phone || "guest").toLowerCase().trim();
     const chatKey = getUserChatKey();
     const effectiveWelcome = getEffectiveWelcomeText();
 
@@ -1266,10 +1295,6 @@ export function LiveChatWidget() {
     const isAuthed = checkAuth();
     if (!isAuthed) return;
 
-    // 관리자 계정은 고객 위젯 폴링을 수행하지 않음
-    const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
-    if (email === "admin@choicomma.com" || email === "admin") return;
-
     loadMessages();
 
     // 이전 조회가 끝나기 전에는 새로 보내지 않고, 화면에 보이지 않는 탭에서는 조회하지 않는다 (서버 과부하 방지)
@@ -1434,6 +1459,8 @@ export function LiveChatWidget() {
         body: JSON.stringify({
           id: newMsg.id,
           sessionId: rawId,
+          customerName: localStorage.getItem("membership_user_name") || "회원",
+          customerEmail: email || `${rawId}@customer.choicomma.com`,
           sender: "user",
           content: newMsg.text || (newMsg.images?.length ? "[사진 첨부]" : ""),
           text: newMsg.text || (newMsg.images?.length ? "[사진 첨부]" : ""),
@@ -1699,6 +1726,7 @@ export function LiveChatWidget() {
               setIsOpen(true);
               setIsMinimized(false);
               setUnreadCount(0);
+              registerUserSession("online");
               if (authed) {
                 loadMessages();
               }
@@ -1948,6 +1976,9 @@ export function LiveChatWidget() {
                               orderId: exc.orderId,
                               orderNumber: exc.orderNumber,
                               items: exc.items,
+                              targetSize: exc.targetSize,
+                              targetColor: exc.targetColor,
+                              targetOption: exc.targetOption,
                               image: exc.image,
                               reason: exc.reason,
                               details: exc.details,
@@ -2004,14 +2035,20 @@ export function LiveChatWidget() {
                                 </div>
                               </div>
 
-                              {/* Reason & Details */}
-                              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs space-y-1">
-                                <div className="flex items-start gap-1">
-                                  <span className="text-neutral-400">사유:</span>
+                              {/* Reason & Details & Target Option */}
+                              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-xs space-y-1.5">
+                                <div className="flex items-start justify-between">
+                                  <span className="text-neutral-400">교환 사유:</span>
                                   <span className="font-extrabold text-white">{parsedOrder.reason}</span>
                                 </div>
+                                {parsedOrder.targetOption && (
+                                  <div className="flex items-start justify-between text-blue-400 font-bold border-t border-neutral-800/80 pt-1">
+                                    <span className="text-neutral-400">변경 희망:</span>
+                                    <span>{parsedOrder.targetOption}</span>
+                                  </div>
+                                )}
                                 {parsedOrder.details && (
-                                  <p className="text-[11px] text-neutral-300 pl-1 border-l-2 border-neutral-700">
+                                  <p className="text-[11px] text-neutral-300 pl-1 border-l-2 border-neutral-700 whitespace-pre-wrap">
                                     {parsedOrder.details}
                                   </p>
                                 )}

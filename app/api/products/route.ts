@@ -347,7 +347,7 @@ function makeResponse(products: any[], req?: NextRequest) {
       Pragma: "no-cache",
       Expires: "0",
       "Access-Control-Expose-Headers": "X-Deleted-Product-Ids",
-      "X-Deleted-Product-Ids": JSON.stringify(deletedIds),
+      "X-Deleted-Product-Ids": encodeURIComponent(JSON.stringify(deletedIds)),
     },
   });
 }

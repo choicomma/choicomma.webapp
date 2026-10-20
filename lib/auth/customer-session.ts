@@ -51,12 +51,15 @@ export function isCurrentUserAdmin(): boolean {
   if (typeof window === "undefined") return false;
   try {
     const role = (localStorage.getItem(STORAGE_KEYS.USER_ROLE) || "").toLowerCase().trim();
+    const grade = (localStorage.getItem(STORAGE_KEYS.USER_GRADE) || localStorage.getItem("membership_user_grade") || "").toUpperCase().trim();
     const email = (localStorage.getItem(STORAGE_KEYS.USER_EMAIL) || "").toLowerCase().trim();
     const name = (localStorage.getItem(STORAGE_KEYS.USER_NAME) || "").trim();
     const isAdminSession = sessionStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === "true";
 
     return (
       role === "admin" ||
+      role === "staff" ||
+      grade === "STAFF" ||
       isAdminSession ||
       email === "admin@choicomma.com" ||
       email === "admin" ||

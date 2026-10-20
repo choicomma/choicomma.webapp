@@ -14,6 +14,7 @@ interface LatestProductCardProps {
 }
 
 import { translateProductTitle, translateUiText, getCurrentLanguage } from "@/lib/i18n/translation";
+import { ProductCardImageSlider, extractProductImages } from "./product-card-image-slider";
 
 export function LatestProductCard({
   product,
@@ -33,8 +34,7 @@ export function LatestProductCard({
     };
   }, []);
 
-  const customImg = (product as any).heroCustomImage;
-  const displayImage = customImg || product.featuredImage?.url || "/product_1.webp";
+  const productImages = React.useMemo(() => extractProductImages(product), [product]);
   const linkedProduct = (product as any).linkedProduct || product;
   const targetHandle = linkedProduct.handle || product.handle || "product-1";
 
@@ -82,18 +82,26 @@ export function LatestProductCard({
           return;
         }
 
-        let isSelected = false;
+        const isDirectTimeSale =
+          (product as any).isTimeSale === true ||
+          product.categoryId === "timesale" ||
+          product.tags?.includes("TIMESALE") ||
+          (linked as any)?.isTimeSale === true ||
+          linked?.categoryId === "timesale" ||
+          linked?.tags?.includes("TIMESALE");
+
+        let isSecretSelected = false;
         const savedIds = localStorage.getItem("secret_timesale_product_ids");
         if (savedIds !== null) {
           try {
             const parsedIds: any[] = JSON.parse(savedIds);
-            isSelected = parsedIds.some((id: any) =>
+            isSecretSelected = Array.isArray(parsedIds) && parsedIds.some((id: any) =>
               possibleIds.includes(String(id))
             );
           } catch (e) {}
-        } else {
-          isSelected = (product as any).isTimeSale === true || product.categoryId === "timesale" || product.tags?.includes("TIMESALE") || (linked as any)?.isTimeSale === true || linked?.categoryId === "timesale" || linked?.tags?.includes("TIMESALE");
         }
+
+        const isTimeSale = isDirectTimeSale || isSecretSelected;
 
         let itemDiscount: number | null = null;
         const itemSettingsSaved = localStorage.getItem("secret_timesale_item_settings");
@@ -108,8 +116,6 @@ export function LatestProductCard({
             }
           } catch (e) {}
         }
-
-        const isTimeSale = isSelected;
 
         if (isTimeSale) {
           const tagRate = Array.isArray(product.tags)
@@ -166,16 +172,15 @@ export function LatestProductCard({
       >
         <Link
           href={`/product/${targetHandle}`}
-          className="relative w-full aspect-square block bg-white flex items-center justify-center p-4"
+          className="relative w-full aspect-square block bg-white flex items-center justify-center p-4 overflow-hidden"
           prefetch
         >
-          <Image
-            priority
-            src={displayImage}
+          <ProductCardImageSlider
+            images={productImages}
             alt={product.featuredImage?.altText || product.title}
-            fill
-            quality={100}
-            className="object-contain size-full"
+            paddingClass="p-0"
+            imageClassName="object-contain size-full"
+            priority={true}
           />
           {isScheduled ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
@@ -208,11 +213,11 @@ export function LatestProductCard({
         className="block w-full aspect-square overflow-hidden rounded-none bg-white relative flex items-center justify-center"
         prefetch
       >
-        <Image
-          src={product.featuredImage.url}
-          alt={product.featuredImage.altText}
-          fill
-          className="object-contain size-full"
+        <ProductCardImageSlider
+          images={productImages}
+          alt={product.featuredImage.altText || product.title}
+          paddingClass="p-0"
+          imageClassName="object-contain size-full"
         />
         {isScheduled ? (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">

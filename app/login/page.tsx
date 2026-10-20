@@ -1077,10 +1077,20 @@ export default function LoginPage() {
 
     // 4) 로그인 성공 및 세션 저장
     if (typeof window !== "undefined") {
-      const isCustAdmin = matchedCustomer.isAdmin || matchedCustomer.role === "ADMIN" || matchedCustomer.email === "admin@choicomma.com";
+      const isCustStaff =
+        matchedCustomer.role === "STAFF" ||
+        matchedCustomer.grade === "STAFF" ||
+        matchedCustomer.isStaff === true ||
+        String(matchedCustomer.group || "").includes("직원");
+      const isCustAdmin =
+        matchedCustomer.isAdmin ||
+        matchedCustomer.role === "ADMIN" ||
+        isCustStaff ||
+        matchedCustomer.email === "admin@choicomma.com";
+
       if (isCustAdmin) {
         sessionStorage.setItem("choicomma_admin_authenticated", "true");
-        localStorage.setItem("user_role", "admin");
+        localStorage.setItem("user_role", isCustStaff ? "staff" : "admin");
       } else {
         sessionStorage.removeItem("choicomma_admin_authenticated");
         localStorage.setItem("user_role", matchedCustomer.role || "CUSTOMER");
@@ -1118,10 +1128,19 @@ export default function LoginPage() {
 
     setTimeout(() => {
       setIsLoading(false);
-      const isCustAdmin = matchedCustomer.isAdmin || matchedCustomer.role === "ADMIN";
+      const isCustStaff =
+        matchedCustomer.role === "STAFF" ||
+        matchedCustomer.grade === "STAFF" ||
+        matchedCustomer.isStaff === true ||
+        String(matchedCustomer.group || "").includes("직원");
+      const isCustAdmin =
+        matchedCustomer.isAdmin ||
+        matchedCustomer.role === "ADMIN" ||
+        isCustStaff;
+
       setToastMsg(
         isCustAdmin
-          ? "관리자 계정으로 로그인되었습니다. 대시보드로 이동합니다."
+          ? (isCustStaff ? `${matchedCustomer.name || "직원"}님, 스태프(관리자) 권한으로 로그인되었습니다. 대시보드로 이동합니다.` : "관리자 계정으로 로그인되었습니다. 대시보드로 이동합니다.")
           : `${matchedCustomer.name || "회원"}님, 성공적으로 로그인되었습니다!`
       );
       setTimeout(() => {

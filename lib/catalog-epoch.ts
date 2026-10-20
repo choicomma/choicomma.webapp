@@ -7,7 +7,7 @@
  *
  * 옛 데이터를 한 번 더 완전히 지우고 싶을 때는 이 값을 새 문자열로 바꿔서 배포하면 된다.
  */
-export const CATALOG_EPOCH = "2026-10-11-1";
+export const CATALOG_EPOCH = "2026-10-20-active-fix";
 
 // 세대가 바뀔 때 지우는 상품 관련 브라우저 캐시 키 (장바구니/로그인/주문/채팅 등은 건드리지 않는다)
 export const CATALOG_CACHE_KEYS_TO_PURGE = [
@@ -15,6 +15,9 @@ export const CATALOG_CACHE_KEYS_TO_PURGE = [
   "admin_deleted_product_ids",
   "admin_custom_products",
   "admin_products_sync_pending",
+  "secret_timesale_product_ids",
+  "secret_timesale_item_settings",
 ];
 
 export const CATALOG_EPOCH_STORAGE_KEY = "catalog_epoch";
+

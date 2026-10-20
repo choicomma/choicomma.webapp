@@ -1,9 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { RefreshCw, Package, Check, ArrowRight, ShieldCheck, AlertCircle, CreditCard, Zap, ArrowRightLeft } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { RefreshCw, Package, Check, ArrowRight, ShieldCheck, AlertCircle, CreditCard, Zap, ArrowRightLeft, Sparkles } from "lucide-react";
 import { getProductThumbnail } from "@/lib/products/thumbnail-helper";
-import { explodeOrderToSingleItems, type ExplodedExchangeItem } from "@/lib/shipping/exchange-item-helper";
+import {
+  explodeOrderToSingleItems,
+  checkExchangeEligibility,
+  resolveProductExchangeOptions,
+  filterOrdersForCustomer,
+  type ExplodedExchangeItem,
+} from "@/lib/shipping/exchange-item-helper";
 import { requestTossExchangePayment, type ExchangePaymentMethod } from "./exchange-payment-service";
 
 interface ExchangeFormBubbleProps {
@@ -11,6 +17,9 @@ interface ExchangeFormBubbleProps {
     orderId: string;
     orderNumber: string;
     items: string;
+    targetSize?: string;
+    targetColor?: string;
+    targetOption?: string;
     image?: string;
     reason: string;
     details: string;
@@ -25,13 +34,16 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
   const [selectedUniqueId, setSelectedUniqueId] = useState<string | null>(null);
   const [selectedOrderNum, setSelectedOrderNum] = useState<string | null>(null);
   const [manualOrderNumber, setManualOrderNumber] = useState("");
-  const [selectedReason, setSelectedReason] = useState<string>("사이즈 교환");
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [selectedReason, setSelectedReason] = useState<string>("사이즈/색상 교환");
+  const [targetSize, setTargetSize] = useState<string>("");
+  const [targetColor, setTargetColor] = useState<string>("");
   const [detailedReason, setDetailedReason] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<ExchangePaymentMethod>("CARD");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Load customer orders from localStorage / API
+  // Load customer orders from localStorage / API with 2-week delivery completion filter
   useEffect(() => {
     let list: any[] = [];
     if (typeof window !== "undefined") {
@@ -57,8 +69,9 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
                   phone: o.customerPhone,
                   items: Array.isArray(o.items) ? o.items.map((it: any) => `${it.name} (${it.quantity}개)`).join(", ") : (o.items || "주문 상품"),
                   totalAmount: o.totalAmount,
-                  status: o.paymentStatus === "PAID" ? (o.shippingStatus || "결제완료") : (o.status || "주문완료"),
+                  status: o.shippingStatus || (o.paymentStatus === "PAID" ? "배송완료" : (o.status || "주문완료")),
                   orderDate: o.created_at || o.orderDate,
+                  deliveredDate: o.deliveredDate || o.delivered_at,
                   image: o.image || "",
                 });
               }
@@ -67,68 +80,108 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
         } catch (e) {}
       }
 
-      const currentEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-      const currentPhone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
-      const currentName = (localStorage.getItem("membership_user_name") || "").toLowerCase().trim();
-      const normalize = (v: any) => String(v || "").toLowerCase().trim();
+      // 1. 고객 본인의 주문만 엄격 매칭 (비로그인은 빈 배열, 관리자는 본인 테스트 주문만)
+      const userOrders = filterOrdersForCustomer(list);
 
-      const filtered = list.filter((s: any) => {
-        if (localStorage.getItem("user_role") === "admin") return true;
-        const sEmail = (s.recipientEmail || s.customerEmail || s.email || "").toLowerCase().trim();
-        const sPhone = (s.phone || s.customerPhone || "").replace(/[^0-9]/g, "");
-        const sAltPhone = (s.altPhone || "").replace(/[^0-9]/g, "");
-        const sRecipient = normalize(s.recipient || s.customerName);
-        const sOrderer = normalize(s.ordererName);
+      // 2. 배송완료 상태 및 14일 이내 교환 가능 주문건 추출
+      const eligibleList = userOrders.filter((s: any) => {
+        const eligibility = checkExchangeEligibility(s);
+        return eligibility.isEligible;
+      }).map((s: any) => {
+        const eligibility = checkExchangeEligibility(s);
+        return {
+          id: s.id,
+          orderNumber: s.orderId || s.orderNumber || s.id,
+          items: typeof s.items === "string" ? s.items : (Array.isArray(s.items) ? s.items.map((i: any) => i.name).join(", ") : "주문 상품"),
+          amount: s.totalAmount ? `${Number(s.totalAmount).toLocaleString()}원` : (s.price ? `${Number(s.price).toLocaleString()}원` : ""),
+          status: s.status || "배송완료",
+          orderDate: s.orderDate || s.created_at || "",
+          deliveredDate: s.deliveredDate || s.delivered_at,
+          deliveredDateStr: eligibility.deliveredDateStr,
+          daysAgo: eligibility.diffDays,
+          daysLeft: eligibility.daysLeft,
+          trackingNumber: s.trackingNumber || "-",
+          image: s.image || s.productImage || s.packages?.[0]?.image || "",
+        };
+      });
 
-        if (currentEmail && sEmail && currentEmail === sEmail) return true;
-        if (currentPhone && currentPhone.length >= 8) {
-          const phoneTail = currentPhone.slice(-8);
-          if (sPhone.endsWith(phoneTail) || sAltPhone.endsWith(phoneTail)) return true;
-        }
-        if (currentName && (sRecipient.includes(currentName) || sOrderer.includes(currentName))) return true;
-        return false;
-      }).map((s: any) => ({
-        id: s.id,
-        orderNumber: s.orderId || s.orderNumber || s.id,
-        items: typeof s.items === "string" ? s.items : (Array.isArray(s.items) ? s.items.map((i: any) => i.name).join(", ") : "주문 상품"),
-        amount: s.totalAmount ? `${Number(s.totalAmount).toLocaleString()}원` : (s.price ? `${Number(s.price).toLocaleString()}원` : ""),
-        status: s.status || "결제완료",
-        orderDate: s.orderDate || s.created_at || "",
-        trackingNumber: s.trackingNumber || "-",
-        image: s.image || s.productImage || s.packages?.[0]?.image || "",
-      }));
-
-      if (filtered.length > 0) {
-        const exploded = explodeOrderToSingleItems(filtered);
+      if (eligibleList.length > 0) {
+        const exploded = explodeOrderToSingleItems(eligibleList);
         setOrders(exploded);
         setSelectedUniqueId(exploded[0]?.uniqueSelectId || null);
         setSelectedOrderNum(exploded[0]?.orderNumber || null);
       } else {
-        // Fallback fetch API
-        fetch("/api/admin/shipments")
+        // Fallback fetch API: 본인 식별 파라미터 전달 및 엄격 필터링
+        const currentEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const currentPhone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
+        const currentName = (localStorage.getItem("membership_user_name") || "").trim();
+        const isAdmin = localStorage.getItem("user_role") === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+        // 비로그인 상태인 경우 타인의 주문을 조회하지 않음
+        if (!isAdmin && !currentEmail && (!currentPhone || currentPhone.length < 8) && !currentName) {
+          setOrders([]);
+          return;
+        }
+
+        const queryParams = new URLSearchParams({
+          forCustomer: "true",
+          email: currentEmail,
+          phone: currentPhone,
+          name: currentName,
+          isAdmin: isAdmin ? "true" : "false",
+        });
+
+        fetch(`/api/admin/shipments?${queryParams.toString()}`)
           .then((res) => res.json())
           .then((data) => {
             const apiList = Array.isArray(data) ? data : (Array.isArray(data?.shipments) ? data.shipments : []);
             if (apiList.length > 0) {
-              const mapped = apiList.slice(0, 5).map((s: any) => ({
-                id: s.id,
-                orderNumber: s.orderId || s.orderNumber || s.id,
-                items: typeof s.items === "string" ? s.items : (Array.isArray(s.items) ? s.items.map((i: any) => i.name).join(", ") : "주문 상품"),
-                amount: s.totalAmount ? `${Number(s.totalAmount).toLocaleString()}원` : (s.price ? `${Number(s.price).toLocaleString()}원` : ""),
-                status: s.status || "결제완료",
-                orderDate: s.orderDate || s.created_at || "",
-                trackingNumber: s.trackingNumber || "-",
-                image: s.image || "",
-              }));
-              const exploded = explodeOrderToSingleItems(mapped);
-              setOrders(exploded);
-              if (exploded.length > 0) {
-                setSelectedUniqueId(exploded[0]?.uniqueSelectId || null);
-                setSelectedOrderNum(exploded[0]?.orderNumber || null);
+              const userApiOrders = filterOrdersForCustomer(apiList, {
+                email: currentEmail,
+                phone: currentPhone,
+                name: currentName,
+                isAdmin,
+              });
+
+              const eligibleApi = userApiOrders.filter((s: any) => {
+                const eligibility = checkExchangeEligibility(s);
+                return eligibility.isEligible;
+              });
+
+              if (eligibleApi.length > 0) {
+                const mapped = eligibleApi.map((s: any) => {
+                  const eligibility = checkExchangeEligibility(s);
+                  return {
+                    id: s.id,
+                    orderNumber: s.orderId || s.orderNumber || s.id,
+                    items: typeof s.items === "string" ? s.items : (Array.isArray(s.items) ? s.items.map((i: any) => i.name).join(", ") : "주문 상품"),
+                    amount: s.totalAmount ? `${Number(s.totalAmount).toLocaleString()}원` : (s.price ? `${Number(s.price).toLocaleString()}원` : ""),
+                    status: s.status || "배송완료",
+                    orderDate: s.orderDate || s.created_at || "",
+                    deliveredDate: s.deliveredDate || s.delivered_at,
+                    deliveredDateStr: eligibility.deliveredDateStr,
+                    daysAgo: eligibility.diffDays,
+                    daysLeft: eligibility.daysLeft,
+                    trackingNumber: s.trackingNumber || "-",
+                    image: s.image || "",
+                  };
+                });
+                const exploded = explodeOrderToSingleItems(mapped);
+                setOrders(exploded);
+                if (exploded.length > 0) {
+                  setSelectedUniqueId(exploded[0]?.uniqueSelectId || null);
+                  setSelectedOrderNum(exploded[0]?.orderNumber || null);
+                }
+              } else {
+                setOrders([]);
               }
+            } else {
+              setOrders([]);
             }
           })
-          .catch(() => {});
+          .catch(() => {
+            setOrders([]);
+          });
       }
     }
   }, []);
@@ -145,6 +198,45 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
     amount: "",
   };
 
+  // 주문 선택 변경 시 희망 옵션 초기화
+  useEffect(() => {
+    setTargetSize("");
+    setTargetColor("");
+  }, [selectedUniqueId, selectedOrderNum]);
+
+  const hasMatchedOrder = orders.length > 0 && Boolean(orders.find((o) => (selectedUniqueId ? o.uniqueSelectId === selectedUniqueId : o.orderNumber === selectedOrderNum)));
+
+  // 선택된 상품의 연동 사이즈 및 색상 옵션 추출
+  const productOptions = useMemo(() => {
+    if (!hasMatchedOrder) {
+      return {
+        matchedTitle: "",
+        currentSize: "",
+        currentColor: "",
+        sizes: [],
+        colors: [],
+        colorImageMap: {},
+        colorHexMap: {},
+        hasOptions: false,
+      };
+    }
+    if (activeOrder.availableSizes && activeOrder.availableSizes.length > 0) {
+      return {
+        matchedTitle: activeOrder.itemName || activeOrder.items,
+        currentSize: activeOrder.currentSize || "",
+        currentColor: activeOrder.currentColor || "",
+        sizes: activeOrder.availableSizes,
+        colors: activeOrder.availableColors || [],
+        colorImageMap: activeOrder.colorImageMap || {},
+        colorHexMap: activeOrder.colorHexMap || {},
+        hasOptions: true,
+      };
+    }
+    return resolveProductExchangeOptions(activeOrder.items || activeOrder.itemName);
+  }, [activeOrder, hasMatchedOrder]);
+
+  const showExchangeOptions = hasMatchedOrder && (productOptions.sizes.length > 0 || productOptions.colors.length > 0);
+
   const isFree = selectedReason === "불량/오배송";
   const exchangeFee = isFree ? 0 : 16000;
 
@@ -158,6 +250,35 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
       return;
     }
 
+    // 사이즈/색상 교환 선택 시 연동 옵션 검증
+    if (selectedReason === "사이즈/색상 교환") {
+      if (showExchangeOptions) {
+        if (!targetSize && !targetColor && !detailedReason.trim()) {
+          alert("교환을 원하시는 희망 사이즈 또는 색상을 선택해 주세요.");
+          return;
+        }
+      } else {
+        if (!detailedReason.trim()) {
+          alert("교환을 원하시는 희망 옵션(사이즈/색상) 또는 사유를 상세 내용에 입력해 주세요.");
+          return;
+        }
+      }
+    }
+
+    const targetOptionParts: string[] = [];
+    if (targetSize) targetOptionParts.push(`사이즈: ${targetSize}`);
+    if (targetColor) targetOptionParts.push(`색상: ${targetColor}`);
+    const targetOptionStr = targetOptionParts.join(" / ");
+
+    const detailSections: string[] = [];
+    if (targetOptionStr) {
+      detailSections.push(`[변경 희망 옵션] ${targetOptionStr}`);
+    }
+    if (detailedReason.trim()) {
+      detailSections.push(`[상세 내용] ${detailedReason.trim()}`);
+    }
+    const finalDetails = detailSections.join("\n") || (targetOptionStr ? `[변경 희망 옵션] ${targetOptionStr}` : "교환 요청");
+
     if (isFree) {
       // Free exchange for defective items
       setIsSubmitted(true);
@@ -165,9 +286,12 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
         orderId: activeOrder.id,
         orderNumber: activeOrder.orderNumber,
         items: activeOrder.items,
+        targetSize: targetSize || undefined,
+        targetColor: targetColor || undefined,
+        targetOption: targetOptionStr || undefined,
         image: activeOrder.image || getProductThumbnail(activeOrder.items),
         reason: selectedReason,
-        details: detailedReason,
+        details: finalDetails,
         fee: 0,
         paymentMethod: "무료교환 (불량/오배송)",
         paymentKey: `free_exc_${Date.now()}`,
@@ -181,7 +305,7 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
           items: activeOrder.items,
           amount: exchangeFee, // 16,000 KRW
           reason: selectedReason,
-          details: detailedReason,
+          details: finalDetails,
           paymentMethod: paymentMethod,
         });
       } catch (err) {
@@ -235,89 +359,186 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
 
       {/* 1. 주문건 선택 섹션 */}
       <div className="space-y-1.5">
-        <label className="text-[11px] font-black text-neutral-800 flex items-center justify-between">
-          <span className="flex items-center gap-1">
-            <Package className="w-3 h-3 text-neutral-900" />
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] font-black text-neutral-900 flex items-center gap-1.5">
+            <Package className="w-3.5 h-3.5 text-neutral-900" />
             <span>1. 교환할 주문건 선택</span>
-          </span>
-          <span className="text-[10px] text-neutral-400 font-bold">
-            {orders.length > 0 ? `${orders.length}건 확인됨` : "직접 입력"}
-          </span>
-        </label>
+          </label>
+          {orders.length > 0 ? (
+            <span className="text-[9px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              배송완료 2주 이내 ({orders.length}건)
+            </span>
+          ) : (
+            <span className="text-[9px] font-bold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200">
+              직접 입력
+            </span>
+          )}
+        </div>
+        <p className="text-[10px] text-neutral-500 font-medium px-0.5">
+          ※ 배송 완료일로부터 14일(2주) 이내 주문건만 신청 가능합니다.
+        </p>
 
         {orders.length === 0 ? (
-          <div className="space-y-1.5">
+          <div className="p-3 bg-neutral-50 border border-neutral-200/90 rounded-xl space-y-2 text-left">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800">
+              <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>
+                {typeof window !== "undefined" &&
+                !Boolean(
+                  localStorage.getItem("membership_user_email") ||
+                  localStorage.getItem("membership_user_phone") ||
+                  localStorage.getItem("membership_user_name") ||
+                  localStorage.getItem("user_role") === "admin"
+                )
+                  ? "로그인된 계정의 주문 내역이 없습니다"
+                  : "2주(14일) 이내 교환 가능한 주문이 없습니다"}
+              </span>
+            </div>
+            <p className="text-[10px] text-neutral-500 font-medium leading-relaxed">
+              {typeof window !== "undefined" &&
+              !Boolean(
+                localStorage.getItem("membership_user_email") ||
+                localStorage.getItem("membership_user_phone") ||
+                localStorage.getItem("membership_user_name") ||
+                localStorage.getItem("user_role") === "admin"
+              )
+                ? "고객님의 주문 정보 보호를 위해 본인 확인이 필요합니다. 로그인 후 이용하시거나 아래에 주문번호를 직접 입력해 주세요."
+                : "교환은 상품 수령(배송완료)일로부터 2주 이내의 본인 주문건만 신청하실 수 있습니다. 특별한 사유나 교환 문의가 있으신 경우 주문번호를 직접 입력해 주세요."}
+            </p>
             <input
               type="text"
               value={manualOrderNumber}
-              onChange={(e) => setManualOrderNumber(e.target.value)}
-              placeholder="주문번호를 직접 입력하세요 (예: CH20260930-001)"
-              className="w-full text-xs font-bold px-3 py-2.5 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-blue-500"
+              onChange={(e) => {
+                setManualOrderNumber(e.target.value);
+                setSelectedOrderNum(e.target.value);
+              }}
+              placeholder="주문번호를 직접 입력하세요 (예: 202610135266882)"
+              className="w-full text-xs font-bold px-3 py-2.5 rounded-xl border border-neutral-200 bg-white focus:outline-none focus:border-neutral-950 placeholder:font-normal placeholder:text-neutral-400"
             />
           </div>
         ) : (
-          <div className="space-y-1.5 max-h-[170px] overflow-y-auto pr-1">
-            {orders.map((ord) => {
-              const isSelected = selectedUniqueId ? ord.uniqueSelectId === selectedUniqueId : selectedOrderNum === ord.orderNumber;
-              const thumb = ord.image || getProductThumbnail(ord.items);
-              return (
-                <div
-                  key={ord.uniqueSelectId || ord.id}
-                  onClick={() => {
-                    setSelectedUniqueId(ord.uniqueSelectId);
-                    setSelectedOrderNum(ord.orderNumber);
-                  }}
-                  className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-2.5 ${
-                    isSelected
-                      ? "bg-neutral-950 border-neutral-950 text-white shadow-2xs"
-                      : "bg-neutral-50/80 hover:bg-neutral-100/70 border-neutral-200/80 text-neutral-900"
-                  }`}
-                >
-                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-white border border-neutral-200 shrink-0">
-                    <img
-                      src={thumb}
-                      alt={ord.items}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
-                      }}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className={`font-mono font-bold truncate ${isSelected ? "text-neutral-400" : "text-neutral-500"}`}>
-                        주문: {ord.orderNumber}
-                      </span>
-                      {isSelected && (
-                        <span className="text-[9px] font-black text-white bg-blue-600 px-1.5 py-0.2 rounded-full flex items-center gap-0.5 shrink-0">
-                          <Check className="w-2.5 h-2.5" /> 선택됨
+          <>
+            <div className="space-y-1.5 max-h-[185px] overflow-y-auto pr-1">
+              {orders.map((ord) => {
+                const isSelected = selectedUniqueId ? ord.uniqueSelectId === selectedUniqueId : selectedOrderNum === ord.orderNumber;
+                const thumb = ord.image || getProductThumbnail(ord.items);
+                return (
+                  <div
+                    key={ord.uniqueSelectId || ord.id}
+                    onClick={() => {
+                      setSelectedUniqueId(ord.uniqueSelectId);
+                      setSelectedOrderNum(ord.orderNumber);
+                      setManualOrderNumber("");
+                    }}
+                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-2.5 ${
+                      isSelected
+                        ? "bg-neutral-950 border-neutral-950 text-white shadow-2xs"
+                        : "bg-neutral-50/80 hover:bg-neutral-100/70 border-neutral-200/80 text-neutral-900"
+                    }`}
+                  >
+                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-white border border-neutral-200 shrink-0">
+                      <img
+                        src={thumb}
+                        alt={ord.items}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = "https://cdn.imweb.me/thumbnail/20260923/47af1f42c40a4357.jpg";
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className={`font-mono font-bold truncate ${isSelected ? "text-neutral-400" : "text-neutral-500"}`}>
+                          주문: {ord.orderNumber}
                         </span>
-                      )}
-                    </div>
-                    <p className={`text-xs font-bold line-clamp-1 leading-snug ${isSelected ? "text-white" : "text-neutral-900"}`}>
-                      {ord.items}
-                    </p>
-                    <div className={`flex items-center gap-2 text-[10px] font-mono mt-0.5 ${isSelected ? "text-neutral-400" : "text-neutral-500"}`}>
-                      <span>수량: {ord.quantity || 1}개</span>
-                      {ord.amount && <span>• {ord.amount}</span>}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {ord.daysLeft !== undefined && (
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border ${
+                                isSelected
+                                  ? "bg-neutral-800 text-neutral-200 border-neutral-700"
+                                  : ord.daysLeft <= 3
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              }`}
+                            >
+                              {ord.daysLeft === 0 ? "오늘 마감 (D-0)" : `D-${ord.daysLeft}일 남음`}
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className="text-[9px] font-black text-white bg-blue-600 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+                              <Check className="w-2.5 h-2.5" /> 선택됨
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className={`text-xs font-bold line-clamp-1 leading-snug ${isSelected ? "text-white" : "text-neutral-900"}`}>
+                        {ord.items}
+                      </p>
+                      <div className={`flex items-center justify-between text-[10px] mt-0.5 ${isSelected ? "text-neutral-400" : "text-neutral-500"}`}>
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <span>수량: {ord.quantity || 1}개</span>
+                          {ord.amount && <span>• {ord.amount}</span>}
+                        </div>
+                        {ord.deliveredDateStr && (
+                          <span className={`text-[9px] font-medium ${isSelected ? "text-neutral-300" : "text-neutral-500"}`}>
+                            배송완료: {ord.deliveredDateStr}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-0.5">
+              <button
+                type="button"
+                onClick={() => setShowManualInput(!showManualInput)}
+                className="text-[10px] font-bold text-neutral-500 hover:text-neutral-800 underline transition-colors cursor-pointer"
+              >
+                {showManualInput ? "▲ 주문 목록에서 선택하기" : "+ 다른 주문번호 직접 입력하기"}
+              </button>
+              {showManualInput && (
+                <div className="mt-1.5">
+                  <input
+                    type="text"
+                    value={manualOrderNumber}
+                    onChange={(e) => {
+                      setManualOrderNumber(e.target.value);
+                      if (e.target.value.trim()) {
+                        setSelectedUniqueId(null);
+                        setSelectedOrderNum(e.target.value.trim());
+                      }
+                    }}
+                    placeholder="주문번호를 직접 입력하세요 (예: 202610135266882)"
+                    className="w-full text-xs font-bold px-3 py-2 rounded-lg border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950 placeholder:font-normal placeholder:text-neutral-400"
+                  />
                 </div>
-              );
-            })}
-          </div>
+              )}
+            </div>
+          </>
         )}
       </div>
 
-      {/* 2. 교환 접수 이유 입력칸 */}
-      <div className="space-y-1.5 pt-1 border-t border-neutral-100">
-        <label className="text-[11px] font-black text-neutral-800 block">
-          2. 교환 사유 선택 및 상세 사유
-        </label>
+      {/* 2. 교환 사유 선택 및 상세 사유 (제품 사이즈/색상 옵션 연동) */}
+      <div className="space-y-2 pt-1 border-t border-neutral-100">
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] font-black text-neutral-900 block">
+            {showExchangeOptions ? "2. 교환 사유 선택 및 희망 옵션" : "2. 교환 사유 선택"}
+          </label>
+          {showExchangeOptions && productOptions.hasOptions && (
+            <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+              <Sparkles className="w-2.5 h-2.5 text-blue-600" /> 제품 옵션 연동됨
+            </span>
+          )}
+        </div>
 
         {/* Quick chips */}
         <div className="flex flex-wrap gap-1.5">
-          {["사이즈 교환", "색상 교환", "단순 변심", "불량/오배송", "기타"].map((reason) => {
+          {["사이즈/색상 교환", "단순 변심", "불량/오배송", "기타"].map((reason) => {
             const isReasonSelected = selectedReason === reason;
             return (
               <button
@@ -336,12 +557,169 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
           })}
         </div>
 
+        {/* 연동된 사이즈 / 색상 옵션 선택 박스 - 최근 주문건이 있고 실제 선택 가능한 옵션이 있을 때만 노출 */}
+        {showExchangeOptions && (
+          <div className="p-3 bg-neutral-50/90 border border-neutral-200/90 rounded-xl space-y-3 text-left">
+          <div className="flex items-center justify-between border-b border-neutral-200/60 pb-1.5">
+            <span className="text-[10px] font-black text-neutral-800 flex items-center gap-1">
+              <ArrowRightLeft className="w-3 h-3 text-neutral-700" />
+              <span>교환 희망 옵션 선택</span>
+            </span>
+            {(productOptions.currentSize || productOptions.currentColor) && (
+              <span className="text-[9px] font-medium text-neutral-500 font-mono truncate max-w-[150px]">
+                기존: {[productOptions.currentColor, productOptions.currentSize].filter(Boolean).join(" / ")}
+              </span>
+            )}
+          </div>
+
+          {/* 사이즈 선택 섹션 */}
+          {productOptions.sizes && productOptions.sizes.length > 0 && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className={`font-bold ${selectedReason === "사이즈/색상 교환" ? "text-blue-600 font-black" : "text-neutral-700"}`}>
+                  희망 사이즈 {selectedReason === "사이즈/색상 교환" && <span className="text-neutral-400 font-medium">(선택)</span>}
+                </span>
+                {targetSize && (
+                  <span className="text-[9px] font-black text-blue-600">
+                    선택: {targetSize}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {productOptions.sizes.map((sz) => {
+                  const isTarget = targetSize === sz;
+                  const isCurrent = Boolean(productOptions.currentSize && productOptions.currentSize.includes(sz));
+                  return (
+                    <button
+                      key={sz}
+                      type="button"
+                      onClick={() => setTargetSize(isTarget ? "" : sz)}
+                      className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                        isTarget
+                          ? "bg-neutral-950 border-neutral-950 text-white shadow-2xs"
+                          : isCurrent
+                          ? "bg-white border-neutral-300 text-neutral-500 hover:border-neutral-400"
+                          : "bg-white border-neutral-200 text-neutral-800 hover:border-neutral-950"
+                      }`}
+                    >
+                      {isTarget && <Check className="w-2.5 h-2.5 text-white" />}
+                      <span>{sz}</span>
+                      {isCurrent && <span className="text-[8px] font-normal text-neutral-400">(현재)</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 색상 / 타입 선택 섹션 (썸네일 비주얼 선택) */}
+          {productOptions.colors && productOptions.colors.length > 0 && (
+            <div className="space-y-1.5 pt-2 border-t border-neutral-200/60">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className={`font-bold ${selectedReason === "사이즈/색상 교환" ? "text-blue-600 font-black" : "text-neutral-700"}`}>
+                  희망 색상/타입 {selectedReason === "사이즈/색상 교환" && <span className="text-neutral-400 font-medium">(선택)</span>}
+                </span>
+                {targetColor && (
+                  <span className="text-[9px] font-black text-blue-600">
+                    선택: {targetColor}
+                  </span>
+                )}
+              </div>
+
+              {/* 썸네일 색상 버튼 목록 (4열 그리드) */}
+              <div className="grid grid-cols-4 gap-1.5 pt-0.5">
+                {productOptions.colors.map((col) => {
+                  const isTarget = targetColor === col;
+                  const isCurrent = Boolean(productOptions.currentColor && productOptions.currentColor.includes(col));
+                  const thumbImg =
+                    productOptions.colorImageMap?.[col] ||
+                    activeOrder.image ||
+                    getProductThumbnail(activeOrder.items) ||
+                    "/product_1.webp";
+
+                  return (
+                    <button
+                      key={col}
+                      type="button"
+                      onClick={() => setTargetColor(isTarget ? "" : col)}
+                      title={col}
+                      className={`p-1 rounded-xl border transition-all cursor-pointer flex flex-col items-center gap-1 group relative text-center select-none ${
+                        isTarget
+                          ? "bg-neutral-950 border-neutral-950 text-white shadow-xs ring-2 ring-neutral-950/20"
+                          : isCurrent
+                          ? "bg-white border-neutral-300 text-neutral-600 hover:border-neutral-400"
+                          : "bg-white border-neutral-200 text-neutral-800 hover:border-neutral-400"
+                      }`}
+                    >
+                      {/* Thumbnail Image Container */}
+                      <div className="w-full aspect-square rounded-lg overflow-hidden bg-neutral-100 border border-neutral-200/80 relative shrink-0">
+                        <img
+                          src={thumbImg}
+                          alt={col}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = activeOrder.image || "/product_1.webp";
+                          }}
+                        />
+                        {/* Selected Checkmark Badge */}
+                        {isTarget && (
+                          <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                            <Check className="w-2 h-2 stroke-[3]" />
+                          </div>
+                        )}
+                        {/* Current Option Badge */}
+                        {isCurrent && !isTarget && (
+                          <span className="absolute bottom-0 inset-x-0 text-center text-[7.5px] font-bold bg-neutral-950/70 text-white py-0.2">
+                            현재
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Color Name */}
+                      <span className={`text-[9px] font-bold truncate max-w-full leading-tight px-0.5 ${
+                        isTarget ? "text-white font-black" : "text-neutral-800"
+                      }`}>
+                        {col}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 선택 완료 피드백 바 */}
+          {(targetSize || targetColor) && (
+            <div className="bg-white border border-neutral-300/80 rounded-lg p-2 flex items-center justify-between text-[10px]">
+              <div className="flex items-center gap-1 font-bold text-neutral-800 truncate">
+                <span className="text-blue-600 font-black shrink-0">변경 희망:</span>
+                <span className="truncate">
+                  {[targetSize && `사이즈 [${targetSize}]`, targetColor && `색상 [${targetColor}]`].filter(Boolean).join(" / ")}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setTargetSize(""); setTargetColor(""); }}
+                className="text-[9px] font-bold text-neutral-400 hover:text-neutral-700 underline shrink-0 cursor-pointer"
+              >
+                초기화
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+        {/* 상세 사유 텍스트 영역 */}
         <textarea
           value={detailedReason}
           onChange={(e) => setDetailedReason(e.target.value)}
           rows={2}
-          placeholder="상세 사유 또는 변경을 원하시는 옵션(예: L사이즈로 변경 희망)을 적어주세요."
-          className="w-full text-xs font-medium p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950 resize-none"
+          placeholder={
+            !showExchangeOptions && selectedReason === "사이즈/색상 교환"
+              ? "희망하시는 변경 사이즈나 색상, 상세 교환 사유를 입력해 주세요"
+              : "추가 요청사항이나 상세 사유가 있으시면 입력해 주세요 (선택사항)"
+          }
+          className="w-full text-xs font-medium p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 focus:bg-white focus:outline-none focus:border-neutral-950 resize-none placeholder:text-neutral-400"
         />
       </div>
 

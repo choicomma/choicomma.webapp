@@ -1447,10 +1447,10 @@ export function InquiriesManagement({
 
       {/* Main 2-Column Console Grid (Live Chat) */}
       {csSubTab === "live_chat" ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Session Card List */}
-        <div className="bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* 1. Left Session Card List (라이브 대화 세션 목록) */}
+        <div className="col-span-12 lg:col-span-3 bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-xs flex flex-col h-[600px]">
+          <div className="flex items-center justify-between pb-3 border-b border-neutral-200 shrink-0">
             <span className="text-xs font-black text-neutral-950 uppercase tracking-wider">
               라이브 대화 세션 목록 ({chatSessionsList.length}개 온라인)
             </span>
@@ -1460,7 +1460,7 @@ export function InquiriesManagement({
           </div>
 
           {/* Customer Sessions Stack */}
-          <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+          <div className="space-y-2.5 flex-1 overflow-y-auto pr-1 min-h-0 pt-2">
             {chatSessionsList.length === 0 ? (
               <div className="p-6 text-center text-xs font-bold text-neutral-400 bg-neutral-50 rounded-2xl border border-neutral-200/60">
                 현재 활성화된 1:1 라이브 채팅 세션이 없습니다.
@@ -1521,53 +1521,10 @@ export function InquiriesManagement({
               })
             )}
           </div>
-
-          {/* Preset Reply Quick Chips */}
-          <div className="space-y-2.5 pt-2 border-t border-neutral-200">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-black text-neutral-800 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-neutral-900" />
-                <span>원클릭 빠른 답장 템플릿 ({templates.length}개)</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setIsEditModalOpen(true)}
-                className="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-extrabold px-2 py-0.5 rounded-md border border-neutral-300 transition-colors cursor-pointer notranslate"
-                translate="no"
-              >
-                ⚡ 실시간 수정하기
-              </button>
-            </div>
-
-            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-              {templates.map((tmpl) => (
-                <button
-                  key={tmpl.id}
-                  type="button"
-                  onClick={() => onSendLiveChat(tmpl.ko)}
-                  className="w-full text-left bg-neutral-50 hover:bg-neutral-100 hover:border-neutral-400 border border-neutral-200/90 p-3 rounded-2xl transition-all cursor-pointer space-y-1 group"
-                >
-                  {/* 상단 한글 원문 (구글 번역 보호: notranslate) */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-extrabold bg-neutral-950 text-white px-2 py-0.5 rounded-md notranslate inline-block" translate="no">
-                      🇰🇷 [한글]: {tmpl.ko}
-                    </span>
-                    <span className="text-[9px] font-extrabold text-neutral-800 bg-neutral-200 px-1.5 py-0.2 rounded notranslate" translate="no">
-                      {tmpl.label}
-                    </span>
-                  </div>
-                  {/* 하단 템플릿 메시지 본문 */}
-                  <div className="text-[11px] font-bold text-neutral-800 group-hover:text-black pt-0.5 leading-relaxed">
-                    {tmpl.ko}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
-        {/* Right Chat History & Input Area */}
-        <div className="lg:col-span-2 bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-4 flex flex-col h-[580px]">
+        {/* 2. Center Chat History & Input Area (채팅창) */}
+        <div className="col-span-12 lg:col-span-6 bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-xs space-y-4 flex flex-col h-[600px]">
           <div className="flex items-center justify-between pb-3 border-b border-neutral-200 shrink-0">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-blue-600" />
@@ -2510,6 +2467,61 @@ export function InquiriesManagement({
               <Send className="w-3.5 h-3.5" />
               답변 전송
             </button>
+          </div>
+        </div>
+
+        {/* 3. Right Quick Reply Templates Card (원클릭 빠른 답장 템플릿) */}
+        <div className="col-span-12 lg:col-span-3 bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-xs flex flex-col h-[600px]">
+          <div className="flex items-center justify-between pb-3 border-b border-neutral-200 shrink-0">
+            <label className="text-xs font-black text-neutral-950 flex items-center gap-1.5 uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+              <span>빠른 답장 ({templates.length}개)</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(true)}
+              className="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-extrabold px-2 py-0.5 rounded-md border border-neutral-300 transition-colors cursor-pointer notranslate"
+              translate="no"
+            >
+              ⚡ 실시간 수정하기
+            </button>
+          </div>
+
+          {/* Template List Stack */}
+          <div className="space-y-2 flex-1 overflow-y-auto pr-1 min-h-0 pt-2">
+            {templates.length === 0 ? (
+              <div className="p-6 text-center text-xs font-bold text-neutral-400 bg-neutral-50 rounded-2xl border border-neutral-200/60">
+                등록된 템플릿이 없습니다.
+              </div>
+            ) : (
+              templates.map((tmpl) => (
+                <button
+                  key={tmpl.id}
+                  type="button"
+                  onClick={() => onSendLiveChat(tmpl.ko)}
+                  className="w-full text-left bg-neutral-50 hover:bg-neutral-100 hover:border-neutral-400 border border-neutral-200/90 p-3 rounded-2xl transition-all cursor-pointer space-y-1.5 group shadow-2xs hover:shadow-xs"
+                  title="클릭 시 현재 상담 중인 고객에게 이 메시지를 즉시 전송합니다"
+                >
+                  {/* 상단 한글 원문 (구글 번역 보호: notranslate) */}
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[10px] font-extrabold bg-neutral-950 text-white px-2 py-0.5 rounded-md notranslate inline-block truncate max-w-[70%]" translate="no">
+                      🇰🇷 [한글]: {tmpl.ko}
+                    </span>
+                    <span className="text-[9px] font-extrabold text-neutral-800 bg-neutral-200 px-1.5 py-0.2 rounded notranslate shrink-0" translate="no">
+                      {tmpl.label}
+                    </span>
+                  </div>
+                  {/* 하단 템플릿 메시지 본문 */}
+                  <div className="text-[11px] font-bold text-neutral-800 group-hover:text-black pt-0.5 leading-relaxed">
+                    {tmpl.ko}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+
+          <div className="pt-2.5 border-t border-neutral-100 text-[10.5px] text-neutral-400 font-medium text-center shrink-0">
+            💡 템플릿 클릭 시 채팅창에 즉시 자동 전송됩니다.
           </div>
         </div>
       </div>

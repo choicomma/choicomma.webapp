@@ -34,7 +34,10 @@ export function useTimesale(triggerToast: (msg: string) => void) {
         const saved = localStorage.getItem("secret_timesale_product_ids");
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) return parsed.map(String);
+          if (Array.isArray(parsed) && parsed.length < 50) return parsed.map(String);
+          if (Array.isArray(parsed) && parsed.length >= 50) {
+            localStorage.removeItem("secret_timesale_product_ids");
+          }
         }
       } catch (e) {}
     }
@@ -56,7 +59,12 @@ export function useTimesale(triggerToast: (msg: string) => void) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            const cleaned = parsed.filter((item: any) => item && item.id);
+            const cleaned = parsed.filter(
+              (item: any) =>
+                item &&
+                item.id &&
+                item.id !== "SECRET-TS-1792479678673"
+            );
             setSecretSalesList(cleaned);
           }
         } catch (e) {}
@@ -66,7 +74,7 @@ export function useTimesale(triggerToast: (msg: string) => void) {
         const savedTS = localStorage.getItem("secret_timesale_product_ids");
         if (savedTS) {
           const parsedTS = JSON.parse(savedTS);
-          if (Array.isArray(parsedTS)) {
+          if (Array.isArray(parsedTS) && parsedTS.length < 50) {
             setAdminTimeSaleProductIds(parsedTS.map(String));
           }
         }
@@ -79,31 +87,16 @@ export function useTimesale(triggerToast: (msg: string) => void) {
         if (res.ok) {
           const json = await res.json();
           if (json.success && Array.isArray(json.data) && isMounted) {
-            const cleaned = json.data.filter((t: any) => t && t.id);
-            if (cleaned.length > 0) {
-              lastSyncedJsonRef.current = JSON.stringify(cleaned);
-              setSecretSalesList(cleaned);
-              if (typeof window !== "undefined") {
-                localStorage.setItem("admin_secret_timesales", JSON.stringify(cleaned));
-              }
-            } else if (typeof window !== "undefined") {
-              const saved = localStorage.getItem("admin_secret_timesales");
-              if (saved) {
-                try {
-                  const parsed = JSON.parse(saved);
-                  if (Array.isArray(parsed) && parsed.length > 0) {
-                    const localCleaned = parsed.filter((t: any) => t && t.id);
-                    if (localCleaned.length > 0) {
-                      setSecretSalesList(localCleaned);
-                      fetch("/api/admin/timesale", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(localCleaned),
-                      }).catch(() => {});
-                    }
-                  }
-                } catch (e) {}
-              }
+            const cleaned = json.data.filter(
+              (t: any) =>
+                t &&
+                t.id &&
+                t.id !== "SECRET-TS-1792479678673"
+            );
+            lastSyncedJsonRef.current = JSON.stringify(cleaned);
+            setSecretSalesList(cleaned);
+            if (typeof window !== "undefined") {
+              localStorage.setItem("admin_secret_timesales", JSON.stringify(cleaned));
             }
           }
         }
@@ -295,25 +288,37 @@ export function useTimesale(triggerToast: (msg: string) => void) {
   const [newTimeSaleMinutes, setNewTimeSaleMinutes] = useState("0");
   const [newTimeSaleDiscountPrice, setNewTimeSaleDiscountPrice] = useState("");
   const [newTimeSaleDiscountRate, setNewTimeSaleDiscountRate] = useState("35");
-  const [newTimeSaleStartMonth, setNewTimeSaleStartMonth] = useState("8");
-  const [newTimeSaleStartDay, setNewTimeSaleStartDay] = useState("20");
+  const [newTimeSaleStartMonth, setNewTimeSaleStartMonth] = useState(() => String(new Date().getMonth() + 1));
+  const [newTimeSaleStartDay, setNewTimeSaleStartDay] = useState(() => String(new Date().getDate()));
   const [newTimeSaleStartAmpm, setNewTimeSaleStartAmpm] = useState("오전");
   const [newTimeSaleStartHour, setNewTimeSaleStartHour] = useState("09");
   const [newTimeSaleStartMinute, setNewTimeSaleStartMinute] = useState("00");
-  const [newTimeSaleEndMonth, setNewTimeSaleEndMonth] = useState("8");
-  const [newTimeSaleEndDay, setNewTimeSaleEndDay] = useState("27");
+  const [newTimeSaleEndMonth, setNewTimeSaleEndMonth] = useState(() => {
+    const fut = new Date(Date.now() + 7 * 24 * 3600 * 1000);
+    return String(fut.getMonth() + 1);
+  });
+  const [newTimeSaleEndDay, setNewTimeSaleEndDay] = useState(() => {
+    const fut = new Date(Date.now() + 7 * 24 * 3600 * 1000);
+    return String(fut.getDate());
+  });
   const [newTimeSaleEndAmpm, setNewTimeSaleEndAmpm] = useState("오후");
   const [newTimeSaleEndHour, setNewTimeSaleEndHour] = useState("11");
   const [newTimeSaleEndMinute, setNewTimeSaleEndMinute] = useState("59");
 
   // Edit product modal timesale states
-  const [editTimeSaleStartMonth, setEditTimeSaleStartMonth] = useState("8");
-  const [editTimeSaleStartDay, setEditTimeSaleStartDay] = useState("20");
+  const [editTimeSaleStartMonth, setEditTimeSaleStartMonth] = useState(() => String(new Date().getMonth() + 1));
+  const [editTimeSaleStartDay, setEditTimeSaleStartDay] = useState(() => String(new Date().getDate()));
   const [editTimeSaleStartAmpm, setEditTimeSaleStartAmpm] = useState("오전");
   const [editTimeSaleStartHour, setEditTimeSaleStartHour] = useState("09");
   const [editTimeSaleStartMinute, setEditTimeSaleStartMinute] = useState("00");
-  const [editTimeSaleEndMonth, setEditTimeSaleEndMonth] = useState("8");
-  const [editTimeSaleEndDay, setEditTimeSaleEndDay] = useState("27");
+  const [editTimeSaleEndMonth, setEditTimeSaleEndMonth] = useState(() => {
+    const fut = new Date(Date.now() + 7 * 24 * 3600 * 1000);
+    return String(fut.getMonth() + 1);
+  });
+  const [editTimeSaleEndDay, setEditTimeSaleEndDay] = useState(() => {
+    const fut = new Date(Date.now() + 7 * 24 * 3600 * 1000);
+    return String(fut.getDate());
+  });
   const [editTimeSaleEndAmpm, setEditTimeSaleEndAmpm] = useState("오후");
   const [editTimeSaleEndHour, setEditTimeSaleEndHour] = useState("11");
   const [editTimeSaleEndMinute, setEditTimeSaleEndMinute] = useState("59");

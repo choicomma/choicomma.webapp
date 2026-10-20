@@ -54,9 +54,7 @@ export function isSuperAdmin(c: any): boolean {
     id === "ADMIN-001" ||
     email === "admin@choicomma.com" ||
     email === "admin" ||
-    name.includes("최고관리자") ||
-    c.isAdmin === true ||
-    c.role === "ADMIN"
+    name.includes("최고관리자")
   );
 }
 
@@ -110,7 +108,18 @@ export function deduplicateCustomers(list: any[]): any[] {
     if (id) seenIds.add(id.toUpperCase());
     if (email && email !== "-") seenEmails.add(email);
 
-    result.push(c);
+    const isStaff =
+      String(c.grade || "").toUpperCase() === "STAFF" ||
+      String(c.role || "").toUpperCase() === "STAFF" ||
+      c.isStaff === true ||
+      String(c.group || "").includes("직원");
+
+    result.push({
+      ...c,
+      isStaff: isStaff || Boolean(c.isStaff),
+      isAdmin: isStaff || Boolean(c.isAdmin),
+      role: isStaff ? "STAFF" : (c.role || "CUSTOMER"),
+    });
   }
 
   if (!adminAdded) {
@@ -201,6 +210,20 @@ export function getCachedCustomers(): any[] {
     }
   } catch (e) {}
   return DEFAULT_CUSTOMERS;
+}
+
+export function safeSaveAdminCustomers(list: any[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("admin_customers", JSON.stringify(list));
+  } catch (err) {
+    console.warn("[admin_customers localStorage quota exceeded, storing recent cache]:", err);
+    try {
+      // 5MB 용량 초과 시 최근 200명 위주로 캐시 보존하여 쿼터 에러 방지
+      const minimal = list.slice(0, 200);
+      localStorage.setItem("admin_customers", JSON.stringify(minimal));
+    } catch {}
+  }
 }
 
 export function useCustomers(triggerToast: (msg: string) => void) {
@@ -353,7 +376,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         const finalList = deduplicateCustomers(localList.length > 0 ? localList : DEFAULT_CUSTOMERS);
         setCustomersList(finalList);
         setIsCustomersLoaded(true);
-        localStorage.setItem("admin_customers", JSON.stringify(finalList));
+        safeSaveAdminCustomers(finalList);
       }
     };
 
@@ -419,6 +442,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     }
 
     const initPoints = parseInt(newCustPoints) || 0;
+    const isStaff = newCustGrade === "STAFF";
     const newCust = {
       id: `CUST-${1000 + customersList.length + 1}`,
       name: newCustName.trim(),
@@ -426,6 +450,10 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       phone: newCustPhone.trim() || "010-0000-0000",
       address: newCustAddress.trim() || "-",
       grade: newCustGrade,
+      role: isStaff ? "STAFF" : "CUSTOMER",
+      isStaff: isStaff,
+      isAdmin: isStaff,
+      group: isStaff ? "직원" : "일반",
       totalSpent: 0,
       points: initPoints,
       couponsCount: 0,
@@ -436,7 +464,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     const updated = deduplicateCustomers([newCust, ...customersList]);
     setCustomersList(updated);
     if (typeof window !== "undefined") {
-      localStorage.setItem("admin_customers", JSON.stringify(updated));
+      safeSaveAdminCustomers(updated);
 
       if (initPoints > 0) {
         try {
@@ -515,9 +543,22 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     // 모달 내부 상태 즉각 갱신
     setEditingCustomer((prev: any) => (prev ? { ...prev, points: newPoints } : null));
 
+    const targetId = editingCustomer.id ? String(editingCustomer.id).trim().toLowerCase() : "";
+    const targetEmail = editingCustomer.email ? String(editingCustomer.email).trim().toLowerCase() : "";
+    const targetUid = editingCustomer.imwebUid ? String(editingCustomer.imwebUid).trim().toLowerCase() : "";
+
     // 전체 회원 목록 갱신
     const updatedList = customersList.map((c) => {
-      if (c.id === editingCustomer.id) {
+      const cId = c.id ? String(c.id).trim().toLowerCase() : "";
+      const cEmail = c.email ? String(c.email).trim().toLowerCase() : "";
+      const cUid = c.imwebUid ? String(c.imwebUid).trim().toLowerCase() : "";
+
+      const isMatch =
+        (targetId && (cId === targetId || cUid === targetId)) ||
+        (targetUid && (cUid === targetUid || cId === targetUid)) ||
+        (targetEmail && cEmail === targetEmail);
+
+      if (isMatch) {
         return {
           ...c,
           points: newPoints,
@@ -528,7 +569,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
 
     setCustomersList(updatedList);
     if (typeof window !== "undefined") {
-      localStorage.setItem("admin_customers", JSON.stringify(updatedList));
+      safeSaveAdminCustomers(updatedList);
 
       // 적립 / 사용 상세 내역(membership_points_history)에 관리자 지급/차감 이력 추가
       try {
@@ -560,17 +601,19 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       }
 
       // 현재 세션 사용자와 일치하거나 관리자 세션 동기화
-      const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-      const currentLoggedInName = (localStorage.getItem("membership_user_name") || "").trim();
-      const custEmail = (editingCustomer.email || "").toLowerCase().trim();
-      const custName = (editingCustomer.name || "").trim();
-      if (
-        (custEmail && custEmail === currentLoggedInEmail) ||
-        (custName && custName === currentLoggedInName) ||
-        localStorage.getItem("user_role") === "admin"
-      ) {
-        localStorage.setItem("membership_user_points", String(newPoints));
-      }
+      try {
+        const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const currentLoggedInName = (localStorage.getItem("membership_user_name") || "").trim();
+        const custEmail = (editingCustomer.email || "").toLowerCase().trim();
+        const custName = (editingCustomer.name || "").trim();
+        if (
+          (custEmail && custEmail === currentLoggedInEmail) ||
+          (custName && custName === currentLoggedInName) ||
+          localStorage.getItem("user_role") === "admin"
+        ) {
+          localStorage.setItem("membership_user_points", String(newPoints));
+        }
+      } catch (e) {}
 
       window.dispatchEvent(new CustomEvent("storage"));
       window.dispatchEvent(new CustomEvent("admin_customers_updated"));
@@ -596,8 +639,10 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     );
   };
 
-  const handleSaveEditCustomer = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveEditCustomer = (e?: React.FormEvent | React.MouseEvent) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
     if (!editingCustomer) return;
 
     let delta = 0;
@@ -609,14 +654,33 @@ export function useCustomers(triggerToast: (msg: string) => void) {
     const currentPoints = Number(editingCustomer.points || 0);
     const calculatedPoints = Math.max(0, currentPoints + delta);
 
+    const targetId = editingCustomer.id ? String(editingCustomer.id).trim().toLowerCase() : "";
+    const targetEmail = editingCustomer.email ? String(editingCustomer.email).trim().toLowerCase() : "";
+    const targetUid = editingCustomer.imwebUid ? String(editingCustomer.imwebUid).trim().toLowerCase() : "";
+
     const updatedList = customersList.map((c) => {
-      if (c.id === editingCustomer.id) {
+      const cId = c.id ? String(c.id).trim().toLowerCase() : "";
+      const cEmail = c.email ? String(c.email).trim().toLowerCase() : "";
+      const cUid = c.imwebUid ? String(c.imwebUid).trim().toLowerCase() : "";
+
+      const isMatch =
+        (targetId && (cId === targetId || cUid === targetId)) ||
+        (targetUid && (cUid === targetUid || cId === targetUid)) ||
+        (targetEmail && cEmail === targetEmail);
+
+      if (isMatch) {
+        const isStaff = editCustGrade === "STAFF";
+        const isPrimaryAdmin = (c.email || "").toLowerCase().trim() === "admin@choicomma.com" || c.id === "ADMIN-001";
         return {
           ...c,
           grade: editCustGrade,
-          address: editCustAddress,
+          role: isStaff ? "STAFF" : (c.role === "STAFF" ? "CUSTOMER" : c.role),
+          isStaff: isStaff,
+          isAdmin: isStaff ? true : (isPrimaryAdmin ? true : false),
+          group: isStaff ? "직원" : (c.group === "직원" ? "일반" : c.group),
+          address: editCustAddress !== undefined && editCustAddress !== "" ? editCustAddress : c.address,
           points: calculatedPoints,
-          status: editCustStatus,
+          status: editCustStatus || c.status || "Active",
         };
       }
       return c;
@@ -624,7 +688,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
 
     setCustomersList(updatedList);
     if (typeof window !== "undefined") {
-      localStorage.setItem("admin_customers", JSON.stringify(updatedList));
+      safeSaveAdminCustomers(updatedList);
 
       // 적립 / 사용 상세 내역(membership_points_history)에 관리자 지급/차감 이력 추가
       if (delta !== 0) {
@@ -654,19 +718,39 @@ export function useCustomers(triggerToast: (msg: string) => void) {
           localStorage.setItem("membership_points_history", JSON.stringify(historyList));
         } catch (hErr) {}
 
-        const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-        const currentLoggedInName = (localStorage.getItem("membership_user_name") || "").trim();
-        const custEmail = (editingCustomer.email || "").toLowerCase().trim();
-        const custName = (editingCustomer.name || "").trim();
-        if (
-          (custEmail && custEmail === currentLoggedInEmail) ||
-          (custName && custName === currentLoggedInName) ||
-          localStorage.getItem("user_role") === "admin"
-        ) {
-          localStorage.setItem("membership_user_points", String(calculatedPoints));
-        }
+        try {
+          const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+          const currentLoggedInName = (localStorage.getItem("membership_user_name") || "").trim();
+          const custEmail = (editingCustomer.email || "").toLowerCase().trim();
+          const custName = (editingCustomer.name || "").trim();
+          if (
+            (custEmail && custEmail === currentLoggedInEmail) ||
+            (custName && custName === currentLoggedInName) ||
+            localStorage.getItem("user_role") === "admin"
+          ) {
+            localStorage.setItem("membership_user_points", String(calculatedPoints));
+          }
+        } catch (e) {}
+
         window.dispatchEvent(new CustomEvent("membership_points_updated"));
       }
+
+      try {
+        const currentLoggedInEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const custEmail = (editingCustomer.email || "").toLowerCase().trim();
+        if (custEmail && custEmail === currentLoggedInEmail) {
+          localStorage.setItem("membership_user_grade", editCustGrade);
+          localStorage.setItem("user_grade", editCustGrade);
+          localStorage.setItem("user_role", editCustGrade === "STAFF" ? "staff" : "customer");
+          if (editCustGrade === "STAFF") {
+            sessionStorage.setItem("choicomma_admin_authenticated", "true");
+          }
+          if (editCustAddress) {
+            localStorage.setItem("membership_user_address", editCustAddress);
+            localStorage.setItem("user_address", editCustAddress);
+          }
+        }
+      } catch (e) {}
 
       window.dispatchEvent(new CustomEvent("storage"));
       window.dispatchEvent(new CustomEvent("admin_customers_updated"));
@@ -679,15 +763,17 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       body: JSON.stringify({
         ...editingCustomer,
         grade: editCustGrade,
-        address: editCustAddress,
+        address: editCustAddress !== undefined && editCustAddress !== "" ? editCustAddress : editingCustomer.address,
         points: calculatedPoints,
-        status: editCustStatus,
+        status: editCustStatus || editingCustomer.status,
       }),
     }).catch((err) => console.warn("Customer API update notice:", err));
 
+    const savedCustName = editingCustomer.name || "회원";
     setEditingCustomer(null);
     setEditCustPointReason("");
-    triggerToast(`회원 '${editingCustomer.name}'님의 정보가 반영되었습니다.`);
+    setEditCustPointAmount("");
+    triggerToast(`회원 '${savedCustName}'님의 정보 및 등급 변경이 완료되었습니다.`);
   };
 
   const handleDeleteCustomer = (id: string, name: string) => {
@@ -700,7 +786,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
       const updated = deduplicateCustomers(customersList.filter((c) => c.id !== id));
       setCustomersList(updated);
       if (typeof window !== "undefined") {
-        localStorage.setItem("admin_customers", JSON.stringify(updated));
+        safeSaveAdminCustomers(updated);
         const custEmail = targetCustomer?.email ? targetCustomer.email.trim().toLowerCase() : "";
         const custLoginId = targetCustomer?.loginId || targetCustomer?.login_id ? (targetCustomer.loginId || targetCustomer.login_id).trim().toLowerCase() : "";
         const custPhone = targetCustomer?.phone ? targetCustomer.phone.trim() : "";
@@ -763,7 +849,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         const combined = deduplicateCustomers([...parsedCustomers, ...customersList]);
         setCustomersList(combined);
         if (typeof window !== "undefined") {
-          localStorage.setItem("admin_customers", JSON.stringify(combined));
+          safeSaveAdminCustomers(combined);
           window.dispatchEvent(new CustomEvent("storage"));
           window.dispatchEvent(new CustomEvent("admin_customers_updated"));
         }

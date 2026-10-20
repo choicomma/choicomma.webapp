@@ -5,8 +5,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { QuickOptionModal } from "./quick-option-modal";
-import { Clock } from "lucide-react";
-import { getAvailableCoupons } from "@/lib/membership/coupons";
+import { Clock, Lock, Flame } from "lucide-react";
 import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 
 // Returns badge config by productLabel value
@@ -87,6 +86,7 @@ export function FeaturedProductLabel({
   const labelBadge = getLabelBadge((product as any).productLabel);
 
   const [timeSaleDiscount, setTimeSaleDiscount] = useState<number | null>(null);
+  const [isSecretTimeSale, setIsSecretTimeSale] = useState(false);
 
   useEffect(() => {
     const updateTimeSaleStatus = () => {
@@ -109,21 +109,84 @@ export function FeaturedProductLabel({
         const globalStatus = localStorage.getItem("secret_timesale_status");
         if (globalStatus === "ended" || (product as any).isTimeSale === false) {
           setTimeSaleDiscount(null);
+          setIsSecretTimeSale(false);
           return;
         }
 
-        let isSelected = false;
+        // 1. Check targeted Secret Time Sale first
+        const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const userRole = localStorage.getItem("user_role") || "";
+        const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || userRole || "").toUpperCase().trim();
+        const isAdmin =
+          userRole === "admin" ||
+          userRole === "staff" ||
+          userGrade === "STAFF" ||
+          sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+
+        let activeSecretDiscount: number | null = null;
+        const secretSalesRaw = localStorage.getItem("admin_secret_timesales");
+        if (secretSalesRaw) {
+          try {
+            const secretSalesList: any[] = JSON.parse(secretSalesRaw);
+            for (const sale of secretSalesList) {
+              if (sale.status !== "active") continue;
+              const matchesProduct = (sale.productIds || []).some((id: string) =>
+                possibleIds.includes(String(id))
+              );
+              if (!matchesProduct) continue;
+
+              const isEmailTargeted = Boolean(
+                userEmail &&
+                  (sale.targetCustomerEmails || []).some(
+                    (em: string) => em.toLowerCase().trim() === userEmail
+                  )
+              );
+              const isGradeTargeted = Boolean(
+                userGrade &&
+                  (sale.targetGrades || []).length > 0 &&
+                  (sale.targetGrades.includes("ALL") ||
+                    sale.targetGrades.includes(userGrade) ||
+                    sale.targetGrades.includes(userRole?.toUpperCase()) ||
+                    (userGrade.includes("VIP") && sale.targetGrades.includes("VIP")) ||
+                    (userGrade.includes("VVIP") && (sale.targetGrades.includes("VVIP") || sale.targetGrades.includes("VIP"))))
+              );
+
+              if (isEmailTargeted || isGradeTargeted || isAdmin) {
+                activeSecretDiscount = Number(sale.discountRate) || 30;
+                break;
+              }
+            }
+          } catch (e) {}
+        }
+
+        if (activeSecretDiscount !== null) {
+          setIsSecretTimeSale(true);
+          setTimeSaleDiscount(activeSecretDiscount);
+          return;
+        } else {
+          setIsSecretTimeSale(false);
+        }
+
+        const isDirectTimeSale =
+          (product as any).isTimeSale === true ||
+          product.categoryId === "timesale" ||
+          product.tags?.includes("TIMESALE") ||
+          (linked as any)?.isTimeSale === true ||
+          linked?.categoryId === "timesale" ||
+          linked?.tags?.includes("TIMESALE");
+
+        let isSecretSelected = false;
         const savedIds = localStorage.getItem("secret_timesale_product_ids");
         if (savedIds !== null) {
           try {
             const parsedIds: any[] = JSON.parse(savedIds);
-            isSelected = parsedIds.some((id: any) =>
+            isSecretSelected = Array.isArray(parsedIds) && parsedIds.some((id: any) =>
               possibleIds.includes(String(id))
             );
           } catch (e) {}
-        } else {
-          isSelected = (product as any).isTimeSale === true || product.categoryId === "timesale" || product.tags?.includes("TIMESALE") || (linked as any)?.isTimeSale === true || linked?.categoryId === "timesale" || linked?.tags?.includes("TIMESALE");
         }
+
+        const isTimeSale = isDirectTimeSale || isSecretSelected;
 
         let itemDiscount: number | null = null;
         const itemSettingsSaved = localStorage.getItem("secret_timesale_item_settings");
@@ -138,8 +201,6 @@ export function FeaturedProductLabel({
             }
           } catch (e) {}
         }
-
-        const isTimeSale = isSelected;
 
         if (isTimeSale) {
           const tagRate = Array.isArray(product.tags)
@@ -218,6 +279,19 @@ export function FeaturedProductLabel({
                   {labelBadge.text}
                 </Badge>
               ) : null}
+              {isTimeSaleActive && timeSaleDiscount && (
+                isSecretTimeSale ? (
+                  <Badge className="font-black rounded-none text-xs px-3 py-1 bg-neutral-950 text-amber-300 border border-neutral-700 tracking-wider flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-amber-400" />
+                    <span>SECRET VIP {timeSaleDiscount}% OFF</span>
+                  </Badge>
+                ) : (
+                  <Badge className="font-black rounded-none text-xs px-3 py-1 bg-rose-600 text-white border-none tracking-wider flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-white fill-white" />
+                    <span>{timeSaleDiscount}% OFF</span>
+                  </Badge>
+                )
+              )}
             </div>
 
             <Link
@@ -273,6 +347,19 @@ export function FeaturedProductLabel({
               {labelBadge.text}
             </Badge>
           ) : null}
+          {isTimeSaleActive && timeSaleDiscount && (
+            isSecretTimeSale ? (
+              <Badge className="bg-neutral-950 text-amber-300 border border-neutral-700 font-black text-[10px] px-2 py-0.5 rounded-none uppercase tracking-wider inline-flex items-center gap-1">
+                <Lock className="w-2.5 h-2.5 text-amber-400" />
+                <span>SECRET VIP {timeSaleDiscount}% OFF</span>
+              </Badge>
+            ) : (
+              <Badge className="bg-rose-600 text-white font-black text-[10px] px-2 py-0.5 rounded-none uppercase tracking-wider inline-flex items-center gap-1 border-none">
+                <Flame className="w-2.5 h-2.5 text-white fill-white" />
+                <span>{timeSaleDiscount}% OFF</span>
+              </Badge>
+            )
+          )}
         </div>
         <Link
           href={`/product/${product.handle}`}

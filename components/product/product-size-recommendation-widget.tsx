@@ -41,8 +41,12 @@ export function ProductSizeRecommendationWidget({
   const isUserLoggedIn = () => {
     if (typeof window === "undefined") return false;
     try {
+      const role = (localStorage.getItem("user_role") || "").toLowerCase().trim();
+      const grade = (localStorage.getItem("user_grade") || "").toUpperCase().trim();
       const isAdmin =
-        localStorage.getItem("user_role") === "admin" ||
+        role === "admin" ||
+        role === "staff" ||
+        grade === "STAFF" ||
         sessionStorage.getItem("choicomma_admin_authenticated") === "true";
       if (isAdmin) return true;
       const isLoggedIn = localStorage.getItem("is_logged_in") === "true";

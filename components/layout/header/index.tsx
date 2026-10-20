@@ -67,6 +67,8 @@ export function Header({ collections }: HeaderProps) {
 
         const isAdm =
           role === "admin" ||
+          role === "staff" ||
+          grade === "STAFF" ||
           (email === "admin" && isLoggedInFlag) ||
           name === "관리자" ||
           isAdminSession;

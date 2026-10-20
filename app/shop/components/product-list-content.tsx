@@ -9,6 +9,19 @@ import ResultsControls from "./results-controls";
 import { SetBundleSection } from "@/components/products/set-bundle-section";
 import { getRegisteredSetProducts } from "@/lib/sfcc/set-products-helper";
 import { getProductNoNum } from "@/lib/sfcc/product-sort";
+import { ProductFormModal } from "@/app/admin/components/product-form-modal";
+import { reorderProduct } from "@/lib/products/reorder-helper";
+import { toast } from "sonner";
+
+const categoriesList = [
+  { id: "timesale", name: "TIMESALE", count: 8, description: "신상품 & 타임세일 컬렉션" },
+  { id: "outer", name: "OUTER", count: 12, description: "아우터 & 재킷" },
+  { id: "top", name: "TOP", count: 24, description: "상의 & 니트웨어" },
+  { id: "bottom", name: "BOTTOM", count: 16, description: "팬츠 & 스커트" },
+  { id: "bag", name: "BAG", count: 6, description: "가방 & 래더 굿즈" },
+  { id: "shoes", name: "SHOES", count: 9, description: "슈즈 & 슈케어" },
+  { id: "accessory", name: "ACCESSORY", count: 15, description: "액세서리 & 잡화" },
+];
 
 interface ProductListContentProps {
   products: Product[];
@@ -29,6 +42,93 @@ export function ProductListContent({
       p.isMainFeatured !== false
   );
   const [displayProducts, setDisplayProducts] = useState<Product[]>(initialValidProducts);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [adminOverlayProductId, setAdminOverlayProductId] = useState<string | null>(null);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+
+  useEffect(() => {
+    const checkAdmin = () => {
+      if (typeof window !== "undefined") {
+        const userRole = (localStorage.getItem("user_role") || "").toLowerCase().trim();
+        const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || "").toUpperCase().trim();
+        const isAdmin =
+          userRole === "admin" ||
+          userRole === "staff" ||
+          userGrade === "STAFF" ||
+          sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+        setIsAdminUser(isAdmin);
+      }
+    };
+    checkAdmin();
+    window.addEventListener("storage", checkAdmin);
+    window.addEventListener("focus", checkAdmin);
+    return () => {
+      window.removeEventListener("storage", checkAdmin);
+      window.removeEventListener("focus", checkAdmin);
+    };
+  }, []);
+
+  const handleSaveProduct = async (savedProduct: any, isNew: boolean) => {
+    try {
+      const nowIso = new Date().toISOString();
+      const finalProduct: any = {
+        ...savedProduct,
+        updated_at: nowIso,
+        updatedAt: nowIso,
+      };
+
+      // 1. 로컬스토리지 admin_products 즉시 동기화
+      if (typeof window !== "undefined") {
+        const currentSaved = localStorage.getItem("admin_products");
+        let list: any[] = [];
+        if (currentSaved) {
+          try {
+            list = JSON.parse(currentSaved);
+          } catch (e) {}
+        }
+        if (!Array.isArray(list) || list.length === 0) {
+          list = displayProducts;
+        }
+        list = list.map((p: any) =>
+          String(p.id) === String(finalProduct.id) || String(p.productCode) === String(finalProduct.productCode)
+            ? finalProduct
+            : p
+        );
+        localStorage.setItem("admin_products", JSON.stringify(list));
+      }
+
+      // 2. 서버 영구 저장 API (POST /api/products)
+      try {
+        await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(finalProduct),
+        });
+      } catch (err) {}
+
+      // 3. 화면 실시간 반영
+      setDisplayProducts((prev) =>
+        prev.map((p) =>
+          String(p.id) === String(finalProduct.id) || String((p as any).productCode || "") === String(finalProduct.productCode || "")
+            ? finalProduct
+            : p
+        )
+      );
+
+      setEditingProduct(null);
+      toast.success(`'${finalProduct.title}' 상품 정보가 성공적으로 수정되었습니다.`);
+
+      // 4. 실시간 동기화 이벤트 브로드캐스트
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("admin_products_updated"));
+        window.dispatchEvent(new CustomEvent("products_updated"));
+        window.dispatchEvent(new CustomEvent("storage"));
+      }
+    } catch (err) {
+      toast.error("상품 정보 저장 중 오류가 발생했습니다.");
+    }
+  };
+
   const searchParams = useSearchParams();
   const query = searchParams?.get("q") || "";
   const sort = searchParams?.get("sort") || "";
@@ -120,7 +220,11 @@ export function ProductListContent({
         const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
         const userRole = localStorage.getItem("user_role") || "";
         const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || userRole || "").toUpperCase().trim();
-        const isAdmin = userRole === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+        const isAdmin =
+          userRole === "admin" ||
+          userRole === "staff" ||
+          userGrade === "STAFF" ||
+          sessionStorage.getItem("choicomma_admin_authenticated") === "true";
 
         // Check Secret Time Sales
         const secretSalesRaw = localStorage.getItem("admin_secret_timesales");
@@ -424,10 +528,53 @@ export function ProductListContent({
       <>
         {sortedProducts.length > 0 ? (
         <div className="flex flex-col w-full">
-          <div className="grid grid-cols-2 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full">
-            {paginatedProducts.map((product, idx) => (
-              <ProductCard key={`${product.id}-${idx}`} product={product} />
-            ))}
+          {/* 투명 배경 클릭 시 활성화된 상품의 관리자 오버레이 닫기 */}
+          {adminOverlayProductId && (
+            <div
+              className="fixed inset-0 z-20 bg-black/10 cursor-default"
+              onClick={() => setAdminOverlayProductId(null)}
+            />
+          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full relative">
+            {paginatedProducts.map((product, idx) => {
+              const globalIndex = (currentPage - 1) * PAGE_SIZE + idx;
+              const isFirst = globalIndex === 0;
+              const isLast = globalIndex === sortedProducts.length - 1;
+              return (
+                <ProductCard
+                  key={`${product.id}-${idx}-${(product as any).updated_at || ""}-${product.availableForSale}-${product.releaseDate || ""}-${(product as any).stock ?? ""}`}
+                  product={product}
+                  isFirst={isFirst}
+                  isLast={isLast}
+                  isAdminOverlayOpen={adminOverlayProductId === String(product.id)}
+                  onAdminClick={isAdminUser ? (p) => setAdminOverlayProductId(String(p.id)) : undefined}
+                  onAdminOverlayClose={() => setAdminOverlayProductId(null)}
+                  onAdminEdit={(p) => {
+                    setAdminOverlayProductId(null);
+                    setEditingProduct(p);
+                  }}
+                  onMoveOrder={async (p, direction) => {
+                    const res = await reorderProduct(String(p.id), direction, displayProducts);
+                    if (res.success) {
+                      toast.success(
+                        direction === "prev"
+                          ? `'${p.title}' 상품이 앞으로 이동되었습니다.`
+                          : `'${p.title}' 상품이 뒤로 이동되었습니다.`
+                      );
+                      if (res.updatedList) {
+                        const updatedIds = new Set(displayProducts.map((it) => String(it.id)));
+                        const nextVisible = res.updatedList.filter((it) => updatedIds.has(String(it.id)));
+                        setDisplayProducts(nextVisible);
+                        setProducts(nextVisible);
+                      }
+                    } else if (res.error) {
+                      toast.info(res.error);
+                    }
+                  }}
+                />
+              );
+            })}
           </div>
 
           {/* Pagination Controls (Matching Home Layout: < Prev  X / Y  Next >) */}
@@ -479,6 +626,20 @@ export function ProductListContent({
             </>
           )}
         </div>
+      )}
+
+      {/* Unified Product Form Modal (전체보기 상품 수정 모달) */}
+      {editingProduct && (
+        <ProductFormModal
+          isOpen={Boolean(editingProduct)}
+          mode="edit"
+          initialProduct={editingProduct}
+          categoriesList={categoriesList}
+          productsList={displayProducts}
+          onClose={() => setEditingProduct(null)}
+          onSave={handleSaveProduct}
+          triggerToast={(msg) => toast.success(msg)}
+        />
       )}
     </>
   );

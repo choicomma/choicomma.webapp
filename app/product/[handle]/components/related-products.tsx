@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import { mockProducts } from "@/lib/sfcc/mock/products";
 
 import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+import { ProductCardImageSlider, extractProductImages } from "@/components/products/product-card-image-slider";
 
 export function RelatedProducts() {
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
@@ -109,12 +110,11 @@ export function RelatedProducts() {
           return (
             <Link key={product.id || idx} href={`/product/${product.handle || product.id}`} className="flex flex-col group cursor-pointer">
               <div className="relative w-full aspect-[3/4] mb-3 overflow-hidden bg-white border border-neutral-100/80 rounded-sm">
-                <Image
-                  src={product.featuredImage?.url || product.images?.[0]?.url || `/product_${(idx % 4) + 1}.webp`}
+                <ProductCardImageSlider
+                  images={extractProductImages(product)}
                   alt={product.title || "Related Product"}
-                  fill
-                  className="object-contain p-2 transition-transform duration-700 group-hover:scale-105"
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  paddingClass="p-2"
+                  imageClassName="object-contain transition-transform duration-700 group-hover:scale-105"
                 />
               </div>
               <div className="flex flex-col items-start gap-1">

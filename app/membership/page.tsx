@@ -60,6 +60,7 @@ import { getAllUserCoupons, getUserCoupons, isLegacyCoupon, syncAdminCouponsFrom
 import { syncSecretTimesalesFromServer, getCachedSecretTimesales } from "@/lib/membership/timesales";
 import { MembershipPopupBanner } from "@/components/membership/membership-popup-banner";
 import { MembershipShopCard } from "@/components/membership/membership-shop-card";
+import { MembershipPromotionCard } from "@/components/membership/membership-promotion-card";
 import { SizeRecommendationTab } from "./components/size-recommendation-tab";
 
 function MembershipContent() {
@@ -204,6 +205,8 @@ function MembershipContent() {
     if (typeof window === "undefined") return false;
     return (
       localStorage.getItem("user_role") === "admin" ||
+      localStorage.getItem("user_role") === "staff" ||
+      (localStorage.getItem("user_grade") || "").toUpperCase() === "STAFF" ||
       sessionStorage.getItem("choicomma_admin_authenticated") === "true" ||
       Boolean(userEmail && userEmail.toLowerCase().includes("admin"))
     );
@@ -211,7 +214,17 @@ function MembershipContent() {
 
   const applicableSecretSales = useMemo(() => {
     return secretSalesList.filter((sale) => {
-      if (sale.status !== "active") return false;
+      if (!sale || sale.status !== "active") return false;
+      if (sale.id === "SECRET-TS-1792479678673") return false;
+      if (!Array.isArray(sale.productIds) || sale.productIds.length === 0) return false;
+
+      // Expiry calculation from createdAt + duration
+      if (sale.createdAt && (sale.durationHours || sale.durationMinutes)) {
+        const start = new Date(sale.createdAt).getTime();
+        const durMs = ((Number(sale.durationHours) || 24) * 3600 + (Number(sale.durationMinutes) || 0) * 60) * 1000;
+        if (!isNaN(start) && start + durMs <= nowTick) return false; // Expired
+      }
+
       if (isAdmin) return true;
       const emailLower = (userEmail || "").toLowerCase().trim();
       const isEmailTargeted = Boolean(
@@ -230,11 +243,90 @@ function MembershipContent() {
       );
       return isEmailTargeted || isGradeTargeted;
     });
-  }, [secretSalesList, userEmail, userGrade, isAdmin]);
+  }, [secretSalesList, userEmail, userGrade, isAdmin, nowTick]);
+
+  const [productsList, setProductsList] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("admin_products");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Sanitize stale localStorage if abnormal timesale flags exist
+            const activeTimeSales = parsed.filter(
+              (p: any) =>
+                p &&
+                p.isTimeSale === true &&
+                p.timeSaleEndDate &&
+                new Date(p.timeSaleEndDate).getTime() > Date.now()
+            );
+            if (activeTimeSales.length <= 20) {
+              return parsed.map((p: any) => {
+                if (p.isTimeSale && (!p.timeSaleEndDate || new Date(p.timeSaleEndDate).getTime() <= Date.now())) {
+                  return { ...p, isTimeSale: false };
+                }
+                return p;
+              });
+            }
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return mockProducts as any[];
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // 1. Load from localStorage if updated by admin
+    const updateProductsFromStorage = () => {
+      try {
+        const saved = localStorage.getItem("admin_products");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProductsList(parsed);
+          }
+        }
+      } catch {}
+    };
+
+    updateProductsFromStorage();
+
+    // 2. Authoritative sync directly from /api/products
+    fetch("/api/products", {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!isMounted || !data) return;
+        const list = Array.isArray(data) ? data : data.products || [];
+        if (Array.isArray(list) && list.length > 0) {
+          setProductsList(list);
+          try {
+            localStorage.setItem("admin_products", JSON.stringify(list));
+            window.dispatchEvent(new CustomEvent("admin_products_updated"));
+          } catch {}
+        }
+      })
+      .catch((err) => {
+        console.warn("[Membership Products Sync Error]:", err);
+      });
+
+    window.addEventListener("admin_products_updated", updateProductsFromStorage);
+    window.addEventListener("storage", updateProductsFromStorage);
+    return () => {
+      isMounted = false;
+      window.removeEventListener("admin_products_updated", updateProductsFromStorage);
+      window.removeEventListener("storage", updateProductsFromStorage);
+    };
+  }, []);
 
   const allAvailableProducts = useMemo(() => {
-    return mockProducts as any[];
-  }, []);
+    return productsList;
+  }, [productsList]);
 
   const handleAddProductToCart = (product: any, discountedPrice?: number) => {
     const finalPrice =
@@ -337,23 +429,6 @@ function MembershipContent() {
       try {
         const parsed = JSON.parse(savedHistory);
         if (Array.isArray(parsed)) historyArr = parsed;
-      } catch (e) {}
-    }
-
-    // 관리자 특별 지급 이력이 누락된 경우 자동 보정 내역 추가
-    const hasAdminGrant = historyArr.some(
-      (h) => h.id === "admin-grant-init-50000" || (h.label && h.label.includes("관리자 지급"))
-    );
-    if (!hasAdminGrant && historyArr.length > 0) {
-      const initialEntry = {
-        id: "admin-grant-init-50000",
-        label: "[관리자 지급] 특별 적립금 지급",
-        date: "2026-10-07",
-        amount: 46000,
-      };
-      historyArr = [initialEntry, ...historyArr];
-      try {
-        localStorage.setItem("membership_points_history", JSON.stringify(historyArr));
       } catch (e) {}
     }
     setPointsHistory(historyArr);
@@ -489,6 +564,8 @@ function MembershipContent() {
     const isAdminSession =
       sessionStorage.getItem("choicomma_admin_authenticated") === "true" ||
       localStorage.getItem("user_role") === "admin" ||
+      localStorage.getItem("user_role") === "staff" ||
+      (localStorage.getItem("user_grade") || "").toUpperCase() === "STAFF" ||
       currentEmail === "admin@choicomma.com" ||
       currentName.includes("최고관리자");
 
@@ -583,7 +660,26 @@ function MembershipContent() {
       })
       .catch(() => {});
 
-    fetch("/api/admin/shipments")
+    const currentEmailParam = (localStorage.getItem("membership_user_email") || userEmail || "").toLowerCase().trim();
+    const currentPhoneParam = (localStorage.getItem("membership_user_phone") || userPhone || "").replace(/[^0-9]/g, "");
+    const currentNameParam = (localStorage.getItem("membership_user_name") || userName || "").trim();
+    const isAdminSessionParam =
+      sessionStorage.getItem("choicomma_admin_authenticated") === "true" ||
+      localStorage.getItem("user_role") === "admin" ||
+      localStorage.getItem("user_role") === "staff" ||
+      (localStorage.getItem("user_grade") || "").toUpperCase() === "STAFF" ||
+      currentEmailParam === "admin@choicomma.com" ||
+      currentNameParam.includes("최고관리자");
+
+    const queryParams = new URLSearchParams({
+      forCustomer: "true",
+      email: currentEmailParam,
+      phone: currentPhoneParam,
+      name: currentNameParam,
+      isAdmin: isAdminSessionParam ? "true" : "false",
+    });
+
+    fetch(`/api/admin/shipments?${queryParams.toString()}`)
       .then((res) => res.json())
       .then((serverShipments) => {
         const list = Array.isArray(serverShipments)
@@ -1724,6 +1820,16 @@ function MembershipContent() {
 
             {/* 쇼핑홈 바로가기 카드 (메인 슬라이드 이미지 활용) */}
             <MembershipShopCard />
+
+            {/* 회원 전용 프로모션 & 실시간 타임세일 카드 */}
+            <MembershipPromotionCard
+              userGrade={userGrade || "VVIP"}
+              userEmail={userEmail || ""}
+              isAdmin={isAdmin}
+              applicableSecretSales={applicableSecretSales}
+              allProducts={productsList}
+              onAddToCart={handleAddProductToCart}
+            />
 
             {/* 회원 등급별 혜택 안내 카드 (회원 등급 혜택 안내표) */}
             <div className="bg-gradient-to-br from-[#8C7A6B] to-[#6E5E52] rounded-3xl p-6 sm:p-8 text-[#FAF7F2] shadow-md space-y-4">

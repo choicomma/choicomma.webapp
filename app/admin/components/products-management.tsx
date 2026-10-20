@@ -33,6 +33,9 @@ import {
   Clock,
   Check,
   ArrowUpToLine,
+  Flame,
+  Lock,
+  Gift,
 } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import * as XLSX from "xlsx";
@@ -112,6 +115,8 @@ interface ProductsManagementProps {
     durationMinutes: number
   ) => void;
   adminTimeSaleProductIds?: string[];
+  secretSalesList?: any[];
+  setSalesList?: any[];
 }
 
 function StockPopover({
@@ -701,6 +706,140 @@ function TablePriceInput({
   );
 }
 
+function TimeSaleRemainingBadge({
+  product,
+  timeSaleInfo,
+}: {
+  product: any;
+  timeSaleInfo: any;
+}) {
+  const [timeLeft, setTimeLeft] = useState<{
+    text: string;
+    isUrgent: boolean;
+    isEnded: boolean;
+  }>({
+    text: "",
+    isUrgent: false,
+    isEnded: false,
+  });
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const pId = String(product.id);
+      const pHandle = product.handle ? String(product.handle) : "";
+      let targetExpiry = 0;
+
+      // 1. Direct timeSaleEndDate on product
+      if (product.timeSaleEndDate) {
+        const parsed = new Date(product.timeSaleEndDate).getTime();
+        if (!isNaN(parsed)) {
+          targetExpiry = parsed;
+        }
+      }
+
+      // 2. Check localStorage secret_timesale_item_expiries
+      if (!targetExpiry && typeof window !== "undefined") {
+        try {
+          const expiriesRaw = localStorage.getItem("secret_timesale_item_expiries");
+          if (expiriesRaw) {
+            const expiries = JSON.parse(expiriesRaw);
+            if (expiries[pId] || (pHandle && expiries[pHandle])) {
+              targetExpiry = Number(expiries[pId] || expiries[pHandle]);
+            }
+          }
+        } catch {}
+      }
+
+      // 3. Check localStorage secret_timesale_item_settings
+      if (!targetExpiry && typeof window !== "undefined") {
+        try {
+          const settingsRaw = localStorage.getItem("secret_timesale_item_settings");
+          if (settingsRaw) {
+            const settings = JSON.parse(settingsRaw);
+            const setting = settings[pId] || (pHandle && settings[pHandle]);
+            if (setting && setting.hours) {
+              const h = Number(setting.hours) || 24;
+              const m = Number(setting.minutes) || 0;
+              const baseTime = product.updated_at || product.createdAt || product.created_at;
+              const startMs = baseTime ? new Date(baseTime).getTime() : Date.now();
+              targetExpiry = startMs + (h * 3600 + m * 60) * 1000;
+            }
+          }
+        } catch {}
+      }
+
+      // 4. Default rolling window: 24 hours or end of current day
+      if (!targetExpiry) {
+        const baseTime = product.updated_at || product.createdAt || product.created_at;
+        const startMs = baseTime ? new Date(baseTime).getTime() : Date.now();
+        const durationHours = 24;
+        const potentialExpiry = startMs + durationHours * 3600 * 1000;
+
+        if (potentialExpiry > Date.now()) {
+          targetExpiry = potentialExpiry;
+        } else {
+          const endOfDay = new Date();
+          endOfDay.setHours(23, 59, 59, 999);
+          targetExpiry = endOfDay.getTime();
+        }
+      }
+
+      const diffMs = targetExpiry - Date.now();
+      if (diffMs <= 0) {
+        setTimeLeft({
+          text: "00:00:00",
+          isUrgent: true,
+          isEnded: true,
+        });
+        return;
+      }
+
+      const totalSec = Math.floor(diffMs / 1000);
+      const days = Math.floor(totalSec / 86400);
+      const hours = Math.floor((totalSec % 86400) / 3600);
+      const minutes = Math.floor((totalSec % 3600) / 60);
+      const seconds = totalSec % 60;
+
+      const pad = (n: number) => String(n).padStart(2, "0");
+
+      let formatted = "";
+      if (days > 0) {
+        formatted = `D-${days} ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      } else {
+        formatted = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      }
+
+      setTimeLeft({
+        text: formatted,
+        isUrgent: totalSec < 3600,
+        isEnded: false,
+      });
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, [product, timeSaleInfo]);
+
+  if (!timeLeft.text) return null;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border shadow-2xs whitespace-nowrap select-none transition-colors ${
+        timeLeft.isEnded
+          ? "bg-neutral-100 text-neutral-500 border-neutral-200"
+          : timeLeft.isUrgent
+          ? "bg-rose-50 text-rose-700 border-rose-300 animate-pulse"
+          : "bg-amber-50 text-amber-900 border-amber-200/90"
+      }`}
+      title={timeLeft.isEnded ? "타임세일 종료" : `세일 마감까지 남은 시간: ${timeLeft.text}`}
+    >
+      <Clock className={`w-2.5 h-2.5 shrink-0 ${timeLeft.isUrgent ? "text-rose-600" : "text-amber-700 animate-pulse"}`} />
+      <span>{timeLeft.text}</span>
+    </span>
+  );
+}
+
 export function ProductsManagement({
   productsList,
   filteredProducts,
@@ -748,6 +887,8 @@ export function ProductsManagement({
   handleQuickUpdateReleaseSchedule,
   handleQuickUpdateTimeSale,
   adminTimeSaleProductIds = [],
+  secretSalesList = [],
+  setSalesList = [],
 }: ProductsManagementProps) {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [excelPreviewItems, setExcelPreviewItems] = useState<any[]>([]);
@@ -765,6 +906,187 @@ export function ProductsManagement({
 
   // Active Time Setting Popover Product ID
   const [activeTimePopoverId, setActiveTimePopoverId] = useState<string | null>(null);
+
+  // Time Sale & Set Sale Detection for Product Rows (Differentiates Public Time Sale, Set Bundle Sale, and Secret VIP Time Sale)
+  const getProductTimeSaleInfo = useCallback((p: any) => {
+    const pId = String(p.id);
+    const pHandle = p.handle ? String(p.handle) : "";
+
+    let isDirectTimeSale = false;
+    let directRate: number | null = null;
+
+    // 1. Direct property on product
+    if (p.isTimeSale) {
+      isDirectTimeSale = true;
+      directRate = p.timeSaleDiscountRate !== undefined && p.timeSaleDiscountRate !== null && p.timeSaleDiscountRate !== ""
+        ? Number(p.timeSaleDiscountRate)
+        : null;
+    } else if (p.categoryId === "timesale") {
+      isDirectTimeSale = true;
+      directRate = p.timeSaleDiscountRate ? Number(p.timeSaleDiscountRate) : null;
+    } else if (
+      Array.isArray(adminTimeSaleProductIds) &&
+      (adminTimeSaleProductIds.includes(pId) || (pHandle && adminTimeSaleProductIds.includes(pHandle)))
+    ) {
+      isDirectTimeSale = true;
+      directRate = p.timeSaleDiscountRate ? Number(p.timeSaleDiscountRate) : null;
+    }
+
+    let isSecretSale = false;
+    let secretRate: number | null = null;
+    let secretTitle = "";
+
+    // 2. secretSalesList (member targeted / VIP secret promotions)
+    if (Array.isArray(secretSalesList)) {
+      const activeSale = secretSalesList.find(
+        (sale) =>
+          sale &&
+          sale.id !== "SECRET-TS-1792479678673" &&
+          sale.status !== "ended" &&
+          sale.status !== "paused" &&
+          Array.isArray(sale.productIds) &&
+          (sale.productIds.includes(pId) || (pHandle && sale.productIds.includes(pHandle)))
+      );
+      if (activeSale) {
+        isSecretSale = true;
+        secretRate = activeSale.discountRate || null;
+        secretTitle = activeSale.title || "시크릿 타임세일";
+      }
+    }
+
+    // 3. Fallback check from localStorage for secret timesale (strictly check admin_secret_timesales)
+    if (!isSecretSale && typeof window !== "undefined") {
+      try {
+        const rawSecret = localStorage.getItem("admin_secret_timesales");
+        if (rawSecret) {
+          const parsedSecret = JSON.parse(rawSecret);
+          if (Array.isArray(parsedSecret)) {
+            const activeSale = parsedSecret.find(
+              (sale: any) =>
+                sale &&
+                sale.id !== "SECRET-TS-1792479678673" &&
+                sale.status !== "ended" &&
+                sale.status !== "paused" &&
+                Array.isArray(sale.productIds) &&
+                (sale.productIds.includes(pId) || (pHandle && sale.productIds.includes(pHandle)))
+            );
+            if (activeSale) {
+              isSecretSale = true;
+              secretRate = activeSale.discountRate || null;
+              secretTitle = activeSale.title || "시크릿 타임세일";
+            }
+          }
+        }
+      } catch {}
+    }
+
+    // 4. Set Sale / Set Bundle Discount Detection (세트상품할인 / 2SET)
+    let isSetSale = false;
+    let setRate: number | null = null;
+    let setTitle = "세트할인";
+
+    // 4-a. Check setSalesList
+    if (Array.isArray(setSalesList)) {
+      const activeSet = setSalesList.find(
+        (s: any) =>
+          s &&
+          s.status !== "ended" &&
+          (String(s.id) === pId ||
+            `set-product-${s.id}` === pId ||
+            (Array.isArray(s.items) &&
+              s.items.some(
+                (it: any) =>
+                  String(it.productId || it.id) === pId ||
+                  (pHandle && String(it.productId || it.id) === pHandle)
+              )))
+      );
+      if (activeSet) {
+        isSetSale = true;
+        setRate = activeSet.discountRate || null;
+        setTitle = activeSet.title || "세트할인";
+      }
+    }
+
+    // 4-b. Fallback check admin_set_sales in localStorage
+    if (!isSetSale && typeof window !== "undefined") {
+      try {
+        const rawSets = localStorage.getItem("admin_set_sales");
+        if (rawSets) {
+          const parsedSets = JSON.parse(rawSets);
+          if (Array.isArray(parsedSets)) {
+            const activeSet = parsedSets.find(
+              (s: any) =>
+                s &&
+                s.status !== "ended" &&
+                (String(s.id) === pId ||
+                  `set-product-${s.id}` === pId ||
+                  (Array.isArray(s.items) &&
+                    s.items.some(
+                      (it: any) =>
+                        String(it.productId || it.id) === pId ||
+                        (pHandle && String(it.productId || it.id) === pHandle)
+                    )))
+            );
+            if (activeSet) {
+              isSetSale = true;
+              setRate = activeSet.discountRate || null;
+              setTitle = activeSet.title || "세트할인";
+            }
+          }
+        }
+      } catch {}
+    }
+
+    // 4-c. Check tags, title, image, bulkDiscount for set item indicators
+    const titleUpper = (p.title || "").toUpperCase();
+    const tagsList = Array.isArray(p.tags) ? p.tags.map((t: string) => String(t).toUpperCase()) : [];
+    const isSetByTags =
+      tagsList.includes("SET_SALE") ||
+      tagsList.includes("SET_BUNDLE") ||
+      tagsList.includes("2SET") ||
+      tagsList.includes("3SET") ||
+      tagsList.some((t: string) => t.includes("SET"));
+    const isSetByTitle =
+      titleUpper.includes("2SET") ||
+      titleUpper.includes("3SET") ||
+      titleUpper.includes("세트") ||
+      titleUpper.includes("[2개구매]");
+    const imgUrlUpper = (p.featuredImage?.url || "").toUpperCase();
+    const isSetByImage = imgUrlUpper.includes("2SET") || imgUrlUpper.includes("SET");
+    const isSetById = String(p.id).startsWith("set-product-") || Boolean(p.isSetProduct);
+    const isSetByBulk = Boolean(p.bulkDiscount?.enabled);
+
+    if (!isSetSale && (isSetByTags || isSetByTitle || isSetByImage || isSetById || isSetByBulk)) {
+      isSetSale = true;
+      if (p.bulkDiscount?.enabled && Array.isArray(p.bulkDiscount.rules) && p.bulkDiscount.rules[0]?.rate) {
+        setRate = Number(p.bulkDiscount.rules[0].rate);
+      } else if (p.timeSaleDiscountRate) {
+        setRate = Number(p.timeSaleDiscountRate);
+      } else {
+        const tagRate = tagsList.find((t: string) => t.startsWith("TSRATE:"))?.replace("TSRATE:", "");
+        if (tagRate && !isNaN(Number(tagRate))) {
+          setRate = Number(tagRate);
+        }
+      }
+      setTitle = (isSetByTitle && titleUpper.includes("2SET")) || (isSetByTags && tagsList.includes("2SET")) || (isSetByImage && imgUrlUpper.includes("2SET")) ? "2SET 세트특가" : "세트상품할인";
+    }
+
+    const isTimeSale = isDirectTimeSale || isSecretSale;
+    const discountRate = secretRate || directRate || setRate || null;
+
+    return {
+      isTimeSale,
+      isDirectTimeSale,
+      isSecretSale,
+      isSetSale,
+      directRate,
+      secretRate,
+      setRate,
+      secretTitle,
+      setTitle,
+      discountRate,
+    };
+  }, [adminTimeSaleProductIds, secretSalesList, setSalesList]);
 
 
   // Bulk Selection State
@@ -808,17 +1130,26 @@ export function ProductsManagement({
         ).length;
       }
       const target = catId.toLowerCase();
+      if (target === "timesale_public") {
+        return productsList.filter((p) => {
+          if (p.categoryId === "main_banner" || String(p.id).startsWith("hero-slide-")) return false;
+          const info = getProductTimeSaleInfo(p);
+          return info.isDirectTimeSale;
+        }).length;
+      }
+      if (target === "timesale_secret") {
+        return productsList.filter((p) => {
+          if (p.categoryId === "main_banner" || String(p.id).startsWith("hero-slide-")) return false;
+          const info = getProductTimeSaleInfo(p);
+          return info.isSecretSale;
+        }).length;
+      }
       if (target === "timesale") {
-        return productsList.filter(
-          (p) =>
-            p.categoryId !== "main_banner" &&
-            !String(p.id).startsWith("hero-slide-") &&
-            ((p.categoryId && String(p.categoryId).toLowerCase() === "timesale") ||
-              (Array.isArray(p.categoryIds) &&
-                p.categoryIds.some((c: any) => String(c).toLowerCase() === "timesale")) ||
-              p.isTimeSale === true ||
-              (p.timeSaleDiscountRate !== undefined && Number(p.timeSaleDiscountRate) > 0))
-        ).length;
+        return productsList.filter((p) => {
+          if (p.categoryId === "main_banner" || String(p.id).startsWith("hero-slide-")) return false;
+          const info = getProductTimeSaleInfo(p);
+          return info.isTimeSale;
+        }).length;
       }
       return productsList.filter(
         (p) =>
@@ -829,7 +1160,7 @@ export function ProductsManagement({
               p.categoryIds.some((c: any) => String(c).toLowerCase() === target)))
       ).length;
     },
-    [productsList]
+    [productsList, getProductTimeSaleInfo]
   );
 
   // When a new product is added (productsList length increases), reset metric filter to "all" and currentPage to 1
@@ -1490,10 +1821,11 @@ export function ProductsManagement({
           let timeSaleDiscountPrice: string | undefined = undefined;
 
           if (discountAmtRaw) {
-            const amtNum = typeof discountAmtRaw === "number" ? discountAmtRaw : parseInt(String(discountAmtRaw).replace(/[^0-9]/g, ""), 10) || 0;
+            const firstPart = String(discountAmtRaw).split(/[,/]/)[0].trim();
+            const amtNum = typeof discountAmtRaw === "number" ? discountAmtRaw : parseInt(firstPart.replace(/[^0-9]/g, ""), 10) || 0;
             if (amtNum > 0) {
               isTimeSale = true;
-              if (discountUnit === "%" || amtNum <= 90) {
+              if (discountUnit.includes("%") || amtNum <= 90) {
                 timeSaleDiscountRate = amtNum;
                 timeSaleDiscountPrice = String(Math.round(priceNum * (1 - amtNum / 100)));
               } else {
@@ -1910,7 +2242,10 @@ export function ProductsManagement({
               className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 cursor-pointer"
             >
               <option value="all">전체 카테고리 ({getCategoryCount("all")}개)</option>
-              {categoriesList.map((c) => (
+              <option value="timesale_public">🔥 타임세일 (전체 공개) ({getCategoryCount("timesale_public")}개)</option>
+              <option value="timesale_secret">🔒 시크릿 세일 (VIP 전용) ({getCategoryCount("timesale_secret")}개)</option>
+              <option value="timesale">⚡ 타임세일 전체 (일반+시크릿) ({getCategoryCount("timesale")}개)</option>
+              {categoriesList.filter((c) => c.id !== "timesale").map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name} ({getCategoryCount(c.id)}개)
                 </option>
@@ -1925,9 +2260,9 @@ export function ProductsManagement({
               onChange={(e) => setProductSortOrder(e.target.value as any)}
               className="bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 cursor-pointer"
             >
-              <option value="productNoDesc">상품번호 높은 순 (최신순 / 기본)</option>
+              <option value="custom">진열 순서 (기본 / 이동 및 드래그 순서)</option>
+              <option value="productNoDesc">상품번호 높은 순 (최신 등록순)</option>
               <option value="productNoAsc">상품번호 낮은 순</option>
-              <option value="custom">사용자 지정 순서 (드래그 앤 드롭)</option>
               <option value="nameAsc">상품명순 (가나다)</option>
               <option value="priceDesc">높은 가격순</option>
               <option value="priceAsc">낮은 가격순</option>
@@ -2112,6 +2447,7 @@ export function ProductsManagement({
                   const isSelected = selectedProductIds.includes(String(p.id));
                   const isDragging = draggedProductId === String(p.id);
                   const isDropTarget = dropTargetId === String(p.id);
+                  const timeSaleInfo = getProductTimeSaleInfo(p);
 
                   return (
                     <tr
@@ -2207,7 +2543,7 @@ export function ProductsManagement({
                         {prodNo}
                       </td>
                       <td className="py-2 px-3 whitespace-nowrap">
-                        <div className="w-9 h-9 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200 group-hover:scale-105 transition-transform">
+                        <div className="w-9 h-9 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200 group-hover:scale-105 transition-transform relative shrink-0">
                           <img
                             src={p.featuredImage?.url || "/product_1.webp"}
                             alt={p.title}
@@ -2216,7 +2552,7 @@ export function ProductsManagement({
                         </div>
                       </td>
                       <td className="py-2 px-4 min-w-[200px]">
-                        <p className="font-bold text-neutral-950 text-xs group-hover:text-amber-800 transition-colors flex items-center gap-1.5 whitespace-normal">
+                        <p className="font-bold text-neutral-950 text-xs group-hover:text-amber-800 transition-colors inline-flex items-center gap-1.5 whitespace-normal">
                           <span>{p.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim()}</span>
                           <span className="text-[10px] text-amber-700 font-normal shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                             [클릭하여 수정]
@@ -2247,14 +2583,72 @@ export function ProductsManagement({
 
                       {/* Price Quick Edit Input */}
                       <td className="py-2 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
-                        <TablePriceInput
-                          initialPrice={p.priceRange?.minVariantPrice?.amount || p.price?.amount || 0}
-                          onSavePrice={(newPrice) => {
-                            if (handleQuickUpdatePrice) {
-                              handleQuickUpdatePrice(String(p.id), newPrice);
-                            }
-                          }}
-                        />
+                        {(() => {
+                          const rawMin = Number(p.priceRange?.minVariantPrice?.amount || p.price?.amount || 0);
+                          const rawMax = Number(p.priceRange?.maxVariantPrice?.amount || p.price?.amount || 0);
+                          const origPriceNum = rawMax > rawMin ? rawMax : (rawMin > 0 ? rawMin : 0);
+                          const isTS = timeSaleInfo.isTimeSale || timeSaleInfo.isSetSale;
+                          const discountRate = timeSaleInfo.discountRate ?? p.timeSaleDiscountRate;
+                          let salePriceNum = origPriceNum;
+
+                          if (p.timeSaleDiscountPrice && Number(p.timeSaleDiscountPrice) > 0) {
+                            salePriceNum = Number(p.timeSaleDiscountPrice);
+                          } else if (isTS && discountRate && discountRate > 0) {
+                            salePriceNum = Math.round(origPriceNum * (1 - discountRate / 100));
+                          } else if (rawMax > rawMin && rawMin > 0) {
+                            salePriceNum = rawMin;
+                          }
+
+                          const hasDiscount = isTS && salePriceNum < origPriceNum && salePriceNum > 0;
+
+                          if (hasDiscount) {
+                            return (
+                              <div className="flex flex-col items-start gap-0.5 leading-tight">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <TablePriceInput
+                                    initialPrice={salePriceNum}
+                                    onSavePrice={(newPrice) => {
+                                      if (handleQuickUpdatePrice) {
+                                        handleQuickUpdatePrice(String(p.id), newPrice);
+                                      }
+                                    }}
+                                  />
+                                  {timeSaleInfo.isSecretSale ? (
+                                    <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded shadow-2xs flex items-center gap-0.5">
+                                      <Lock className="w-2.5 h-2.5 text-indigo-600" />
+                                      {timeSaleInfo.secretRate ? `${timeSaleInfo.secretRate}% 시크릿특가` : "시크릿특가"}
+                                    </span>
+                                  ) : timeSaleInfo.isSetSale && !timeSaleInfo.isDirectTimeSale ? (
+                                    <span className="text-[10px] font-black text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded shadow-2xs flex items-center gap-0.5">
+                                      <Gift className="w-2.5 h-2.5 text-purple-600" />
+                                      {timeSaleInfo.setRate ? `${timeSaleInfo.setRate}% 세트특가` : "세트특가"}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-black text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded shadow-2xs flex items-center gap-0.5">
+                                      <Flame className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
+                                      {discountRate ? `${discountRate}% 일반특가` : "일반특가"}
+                                    </span>
+                                  )}
+                                  <TimeSaleRemainingBadge product={p} timeSaleInfo={timeSaleInfo} />
+                                </div>
+                                <span className="text-[10px] text-neutral-400 line-through font-semibold pl-1" title="기본 정가">
+                                  정가 {origPriceNum.toLocaleString()}원
+                                </span>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <TablePriceInput
+                              initialPrice={p.priceRange?.minVariantPrice?.amount || p.price?.amount || 0}
+                              onSavePrice={(newPrice) => {
+                                if (handleQuickUpdatePrice) {
+                                  handleQuickUpdatePrice(String(p.id), newPrice);
+                                }
+                              }}
+                            />
+                          );
+                        })()}
                       </td>
                       <td className="py-2 px-3 whitespace-nowrap relative" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1.5 relative">
