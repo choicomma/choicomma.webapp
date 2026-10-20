@@ -15,10 +15,22 @@ export function extractProductImages(product: any): string[] {
   if (!product) return ["/product_1.webp"];
   const list: string[] = [];
 
+  const isPlaceholder = (url: string) => {
+    if (!url) return true;
+    const lower = url.trim().toLowerCase();
+    return (
+      lower === "/product_1.webp" ||
+      lower === "/product_placeholder.webp" ||
+      lower.includes("placeholder")
+    );
+  };
+
   const add = (url: any) => {
     if (!url || typeof url !== "string") return;
     const trimmed = url.trim();
     if (!trimmed || trimmed === "undefined" || trimmed === "null") return;
+    // 대체용 더미 이미지(/product_1.webp 등)는 실제 상품 이미지가 존재할 때 절대 추가하지 않음
+    if (isPlaceholder(trimmed)) return;
     if (!list.includes(trimmed)) {
       list.push(trimmed);
     }
@@ -34,7 +46,7 @@ export function extractProductImages(product: any): string[] {
     add(product.featuredImage.url);
   }
 
-  // 3. images array
+  // 3. images array (사용자가 등록한 상품 이미지 목록)
   if (Array.isArray(product.images)) {
     const detailHtml = product.detailDescription || product.descriptionHtml || "";
     product.images.forEach((img: any, idx: number) => {
@@ -47,8 +59,9 @@ export function extractProductImages(product: any): string[] {
     });
   }
 
-  // 4. colorImages if present
-  if (product.colorImages && typeof product.colorImages === "object") {
+  // 4. colorImages if present: 상품 이미지가 0~1개만 있을 때만 보조적으로 추가
+  // (사용자가 4장 이상의 제품 이미지를 등록한 경우 옵션컷이나 더미 플레이스홀더가 5번째 이미지로 끼어들지 않도록 방지)
+  if (list.length <= 1 && product.colorImages && typeof product.colorImages === "object") {
     Object.values(product.colorImages).forEach((u: any) => {
       if (typeof u === "string") add(u);
     });
@@ -72,20 +85,20 @@ interface ProductCardImageSliderProps {
 
 /**
  * Pure element-free product image slider:
- * - Auto-slides smoothly when multiple images are registered
- * - ZERO UI elements: No arrows, no dots, no badges, no counter numbers
- * - True infinite seamless forward sliding
- * - Mobile touch swipe supported without blocking card click/navigation
+ * - 평상시: 0번 대표 이미지(앞모습)를 기본으로 표시
+ * - PC 호버 시: 1번 호버백이미지(뒷모습)로 즉시 전환되고, 3장 이상일 경우 순차 슬라이드 프리뷰
+ * - 마우스 벗어날 시: 즉시 0번 대표 이미지로 복귀 (호버백이미지가 기본으로 떠 있는 오류 차단)
+ * - 모바일 터치 스와이프 지원 (무차별 자동 타이머 슬라이드로 인한 강제 전환 방지)
  */
 export function ProductCardImageSlider({
   images,
   alt,
   paddingClass = "p-3 sm:p-5 md:p-7",
   imageClassName = "object-contain transition-transform duration-700 group-hover:scale-105",
-  intervalMs = 3200,
+  intervalMs = 2800,
   priority = false,
 }: ProductCardImageSliderProps) {
-  // Deduplicate and sanitize
+  // Deduplicate and sanitize (실제 이미지가 1장 이상 등록된 경우 더미 플레이스홀더 /product_1.webp 제거)
   const cleanImages = useMemo(() => {
     const list: string[] = [];
     (images || []).forEach((img) => {
@@ -94,6 +107,12 @@ export function ProductCardImageSlider({
         list.push(u);
       }
     });
+    const isPlaceholder = (u: string) =>
+      u === "/product_1.webp" || u === "/product_placeholder.webp" || u.includes("placeholder");
+    const nonPlaceholders = list.filter((u) => !isPlaceholder(u));
+    if (nonPlaceholders.length > 0) {
+      return nonPlaceholders;
+    }
     return list.length > 0 ? list : ["/product_1.webp"];
   }, [images]);
 
@@ -135,23 +154,30 @@ function PureElementFreeSlider({
   alt,
   paddingClass,
   imageClassName,
-  intervalMs,
+  intervalMs = 2800,
   priority,
 }: {
   images: string[];
   alt: string;
   paddingClass: string;
   imageClassName: string;
-  intervalMs: number;
+  intervalMs?: number;
   priority: boolean;
 }) {
   // Append first image at the end to form a true infinite loop [0, 1, ..., N-1, 0]
   const slides = useMemo(() => [...images, images[0]], [images]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [enableTransition, setEnableTransition] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
 
-  // Auto slide interval
+  // Auto-slide interval:
+  // - 첫 로드 시 항상 0번 대표 이미지(앞모습)부터 시작
+  // - 등록된 4개 이미지를 3초 간격으로 순차적/부드럽게 자동 슬라이드 (1 -> 2 -> 3 -> 4 -> 1...)
+  // - PC 마우스 호버 시 일시 정지(pause)하여 고객이 현재 사진을 멈춰서 상세히 감상할 수 있음
+  // - 마우스가 벗어나면 자연스럽게 다음 슬라이드로 자동 순환 재개
   useEffect(() => {
+    if (isHovered) return;
+
     const timer = setInterval(() => {
       if (typeof document !== "undefined" && document.hidden) return;
       setEnableTransition(true);
@@ -162,7 +188,7 @@ function PureElementFreeSlider({
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [images.length, intervalMs]);
+  }, [isHovered, images.length, intervalMs]);
 
   // When transition to the duplicate last slide finishes, silently jump back to index 0
   const handleTransitionEnd = () => {
@@ -212,6 +238,8 @@ function PureElementFreeSlider({
         "relative w-full aspect-square bg-white flex items-center justify-center overflow-hidden select-none",
         paddingClass
       )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

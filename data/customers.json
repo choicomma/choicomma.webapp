@@ -36,8 +36,8 @@
     "joinedDate": "2026-09-28",
     "status": "Active",
     "role": "STAFF",
-    "isAdmin": false,
-    "updated_at": "2026-10-15T11:08:34.587Z",
+    "isAdmin": true,
+    "updated_at": "2026-10-20T15:22:37.923Z",
     "created_at": "2026-10-08T12:04:31.660839+00:00",
     "totalOrders": 0,
     "group": "직원",
@@ -57,9 +57,9 @@
     "joinedDate": "2026-10-07",
     "status": "Active",
     "role": "STAFF",
-    "isAdmin": false,
+    "isAdmin": true,
     "created_at": "2026-10-07T11:01:03.954568+00:00",
-    "updated_at": "2026-10-15T11:08:34.745Z",
+    "updated_at": "2026-10-20T15:22:38.132Z",
     "postcode": "10401",
     "detailAddress": "(장항동, 삼라 마이다스빌)",
     "totalOrders": 0,
@@ -82,10 +82,11 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "created_at": "2026-10-08T08:16:41.542516+00:00",
-    "updated_at": "2026-10-15T11:08:34.850Z",
+    "updated_at": "2026-10-20T15:22:38.259Z",
     "postcode": "47594",
     "detailAddress": "(연산동)",
-    "totalOrders": 17
+    "totalOrders": 17,
+    "isStaff": false
   },
   {
     "id": "onlyma",
@@ -102,7 +103,7 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "created_at": "2026-10-08T13:58:18.870634+00:00",
-    "updated_at": "2026-10-15T11:08:34.961Z",
+    "updated_at": "2026-10-20T15:22:38.379Z",
     "postcode": "10084",
     "detailAddress": "(장기동, 고창마을 한양수자인 리버팰리스)",
     "imwebUid": "m20250926bd724d0a1ca0e",
@@ -112,7 +113,8 @@
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalOrders": 20,
-    "lastLogin": "2026-10-12 / 20:47:27"
+    "lastLogin": "2026-10-12 / 20:47:27",
+    "isStaff": false
   },
   {
     "id": "sundol123",
@@ -129,7 +131,7 @@
     "role": "CUSTOMER",
     "isAdmin": false,
     "created_at": "2026-10-09T04:53:32.255365+00:00",
-    "updated_at": "2026-10-15T11:08:35.055Z",
+    "updated_at": "2026-10-20T15:22:38.564Z",
     "postcode": "41404",
     "detailAddress": "(학정동, 칠곡경북대학교병원)",
     "imwebUid": "m20241026e80d2f777991e",
@@ -139,7 +141,8 @@
     "rawGrade": "우수고객",
     "group": "일반고객 / 카카오 로그인 회원, 우수고객",
     "totalOrders": 27,
-    "lastLogin": "2026-10-12 / 23:52:18"
+    "lastLogin": "2026-10-12 / 23:52:18",
+    "isStaff": false
   },
   {
     "id": "yujeong486",
@@ -142839,5 +142842,24 @@
     "isAdmin": false,
     "postcode": "",
     "detailAddress": ""
+  },
+  {
+    "id": "m202510104099d9945aa3a",
+    "name": "조현우",
+    "email": "chohyeonwoo@kakao.com",
+    "phone": "010-7576-3031",
+    "address": "-",
+    "detailAddress": "",
+    "postcode": "",
+    "grade": "GENERAL",
+    "totalSpent": 0,
+    "points": 0,
+    "couponsCount": 0,
+    "joinedDate": "2025-10-10",
+    "status": "Active",
+    "role": "STAFF",
+    "isAdmin": true,
+    "loginId": "chohyeonwoo@kakao.com",
+    "updated_at": "2026-10-20T15:09:53.502Z"
   }
 ]

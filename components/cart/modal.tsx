@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, TriangleAlert, ShoppingBag } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { createPortal } from "react-dom";
@@ -14,10 +14,12 @@ import { formatPrice } from "@/lib/sfcc/utils";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import TossPaymentModal from "../checkout/toss-payment-modal";
+import { isCustomerLoggedIn } from "@/lib/auth/customer-session";
 
 import { translateUiText, getCurrentLanguage } from "@/lib/i18n/translation";
 
 const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTossModal: () => void }) => {
+  const router = useRouter();
   const { cart, updateCartItem } = useCart();
   const [currentLang, setCurrentLang] = useState("ko");
 
@@ -29,6 +31,17 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
   }, []);
 
   if (!cart) return <></>;
+
+  const handleCheckoutClick = (e: React.MouseEvent) => {
+    if (!isCustomerLoggedIn()) {
+      e.preventDefault();
+      closeCart();
+      alert("로그인을 해주세요.");
+      router.push("/login");
+      return;
+    }
+    closeCart();
+  };
 
   return (
     <div className="flex h-full flex-col justify-between overflow-hidden">
@@ -76,7 +89,7 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
       <div className="pt-2 space-y-2">
         <Link
           href="/checkout"
-          onClick={closeCart}
+          onClick={handleCheckoutClick}
           className="w-full relative flex items-center justify-between gap-3 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold cursor-pointer py-3.5 px-5 rounded-2xl shadow-md transition-all text-sm"
         >
           <span>📋 {translateUiText("결제하기", currentLang)}</span>

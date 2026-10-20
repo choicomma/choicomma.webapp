@@ -358,8 +358,11 @@ export function ProductFormModal({
             return !detailText.includes(url);
           })
         : allProductImgs;
-      setImages(cleanImgs);
-      setImageUrl(cleanImgs[0] || "");
+      // 실제 등록된 이미지가 있는 경우 가짜 더미 이미지(/product_1.webp)는 제품이미지에 추가되지 않도록 필터링
+      const nonDummyImgs = cleanImgs.filter((u: string) => typeof u === "string" && u.trim() !== "/product_1.webp" && !u.includes("placeholder"));
+      const finalModalImgs = nonDummyImgs.length > 0 ? nonDummyImgs : (cleanImgs.length > 0 ? cleanImgs : ["/product_1.webp"]);
+      setImages(finalModalImgs);
+      setImageUrl(finalModalImgs[0] || "");
 
       setStock(initialProduct.stock !== undefined ? Number(initialProduct.stock) : 50);
       setAvailableForSale(initialProduct.availableForSale !== false);
@@ -371,7 +374,14 @@ export function ProductFormModal({
       const initColors = Array.isArray(initialProduct.colors) ? initialProduct.colors : [];
       setColors(initColors);
       setColorHexMap(initialProduct.colorHexMap ? { ...DEFAULT_COLOR_HEX_MAP, ...initialProduct.colorHexMap } : DEFAULT_COLOR_HEX_MAP);
-      setColorImages(initialProduct.colorImages || {});
+      const rawInitColorImgs = initialProduct.colorImages || {};
+      const sanitizedInitColorImgs: Record<string, string> = {};
+      Object.entries(rawInitColorImgs).forEach(([k, v]) => {
+        if (typeof v === "string" && v.trim() && v !== "/product_1.webp" && !v.includes("placeholder")) {
+          sanitizedInitColorImgs[k] = v.trim();
+        }
+      });
+      setColorImages(sanitizedInitColorImgs);
       setCustomColor("");
       setCustomColorImg("");
 
@@ -768,7 +778,9 @@ export function ProductFormModal({
           return !detailDescription.includes(url);
         })
       : images;
-    const finalImages = cleanImages.length > 0 ? cleanImages : [detailFirstImage || "/product_1.webp"];
+    // 실제 이미지가 등록된 경우 가짜 플레이스홀더(/product_1.webp)가 최종 이미지에 추가되지 않도록 차단
+    const nonDummyClean = cleanImages.filter((u: string) => typeof u === "string" && u.trim() !== "/product_1.webp" && !u.includes("placeholder"));
+    const finalImages = nonDummyClean.length > 0 ? nonDummyClean : (cleanImages.length > 0 ? cleanImages : [detailFirstImage || "/product_1.webp"]);
 
     // Product sequence number & code (상품 등록 순서로 순차 자동 부여)
     let finalProdNo: number;
@@ -851,6 +863,15 @@ export function ProductFormModal({
       finalTags = finalTags.filter((t: string) => t !== "TIMESALE");
     }
 
+    const cleanColorImages: Record<string, string> = {};
+    if (colorImages && typeof colorImages === "object") {
+      Object.entries(colorImages).forEach(([k, v]) => {
+        if (typeof v === "string" && v.trim() && v !== "/product_1.webp" && !v.includes("placeholder")) {
+          cleanColorImages[k] = v.trim();
+        }
+      });
+    }
+
     const resultProduct: any = {
       customTitles: formTitles,
       ...(isEdit ? initialProduct : {}),
@@ -877,7 +898,7 @@ export function ProductFormModal({
       productLabel: label,
       colors,
       colorHexMap,
-      colorImages,
+      colorImages: cleanColorImages,
       sizes,
       sizeMeasurements,
       sizeGuideImage: sizeGuideImage ? sizeGuideImage.trim() : undefined,

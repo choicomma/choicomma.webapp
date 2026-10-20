@@ -160,6 +160,7 @@ export function logoutUser(options?: { redirectUrl?: string; clearCart?: boolean
     localStorage.removeItem(STORAGE_KEYS.USER_ADDRESS_DETAIL);
     localStorage.removeItem(STORAGE_KEYS.USER_POINTS);
     localStorage.removeItem(STORAGE_KEYS.USER_GRADE);
+    localStorage.removeItem("membership_user_grade");
     localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
 
     window.dispatchEvent(new CustomEvent("storage"));
@@ -220,3 +221,29 @@ export function validateCustomerSession(): boolean {
     return true;
   }
 }
+
+/**
+ * 현재 방문자가 로그인한 회원인지 판별 (비회원/게스트 여부 검사)
+ * - 관리자/스태프: true
+ * - 유효한 세션을 보유한 로그인 회원: true
+ * - 비로그인 방문자 또는 세션 만료 고객: false
+ */
+export function isCustomerLoggedIn(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (isCurrentUserAdmin()) return true;
+
+    const isLoggedInFlag = localStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN) === "true";
+    const userName = localStorage.getItem(STORAGE_KEYS.USER_NAME);
+    const userEmail = localStorage.getItem(STORAGE_KEYS.USER_EMAIL);
+
+    if (!isLoggedInFlag && !userName && !userEmail) {
+      return false;
+    }
+
+    return validateCustomerSession();
+  } catch {
+    return false;
+  }
+}
+

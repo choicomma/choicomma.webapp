@@ -429,6 +429,331 @@
   ],
   "auditLogs": [
     {
+      "id": "adt_1792512205899_k8bgs",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-459",
+      "targetName": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이",
+      "description": "상품 [[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이] 정보 수정 (가격: 310000원, 재고: 35개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이",
+        "price": "310000",
+        "stock": 35,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[BLACK LABEL]하이엔드 F/W 메리노울100 요크 디테일 브이넥 니트 /멜란지 쿨그레이",
+        "price": "310000",
+        "stock": 35,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 01:03:25",
+      "created_at": "2026-10-20T16:03:25.899Z"
+    },
+    {
+      "id": "adt_1792510677010_w1tm2",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:37:57",
+      "created_at": "2026-10-20T15:37:57.010Z"
+    },
+    {
+      "id": "adt_1792510668191_rygz8",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:37:48",
+      "created_at": "2026-10-20T15:37:48.191Z"
+    },
+    {
+      "id": "adt_1792509784900_9nz2m",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:23:04",
+      "created_at": "2026-10-20T15:23:04.900Z"
+    },
+    {
+      "id": "adt_1792509406669_elydq",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:16:46",
+      "created_at": "2026-10-20T15:16:46.669Z"
+    },
+    {
+      "id": "adt_1792509397213_hv5jt",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:16:37",
+      "created_at": "2026-10-20T15:16:37.213Z"
+    },
+    {
+      "id": "adt_1792509395205_rn4ek",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:16:35",
+      "created_at": "2026-10-20T15:16:35.205Z"
+    },
+    {
+      "id": "adt_1792509394139_k5q5w",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:16:34",
+      "created_at": "2026-10-20T15:16:34.139Z"
+    },
+    {
+      "id": "adt_1792509393366_m0mmc",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:16:33",
+      "created_at": "2026-10-20T15:16:33.366Z"
+    },
+    {
+      "id": "adt_1792509392190_herre",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:16:32",
+      "created_at": "2026-10-20T15:16:32.190Z"
+    },
+    {
+      "id": "adt_1792509388799_qpsv9",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:16:28",
+      "created_at": "2026-10-20T15:16:28.799Z"
+    },
+    {
+      "id": "adt_1792509386753_bel0j",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:16:26",
+      "created_at": "2026-10-20T15:16:26.753Z"
+    },
+    {
+      "id": "adt_1792509357312_i0hsq",
+      "adminId": "admin_master",
+      "adminName": "상품 관리자",
+      "actionType": "UPDATE",
+      "domain": "PRODUCT",
+      "targetId": "excel-product-471",
+      "targetName": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+      "description": "상품 [[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스] 정보 수정 (가격: 270000원, 재고: 155개, 상태: 판매중)",
+      "beforeData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "afterData": {
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000",
+        "stock": 155,
+        "availableForSale": true
+      },
+      "ipAddress": "",
+      "timestamp": "2026-10-21 00:15:57",
+      "created_at": "2026-10-20T15:15:57.312Z"
+    },
+    {
       "id": "adt_1792506202861_gv9fh",
       "adminId": "admin_master",
       "adminName": "상품 관리자",
@@ -3076,5 +3401,5 @@
       "created_at": "2026-10-13T12:48:15.593Z"
     }
   ],
-  "updatedAt": "2026-10-20T14:23:22.863Z"
+  "updatedAt": "2026-10-20T16:03:25.902Z"
 }

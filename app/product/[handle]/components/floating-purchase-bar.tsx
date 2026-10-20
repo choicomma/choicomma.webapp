@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
 import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
+import { isCustomerLoggedIn } from "@/lib/auth/customer-session";
 
 interface FloatingPurchaseBarProps {
   product: Product;
@@ -432,6 +433,13 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
 
   // 구매하기 (장바구니 추가 없이 주문서로 바로 이동)
   const handleBuyNow = () => {
+    // 비회원 구매 제한: 로그인 안내 알림 후 로그인창으로 이동
+    if (!isCustomerLoggedIn()) {
+      alert("로그인을 해주세요.");
+      router.push("/login");
+      return;
+    }
+
     if (parsedColors.length > 0 && !selectedColor) {
       setIsColorOpen(true);
       toast.error("색상을 선택해 주세요.");

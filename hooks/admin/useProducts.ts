@@ -165,8 +165,9 @@ export function sanitizeProductsForLocalStorage(list: any[]): any[] {
       Object.entries(colorImages).forEach(([k, v]) => {
         if (typeof v === "string" && v.startsWith("data:image")) {
           hasBase64 = true;
-          sanitizedColorImages[k] = "/product_1.webp";
-        } else if (typeof v === "string") {
+          // base64 용량 절약 시 가짜 placeholder(/product_1.webp)가 주입되지 않도록 빈 문자열 처리
+          sanitizedColorImages[k] = "";
+        } else if (typeof v === "string" && v !== "/product_1.webp") {
           sanitizedColorImages[k] = v;
         }
       });

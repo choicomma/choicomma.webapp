@@ -404,9 +404,15 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
                 if (!localItem) return p;
                 const localTime = localItem.updated_at ? new Date(localItem.updated_at).getTime() : 0;
                 const serverTime = p.updated_at ? new Date(p.updated_at).getTime() : 0;
-                // 로컬에 더 최신이거나 메인진열 상태가 명시되어 있다면 로컬 오버레이 적용
+                // 로컬에 더 최신이거나 메인진열 상태가 명시되어 있다면 로컬 오버레이 적용 (단, 로컬 절약본이 서버의 4개 원본 이미지를 덮어쓰지 않도록 보호)
                 if (localTime >= serverTime && localItem.isMainFeatured !== undefined) {
-                  return { ...p, ...localItem };
+                  const hasDummyImgs = Array.isArray(localItem.images) && localItem.images.some((im: any) => (typeof im === "string" ? im : im?.url) === "/product_1.webp");
+                  const preserveServerImages = (localItem._lightStripped || hasDummyImgs) && Array.isArray(p.images) && p.images.length > 0;
+                  return {
+                    ...p,
+                    ...localItem,
+                    ...(preserveServerImages ? { images: p.images, featuredImage: p.featuredImage } : {}),
+                  };
                 }
                 return p;
               });

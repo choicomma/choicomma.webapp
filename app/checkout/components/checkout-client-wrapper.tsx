@@ -40,6 +40,7 @@ import {
   calculateCouponDiscount,
 } from "@/lib/membership/coupons";
 import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
+import { isCustomerLoggedIn } from "@/lib/auth/customer-session";
 
 export default function CheckoutClientWrapper() {
   const router = useRouter();
@@ -48,6 +49,9 @@ export default function CheckoutClientWrapper() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const isMember = isCustomerLoggedIn();
+      setIsLoggedInUser(isMember);
+
       const savedDirect = sessionStorage.getItem("choicomma_direct_order");
       if (savedDirect) {
         try {
@@ -98,6 +102,14 @@ export default function CheckoutClientWrapper() {
   // Sync Member Profile from 회원 정보 관리 & 세션 (admin_customers / membership_user_*)
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const isMember = isCustomerLoggedIn();
+      setIsLoggedInUser(isMember);
+
+      // 비회원인 경우: 더미 기본값(customer@choicomma.com, 010-1234-5678, 고객님 등)을 주입하지 않고 빈 값 유지
+      if (!isMember) {
+        return;
+      }
+
       const savedName = localStorage.getItem("membership_user_name") || "";
       const savedEmail = localStorage.getItem("membership_user_email") || "";
       const savedPhone = localStorage.getItem("membership_user_phone") || "";
@@ -128,18 +140,18 @@ export default function CheckoutClientWrapper() {
         } catch (e) {}
       }
 
-      let finalName = matchedCust?.name || savedName || "고객님";
-      let finalEmail = matchedCust?.email || savedEmail || "customer@choicomma.com";
-      let finalPhone = matchedCust?.phone || savedPhone || "010-1234-5678";
-      let rawTargetAddress = matchedCust?.address || savedAddress || "서울특별시 강남구 테헤란로 123";
-      let rawFallbackPostcode = matchedCust?.postcode || savedPostcode || "06306";
+      let finalName = matchedCust?.name || savedName;
+      let finalEmail = matchedCust?.email || savedEmail;
+      let finalPhone = matchedCust?.phone || savedPhone;
+      let rawTargetAddress = matchedCust?.address || savedAddress;
+      let rawFallbackPostcode = matchedCust?.postcode || savedPostcode;
       let rawFallbackDetail = matchedCust?.detailAddress || matchedCust?.addressDetail || savedDetail || "";
 
-      // 지능형 한국 주소 파서를 통한 우편번호/기본주소/상세주소 완벽 분리
-      const parsed = splitKoreanAddress(rawTargetAddress, rawFallbackPostcode, rawFallbackDetail);
-      let finalPostcode = parsed.postcode || rawFallbackPostcode || "06306";
-      let finalAddress = parsed.baseAddress || "서울특별시 강남구 테헤란로 123";
-      let finalDetail = parsed.detailAddress || rawFallbackDetail || "";
+      // 지능형 한국 주소 파서를 통한 우편번호/기본주소/상세주소 분리
+      const parsed = rawTargetAddress ? splitKoreanAddress(rawTargetAddress, rawFallbackPostcode, rawFallbackDetail) : null;
+      let finalPostcode = parsed?.postcode || rawFallbackPostcode || "";
+      let finalAddress = parsed?.baseAddress || rawTargetAddress || "";
+      let finalDetail = parsed?.detailAddress || rawFallbackDetail || "";
 
       // 만약 분리 후에도 상세주소가 비어있고 localStorage에 저장된 savedDetail이 있다면 보정
       if (!finalDetail && savedDetail) {
@@ -151,14 +163,14 @@ export default function CheckoutClientWrapper() {
 
       setFormData((prev) => ({
         ...prev,
-        ordererName: prev.ordererName || finalName,
-        ordererEmail: prev.ordererEmail || finalEmail,
-        ordererPhone: prev.ordererPhone || finalPhone,
-        recipientName: prev.recipientName || finalName,
-        recipientPhone: prev.recipientPhone || finalPhone,
-        postcode: prev.postcode && prev.postcode !== "06123" && prev.postcode !== "06306" ? prev.postcode : finalPostcode,
-        address: finalAddress,
-        addressDetail: finalDetail,
+        ordererName: prev.ordererName || finalName || "",
+        ordererEmail: prev.ordererEmail || finalEmail || "",
+        ordererPhone: prev.ordererPhone || finalPhone || "",
+        recipientName: prev.recipientName || finalName || "",
+        recipientPhone: prev.recipientPhone || finalPhone || "",
+        postcode: prev.postcode && prev.postcode !== "06123" && prev.postcode !== "06306" ? prev.postcode : finalPostcode || "06123",
+        address: finalAddress || prev.address,
+        addressDetail: finalDetail || prev.addressDetail,
         refundBank: prev.refundBank || savedRefundBank,
         refundAccountNumber: prev.refundAccountNumber || savedRefundAccount,
         refundAccountHolder: prev.refundAccountHolder || savedRefundHolder,
@@ -166,12 +178,13 @@ export default function CheckoutClientWrapper() {
     }
   }, []);
 
-  // Customer Tier & Point Rate State
+  // Customer Login & Tier & Point Rate State
+  const [isLoggedInUser, setIsLoggedInUser] = useState<boolean>(false);
   const [userGrade, setUserGrade] = useState<"GENERAL" | "SILVER" | "GOLD" | "PLATINUM" | "VVIP">("GENERAL");
-  const [pointRate, setPointRate] = useState<number>(1);
+  const [pointRate, setPointRate] = useState<number>(0);
 
-  // Rewards Points (적립금) State
-  const [availablePoints, setAvailablePoints] = useState(5000);
+  // Rewards Points (적립금) State (비회원은 0P 기본값)
+  const [availablePoints, setAvailablePoints] = useState(0);
   const [usedPointsInput, setUsedPointsInput] = useState("");
   const [appliedPoints, setAppliedPoints] = useState(0);
   const [pointsMessage, setPointsMessage] = useState<string | null>(null);
@@ -225,6 +238,15 @@ export default function CheckoutClientWrapper() {
       } catch (e) {}
 
       if (!isSubscribed) return;
+
+      const isMember = isCustomerLoggedIn();
+      if (!isMember) {
+        setAvailableCoupons([]);
+        setSelectedCouponId("NONE");
+        setAppliedDiscount(0);
+        setCouponMessage(null);
+        return;
+      }
 
       const email = (formData.ordererEmail || localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
       const grade = userGrade || "GENERAL";
@@ -348,6 +370,19 @@ export default function CheckoutClientWrapper() {
 
     const syncMemberGradeAndPoints = async () => {
       if (typeof window === "undefined") return;
+
+      const isMember = isCustomerLoggedIn();
+      setIsLoggedInUser(isMember);
+
+      // 비회원은 회원 등급 GENERAL, 적립률 0%, 보유/적용 적립금 0P로 엄격 고정 (조회 및 적용 완전 차단)
+      if (!isMember) {
+        setUserGrade("GENERAL");
+        setPointRate(0);
+        setAvailablePoints(0);
+        setAppliedPoints(0);
+        setUsedPointsInput("");
+        return;
+      }
 
       const currentEmail = (formData.ordererEmail || localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
       const currentPhone = (formData.ordererPhone || localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
@@ -532,14 +567,19 @@ export default function CheckoutClientWrapper() {
     return Math.floor(eligibleAmount * 0.05);
   }, [isVVIP, orderLines, selectedCouponId]);
 
+  const isMember = isLoggedInUser;
+  const effectiveVvipDiscount = isMember ? vvipDiscountAmount : 0;
+  const effectiveAppliedDiscount = isMember ? appliedDiscount : 0;
+  const effectiveAppliedPoints = isMember ? appliedPoints : 0;
+
   // 실 상품 결제 대상 금액 (총 상품금액에서 VVIP 상시 할인, 쿠폰 할인 및 적립금 사용을 차감한 금액)
-  const netProductAmount = Math.max(0, totalItemAmount - vvipDiscountAmount - appliedDiscount - appliedPoints);
+  const netProductAmount = Math.max(0, totalItemAmount - effectiveVvipDiscount - effectiveAppliedDiscount - effectiveAppliedPoints);
 
   // 적립금 또는 할인으로 인해 결제금액이 10만원 미만이 되었는지 확인 (배송비 부과 트리거)
-  const isDiscountedUnderThreshold = (vvipDiscountAmount > 0 || appliedDiscount > 0 || appliedPoints > 0) && netProductAmount < freeThreshold;
+  const isDiscountedUnderThreshold = (effectiveVvipDiscount > 0 || effectiveAppliedDiscount > 0 || effectiveAppliedPoints > 0) && netProductAmount < freeThreshold;
 
-  // 등급별 상시 무료배송 혜택 여부 (PLATINUM, VVIP)
-  const isTierFreeShipping = userGrade === "PLATINUM" || userGrade === "VVIP";
+  // 등급별 상시 무료배송 혜택 여부 (PLATINUM, VVIP - 회원 전용)
+  const isTierFreeShipping = isMember && (userGrade === "PLATINUM" || userGrade === "VVIP");
 
   // 배송비 계산:
   // 1) 장바구니가 비어있거나(0원) 기본 배송비가 0원이면 0원
@@ -558,6 +598,11 @@ export default function CheckoutClientWrapper() {
       : baseShippingFee;
 
   const handleApplyPoints = (amountToUse?: number) => {
+    if (!isCustomerLoggedIn()) {
+      setAppliedPoints(0);
+      setPointsMessage("비회원 주문은 적립금 사용이 제한됩니다.");
+      return;
+    }
     const amount = amountToUse !== undefined ? amountToUse : parseInt(usedPointsInput) || 0;
     if (amount <= 0) {
       setAppliedPoints(0);
@@ -570,11 +615,11 @@ export default function CheckoutClientWrapper() {
     }
 
     const totalOrderAmount = totalItemAmount + shippingFee;
-    let effectiveDiscount = vvipDiscountAmount + appliedDiscount;
+    let effectiveDiscount = effectiveVvipDiscount + effectiveAppliedDiscount;
 
     // 만약 입력한 적립금이 (주문총액 - 할인액)보다 크다면, 적립금 전액/우선 사용을 위해 쿠폰 자동 해제
-    if (amount > totalOrderAmount - effectiveDiscount && appliedDiscount > 0) {
-      effectiveDiscount = vvipDiscountAmount;
+    if (amount > totalOrderAmount - effectiveDiscount && effectiveAppliedDiscount > 0) {
+      effectiveDiscount = effectiveVvipDiscount;
       setAppliedDiscount(0);
       setSelectedCouponId("NONE");
       userSelectedCouponRef.current = "NONE";
@@ -596,8 +641,13 @@ export default function CheckoutClientWrapper() {
   };
 
   const handleUseAllPoints = () => {
+    if (!isCustomerLoggedIn()) {
+      setAppliedPoints(0);
+      setPointsMessage("비회원 주문은 적립금 사용이 제한됩니다.");
+      return;
+    }
     const totalOrderAmount = totalItemAmount + shippingFee;
-    const totalDiscounts = vvipDiscountAmount + appliedDiscount;
+    const totalDiscounts = effectiveVvipDiscount + effectiveAppliedDiscount;
     const remainingWithCoupon = Math.max(0, totalOrderAmount - totalDiscounts);
     const targetAmount = totalDiscounts > 0 ? remainingWithCoupon : totalOrderAmount;
     const finalUse = Math.min(availablePoints, targetAmount);
@@ -605,8 +655,8 @@ export default function CheckoutClientWrapper() {
     handleApplyPoints(finalUse);
   };
 
-  const finalTotalAmount = Math.max(0, totalItemAmount + shippingFee - vvipDiscountAmount - appliedDiscount - appliedPoints);
-  const earnedPoints = Math.floor(finalTotalAmount * (pointRate / 100));
+  const finalTotalAmount = Math.max(0, totalItemAmount + shippingFee - effectiveVvipDiscount - effectiveAppliedDiscount - effectiveAppliedPoints);
+  const earnedPoints = isMember ? Math.floor(finalTotalAmount * (pointRate / 100)) : 0;
 
 
   const clientKey =
@@ -707,9 +757,9 @@ export default function CheckoutClientWrapper() {
         });
       }
 
-      // Deduct used rewards points if any
-      if (appliedPoints > 0) {
-        const remaining = Math.max(0, availablePoints - appliedPoints);
+      // Deduct used rewards points if any (회원만 차감)
+      if (effectiveAppliedPoints > 0 && isMember) {
+        const remaining = Math.max(0, availablePoints - effectiveAppliedPoints);
         localStorage.setItem("membership_user_points", String(remaining));
         setAvailablePoints(remaining);
       }
@@ -742,12 +792,12 @@ export default function CheckoutClientWrapper() {
             },
           },
           finalTotalAmount,
-          earnedPoints,
-          pointRate,
-          userGrade,
-          appliedPoints,
-          appliedDiscount,
-          vvipDiscountAmount,
+          earnedPoints: isMember ? earnedPoints : 0,
+          pointRate: isMember ? pointRate : 0,
+          userGrade: isMember ? userGrade : "GENERAL",
+          appliedPoints: effectiveAppliedPoints,
+          appliedDiscount: effectiveAppliedDiscount,
+          vvipDiscountAmount: effectiveVvipDiscount,
           isDirectOrder: !!directOrder,
           selectedCouponId: selectedCouponId && selectedCouponId !== "NONE" ? selectedCouponId : null,
           selectedCouponTitle: foundCoupon?.title || null,
@@ -853,7 +903,7 @@ export default function CheckoutClientWrapper() {
       }
     } catch (err: any) {
       // 결제 취소 또는 오류 발생 시 차감되었던 적립금 및 쿠폰 안전하게 원복
-      if (appliedPoints > 0) {
+      if (effectiveAppliedPoints > 0 && isMember) {
         localStorage.setItem("membership_user_points", String(previousAvailablePoints));
         setAvailablePoints(previousAvailablePoints);
         window.dispatchEvent(new CustomEvent("membership_points_updated"));
@@ -1432,32 +1482,54 @@ export default function CheckoutClientWrapper() {
             <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
               <div className="flex items-center justify-between text-xs font-extrabold text-neutral-900 dark:text-white">
                 <span>💰 보유 적립금 사용</span>
-                <span className="text-neutral-500 font-bold">보유: <strong className="text-neutral-900 dark:text-white">{availablePoints.toLocaleString()}P</strong></span>
+                <span className="text-neutral-500 font-bold">
+                  보유:{" "}
+                  <strong className="text-neutral-900 dark:text-white">
+                    {isLoggedInUser ? `${availablePoints.toLocaleString()}P` : "0P (회원전용)"}
+                  </strong>
+                </span>
               </div>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={usedPointsInput}
-                  onChange={(e) => {
-                    setUsedPointsInput(e.target.value);
-                    const val = parseInt(e.target.value) || 0;
-                    handleApplyPoints(val);
-                  }}
-                  placeholder="0 P"
-                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 text-xs"
-                />
-                <button
-                  type="button"
-                  onClick={handleUseAllPoints}
-                  className="px-3.5 py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-black transition-colors shrink-0"
-                >
-                  전액사용
-                </button>
-              </div>
-              {pointsMessage && (
-                <p className="text-[11px] font-bold text-neutral-900 dark:text-white">
-                  {pointsMessage}
-                </p>
+              {isLoggedInUser ? (
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={usedPointsInput}
+                      onChange={(e) => {
+                        setUsedPointsInput(e.target.value);
+                        const val = parseInt(e.target.value) || 0;
+                        handleApplyPoints(val);
+                      }}
+                      placeholder="0 P"
+                      className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800 font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900 text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleUseAllPoints}
+                      className="px-3.5 py-2.5 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-black transition-colors shrink-0"
+                    >
+                      전액사용
+                    </button>
+                  </div>
+                  {pointsMessage && (
+                    <p className="text-[11px] font-bold text-neutral-900 dark:text-white">
+                      {pointsMessage}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="p-3 bg-neutral-50 dark:bg-neutral-800/60 rounded-xl border border-neutral-200 dark:border-neutral-700/80 text-xs flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-neutral-500 font-medium">
+                    <Lock className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                    <span>비회원 주문은 적립금 사용이 제한됩니다.</span>
+                  </div>
+                  <Link
+                    href="/login"
+                    className="text-xs font-bold text-neutral-900 dark:text-white underline hover:opacity-80 shrink-0"
+                  >
+                    로그인하기
+                  </Link>
+                </div>
               )}
             </div>
 
@@ -1480,38 +1552,50 @@ export default function CheckoutClientWrapper() {
                   {shippingFee === 0 ? "무료배송 (0원)" : formatPrice(shippingFee)}
                 </span>
               </div>
-              {vvipDiscountAmount > 0 && (
+              {effectiveVvipDiscount > 0 && (
                 <div className="flex justify-between text-purple-700 dark:text-purple-300 font-bold">
                   <span className="flex items-center gap-1.5">
                     <Crown className="w-3.5 h-3.5" />
                     VVIP 전 품목 상시 5% 추가 할인
                   </span>
-                  <span className="font-black text-purple-700 dark:text-purple-300">-{formatPrice(vvipDiscountAmount)}</span>
+                  <span className="font-black text-purple-700 dark:text-purple-300">-{formatPrice(effectiveVvipDiscount)}</span>
                 </div>
               )}
-              {appliedDiscount > 0 && (
+              {effectiveAppliedDiscount > 0 && (
                 <div className="flex justify-between text-neutral-900 dark:text-white font-bold">
                   <span>쿠폰 할인</span>
-                  <span className="font-black text-neutral-950 dark:text-white">-{formatPrice(appliedDiscount)}</span>
+                  <span className="font-black text-neutral-950 dark:text-white">-{formatPrice(effectiveAppliedDiscount)}</span>
                 </div>
               )}
-              {appliedPoints > 0 && (
+              {effectiveAppliedPoints > 0 && (
                 <div className="flex justify-between text-neutral-900 dark:text-white font-bold">
                   <span>적립금 사용</span>
-                  <span className="font-black text-neutral-950 dark:text-white">-{appliedPoints.toLocaleString()}P</span>
+                  <span className="font-black text-neutral-950 dark:text-white">-{effectiveAppliedPoints.toLocaleString()}P</span>
                 </div>
               )}
-              <div className="p-2.5 bg-neutral-100 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 flex justify-between items-center text-xs text-neutral-900 dark:text-white font-extrabold">
-                <div className="flex items-center gap-1.5">
-                  <span>🎁 {userGrade} 등급 적립 예정 혜택</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200">
-                    {pointRate}%
+              {isLoggedInUser ? (
+                <div className="p-2.5 bg-neutral-100 dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 flex justify-between items-center text-xs text-neutral-900 dark:text-white font-extrabold">
+                  <div className="flex items-center gap-1.5">
+                    <span>🎁 {userGrade} 등급 적립 예정 혜택</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200">
+                      {pointRate}%
+                    </span>
+                  </div>
+                  <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">
+                    +{earnedPoints.toLocaleString()}P
                   </span>
                 </div>
-                <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">
-                  +{earnedPoints.toLocaleString()}P
-                </span>
-              </div>
+              ) : (
+                <div className="p-2.5 bg-neutral-50 dark:bg-neutral-850 rounded-xl border border-neutral-200 dark:border-neutral-800 flex justify-between items-center text-xs text-neutral-500 font-bold">
+                  <div className="flex items-center gap-1.5">
+                    <span>🎁 구매 적립 혜택</span>
+                    <span className="text-[10px] text-neutral-400">(회원 전용)</span>
+                  </div>
+                  <span className="text-neutral-400 font-medium text-xs">
+                    0P <Link href="/login" className="underline text-neutral-700 dark:text-neutral-300 ml-1">로그인 시 적립</Link>
+                  </span>
+                </div>
+              )}
               <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3 flex justify-between items-baseline">
                 <span className="text-base font-black text-neutral-900 dark:text-white">최종 결제 금액</span>
                 <span className="text-2xl font-black text-neutral-900 dark:text-white">

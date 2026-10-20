@@ -13,6 +13,7 @@ import { getAvailableCoupons, getUserCoupons } from "@/lib/membership/coupons";
 import { getAllProductOptions, getProductDirectColor } from "./product-options-helper";
 import { ProductSizeRecommendationWidget } from "@/components/product/product-size-recommendation-widget";
 import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
+import { isCustomerLoggedIn } from "@/lib/auth/customer-session";
 
 const DEFAULT_COLOR_HEX_MAP: Record<string, string> = {
   BLACK: "#000000",
@@ -318,13 +319,13 @@ export function ProductDetailHeader({
       const userEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
       const userRole = localStorage.getItem("user_role") || "";
       const userGrade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || userRole || "").toUpperCase().trim();
+      const isLoggedIn = isCustomerLoggedIn();
+      setIsLoggedInUser(isLoggedIn);
       const isAdmin =
         userRole === "admin" ||
         userRole === "staff" ||
         userGrade === "STAFF" ||
         sessionStorage.getItem("choicomma_admin_authenticated") === "true";
-      const isLoggedIn = isAdmin || (localStorage.getItem("is_logged_in") === "true" && Boolean(userEmail));
-      setIsLoggedInUser(isLoggedIn);
 
       const globalStatus = localStorage.getItem("secret_timesale_status");
       const isGlobalOff = globalStatus === "ended";
@@ -687,6 +688,13 @@ export function ProductDetailHeader({
 
   const handleBuyNow = () => {
     if (!product.availableForSale || isScheduled || isStockEmpty) return;
+
+    // 비회원 구매 제한: 로그인 안내 알림 후 로그인창으로 이동
+    if (!isCustomerLoggedIn()) {
+      alert("로그인을 해주세요.");
+      router.push("/login");
+      return;
+    }
 
     const variantTitle = `${cleanProductTitle(product.title)} ${selectedColor ? `- ${selectedColor}` : ""} ${selectedSize ? `/ ${selectedSize}` : ""}`.trim();
     const directItem = {

@@ -11,7 +11,7 @@ import { NavItem } from "@/lib/types";
 import { Collection } from "@/lib/sfcc/types";
 import { MainNoticeBanner } from "@/components/home/main-client-features";
 import { LanguageSelector } from "./language-selector";
-import { validateCustomerSession } from "@/lib/auth/customer-session";
+import { validateCustomerSession, logoutUser } from "@/lib/auth/customer-session";
 import { syncSecretTimesalesFromServer } from "@/lib/membership/timesales";
 
 export const navItems: NavItem[] = [
@@ -50,6 +50,11 @@ export function Header({ collections }: HeaderProps) {
 
   const [hasSecretTimeSale, setHasSecretTimeSale] = useState(false);
 
+  const handleLogout = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    logoutUser({ redirectUrl: "/" });
+  };
+
   useEffect(() => {
     if (pathname === "/login" || pathname === "/admin" || pathname === "/membership") {
       return;
@@ -73,7 +78,7 @@ export function Header({ collections }: HeaderProps) {
           name === "관리자" ||
           isAdminSession;
 
-        const isLogged = isLoggedInFlag || Boolean(name && name.trim().length > 0);
+        const isLogged = isLoggedInFlag || Boolean(name && name.trim().length > 0) || isAdm;
 
         setIsAdmin(isAdm);
         setIsLoggedIn(isLogged);
@@ -171,28 +176,28 @@ export function Header({ collections }: HeaderProps) {
             "text-neutral-900"
           )}
         >
-          {/* Mobile: Logo on far left / Desktop: col-span-5 */}
-          <Link href="/" className="md:col-span-5 flex items-center justify-start py-0.5" prefetch>
+          {/* Mobile: Logo on far left / Desktop: col-span-3 lg:col-span-4 */}
+          <Link href="/" className="md:col-span-3 lg:col-span-4 flex items-center justify-start py-0.5" prefetch>
             <LogoSvg
               className="cursor-pointer justify-start"
             />
           </Link>
 
           {/* Desktop Navigation & Cart (Single Unified Pill Bar) */}
-          <nav className="hidden md:flex items-center md:col-span-7 justify-end gap-2.5">
+          <nav className="hidden md:flex items-center md:col-span-9 lg:col-span-8 justify-end gap-2.5">
             <div
               className={cn(
                 "items-center gap-1.5 md:gap-2 h-10 md:h-11 px-2.5 md:px-4 rounded-full backdrop-blur-md flex transition-colors duration-400 shadow-sm shrink-0",
                 "bg-black/5 text-neutral-900 border border-black/5"
               )}
             >
-              <ul className="flex items-center gap-2 md:gap-3 lg:gap-4 xl:gap-6 shrink-0">
+              <ul className="flex items-center gap-2 md:gap-2.5 lg:gap-4 xl:gap-6 shrink-0">
                 {activeNavItems.map((item: any) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       className={cn(
-                        "font-bold text-sm transition-colors duration-300 uppercase flex items-center gap-1.5 whitespace-nowrap",
+                        "font-bold text-xs lg:text-sm transition-colors duration-300 uppercase flex items-center gap-1.5 whitespace-nowrap",
                         item.isSecret
                           ? "bg-amber-400 text-neutral-950 px-2.5 py-0.5 rounded-full font-black shadow-xs hover:bg-amber-300"
                           : pathname === item.href
@@ -205,6 +210,18 @@ export function Header({ collections }: HeaderProps) {
                     </Link>
                   </li>
                 ))}
+                {isLoggedIn && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="font-bold text-xs lg:text-sm transition-colors duration-300 uppercase flex items-center gap-1 whitespace-nowrap text-neutral-700 hover:text-rose-600 cursor-pointer"
+                      title="로그아웃"
+                    >
+                      <span>로그아웃</span>
+                    </button>
+                  </li>
+                )}
               </ul>
 
               <div className="w-px h-4 mx-2 bg-black/10" />
