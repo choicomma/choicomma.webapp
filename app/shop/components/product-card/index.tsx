@@ -27,6 +27,83 @@ export interface ProductCardProps {
   isLast?: boolean;
 }
 
+interface MarqueeProductTitleProps {
+  title: string;
+  className?: string;
+}
+
+export const MarqueeProductTitle = ({ title, className = "" }: MarqueeProductTitleProps) => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const textRef = React.useRef<HTMLSpanElement>(null);
+  const [isOverflowing, setIsOverflowing] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = containerRef.current;
+    const txt = textRef.current;
+    if (!el || !txt) return;
+
+    const checkOverflow = () => {
+      if (containerRef.current && textRef.current) {
+        setIsOverflowing(textRef.current.scrollWidth > containerRef.current.clientWidth + 1);
+      }
+    };
+
+    checkOverflow();
+    const timer = setTimeout(checkOverflow, 200);
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => checkOverflow());
+      ro.observe(el);
+    }
+    window.addEventListener("resize", checkOverflow);
+
+    return () => {
+      clearTimeout(timer);
+      if (ro) ro.disconnect();
+      window.removeEventListener("resize", checkOverflow);
+    };
+  }, [title]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="overflow-hidden w-full whitespace-nowrap relative select-none"
+    >
+      {/* Off-screen measurement span to accurately compare scrollWidth with container clientWidth */}
+      <span
+        ref={textRef}
+        aria-hidden="true"
+        className={`invisible pointer-events-none whitespace-nowrap fixed left-[-9999px] top-[-9999px] ${className}`}
+      >
+        {title}
+      </span>
+
+      {isOverflowing ? (
+        <div
+          className="inline-flex will-change-transform hover:[animation-play-state:paused] active:[animation-play-state:paused]"
+          style={{
+            display: "inline-flex",
+            width: "max-content",
+            animation: "marquee 14s linear infinite",
+          }}
+        >
+          <span className={`pr-8 shrink-0 whitespace-nowrap ${className}`}>
+            {title}
+          </span>
+          <span className={`pr-8 shrink-0 whitespace-nowrap ${className}`} aria-hidden="true">
+            {title}
+          </span>
+        </div>
+      ) : (
+        <span className={`block truncate w-full ${className}`}>
+          {title}
+        </span>
+      )}
+    </div>
+  );
+};
+
 export const ProductCard = ({
   product,
   onAdminClick,
@@ -303,19 +380,21 @@ export const ProductCard = ({
           </span>
         )}
 
-        {/* 타임세일 할인율 Badge: 시크릿 VIP 세일과 일반 타임세일 구분 */}
+        {/* 타임세일 할인율 Badge: 모바일에선 퍼센트와 OFF만 노출, PC에선 전체 라벨 및 아이콘 노출 */}
         {isTimeSaleActive && timeSaleDiscount && (
           secretSaleInfo ? (
             <span
               className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-950 text-amber-300 border border-neutral-700 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1"
               title={secretSaleInfo.title ? `[시크릿 VIP 특가] ${secretSaleInfo.title}` : "[시크릿 VIP 특가]"}
             >
-              <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 shrink-0" />
-              <span>SECRET VIP {timeSaleDiscount}% OFF</span>
+              <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 shrink-0 hidden md:inline-block" />
+              <span className="hidden md:inline">SECRET VIP </span>
+              <span>{timeSaleDiscount}% OFF</span>
             </span>
           ) : (
             <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-red-600 text-white shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
-              <span>🔥 TIME SALE {timeSaleDiscount}% OFF</span>
+              <span className="hidden md:inline">🔥 TIME SALE </span>
+              <span>{timeSaleDiscount}% OFF</span>
             </span>
           )
         )}
@@ -447,27 +526,42 @@ export const ProductCard = ({
       </div>
 
       {/* Bottom Bar: Title on Top & Price on Bottom */}
-      <div className="absolute bottom-0 inset-x-0 p-2.5 sm:p-4 md:p-5 flex flex-col gap-1 sm:gap-1.5 z-10 w-full bg-gradient-to-t from-white via-white/80 to-transparent pt-6 sm:pt-8">
-        {/* 상품명은 한줄로 truncate 유지 (모바일 2열에 최적화된 텍스트 크기) */}
-        <span className="text-xs sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight truncate block w-full leading-tight md:leading-normal">
-          {product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
-        </span>
+      <div className="absolute bottom-0 inset-x-0 p-2.5 sm:p-4 md:p-5 flex flex-col gap-1 sm:gap-1.5 z-10 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-8 sm:pt-8">
+        {/* 모바일 2열: 상품명이 긴 경우 잘리지 않고 천천히 지나가는 마키 기능 + 모바일 폰트 2배 (text-2xl) */}
+        <MarqueeProductTitle
+          title={product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
+          className="text-2xl sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight block w-full leading-tight md:leading-normal"
+        />
 
-        {/* 가격 정보 */}
-        <div className="flex items-baseline justify-end gap-1.5 sm:gap-2 md:gap-2.5 w-full">
-          {isTimeSaleActive && timeSaleDiscount && (
-            <span className="text-xs sm:text-base md:text-lg font-black text-red-600 whitespace-nowrap notranslate" translate="no">
-              {timeSaleDiscount}%
-            </span>
-          )}
+        {/* 가격 정보: 모바일은 정상가가 할인가 위로, 할인 퍼센트는 할인가 왼쪽 옆으로 배치, 전체 크기는 상품명과 같이 2배로 확대 */}
+        <div className="flex flex-col items-end w-full sm:flex-row sm:items-baseline sm:justify-end sm:gap-2 md:gap-2.5">
+          {/* 정상가 (취소선): 모바일에서는 할인가 위로 배치 */}
           {strikethroughPriceNum !== null && (
-            <span className="text-[10px] sm:text-xs md:text-sm text-neutral-400 line-through font-bold whitespace-nowrap notranslate" translate="no">
+            <span
+              className="text-base sm:text-xs md:text-sm text-neutral-400 line-through font-bold whitespace-nowrap sm:order-2 notranslate"
+              translate="no"
+            >
               {formatPrice(strikethroughPriceNum.toString(), currCode)}
             </span>
           )}
-          <span className="text-xs sm:text-base md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap notranslate" translate="no">
-            {formatPrice(finalPriceNum.toString(), currCode)}
-          </span>
+
+          {/* 할인가 및 할인 퍼센트 (할인 퍼센트가 할인가 왼쪽 옆에 위치) */}
+          <div className="flex items-baseline justify-end gap-1.5 sm:gap-2 sm:contents">
+            {isTimeSaleActive && timeSaleDiscount && (
+              <span
+                className="text-2xl sm:text-base md:text-lg font-black text-red-600 whitespace-nowrap sm:order-1 notranslate"
+                translate="no"
+              >
+                {timeSaleDiscount}%
+              </span>
+            )}
+            <span
+              className="text-2xl sm:text-base md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap sm:order-3 notranslate"
+              translate="no"
+            >
+              {formatPrice(finalPriceNum.toString(), currCode)}
+            </span>
+          </div>
         </div>
       </div>
     </div>

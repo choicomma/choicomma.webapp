@@ -170,7 +170,9 @@ export function ProductDetailAccordions({
   const [isMobileScreen, setIsMobileScreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
   const touchDeltaX = useRef<number>(0);
+  const touchDeltaY = useRef<number>(0);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -181,7 +183,7 @@ export function ProductDetailAccordions({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const isMobile = isMobileProp ?? isMobileScreen;
+  const isMobile = isMobileProp !== undefined ? (isMobileProp || isMobileScreen) : isMobileScreen;
 
   useEffect(() => {
     setCurrentLang(getCurrentLanguage());
@@ -267,12 +269,6 @@ export function ProductDetailAccordions({
   const panScrollLeft = useRef(0);
   const panWindowScrollY = useRef(0);
 
-  // 모바일 터치 2D 패닝 (상하좌우) Ref
-  const isTouchingPan = useRef(false);
-  const touchPanStartX = useRef(0);
-  const touchPanStartY = useRef(0);
-  const touchPanScrollLeft = useRef(0);
-  const touchPanWindowScrollY = useRef(0);
 
   // 확대 배율 변경 시 보고 있던 사진 지점을 기억하는 앵커 Ref
   const focalAnchorRef = useRef<{
@@ -342,7 +338,7 @@ export function ProductDetailAccordions({
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (!isDetailImageEnlarged || !panContainerRef.current) return;
+    if (isMobile || !isDetailImageEnlarged || !panContainerRef.current) return;
     if (e.button !== 0) return;
     isDraggingPan.current = true;
     hasDragged.current = false;
@@ -352,73 +348,35 @@ export function ProductDetailAccordions({
     panWindowScrollY.current = window.scrollY;
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDraggingPan.current || !panContainerRef.current) return;
-    e.preventDefault();
-    const deltaX = (e.clientX - panStartX.current) * 1.3;
-    const deltaY = (e.clientY - panStartY.current) * 1.3;
-    if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
-      hasDragged.current = true;
-    }
-    panContainerRef.current.scrollLeft = panScrollLeft.current - deltaX;
-    window.scrollTo({
-      top: Math.max(0, panWindowScrollY.current - deltaY),
-      behavior: "instant" as ScrollBehavior,
-    });
-  };
-
-  const handleMouseUpOrLeave = () => {
-    isDraggingPan.current = false;
-  };
-
-  const handleTouchStartPan = (e: React.TouchEvent) => {
-    if (!isDetailImageEnlarged || !panContainerRef.current) return;
-    if (e.touches.length === 1) {
-      isTouchingPan.current = true;
-      hasDragged.current = false;
-      const touch = e.touches[0];
-      touchPanStartX.current = touch.clientX;
-      touchPanStartY.current = touch.clientY;
-      touchPanScrollLeft.current = panContainerRef.current.scrollLeft;
-      touchPanWindowScrollY.current = window.scrollY;
-    }
-  };
-
-  const handleTouchMovePan = (e: React.TouchEvent) => {
-    if (!isTouchingPan.current || !panContainerRef.current || e.touches.length !== 1) return;
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - touchPanStartX.current;
-    const deltaY = touch.clientY - touchPanStartY.current;
-
-    if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
-      hasDragged.current = true;
-    }
-
-    panContainerRef.current.scrollLeft = touchPanScrollLeft.current - deltaX;
-    window.scrollTo({
-      top: Math.max(0, touchPanWindowScrollY.current - deltaY),
-      behavior: "instant" as ScrollBehavior,
-    });
-  };
-
-  const handleTouchEndPan = () => {
-    isTouchingPan.current = false;
-  };
-
+  // PC 전용: 마우스 드래그를 창 전체에서 부드럽게 추적 (컨테이너 경계를 벗어나도 끊김 없이 부드럽게 패닝)
   useEffect(() => {
-    const handleGlobalMouseUp = () => {
+    if (isMobile) return;
+
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      if (!isDraggingPan.current || !panContainerRef.current) return;
+      const deltaX = (e.clientX - panStartX.current) * 1.3;
+      const deltaY = (e.clientY - panStartY.current) * 1.3;
+      if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+        hasDragged.current = true;
+      }
+      panContainerRef.current.scrollLeft = panScrollLeft.current - deltaX;
+      window.scrollTo({
+        top: Math.max(0, panWindowScrollY.current - deltaY),
+        behavior: "instant" as ScrollBehavior,
+      });
+    };
+
+    const handleWindowMouseUp = () => {
       isDraggingPan.current = false;
-      isTouchingPan.current = false;
     };
-    window.addEventListener("mouseup", handleGlobalMouseUp);
-    window.addEventListener("touchend", handleGlobalMouseUp);
-    window.addEventListener("touchcancel", handleGlobalMouseUp);
+
+    window.addEventListener("mousemove", handleWindowMouseMove);
+    window.addEventListener("mouseup", handleWindowMouseUp);
     return () => {
-      window.removeEventListener("mouseup", handleGlobalMouseUp);
-      window.removeEventListener("touchend", handleGlobalMouseUp);
-      window.removeEventListener("touchcancel", handleGlobalMouseUp);
+      window.removeEventListener("mousemove", handleWindowMouseMove);
+      window.removeEventListener("mouseup", handleWindowMouseUp);
     };
-  }, []);
+  }, [isMobile]);
 
   // 확대 배율 변경 시 화면 렌더링 직전에 스크롤 오프셋을 즉각 보정하여 사진 위치 불변 유지
   useIsomorphicLayoutEffect(() => {
@@ -521,34 +479,45 @@ export function ProductDetailAccordions({
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    // 확대 상태에서는 캐러셀 탭 스와이프를 비활성화하여 이미지 탐색 제스처와 충돌 방지
     if (isDetailImageEnlarged) return;
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
     touchDeltaX.current = 0;
+    touchDeltaY.current = 0;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (isDetailImageEnlarged) return;
-    if (touchStartX.current !== null) {
+    if (touchStartX.current !== null && touchStartY.current !== null) {
       touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+      touchDeltaY.current = e.touches[0].clientY - touchStartY.current;
     }
   };
 
   const handleTouchEnd = () => {
     if (isDetailImageEnlarged) {
       touchStartX.current = null;
+      touchStartY.current = null;
       touchDeltaX.current = 0;
+      touchDeltaY.current = 0;
       return;
     }
-    if (touchStartX.current !== null) {
-      if (touchDeltaX.current < -50 && activeTabIdx < tabs.length - 1) {
-        handleTabClick(activeTabIdx + 1);
-      } else if (touchDeltaX.current > 50 && activeTabIdx > 0) {
-        handleTabClick(activeTabIdx - 1);
+    if (touchStartX.current !== null && touchStartY.current !== null) {
+      const absX = Math.abs(touchDeltaX.current);
+      const absY = Math.abs(touchDeltaY.current);
+      // 수평 이동 거리가 60px 이상이고 세로 스크롤보다 확연히 클 때만 탭 전환 (모바일 세로 스크롤 시 오작동 방지)
+      if (absX > 60 && absX > absY * 1.5) {
+        if (touchDeltaX.current < 0 && activeTabIdx < tabs.length - 1) {
+          handleTabClick(activeTabIdx + 1);
+        } else if (touchDeltaX.current > 0 && activeTabIdx > 0) {
+          handleTabClick(activeTabIdx - 1);
+        }
       }
     }
     touchStartX.current = null;
+    touchStartY.current = null;
     touchDeltaX.current = 0;
+    touchDeltaY.current = 0;
   };
 
   return (
@@ -802,14 +771,7 @@ export function ProductDetailAccordions({
                   {isHtmlContent ? (
                     <div
                       ref={panContainerRef}
-                      onMouseDown={handleMouseDown}
-                      onMouseMove={handleMouseMove}
-                      onMouseUp={handleMouseUpOrLeave}
-                      onMouseLeave={handleMouseUpOrLeave}
-                      onTouchStart={handleTouchStartPan}
-                      onTouchMove={handleTouchMovePan}
-                      onTouchEnd={handleTouchEndPan}
-                      onTouchCancel={handleTouchEndPan}
+                      onMouseDown={!isMobile ? handleMouseDown : undefined}
                       onDragStart={(e) => e.preventDefault()}
                       onClickCapture={(e) => {
                         if (hasDragged.current) {
@@ -819,14 +781,14 @@ export function ProductDetailAccordions({
                       }}
                       className={cn(
                         "w-full max-w-full min-w-0 select-none",
-                        isDetailImageEnlarged
+                        !isMobile && isDetailImageEnlarged
                           ? "overflow-x-auto overflow-y-visible touch-none cursor-grab active:cursor-grabbing pb-6 [scrollbar-width:thin] [scrollbar-color:#a3a3a3_#f5f5f5]"
                           : "overflow-hidden w-full mx-auto"
                       )}
                     >
                       <div
                         style={
-                          isDetailImageEnlarged
+                          !isMobile && isDetailImageEnlarged
                             ? {
                                 width: `${Math.round(zoomScale * 100)}%`,
                                 minWidth: `${Math.round(zoomScale * 100)}%`,
@@ -835,7 +797,7 @@ export function ProductDetailAccordions({
                         }
                         className={cn(
                           "select-none",
-                          isDetailImageEnlarged ? "max-w-none" : "w-full mx-auto"
+                          !isMobile && isDetailImageEnlarged ? "max-w-none" : "w-full mx-auto"
                         )}
                       >
                         <div
@@ -844,10 +806,14 @@ export function ProductDetailAccordions({
                             "[&_p]:!max-w-none [&_p]:!w-full [&_p]:!overflow-visible [&_p]:my-2",
                             "[&_img]:!w-full [&_img]:!h-auto [&_img]:!max-w-none [&_img]:mx-auto [&_img]:rounded-2xl",
                             "[&_img]:select-none [&_img]:pointer-events-auto [&_img]:[user-drag:none] [&_img]:[-webkit-user-drag:none]",
-                            isDetailImageEnlarged
+                            !isMobile && isDetailImageEnlarged
                               ? "[&_img]:my-6 [&_img]:shadow-2xl"
-                              : "[&_img]:my-3 hover:[&_img]:brightness-95 hover:[&_img]:shadow-md"
+                              : cn(
+                                  "[&_img]:my-3",
+                                  !isMobile && "hover:[&_img]:brightness-95 hover:[&_img]:shadow-md cursor-pointer"
+                                )
                           )}
+                          onClick={!isMobile && !isDetailImageEnlarged ? handleOpenZoomSlider : undefined}
                           dangerouslySetInnerHTML={{ __html: formattedDetailHtml }}
                         />
                       </div>

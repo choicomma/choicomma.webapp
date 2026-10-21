@@ -281,13 +281,15 @@ export function FeaturedProductLabel({
               ) : null}
               {isTimeSaleActive && timeSaleDiscount && (
                 isSecretTimeSale ? (
-                  <Badge className="font-black rounded-none text-xs px-3 py-1 bg-neutral-950 text-amber-300 border border-neutral-700 tracking-wider flex items-center gap-1">
-                    <Lock className="w-3 h-3 text-amber-400" />
-                    <span>SECRET VIP {timeSaleDiscount}% OFF</span>
+                  <Badge className="font-black rounded-none text-xs px-2 md:px-3 py-1 bg-neutral-950 text-amber-300 border border-neutral-700 tracking-wider flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-amber-400 hidden md:inline-block" />
+                    <span className="hidden md:inline">SECRET VIP </span>
+                    <span>{timeSaleDiscount}% OFF</span>
                   </Badge>
                 ) : (
-                  <Badge className="font-black rounded-none text-xs px-3 py-1 bg-rose-600 text-white border-none tracking-wider flex items-center gap-1">
-                    <Flame className="w-3 h-3 text-white fill-white" />
+                  <Badge className="font-black rounded-none text-xs px-2 md:px-3 py-1 bg-rose-600 text-white border-none tracking-wider flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-white fill-white hidden md:inline-block" />
+                    <span className="hidden md:inline">TIME SALE </span>
                     <span>{timeSaleDiscount}% OFF</span>
                   </Badge>
                 )
@@ -349,13 +351,15 @@ export function FeaturedProductLabel({
           ) : null}
           {isTimeSaleActive && timeSaleDiscount && (
             isSecretTimeSale ? (
-              <Badge className="bg-neutral-950 text-amber-300 border border-neutral-700 font-black text-[10px] px-2 py-0.5 rounded-none uppercase tracking-wider inline-flex items-center gap-1">
-                <Lock className="w-2.5 h-2.5 text-amber-400" />
-                <span>SECRET VIP {timeSaleDiscount}% OFF</span>
+              <Badge className="bg-neutral-950 text-amber-300 border border-neutral-700 font-black text-[10px] px-1.5 md:px-2 py-0.5 rounded-none uppercase tracking-wider inline-flex items-center gap-1">
+                <Lock className="w-2.5 h-2.5 text-amber-400 hidden md:inline-block" />
+                <span className="hidden md:inline">SECRET VIP </span>
+                <span>{timeSaleDiscount}% OFF</span>
               </Badge>
             ) : (
-              <Badge className="bg-rose-600 text-white font-black text-[10px] px-2 py-0.5 rounded-none uppercase tracking-wider inline-flex items-center gap-1 border-none">
-                <Flame className="w-2.5 h-2.5 text-white fill-white" />
+              <Badge className="bg-rose-600 text-white font-black text-[10px] px-1.5 md:px-2 py-0.5 rounded-none uppercase tracking-wider inline-flex items-center gap-1 border-none">
+                <Flame className="w-2.5 h-2.5 text-white fill-white hidden md:inline-block" />
+                <span className="hidden md:inline">TIME SALE </span>
                 <span>{timeSaleDiscount}% OFF</span>
               </Badge>
             )

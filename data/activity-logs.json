@@ -1,6 +1,27 @@
 {
   "journeyLogs": [
     {
+      "id": "jnl_1792593900094_i9ygq",
+      "sessionId": "s_1792508476795_efv0s",
+      "visitorId": "v_1791294529411_hafq13j",
+      "userId": "admin@choicomma.com",
+      "userName": "최고관리자 (Admin)",
+      "eventType": "VIEW_PRODUCT",
+      "eventLabel": "상품 조회 ([PREMIUM] 밴딩 플레어 세미 와이드 슬랙스)",
+      "path": "/product/premium-%EB%B0%B4%EB%94%A9-%ED%94%8C%EB%A0%88%EC%96%B4-%EC%84%B8%EB%AF%B8-%EC%99%80%EC%9D%B4%EB%93%9C-%EC%8A%AC%EB%9E%99%EC%8A%A4-4colors-3sizes-excel-product-471",
+      "referrer": "http://172.30.1.74:3001/admin?tab=inquiries",
+      "device": "PC",
+      "metadata": {
+        "productId": "excel-product-471",
+        "handle": "premium-밴딩-플레어-세미-와이드-슬랙스-4colors-3sizes-excel-product-471",
+        "title": "[PREMIUM] 밴딩 플레어 세미 와이드 슬랙스",
+        "price": "270000"
+      },
+      "ip": "::ffff:172.30.1.74",
+      "timestamp": "2026-10-21 23:45:00",
+      "created_at": "2026-10-21T14:45:00.094Z"
+    },
+    {
       "id": "jnl_1792498408788_glpsg",
       "sessionId": "s_1792483662795_xxxqb",
       "visitorId": "v_1791789874192_rcg7pp1",
@@ -3851,5 +3872,5 @@
       "created_at": "2026-10-13T12:48:15.593Z"
     }
   ],
-  "updatedAt": "2026-10-21T13:20:08.958Z"
+  "updatedAt": "2026-10-21T14:45:00.096Z"
 }
