@@ -1,3 +1,4 @@
+// Build & deploy trigger: 2026-10-22
 const nextConfig = {
   allowedDevOrigins: ["localhost", "127.0.0.1", "172.30.1.74"],
   experimental: {
