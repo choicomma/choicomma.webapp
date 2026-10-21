@@ -12,6 +12,20 @@ import { getProductNoNum } from "@/lib/sfcc/product-sort";
 import { ProductFormModal } from "@/app/admin/components/product-form-modal";
 import { reorderProduct } from "@/lib/products/reorder-helper";
 import { toast } from "sonner";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+function getPageNumbers(current: number, total: number) {
+  if (total <= 5) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 3) {
+    return [1, 2, 3, 4, 5];
+  }
+  if (current >= total - 2) {
+    return [total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [current - 2, current - 1, current, current + 1, current + 2];
+}
 
 const categoriesList = [
   { id: "timesale", name: "TIMESALE", count: 8, description: "신상품 & 타임세일 컬렉션" },
@@ -577,36 +591,69 @@ export function ProductListContent({
             })}
           </div>
 
-          {/* Pagination Controls (Matching Home Layout: < Prev  X / Y  Next >) */}
-          {uniqueProducts.length > PAGE_SIZE && (
-            <div className="flex justify-center items-center py-12 gap-4 border-t border-neutral-200/80 mt-4 mb-16">
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentPage((p) => Math.max(1, p - 1));
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                disabled={currentPage === 1}
-                className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
-              >
-                &lt; Prev
-              </button>
-              <span className="text-xs text-neutral-900 font-medium font-mono">
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentPage((p) => Math.min(totalPages, p + 1));
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                disabled={currentPage >= totalPages}
-                className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
-              >
-                Next &gt;
-              </button>
-            </div>
-          )}
+          {/* Pagination Controls */}
+          {uniqueProducts.length > PAGE_SIZE && (() => {
+            const pageNumbers = getPageNumbers(currentPage, totalPages);
+            return (
+              <div className="flex flex-col sm:flex-row justify-center items-center py-10 sm:py-12 gap-3 sm:gap-4 border-t border-neutral-200/80 mt-4 mb-16 select-none">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentPage((p) => Math.max(1, p - 1));
+                      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    disabled={currentPage === 1}
+                    className="min-w-[40px] h-10 px-2.5 rounded-xl border border-neutral-200/80 bg-white hover:bg-neutral-100 disabled:opacity-25 disabled:pointer-events-none text-neutral-700 transition-colors flex items-center justify-center gap-1 text-xs font-bold cursor-pointer"
+                    title="이전 페이지"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">이전</span>
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {pageNumbers.map((p) => {
+                      const isActive = p === currentPage;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => {
+                            setCurrentPage(p);
+                            if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className={`min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 px-2 sm:px-3 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center justify-center cursor-pointer ${
+                            isActive
+                              ? "bg-neutral-950 text-white shadow-sm scale-105"
+                              : "border border-neutral-200/80 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    disabled={currentPage >= totalPages}
+                    className="min-w-[40px] h-10 px-2.5 rounded-xl border border-neutral-200/80 bg-white hover:bg-neutral-100 disabled:opacity-25 disabled:pointer-events-none text-neutral-700 transition-colors flex items-center justify-center gap-1 text-xs font-bold cursor-pointer"
+                    title="다음 페이지"
+                  >
+                    <span className="hidden sm:inline">다음</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <span className="text-[11px] text-neutral-400 font-mono sm:hidden">
+                  {currentPage} / {totalPages} 페이지
+                </span>
+              </div>
+            );
+          })()}
         </div>
       ) : (
         <div className="col-span-full py-20 text-center flex flex-col items-center justify-center border border-dashed border-neutral-300 rounded-3xl bg-neutral-50/50 my-4">

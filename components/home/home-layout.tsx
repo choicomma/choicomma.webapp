@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Clock, Sliders, Edit3, ExternalLink, ChevronRight, X } from "lucide-react";
+import { Clock, Sliders, Edit3, ExternalLink, ChevronRight, ChevronLeft, X } from "lucide-react";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { translateProductTitle, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 import useEmblaCarousel from "embla-carousel-react";
@@ -81,6 +81,19 @@ function ChoicommaMarqueeTicker() {
       </div>
     </div>
   );
+}
+
+function getPageNumbers(current: number, total: number) {
+  if (total <= 5) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 3) {
+    return [1, 2, 3, 4, 5];
+  }
+  if (current >= total - 2) {
+    return [total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [current - 2, current - 1, current, current + 1, current + 2];
 }
 
 export function HomeLayout({ products = [] }: { products?: any[] }) {
@@ -221,6 +234,20 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    if (typeof window !== "undefined") {
+      const el = document.getElementById("home-product-grid-section");
+      if (el) {
+        const navOffset = 64; // Header offset
+        const top = el.getBoundingClientRect().top + window.pageYOffset - navOffset;
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  };
 
 
   const [isHydrated, setIsHydrated] = React.useState(false);
@@ -676,7 +703,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
       <ChoicommaMarqueeTicker />
 
       {/* SECTION 2: Responsive Paginated Grid (Matching Shop Page: 2 Columns on Mobile, 3 Columns on PC) */}
-      <section className="w-full bg-white">
+      <section id="home-product-grid-section" className="w-full bg-white scroll-mt-20">
         {allProducts.length > 0 ? (
           <>
             {/* 투명 배경 클릭 시 활성화된 상품의 관리자 오버레이 닫기 */}
@@ -727,36 +754,61 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
               })}
             </div>
 
-            {/* Pagination Controls (Matching Shop Page Layout: < Prev  X / Y  Next >) */}
-            {allProducts.length > pageSize && (
-              <div className="flex justify-center items-center py-12 gap-4 border-t border-neutral-200/80 mt-4 mb-16">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentPage((p) => Math.max(1, p - 1));
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  disabled={currentPage === 1}
-                  className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
-                >
-                  &lt; Prev
-                </button>
-                <span className="text-xs text-neutral-900 font-medium font-mono">
-                  {currentPage} / {Math.ceil(allProducts.length / pageSize)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentPage((p) => Math.min(Math.ceil(allProducts.length / pageSize), p + 1));
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  disabled={currentPage >= Math.ceil(allProducts.length / pageSize)}
-                  className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black disabled:opacity-30 disabled:hover:text-neutral-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
-                >
-                  Next &gt;
-                </button>
-              </div>
-            )}
+            {/* Pagination Controls */}
+            {allProducts.length > pageSize && (() => {
+              const totalPages = Math.ceil(allProducts.length / pageSize);
+              const pageNumbers = getPageNumbers(currentPage, totalPages);
+              return (
+                <div className="flex flex-col sm:flex-row justify-center items-center py-10 sm:py-12 gap-3 sm:gap-4 border-t border-neutral-200/80 mt-4 mb-16 select-none">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className="min-w-[40px] h-10 px-2.5 rounded-xl border border-neutral-200/80 bg-white hover:bg-neutral-100 disabled:opacity-25 disabled:pointer-events-none text-neutral-700 transition-colors flex items-center justify-center gap-1 text-xs font-bold cursor-pointer"
+                      title="이전 페이지"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline">이전</span>
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      {pageNumbers.map((p) => {
+                        const isActive = p === currentPage;
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => handlePageChange(p)}
+                            className={`min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 px-2 sm:px-3 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center justify-center cursor-pointer ${
+                              isActive
+                                ? "bg-neutral-950 text-white shadow-sm scale-105"
+                                : "border border-neutral-200/80 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage >= totalPages}
+                      className="min-w-[40px] h-10 px-2.5 rounded-xl border border-neutral-200/80 bg-white hover:bg-neutral-100 disabled:opacity-25 disabled:pointer-events-none text-neutral-700 transition-colors flex items-center justify-center gap-1 text-xs font-bold cursor-pointer"
+                      title="다음 페이지"
+                    >
+                      <span className="hidden sm:inline">다음</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <span className="text-[11px] text-neutral-400 font-mono sm:hidden">
+                    {currentPage} / {totalPages} 페이지
+                  </span>
+                </div>
+              );
+            })()}
           </>
         ) : (
           <div className="py-24 text-center flex flex-col items-center justify-center border-t border-neutral-200 px-4">

@@ -575,61 +575,109 @@ export default function LoginPage() {
     if (!foundCustomer) return;
     const chosenId = foundCustomer.loginId || foundCustomer.email;
     setIsFindIdModalOpen(false);
-    setResetInputEmail(chosenId);
-    setResetNewPassword("");
-    setResetConfirmPassword("");
+    setResetStep("verify");
+    setResetIdentifier(chosenId);
+    setResetName(foundCustomer.name || "");
+    setResetPhone(foundCustomer.phone || "");
     setResetErrorMsg("");
     setIsResetModalOpen(true);
   };
 
-  // Password Reset Modal state
+  // Password Reset Modal state (Idea 1: 가입 정보 3중 확인 후 즉시 새 비밀번호 설정)
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const [resetInputEmail, setResetInputEmail] = useState("");
-  const [resetCurrentPassword, setResetCurrentPassword] = useState("");
+  const [resetStep, setResetStep] = useState<"verify" | "new_password" | "success">("verify");
+  
+  // 1단계: 본인 확인 입력값
+  const [resetIdentifier, setResetIdentifier] = useState("");
+  const [resetName, setResetName] = useState("");
+  const [resetPhone, setResetPhone] = useState("");
+  const [isVerifyingIdentity, setIsVerifyingIdentity] = useState(false);
+  const [verifiedCustomer, setVerifiedCustomer] = useState<{ id: string; name: string; loginId: string; email: string } | null>(null);
+
+  // 2단계: 새 비밀번호 입력값
   const [resetNewPassword, setResetNewPassword] = useState("");
   const [resetConfirmPassword, setResetConfirmPassword] = useState("");
-  const [resetErrorMsg, setResetErrorMsg] = useState("");
-  const [showResetCurrentPassword, setShowResetCurrentPassword] = useState(false);
   const [showResetNewPassword, setShowResetNewPassword] = useState(false);
   const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+
+  // 에러 메시지
+  const [resetErrorMsg, setResetErrorMsg] = useState("");
 
   const handleOpenResetModal = () => {
-    setResetInputEmail(email || "");
-    setResetCurrentPassword("");
+    setResetStep("verify");
+    setResetIdentifier(email || "");
+    setResetName("");
+    setResetPhone("");
     setResetNewPassword("");
     setResetConfirmPassword("");
-    setResetErrorMsg("");
-    setShowResetCurrentPassword(false);
     setShowResetNewPassword(false);
     setShowResetConfirmPassword(false);
+    setResetErrorMsg("");
+    setIsVerifyingIdentity(false);
+    setIsResettingPassword(false);
+    setVerifiedCustomer(null);
     setIsResetModalOpen(true);
   };
 
-  const handlePasswordResetSubmit = async (e: React.FormEvent) => {
+  // 1단계: 본인 확인 (아이디 + 이름 + 휴대폰 번호)
+  const handleVerifyIdentitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const targetEmail = resetInputEmail.trim().toLowerCase();
-    const cleanPhoneTarget = targetEmail.replace(/[^0-9]/g, "");
-    const curPwd = resetCurrentPassword.trim();
+    const id = resetIdentifier.trim();
+    const nm = resetName.trim();
+    const ph = resetPhone.trim();
 
-    if (!targetEmail) {
+    if (!id) {
       setResetErrorMsg("아이디 또는 이메일 주소를 입력해 주세요.");
       return;
     }
-    if (!curPwd) {
-      setResetErrorMsg("현재 비밀번호를 입력해 주세요. (기존 회원의 초기 비밀번호는 휴대폰 뒤 4자리입니다)");
+    if (!nm) {
+      setResetErrorMsg("가입 시 등록하신 성함(이름)을 입력해 주세요.");
       return;
     }
-    if (!resetNewPassword) {
-      setResetErrorMsg("새 비밀번호를 입력해 주세요.");
+    if (!ph || ph.replace(/[^0-9]/g, "").length < 4) {
+      setResetErrorMsg("가입 시 등록하신 휴대폰 번호를 입력해 주세요.");
       return;
     }
-    const resetPwdCheck = validatePasswordComplexity(resetNewPassword);
-    if (!resetPwdCheck.isValid) {
+
+    setIsVerifyingIdentity(true);
+    setResetErrorMsg("");
+
+    try {
+      const res = await fetch("/api/auth/reset-by-identity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "verify",
+          identifier: id,
+          name: nm,
+          phone: ph,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        setResetErrorMsg(json.error || "입력하신 정보와 일치하는 회원을 찾을 수 없습니다. 다시 확인해 주세요.");
+        return;
+      }
+
+      setVerifiedCustomer(json.customer);
+      setResetStep("new_password");
+      setResetErrorMsg("");
+    } catch (err: any) {
+      setResetErrorMsg("서버 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setIsVerifyingIdentity(false);
+    }
+  };
+
+  // 2단계: 새 비밀번호 설정 제출
+  const handleResetNewPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const pwdCheck = validatePasswordComplexity(resetNewPassword);
+    if (!pwdCheck.isValid) {
       setResetErrorMsg("새 비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.");
-      return;
-    }
-    if (resetNewPassword === curPwd) {
-      setResetErrorMsg("새 비밀번호가 현재 비밀번호와 동일합니다. 다른 비밀번호를 입력해 주세요.");
       return;
     }
     if (resetNewPassword !== resetConfirmPassword) {
@@ -637,97 +685,66 @@ export default function LoginPage() {
       return;
     }
 
-    // 등록된 회원 여부 및 현재 비밀번호 검증
-    let matchedCustomer: any = null;
-    if (typeof window !== "undefined") {
-      const savedCustomers = localStorage.getItem("admin_customers");
-      if (savedCustomers) {
-        try {
-          const list: any[] = JSON.parse(savedCustomers);
-          matchedCustomer = list.find(
-            (c) =>
-              (c.email && c.email.trim().toLowerCase() === targetEmail) ||
-              (c.loginId && c.loginId.trim().toLowerCase() === targetEmail) ||
-              (c.login_id && c.login_id.trim().toLowerCase() === targetEmail) ||
-              (c.id && c.id.trim().toLowerCase() === targetEmail) ||
-              (cleanPhoneTarget.length >= 8 && c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhoneTarget)
-          );
-        } catch (err) {}
+    setIsResettingPassword(true);
+    setResetErrorMsg("");
+
+    try {
+      const res = await fetch("/api/auth/reset-by-identity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "reset",
+          identifier: resetIdentifier.trim(),
+          name: resetName.trim(),
+          phone: resetPhone.trim(),
+          newPassword: resetNewPassword,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        setResetErrorMsg(json.error || "비밀번호 변경에 실패했습니다. 다시 시도해 주세요.");
+        return;
       }
-    }
 
-    if (!matchedCustomer && (targetEmail === "admin" || targetEmail === "admin@choicomma.com")) {
-      matchedCustomer = {
-        name: "최고관리자 (Admin)",
-        loginId: "admin",
-        email: "admin@choicomma.com",
-        phone: "02-579-1171",
-        isAdmin: true,
-      };
-    }
-
-    if (!matchedCustomer) {
-      try {
-        const res = await fetch("/api/admin/customers", { cache: "no-store" });
-        if (res.ok) {
-          const json = await res.json();
-          const list = json.customers || [];
-          matchedCustomer = list.find(
-            (c: any) =>
-              (c.email && c.email.trim().toLowerCase() === targetEmail) ||
-              (c.loginId && c.loginId.trim().toLowerCase() === targetEmail) ||
-              (c.login_id && c.login_id.trim().toLowerCase() === targetEmail) ||
-              (c.id && c.id.trim().toLowerCase() === targetEmail) ||
-              (cleanPhoneTarget.length >= 8 && c.phone && c.phone.replace(/[^0-9]/g, "") === cleanPhoneTarget)
-          );
+      // 로컬 스토리지에 새 비밀번호 동기화 (즉시 로그인 가능하도록)
+      if (typeof window !== "undefined") {
+        const targetId = json.loginIdentifier || resetIdentifier.trim();
+        localStorage.setItem(`user_pwd_${targetId.toLowerCase()}`, resetNewPassword);
+        if (verifiedCustomer?.email) {
+          localStorage.setItem(`user_pwd_${verifiedCustomer.email.toLowerCase()}`, resetNewPassword);
         }
-      } catch (err) {}
-    }
-
-    if (!matchedCustomer) {
-      setResetErrorMsg("등록되지 않은 회원 정보입니다. 아이디(이메일)를 확인해 주세요.");
-      return;
-    }
-
-    // 현재 비밀번호 일치 검증
-    const custLoginId = (matchedCustomer.loginId || matchedCustomer.login_id || "").trim().toLowerCase();
-    const custEmail = (matchedCustomer.email || "").trim().toLowerCase();
-    const custCleanPhone = (matchedCustomer.phone || "").replace(/[^0-9]/g, "");
-    const phoneLast4 = custCleanPhone.length >= 4 ? custCleanPhone.slice(-4) : "";
-
-    const validPasswords: (string | null | undefined)[] = [
-      custLoginId ? localStorage.getItem(`user_pwd_${custLoginId}`) : null,
-      custEmail ? localStorage.getItem(`user_pwd_${custEmail}`) : null,
-      custCleanPhone ? localStorage.getItem(`user_pwd_${custCleanPhone}`) : null,
-      targetEmail ? localStorage.getItem(`user_pwd_${targetEmail}`) : null,
-      cleanPhoneTarget.length >= 8 ? localStorage.getItem(`user_pwd_${cleanPhoneTarget}`) : null,
-      matchedCustomer.password,
-      phoneLast4, // 아임웹 기존 회원 초기 비밀번호
-      (matchedCustomer.isAdmin || targetEmail === "admin" || targetEmail === "admin@choicomma.com") ? "Mrschoi83!!" : null,
-      "Mrschoi83!!",
-    ];
-
-    const isCurrentCorrect = validPasswords.some((pwd) => pwd && pwd.trim() === curPwd);
-    if (!isCurrentCorrect) {
-      setResetErrorMsg("현재 비밀번호가 일치하지 않습니다. (기존 회원의 초기 비밀번호는 가입 당시 휴대폰 뒤 4자리입니다)");
-      return;
-    }
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`user_pwd_${targetEmail}`, resetNewPassword);
-      if (custLoginId) localStorage.setItem(`user_pwd_${custLoginId}`, resetNewPassword);
-      if (custEmail) localStorage.setItem(`user_pwd_${custEmail}`, resetNewPassword);
-      if (custCleanPhone.length >= 8) localStorage.setItem(`user_pwd_${custCleanPhone}`, resetNewPassword);
-      if (cleanPhoneTarget.length >= 8) {
-        localStorage.setItem(`user_pwd_${cleanPhoneTarget}`, resetNewPassword);
+        if (verifiedCustomer?.loginId) {
+          localStorage.setItem(`user_pwd_${verifiedCustomer.loginId.toLowerCase()}`, resetNewPassword);
+        }
+        const cleanPh = resetPhone.replace(/[^0-9]/g, "");
+        if (cleanPh.length >= 8) {
+          localStorage.setItem(`user_pwd_${cleanPh}`, resetNewPassword);
+        }
+        window.dispatchEvent(new CustomEvent("storage"));
       }
-      window.dispatchEvent(new CustomEvent("storage"));
-    }
 
-    setEmail(targetEmail);
+      setResetStep("success");
+      setToastMsg("비밀번호가 성공적으로 변경되었습니다.");
+    } catch (err: any) {
+      setResetErrorMsg("서버 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  // 3단계 완료: 새 비밀번호를 로그인 폼에 자동 입력하고 모달 닫기
+  const handleApplyNewPasswordToLoginForm = () => {
+    const finalId = verifiedCustomer?.loginId || verifiedCustomer?.email || resetIdentifier.trim();
+    setEmail(finalId);
     setPassword(resetNewPassword);
     setIsResetModalOpen(false);
-    setToastMsg("비밀번호가 성공적으로 변경되었습니다. 즉시 로그인하실 수 있습니다!");
+    setToastMsg("새 비밀번호가 입력되었습니다. 로그인하기 버튼을 눌러주세요!");
+    setTimeout(() => {
+      const submitBtn = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+      if (submitBtn) submitBtn.focus();
+    }, 150);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1957,7 +1974,7 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* Internal Password Reset Modal */}
+      {/* Internal Password Reset Modal (Idea 1: 가입 정보 3중 확인 후 즉시 새 비밀번호 설정) */}
       {isResetModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 text-neutral-900 animate-in fade-in duration-200 font-sans">
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-neutral-200 animate-in zoom-in-95 duration-200 space-y-5 relative">
@@ -1968,196 +1985,321 @@ export default function LoginPage() {
               <X className="w-5 h-5" />
             </button>
 
-            <div className="text-center space-y-1.5 pt-1">
-              <div className="w-12 h-12 rounded-2xl bg-neutral-950 text-white flex items-center justify-center mx-auto shadow-md mb-2">
-                <Lock className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-extrabold text-neutral-950 tracking-tight">
-                비밀번호 재설정
-              </h3>
-              <p className="text-xs text-neutral-500">
-                아이디(이메일)를 입력하고 새로운 비밀번호를 설정해 주세요.
-              </p>
-            </div>
-
-            <form onSubmit={handlePasswordResetSubmit} className="space-y-4 pt-1">
-              <div>
-                <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                  아이디 또는 이메일
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                  <input
-                    type="text"
-                    required
-                    value={resetInputEmail}
-                    onChange={(e) => {
-                      setResetInputEmail(e.target.value);
-                      setResetErrorMsg("");
-                    }}
-                    placeholder="아이디 또는 이메일 입력"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
-                  />
+            {resetStep === "success" ? (
+              /* ── 3단계: 변경 완료 화면 ── */
+              <div className="text-center space-y-5 pt-2 animate-in fade-in zoom-in-95 duration-200">
+                <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border-2 border-emerald-200 shadow-sm">
+                  <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <div className="flex justify-end pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsResetModalOpen(false);
-                      handleOpenFindIdModal();
-                    }}
-                    className="text-[11px] text-neutral-500 hover:text-neutral-950 underline font-semibold cursor-pointer"
-                  >
-                    아이디가 기억나지 않으시나요? 아이디 찾기
-                  </button>
-                </div>
-              </div>
-
-              {/* 현재 비밀번호 (Current Password) */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                    현재 비밀번호
-                  </label>
-                  <span className="text-[10px] text-neutral-400">
-                    초기: 휴대폰 번호 뒤 4자리
-                  </span>
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                  <input
-                    type={showResetCurrentPassword ? "text" : "password"}
-                    required
-                    value={resetCurrentPassword}
-                    onChange={(e) => {
-                      setResetCurrentPassword(e.target.value);
-                      setResetErrorMsg("");
-                    }}
-                    placeholder="현재 비밀번호 입력"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowResetCurrentPassword(!showResetCurrentPassword)}
-                    className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
-                    tabIndex={-1}
-                  >
-                    {showResetCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <p className="text-[10px] text-neutral-400 mt-1 pl-1">
-                  기존 쇼핑몰 이전 회원의 초기 비밀번호는 휴대폰 번호 뒤 4자리입니다.
-                </p>
-              </div>
-
-              {/* 새 비밀번호 */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                    새 비밀번호
-                  </label>
-                  <span className="text-[10px] text-neutral-400">
-                    영문+숫자+특수문자 8자 이상
-                  </span>
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                  <input
-                    type={showResetNewPassword ? "text" : "password"}
-                    required
-                    value={resetNewPassword}
-                    onChange={(e) => {
-                      setResetNewPassword(e.target.value);
-                      setResetErrorMsg("");
-                    }}
-                    placeholder="새 비밀번호 입력 (영문, 숫자, 특수문자 8자 이상)"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowResetNewPassword(!showResetNewPassword)}
-                    className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
-                    tabIndex={-1}
-                  >
-                    {showResetNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <p className="text-[10px] text-neutral-400 mt-1 pl-1">
-                  영문, 숫자, 특수문자를 포함하여 8자 이상 입력해 주세요.
-                </p>
-              </div>
-
-              {/* 새 비밀번호 확인 */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                    새 비밀번호 확인
-                  </label>
-                  <span className="text-[10px] text-neutral-400">
-                    동일한 비밀번호 재입력
-                  </span>
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                  <input
-                    type={showResetConfirmPassword ? "text" : "password"}
-                    required
-                    value={resetConfirmPassword}
-                    onChange={(e) => {
-                      setResetConfirmPassword(e.target.value);
-                      setResetErrorMsg("");
-                    }}
-                    placeholder="새 비밀번호 다시 입력"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowResetConfirmPassword(!showResetConfirmPassword)}
-                    className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
-                    tabIndex={-1}
-                  >
-                    {showResetConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {resetConfirmPassword.length === 0 ? (
-                  <p className="text-[10px] text-neutral-400 mt-1 pl-1">
-                    위에서 입력한 새 비밀번호를 한 번 더 입력해 주세요.
+                <div className="space-y-1.5">
+                  <h3 className="text-xl font-extrabold text-neutral-950 tracking-tight">
+                    비밀번호 변경 완료!
+                  </h3>
+                  <p className="text-xs text-neutral-600 leading-relaxed px-2">
+                    비밀번호가 안전하게 변경되었습니다.<br />
+                    새로운 비밀번호로 지금 바로 로그인하실 수 있습니다.
                   </p>
-                ) : resetConfirmPassword !== resetNewPassword ? (
-                  <p className="text-[10px] font-bold text-amber-700 mt-1 pl-1 flex items-center gap-1 animate-in fade-in">
-                    <span>✕</span>
-                    <span>비밀번호가 일치하지 않습니다.</span>
-                  </p>
-                ) : (
-                  <p className="text-[10px] font-bold text-neutral-950 mt-1 pl-1 flex items-center gap-1 animate-in fade-in">
-                    <span>✓</span>
-                    <span>비밀번호가 일치합니다.</span>
-                  </p>
-                )}
-              </div>
+                </div>
 
-              {resetErrorMsg && (
-                <p className="text-xs font-bold text-rose-600 text-center pt-1 animate-in fade-in">
-                  ✕ {resetErrorMsg}
-                </p>
-              )}
+                <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4 text-left space-y-1.5 text-xs text-neutral-600">
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-400 font-medium">로그인 아이디</span>
+                    <strong className="text-neutral-950 font-bold font-mono">
+                      {verifiedCustomer?.loginId || verifiedCustomer?.email || resetIdentifier}
+                    </strong>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-400 font-medium">회원 성함</span>
+                    <span className="text-neutral-900 font-semibold">{verifiedCustomer?.name || resetName}</span>
+                  </div>
+                </div>
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsResetModalOpen(false)}
-                  className="flex-1 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-3 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold rounded-xl text-xs shadow-md transition-all cursor-pointer"
-                >
-                  비밀번호 변경 완료
-                </button>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={handleApplyNewPasswordToLoginForm}
+                    className="w-full py-4 bg-neutral-950 hover:bg-black text-white font-extrabold rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                  >
+                    <span>새 비밀번호로 바로 로그인하기</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </form>
+            ) : resetStep === "new_password" ? (
+              /* ── 2단계: 새 비밀번호 설정 화면 ── */
+              <div className="space-y-5 pt-1 animate-in fade-in zoom-in-95 duration-200">
+                <div className="text-center space-y-1.5">
+                  <div className="w-12 h-12 rounded-2xl bg-neutral-950 text-white flex items-center justify-center mx-auto shadow-md mb-2">
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-xl font-extrabold text-neutral-950 tracking-tight">
+                    새 비밀번호 설정
+                  </h3>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    <strong className="text-neutral-900 font-bold">{verifiedCustomer?.name || resetName}</strong> 회원님의
+                    새로운 비밀번호를 설정해 주세요.
+                  </p>
+                </div>
+
+                <form onSubmit={handleResetNewPasswordSubmit} className="space-y-4 pt-1">
+                  {/* 새 비밀번호 입력 */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                        새 비밀번호 <span className="text-neutral-950">*</span>
+                      </label>
+                      <span className="text-[10px] text-neutral-400">
+                        영문+숫자+특수문자 8자 이상
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                      <input
+                        type={showResetNewPassword ? "text" : "password"}
+                        required
+                        value={resetNewPassword}
+                        onChange={(e) => {
+                          setResetNewPassword(e.target.value);
+                          setResetErrorMsg("");
+                        }}
+                        placeholder="영문, 숫자, 특수문자 조합 8자 이상"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowResetNewPassword(!showResetNewPassword)}
+                        className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                        tabIndex={-1}
+                      >
+                        {showResetNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+
+                    {/* 복잡도 체크 뱃지 */}
+                    <div className="grid grid-cols-2 gap-1.5 mt-2.5">
+                      {(() => {
+                        const comp = validatePasswordComplexity(resetNewPassword);
+                        const hasLen = resetNewPassword.length >= 8;
+                        const hasLet = /[a-zA-Z]/.test(resetNewPassword);
+                        const hasNum = /[0-9]/.test(resetNewPassword);
+                        const hasSpc = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(resetNewPassword);
+                        return (
+                          <>
+                            <div className={`text-[10px] font-bold px-2 py-1 rounded-md flex items-center gap-1 ${hasLen ? "bg-emerald-50 text-emerald-700" : "bg-neutral-100 text-neutral-400"}`}>
+                              <span>{hasLen ? "✓" : "•"}</span>
+                              <span>8자 이상</span>
+                            </div>
+                            <div className={`text-[10px] font-bold px-2 py-1 rounded-md flex items-center gap-1 ${hasLet ? "bg-emerald-50 text-emerald-700" : "bg-neutral-100 text-neutral-400"}`}>
+                              <span>{hasLet ? "✓" : "•"}</span>
+                              <span>영문 포함</span>
+                            </div>
+                            <div className={`text-[10px] font-bold px-2 py-1 rounded-md flex items-center gap-1 ${hasNum ? "bg-emerald-50 text-emerald-700" : "bg-neutral-100 text-neutral-400"}`}>
+                              <span>{hasNum ? "✓" : "•"}</span>
+                              <span>숫자 포함</span>
+                            </div>
+                            <div className={`text-[10px] font-bold px-2 py-1 rounded-md flex items-center gap-1 ${hasSpc ? "bg-emerald-50 text-emerald-700" : "bg-neutral-100 text-neutral-400"}`}>
+                              <span>{hasSpc ? "✓" : "•"}</span>
+                              <span>특수문자 포함</span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* 새 비밀번호 확인 입력 */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                        새 비밀번호 확인 <span className="text-neutral-950">*</span>
+                      </label>
+                      <span className="text-[10px] text-neutral-400">
+                        동일한 비밀번호 재입력
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                      <input
+                        type={showResetConfirmPassword ? "text" : "password"}
+                        required
+                        value={resetConfirmPassword}
+                        onChange={(e) => {
+                          setResetConfirmPassword(e.target.value);
+                          setResetErrorMsg("");
+                        }}
+                        placeholder="새 비밀번호 다시 입력"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-10 py-3 text-sm font-mono text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowResetConfirmPassword(!showResetConfirmPassword)}
+                        className="absolute right-3.5 top-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                        tabIndex={-1}
+                      >
+                        {showResetConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {resetConfirmPassword && (
+                      <p className={`text-[11px] font-bold mt-1.5 pl-1 flex items-center gap-1 ${resetNewPassword === resetConfirmPassword ? "text-emerald-700" : "text-rose-600"}`}>
+                        <span>{resetNewPassword === resetConfirmPassword ? "✓" : "✕"}</span>
+                        <span>{resetNewPassword === resetConfirmPassword ? "비밀번호가 일치합니다." : "비밀번호가 일치하지 않습니다."}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {resetErrorMsg && (
+                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 text-center animate-in fade-in">
+                      ✕ {resetErrorMsg}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetStep("verify");
+                        setResetErrorMsg("");
+                      }}
+                      className="py-3 px-4 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                    >
+                      이전 단계
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isResettingPassword || !validatePasswordComplexity(resetNewPassword).isValid || resetNewPassword !== resetConfirmPassword}
+                      className="flex-1 py-3 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {isResettingPassword ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <span>비밀번호 변경 완료</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              /* ── 1단계: 본인 확인 입력 화면 ── */
+              <div className="space-y-5 pt-1">
+                <div className="text-center space-y-1.5">
+                  <div className="w-12 h-12 rounded-2xl bg-neutral-950 text-white flex items-center justify-center mx-auto shadow-md mb-2">
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-xl font-extrabold text-neutral-950 tracking-tight">
+                    비밀번호 찾기
+                  </h3>
+                  <p className="text-xs text-neutral-500 leading-relaxed px-2">
+                    가입 시 등록하신 회원 정보를 확인한 후,<br />
+                    새로운 비밀번호로 즉시 재설정하실 수 있습니다.
+                  </p>
+                </div>
+
+                <form onSubmit={handleVerifyIdentitySubmit} className="space-y-3.5 pt-1">
+                  {/* 1. 아이디 또는 이메일 */}
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                      아이디 또는 이메일
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                      <input
+                        type="text"
+                        required
+                        value={resetIdentifier}
+                        onChange={(e) => {
+                          setResetIdentifier(e.target.value);
+                          setResetErrorMsg("");
+                        }}
+                        placeholder="아이디 또는 가입 이메일 주소 입력"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 2. 이름 (성함) */}
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                      이름 (성함)
+                    </label>
+                    <div className="relative">
+                      <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                      <input
+                        type="text"
+                        required
+                        value={resetName}
+                        onChange={(e) => {
+                          setResetName(e.target.value);
+                          setResetErrorMsg("");
+                        }}
+                        placeholder="가입 시 등록하신 성함 입력 (예: 홍길동)"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 3. 휴대폰 번호 */}
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+                      휴대폰 번호
+                    </label>
+                    <div className="relative">
+                      <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
+                      <input
+                        type="tel"
+                        required
+                        value={resetPhone}
+                        onChange={(e) => {
+                          setResetPhone(e.target.value);
+                          setResetErrorMsg("");
+                        }}
+                        placeholder="가입 시 등록하신 휴대폰 번호 (예: 010-1234-5678)"
+                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsResetModalOpen(false);
+                        handleOpenFindIdModal();
+                      }}
+                      className="text-[11px] text-neutral-500 hover:text-neutral-950 underline font-semibold cursor-pointer"
+                    >
+                      아이디가 기억나지 않으시나요? 아이디 찾기
+                    </button>
+                  </div>
+
+                  {resetErrorMsg && (
+                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 text-center animate-in fade-in">
+                      ✕ {resetErrorMsg}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsResetModalOpen(false)}
+                      className="flex-1 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isVerifyingIdentity}
+                      className="flex-1 py-3 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {isVerifyingIdentity ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <span>본인 확인 및 다음</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       )}
