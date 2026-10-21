@@ -1,6 +1,26 @@
 {
   "logs": [
     {
+      "id": "LOG-1792592579933-827",
+      "timestamp": "2026-10-21 23:22:59",
+      "isoDate": "2026-10-21T14:22:59.933Z",
+      "ip": "172.30.1.74",
+      "country": "대한민국 (내부/관리자)",
+      "countryCode": "KR",
+      "flag": "🇰🇷",
+      "deviceType": "PC",
+      "browser": "Chrome",
+      "os": "Windows 11/10",
+      "landingPath": "/admin",
+      "landingTitle": "choicomma",
+      "referrer": "172.30.1.74",
+      "referrerLabel": "외부 사이트 (172.30.1.74)",
+      "visitorId": "v_1791294529411_hafq13j",
+      "sessionId": "s_1792508476795_efv0s",
+      "isBlocked": false,
+      "isAdmin": true
+    },
+    {
       "id": "LOG-1792592227721-679",
       "timestamp": "2026-10-21 23:17:07",
       "isoDate": "2026-10-21T14:17:07.720Z",
@@ -19979,26 +19999,6 @@
       "landingPath": "/admin",
       "landingTitle": "choicomma",
       "referrerLabel": "외부 사이트 (172.30.1.74)"
-    },
-    {
-      "id": "LOG-1790674962134-92",
-      "ip": "172.30.1.74",
-      "os": "Windows 11/10",
-      "flag": "🇰🇷",
-      "browser": "Chrome",
-      "country": "대한민국 (내부/관리자)",
-      "isAdmin": true,
-      "isoDate": "2026-09-29T09:42:42.134Z",
-      "referrer": "direct",
-      "isBlocked": false,
-      "sessionId": "s_1790674952629_zoj7p",
-      "timestamp": "2026-09-29 18:42:42",
-      "visitorId": "v_1790671870295_aosss7h",
-      "deviceType": "PC",
-      "countryCode": "KR",
-      "landingPath": "/admin",
-      "landingTitle": "choicomma",
-      "referrerLabel": "직접 접속 (URL / 북마크)"
     }
   ],
   "blockedIps": [],
@@ -20016,5 +20016,5 @@
     "118.235.74.118",
     "118.235.14.233"
   ],
-  "updatedAt": "2026-10-21T14:17:07.720Z"
+  "updatedAt": "2026-10-21T14:22:59.933Z"
 }

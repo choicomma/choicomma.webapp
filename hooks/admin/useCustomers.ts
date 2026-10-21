@@ -67,22 +67,56 @@ export function getCustomerKey(c: any): string {
   return id || (email && email !== "-" ? email : "") || (phone && phone.length >= 7 ? phone : "") || name || "";
 }
 
+export function getCustomerSortScore(c: any): number {
+  if (!c) return 0;
+  if (isSuperAdmin(c)) return Number.MAX_SAFE_INTEGER;
+
+  // 1. 가입일자 (joinedDate / YYYY-MM-DD)
+  let datePart = 0;
+  const rawDate = String(c.joinedDate || c.joinDate || c["가입일"] || "").trim().split(" ")[0];
+  if (rawDate && rawDate.length >= 8) {
+    const parsed = new Date(rawDate).getTime();
+    if (!isNaN(parsed) && parsed > 0) {
+      datePart = parsed;
+    }
+  }
+
+  // 2. 동일 일자 또는 상세 타임스탬프 (created_at) 반영
+  let timeOffset = 0;
+  if (c.created_at) {
+    const t = new Date(c.created_at).getTime();
+    if (!isNaN(t) && t > 0) {
+      if (datePart === 0) return t;
+      const dayStart = new Date(new Date(t).toISOString().split("T")[0]).getTime();
+      timeOffset = Math.max(0, t - dayStart);
+    }
+  } else if (c.updated_at) {
+    const t = new Date(c.updated_at).getTime();
+    if (!isNaN(t) && t > 0) {
+      if (datePart === 0) return t;
+      const dayStart = new Date(new Date(t).toISOString().split("T")[0]).getTime();
+      timeOffset = Math.max(0, t - dayStart);
+    }
+  }
+
+  return datePart + timeOffset;
+}
+
 /**
- * 회원 목록 중복 완전 제거 (최고관리자 ADMIN-001 단 1개 보장 및 ID/이메일 충돌 원천 방지)
+ * 회원 목록 중복 완전 제거 및 최신 가입일순(내림차순) 정렬 (최고관리자 ADMIN-001 단 1개 최상단 보장)
  */
 export function deduplicateCustomers(list: any[]): any[] {
   if (!Array.isArray(list) || list.length === 0) return DEFAULT_CUSTOMERS;
   const seenIds = new Set<string>();
   const seenEmails = new Set<string>();
   const result: any[] = [];
-
-  let adminAdded = false;
+  let adminCustomer: any = null;
 
   for (const c of list) {
     if (!c) continue;
     if (isSuperAdmin(c)) {
-      if (!adminAdded) {
-        result.push({
+      if (!adminCustomer) {
+        adminCustomer = {
           ...DEFAULT_ADMIN_CUSTOMER,
           ...c,
           id: "ADMIN-001",
@@ -90,10 +124,9 @@ export function deduplicateCustomers(list: any[]): any[] {
           email: "admin@choicomma.com",
           role: "ADMIN",
           isAdmin: true,
-        });
+        };
         seenIds.add("ADMIN-001");
         seenEmails.add("admin@choicomma.com");
-        adminAdded = true;
       }
       continue;
     }
@@ -122,7 +155,13 @@ export function deduplicateCustomers(list: any[]): any[] {
     });
   }
 
-  if (!adminAdded) {
+  // 1. 일반 회원 가입일 최신순(내림차순) 정렬
+  result.sort((a, b) => getCustomerSortScore(b) - getCustomerSortScore(a));
+
+  // 2. 최고관리자(ADMIN-001)는 항상 최상단에 배치
+  if (adminCustomer) {
+    result.unshift(adminCustomer);
+  } else {
     result.unshift(DEFAULT_ADMIN_CUSTOMER);
   }
 
@@ -215,11 +254,12 @@ export function getCachedCustomers(): any[] {
 export function safeSaveAdminCustomers(list: any[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem("admin_customers", JSON.stringify(list));
+    // 5MB 용량 초과 방지를 위해 최근 500명 위주로 캐시 보존
+    const safeList = list.slice(0, 500);
+    localStorage.setItem("admin_customers", JSON.stringify(safeList));
   } catch (err) {
     console.warn("[admin_customers localStorage quota exceeded, storing recent cache]:", err);
     try {
-      // 5MB 용량 초과 시 최근 200명 위주로 캐시 보존하여 쿼터 에러 방지
       const minimal = list.slice(0, 200);
       localStorage.setItem("admin_customers", JSON.stringify(minimal));
     } catch {}
@@ -257,8 +297,6 @@ export function useCustomers(triggerToast: (msg: string) => void) {
             }
           }
         } catch (e) {}
-
-
 
         const localCached = getCachedCustomers();
         const customerMap = new Map<string, any>();
@@ -332,8 +370,8 @@ export function useCustomers(triggerToast: (msg: string) => void) {
                 ...existing,
                 ...c,
               });
-            } else if (serverData.length === 0) {
-              // 서버 데이터를 못 가져온 비상 시에만 로컬 캐시 단독 사용
+            } else {
+              // 로컬 캐시에 등록된 신규 회원도 버리지 않고 보존!
               customerMap.set(key, c);
             }
           }
@@ -343,13 +381,7 @@ export function useCustomers(triggerToast: (msg: string) => void) {
         if (isMounted) {
           setCustomersList(finalList);
           setIsCustomersLoaded(true);
-          if (typeof window !== "undefined") {
-            try {
-              localStorage.setItem("admin_customers", JSON.stringify(finalList));
-            } catch (storageErr) {
-              console.warn("Notice: LocalStorage quota reached, using in-memory list:", storageErr);
-            }
-          }
+          safeSaveAdminCustomers(finalList);
 
           // 4. 로컬에만 있고 원격 DB에 누락된 회원은 백그라운드 자동 동기화 (최고관리자 제외)
           localCached.forEach((lc) => {

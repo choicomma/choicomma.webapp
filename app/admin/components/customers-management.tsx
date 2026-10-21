@@ -1020,7 +1020,12 @@ export function CustomersManagement({
                     <span className="text-[10px] font-normal normal-case text-neutral-400 font-sans">(클릭 시 내역)</span>
                   </span>
                 </th>
-                <th className="py-3.5 px-5">가입일 / 최근접속</th>
+                <th className="py-3.5 px-5">
+                  <span className="flex items-center gap-1.5">
+                    가입일 / 최근접속
+                    <span className="text-[10px] font-bold text-neutral-900 bg-neutral-200/90 px-1.5 py-0.5 rounded font-sans tracking-tight">최신순 ↓</span>
+                  </span>
+                </th>
                 <th className="py-3.5 px-5 text-right">관리</th>
               </tr>
             </thead>

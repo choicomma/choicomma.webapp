@@ -90,13 +90,79 @@ function normalizeCustomerForSupabase(c: any) {
   };
 }
 
+function normalizeCustomerFromSupabase(rc: any) {
+  let baseAddress = rc.address || "";
+  let detailAddress = rc.detailAddress || "";
+  if (baseAddress.includes(" | ")) {
+    const parts = baseAddress.split(" | ");
+    baseAddress = parts[0] || "";
+    detailAddress = parts.slice(1).join(" ") || detailAddress;
+  }
+  return {
+    id: String(rc.id),
+    imwebUid: rc.imwebUid || undefined,
+    loginId: rc.loginId || rc.id,
+    name: String(rc.name || "회원").trim(),
+    email: String(rc.email || "").trim(),
+    phone: String(rc.phone || "-").trim(),
+    postcode: String(rc.postcode || "").trim(),
+    address: baseAddress || "-",
+    detailAddress: detailAddress || "",
+    grade: String(rc.grade || "GENERAL").toUpperCase(),
+    totalSpent: Number(rc.totalSpent || 0),
+    points: Number(rc.points || 0),
+    couponsCount: Number(rc.couponsCount || 0),
+    joinedDate: rc.joinedDate || (rc.created_at ? rc.created_at.split("T")[0] : new Date().toISOString().split("T")[0]),
+    status: rc.status || "Active",
+    role: rc.role || (rc.isAdmin ? "ADMIN" : "CUSTOMER"),
+    isAdmin: Boolean(rc.isAdmin),
+    created_at: rc.created_at,
+    updated_at: rc.updated_at,
+  };
+}
+
+function getCustomerSortScore(c: any): number {
+  if (!c) return 0;
+  const id = String(c.id || "").toUpperCase();
+  const email = String(c.email || "").toLowerCase();
+  if (id === "ADMIN-001" || email === "admin@choicomma.com") return Number.MAX_SAFE_INTEGER;
+
+  let datePart = 0;
+  const rawDate = String(c.joinedDate || c.joinDate || c["가입일"] || "").trim().split(" ")[0];
+  if (rawDate && rawDate.length >= 8) {
+    const parsed = new Date(rawDate).getTime();
+    if (!isNaN(parsed) && parsed > 0) {
+      datePart = parsed;
+    }
+  }
+
+  let timeOffset = 0;
+  if (c.created_at) {
+    const t = new Date(c.created_at).getTime();
+    if (!isNaN(t) && t > 0) {
+      if (datePart === 0) return t;
+      const dayStart = new Date(new Date(t).toISOString().split("T")[0]).getTime();
+      timeOffset = Math.max(0, t - dayStart);
+    }
+  } else if (c.updated_at) {
+    const t = new Date(c.updated_at).getTime();
+    if (!isNaN(t) && t > 0) {
+      if (datePart === 0) return t;
+      const dayStart = new Date(new Date(t).toISOString().split("T")[0]).getTime();
+      timeOffset = Math.max(0, t - dayStart);
+    }
+  }
+
+  return datePart + timeOffset;
+}
+
 const NO_CACHE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
   Pragma: "no-cache",
   Expires: "0",
 };
 
-// GET: 회원 목록 조회 (Git data/customers.json 기준 및 Supabase 자가 복구)
+// GET: 회원 목록 조회 (Git data/customers.json 기준 및 Supabase 실시간 양방향 동기화)
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
@@ -106,29 +172,95 @@ export async function GET(req: NextRequest) {
 
     let list = readCustomersFile();
 
-    // 비상 복구(Self-Healing): 로컬 회원 데이터가 비어있는 경우 Supabase에서 복구 시도
-    if (list.length === 0) {
-      try {
-        const { data, error } = await runSafeSupabaseQuery<any[]>(
-          async (supabase) => supabase.from("customers").select("*").order("created_at", { ascending: true }),
-          1500
-        );
-        if (!error && Array.isArray(data) && data.length > 0) {
-          list = data;
-          writeCustomersFile(list); // 로컬 캐시 자가 복구
+    // 1. Supabase Pro DB에서 최신 등록/수정 회원 실시간 조회 및 자동 병합 (최신 500명)
+    try {
+      const { data: remoteData, error: dbError } = await runSafeSupabaseQuery<any[]>(
+        async (supabase) =>
+          supabase
+            .from("customers")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(500),
+        2500
+      );
+
+      if (!dbError && Array.isArray(remoteData) && remoteData.length > 0) {
+        if (list.length === 0) {
+          list = remoteData.map(normalizeCustomerFromSupabase);
+          writeCustomersFile(list);
+        } else {
+          const fileIndexMap = new Map<string, number>();
+          list.forEach((c, idx) => {
+            if (c.id) fileIndexMap.set(String(c.id).toLowerCase(), idx);
+            if (c.email && c.email !== "-") fileIndexMap.set(String(c.email).toLowerCase(), idx);
+          });
+
+          const newMembers: any[] = [];
+          let hasFileUpdates = false;
+
+          remoteData.forEach((raw) => {
+            const rc = normalizeCustomerFromSupabase(raw);
+            const matchIdx =
+              (rc.id ? fileIndexMap.get(String(rc.id).toLowerCase()) : undefined) ??
+              (rc.email && rc.email !== "-" ? fileIndexMap.get(String(rc.email).toLowerCase()) : undefined);
+
+            if (matchIdx !== undefined) {
+              const existing = list[matchIdx];
+              // 원격 DB에 더 최신 업데이트(포인트, 등급 등)가 있는 경우 병합
+              if (rc.updated_at && (!existing.updated_at || new Date(rc.updated_at) > new Date(existing.updated_at))) {
+                list[matchIdx] = { ...existing, ...rc };
+                hasFileUpdates = true;
+              }
+            } else {
+              // 원본 파일에 없던 신규 가입 회원 -> 목록 최상단에 추가!
+              newMembers.push(rc);
+              hasFileUpdates = true;
+            }
+          });
+
+          if (newMembers.length > 0) {
+            list = [...newMembers, ...list];
+          }
+
+          if (hasFileUpdates) {
+            try {
+              writeCustomersFile(list);
+            } catch (wErr) {}
+          }
         }
-      } catch (fallbackErr) {
-        console.warn("[Customers Remote Fallback Warning]:", fallbackErr);
       }
+    } catch (remoteErr) {
+      console.warn("[Customers Remote Sync Warning]:", remoteErr);
     }
 
+    // 2. 가입일 최신순(내림차순) 정렬 (최고관리자 최상단 우선)
+    list.sort((a, b) => getCustomerSortScore(b) - getCustomerSortScore(a));
+
     if (id) {
-      const found = list.find((c) => c.id === id || c.loginId === id);
+      let found = list.find((c) => c.id === id || c.loginId === id);
+      if (!found) {
+        try {
+          const { data: dbUser } = await runSafeSupabaseQuery<any>(
+            async (supabase) => supabase.from("customers").select("*").or(`id.eq.${id}`).limit(1).maybeSingle(),
+            1500
+          );
+          if (dbUser) found = normalizeCustomerFromSupabase(dbUser);
+        } catch (e) {}
+      }
       return NextResponse.json({ success: true, customer: found || null }, { headers: NO_CACHE_HEADERS });
     }
 
     if (email) {
-      const found = list.find((c) => c.email?.toLowerCase() === email);
+      let found = list.find((c) => c.email?.toLowerCase() === email);
+      if (!found) {
+        try {
+          const { data: dbUser } = await runSafeSupabaseQuery<any>(
+            async (supabase) => supabase.from("customers").select("*").eq("email", email).limit(1).maybeSingle(),
+            1500
+          );
+          if (dbUser) found = normalizeCustomerFromSupabase(dbUser);
+        } catch (e) {}
+      }
       return NextResponse.json({ success: true, customer: found || null }, { headers: NO_CACHE_HEADERS });
     }
 
@@ -255,22 +387,21 @@ export async function POST(req: NextRequest) {
       // 1. 로컬 저장 (0ms 보장, 무손실 원자적 쓰기)
       writeCustomersFile(current);
 
-      // 2. Supabase 비동기 듀얼 라이트
+      // 2. Supabase 듀얼 라이트 (await 적용으로 확실한 DB 반영 보장)
       const supabaseRow = normalizeCustomerForSupabase(updatedRecord);
-      runSafeSupabaseQuery(
-        async (supabase) => supabase.from("customers").upsert([supabaseRow], { onConflict: "id" }),
-        2500
-      )
-        .then((res) => {
-          if (res.error) {
-            console.warn("[Customer Supabase Dual-Write Notice]:", res.error.message || res.error);
-          } else {
-            console.log(`[Customer Supabase Dual-Write Success] ID: ${supabaseRow.id}`);
-          }
-        })
-        .catch((err) => {
-          console.warn("[Customer Supabase Dual-Write Warning]:", err);
-        });
+      try {
+        const dbRes = await runSafeSupabaseQuery(
+          async (supabase) => supabase.from("customers").upsert([supabaseRow], { onConflict: "id" }),
+          3000
+        );
+        if (dbRes.error) {
+          console.warn("[Customer Supabase Dual-Write Notice]:", dbRes.error.message || dbRes.error);
+        } else {
+          console.log(`[Customer Supabase Dual-Write Success] ID: ${supabaseRow.id}`);
+        }
+      } catch (err) {
+        console.warn("[Customer Supabase Dual-Write Warning]:", err);
+      }
 
       return NextResponse.json({ success: true, customer: updatedRecord, customers: current }, { headers: NO_CACHE_HEADERS });
     } catch (err: any) {

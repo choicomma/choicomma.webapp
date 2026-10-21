@@ -881,13 +881,15 @@ export default function LoginPage() {
 
       const newCustId = finalLoginId || `CUST-${Date.now().toString().slice(-6)}`;
       
-      // Supabase customers 테이블에 실제로 존재하는 컬럼만 선별 (loginId 컬럼 누락 에러 방지)
       const dbCustomer = {
         id: newCustId,
+        loginId: finalLoginId,
         name: displayName,
         email: finalEmail,
         phone: phone.trim() || "010-0000-0000",
-        address: fullAddress || cleanAddress || "-",
+        address: cleanAddress || "-",
+        detailAddress: cleanDetail || "",
+        postcode: cleanPostcode || "",
         grade: "GENERAL",
         totalSpent: 0,
         points: 0,
@@ -900,6 +902,7 @@ export default function LoginPage() {
 
       const localCustomer = {
         ...dbCustomer,
+        address: fullAddress || cleanAddress || "-",
         loginId: finalLoginId,
         login_id: finalLoginId,
         postcode: cleanPostcode || "",
@@ -911,11 +914,16 @@ export default function LoginPage() {
 
       // 1) Save to local admin_customers
       if (typeof window !== "undefined") {
-        const filteredList = customerList.filter((c) => c.id !== newCustId && c.email !== finalEmail);
-        localStorage.setItem("admin_customers", JSON.stringify([localCustomer, ...filteredList]));
+        try {
+          const filteredList = customerList.filter((c) => c.id !== newCustId && c.email !== finalEmail);
+          const safeList = [localCustomer, ...filteredList].slice(0, 300);
+          localStorage.setItem("admin_customers", JSON.stringify(safeList));
+        } catch (storageErr) {
+          console.warn("Notice: admin_customers localStorage quota:", storageErr);
+        }
       }
 
-      // 2) Sync to Git customers (data/customers.json) via Server API
+      // 2) Sync to Server & Supabase via Server API
       try {
         await fetch("/api/admin/customers", {
           method: "POST",
@@ -923,7 +931,7 @@ export default function LoginPage() {
           body: JSON.stringify(dbCustomer),
         });
       } catch (apiErr) {
-        console.warn("Notice: Failed to sync customer to Git file:", apiErr);
+        console.warn("Notice: Failed to sync customer to server:", apiErr);
       }
 
       // 3) Save password in localStorage
