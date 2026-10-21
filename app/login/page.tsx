@@ -573,24 +573,20 @@ export default function LoginPage() {
 
   const handleGoToResetPasswordFromFindId = () => {
     if (!foundCustomer) return;
-    const chosenId = foundCustomer.loginId || foundCustomer.email;
+    const chosenEmail = foundCustomer.email || foundCustomer.loginId || "";
     setIsFindIdModalOpen(false);
     setResetStep("verify");
-    setResetIdentifier(chosenId);
-    setResetName(foundCustomer.name || "");
-    setResetPhone(foundCustomer.phone || "");
+    setResetEmail(chosenEmail);
     setResetErrorMsg("");
     setIsResetModalOpen(true);
   };
 
-  // Password Reset Modal state (Idea 1: 가입 정보 3중 확인 후 즉시 새 비밀번호 설정)
+  // Password Reset Modal state (가입 이메일 주소 확인 후 즉시 새 비밀번호 설정)
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [resetStep, setResetStep] = useState<"verify" | "new_password" | "success">("verify");
   
-  // 1단계: 본인 확인 입력값
-  const [resetIdentifier, setResetIdentifier] = useState("");
-  const [resetName, setResetName] = useState("");
-  const [resetPhone, setResetPhone] = useState("");
+  // 1단계: 가입 이메일 주소 입력값
+  const [resetEmail, setResetEmail] = useState("");
   const [isVerifyingIdentity, setIsVerifyingIdentity] = useState(false);
   const [verifiedCustomer, setVerifiedCustomer] = useState<{ id: string; name: string; loginId: string; email: string } | null>(null);
 
@@ -606,9 +602,7 @@ export default function LoginPage() {
 
   const handleOpenResetModal = () => {
     setResetStep("verify");
-    setResetIdentifier(email || "");
-    setResetName("");
-    setResetPhone("");
+    setResetEmail(email || "");
     setResetNewPassword("");
     setResetConfirmPassword("");
     setShowResetNewPassword(false);
@@ -620,23 +614,13 @@ export default function LoginPage() {
     setIsResetModalOpen(true);
   };
 
-  // 1단계: 본인 확인 (아이디 + 이름 + 휴대폰 번호)
+  // 1단계: 본인 확인 (가입 이메일 주소만 확인)
   const handleVerifyIdentitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const id = resetIdentifier.trim();
-    const nm = resetName.trim();
-    const ph = resetPhone.trim();
+    const em = resetEmail.trim().toLowerCase();
 
-    if (!id) {
-      setResetErrorMsg("아이디 또는 이메일 주소를 입력해 주세요.");
-      return;
-    }
-    if (!nm) {
-      setResetErrorMsg("가입 시 등록하신 성함(이름)을 입력해 주세요.");
-      return;
-    }
-    if (!ph || ph.replace(/[^0-9]/g, "").length < 4) {
-      setResetErrorMsg("가입 시 등록하신 휴대폰 번호를 입력해 주세요.");
+    if (!em) {
+      setResetErrorMsg("가입 시 등록하신 이메일 주소를 입력해 주세요.");
       return;
     }
 
@@ -649,16 +633,14 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "verify",
-          identifier: id,
-          name: nm,
-          phone: ph,
+          email: em,
         }),
       });
 
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setResetErrorMsg(json.error || "입력하신 정보와 일치하는 회원을 찾을 수 없습니다. 다시 확인해 주세요.");
+        setResetErrorMsg(json.error || "가입되지 않은 이메일 주소입니다. 이메일 주소를 다시 확인해 주세요.");
         return;
       }
 
@@ -694,9 +676,7 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "reset",
-          identifier: resetIdentifier.trim(),
-          name: resetName.trim(),
-          phone: resetPhone.trim(),
+          email: verifiedCustomer?.email || resetEmail.trim().toLowerCase(),
           newPassword: resetNewPassword,
         }),
       });
@@ -710,17 +690,13 @@ export default function LoginPage() {
 
       // 로컬 스토리지에 새 비밀번호 동기화 (즉시 로그인 가능하도록)
       if (typeof window !== "undefined") {
-        const targetId = json.loginIdentifier || resetIdentifier.trim();
+        const targetId = json.loginIdentifier || resetEmail.trim();
         localStorage.setItem(`user_pwd_${targetId.toLowerCase()}`, resetNewPassword);
         if (verifiedCustomer?.email) {
           localStorage.setItem(`user_pwd_${verifiedCustomer.email.toLowerCase()}`, resetNewPassword);
         }
         if (verifiedCustomer?.loginId) {
           localStorage.setItem(`user_pwd_${verifiedCustomer.loginId.toLowerCase()}`, resetNewPassword);
-        }
-        const cleanPh = resetPhone.replace(/[^0-9]/g, "");
-        if (cleanPh.length >= 8) {
-          localStorage.setItem(`user_pwd_${cleanPh}`, resetNewPassword);
         }
         window.dispatchEvent(new CustomEvent("storage"));
       }
@@ -736,7 +712,7 @@ export default function LoginPage() {
 
   // 3단계 완료: 새 비밀번호를 로그인 폼에 자동 입력하고 모달 닫기
   const handleApplyNewPasswordToLoginForm = () => {
-    const finalId = verifiedCustomer?.loginId || verifiedCustomer?.email || resetIdentifier.trim();
+    const finalId = verifiedCustomer?.email || verifiedCustomer?.loginId || resetEmail.trim();
     setEmail(finalId);
     setPassword(resetNewPassword);
     setIsResetModalOpen(false);
@@ -2003,15 +1979,17 @@ export default function LoginPage() {
 
                 <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4 text-left space-y-1.5 text-xs text-neutral-600">
                   <div className="flex items-center justify-between">
-                    <span className="text-neutral-400 font-medium">로그인 아이디</span>
+                    <span className="text-neutral-400 font-medium">이메일 계정</span>
                     <strong className="text-neutral-950 font-bold font-mono">
-                      {verifiedCustomer?.loginId || verifiedCustomer?.email || resetIdentifier}
+                      {verifiedCustomer?.email || verifiedCustomer?.loginId || resetEmail}
                     </strong>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-neutral-400 font-medium">회원 성함</span>
-                    <span className="text-neutral-900 font-semibold">{verifiedCustomer?.name || resetName}</span>
-                  </div>
+                  {verifiedCustomer?.name && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-neutral-400 font-medium">회원 성함</span>
+                      <span className="text-neutral-900 font-semibold">{verifiedCustomer.name}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-2">
@@ -2036,7 +2014,7 @@ export default function LoginPage() {
                     새 비밀번호 설정
                   </h3>
                   <p className="text-xs text-neutral-500 leading-relaxed">
-                    <strong className="text-neutral-900 font-bold">{verifiedCustomer?.name || resetName}</strong> 회원님의
+                    <strong className="text-neutral-900 font-bold">{verifiedCustomer?.name ? `${verifiedCustomer.name} (${verifiedCustomer.email})` : (verifiedCustomer?.email || resetEmail)}</strong> 회원님의
                     새로운 비밀번호를 설정해 주세요.
                   </p>
                 </div>
@@ -2179,7 +2157,7 @@ export default function LoginPage() {
                 </form>
               </div>
             ) : (
-              /* ── 1단계: 본인 확인 입력 화면 ── */
+              /* ── 1단계: 본인 확인 (이메일 주소만 입력) ── */
               <div className="space-y-5 pt-1">
                 <div className="text-center space-y-1.5">
                   <div className="w-12 h-12 rounded-2xl bg-neutral-950 text-white flex items-center justify-center mx-auto shadow-md mb-2">
@@ -2189,70 +2167,29 @@ export default function LoginPage() {
                     비밀번호 찾기
                   </h3>
                   <p className="text-xs text-neutral-500 leading-relaxed px-2">
-                    가입 시 등록하신 회원 정보를 확인한 후,<br />
+                    가입 시 등록하신 이메일 주소를 입력하시면,<br />
                     새로운 비밀번호로 즉시 재설정하실 수 있습니다.
                   </p>
                 </div>
 
-                <form onSubmit={handleVerifyIdentitySubmit} className="space-y-3.5 pt-1">
-                  {/* 1. 아이디 또는 이메일 */}
+                <form onSubmit={handleVerifyIdentitySubmit} className="space-y-4 pt-1">
+                  {/* 이메일 주소 입력 */}
                   <div>
                     <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                      아이디 또는 이메일
+                      이메일 주소
                     </label>
                     <div className="relative">
                       <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
                       <input
-                        type="text"
+                        type="email"
                         required
-                        value={resetIdentifier}
+                        autoFocus
+                        value={resetEmail}
                         onChange={(e) => {
-                          setResetIdentifier(e.target.value);
+                          setResetEmail(e.target.value);
                           setResetErrorMsg("");
                         }}
-                        placeholder="아이디 또는 가입 이메일 주소 입력"
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* 2. 이름 (성함) */}
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                      이름 (성함)
-                    </label>
-                    <div className="relative">
-                      <User2 className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                      <input
-                        type="text"
-                        required
-                        value={resetName}
-                        onChange={(e) => {
-                          setResetName(e.target.value);
-                          setResetErrorMsg("");
-                        }}
-                        placeholder="가입 시 등록하신 성함 입력 (예: 홍길동)"
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* 3. 휴대폰 번호 */}
-                  <div>
-                    <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
-                      휴대폰 번호
-                    </label>
-                    <div className="relative">
-                      <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-neutral-400" />
-                      <input
-                        type="tel"
-                        required
-                        value={resetPhone}
-                        onChange={(e) => {
-                          setResetPhone(e.target.value);
-                          setResetErrorMsg("");
-                        }}
-                        placeholder="가입 시 등록하신 휴대폰 번호 (예: 010-1234-5678)"
+                        placeholder="가입 시 등록하신 이메일 주소 입력"
                         className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-neutral-900 focus:outline-none focus:border-neutral-950 focus:bg-white transition-colors"
                       />
                     </div>
@@ -2287,7 +2224,7 @@ export default function LoginPage() {
                     </button>
                     <button
                       type="submit"
-                      disabled={isVerifyingIdentity}
+                      disabled={isVerifyingIdentity || !resetEmail.trim()}
                       className="flex-1 py-3 bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
                       {isVerifyingIdentity ? (

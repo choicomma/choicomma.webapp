@@ -1426,9 +1426,23 @@ export function LiveChatWidget() {
       scrollToBottom("smooth");
     }, 20);
 
-    const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
-    const phone = (typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") || "" : "").trim();
-    const rawId = (email || phone || "").toLowerCase().trim();
+    let email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
+    let phone = (typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") || "" : "").trim();
+    if (!email && !phone && typeof window !== "undefined") {
+      const loginId = (localStorage.getItem("membership_user_login_id") || "").trim();
+      const userId = (localStorage.getItem("membership_user_id") || "").trim();
+      const uName = (localStorage.getItem("membership_user_name") || "").trim();
+      if (loginId) {
+        email = loginId.includes("@") ? loginId.toLowerCase() : `${loginId}@customer.choicomma.com`;
+      } else if (userId) {
+        email = `${userId}@customer.choicomma.com`;
+      } else if (uName) {
+        email = `${encodeURIComponent(uName)}@customer.choicomma.com`;
+      } else {
+        email = "guest@customer.choicomma.com";
+      }
+    }
+    const rawId = (email || phone || "guest").toLowerCase().trim();
 
     // Register active user to admin chat sessions list with accurate grade/tier & Supabase
     registerUserSession("active");

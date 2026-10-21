@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "soso7812@naver.com",
+    "customerName": "수빈",
+    "customerEmail": "soso7812@naver.com",
+    "customerPhone": "010-9953-9612",
+    "status": "active",
+    "created_at": "2026-10-21T13:11:52.857183+00:00",
+    "updated_at": "2026-10-21T13:12:15.187+00:00"
+  },
+  {
+    "id": "guest@customer.choicomma.com",
+    "customerName": "방문자",
+    "customerEmail": "guest@customer.choicomma.com",
+    "customerPhone": "",
+    "status": "ended",
+    "created_at": "2026-10-21T14:12:32.179304+00:00",
+    "updated_at": "2026-10-21T14:12:31.223+00:00"
+  }
+]

@@ -9,7 +9,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
   const [adminLiveInput, setAdminLiveInput] = useState("");
 
   // Multi-Customer Live Chat Sessions State
-  const [activeSessionId, setActiveSessionId] = useState<string>("");
+  const [activeSessionId, setActiveSessionIdState] = useState<string>("");
   const [chatSessionsList, setChatSessionsList] = useState<any[]>([]);
   const [demoSessionMessages, setDemoSessionMessages] = useState<Record<string, any[]>>({});
 
@@ -21,6 +21,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
   const [isSendingLiveChat, setIsSendingLiveChat] = useState(false);
   const lastSentTextRef = useRef("");
   const pendingAdminMsgIdsRef = useRef<Set<string>>(new Set());
+  const deletedSessionIdsRef = useRef<Set<string>>(new Set());
 
   // 1. Load Sessions from Supabase + localStorage merge
   const loadSessions = useCallback(async () => {
@@ -42,15 +43,22 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       const res = await fetch("/api/admin/chat?type=all", { cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
-        dbSessions = (json.sessions || []).filter((s: any) => s.status !== "closed");
+        dbSessions = json.sessions || [];
         dbMsgRows = json.messages || [];
       }
 
-      const dbMsgSessionIds = new Set<string>();
+      // Map latest message per session
+      const sessionLastMsgMap = new Map<string, any>();
       if (Array.isArray(dbMsgRows)) {
         dbMsgRows.forEach((r: any) => {
-          if (r?.sessionId) {
-            dbMsgSessionIds.add(String(r.sessionId).toLowerCase().trim());
+          const sid = String(r?.sessionId || "").toLowerCase().trim();
+          if (sid) {
+            const existing = sessionLastMsgMap.get(sid);
+            const rTime = new Date(r.created_at || 0).getTime();
+            const exTime = existing ? new Date(existing.created_at || 0).getTime() : 0;
+            if (!existing || rTime >= exTime) {
+              sessionLastMsgMap.set(sid, r);
+            }
           }
         });
       }
@@ -58,8 +66,8 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       const isValidSession = (s: any) => {
         if (!s || !s.id) return false;
         const sid = String(s.id).toLowerCase().trim();
-        if (s.status === "closed") return false;
-        if (sid === "vip@choicomma.com" && !dbMsgSessionIds.has(sid)) return false;
+        if (deletedSessionIdsRef.current.has(sid)) return false;
+        if (sid === "vip@choicomma.com" && !sessionLastMsgMap.has(sid)) return false;
         return true;
       };
 
@@ -76,11 +84,11 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
                 (c.phone && rawPhone && c.phone.replace(/[^0-9]/g, "") === rawPhone.replace(/[^0-9]/g, "")) ||
                 (c.name && c.name === s.customerName)
             );
-            const grade = (foundCust?.grade || "GENERAL").toUpperCase();
+            const grade = (foundCust?.grade || (normId.includes("admin") ? "관리자" : "GENERAL")).toUpperCase();
             const uName = foundCust?.name || s.customerName || "고객";
 
             let badgeColor = "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300";
-            if (grade.includes("VVIP") || grade.includes("BLACK") || foundCust?.role === "ADMIN") {
+            if (grade.includes("VVIP") || grade.includes("BLACK") || foundCust?.role === "ADMIN" || normId.includes("admin")) {
               badgeColor = "bg-neutral-950 text-white font-black border border-neutral-950";
             } else if (grade.includes("PLATINUM")) {
               badgeColor = "bg-neutral-800 text-white font-black border border-neutral-800";
@@ -89,59 +97,39 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
             } else if (grade.includes("SILVER")) {
               badgeColor = "bg-neutral-100 text-neutral-800 border border-neutral-200";
             }
+
+            const lastMsgObj = sessionLastMsgMap.get(normId);
+            let lastMsgText = lastMsgObj ? (lastMsgObj.text || lastMsgObj.content || "") : (s.lastMessage || "");
+            if (typeof lastMsgText === "string" && lastMsgText.startsWith('{"type":')) {
+              try {
+                const parsed = JSON.parse(lastMsgText);
+                if (parsed.type === "ORDER_SELECTED") lastMsgText = `📦 주문 문의: ${parsed.orderNumber || ""}`;
+                else if (parsed.type === "EXCHANGE_REQUEST") lastMsgText = "🔄 교환 접수 요청";
+                else if (parsed.type === "EXCHANGE_COMPLETED") lastMsgText = "✓ 교환 접수 완료";
+                else if (parsed.type === "REFUND_REQUEST") lastMsgText = "💳 환불 접수 요청";
+                else if (parsed.type === "REFUND_SUBMITTED") lastMsgText = "✓ 환불 접수 완료";
+                else if (parsed.title) lastMsgText = parsed.title;
+              } catch (e) {}
+            }
+            const lastMsgTime = lastMsgObj?.created_at || s.lastMessageAt || s.updated_at || s.created_at || "";
 
             return {
               id: normId,
               name: uName.endsWith("님") ? uName : `${uName}님`,
               email: s.customerEmail || normId,
               phone: rawPhone || foundCust?.phone || "",
-              tier: grade,
+              tier: normId.includes("admin") ? "관리자" : grade,
               badgeColor,
-              status: s.status === "active" ? "online" : (s.status || "online"),
+              status: s.status === "ended" ? "ended" : "online",
+              lastMessage: lastMsgText,
+              lastMessageAt: lastMsgTime,
             };
           });
       }
 
-      // B. Merge with localStorage sessions that are active
+      // B. Merge with localStorage sessions that are active (excluding deleted sessions)
       const sessionsMap = new Map<string, any>();
       dbMappedSessions.forEach((s) => sessionsMap.set(s.id, s));
-
-      // C. 메시지는 존재하나 세션 목록에 없는 경우 자동 매핑 추가
-      if (Array.isArray(dbMsgRows)) {
-        dbMsgRows.forEach((r: any) => {
-          const sid = String(r?.sessionId || "").toLowerCase().trim();
-          if (sid && !sessionsMap.has(sid)) {
-            const foundCust = adminCustomers.find(
-              (c: any) =>
-                (c.email && c.email.toLowerCase().trim() === sid) ||
-                (c.phone && c.phone.replace(/[^0-9]/g, "") === sid.replace(/[^0-9]/g, "")) ||
-                (c.name && c.name === r.senderName)
-            );
-            const grade = (foundCust?.grade || (sid.includes("admin") ? "VVIP" : "GENERAL")).toUpperCase();
-            const uName = foundCust?.name || (sid.includes("@") ? sid.split("@")[0] : sid);
-            let badgeColor = "bg-neutral-100 text-neutral-800 font-bold border border-neutral-300";
-            if (grade.includes("VVIP") || grade.includes("BLACK") || foundCust?.role === "ADMIN" || sid.includes("admin")) {
-              badgeColor = "bg-neutral-950 text-white font-black border border-neutral-950";
-            } else if (grade.includes("PLATINUM")) {
-              badgeColor = "bg-neutral-800 text-white font-black border border-neutral-800";
-            } else if (grade.includes("GOLD")) {
-              badgeColor = "bg-neutral-200 text-neutral-900 border border-neutral-300";
-            } else if (grade.includes("SILVER")) {
-              badgeColor = "bg-neutral-100 text-neutral-800 border border-neutral-200";
-            }
-
-            sessionsMap.set(sid, {
-              id: sid,
-              name: uName.endsWith("님") ? uName : `${uName}님`,
-              email: sid.includes("@") ? sid : (foundCust?.email || ""),
-              phone: foundCust?.phone || "",
-              tier: sid.includes("admin") ? "관리자" : grade,
-              badgeColor,
-              status: "online",
-            });
-          }
-        });
-      }
 
       const savedLocal = localStorage.getItem("admin_chat_sessions");
       if (savedLocal) {
@@ -149,10 +137,24 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
           const parsed = JSON.parse(savedLocal);
           if (Array.isArray(parsed)) {
             parsed.forEach((s: any) => {
-              if (s?.id && s.status !== "closed") {
+              if (s?.id) {
                 const normId = String(s.id).toLowerCase().trim();
-                if (!sessionsMap.has(normId)) {
-                  sessionsMap.set(normId, { ...s, id: normId });
+                if (deletedSessionIdsRef.current.has(normId)) return;
+                const sEmail = (s.email || "").toLowerCase().trim();
+                const sName = (s.name || "").replace("님", "").trim();
+
+                const isDuplicate = Array.from(sessionsMap.values()).some((existing: any) => {
+                  const exId = String(existing.id || "").toLowerCase().trim();
+                  const exEmail = (existing.email || "").toLowerCase().trim();
+                  const exName = (existing.name || "").replace("님", "").trim();
+                  if (exId === normId) return true;
+                  if (sEmail && exEmail && sEmail === exEmail) return true;
+                  if (sName && exName && sName === exName) return true;
+                  return false;
+                });
+
+                if (!isDuplicate && normId !== "vip@choicomma.com") {
+                  sessionsMap.set(normId, { ...s, id: normId, status: s.status === "ended" ? "ended" : "online" });
                 }
               }
             });
@@ -161,6 +163,13 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       }
 
       const finalList = Array.from(sessionsMap.values());
+      // Sort by last message / update time descending (most recent first)
+      finalList.sort((a, b) => {
+        const timeA = new Date(a.lastMessageAt || a.updated_at || a.created_at || 0).getTime();
+        const timeB = new Date(b.lastMessageAt || b.updated_at || b.created_at || 0).getTime();
+        return timeB - timeA;
+      });
+
       setChatSessionsList((prev) => {
         if (
           prev.length === finalList.length &&
@@ -168,7 +177,8 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
             (s, idx) =>
               s?.id === finalList[idx]?.id &&
               s?.status === finalList[idx]?.status &&
-              s?.tier === finalList[idx]?.tier
+              s?.tier === finalList[idx]?.tier &&
+              s?.lastMessage === finalList[idx]?.lastMessage
           )
         ) {
           return prev;
@@ -178,14 +188,24 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       localStorage.setItem("admin_chat_sessions", JSON.stringify(finalList));
 
       // Update activeSessionId with robust preservation
-      setActiveSessionId((prev) => {
+      setActiveSessionIdState((prev) => {
         const normPrev = (prev || "").toLowerCase().trim();
         if (!normPrev) {
-          return finalList.length > 0 ? finalList[0].id : "";
+          const firstId = finalList.length > 0 ? (finalList[0].id || "").toLowerCase().trim() : "";
+          activeSessionIdRef.current = firstId;
+          return firstId;
         }
-        const match = finalList.find((s) => s.id.toLowerCase().trim() === normPrev);
-        if (match) return match.id;
-        if (finalList.length > 0) return finalList[0].id;
+        const match = finalList.find((s) => (s.id || "").toLowerCase().trim() === normPrev);
+        if (match) {
+          const matchId = (match.id || "").toLowerCase().trim();
+          activeSessionIdRef.current = matchId;
+          return matchId;
+        }
+        if (finalList.length > 0) {
+          const firstId = (finalList[0].id || "").toLowerCase().trim();
+          activeSessionIdRef.current = firstId;
+          return firstId;
+        }
         return "";
       });
     } catch (sbErr) {
@@ -193,9 +213,9 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     }
   }, []);
 
-  // 2. Load Chat Messages for Active Session (Supabase + localStorage merge)
-  const syncAdminLiveChat = useCallback(async () => {
-    const rawId = activeSessionIdRef.current;
+  // 2. Load Chat Messages for Active Session (Authoritative DB + Strictly Isolated Local)
+  const syncAdminLiveChat = useCallback(async (explicitId?: string) => {
+    const rawId = explicitId || activeSessionIdRef.current;
     if (typeof window === "undefined" || !rawId) {
       setAdminLiveChatMessages([]);
       return;
@@ -204,13 +224,17 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     const currentId = rawId.trim().toLowerCase();
     const sessionKey = `site_live_chat_messages_${currentId}`;
 
-    // Read existing local messages for optimistic retention
+    // Read existing local messages for optimistic retention (strictly matching currentId)
     let existingLocal: any[] = [];
     const saved = localStorage.getItem(sessionKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) existingLocal = parsed;
+        if (Array.isArray(parsed)) {
+          existingLocal = parsed.filter(
+            (m: any) => !m.sessionId || m.sessionId.toLowerCase().trim() === currentId
+          );
+        }
       } catch (e) {}
     }
 
@@ -221,13 +245,14 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       if (res.ok) {
         const json = await res.json();
         const dbMessages = json.messages || [];
-        if (Array.isArray(dbMessages) && dbMessages.length > 0) {
+        if (Array.isArray(dbMessages)) {
           dbFormatted = dbMessages.map((m: any) => {
             const d = new Date(m.created_at || Date.now());
             const hours = String(d.getHours()).padStart(2, "0");
             const mins = String(d.getMinutes()).padStart(2, "0");
             return {
               id: m.id,
+              sessionId: currentId,
               sender: m.sender || "user",
               senderName: m.sender === "admin" ? "choicomma VIP 케어팀" : "고객님",
               text: m.text || m.content || m.message || "",
@@ -239,39 +264,44 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       }
     } catch (e) {}
 
-    // B. Merge DB messages with local messages (Non-destructive Smart Merge)
+    // Race condition guard: ignore if user switched to another session while fetching
+    if (activeSessionIdRef.current.trim().toLowerCase() !== currentId) {
+      return;
+    }
+
+    // B. Server DB messages are the authoritative source of truth for this session
+    // CRITICAL FIX: Only include messages that actually belong to currentId from the server.
+    // Do NOT merge contaminated existingLocal messages!
+    const mergedMap = new Map<string, any>();
+
+    // 1. Authoritative Server DB messages first
+    dbFormatted.forEach((m) => {
+      if (m && m.id) mergedMap.set(m.id, { ...m, sessionId: currentId });
+    });
+
+    // 2. Explicitly preserve ONLY in-flight pending messages sent by admin that are currently transmitting
+    pendingAdminMsgIdsRef.current.forEach((pendingId) => {
+      const pendingMsg = existingLocal.find((m) => m && m.id === pendingId);
+      if (pendingMsg) {
+        mergedMap.set(pendingId, { ...pendingMsg, sessionId: currentId });
+      }
+    });
+
+    const finalList = Array.from(mergedMap.values());
+    // Chronological sort
+    finalList.sort((a, b) => {
+      const timeA = a.created_at ? new Date(a.created_at).getTime() : (parseInt((a.id || "").match(/\d{10,}/)?.[0] || "0", 10) || 0);
+      const timeB = b.created_at ? new Date(b.created_at).getTime() : (parseInt((b.id || "").match(/\d{10,}/)?.[0] || "0", 10) || 0);
+      return timeA - timeB;
+    });
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(sessionKey, JSON.stringify(finalList));
+    }
+
     setAdminLiveChatMessages((prev) => {
-      const mergedMap = new Map<string, any>();
-
-      // 1. Local/existing messages first
-      const candidates = [...existingLocal, ...prev];
-      candidates.forEach((m) => {
-        if (m && m.id) mergedMap.set(m.id, m);
-      });
-
-      // 2. Server DB messages (authoritative updates)
-      dbFormatted.forEach((m) => {
-        if (m && m.id) mergedMap.set(m.id, m);
-      });
-
-      // 3. Explicitly preserve any in-flight pending messages against polling overwrite
-      pendingAdminMsgIdsRef.current.forEach((pendingId) => {
-        const pendingMsg = candidates.find((m) => m && m.id === pendingId);
-        if (pendingMsg) {
-          mergedMap.set(pendingId, pendingMsg);
-        }
-      });
-
-      const finalList = Array.from(mergedMap.values());
-      // Chronological sort
-      finalList.sort((a, b) => {
-        const timeA = a.created_at ? new Date(a.created_at).getTime() : (parseInt((a.id || "").match(/\d{10,}/)?.[0] || "0", 10) || 0);
-        const timeB = b.created_at ? new Date(b.created_at).getTime() : (parseInt((b.id || "").match(/\d{10,}/)?.[0] || "0", 10) || 0);
-        return timeA - timeB;
-      });
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem(sessionKey, JSON.stringify(finalList));
+      if (activeSessionIdRef.current.trim().toLowerCase() !== currentId) {
+        return prev;
       }
       if (
         prev.length === finalList.length &&
@@ -287,6 +317,45 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       return finalList;
     });
   }, []);
+
+  // 3. Instant Session Switching Handler (UI moves immediately on click with 0ms delay)
+  const setActiveSessionId = useCallback((rawTargetId: string) => {
+    const targetId = (rawTargetId || "").trim().toLowerCase();
+    setActiveSessionIdState(targetId);
+    activeSessionIdRef.current = targetId;
+
+    if (!targetId) {
+      setAdminLiveChatMessages([]);
+      return;
+    }
+
+    // A. 즉시 로컬 캐시에서 해당 세션에 정확히 속한 메시지만 로드하여 지연 없이 대화창 전환
+    if (typeof window !== "undefined") {
+      const sessionKey = `site_live_chat_messages_${targetId}`;
+      const saved = localStorage.getItem(sessionKey);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            // 다른 세션의 오염된 메시지 엄격 배제: sessionId가 정확히 targetId인 것만 허용
+            const clean = parsed.filter(
+              (m: any) => m && m.sessionId && m.sessionId.toLowerCase().trim() === targetId
+            );
+            setAdminLiveChatMessages(clean);
+          } else {
+            setAdminLiveChatMessages([]);
+          }
+        } catch {
+          setAdminLiveChatMessages([]);
+        }
+      } else {
+        setAdminLiveChatMessages([]);
+      }
+    }
+
+    // B. 서버 DB로부터 해당 세션의 정식 메시지 즉시 동기화
+    syncAdminLiveChat(targetId);
+  }, [syncAdminLiveChat]);
 
   // Initialize and listen for storage & realtime events
   useEffect(() => {
@@ -310,7 +379,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
             const sid = (event.data.sessionId || "").toLowerCase().trim();
             loadSessions();
             if (activeSessionIdRef.current.toLowerCase().trim() === sid) {
-              syncAdminLiveChat();
+              syncAdminLiveChat(sid);
               if (event.data?.message) {
                 setAdminLiveChatMessages((prev) => {
                   if (prev.some((m) => m.id === event.data.message.id)) return prev;
@@ -333,8 +402,6 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     }
 
     // Resilient Polling (every 3.5 seconds)
-    // 서버가 느릴 때 요청이 계속 쌓여 상품 저장까지 지연되지 않도록, 이전 조회가 끝나기 전에는 새로 보내지 않고
-    // 화면에 보이지 않는 탭에서는 조회하지 않는다. 관리자가 메시지 전송 중일 때도 덮어쓰기 방지를 위해 폴링을 일시 건너뛴다.
     let pollInFlight = false;
     const interval = setInterval(async () => {
       if (pollInFlight) return;
@@ -359,15 +426,27 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
 
   // Sync messages when activeSessionId changes
   useEffect(() => {
-    syncAdminLiveChat();
+    if (activeSessionId) {
+      syncAdminLiveChat(activeSessionId);
+    }
   }, [activeSessionId, syncAdminLiveChat]);
 
-  const lastLiveChatMsg = adminLiveChatMessages[adminLiveChatMessages.length - 1];
-  const isLiveChatSessionEnded =
-    !lastLiveChatMsg ||
-    lastLiveChatMsg.id?.startsWith("admin-close") ||
-    lastLiveChatMsg.text?.includes("상담이 종료되었습니다");
-  const activeSessionMessages = adminLiveChatMessages;
+  // Active session messages strictly partitioned by activeSessionId
+  const activeSessionMessages = adminLiveChatMessages.filter((m: any) => {
+    if (!m) return false;
+    const currentActive = (activeSessionId || "").toLowerCase().trim();
+    if (!currentActive) return false;
+    if (m.sessionId) {
+      return m.sessionId.toLowerCase().trim() === currentActive;
+    }
+    return pendingAdminMsgIdsRef.current.has(m.id);
+  });
+  const lastLiveChatMsg = activeSessionMessages[activeSessionMessages.length - 1];
+  const isLiveChatSessionEnded = Boolean(
+    chatSessionsList.find(
+      (s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim()
+    )?.status === "ended"
+  );
 
   // 3. Send Message from Admin
   const handleAdminSendLiveChat = async (presetText?: string) => {
@@ -470,7 +549,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     }
   };
 
-  // 4. End Live Chat Session
+  // 4. End Live Chat Session (상담 종료)
   const handleAdminEndLiveChat = async (sessionIdTarget?: string) => {
     const targetId = sessionIdTarget || activeSessionId;
     if (!targetId) return;
@@ -478,55 +557,124 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     const sessionName = targetSession?.name || "고객";
 
     const isConfirmed = window.confirm(
-      `정말로 '${sessionName}'님과의 1:1 라이브 상담을 종료하고 대화 내역 및 세션을 삭제하시겠습니까?`
+      `'${sessionName}'님과의 1:1 라이브 상담을 종료하시겠습니까?`
     );
     if (!isConfirmed) return;
 
     const normalizedTargetId = targetId.trim().toLowerCase();
     const sessionKey = `site_live_chat_messages_${normalizedTargetId}`;
-    setAdminLiveChatMessages([]);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(sessionKey, JSON.stringify([]));
-      localStorage.setItem("site_live_chat_messages", JSON.stringify([]));
-      localStorage.setItem("site_live_chat_ended", "true");
-      window.dispatchEvent(new CustomEvent("live_chat_updated"));
-      window.dispatchEvent(new CustomEvent("live_chat_ended"));
 
-      if ("BroadcastChannel" in window) {
-        try {
-          const sendBc = new BroadcastChannel("choicomma_live_chat_sync");
-          sendBc.postMessage({
-            type: "CHAT_ENDED",
-            sessionId: normalizedTargetId,
-          });
-          sendBc.close();
-        } catch (e) {}
+    // 1. 즉시 로컬 및 세션 목록 상태를 'ended'로 전환
+    setChatSessionsList((prev) => {
+      const updated = prev.map((s) =>
+        (s.id || "").toLowerCase().trim() === normalizedTargetId
+          ? { ...s, status: "ended" }
+          : s
+      );
+      if (typeof window !== "undefined") {
+        localStorage.setItem("admin_chat_sessions", JSON.stringify(updated));
+        localStorage.setItem("site_live_chat_ended", "true");
+      }
+      return updated;
+    });
+
+    // 2. 현재 열린 대화창이 종료 대상인 경우 다음 접속 중인 상담으로 자동 전환
+    if ((activeSessionIdRef.current || "").toLowerCase().trim() === normalizedTargetId) {
+      const remainingActive = chatSessionsList.find(
+        (s) => (s.id || "").toLowerCase().trim() !== normalizedTargetId && s.status !== "ended"
+      );
+      const nextId = remainingActive ? remainingActive.id : "";
+      setActiveSessionId(nextId);
+      if (!nextId) {
+        setAdminLiveChatMessages([]);
       }
     }
 
-    // Git chat 세션 및 대화 내역 삭제
+    // 3. 브로드캐스트 채널을 통해 고객 측 채팅창 종료 이벤트 전송
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        const sendBc = new BroadcastChannel("choicomma_live_chat_sync");
+        sendBc.postMessage({
+          type: "CHAT_ENDED",
+          sessionId: normalizedTargetId,
+        });
+        sendBc.close();
+      } catch (e) {}
+    }
+
+    // 4. 서버 및 DB에 세션 상태를 'ended'로 안전하게 영구 저장
+    try {
+      await fetch(`/api/admin/chat?type=session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: targetId,
+          status: "ended",
+        }),
+      });
+    } catch (e) {
+      console.warn("Notice: Failed to update chat session status to ended:", e);
+    }
+
+    // 5. 서버 저장 완료 후 이벤트 디스패치
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("live_chat_updated"));
+      window.dispatchEvent(new CustomEvent("live_chat_ended"));
+    }
+
+    triggerToast(`🔒 '${sessionName}'님과의 1:1 라이브 상담이 성공적으로 종료되었습니다.`);
+  };
+
+  // 5. Delete Live Chat Session Completely (상담 세션 완전 삭제)
+  const handleAdminDeleteLiveChat = async (sessionIdTarget?: string) => {
+    const targetId = sessionIdTarget || activeSessionId;
+    if (!targetId) return;
+    const targetSession = chatSessionsList.find((s) => s.id === targetId);
+    const sessionName = targetSession?.name || "고객";
+
+    const isConfirmed = window.confirm(
+      `정말로 '${sessionName}'님의 상담 세션 및 대화 내역을 완전히 삭제하시겠습니까?\n이 작업은 복구할 수 없습니다.`
+    );
+    if (!isConfirmed) return;
+
+    const normalizedTargetId = targetId.trim().toLowerCase();
+    const sessionKey = `site_live_chat_messages_${normalizedTargetId}`;
+
+    deletedSessionIdsRef.current.add(normalizedTargetId);
+
+    setChatSessionsList((prev) => {
+      const filtered = prev.filter((s) => (s.id || "").toLowerCase().trim() !== normalizedTargetId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("admin_chat_sessions", JSON.stringify(filtered));
+        localStorage.removeItem(sessionKey);
+      }
+      return filtered;
+    });
+
+    if ((activeSessionIdRef.current || "").toLowerCase().trim() === normalizedTargetId) {
+      setAdminLiveChatMessages([]);
+      const remainingActive = chatSessionsList.find(
+        (s) => (s.id || "").toLowerCase().trim() !== normalizedTargetId && s.status !== "ended"
+      );
+      setActiveSessionId(remainingActive ? remainingActive.id : "");
+    }
+
     try {
       await fetch(`/api/admin/chat?sessionId=${encodeURIComponent(targetId)}`, {
         method: "DELETE",
       });
     } catch (e) {
-      console.warn("Notice: Failed to delete chat_messages on end live chat:", e);
+      console.warn("Notice: Failed to delete chat session:", e);
     }
 
-    setChatSessionsList((prev) => {
-      const filtered = prev.filter((s) => s.id !== targetId);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("admin_chat_sessions", JSON.stringify(filtered));
-      }
-      if (activeSessionId === targetId) {
-        setActiveSessionId(filtered.length > 0 ? filtered[0].id : "");
-      }
-      return filtered;
-    });
-    triggerToast(`🔒 '${sessionName}'님과의 1:1 라이브 상담 및 대화 내역이 성공적으로 삭제되었습니다.`);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("live_chat_updated"));
+    }
+
+    triggerToast(`🗑️ '${sessionName}'님의 상담 세션 및 대화 내역이 완전히 삭제되었습니다.`);
   };
 
-  // 5. Clear Live Chat
+  // 6. Clear Live Chat
   const handleAdminClearLiveChat = async () => {
     const isConfirmed = window.confirm(
       "정말로 라이브 채팅 대화 기록을 전체 초기화하시겠습니까?\n이 작업은 복구할 수 없습니다."
@@ -581,6 +729,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     isSendingLiveChat,
     handleAdminSendLiveChat,
     handleAdminEndLiveChat,
+    handleAdminDeleteLiveChat,
     handleAdminClearLiveChat,
   };
 }

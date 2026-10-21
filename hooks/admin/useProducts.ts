@@ -124,61 +124,56 @@ export function sanitizeProductsForLocalStorage(list: any[]): any[] {
   if (!Array.isArray(list)) return [];
   return list.map((p: any) => {
     if (!p) return p;
+
+    // 상세페이지 본문의 거대한 base64 dataUrl만 경량화 (상세 사진은 본문에 별도 저장)
     let detail = p.detailDescription || "";
     if (typeof detail === "string" && detail.includes("data:image")) {
-      detail = detail.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "/product_1.webp");
+      detail = detail.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "");
     }
     let html = p.descriptionHtml || "";
     if (typeof html === "string" && html.includes("data:image")) {
-      html = html.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "/product_1.webp");
+      html = html.replace(/data:image\/[^;]+;base64,[^"'\s)]+/g, "");
     }
 
+    // 대표 이미지 및 갤러리 이미지 보존 (절대 더미 가방 이미지 /product_1.webp 로 교체하지 않음)
     let featuredImage = p.featuredImage;
-    if (featuredImage?.url && typeof featuredImage.url === "string" && featuredImage.url.startsWith("data:image")) {
-      featuredImage = { ...featuredImage, url: "/product_1.webp" };
+    if (featuredImage?.url && typeof featuredImage.url === "string") {
+      if (featuredImage.url === "/product_1.webp") {
+        const validAlt = Array.isArray(p.images) ? p.images.find((im: any) => {
+          const u = typeof im === "string" ? im : im?.url;
+          return u && u !== "/product_1.webp";
+        }) : null;
+        if (validAlt) {
+          featuredImage = { ...featuredImage, url: typeof validAlt === "string" ? validAlt : validAlt.url };
+        }
+      }
     }
 
     let images = p.images;
     if (Array.isArray(images)) {
-      images = images.map((img: any) => {
+      const nonDummy = images.filter((img: any) => {
         const u = typeof img === "string" ? img : img?.url;
-        if (typeof u === "string" && u.startsWith("data:image")) {
-          return typeof img === "string" ? "/product_1.webp" : { ...img, url: "/product_1.webp" };
-        }
-        return img;
+        return typeof u === "string" && u !== "/product_1.webp";
       });
+      if (nonDummy.length > 0) {
+        images = nonDummy;
+      }
     }
 
-    let fabricImg = p.fabricImage;
-    if (typeof fabricImg === "string" && fabricImg.startsWith("data:image")) {
-      fabricImg = "";
-    }
-    let sizeGuideImg = p.sizeGuideImage;
-    if (typeof sizeGuideImg === "string" && sizeGuideImg.startsWith("data:image")) {
-      sizeGuideImg = "";
-    }
-
+    // 옵션별 제품컷(colorImages) 완벽 보존 (절대 빈 문자열이나 가방 이미지로 덮어쓰지 않음)
     let colorImages = p.colorImages;
     if (colorImages && typeof colorImages === "object") {
-      let hasBase64 = false;
       const sanitizedColorImages: Record<string, string> = {};
       Object.entries(colorImages).forEach(([k, v]) => {
-        if (typeof v === "string" && v.startsWith("data:image")) {
-          hasBase64 = true;
-          // base64 용량 절약 시 가짜 placeholder(/product_1.webp)가 주입되지 않도록 빈 문자열 처리
-          sanitizedColorImages[k] = "";
-        } else if (typeof v === "string" && v !== "/product_1.webp") {
+        if (typeof v === "string" && v.trim() && v !== "/product_1.webp") {
           sanitizedColorImages[k] = v;
         }
       });
-      if (hasBase64) colorImages = sanitizedColorImages;
+      colorImages = sanitizedColorImages;
     }
 
-    // 업로드 이미지(data:image)를 대체 이미지로 바꾼 절약본임을 표시한다. (불러올 때 서버 원본을 우선 사용)
-    let wasStripped = false;
-    try {
-      wasStripped = JSON.stringify(p).includes("data:image");
-    } catch {}
+    let fabricImg = p.fabricImage;
+    let sizeGuideImg = p.sizeGuideImage;
 
     return {
       ...p,
@@ -189,7 +184,6 @@ export function sanitizeProductsForLocalStorage(list: any[]): any[] {
       fabricImage: fabricImg,
       sizeGuideImage: sizeGuideImg,
       colorImages,
-      ...(wasStripped ? { _lightStripped: true } : {}),
     };
   });
 }

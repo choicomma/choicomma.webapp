@@ -19,9 +19,10 @@ import { validateCustomerSession, logoutUser } from "@/lib/auth/customer-session
 interface MobileMenuProps {
   collections: Collection[];
   isScrolled?: boolean;
+  className?: string;
 }
 
-function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
+function MobileMenuContent({ collections, isScrolled, className }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
@@ -77,9 +78,9 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
 
     const checkAuth = () => {
       if (typeof window !== "undefined") {
-        validateCustomerSession();
+        const isValid = validateCustomerSession();
         const name = localStorage.getItem("membership_user_name");
-        const email = localStorage.getItem("membership_user_email");
+        const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
         const role = localStorage.getItem("user_role");
         const grade = (localStorage.getItem("user_grade") || localStorage.getItem("membership_user_grade") || role || "").toUpperCase().trim();
         const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
@@ -91,7 +92,7 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
           grade === "STAFF" ||
           (email === "admin" && isLoggedInFlag) ||
           isAdminSession;
-        const isLogged = isLoggedInFlag || Boolean(name && name.trim().length > 0);
+        const isLogged = isAdm || (isLoggedInFlag && isValid);
 
         setIsAdmin(isAdm);
         setIsLoggedIn(isLogged);
@@ -133,9 +134,11 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
         aria-label="Open mobile menu"
         variant="ghost"
         size="sm"
-        className={`md:hidden p-2 border-0 bg-transparent hover:bg-transparent shadow-none transition-colors duration-300 ${
-          isScrolled ? "text-white hover:text-neutral-300" : "text-neutral-900 hover:text-black"
-        }`}
+        className={cn(
+          "md:hidden p-2 border-0 bg-transparent hover:bg-transparent shadow-none transition-colors duration-300",
+          isScrolled ? "text-white hover:text-neutral-300" : "text-neutral-900 hover:text-black",
+          className
+        )}
       >
         <Menu className="w-5 h-5" />
       </Button>
@@ -204,74 +207,19 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
                   </div>
                 )}
 
-                {/* Top Quick Actions Grid: 로그인 / MY PAGE + 로그아웃 + 주문내역 + 장바구니 */}
+                {/* Top Quick Actions Grid: 로그인 시에만 주문내역/배송조회 및 장바구니 노출, 비로그인 시 로그인 버튼만 노출 */}
                 {isLoggedIn ? (
-                  <nav className="grid grid-cols-3 gap-2">
+                  <nav className="grid grid-cols-2 gap-2.5">
                     {/* 1. 마이페이지 */}
                     <Button
                       size="lg"
                       variant="secondary"
                       onClick={closeMobileMenu}
-                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm truncate shadow-2xs rounded-xl px-1.5"
+                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm truncate shadow-2xs rounded-xl"
                       asChild
                     >
                       <Link href={isAdmin ? "/admin" : "/membership"} prefetch>
                         마이페이지
-                      </Link>
-                    </Button>
-
-                    {/* 2. 로그아웃 (마이페이지와 주문내역 사이) */}
-                    <Button
-                      size="lg"
-                      variant="secondary"
-                      onClick={handleLogout}
-                      className="bg-neutral-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-neutral-700 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm shadow-2xs rounded-xl gap-1 px-1.5 cursor-pointer transition-colors"
-                    >
-                      <LogOut className="w-3.5 h-3.5 shrink-0" />
-                      <span>로그아웃</span>
-                    </Button>
-
-                    {/* 3. 주문내역 */}
-                    <Button
-                      size="lg"
-                      variant="secondary"
-                      onClick={closeMobileMenu}
-                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm truncate shadow-2xs rounded-xl px-1.5"
-                      asChild
-                    >
-                      <Link href="/membership?tab=orders" prefetch>
-                        <span>주문내역</span>
-                      </Link>
-                    </Button>
-
-                    {/* 4. 장바구니 */}
-                    <Button
-                      size="lg"
-                      variant="secondary"
-                      onClick={() => {
-                        closeMobileMenu();
-                        setTimeout(() => {
-                          window.dispatchEvent(new CustomEvent("choicomma_open_cart"));
-                        }, 100);
-                      }}
-                      className="col-span-3 w-full bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-4 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer"
-                    >
-                      <ShoppingBag className="w-4 h-4 shrink-0" />
-                      <span>장바구니 ({cart?.totalQuantity || 0})</span>
-                    </Button>
-                  </nav>
-                ) : (
-                  <nav className="grid grid-cols-2 gap-2.5">
-                    {/* 1. 로그인 */}
-                    <Button
-                      size="lg"
-                      variant="secondary"
-                      onClick={closeMobileMenu}
-                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm truncate shadow-2xs rounded-xl"
-                      asChild
-                    >
-                      <Link href="/login" prefetch>
-                        로그인
                       </Link>
                     </Button>
 
@@ -280,7 +228,7 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
                       size="lg"
                       variant="secondary"
                       onClick={closeMobileMenu}
-                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm truncate shadow-2xs rounded-xl"
+                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm truncate shadow-2xs rounded-xl"
                       asChild
                     >
                       <Link href="/membership?tab=orders" prefetch>
@@ -298,10 +246,36 @@ function MobileMenuContent({ collections, isScrolled }: MobileMenuProps) {
                           window.dispatchEvent(new CustomEvent("choicomma_open_cart"));
                         }, 100);
                       }}
-                      className="col-span-2 w-full bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-5 text-sm shadow-2xs rounded-xl gap-2 cursor-pointer"
+                      className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm shadow-2xs rounded-xl gap-2 cursor-pointer"
                     >
                       <ShoppingBag className="w-4 h-4 shrink-0" />
                       <span>장바구니 ({cart?.totalQuantity || 0})</span>
+                    </Button>
+
+                    {/* 4. 로그아웃 */}
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      onClick={handleLogout}
+                      className="bg-neutral-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-neutral-700 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm shadow-2xs rounded-xl gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5 shrink-0" />
+                      <span>로그아웃</span>
+                    </Button>
+                  </nav>
+                ) : (
+                  <nav className="w-full">
+                    {/* 비로그인 방문자: 로그인 버튼만 노출 (주문내역/배송조회 및 장바구니 숨김) */}
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      onClick={closeMobileMenu}
+                      className="w-full bg-neutral-950 hover:bg-black text-white justify-center font-black py-4 text-sm shadow-sm rounded-xl cursor-pointer"
+                      asChild
+                    >
+                      <Link href="/login" prefetch>
+                        로그인
+                      </Link>
                     </Button>
                   </nav>
                 )}

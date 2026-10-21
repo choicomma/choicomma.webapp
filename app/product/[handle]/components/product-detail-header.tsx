@@ -975,9 +975,20 @@ export function ProductDetailHeader({
                 return null;
               }
               const isSelected = selectedColor === colorStr || selectedColor === color;
-              const customImg = optionsColorImages[colorStr] || (product as any).colorImages?.[colorStr];
-              const fallbackImg = product.images?.[idx]?.url || product.featuredImage?.url || "/product_1.webp";
-              const cutImgUrl = customImg || fallbackImg;
+              const cMap = (product as any).colorImages || {};
+              const customImg =
+                optionsColorImages[colorStr] ||
+                optionsColorImages[colorStr.trim()] ||
+                optionsColorImages[colorStr.toUpperCase()] ||
+                optionsColorImages[colorStr.toLowerCase()] ||
+                cMap[colorStr] ||
+                cMap[colorStr.trim()] ||
+                cMap[colorStr.toUpperCase()] ||
+                cMap[colorStr.toLowerCase()];
+              const validCustom = (customImg && customImg !== "/product_1.webp" && !customImg.includes("placeholder")) ? customImg : "";
+              const candidate = product.images?.[idx]?.url || product.featuredImage?.url || "";
+              const validCandidate = (candidate && candidate !== "/product_1.webp" && !candidate.includes("placeholder")) ? candidate : "";
+              const cutImgUrl = validCustom || validCandidate;
 
               return (
                 <button
@@ -1012,12 +1023,16 @@ export function ProductDetailHeader({
                         : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                     )}
                   >
-                    <div className="w-full h-full rounded-[10px] overflow-hidden bg-neutral-100 relative">
-                      <img
-                        src={cutImgUrl}
-                        alt={colorStr}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="w-full h-full rounded-[10px] overflow-hidden bg-neutral-100 relative flex items-center justify-center">
+                      {cutImgUrl ? (
+                        <img
+                          src={cutImgUrl}
+                          alt={colorStr}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase">{colorStr.slice(0, 3)}</span>
+                      )}
                       {isSelected && (
                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                           <Check className="w-4 h-4 text-white stroke-[3] drop-shadow-sm" />

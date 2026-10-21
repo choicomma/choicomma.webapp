@@ -2545,7 +2545,14 @@ export function ProductsManagement({
                       <td className="py-2 px-3 whitespace-nowrap">
                         <div className="w-9 h-9 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200 group-hover:scale-105 transition-transform relative shrink-0">
                           <img
-                            src={p.featuredImage?.url || "/product_1.webp"}
+                            src={
+                              (p.featuredImage?.url && p.featuredImage.url !== "/product_1.webp")
+                                ? p.featuredImage.url
+                                : ((p.images?.[0] ? (typeof p.images[0] === "string" ? p.images[0] : p.images[0]?.url) : "") ||
+                                   (Object.values(p.colorImages || {})[0] as string) ||
+                                   p.featuredImage?.url ||
+                                   "/product_1.webp")
+                            }
                             alt={p.title}
                             className="w-full h-full object-cover"
                           />
@@ -3016,7 +3023,14 @@ export function ProductsManagement({
                           </td>
                           <td className="py-2.5 px-3">
                             <img
-                              src={item.featuredImage?.url || "/product_1.webp"}
+                              src={
+                                (item.featuredImage?.url && item.featuredImage.url !== "/product_1.webp")
+                                  ? item.featuredImage.url
+                                  : ((item.images?.[0] ? (typeof item.images[0] === "string" ? item.images[0] : item.images[0]?.url) : "") ||
+                                     (Object.values(item.colorImages || {})[0] as string) ||
+                                     item.featuredImage?.url ||
+                                     "/product_1.webp")
+                              }
                               alt={item.title}
                               className="w-9 h-9 object-cover rounded-lg border border-neutral-200"
                             />

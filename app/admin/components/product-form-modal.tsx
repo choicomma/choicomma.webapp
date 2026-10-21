@@ -360,7 +360,7 @@ export function ProductFormModal({
         : allProductImgs;
       // 실제 등록된 이미지가 있는 경우 가짜 더미 이미지(/product_1.webp)는 제품이미지에 추가되지 않도록 필터링
       const nonDummyImgs = cleanImgs.filter((u: string) => typeof u === "string" && u.trim() !== "/product_1.webp" && !u.includes("placeholder"));
-      const finalModalImgs = nonDummyImgs.length > 0 ? nonDummyImgs : (cleanImgs.length > 0 ? cleanImgs : ["/product_1.webp"]);
+      const finalModalImgs = nonDummyImgs;
       setImages(finalModalImgs);
       setImageUrl(finalModalImgs[0] || "");
 
@@ -557,20 +557,48 @@ export function ProductFormModal({
 
   if (!isOpen) return null;
 
-  // Image upload handlers
-  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  // Single image upload helper (tries server upload, falls back to compressed dataUrl)
+  const uploadSingleImage = async (file: File, quality = 0.76, maxDim = 1000): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.success && data?.url) {
+          return data.url;
+        }
+      }
+    } catch (e) {
+      console.warn("Upload to /api/admin/upload failed, falling back to dataUrl", e);
+    }
+
+    return new Promise<string>((resolve) => {
       const reader = new FileReader();
       reader.onload = async (evt) => {
-        const rawResult = evt.target?.result as string;
-        const compressed = await compressImageDataUrl(rawResult, 1000, 0.76);
-        setImageUrl(compressed);
-        if (!images.includes(compressed)) {
-          setImages([compressed, ...images]);
+        const raw = evt.target?.result as string;
+        if (raw) {
+          const compressed = await compressImageDataUrl(raw, maxDim, quality);
+          resolve(compressed);
+        } else {
+          resolve("");
         }
       };
       reader.readAsDataURL(file);
+    });
+  };
+
+  // Image upload handlers
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = await uploadSingleImage(file, 0.76, 1000);
+      if (url) {
+        setImageUrl(url);
+        if (!images.includes(url)) {
+          setImages([url, ...images]);
+        }
+      }
     }
   };
 
@@ -588,20 +616,8 @@ export function ProductFormModal({
     const newUrls: string[] = [];
 
     for (const file of filesToProcess) {
-      const dataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = async (evt) => {
-          const raw = evt.target?.result as string;
-          if (raw) {
-            const compressed = await compressImageDataUrl(raw, 1000, 0.76);
-            resolve(compressed);
-          } else {
-            resolve("");
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-      if (dataUrl) newUrls.push(dataUrl);
+      const url = await uploadSingleImage(file, 0.76, 1000);
+      if (url) newUrls.push(url);
     }
 
     setImages((prev) => [...prev, ...newUrls].slice(0, 10));
@@ -609,6 +625,23 @@ export function ProductFormModal({
       setImageUrl(newUrls[0]);
     }
     triggerToast(`${newUrls.length}개의 이미지가 추가되었습니다.`);
+    e.target.value = "";
+  };
+
+  // Handle Replace Single Product Image
+  const handleReplaceImage = async (idx: number, file: File) => {
+    const url = await uploadSingleImage(file, 0.76, 1000);
+    if (url) {
+      setImages((prev) => {
+        const next = [...prev];
+        next[idx] = url;
+        return next;
+      });
+      if (idx === 0) {
+        setImageUrl(url);
+      }
+      triggerToast(`${idx === 0 ? "대표" : `#${idx + 1}`} 이미지가 변경되었습니다.`);
+    }
   };
 
   // Helper to extract image srcs from detailDescription HTML or plain text
@@ -738,8 +771,8 @@ export function ProductFormModal({
       return;
     }
     if (!customColorImg) {
-      alert("제품을 등록해주세요");
-      triggerToast("제품을 등록해주세요");
+      alert("제품컷을 등록해주세요.");
+      triggerToast("제품컷을 등록해주세요.");
       return;
     }
     if (colors.includes(trimmed)) {
@@ -749,10 +782,15 @@ export function ProductFormModal({
     }
 
     setColors([...colors, trimmed]);
-    setColorImages((prev) => ({ ...prev, [trimmed]: customColorImg }));
+    setColorImages((prev) => ({
+      ...prev,
+      [trimmed]: customColorImg,
+      [customColor.trim()]: customColorImg,
+      [trimmed.toLowerCase()]: customColorImg,
+    }));
     setCustomColor("");
     setCustomColorImg("");
-    triggerToast(`'${trimmed}' 컬러가 등록되었습니다.`);
+    triggerToast(`'${trimmed}' 컬러 및 제품컷이 등록되었습니다.`);
   };
 
 
@@ -780,7 +818,13 @@ export function ProductFormModal({
       : images;
     // 실제 이미지가 등록된 경우 가짜 플레이스홀더(/product_1.webp)가 최종 이미지에 추가되지 않도록 차단
     const nonDummyClean = cleanImages.filter((u: string) => typeof u === "string" && u.trim() !== "/product_1.webp" && !u.includes("placeholder"));
-    const finalImages = nonDummyClean.length > 0 ? nonDummyClean : (cleanImages.length > 0 ? cleanImages : [detailFirstImage || "/product_1.webp"]);
+    const validDetailFirst = detailFirstImage && detailFirstImage !== "/product_1.webp" && !detailFirstImage.includes("placeholder") ? detailFirstImage : "";
+    const firstColorImg = Object.values(colorImages || {}).find((u) => typeof u === "string" && u.trim() && u !== "/product_1.webp" && !u.includes("placeholder")) || "";
+    const finalImages = nonDummyClean.length > 0
+      ? nonDummyClean
+      : (validDetailFirst
+          ? [validDetailFirst]
+          : (firstColorImg ? [firstColorImg] : []));
 
     // Product sequence number & code (상품 등록 순서로 순차 자동 부여)
     let finalProdNo: number;
@@ -867,10 +911,24 @@ export function ProductFormModal({
     if (colorImages && typeof colorImages === "object") {
       Object.entries(colorImages).forEach(([k, v]) => {
         if (typeof v === "string" && v.trim() && v !== "/product_1.webp" && !v.includes("placeholder")) {
-          cleanColorImages[k] = v.trim();
+          const val = v.trim();
+          cleanColorImages[k] = val;
+          cleanColorImages[k.trim()] = val;
         }
       });
     }
+    // 각 등록된 컬러에 대해 누락 없이 매핑 보강
+    colors.forEach((col) => {
+      const match =
+        cleanColorImages[col] ||
+        cleanColorImages[col.trim()] ||
+        cleanColorImages[col.trim().toUpperCase()] ||
+        cleanColorImages[col.trim().toLowerCase()];
+      if (match) {
+        cleanColorImages[col] = match;
+        cleanColorImages[col.trim()] = match;
+      }
+    });
 
     const resultProduct: any = {
       customTitles: formTitles,
@@ -935,7 +993,7 @@ export function ProductFormModal({
         minVariantPrice: { amount: numPrice || "0", currencyCode: "KRW" },
       },
       featuredImage: {
-        url: finalImages[0],
+        url: finalImages[0] || Object.values(cleanColorImages)[0] || "",
         altText: title,
         width: 1200,
         height: 1600,
@@ -1118,8 +1176,11 @@ export function ProductFormModal({
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-neutral-700">
-                      {formTitles.productImages} *
+                    <label className="block text-xs font-bold text-neutral-700 flex items-center gap-1.5">
+                      <span>{formTitles.productImages} *</span>
+                      <span className="text-[10px] text-amber-700 font-normal bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded-md">
+                        사진 클릭 시 다른 이미지로 즉시 변경
+                      </span>
                     </label>
                     <span className="text-[11px] font-mono font-extrabold text-neutral-500">
                       {images.length} / 10개 등록됨
@@ -1132,53 +1193,101 @@ export function ProductFormModal({
                       {images.map((url, idx) => (
                         <div
                           key={`${url.slice(0, 20)}-${idx}`}
-                          className="relative aspect-[3/4] rounded-xl overflow-hidden border-2 border-neutral-200 bg-neutral-100 group shadow-2xs"
+                          className="relative aspect-[3/4] rounded-xl overflow-hidden border-2 border-neutral-200 bg-neutral-100 group shadow-2xs hover:border-neutral-900 transition-colors"
                         >
                           <img src={url} alt={`상품 이미지 ${idx + 1}`} className="w-full h-full object-cover" />
                           <span
-                            className={`absolute top-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded-md ${idx === 0
+                            className={`absolute top-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded-md pointer-events-none z-10 ${idx === 0
                               ? "bg-amber-500 text-neutral-950 shadow-xs"
                               : "bg-black/60 text-white backdrop-blur-xs"
                               }`}
                           >
                             {idx === 0 ? "대표" : `#${idx + 1}`}
                           </span>
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1">
-                            <button
-                              type="button"
-                              onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                              className="self-end bg-rose-600 text-white rounded-md p-1 hover:bg-rose-700 transition-colors cursor-pointer"
-                              title="삭제"
+
+                          {/* Hover Overlay with Change / Delete / Move */}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 z-20">
+                            {/* Top row: Delete Button */}
+                            <div className="flex justify-end">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setImages(images.filter((_, i) => i !== idx));
+                                  if (idx === 0 && images.length > 1) {
+                                    setImageUrl(images[1]);
+                                  } else if (images.length === 1) {
+                                    setImageUrl("");
+                                  }
+                                }}
+                                className="bg-rose-600 text-white rounded-md p-1 hover:bg-rose-700 transition-colors cursor-pointer"
+                                title="이미지 삭제"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+
+                            {/* Center: Click to Change (파일 선택) */}
+                            <label
+                              htmlFor={`product-image-replace-${idx}`}
+                              className="flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer text-white hover:scale-105 transition-transform"
+                              title="클릭하여 이 이미지 변경"
                             >
-                              <X className="w-3 h-3" />
-                            </button>
+                              <Upload className="w-4 h-4 text-white drop-shadow-sm" />
+                              <span className="text-[10px] font-black bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full text-white border border-white/40 shadow-xs">
+                                변경
+                              </span>
+                              <input
+                                id={`product-image-replace-${idx}`}
+                                type="file"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    await handleReplaceImage(idx, file);
+                                    e.target.value = "";
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+
+                            {/* Bottom row: Move Left / Move Right */}
                             <div className="flex justify-between items-center gap-1">
-                              {idx > 0 && (
+                              {idx > 0 ? (
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     const updated = [...images];
                                     const temp = updated[idx];
                                     updated[idx] = updated[idx - 1];
                                     updated[idx - 1] = temp;
                                     setImages(updated);
+                                    if (idx === 1) setImageUrl(temp);
                                   }}
                                   className="bg-white/90 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-md hover:bg-white transition-colors cursor-pointer"
+                                  title="앞으로 이동"
                                 >
                                   ←
                                 </button>
+                              ) : (
+                                <div />
                               )}
                               {idx < images.length - 1 && (
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     const updated = [...images];
                                     const temp = updated[idx];
                                     updated[idx] = updated[idx + 1];
                                     updated[idx + 1] = temp;
                                     setImages(updated);
+                                    if (idx === 0) setImageUrl(updated[0]);
                                   }}
                                   className="ml-auto bg-white/90 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-md hover:bg-white transition-colors cursor-pointer"
+                                  title="뒤로 이동"
                                 >
                                   →
                                 </button>
@@ -1618,15 +1727,11 @@ export function ProductFormModal({
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              const reader = new FileReader();
-                              reader.onload = async (evt) => {
-                                const raw = evt.target?.result as string;
-                                if (raw) {
-                                  const compressed = await compressImageDataUrl(raw, 800, 0.72);
-                                  setFabricImage(compressed);
-                                }
-                              };
-                              reader.readAsDataURL(file);
+                              const url = await uploadSingleImage(file, 0.72, 800);
+                              if (url) {
+                                setFabricImage(url);
+                                triggerToast("원단 이미지가 등록되었습니다.");
+                              }
                             }
                           }}
                           className="hidden"
@@ -1693,15 +1798,11 @@ export function ProductFormModal({
                             onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                const reader = new FileReader();
-                                reader.onload = async (evt) => {
-                                  const raw = evt.target?.result as string;
-                                  if (raw) {
-                                    const compressed = await compressImageDataUrl(raw, 800, 0.72);
-                                    setCustomColorImg(compressed);
-                                  }
-                                };
-                                reader.readAsDataURL(file);
+                                const url = await uploadSingleImage(file, 0.75, 800);
+                                if (url) {
+                                  setCustomColorImg(url);
+                                  triggerToast("제품컷이 준비되었습니다. '+ 컬러 추가'를 눌러 등록하세요.");
+                                }
                               }
                             }}
                             className="hidden"
@@ -1724,33 +1825,59 @@ export function ProductFormModal({
                   {colors.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pt-1">
                       {colors.map((color) => {
-                        const imgUrl = colorImages[color] || images[0] || "/product_1.webp";
+                        const trimmedColor = color.trim();
+                        const foundCut =
+                          colorImages[color] ||
+                          colorImages[trimmedColor] ||
+                          colorImages[trimmedColor.toUpperCase()] ||
+                          colorImages[trimmedColor.toLowerCase()] ||
+                          "";
+                        const hasValidCut = Boolean(foundCut && foundCut !== "/product_1.webp" && !foundCut.includes("placeholder"));
+                        const imgUrl = hasValidCut ? foundCut : "";
+
                         return (
                           <div
                             key={color}
                             className="flex items-center justify-between bg-white border border-neutral-200 rounded-2xl p-2 shadow-2xs hover:border-neutral-400 transition-colors"
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <label className="relative w-10 h-10 rounded-xl overflow-hidden border border-neutral-200 bg-neutral-50 shrink-0 cursor-pointer group" title="클릭하여 제품컷 변경">
-                                <img src={imgUrl} alt={color} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Upload className="w-3 h-3 text-white" />
-                                </div>
+                              <label
+                                className={`relative w-10 h-10 rounded-xl overflow-hidden border shrink-0 cursor-pointer group flex items-center justify-center ${
+                                  hasValidCut
+                                    ? "border-neutral-200 bg-neutral-50"
+                                    : "border-dashed border-amber-300 bg-amber-50/50 hover:bg-amber-100/50"
+                                }`}
+                                title={hasValidCut ? "클릭하여 제품컷 변경" : "클릭하여 제품컷 등록"}
+                              >
+                                {hasValidCut ? (
+                                  <>
+                                    <img src={imgUrl} alt={color} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <Upload className="w-3 h-3 text-white" />
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="flex flex-col items-center justify-center p-1 text-center">
+                                    <Upload className="w-3.5 h-3.5 text-amber-700" />
+                                    <span className="text-[8px] font-black text-amber-700 mt-0.5">컷등록</span>
+                                  </div>
+                                )}
                                 <input
                                   type="file"
                                   accept="image/*"
                                   onChange={async (e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
-                                      const reader = new FileReader();
-                                      reader.onload = async (evt) => {
-                                        const raw = evt.target?.result as string;
-                                        if (raw) {
-                                          const compressed = await compressImageDataUrl(raw, 800, 0.72);
-                                          setColorImages((prev) => ({ ...prev, [color]: compressed }));
-                                        }
-                                      };
-                                      reader.readAsDataURL(file);
+                                      const url = await uploadSingleImage(file, 0.75, 800);
+                                      if (url) {
+                                        setColorImages((prev) => ({
+                                          ...prev,
+                                          [color]: url,
+                                          [trimmedColor]: url,
+                                          [trimmedColor.toUpperCase()]: url,
+                                        }));
+                                        triggerToast(`'${color}' 제품컷이 등록되었습니다.`);
+                                      }
                                     }
                                   }}
                                   className="hidden"
@@ -1758,7 +1885,9 @@ export function ProductFormModal({
                               </label>
                               <div className="min-w-0">
                                 <span className="block text-xs font-black text-neutral-950 truncate">{color}</span>
-                                <span className="block text-[10px] text-neutral-400 font-semibold truncate">제품컷 연동</span>
+                                <span className={`block text-[10px] font-semibold truncate ${hasValidCut ? "text-emerald-600" : "text-amber-600"}`}>
+                                  {hasValidCut ? "제품컷 연동됨" : "제품컷 미등록"}
+                                </span>
                               </div>
                             </div>
                             <button
@@ -1767,6 +1896,8 @@ export function ProductFormModal({
                                 setColors(colors.filter((c) => c !== color));
                                 const updatedMap = { ...colorImages };
                                 delete updatedMap[color];
+                                delete updatedMap[trimmedColor];
+                                delete updatedMap[trimmedColor.toUpperCase()];
                                 setColorImages(updatedMap);
                               }}
                               className="text-neutral-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
@@ -1914,16 +2045,11 @@ export function ProductFormModal({
                               onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  const reader = new FileReader();
-                                  reader.onload = async (evt) => {
-                                    const raw = evt.target?.result as string;
-                                    if (raw) {
-                                      const compressed = await compressImageDataUrl(raw, 900, 0.72);
-                                      setSizeGuideImage(compressed);
-                                      triggerToast("사이즈 가이드 이미지가 변경되었습니다.");
-                                    }
-                                  };
-                                  reader.readAsDataURL(file);
+                                  const url = await uploadSingleImage(file, 0.72, 900);
+                                  if (url) {
+                                    setSizeGuideImage(url);
+                                    triggerToast("사이즈 가이드 이미지가 변경되었습니다.");
+                                  }
                                 }
                               }}
                               className="hidden"
@@ -1956,16 +2082,11 @@ export function ProductFormModal({
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              const reader = new FileReader();
-                              reader.onload = async (evt) => {
-                                const raw = evt.target?.result as string;
-                                if (raw) {
-                                  const compressed = await compressImageDataUrl(raw, 900, 0.72);
-                                  setSizeGuideImage(compressed);
-                                  triggerToast("사이즈 가이드 이미지가 등록되었습니다.");
-                                }
-                              };
-                              reader.readAsDataURL(file);
+                              const url = await uploadSingleImage(file, 0.72, 900);
+                              if (url) {
+                                setSizeGuideImage(url);
+                                triggerToast("사이즈 가이드 이미지가 등록되었습니다.");
+                              }
                             }
                           }}
                           className="hidden"
@@ -3381,9 +3502,15 @@ export function ProductFormModal({
                               {effectiveColors.map((color, idx) => {
                                 const isSelected = activeColor === color;
                                 const colorStr = String(color);
-                                const customImg = mergedColorImages[colorStr];
-                                const fallbackImg = candidateImages[idx] || candidateImages[0] || "/product_1.webp";
-                                const cutImgUrl = customImg || fallbackImg;
+                                const customImg =
+                                  mergedColorImages[colorStr] ||
+                                  mergedColorImages[colorStr.trim()] ||
+                                  mergedColorImages[colorStr.toUpperCase()] ||
+                                  mergedColorImages[colorStr.toLowerCase()];
+                                const validCustomImg = (customImg && customImg !== "/product_1.webp" && !customImg.includes("placeholder")) ? customImg : "";
+                                const candidateImg = candidateImages[idx] || candidateImages[0] || "";
+                                const validCandidate = (candidateImg && candidateImg !== "/product_1.webp" && !candidateImg.includes("placeholder")) ? candidateImg : "";
+                                const cutImgUrl = validCustomImg || validCandidate;
 
                                 return (
                                   <button
@@ -3405,8 +3532,14 @@ export function ProductFormModal({
                                         isSelected ? "ring-2 ring-neutral-950 shadow-sm" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                                       }`}
                                     >
-                                      <div className="w-full h-full rounded-[10px] overflow-hidden bg-neutral-100 relative">
-                                        <img src={cutImgUrl} alt={colorStr} className="w-full h-full object-cover" />
+                                      <div className="w-full h-full rounded-[10px] overflow-hidden bg-neutral-100 relative flex items-center justify-center">
+                                        {cutImgUrl ? (
+                                          <img src={cutImgUrl} alt={colorStr} className="w-full h-full object-cover" />
+                                        ) : (
+                                          <div className="flex flex-col items-center justify-center text-neutral-400">
+                                            <span className="text-[10px] font-bold uppercase">{colorStr.slice(0, 3)}</span>
+                                          </div>
+                                        )}
                                         {isSelected && (
                                           <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                                             <Check className="w-4 h-4 text-white stroke-[3] drop-shadow-sm" />

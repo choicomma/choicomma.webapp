@@ -63,10 +63,17 @@ function validatePasswordComplexity(pwd: string): { isValid: boolean; message?: 
   return { isValid: true };
 }
 
-function findMatchingCustomer(customers: any[], identifier: string, name: string, phone: string) {
-  const normId = identifier.trim().toLowerCase();
-  const normName = name.replace(/\s+/g, "").toLowerCase();
-  const cleanPhone = phone.replace(/[^0-9]/g, "");
+function findMatchingCustomer(
+  customers: any[],
+  emailOrId: string,
+  name?: string,
+  phone?: string
+) {
+  const norm = emailOrId.trim().toLowerCase();
+  if (!norm) return null;
+
+  const normName = name ? name.replace(/\s+/g, "").toLowerCase() : "";
+  const cleanPhone = phone ? phone.replace(/[^0-9]/g, "") : "";
 
   return customers.find((c: any) => {
     const cLoginId = (c.loginId || c.login_id || "").trim().toLowerCase();
@@ -75,14 +82,22 @@ function findMatchingCustomer(customers: any[], identifier: string, name: string
     const cName = (c.name || "").replace(/\s+/g, "").toLowerCase();
     const cPhone = (c.phone || "").replace(/[^0-9]/g, "");
 
-    const idMatch = cLoginId === normId || cEmail === normId || cId === normId;
-    const nameMatch = cName === normName;
-    const phoneMatch =
-      cPhone === cleanPhone ||
-      (cleanPhone.length >= 7 && cPhone.endsWith(cleanPhone)) ||
-      (cleanPhone.length === 4 && cPhone.endsWith(cleanPhone));
+    const idMatch = cEmail === norm || cLoginId === norm || cId === norm;
+    if (!idMatch) return false;
 
-    return idMatch && nameMatch && phoneMatch;
+    // 성함이 전달된 경우 추가 검증
+    if (normName && cName !== normName) return false;
+
+    // 휴대폰 번호가 전달된 경우 추가 검증
+    if (cleanPhone) {
+      const phoneMatch =
+        cPhone === cleanPhone ||
+        (cleanPhone.length >= 7 && cPhone.endsWith(cleanPhone)) ||
+        (cleanPhone.length === 4 && cPhone.endsWith(cleanPhone));
+      if (!phoneMatch) return false;
+    }
+
+    return true;
   });
 }
 
@@ -90,37 +105,44 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const action = body?.action || "verify"; // "verify" | "reset"
-    const identifier = String(body?.identifier || "").trim();
+    const emailInput = String(body?.email || body?.identifier || "").trim();
     const name = String(body?.name || "").trim();
     const phone = String(body?.phone || "").trim();
 
-    if (!identifier) {
+    if (!emailInput) {
       return NextResponse.json(
-        { success: false, error: "아이디 또는 이메일 주소를 입력해 주세요." },
-        { status: 400 }
-      );
-    }
-    if (!name) {
-      return NextResponse.json(
-        { success: false, error: "가입 시 등록하신 성함(이름)을 입력해 주세요." },
-        { status: 400 }
-      );
-    }
-    if (!phone || phone.replace(/[^0-9]/g, "").length < 4) {
-      return NextResponse.json(
-        { success: false, error: "가입 시 등록하신 휴대폰 번호를 입력해 주세요." },
+        { success: false, error: "가입 시 등록하신 이메일 주소를 입력해 주세요." },
         { status: 400 }
       );
     }
 
     const customers = readCustomersFile();
-    const matched = findMatchingCustomer(customers, identifier, name, phone);
+    let matched = findMatchingCustomer(customers, emailInput, name, phone);
+
+    if (!matched) {
+      // Supabase 조회도 추가 시도
+      try {
+        const supaCust = await runSafeSupabaseQuery(
+          async (supabase) =>
+            supabase
+              .from("customers")
+              .select("id, name, email, login_id, phone, password")
+              .or(`email.ilike.${emailInput},login_id.ilike.${emailInput},id.ilike.${emailInput}`)
+              .limit(1)
+              .maybeSingle(),
+          2000
+        );
+        if (supaCust?.data) {
+          matched = supaCust.data;
+        }
+      } catch {}
+    }
 
     if (!matched) {
       return NextResponse.json(
         {
           success: false,
-          error: "입력하신 정보와 일치하는 회원 정보를 찾을 수 없습니다. 아이디, 성함, 휴대폰 번호를 다시 확인해 주세요.",
+          error: "가입되지 않은 이메일 주소입니다. 이메일 주소를 다시 확인해 주세요.",
         },
         { status: 404 }
       );
@@ -130,12 +152,12 @@ export async function POST(req: NextRequest) {
     if (action === "verify") {
       return NextResponse.json({
         success: true,
-        message: "본인 확인이 완료되었습니다.",
+        message: "회원 정보가 확인되었습니다.",
         customer: {
           id: matched.id,
           name: matched.name,
           loginId: matched.loginId || matched.login_id || matched.email,
-          email: matched.email,
+          email: matched.email || emailInput,
         },
       });
     }
@@ -152,7 +174,12 @@ export async function POST(req: NextRequest) {
       }
 
       // JSON 파일 내 비밀번호 갱신
-      const idx = customers.findIndex((c) => c.id === matched.id || c.email === matched.email);
+      const idx = customers.findIndex(
+        (c) =>
+          (c.email && matched.email && c.email.toLowerCase() === matched.email.toLowerCase()) ||
+          c.id === matched.id ||
+          (c.loginId && matched.loginId && c.loginId === matched.loginId)
+      );
       if (idx !== -1) {
         customers[idx] = {
           ...customers[idx],
@@ -180,7 +207,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         message: "비밀번호가 성공적으로 변경되었습니다. 새로운 비밀번호로 로그인해 주세요.",
-        loginIdentifier: matched.loginId || matched.login_id || matched.email,
+        loginIdentifier: matched.email || matched.loginId || matched.login_id,
       });
     }
 

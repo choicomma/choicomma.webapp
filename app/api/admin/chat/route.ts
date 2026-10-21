@@ -106,10 +106,19 @@ export async function GET(req: NextRequest) {
               .select("*")
               .eq("sessionId", norm)
               .order("created_at", { ascending: true }),
-          1500
+          2000
         );
         if (!error && Array.isArray(data) && data.length > 0) {
           filtered = data;
+          // 로컬 메시지 파일에도 영구 보존
+          const allMsgs = readJsonFile(getMessagesFilePath());
+          const merged = [...allMsgs];
+          data.forEach((dbMsg) => {
+            if (!merged.some((m) => m.id === dbMsg.id)) {
+              merged.push(dbMsg);
+            }
+          });
+          safeAtomicWriteJson(getMessagesFilePath(), merged);
         }
       } catch (fallbackErr) {
         console.warn("[Chat Messages Remote Fallback Warning]:", fallbackErr);
@@ -122,57 +131,98 @@ export async function GET(req: NextRequest) {
   if (type === "sessions") {
     let sessions = readJsonFile(getSessionsFilePath());
 
-    // 비상 복구(Self-Healing): 로컬 세션이 없는 경우 Supabase에서 복구 시도
-    if (sessions.length === 0) {
-      try {
-        const { data, error } = await runSafeSupabaseQuery<any[]>(
-          async (supabase) =>
-            supabase.from("chat_sessions").select("*").order("updated_at", { ascending: false }),
-          1500
-        );
-        if (!error && Array.isArray(data) && data.length > 0) {
-          sessions = data;
-          safeAtomicWriteJson(getSessionsFilePath(), sessions);
-        }
-      } catch (fallbackErr) {
-        console.warn("[Chat Sessions Remote Fallback Warning]:", fallbackErr);
+    // 비상 복구(Self-Healing): Supabase와 동기화
+    try {
+      const { data, error } = await runSafeSupabaseQuery<any[]>(
+        async (supabase) =>
+          supabase.from("chat_sessions").select("*").order("updated_at", { ascending: false }),
+        2000
+      );
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const sessionMap = new Map<string, any>();
+        data.forEach((s) => {
+          if (s?.id) sessionMap.set(String(s.id).trim().toLowerCase(), s);
+        });
+        sessions.forEach((s) => {
+          if (s?.id) {
+            const key = String(s.id).trim().toLowerCase();
+            const existing = sessionMap.get(key);
+            sessionMap.set(key, { ...existing, ...s });
+          }
+        });
+        sessions = Array.from(sessionMap.values());
+        safeAtomicWriteJson(getSessionsFilePath(), sessions);
       }
+    } catch (fallbackErr) {
+      console.warn("[Chat Sessions Remote Fallback Warning]:", fallbackErr);
     }
 
     return NextResponse.json({ success: true, count: sessions.length, sessions }, { headers: NO_CACHE_HEADERS });
   }
 
+  // DEFAULT / TYPE === "ALL"
   let sessions = readJsonFile(getSessionsFilePath());
-  const messages = readJsonFile(getMessagesFilePath());
+  let messages = readJsonFile(getMessagesFilePath());
 
-  // 메시지는 있으나 세션 목록에 누락된 경우 자동 복구/보정
-  const sessionMap = new Map<string, any>();
-  sessions.forEach((s) => {
-    if (s && s.id) sessionMap.set(String(s.id).trim().toLowerCase(), s);
-  });
-  let sessionsUpdated = false;
-  messages.forEach((m) => {
-    const sId = String(m?.sessionId || "").trim().toLowerCase();
-    if (sId && !sessionMap.has(sId)) {
-      const syn = {
-        id: sId,
-        customerName: sId.includes("@") ? sId.split("@")[0] : sId,
-        customerEmail: sId.includes("@") ? sId : "",
-        customerPhone: "",
-        status: "active",
-        lastMessage: m.content || m.text || "",
-        lastMessageAt: m.created_at,
-        created_at: m.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      sessionMap.set(sId, syn);
-      sessions.unshift(syn);
-      sessionsUpdated = true;
+  // 1. Supabase에서 세션 및 메시지 복구 및 비파괴적 병합 (Self-Healing & Two-Way Sync)
+  try {
+    const [sbSessionsRes, sbMessagesRes] = await Promise.all([
+      runSafeSupabaseQuery<any[]>(
+        async (supabase) => supabase.from("chat_sessions").select("*").order("updated_at", { ascending: false }),
+        2000
+      ),
+      runSafeSupabaseQuery<any[]>(
+        async (supabase) => supabase.from("chat_messages").select("*").order("created_at", { ascending: true }),
+        2000
+      ),
+    ]);
+
+    let sessionsChanged = false;
+    let messagesChanged = false;
+
+    if (!sbSessionsRes.error && Array.isArray(sbSessionsRes.data) && sbSessionsRes.data.length > 0) {
+      const sessionMap = new Map<string, any>();
+      sbSessionsRes.data.forEach((s) => {
+        if (s?.id) sessionMap.set(String(s.id).trim().toLowerCase(), s);
+      });
+      sessions.forEach((s) => {
+        if (s?.id) {
+          const key = String(s.id).trim().toLowerCase();
+          const existing = sessionMap.get(key);
+          sessionMap.set(key, { ...existing, ...s });
+        }
+      });
+      sessions = Array.from(sessionMap.values());
+      sessionsChanged = true;
     }
-  });
-  if (sessionsUpdated) {
-    safeAtomicWriteJson(getSessionsFilePath(), sessions);
+
+    if (!sbMessagesRes.error && Array.isArray(sbMessagesRes.data) && sbMessagesRes.data.length > 0) {
+      const msgMap = new Map<string, any>();
+      sbMessagesRes.data.forEach((m) => {
+        if (m?.id) msgMap.set(String(m.id), m);
+      });
+      messages.forEach((m) => {
+        if (m?.id) {
+          const existing = msgMap.get(String(m.id));
+          msgMap.set(String(m.id), { ...existing, ...m });
+        }
+      });
+      messages = Array.from(msgMap.values());
+      messagesChanged = true;
+    }
+
+    if (sessionsChanged) {
+      safeAtomicWriteJson(getSessionsFilePath(), sessions);
+    }
+    if (messagesChanged) {
+      safeAtomicWriteJson(getMessagesFilePath(), messages);
+    }
+  } catch (syncErr) {
+    console.warn("[Chat API Sync All Warning]:", syncErr);
   }
+
+  // GET 요청 시에는 삭제되거나 종료된 세션이 임의로 재등록되지 않도록, 메시지 기반 자동 세션 생성을 비활성화합니다.
+  // 신규 세션은 고객이 채팅을 열거나 메시지를 전송할 때(POST)만 등록됩니다.
 
   return NextResponse.json({ success: true, sessions, messages }, { headers: NO_CACHE_HEADERS });
 }
@@ -208,7 +258,7 @@ export async function POST(req: NextRequest) {
         // 1. 로컬 저장 (0ms 보장, 원자적 쓰기)
         safeAtomicWriteJson(getSessionsFilePath(), sessions);
 
-        // 2. Supabase 비동기 듀얼 라이트
+        // 2. Supabase 듀얼 라이트 (완료 대기)
         const supabaseSession = {
           id: normId,
           customerName: body.customerName || body.name || "방문자",
@@ -218,20 +268,14 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         };
 
-        runSafeSupabaseQuery(
-          async (supabase) => supabase.from("chat_sessions").upsert([supabaseSession], { onConflict: "id" }),
-          2500
-        )
-          .then((res) => {
-            if (res.error) {
-              console.warn("[Chat Session Supabase Dual-Write Notice]:", res.error.message || res.error);
-            } else {
-              console.log(`[Chat Session Supabase Dual-Write Success] ID: ${normId}`);
-            }
-          })
-          .catch((err) => {
-            console.warn("[Chat Session Supabase Dual-Write Warning]:", err);
-          });
+        try {
+          await runSafeSupabaseQuery(
+            async (supabase) => supabase.from("chat_sessions").upsert([supabaseSession], { onConflict: "id" }),
+            2500
+          );
+        } catch (err) {
+          console.warn("[Chat Session Supabase Dual-Write Warning]:", err);
+        }
 
         return NextResponse.json({ success: true, session: sessionRecord }, { headers: NO_CACHE_HEADERS });
       }
@@ -362,24 +406,32 @@ export async function DELETE(req: NextRequest) {
         });
         safeAtomicWriteJson(getSessionsFilePath(), updatedSessions);
 
-        // Supabase 메시지만 듀얼 삭제
-        runSafeSupabaseQuery(
-          async (supabase) => supabase.from("chat_messages").delete().eq("sessionId", normTarget),
-          2500
-        ).catch((err) => console.warn("[Chat Clear Supabase Dual-Delete Warning]:", err));
+        // Supabase 메시지만 듀얼 삭제 (완료 대기)
+        try {
+          await runSafeSupabaseQuery(
+            async (supabase) => supabase.from("chat_messages").delete().eq("sessionId", normTarget),
+            2500
+          );
+        } catch (err) {
+          console.warn("[Chat Clear Supabase Dual-Delete Warning]:", err);
+        }
       } else {
         // 세션 완전 삭제
         const filteredSessions = sessions.filter((s) => String(s.id || "").trim().toLowerCase() !== normTarget);
         safeAtomicWriteJson(getSessionsFilePath(), filteredSessions);
 
-        // Supabase 세션 및 메시지 듀얼 삭제
-        runSafeSupabaseQuery(
-          async (supabase) => {
-            await supabase.from("chat_messages").delete().eq("sessionId", normTarget);
-            return await supabase.from("chat_sessions").delete().eq("id", normTarget);
-          },
-          2500
-        ).catch((err) => console.warn("[Chat Session Supabase Dual-Delete Warning]:", err));
+        // Supabase 세션 및 메시지 듀얼 삭제 (완료 대기)
+        try {
+          await runSafeSupabaseQuery(
+            async (supabase) => {
+              await supabase.from("chat_messages").delete().eq("sessionId", normTarget);
+              return await supabase.from("chat_sessions").delete().eq("id", normTarget);
+            },
+            2500
+          );
+        } catch (err) {
+          console.warn("[Chat Session Supabase Dual-Delete Warning]:", err);
+        }
       }
 
       return NextResponse.json({ success: true, sessionId, clearOnly }, { headers: NO_CACHE_HEADERS });

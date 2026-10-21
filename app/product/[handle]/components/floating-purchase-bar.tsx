@@ -364,16 +364,28 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
       return;
     }
     setSelectedColor(color);
+    const cMap = (product as any).colorImages || {};
     const customImg =
       colorImageMap[color] ||
-      (product as any).colorImages?.[color] ||
+      colorImageMap[color.trim()] ||
+      colorImageMap[color.toUpperCase()] ||
+      colorImageMap[color.toLowerCase()] ||
+      cMap[color] ||
+      cMap[color.trim()] ||
+      cMap[color.toUpperCase()] ||
+      cMap[color.toLowerCase()] ||
       (selectedSister as any)?.featuredImage?.url;
-    const fallbackImg = product.featuredImage?.url || "/product_1.webp";
-    window.dispatchEvent(
-      new CustomEvent("product_color_selected", {
-        detail: { color, image: customImg || fallbackImg },
-      })
-    );
+    const validCustom = (customImg && customImg !== "/product_1.webp" && !customImg.includes("placeholder")) ? customImg : "";
+    const pFeat = product.featuredImage?.url;
+    const fallbackImg = (pFeat && pFeat !== "/product_1.webp" && !pFeat.includes("placeholder")) ? pFeat : (product.images?.[0]?.url || "");
+    const finalSelectedImg = validCustom || fallbackImg;
+    if (finalSelectedImg) {
+      window.dispatchEvent(
+        new CustomEvent("product_color_selected", {
+          detail: { color, image: finalSelectedImg },
+        })
+      );
+    }
   };
 
   const handleSizeChange = (size: string) => {
@@ -509,13 +521,29 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
     router.push("/checkout");
   };
 
+  const cMap = (product as any).colorImages || {};
+  const selectedCut = selectedColor
+    ? (colorImageMap[selectedColor] ||
+       colorImageMap[selectedColor.trim()] ||
+       colorImageMap[selectedColor.toUpperCase()] ||
+       colorImageMap[selectedColor.toLowerCase()] ||
+       cMap[selectedColor] ||
+       cMap[selectedColor.trim()] ||
+       cMap[selectedColor.toUpperCase()] ||
+       cMap[selectedColor.toLowerCase()])
+    : "";
+  const validSelectedCut = (selectedCut && selectedCut !== "/product_1.webp" && !selectedCut.includes("placeholder")) ? selectedCut : "";
+  const sisterImg = (selectedSister as any)?.featuredImage?.url;
+  const pFeatImg = product.featuredImage?.url;
+  const pFirstImg = product.images?.[0]?.url;
+  const anyCut = Object.values(cMap)[0] as string | undefined;
+
   const thumbImg =
-    (selectedColor && colorImageMap[selectedColor]) ||
-    (selectedColor && (product as any).colorImages?.[selectedColor]) ||
-    (selectedSister as any)?.featuredImage?.url ||
-    product.featuredImage?.url ||
-    (product.images && product.images[0]?.url) ||
-    "/product_1.webp";
+    validSelectedCut ||
+    (sisterImg && sisterImg !== "/product_1.webp" ? sisterImg : "") ||
+    (pFeatImg && pFeatImg !== "/product_1.webp" ? pFeatImg : "") ||
+    (pFirstImg && pFirstImg !== "/product_1.webp" ? pFirstImg : "") ||
+    (anyCut && anyCut !== "/product_1.webp" ? anyCut : "");
 
   return (
     <aside
@@ -600,8 +628,18 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
                       }
                       const isSelected = selectedColor === colorStr || selectedColor === color;
                       const customImg =
-                        colorImageMap[colorStr] || (product as any).colorImages?.[colorStr];
-                      const fallbackImg = product.featuredImage?.url || "/product_1.webp";
+                        colorImageMap[colorStr] ||
+                        colorImageMap[colorStr.trim()] ||
+                        colorImageMap[colorStr.toUpperCase()] ||
+                        colorImageMap[colorStr.toLowerCase()] ||
+                        cMap[colorStr] ||
+                        cMap[colorStr.trim()] ||
+                        cMap[colorStr.toUpperCase()] ||
+                        cMap[colorStr.toLowerCase()];
+                      const validCustom = (customImg && customImg !== "/product_1.webp" && !customImg.includes("placeholder")) ? customImg : "";
+                      const fallbackCandidate = product.featuredImage?.url || product.images?.[0]?.url || "";
+                      const fallbackImg = (fallbackCandidate && fallbackCandidate !== "/product_1.webp" && !fallbackCandidate.includes("placeholder")) ? fallbackCandidate : "";
+                      const cutImg = validCustom || fallbackImg;
 
                       return (
                         <button
@@ -616,8 +654,12 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
                           )}
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-5 h-5 rounded-md overflow-hidden border border-neutral-300 shrink-0 bg-neutral-100">
-                              <img src={customImg || fallbackImg} alt={colorStr} className="w-full h-full object-cover" />
+                            <div className="w-5 h-5 rounded-md overflow-hidden border border-neutral-300 shrink-0 bg-neutral-100 flex items-center justify-center">
+                              {cutImg ? (
+                                <img src={cutImg} alt={colorStr} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-[9px] font-bold text-neutral-400 uppercase">{colorStr.slice(0, 2)}</span>
+                              )}
                             </div>
                             <span className="truncate">{colorStr}</span>
                           </div>

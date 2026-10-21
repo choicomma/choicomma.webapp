@@ -116,6 +116,7 @@ interface InquiriesManagementProps {
   setAdminLiveInput: (val: string) => void;
   handleAdminSendLiveChat: (text?: string) => void;
   handleAdminEndLiveChat: (sessionId: string) => void;
+  handleAdminDeleteLiveChat?: (sessionId: string) => void;
   handleAdminClearLiveChat: () => void;
   // 1:1 Board Customer Inquiries Props
   inquiriesList?: any[];
@@ -139,6 +140,7 @@ export function InquiriesManagement({
   setAdminLiveInput,
   handleAdminSendLiveChat,
   handleAdminEndLiveChat,
+  handleAdminDeleteLiveChat,
   handleAdminClearLiveChat,
   inquiriesList = [],
   setInquiriesList,
@@ -153,6 +155,8 @@ export function InquiriesManagement({
   const [csSubTab, setCsSubTab] = useState<"live_chat" | "board_inquiries">("live_chat");
   const [boardSearchQuery, setBoardSearchQuery] = useState("");
   const [boardStatusFilter, setBoardStatusFilter] = useState<"all" | "pending" | "completed">("all");
+  const [liveChatSearchQuery, setLiveChatSearchQuery] = useState("");
+  const [liveChatStatusFilter, setLiveChatStatusFilter] = useState<"all" | "active" | "ended">("all");
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
@@ -242,7 +246,7 @@ export function InquiriesManagement({
       return;
     }
 
-    const currentSession = chatSessionsList.find((s) => s.id === activeSessionId);
+    const currentSession = chatSessionsList.find((s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim());
     const sessionEmail = (currentSession?.email || "").toLowerCase().trim();
     const sessionName = (currentSession?.name || "").trim();
 
@@ -513,7 +517,7 @@ export function InquiriesManagement({
       return;
     }
 
-    const currentSession = chatSessionsList.find((s) => s.id === activeSessionId);
+    const currentSession = chatSessionsList.find((s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim());
     const sessionEmail = (currentSession?.email || "").toLowerCase().trim();
     const sessionName = (currentSession?.name || "").trim();
 
@@ -1253,14 +1257,67 @@ export function InquiriesManagement({
     };
   };
 
+  // Filtered Live Chat Sessions
+  const filteredChatSessions = React.useMemo(() => {
+    return (chatSessionsList || []).filter((session) => {
+      const isEnded = session.status === "ended";
+      const matchesStatus =
+        liveChatStatusFilter === "all" ||
+        (liveChatStatusFilter === "active" && !isEnded) ||
+        (liveChatStatusFilter === "ended" && isEnded);
+
+      const q = liveChatSearchQuery.toLowerCase().trim();
+      if (!q) return matchesStatus;
+
+      const name = String(session.name || "").toLowerCase();
+      const email = String(session.email || "").toLowerCase();
+      const phone = String(session.phone || "").toLowerCase();
+      const lastMsg = String(session.lastMessage || "").toLowerCase();
+
+      return matchesStatus && (name.includes(q) || email.includes(q) || phone.includes(q) || lastMsg.includes(q));
+    });
+  }, [chatSessionsList, liveChatStatusFilter, liveChatSearchQuery]);
+
+  // Unified Inquiries: 1:1 Board Inquiries + Live Chat Consultation Inquiries
+  const unifiedInquiries = React.useMemo(() => {
+    const list: any[] = [...(inquiriesList || [])];
+
+    // Merge live chat sessions as inquiries
+    (chatSessionsList || []).forEach((session) => {
+      if (!list.some((item) => String(item.id) === String(session.id))) {
+        const isEnded = session.status === "ended" || session.status === "closed";
+        list.push({
+          id: session.id,
+          userName: session.name,
+          name: session.name,
+          userEmail: session.email,
+          email: session.email,
+          userPhone: session.phone,
+          phone: session.phone,
+          userGrade: session.tier,
+          category: "실시간 라이브 상담",
+          title: session.lastMessage || "1:1 라이브 상담 문의",
+          content: session.lastMessage || "실시간 대화 문의 내역이 접수되었습니다.",
+          status: isEnded ? "completed" : "pending",
+          channel: "live_chat",
+          created_at: session.lastMessageAt || session.updated_at || session.created_at || new Date().toISOString(),
+          isLiveChat: true,
+        });
+      }
+    });
+
+    list.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    return list;
+  }, [inquiriesList, chatSessionsList]);
+
   // Board inquiries statistics & filtering
-  const totalInquiriesCount = (inquiriesList || []).length;
-  const pendingInquiriesCount = (inquiriesList || []).filter((item: any) => item.status !== "completed").length;
-  const completedInquiriesCount = (inquiriesList || []).filter((item: any) => item.status === "completed").length;
+  const totalInquiriesCount = unifiedInquiries.length;
+  const pendingInquiriesCount = unifiedInquiries.filter((item: any) => item.status !== "completed").length;
+  const completedInquiriesCount = unifiedInquiries.filter((item: any) => item.status === "completed").length;
 
   const currentBoardFilter = inquiriesFilter || boardStatusFilter;
 
-  const filteredBoardInquiries = (inquiriesList || []).filter((item: any) => {
+  const filteredBoardInquiries = unifiedInquiries.filter((item: any) => {
     const matchesFilter =
       currentBoardFilter === "all" ||
       (currentBoardFilter === "pending" && item.status !== "completed") ||
@@ -1289,31 +1346,32 @@ export function InquiriesManagement({
   });
 
   const handleExportInquiriesExcel = () => {
-    const listToExport = inquiriesList || [];
+    const listToExport = unifiedInquiries || [];
     if (listToExport.length === 0) {
-      alert("다운로드할 1:1 문의 내역이 없습니다.");
+      alert("다운로드할 고객 문의 내역이 없습니다.");
       return;
     }
     try {
       const exportData = listToExport.map((item: any, idx: number) => ({
         "번호": idx + 1,
         "문의ID": item.id || "-",
+        "접수채널": item.isLiveChat ? "실시간 라이브 상담" : "1:1 문의 접수",
         "작성일시": item.created_at ? new Date(item.created_at).toLocaleString() : "-",
-        "상태": item.status === "completed" ? "답변 완료" : "답변 대기",
+        "상태": item.status === "completed" ? (item.isLiveChat ? "상담 종료" : "답변 완료") : (item.isLiveChat ? "상담 진행중" : "답변 대기"),
         "고객명": item.userName || item.name || item.customerName || "-",
         "이메일": item.userEmail || item.email || item.customerEmail || "-",
         "연락처": item.userPhone || item.phone || "-",
         "문의유형": item.category || item.type || "일반 문의",
         "문의제목": item.title || item.subject || "-",
         "문의내용": item.content || item.message || "-",
-        "답변내용": item.reply || "-",
+        "답변내용": item.reply || (item.isLiveChat ? "실시간 채팅 대화내역 참조" : "-"),
         "답변일시": item.repliedAt ? new Date(item.repliedAt).toLocaleString() : "-",
       }));
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "1대1고객문의");
+      XLSX.utils.book_append_sheet(wb, ws, "고객문의통합내역");
       const today = new Date().toISOString().split("T")[0];
-      XLSX.writeFile(wb, `초이콤마_1대1고객문의_${today}.xlsx`);
+      XLSX.writeFile(wb, `초이콤마_고객문의통합내역_${today}.xlsx`);
     } catch (e) {
       console.error(e);
       alert("엑셀 다운로드 중 오류가 발생했습니다.");
@@ -1449,45 +1507,97 @@ export function InquiriesManagement({
       {csSubTab === "live_chat" ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* 1. Left Session Card List (라이브 대화 세션 목록) */}
-        <div className="col-span-12 lg:col-span-3 bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-xs flex flex-col h-[600px]">
+        <div className="col-span-12 lg:col-span-4 xl:col-span-3 bg-white border border-neutral-200/80 rounded-3xl p-5 shadow-xs flex flex-col h-[650px]">
           <div className="flex items-center justify-between pb-3 border-b border-neutral-200 shrink-0">
             <span className="text-xs font-black text-neutral-950 uppercase tracking-wider">
-              라이브 대화 세션 목록 ({chatSessionsList.length}개 온라인)
+              라이브 대화 세션 ({chatSessionsList.length})
             </span>
-            <span className="text-[10px] font-extrabold bg-neutral-950 text-white px-2 py-0.5 rounded-full">
-              실시간 세션
+            <span className="text-[10px] font-extrabold bg-blue-600 text-white px-2 py-0.5 rounded-full">
+              {chatSessionsList.filter((s) => s.status !== "ended").length} 접속중
             </span>
           </div>
 
+          {/* Search & Filter in Session List */}
+          <div className="pt-2.5 pb-2 space-y-2 shrink-0">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="고객명, 이메일, 내용 검색..."
+                value={liveChatSearchQuery}
+                onChange={(e) => setLiveChatSearchQuery(e.target.value)}
+                className="w-full bg-neutral-50 hover:bg-neutral-100 focus:bg-white border border-neutral-200 focus:border-neutral-950 rounded-xl pl-8 pr-3 py-1.5 text-[11px] font-bold text-neutral-950 focus:outline-none transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setLiveChatStatusFilter("all")}
+                className={`flex-1 py-1 rounded-lg text-[10px] font-black transition-colors cursor-pointer text-center ${
+                  liveChatStatusFilter === "all"
+                    ? "bg-neutral-950 text-white shadow-2xs"
+                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600"
+                }`}
+              >
+                전체 ({chatSessionsList.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setLiveChatStatusFilter("active")}
+                className={`flex-1 py-1 rounded-lg text-[10px] font-black transition-colors cursor-pointer text-center ${
+                  liveChatStatusFilter === "active"
+                    ? "bg-blue-600 text-white shadow-2xs"
+                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600"
+                }`}
+              >
+                접속중 ({chatSessionsList.filter((s) => s.status !== "ended").length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setLiveChatStatusFilter("ended")}
+                className={`flex-1 py-1 rounded-lg text-[10px] font-black transition-colors cursor-pointer text-center ${
+                  liveChatStatusFilter === "ended"
+                    ? "bg-neutral-800 text-white shadow-2xs"
+                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600"
+                }`}
+              >
+                종료 ({chatSessionsList.filter((s) => s.status === "ended").length})
+              </button>
+            </div>
+          </div>
+
           {/* Customer Sessions Stack */}
-          <div className="space-y-2.5 flex-1 overflow-y-auto pr-1 min-h-0 pt-2">
-            {chatSessionsList.length === 0 ? (
+          <div className="space-y-2.5 flex-1 overflow-y-auto pr-1 min-h-0 pt-1">
+            {filteredChatSessions.length === 0 ? (
               <div className="p-6 text-center text-xs font-bold text-neutral-400 bg-neutral-50 rounded-2xl border border-neutral-200/60">
-                현재 활성화된 1:1 라이브 채팅 세션이 없습니다.
+                {liveChatSearchQuery || liveChatStatusFilter !== "all"
+                  ? "조건에 맞는 상담 세션이 없습니다."
+                  : "현재 등록된 1:1 라이브 채팅 세션이 없습니다."}
               </div>
             ) : (
-              chatSessionsList.map((session) => {
-                const isSelected = activeSessionId === session.id;
-                const isEnded = session.status === "ended" || (session.id === activeSessionId && isLiveChatSessionEnded);
+              filteredChatSessions.map((session) => {
+                const isSelected = (activeSessionId || "").toLowerCase().trim() === (session.id || "").toLowerCase().trim();
+                const isEnded = session.status === "ended";
                 const badgeInfo = getSessionBadgeInfo(session);
                 return (
                   <div
                     key={session.id}
                     onClick={() => setActiveSessionId(session.id)}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 ${
+                    className={`p-3 rounded-2xl border transition-all cursor-pointer space-y-1.5 ${
                       isSelected
-                        ? "bg-neutral-950 text-white border-neutral-900 shadow-md"
+                        ? "bg-neutral-950 text-white border-neutral-900 shadow-md ring-1 ring-neutral-900"
                         : "bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border-neutral-200"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black">{session.name}</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${badgeInfo.color}`}>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-xs font-black truncate">{session.name}</span>
+                        <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black shrink-0 ${badgeInfo.color}`}>
                           {badgeInfo.tier}
                         </span>
                       </div>
-                      <span className={`text-[9px] font-mono font-black px-1.5 py-0.5 rounded ${
+                      <span className={`text-[9px] font-mono font-black px-1.5 py-0.5 rounded shrink-0 ${
                         isEnded
                           ? "bg-neutral-200 text-neutral-600"
                           : "bg-blue-600 text-white"
@@ -1496,25 +1606,50 @@ export function InquiriesManagement({
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className={isSelected ? "text-neutral-400 font-mono" : "text-neutral-500 font-mono"}>
-                        {session.email}
+                    {/* Latest inquiry message preview */}
+                    {session.lastMessage && (
+                      <p className={`text-[11px] line-clamp-1 leading-snug font-bold ${
+                        isSelected ? "text-neutral-200" : "text-neutral-700"
+                      }`}>
+                        💬 {session.lastMessage}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between text-[10px] pt-0.5">
+                      <span className={isSelected ? "text-neutral-400 font-mono truncate max-w-[130px]" : "text-neutral-500 font-mono truncate max-w-[130px]"}>
+                        {session.email || session.phone || session.id}
                       </span>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAdminEndLiveChat(session.id);
-                        }}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
-                          isSelected
-                            ? "bg-neutral-800 text-neutral-300 border-neutral-700 hover:bg-neutral-700"
-                            : "bg-neutral-100 text-neutral-700 border-neutral-200 hover:bg-neutral-200"
-                        }`}
-                      >
-                        🔒 상담 종료
-                      </button>
+                      {!isEnded ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAdminEndLiveChat(session.id);
+                          }}
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded border transition-colors cursor-pointer shrink-0 ${
+                            isSelected
+                              ? "bg-neutral-800 text-neutral-300 border-neutral-700 hover:bg-neutral-700"
+                              : "bg-neutral-100 text-neutral-700 border-neutral-200 hover:bg-neutral-200"
+                          }`}
+                        >
+                          🔒 종료
+                        </button>
+                      ) : (
+                        handleAdminDeleteLiveChat && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAdminDeleteLiveChat(session.id);
+                            }}
+                            className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-neutral-200 bg-neutral-100 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 transition-colors cursor-pointer shrink-0 text-neutral-500"
+                            title="종료된 상담 세션 및 대화 내역 완전 삭제"
+                          >
+                            🗑️ 삭제
+                          </button>
+                        )
+                      )}
                     </div>
                   </div>
                 );
@@ -1529,19 +1664,23 @@ export function InquiriesManagement({
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-blue-600" />
               <h3 className="text-sm font-black text-neutral-950">
-                실시간 대화 내역 ({chatSessionsList.find((s) => s.id === activeSessionId)?.name || "진행 중인 상담 없음"})
+                실시간 대화 내역 ({chatSessionsList.find((s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim())?.name || "진행 중인 상담 없음"})
               </h3>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                disabled={!activeSessionId || chatSessionsList.length === 0}
+                disabled={!activeSessionId || chatSessionsList.length === 0 || isLiveChatSessionEnded}
                 onClick={() => handleAdminEndLiveChat(activeSessionId)}
-                className="bg-neutral-100 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed text-neutral-700 border border-neutral-300 font-bold px-3 py-1.5 rounded-xl transition-all text-xs cursor-pointer flex items-center gap-1 shadow-2xs"
-                title="선택한 고객과의 1:1 라이브 상담을 종료합니다"
+                className={`font-bold px-3 py-1.5 rounded-xl transition-all text-xs flex items-center gap-1 shadow-2xs ${
+                  isLiveChatSessionEnded
+                    ? "bg-neutral-100 text-neutral-400 border border-neutral-200 cursor-not-allowed opacity-60"
+                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 cursor-pointer"
+                }`}
+                title={isLiveChatSessionEnded ? "이미 상담이 종료된 세션입니다" : "선택한 고객과의 1:1 라이브 상담을 종료합니다"}
               >
                 <LogOut className="w-3.5 h-3.5" />
-                상담 종료
+                {isLiveChatSessionEnded ? "상담 종료됨" : "상담 종료"}
               </button>
               <button
                 type="button"
@@ -2433,7 +2572,7 @@ export function InquiriesManagement({
             </div>
             {activeSessionId && (
               <span className="text-[11px] text-neutral-400 font-bold">
-                {chatSessionsList.find((s) => s.id === activeSessionId)?.name || "고객"}님 상담 중
+                {chatSessionsList.find((s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim())?.name || "고객"}님 상담 중
               </span>
             )}
           </div>
@@ -2442,7 +2581,7 @@ export function InquiriesManagement({
           <div className="pt-2 shrink-0 flex gap-2">
             <input
               type="text"
-              disabled={!activeSessionId || chatSessionsList.length === 0}
+              disabled={!activeSessionId || chatSessionsList.length === 0 || isLiveChatSessionEnded}
               value={adminLiveInput}
               onChange={(e) => setAdminLiveInput(e.target.value)}
               onKeyDown={(e) => {
@@ -2454,6 +2593,8 @@ export function InquiriesManagement({
               placeholder={
                 !activeSessionId || chatSessionsList.length === 0
                   ? "진행 중인 라이브 대화 세션이 없습니다..."
+                  : isLiveChatSessionEnded
+                  ? "상담이 종료된 대화 세션입니다. (답변 불가)"
                   : "고객에게 전달할 답변 메세지를 입력하세요..."
               }
               className="flex-1 bg-neutral-50 disabled:bg-neutral-100 disabled:cursor-not-allowed border border-neutral-200 rounded-xl px-4 py-3 text-xs font-extrabold text-neutral-950 focus:outline-none focus:border-neutral-950"
@@ -2461,7 +2602,7 @@ export function InquiriesManagement({
             <button
               type="button"
               onClick={() => onSendLiveChat()}
-              disabled={!adminLiveInput.trim() || !activeSessionId || chatSessionsList.length === 0}
+              disabled={!adminLiveInput.trim() || !activeSessionId || chatSessionsList.length === 0 || isLiveChatSessionEnded}
               className="bg-neutral-950 hover:bg-black text-white px-5 py-3 rounded-xl font-black text-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-md flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
@@ -2653,8 +2794,12 @@ export function InquiriesManagement({
                         <span className="text-xs font-mono font-bold text-neutral-400">
                           #{inquiry.id}
                         </span>
-                        <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
-                          {inquiry.category || inquiry.type || "일반 문의"}
+                        <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${
+                          inquiry.isLiveChat
+                            ? "bg-blue-50 text-blue-800 border-blue-200"
+                            : "bg-neutral-100 text-neutral-800 border-neutral-200"
+                        }`}>
+                          {inquiry.isLiveChat ? "실시간 라이브 상담" : (inquiry.category || inquiry.type || "일반 문의")}
                         </span>
                         <span
                           className={`text-[10px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
@@ -2666,12 +2811,12 @@ export function InquiriesManagement({
                           {isCompleted ? (
                             <>
                               <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                              <span>답변 완료</span>
+                              <span>{inquiry.isLiveChat ? "상담 종료" : "답변 완료"}</span>
                             </>
                           ) : (
                             <>
                               <Clock className="w-3 h-3 text-rose-600" />
-                              <span>답변 대기</span>
+                              <span>{inquiry.isLiveChat ? "실시간 대기 / 진행중" : "답변 대기"}</span>
                             </>
                           )}
                         </span>
@@ -2755,8 +2900,31 @@ export function InquiriesManagement({
                       </div>
                     )}
 
-                    {/* Admin Reply Section */}
-                    {isCompleted && !isEditing ? (
+                    {/* Admin Reply or Live Chat Jump Section */}
+                    {inquiry.isLiveChat ? (
+                      <div className="bg-blue-50/70 border border-blue-200/90 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <span className="text-xs font-black text-blue-950 flex items-center gap-1.5">
+                            <MessageSquare className="w-4 h-4 text-blue-600" />
+                            <span>1:1 실시간 라이브 상담 채널</span>
+                          </span>
+                          <p className="text-[11px] text-blue-700 font-medium">
+                            고객과의 1:1 실시간 대화창에서 즉시 답변, 실시간 주문 확인 및 교환/환불 요청서를 전송할 수 있습니다.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveSessionId(inquiry.id);
+                            setCsSubTab("live_chat");
+                          }}
+                          className="bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-2 shrink-0"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                          <span>실시간 대화창 열기 (상담 진행) →</span>
+                        </button>
+                      </div>
+                    ) : isCompleted && !isEditing ? (
                       <div className="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-extrabold text-emerald-950 flex items-center gap-1.5">

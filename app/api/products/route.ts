@@ -122,6 +122,90 @@ function readSeedCatalog(): any[] {
   return [];
 }
 
+function saveBase64ImageToUploads(dataUrl: string, prefix: string = "prod"): string {
+  if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/")) {
+    return dataUrl;
+  }
+  try {
+    const match = dataUrl.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,(.+)$/);
+    if (!match) return dataUrl;
+    let ext = `.${match[1].toLowerCase()}`;
+    if (ext === ".jpeg") ext = ".jpg";
+    const base64Data = match[2];
+    const buffer = Buffer.from(base64Data, "base64");
+
+    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${prefix}${ext}`;
+    const filePath = path.join(uploadsDir, fileName);
+    fs.writeFileSync(filePath, buffer);
+    return `/uploads/${fileName}`;
+  } catch (err) {
+    console.error("[Save Base64 Image Error]:", err);
+    return dataUrl;
+  }
+}
+
+function persistAndNormalizeProductImages(product: any): any {
+  if (!product || typeof product !== "object") return product;
+  const p = { ...product };
+  const pId = String(p.id || "item");
+
+  // 1. featuredImage
+  if (p.featuredImage?.url && typeof p.featuredImage.url === "string") {
+    if (p.featuredImage.url.startsWith("data:image/")) {
+      p.featuredImage = {
+        ...p.featuredImage,
+        url: saveBase64ImageToUploads(p.featuredImage.url, `${pId}-feat`),
+      };
+    }
+  }
+
+  // 2. images array
+  if (Array.isArray(p.images)) {
+    p.images = p.images.map((img: any, idx: number) => {
+      const u = typeof img === "string" ? img : img?.url;
+      if (typeof u === "string" && u.startsWith("data:image/")) {
+        const savedUrl = saveBase64ImageToUploads(u, `${pId}-img${idx + 1}`);
+        return typeof img === "string" ? savedUrl : { ...img, url: savedUrl };
+      }
+      return img;
+    });
+  }
+
+  // 3. colorImages (옵션별 제품컷)
+  if (p.colorImages && typeof p.colorImages === "object") {
+    const nextColorImages: Record<string, string> = {};
+    Object.entries(p.colorImages).forEach(([colorKey, imgVal]) => {
+      if (typeof imgVal === "string") {
+        if (imgVal.startsWith("data:image/")) {
+          const cleanKey = colorKey.replace(/[^a-zA-Z0-9가-힣_-]/g, "");
+          nextColorImages[colorKey] = saveBase64ImageToUploads(imgVal, `${pId}-color-${cleanKey || "cut"}`);
+        } else if (imgVal !== "/product_1.webp") {
+          nextColorImages[colorKey] = imgVal;
+        }
+      }
+    });
+    p.colorImages = nextColorImages;
+  }
+
+  // 4. fabricImage
+  if (typeof p.fabricImage === "string" && p.fabricImage.startsWith("data:image/")) {
+    p.fabricImage = saveBase64ImageToUploads(p.fabricImage, `${pId}-fabric`);
+  }
+  if (typeof p.fabricTextureImage === "string" && p.fabricTextureImage.startsWith("data:image/")) {
+    p.fabricTextureImage = saveBase64ImageToUploads(p.fabricTextureImage, `${pId}-fabric-tex`);
+  }
+
+  // 5. sizeGuideImage
+  if (typeof p.sizeGuideImage === "string" && p.sizeGuideImage.startsWith("data:image/")) {
+    p.sizeGuideImage = saveBase64ImageToUploads(p.sizeGuideImage, `${pId}-sizeguide`);
+  }
+
+  return p;
+}
+
 // In-memory cache for ultra-fast response & fail-safe fallback
 const globalForProducts = global as unknown as { serverProductsCache?: any[]; serverProductsDirty?: boolean };
 
@@ -549,7 +633,7 @@ export async function POST(req: NextRequest) {
         ? Number(p.timeSaleDiscountRate)
         : undefined;
 
-      const itemToSave: any = {
+      const baseItemToSave: any = {
         ...p,
         handle: safeHandle,
         productNo: num,
@@ -561,10 +645,12 @@ export async function POST(req: NextRequest) {
       };
 
       if (relDate) {
-        itemToSave.releaseDate = relDate;
+        baseItemToSave.releaseDate = relDate;
       } else {
-        delete itemToSave.releaseDate;
+        delete baseItemToSave.releaseDate;
       }
+
+      const itemToSave = persistAndNormalizeProductImages(baseItemToSave);
 
       // If this product was previously in deleted list, un-blacklist it
       const currentDeleted = readDeletedProductsList();
@@ -730,6 +816,7 @@ export async function POST(req: NextRequest) {
       finalList = merged;
     }
 
+    finalList = finalList.map((p) => persistAndNormalizeProductImages(p));
     const persistedBatch = await persistProducts(finalList);
 
     revalidateAllProductPaths();

@@ -86,10 +86,12 @@ function MembershipContent() {
     }
   }, [searchParams]);
 
+  const [isAuthVerified, setIsAuthVerified] = useState(false);
+
   // User Profile & Grade State (Synced with localStorage & Admin)
-  const [userName, setUserName] = useState("홍길동");
-  const [userEmail, setUserEmail] = useState("customer@choicomma.com");
-  const [userPhone, setUserPhone] = useState("010-1234-5678");
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [userPhone, setUserPhone] = useState("");
   const [userPostcode, setUserPostcode] = useState("");
   const [userAddress, setUserAddress] = useState("");
   const [userAddressDetail, setUserAddressDetail] = useState("");
@@ -393,11 +395,13 @@ function MembershipContent() {
     const isLoggedIn = localStorage.getItem("is_logged_in") === "true";
     const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
     if (!isAdminSession && (!isValid || !isLoggedIn)) {
+      setIsAuthVerified(false);
       // 이전에 유효한 고객 세션이 존재했던 경우에만 만료 안내 파라미터 전달
       const hadSession = Boolean(localStorage.getItem("customer_session_expires_at"));
-      window.location.href = hadSession ? "/login?expired=true" : "/login";
+      window.location.replace(hadSession ? "/login?expired=true" : "/login");
       return;
     }
+    setIsAuthVerified(true);
 
     const savedId = localStorage.getItem("membership_user_id");
     if (savedId) setUserId(savedId);
@@ -1366,6 +1370,14 @@ function MembershipContent() {
   const popularCollection = mockProducts.filter((p) =>
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (!isAuthVerified) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-neutral-900 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-[#FAF9F5] text-neutral-900 font-sans items-start">

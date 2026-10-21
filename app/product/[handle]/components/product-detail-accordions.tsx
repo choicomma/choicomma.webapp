@@ -257,7 +257,7 @@ export function ProductDetailAccordions({
   const [isSticky, setIsSticky] = useState(false);
   const [isZoomSliderOpen, setIsZoomSliderOpen] = useState(false);
   const [zoomScale, setZoomScale] = useState<number>(1.0); // 1.0 = 100%, 2.8 = 280%
-  const isDetailImageEnlarged = isZoomSliderOpen && zoomScale > 1.0;
+  const isDetailImageEnlarged = !isMobile && isZoomSliderOpen && zoomScale > 1.0;
 
   const panContainerRef = useRef<HTMLDivElement>(null);
   const isDraggingPan = useRef(false);
@@ -648,9 +648,9 @@ export function ProductDetailAccordions({
           )}
         </div>
 
-        {/* 돋보기 메뉴 바 (모바일에서만 표시 & 상세페이지 탭 스티키 효과 포함) */}
-        {isMobile && tabs[activeTabIdx]?.id === "details" && (
-          <div className="md:hidden w-full px-2 sm:px-4 pb-2 pt-1 border-t border-neutral-100 bg-white/95 transition-all">
+        {/* 돋보기 메뉴 바 (PC에서만 표시 & 상세페이지 탭 스티키 효과 포함) */}
+        {!isMobile && tabs[activeTabIdx]?.id === "details" && (
+          <div className="hidden md:block w-full px-2 sm:px-4 pb-2 pt-1 border-t border-neutral-100 bg-white/95 transition-all">
             {!isZoomSliderOpen ? (
               /* 돋보기 바 닫힘 상태: 제목만 표시되는 콤팩트 바 (클릭 시 슬라이더 활성화) */
               <div
@@ -733,9 +733,9 @@ export function ProductDetailAccordions({
           </div>
         )}
 
-        {/* 확대 안내 배너 바 (상세 사진 확대 중일 때 상단에 계속 떠 있게 스티키 적용) */}
-        {isDetailImageEnlarged && tabs[activeTabIdx]?.id === "details" && (
-          <div className="w-full px-2 sm:px-4 pb-2 pt-0.5 border-t border-neutral-100 bg-white/95 transition-all animate-in fade-in duration-150">
+        {/* 확대 안내 배너 바 (상세 사진 확대 중일 때 상단에 계속 떠 있게 스티키 적용 - PC 전용) */}
+        {!isMobile && isDetailImageEnlarged && tabs[activeTabIdx]?.id === "details" && (
+          <div className="hidden md:block w-full px-2 sm:px-4 pb-2 pt-0.5 border-t border-neutral-100 bg-white/95 transition-all animate-in fade-in duration-150">
             <div
               role="button"
               tabIndex={0}

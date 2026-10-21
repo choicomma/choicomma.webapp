@@ -537,7 +537,8 @@ export default function AdminPage() {
     handleAdminClearLiveChat,
     isLiveChatSessionEnded,
     activeSessionMessages,
-    handleAdminEndLiveChat
+    handleAdminEndLiveChat,
+    handleAdminDeleteLiveChat
   } = useLiveChat(triggerToast);
 
   // Ticker interval every 1 second
@@ -979,7 +980,7 @@ export default function AdminPage() {
           >
             <div className="flex items-center gap-3">
               <MessageSquare className="w-4 h-4 text-neutral-900" />
-              <span>CS & 실시간 상담</span>
+              <span>CS 관리</span>
             </div>
             {(chatSessionsList.length > 0 || (Array.isArray(inquiriesList) && inquiriesList.some((i: any) => i.status !== "completed"))) && (
               <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
@@ -1207,7 +1208,7 @@ export default function AdminPage() {
                 }`}
             >
               <MessageSquare className="w-3.5 h-3.5 text-neutral-900" />
-              CS
+              CS 관리
             </button>
             <button
               onClick={() => setActiveTab("products")}
@@ -1526,6 +1527,7 @@ export default function AdminPage() {
               setAdminLiveInput={setAdminLiveInput}
               handleAdminSendLiveChat={handleAdminSendLiveChat}
               handleAdminEndLiveChat={handleAdminEndLiveChat}
+              handleAdminDeleteLiveChat={handleAdminDeleteLiveChat}
               handleAdminClearLiveChat={handleAdminClearLiveChat}
               inquiriesList={inquiriesList}
               setInquiriesList={setInquiriesList}

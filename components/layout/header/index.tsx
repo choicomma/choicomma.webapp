@@ -78,7 +78,7 @@ export function Header({ collections }: HeaderProps) {
           name === "관리자" ||
           isAdminSession;
 
-        const isLogged = isLoggedInFlag || Boolean(name && name.trim().length > 0) || isAdm;
+        const isLogged = isAdm || (isLoggedInFlag && Boolean(validateCustomerSession()));
 
         setIsAdmin(isAdm);
         setIsLoggedIn(isLogged);
@@ -144,15 +144,23 @@ export function Header({ collections }: HeaderProps) {
   }
 
   const activeNavItems = [
-    ...navItems.map((item) => {
-      if (item.href === "/login" && isLoggedIn) {
-        return {
-          label: "마이페이지",
-          href: isAdmin ? "/admin" : "/membership",
-        };
-      }
-      return item;
-    }),
+    ...navItems
+      .filter((item) => {
+        // 비회원/비로그인 시 주문내역/배송조회 버튼 숨김 (로그인 시에만 노출)
+        if (item.href === "/membership?tab=orders" && !isLoggedIn) {
+          return false;
+        }
+        return true;
+      })
+      .map((item) => {
+        if (item.href === "/login" && isLoggedIn) {
+          return {
+            label: "마이페이지",
+            href: isAdmin ? "/admin" : "/membership",
+          };
+        }
+        return item;
+      }),
   ];
 
   const isLightHeaderRoute = pathname?.startsWith("/shop") || pathname === "/checkout" || pathname?.startsWith("/product") || pathname?.startsWith("/order");
@@ -167,19 +175,22 @@ export function Header({ collections }: HeaderProps) {
       {/* Main Header Bar Container */}
       <div className={cn(
         "relative w-full pointer-events-auto overflow-visible transition-colors duration-300",
-        isLightHeaderRoute ? "bg-white/95 backdrop-blur-md border-b border-neutral-200/60 shadow-xs" : ""
+        isLightHeaderRoute
+          ? "bg-white/95 backdrop-blur-md border-b border-neutral-200/60 shadow-xs"
+          : "bg-black md:bg-transparent border-b border-neutral-900 md:border-b-0 md:border-transparent shadow-sm md:shadow-none"
       )}>
         {/* Header Content Bar */}
         <div
           className={cn(
             "relative z-10 w-full pl-3 sm:pl-4 md:pl-6 pr-sides flex items-center justify-between md:grid md:grid-cols-12 md:gap-sides transition-colors duration-400 py-2.5 md:py-3.5",
-            "text-neutral-900"
+            isLightHeaderRoute ? "text-neutral-900" : "text-white md:text-neutral-900"
           )}
         >
           {/* Mobile: Logo on far left / Desktop: col-span-3 lg:col-span-4 */}
           <Link href="/" className="md:col-span-3 lg:col-span-4 flex items-center justify-start py-0.5" prefetch>
             <LogoSvg
               className="cursor-pointer justify-start"
+              textClassName={isLightHeaderRoute ? "text-neutral-950" : "text-white md:text-neutral-950"}
             />
           </Link>
 
@@ -239,12 +250,22 @@ export function Header({ collections }: HeaderProps) {
 
           {/* Mobile: Language Selector, Cart Icon & MENU on far right */}
           <div className="flex items-center gap-1.5 md:hidden">
-            <LanguageSelector />
+            <LanguageSelector
+              className={isLightHeaderRoute ? "text-neutral-900 hover:text-black" : "text-white hover:text-neutral-200"}
+              isScrolled={!isLightHeaderRoute}
+            />
             <CartModal
               variant="ghost"
-              className="transition-colors duration-400 p-2 border-0 bg-transparent hover:bg-transparent shadow-none text-neutral-900 hover:text-black"
+              className={cn(
+                "transition-colors duration-400 p-2 border-0 bg-transparent hover:bg-transparent shadow-none",
+                isLightHeaderRoute ? "text-neutral-900 hover:text-black" : "text-white hover:text-neutral-200"
+              )}
             />
-            <MobileMenu collections={collections} />
+            <MobileMenu
+              collections={collections}
+              isScrolled={!isLightHeaderRoute}
+              className={isLightHeaderRoute ? "text-neutral-900 hover:text-black" : "text-white hover:text-neutral-200"}
+            />
           </div>
         </div>
       </div>
