@@ -51,9 +51,12 @@ export function extractProductImages(product: any): string[] {
     const detailHtml = product.detailDescription || product.descriptionHtml || "";
     product.images.forEach((img: any, idx: number) => {
       const u = typeof img === "string" ? img : img?.url;
-      // Skip if it's explicitly only part of detail description and not the primary image
-      if (idx > 0 && detailHtml && typeof u === "string" && detailHtml.includes(u)) {
-        return;
+      // 1) 상세페이지 본문(detailDescription)에 등록된 사진이거나
+      // 2) 아임웹 본문 컷 URL(cdn.imweb.me/upload/)인 경우,
+      // 상품 리스트 카드 슬라이더에서 제외 (0번 대표 이미지가 아닌 2번 이후의 상세 컷 슬라이딩 방지)
+      if (idx > 0 && typeof u === "string") {
+        if (u.includes("cdn.imweb.me/upload/")) return;
+        if (detailHtml && detailHtml.includes(u)) return;
       }
       add(u);
     });
