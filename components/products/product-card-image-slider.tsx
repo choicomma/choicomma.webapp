@@ -126,7 +126,8 @@ export function ProductCardImageSlider({
     return (
       <div
         className={cn(
-          "relative w-full aspect-square bg-white flex items-center justify-center overflow-hidden",
+          "relative w-full bg-white flex items-center justify-center overflow-hidden",
+          fillContainer ? "h-full" : "aspect-square",
           paddingClass
         )}
       >
@@ -150,6 +151,7 @@ export function ProductCardImageSlider({
       imageClassName={imageClassName}
       intervalMs={intervalMs}
       priority={priority}
+      fillContainer={fillContainer}
     />
   );
 }
@@ -161,6 +163,7 @@ function PureElementFreeSlider({
   imageClassName,
   intervalMs = 2800,
   priority,
+  fillContainer = false,
 }: {
   images: string[];
   alt: string;
@@ -168,6 +171,7 @@ function PureElementFreeSlider({
   imageClassName: string;
   intervalMs?: number;
   priority: boolean;
+  fillContainer?: boolean;
 }) {
   // Append first image at the end to form a true infinite loop [0, 1, ..., N-1, 0]
   const slides = useMemo(() => [...images, images[0]], [images]);
