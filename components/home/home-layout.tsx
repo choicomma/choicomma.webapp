@@ -714,7 +714,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
               />
             )}
 
-            <div className="grid grid-cols-2 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pb-6 w-full relative">
+            <div className="grid grid-cols-2 md:grid-cols-3 border-t md:border-t-0 border-neutral-200 bg-white pt-2 sm:pt-0 pb-12 w-full relative">
               {allProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((product, idx) => {
                 const globalIndex = (currentPage - 1) * pageSize + idx;
                 const isFirst = globalIndex === 0;

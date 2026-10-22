@@ -360,7 +360,7 @@ export const ProductCard = ({
           router.push(`/product/${product.handle || "item"}`);
         }
       }}
-      className={`group relative flex flex-col items-center justify-between aspect-[4/5] overflow-hidden border-b border-r border-neutral-200 bg-white w-full cursor-pointer select-none ${
+      className={`group relative flex flex-col items-center justify-between aspect-[3/4] sm:aspect-[4/5] overflow-hidden border-b border-r border-neutral-200 bg-white w-full cursor-pointer select-none ${
         isOverlayActive ? "z-30 ring-2 ring-blue-600 shadow-xl" : ""
       }`}
     >
@@ -416,8 +416,8 @@ export const ProductCard = ({
         ) : null}
       </div>
 
-      {/* 1:1 Square Product Image Area with White Background - 뱃지 겹침 방지 상단 여백(mt-9), 상품명 여백 확보 하단 여백(pb-16) */}
-      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-2.5 pt-2 pb-16 sm:p-5 md:p-7 mt-9 sm:mt-8 md:mt-10 overflow-hidden">
+      {/* 1:1 Square Product Image Area with White Background - 뱃지 겹침 방지 상단 여백(mt-10), 상품명 여백 확보 하단 여백(pb-20) */}
+      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-2.5 pt-2 pb-20 sm:p-5 md:p-7 mt-10 sm:mt-8 md:mt-10 overflow-hidden">
         <ProductCardImageSlider
           images={productImages}
           alt={product.title || "Product"}
@@ -533,12 +533,12 @@ export const ProductCard = ({
           className="text-2xl sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight block w-full leading-tight md:leading-normal"
         />
 
-        {/* 가격 정보: 모바일 폰트 축소 및 깔끔한 가로 정렬 */}
+        {/* 가격 정보: 모바일 폰트 1.5배 확대 (text-lg / text-sm) 및 깔끔한 가로 정렬 */}
         <div className="flex items-baseline justify-end gap-1.5 sm:gap-2 flex-wrap sm:flex-row sm:items-baseline sm:justify-end sm:gap-2 md:gap-2.5">
           {/* 정상가 (취소선) */}
           {strikethroughPriceNum !== null && (
             <span
-              className="text-[10px] sm:text-xs md:text-sm text-neutral-400 line-through font-bold whitespace-nowrap sm:order-2 notranslate"
+              className="text-sm sm:text-xs md:text-sm text-neutral-400 line-through font-bold whitespace-nowrap sm:order-2 notranslate"
               translate="no"
             >
               {formatPrice(strikethroughPriceNum.toString(), currCode)}
@@ -546,17 +546,17 @@ export const ProductCard = ({
           )}
 
           {/* 할인가 및 할인 퍼센트 */}
-          <div className="flex items-baseline justify-end gap-1 sm:gap-2 sm:contents">
+          <div className="flex items-baseline justify-end gap-1.5 sm:gap-2 sm:contents">
             {isTimeSaleActive && timeSaleDiscount && (
               <span
-                className="text-xs sm:text-base md:text-lg font-black text-red-600 whitespace-nowrap sm:order-1 notranslate"
+                className="text-lg sm:text-base md:text-lg font-black text-red-600 whitespace-nowrap sm:order-1 notranslate"
                 translate="no"
               >
                 {timeSaleDiscount}%
               </span>
             )}
             <span
-              className="text-xs sm:text-base md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap sm:order-3 notranslate"
+              className="text-lg sm:text-base md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap sm:order-3 notranslate"
               translate="no"
             >
               {formatPrice(finalPriceNum.toString(), currCode)}
