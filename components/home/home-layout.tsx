@@ -669,7 +669,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   }, [emblaApi, heroImages.length]);
 
   return (
-    <div className="w-full flex flex-col bg-white">
+    <div className="w-full flex flex-col bg-white pt-[54px] md:pt-0">
       {/* Home Popup Modal (Admin Configured & Deployed) */}
       <HomePopupModal />
 
@@ -688,7 +688,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
                     alt={`Main Hero ${idx}`}
                     fill
                     sizes="(max-width: 768px) 100vw, 1920px"
-                    className="object-cover object-center pointer-events-none select-none"
+                    className="object-cover object-top md:object-center pointer-events-none select-none"
                     priority={idx === 0}
                     loading={idx === 0 ? "eager" : "lazy"}
                   />
