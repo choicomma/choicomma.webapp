@@ -669,7 +669,7 @@ export function HomeLayout({ products = [] }: { products?: any[] }) {
   }, [emblaApi, heroImages.length]);
 
   return (
-    <div className="w-full flex flex-col bg-white pt-[54px] md:pt-0">
+    <div className="w-full flex flex-col bg-white pt-[45px] md:pt-0">
       {/* Home Popup Modal (Admin Configured & Deployed) */}
       <HomePopupModal />
 

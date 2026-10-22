@@ -104,6 +104,24 @@ export const MarqueeProductTitle = ({ title, className = "" }: MarqueeProductTit
   );
 };
 
+// 금액 숫자와 통화단위(KRW 등)를 분리하여 통화단위 폰트를 반으로 축소 렌더링
+function renderPriceWithSmallCurrency(priceFormatted: string, numberClass: string, currencyClass?: string) {
+  const parts = priceFormatted.trim().split(" ");
+  if (parts.length >= 2) {
+    const currency = parts.pop();
+    const amount = parts.join(" ");
+    return (
+      <span className={numberClass}>
+        <span>{amount}</span>
+        <span className={`text-[9px] sm:text-[10px] md:text-xs font-semibold ml-0.5 tracking-normal opacity-70 ${currencyClass || ""}`}>
+          {" "}{currency}
+        </span>
+      </span>
+    );
+  }
+  return <span className={numberClass}>{priceFormatted}</span>;
+}
+
 export const ProductCard = ({
   product,
   onAdminClick,
@@ -364,8 +382,8 @@ export const ProductCard = ({
         isOverlayActive ? "z-30 ring-2 ring-blue-600 shadow-xl" : ""
       }`}
     >
-      {/* [1단] 상단 뱃지 영역: 독립적인 Flex 상단 아이템 (고정/자연 높이, 아래 이미지 영역을 물리적으로 침범하지 않음) */}
-      <div className="w-full px-2 pt-2 pb-1 sm:px-3 sm:pt-3 md:px-4 md:pt-4 flex items-center gap-1 sm:gap-1.5 flex-wrap z-10 pointer-events-none min-h-[30px] sm:min-h-[34px] shrink-0">
+      {/* [1단] 상단 뱃지 영역: 고정 높이(h-[32px] sm:h-[36px])를 주어 뱃지 유무와 상관없이 모든 카드의 상품명 높이 100% 일치 */}
+      <div className="w-full px-2 pt-2 pb-1 sm:px-3 sm:pt-3 md:px-4 md:pt-4 flex items-center justify-center md:justify-start gap-1 sm:gap-1.5 flex-wrap z-10 pointer-events-none h-[32px] sm:h-[36px] shrink-0">
         {(product as any).productLabel && (
           <span
             className={`hidden md:inline-flex text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs shrink-0 whitespace-nowrap shadow-2xs ${
@@ -380,11 +398,11 @@ export const ProductCard = ({
           </span>
         )}
 
-        {/* 타임세일 할인율 Badge: 모바일에선 퍼센트와 OFF만 노출, PC에선 전체 라벨 및 아이콘 노출 */}
+        {/* 타임세일 할인율 Badge: 모바일에서는 하단 가격 영역에 세일 정보가 이미 노출되므로 상단 세일 뱃지는 삭제(PC만 노출) */}
         {isTimeSaleActive && timeSaleDiscount && (
           secretSaleInfo ? (
             <span
-              className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-950 text-amber-300 border border-neutral-700 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1"
+              className="hidden md:inline-flex text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-950 text-amber-300 border border-neutral-700 shadow-2xs shrink-0 whitespace-nowrap items-center gap-1"
               title={secretSaleInfo.title ? `[시크릿 VIP 특가] ${secretSaleInfo.title}` : "[시크릿 VIP 특가]"}
             >
               <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 shrink-0 hidden md:inline-block" />
@@ -392,16 +410,16 @@ export const ProductCard = ({
               <span>{timeSaleDiscount}% OFF</span>
             </span>
           ) : (
-            <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-red-600 text-white shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
+            <span className="hidden md:inline-flex text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-red-600 text-white shadow-2xs shrink-0 whitespace-nowrap items-center gap-1">
               <span className="hidden md:inline">🔥 TIME SALE </span>
               <span>{timeSaleDiscount}% OFF</span>
             </span>
           )
         )}
 
-        {/* 오픈 예정 / 품절 Badge: 가장 마지막에 배치 */}
+        {/* 오픈 예정 / 품절 Badge: 모바일 상단 중앙 배치 (mx-auto md:mx-0) */}
         {product.releaseDate && new Date(product.releaseDate).getTime() > Date.now() ? (
-          <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
+          <span className="mx-auto md:mx-0 text-[9px] sm:text-[11px] md:text-xs font-black px-2 sm:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
             <Clock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-neutral-950" />
             <span className="md:hidden">{formatReleaseDateBadge(product.releaseDate)}</span>
             <span className="hidden md:inline">오픈 예정</span>
@@ -410,7 +428,7 @@ export const ProductCard = ({
             (product as any).stock !== null &&
             Number((product as any).stock) <= 0) ||
           (product.availableForSale === false && !(product.releaseDate && new Date(product.releaseDate).getTime() <= Date.now())) ? (
-          <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
+          <span className="mx-auto md:mx-0 text-[9px] sm:text-[11px] md:text-xs font-black px-2 sm:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
             품절
           </span>
         ) : null}
@@ -534,33 +552,39 @@ export const ProductCard = ({
           className="text-2xl sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight block w-full leading-tight md:leading-normal"
         />
 
-        {/* 가격 정보: 모바일 폰트 1.5배 확대 (text-lg / text-sm) 및 깔끔한 가로 정렬 */}
-        <div className="flex items-baseline justify-end gap-1.5 sm:gap-2 flex-wrap sm:flex-row sm:items-baseline sm:justify-end sm:gap-2 md:gap-2.5">
-          {/* 정상가 (취소선) */}
-          {strikethroughPriceNum !== null && (
-            <span
-              className="text-sm sm:text-xs md:text-sm text-neutral-400 line-through font-bold whitespace-nowrap sm:order-2 notranslate"
-              translate="no"
-            >
-              {formatPrice(strikethroughPriceNum.toString(), currCode)}
-            </span>
-          )}
+        {/* 가격 정보: 2행 고정 구조로 정상가(취소선) 유무와 관계없이 모든 카드의 상품명 높이를 수평선으로 100% 일치 */}
+        <div className="flex flex-col justify-end w-full min-h-[38px] sm:min-h-[42px]">
+          {/* 1행: 정상가 (취소선) - 정가 상품도 동일한 높이를 차지하도록 빈 공간 유지 */}
+          <div className="h-4 flex items-center justify-center md:justify-end">
+            {strikethroughPriceNum !== null ? (
+              <span className="notranslate" translate="no">
+                {renderPriceWithSmallCurrency(
+                  formatPrice(strikethroughPriceNum.toString(), currCode),
+                  "text-xs sm:text-xs md:text-sm text-neutral-400 line-through font-bold whitespace-nowrap",
+                  "text-[8px] sm:text-[9px] md:text-[10px] no-underline opacity-60"
+                )}
+              </span>
+            ) : (
+              <span className="h-4 invisible select-none" aria-hidden="true">-</span>
+            )}
+          </div>
 
-          {/* 할인가 및 할인 퍼센트 */}
-          <div className="flex items-baseline justify-end gap-1.5 sm:gap-2 sm:contents">
+          {/* 2행: 할인가 및 할인 퍼센트 (모바일 중앙 정렬, KRW 반 크기) */}
+          <div className="flex items-baseline justify-center md:justify-end gap-1.5 sm:gap-2">
             {isTimeSaleActive && timeSaleDiscount && (
               <span
-                className="text-lg sm:text-base md:text-lg font-black text-red-600 whitespace-nowrap sm:order-1 notranslate"
+                className="text-lg sm:text-base md:text-lg font-black text-red-600 whitespace-nowrap notranslate"
                 translate="no"
               >
                 {timeSaleDiscount}%
               </span>
             )}
-            <span
-              className="text-lg sm:text-base md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap sm:order-3 notranslate"
-              translate="no"
-            >
-              {formatPrice(finalPriceNum.toString(), currCode)}
+            <span className="notranslate" translate="no">
+              {renderPriceWithSmallCurrency(
+                formatPrice(finalPriceNum.toString(), currCode),
+                "text-lg sm:text-base md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap",
+                "text-[9px] sm:text-[10px] md:text-xs font-semibold text-neutral-500"
+              )}
             </span>
           </div>
         </div>
