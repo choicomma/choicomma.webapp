@@ -809,6 +809,7 @@ export function LiveChatWidget() {
       setIsLoggedIn(true);
       setIsChatLoggingIn(false);
       setChatPassword("");
+      registerUserSession("online");
       loadMessages();
       toast.success(`${matchedCustomer.name || "고객"}님, 로그인되었습니다!`);
     } catch (err) {
@@ -828,6 +829,9 @@ export function LiveChatWidget() {
 
   const registerUserSession = (status: "active" | "online" = "active") => {
     if (typeof window === "undefined") return;
+    const authed = checkAuth();
+    if (!authed) return;
+
     let email = (localStorage.getItem("membership_user_email") || "").trim().toLowerCase();
     let phone = (localStorage.getItem("membership_user_phone") || "").trim();
     let uName = (localStorage.getItem("membership_user_name") || "").trim();
@@ -841,13 +845,15 @@ export function LiveChatWidget() {
         email = `${userId}@customer.choicomma.com`;
       } else if (uName) {
         email = `${encodeURIComponent(uName)}@customer.choicomma.com`;
-      } else {
-        email = "guest@customer.choicomma.com";
-        uName = "실시간 방문 고객";
       }
     }
 
-    const rawId = (email || phone || "guest").trim().toLowerCase();
+    // 비로그인 사용자이거나 이메일/전화번호가 없는 경우 더미 세션 등록 원천 차단
+    if (!email && !phone) {
+      return;
+    }
+
+    const rawId = (email || phone).trim().toLowerCase();
     const uEmail = email || `${rawId}@customer.choicomma.com`;
     const finalName = uName || (rawId.includes("@") ? rawId.split("@")[0] : "고객");
 
@@ -1247,11 +1253,27 @@ export function LiveChatWidget() {
           }
 
           const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-          const phone = (localStorage.getItem("membership_user_phone") || "").trim();
-          const rawId = email || phone;
-          const targetSessionId = (event.data?.sessionId || "").toLowerCase().trim();
+          const phone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
+          const loginId = (localStorage.getItem("membership_user_login_id") || "").toLowerCase().trim();
+          const userId = (localStorage.getItem("membership_user_id") || "").toLowerCase().trim();
+          const rawId = (email || phone).toLowerCase().trim();
 
-          if (!targetSessionId || targetSessionId === rawId || (email && targetSessionId === email)) {
+          const targetSid = (event.data?.sessionId || "").toLowerCase().trim();
+          const targetEmail = (event.data?.sessionEmail || "").toLowerCase().trim();
+          const targetPhone = (event.data?.sessionPhone || "").replace(/[^0-9]/g, "");
+
+          const isMatchForCustomer =
+            !targetSid ||
+            targetSid === rawId ||
+            (email && targetSid === email) ||
+            (email && targetSid.includes(email)) ||
+            (email && targetEmail && email === targetEmail) ||
+            (phone && targetPhone && phone === targetPhone) ||
+            (phone && targetSid.replace(/[^0-9]/g, "") === phone) ||
+            (loginId && targetSid.includes(loginId)) ||
+            (userId && targetSid === userId);
+
+          if (isMatchForCustomer) {
             if (event.data?.type === "ADMIN_REPLY" && event.data.message) {
               cancelAutoReply();
               const newMsg = event.data.message;
@@ -1438,11 +1460,10 @@ export function LiveChatWidget() {
         email = `${userId}@customer.choicomma.com`;
       } else if (uName) {
         email = `${encodeURIComponent(uName)}@customer.choicomma.com`;
-      } else {
-        email = "guest@customer.choicomma.com";
       }
     }
-    const rawId = (email || phone || "guest").toLowerCase().trim();
+    const rawId = (email || phone).toLowerCase().trim();
+    if (!rawId) return;
 
     // Register active user to admin chat sessions list with accurate grade/tier & Supabase
     registerUserSession("active");
@@ -1454,6 +1475,8 @@ export function LiveChatWidget() {
         sendBc.postMessage({
           type: "USER_MESSAGE",
           sessionId: rawId,
+          sessionEmail: email || `${rawId}@customer.choicomma.com`,
+          sessionPhone: phone || "",
           message: newMsg,
         });
         sendBc.close();
@@ -1740,8 +1763,8 @@ export function LiveChatWidget() {
               setIsOpen(true);
               setIsMinimized(false);
               setUnreadCount(0);
-              registerUserSession("online");
               if (authed) {
+                registerUserSession("online");
                 loadMessages();
               }
             }}

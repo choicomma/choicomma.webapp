@@ -1,40 +1,5 @@
 [
   {
-    "id": "user-msg-1792588315187",
-    "sessionId": "soso7812@naver.com",
-    "sender": "user",
-    "text": "안녕하세요",
-    "created_at": "2026-10-21T13:11:55.452+00:00"
-  },
-  {
-    "id": "admin-msg-auto-1792588321691",
-    "sessionId": "soso7812@naver.com",
-    "sender": "admin",
-    "text": "안녕하세요! 초이콤마 오리지널 1:1 라이브 전담 케어 팀입니다. 💫\n상품 문의, 주문/배송 등 어떤 내용이든 편하게 말씀해 주세요.",
-    "created_at": "2026-10-21T13:12:01.91+00:00"
-  },
-  {
-    "id": "user-msg-1792588334959",
-    "sessionId": "soso7812@naver.com",
-    "sender": "user",
-    "text": "배송 언제 되는지 확인 부탁드립니다",
-    "created_at": "2026-10-21T13:12:15.181+00:00"
-  },
-  {
-    "id": "admin-reply-1792588409930",
-    "sessionId": "soso7812@naver.com",
-    "sender": "admin",
-    "text": "배송은 꿈도 꾸지 마세죠",
-    "created_at": "2026-10-21T13:13:30.002+00:00"
-  },
-  {
-    "id": "user-msg-1792588845635",
-    "sessionId": "soso7812@naver.com",
-    "sender": "user",
-    "text": "그러는거 아닙니다",
-    "created_at": "2026-10-21T13:20:45.865+00:00"
-  },
-  {
     "id": "user-msg-1792594043382",
     "sessionId": "cho@findcategory.co.kr",
     "sender": "user",
@@ -84,17 +49,90 @@
     "created_at": "2026-10-21T14:50:16.3+00:00"
   },
   {
-    "id": "admin-reply-1792648216368",
-    "sessionId": "soso7812@naver.com",
+    "id": "admin-reply-1792657326783",
+    "sessionId": "cho@findcategory.co.kr",
     "sender": "admin",
-    "text": "{\"type\":\"ORDER_SELECT_REQUEST\",\"title\":\"문의하실 주문건을 선택해 주세요\",\"text\":\"고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T05:50:16.368Z\"}",
-    "created_at": "2026-10-22T05:50:19.327+00:00"
+    "text": "{\"type\":\"ORDER_SELECT_REQUEST\",\"title\":\"문의하실 주문건을 선택해 주세요\",\"text\":\"고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T08:22:06.783Z\"}",
+    "created_at": "2026-10-22T08:22:08.224+00:00"
   },
   {
-    "id": "admin-reply-1792649688624",
-    "sessionId": "soso7812@naver.com",
+    "id": "admin-reply-1792657330187",
+    "sessionId": "cho@findcategory.co.kr",
     "sender": "admin",
-    "text": "{\"type\":\"EXCHANGE_REQUEST\",\"title\":\"교환 접수 안내 및 신청서\",\"text\":\"교환을 원하시는 주문건과 교환 사유를 입력해 주시면, 왕복 배송비(16,000원) 결제 후 교환 접수가 안전하게 완료됩니다.\",\"exchangeFee\":16000,\"requestedAt\":\"2026-10-22T06:14:48.623Z\"}",
-    "created_at": "2026-10-22T06:14:48.672+00:00"
+    "text": "{\"type\":\"ORDER_SELECT_REQUEST\",\"title\":\"문의하실 주문건을 선택해 주세요\",\"text\":\"고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T08:22:10.187Z\"}",
+    "created_at": "2026-10-22T08:22:10.612+00:00"
+  },
+  {
+    "id": "admin-reply-1792657333485",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "admin",
+    "text": "{\"type\":\"ORDER_SELECT_REQUEST\",\"title\":\"문의하실 주문건을 선택해 주세요\",\"text\":\"고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T08:22:13.485Z\"}",
+    "created_at": "2026-10-22T08:22:13.584+00:00"
+  },
+  {
+    "id": "admin-reply-1792657380505",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "admin",
+    "text": "{\"type\":\"EXCHANGE_REQUEST\",\"title\":\"교환 접수 안내 및 신청서\",\"text\":\"교환을 원하시는 주문건과 교환 사유를 입력해 주시면, 왕복 배송비(16,000원) 결제 후 교환 접수가 안전하게 완료됩니다.\",\"exchangeFee\":16000,\"requestedAt\":\"2026-10-22T08:23:00.505Z\"}",
+    "created_at": "2026-10-22T08:23:00.849+00:00"
+  },
+  {
+    "id": "admin-reply-1792657386359",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "admin",
+    "text": "{\"type\":\"EXCHANGE_REQUEST\",\"title\":\"교환 접수 안내 및 신청서\",\"text\":\"교환을 원하시는 주문건과 교환 사유를 입력해 주시면, 왕복 배송비(16,000원) 결제 후 교환 접수가 안전하게 완료됩니다.\",\"exchangeFee\":16000,\"requestedAt\":\"2026-10-22T08:23:06.359Z\"}",
+    "created_at": "2026-10-22T08:23:06.456+00:00"
+  },
+  {
+    "id": "admin-reply-1792657515665",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "admin",
+    "text": "{\"type\":\"REFUND_REQUEST\",\"title\":\"환불 접수 안내 및 신청서\",\"text\":\"환불을 원하시는 주문건과 환불 사유를 입력해 주시면, 확인 후 신속하게 결제 취소 및 환불 처리를 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T08:25:15.665Z\"}",
+    "created_at": "2026-10-22T08:25:15.741+00:00"
+  },
+  {
+    "id": "admin-reply-1792659150547",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "admin",
+    "text": "{\"type\":\"ORDER_SELECT_REQUEST\",\"title\":\"문의하실 주문건을 선택해 주세요\",\"text\":\"고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T08:52:30.547Z\"}",
+    "created_at": "2026-10-22T08:52:30.574Z",
+    "content": "{\"type\":\"ORDER_SELECT_REQUEST\",\"title\":\"문의하실 주문건을 선택해 주세요\",\"text\":\"고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T08:52:30.547Z\"}"
+  },
+  {
+    "id": "user-msg-1792659223506",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "user",
+    "text": "주문이없어요",
+    "created_at": "2026-10-22T08:53:43.729+00:00"
+  },
+  {
+    "id": "admin-reply-1792659230083",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "admin",
+    "text": "{\"type\":\"ORDER_SELECT_REQUEST\",\"title\":\"문의하실 주문건을 선택해 주세요\",\"text\":\"고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T08:53:50.083Z\"}",
+    "created_at": "2026-10-22T08:53:50.106Z",
+    "content": "{\"type\":\"ORDER_SELECT_REQUEST\",\"title\":\"문의하실 주문건을 선택해 주세요\",\"text\":\"고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T08:53:50.083Z\"}"
+  },
+  {
+    "id": "admin-reply-1792659238286",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "admin",
+    "text": "{\"type\":\"EXCHANGE_REQUEST\",\"title\":\"교환 접수 안내 및 신청서\",\"text\":\"교환을 원하시는 주문건과 교환 사유를 입력해 주시면, 왕복 배송비(16,000원) 결제 후 교환 접수가 안전하게 완료됩니다.\",\"exchangeFee\":16000,\"requestedAt\":\"2026-10-22T08:53:58.286Z\"}",
+    "created_at": "2026-10-22T08:53:58.319Z",
+    "content": "{\"type\":\"EXCHANGE_REQUEST\",\"title\":\"교환 접수 안내 및 신청서\",\"text\":\"교환을 원하시는 주문건과 교환 사유를 입력해 주시면, 왕복 배송비(16,000원) 결제 후 교환 접수가 안전하게 완료됩니다.\",\"exchangeFee\":16000,\"requestedAt\":\"2026-10-22T08:53:58.286Z\"}"
+  },
+  {
+    "id": "admin-reply-1792661433965",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "admin",
+    "text": "{\"type\":\"ORDER_SELECT_REQUEST\",\"title\":\"문의하실 주문건을 선택해 주세요\",\"text\":\"고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T09:30:33.965Z\"}",
+    "created_at": "2026-10-22T09:30:34.245+00:00"
+  },
+  {
+    "id": "user-msg-1792661456437",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "user",
+    "text": "상담요청",
+    "created_at": "2026-10-22T09:30:56.716+00:00"
   }
 ]

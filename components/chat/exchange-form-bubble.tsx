@@ -90,20 +90,15 @@ export function ExchangeFormBubble({
         } catch (e) {}
       }
 
-      // 1. 고객 본인의 주문만 엄격 매칭 (비로그인은 빈 배열, 관리자는 본인 테스트 주문만)
+      // 1. 고객 본인의 주문만 엄격 매칭 (관리자 뷰라도 상담 중인 해당 고객의 주문만 필터링)
       const normEmail = (customerEmail || "").toLowerCase().trim();
-      const isTargetAdmin = normEmail === "admin@choicomma.com" || (customerName || "").includes("최고관리자");
+      const isTargetAdmin = !isAdminView && (normEmail === "admin@choicomma.com" || (customerName || "").includes("최고관리자"));
       let userOrders = filterOrdersForCustomer(list, {
         email: customerEmail,
         name: customerName,
         phone: customerPhone,
         isAdmin: isTargetAdmin,
       });
-
-      // 관리자 화면이거나 매칭 주문이 없을 때 최근 등록된 주문이 있으면 기본 표시
-      if (userOrders.length === 0 && (isAdminView || isTargetAdmin) && list.length > 0) {
-        userOrders = list.slice(0, 5);
-      }
 
       // 2. 배송완료 상태 및 14일 이내 교환 가능 주문건 추출
       const eligibleList = userOrders.filter((s: any) => {
@@ -134,13 +129,13 @@ export function ExchangeFormBubble({
         setSelectedOrderNum(exploded[0]?.orderNumber || null);
       } else {
         // Fallback fetch API: 본인 식별 파라미터 전달 및 엄격 필터링
-        const currentEmail = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-        const currentPhone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
-        const currentName = (localStorage.getItem("membership_user_name") || "").trim();
-        const isAdmin = localStorage.getItem("user_role") === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true";
+        const currentEmail = (customerEmail || localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+        const currentPhone = (customerPhone || localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
+        const currentName = (customerName || localStorage.getItem("membership_user_name") || "").trim();
+        const isAdmin = !isAdminView && (localStorage.getItem("user_role") === "admin" || sessionStorage.getItem("choicomma_admin_authenticated") === "true");
 
-        // 비로그인 상태인 경우 타인의 주문을 조회하지 않음
-        if (!isAdmin && !currentEmail && (!currentPhone || currentPhone.length < 8) && !currentName) {
+        // 식별 정보가 없는 경우 타인의 주문을 조회하지 않고 빈 배열 처리
+        if (!currentEmail && (!currentPhone || currentPhone.length < 8) && !currentName) {
           setOrders([]);
           return;
         }

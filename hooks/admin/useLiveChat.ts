@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { playNotificationSound } from "@/lib/audio/notification-sound";
 
 
 export function useLiveChat(triggerToast: (msg: string) => void) {
@@ -287,6 +288,17 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       }
     });
 
+    // 3. Preserve recent in-flight user messages (within last 30s) so they never flicker or disappear during background fetch
+    const now = Date.now();
+    existingLocal.forEach((localMsg) => {
+      if (localMsg && localMsg.id && !mergedMap.has(localMsg.id)) {
+        const msgTime = localMsg.created_at ? new Date(localMsg.created_at).getTime() : now;
+        if (now - msgTime < 30000 || localMsg.sender === "user") {
+          mergedMap.set(localMsg.id, { ...localMsg, sessionId: currentId });
+        }
+      }
+    });
+
     const finalList = Array.from(mergedMap.values());
     // Chronological sort
     finalList.sort((a, b) => {
@@ -361,7 +373,9 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
   useEffect(() => {
     loadSessions();
 
-    const handleStorageChange = () => {
+    const handleStorageChange = (e?: any) => {
+      // 관리자 본인의 낙관적 업데이트 발송 시 같은 탭 내 중복 API fetch 차단하여 버퍼링 방지
+      if (e?.detail?.sender === "admin") return;
       loadSessions();
       syncAdminLiveChat();
     };
@@ -376,20 +390,91 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
         bc = new BroadcastChannel("choicomma_live_chat_sync");
         bc.onmessage = (event) => {
           if (event.data?.type === "USER_MESSAGE" || event.data?.type === "SESSION_REGISTERED") {
+            // 신규 고객 메시지 인입 시 Web Audio 차임벨 사운드 재생
+            if (event.data?.type === "USER_MESSAGE") {
+              playNotificationSound();
+            }
+
             const sid = (event.data.sessionId || "").toLowerCase().trim();
-            loadSessions();
-            if (activeSessionIdRef.current.toLowerCase().trim() === sid) {
-              syncAdminLiveChat(sid);
-              if (event.data?.message) {
-                const incomingMsg = {
-                  ...event.data.message,
-                  sessionId: sid || event.data.message.sessionId || activeSessionIdRef.current.toLowerCase().trim(),
-                };
-                setAdminLiveChatMessages((prev) => {
-                  if (prev.some((m) => m.id === incomingMsg.id)) return prev;
-                  return [...prev, incomingMsg];
-                });
+            const sEmail = (event.data.sessionEmail || "").toLowerCase().trim();
+            const sPhone = (event.data.sessionPhone || "").replace(/[^0-9]/g, "");
+            const incomingMsg = event.data?.message;
+
+            const currentActiveId = (activeSessionIdRef.current || "").toLowerCase().trim();
+
+            // 1. 활성 세션 일치 여부 다각도 검증 (ID, 이메일, 전화번호 교차 체크)
+            let isCurrentSession = false;
+            if (currentActiveId) {
+              if (sid && (currentActiveId === sid || currentActiveId.includes(sid) || sid.includes(currentActiveId))) {
+                isCurrentSession = true;
+              } else if (sEmail && (currentActiveId === sEmail || currentActiveId.includes(sEmail))) {
+                isCurrentSession = true;
+              } else if (sPhone && currentActiveId.replace(/[^0-9]/g, "") === sPhone) {
+                isCurrentSession = true;
               }
+            }
+
+            // 2. 좌측 세션 목록 0ms 실시간 업데이트 (미리보기 메시지, 갱신 시각, 활성 상태)
+            setChatSessionsList((prev) => {
+              const matched = prev.some((s) => {
+                const sId = (s.id || "").toLowerCase().trim();
+                const semail = (s.customerEmail || s.email || "").toLowerCase().trim();
+                const sphone = (s.customerPhone || s.phone || "").replace(/[^0-9]/g, "");
+                return sId === sid || (sEmail && semail === sEmail) || (sPhone && sphone === sPhone) || (currentActiveId && sId === currentActiveId && isCurrentSession);
+              });
+
+              if (!matched && event.data.session) {
+                return [event.data.session, ...prev];
+              }
+
+              return prev.map((s) => {
+                const sId = (s.id || "").toLowerCase().trim();
+                const semail = (s.customerEmail || s.email || "").toLowerCase().trim();
+                const sphone = (s.customerPhone || s.phone || "").replace(/[^0-9]/g, "");
+                if (sId === sid || (sEmail && semail === sEmail) || (sPhone && sphone === sPhone) || (currentActiveId && sId === currentActiveId && isCurrentSession)) {
+                  return {
+                    ...s,
+                    lastMessage: incomingMsg?.text || (incomingMsg?.images?.length ? "[사진 첨부]" : s.lastMessage),
+                    lastMessageAt: incomingMsg?.created_at || new Date().toISOString(),
+                    status: "active",
+                    updated_at: new Date().toISOString(),
+                  };
+                }
+                return s;
+              });
+            });
+
+            // 3. 현재 열려있는 세션인 경우 0ms 즉각 화면 노출 및 로컬스토리지 보존
+            if (isCurrentSession && incomingMsg) {
+              const targetKeyId = currentActiveId || sid;
+              const formattedMsg = {
+                ...incomingMsg,
+                sessionId: targetKeyId,
+              };
+
+              // (1) UI State 0ms 즉각 렌더링
+              setAdminLiveChatMessages((prev) => {
+                if (prev.some((m) => m.id === formattedMsg.id)) return prev;
+                return [...prev, formattedMsg];
+              });
+
+              // (2) 로컬스토리지 즉각 보존 (새로고침/재렌더링 방어)
+              try {
+                const sessionKey = `site_live_chat_messages_${targetKeyId}`;
+                const savedStr = localStorage.getItem(sessionKey);
+                const list = savedStr ? JSON.parse(savedStr) : [];
+                if (Array.isArray(list) && !list.some((m: any) => m.id === formattedMsg.id)) {
+                  list.push(formattedMsg);
+                  localStorage.setItem(sessionKey, JSON.stringify(list));
+                }
+              } catch (e) {}
+
+              // (3) 비동기 API 동기화는 화면 렌더링을 방해하지 않도록 약간의 지연 후 백그라운드에서 실행
+              setTimeout(() => {
+                syncAdminLiveChat(targetKeyId);
+              }, 1200);
+            } else {
+              loadSessions();
             }
           } else if (event.data?.type === "CHAT_RESET" || event.data?.type === "CHAT_CLEARED") {
             const sid = (event.data.sessionId || "").toLowerCase().trim();
@@ -518,7 +603,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
 
     // 3. Dispatch update event immediately so UI remains responsive
     if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("live_chat_updated"));
+      window.dispatchEvent(new CustomEvent("live_chat_updated", { detail: { sender: "admin", messageId: newReply.id } }));
     }
 
     triggerToast("💬 고객 라이브 채팅방으로 답변이 성공적으로 전송되었습니다!");
@@ -602,6 +687,8 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
         sendBc.postMessage({
           type: "CHAT_ENDED",
           sessionId: normalizedTargetId,
+          sessionEmail: targetSession?.customerEmail || targetSession?.email || "",
+          sessionPhone: targetSession?.customerPhone || targetSession?.phone || "",
         });
         sendBc.close();
       } catch (e) {}

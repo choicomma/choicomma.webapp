@@ -31,6 +31,17 @@ function getMessagesFilePath() {
   return path.join(process.cwd(), "data", "chat-messages.json");
 }
 
+function isGuestSession(id?: string, email?: string): boolean {
+  const normId = String(id || "").toLowerCase().trim();
+  const normEmail = String(email || "").toLowerCase().trim();
+  return (
+    normId === "guest" ||
+    normId.startsWith("guest@") ||
+    normEmail === "guest" ||
+    normEmail.startsWith("guest@")
+  );
+}
+
 function readJsonFile(filePath: string): any[] {
   try {
     if (fs.existsSync(filePath)) {
@@ -157,6 +168,7 @@ export async function GET(req: NextRequest) {
       console.warn("[Chat Sessions Remote Fallback Warning]:", fallbackErr);
     }
 
+    sessions = sessions.filter((s) => !isGuestSession(s.id, s.customerEmail || s.email));
     return NextResponse.json({ success: true, count: sessions.length, sessions }, { headers: NO_CACHE_HEADERS });
   }
 
@@ -224,6 +236,7 @@ export async function GET(req: NextRequest) {
   // GET 요청 시에는 삭제되거나 종료된 세션이 임의로 재등록되지 않도록, 메시지 기반 자동 세션 생성을 비활성화합니다.
   // 신규 세션은 고객이 채팅을 열거나 메시지를 전송할 때(POST)만 등록됩니다.
 
+  sessions = sessions.filter((s) => !isGuestSession(s.id, s.customerEmail || s.email));
   return NextResponse.json({ success: true, sessions, messages }, { headers: NO_CACHE_HEADERS });
 }
 
@@ -237,6 +250,9 @@ export async function POST(req: NextRequest) {
 
       if (type === "session") {
         const normId = String(body.id || "").trim().toLowerCase();
+        if (isGuestSession(normId, body.customerEmail)) {
+          return NextResponse.json({ success: true, ignored: true, message: "Guest sessions are ignored" }, { headers: NO_CACHE_HEADERS });
+        }
         const sessions = readJsonFile(getSessionsFilePath());
         const idx = sessions.findIndex((s) => String(s.id || "").trim().toLowerCase() === normId);
         const sessionRecord = {
@@ -281,8 +297,11 @@ export async function POST(req: NextRequest) {
       }
 
       // Default: append or update message
-      const messages = readJsonFile(getMessagesFilePath());
       const normSessionId = String(body.sessionId || "").trim().toLowerCase();
+      if (isGuestSession(normSessionId, body.customerEmail)) {
+        return NextResponse.json({ error: "Authentication required to chat" }, { status: 401, headers: NO_CACHE_HEADERS });
+      }
+      const messages = readJsonFile(getMessagesFilePath());
       const msgId = String(body.id || `MSG-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`);
 
       const newMsg = {

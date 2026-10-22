@@ -566,11 +566,7 @@ export default function AdminPage() {
     };
   }, [isNotificationOpen]);
 
-  // 알림(새로운 소식) 상태 계산
-  const pendingInquiriesCount = (inquiriesList || []).filter(
-    (i: any) => i.status === "대기" || i.status === "미답변" || i.status === "답변대기"
-  ).length;
-
+  // 알림(새로운 소식) 상태 계산 (1:1 게시판 미운영에 따라 실시간 상담 및 신규 주문만 집계)
   const unreadChatCount = (chatSessionsList || []).reduce(
     (acc: number, s: any) => acc + (Number(s.unreadCount) || (s.unread ? 1 : 0)),
     0
@@ -580,7 +576,7 @@ export default function AdminPage() {
     (o: any) => o.status === "결제완료" || o.status === "주문접수" || o.status === "배송준비"
   ).length;
 
-  const totalNotificationCount = pendingInquiriesCount + unreadChatCount + pendingOrdersCount;
+  const totalNotificationCount = unreadChatCount + pendingOrdersCount;
   const hasNewNotifications = totalNotificationCount > 0;
 
   // Main Home Page Admin Control State
@@ -842,34 +838,11 @@ export default function AdminPage() {
                       </div>
                       <p className="text-xs font-bold text-neutral-800">새로운 알림이 없습니다</p>
                       <p className="text-[11px] text-neutral-400 mt-0.5">
-                        고객 문의, 실시간 상담, 신규 주문이 모두 처리되었습니다.
+                        실시간 상담과 신규 주문이 모두 처리되었습니다.
                       </p>
                     </div>
                   ) : (
                     <>
-                      {pendingInquiriesCount > 0 && (
-                        <div
-                          onClick={() => {
-                            setActiveTab("inquiries");
-                            setIsNotificationOpen(false);
-                          }}
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer border border-neutral-100"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                              <Mail className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-neutral-900">1:1 고객 문의 답변 대기</p>
-                              <p className="text-[10px] text-neutral-500">답변 대기 중인 문의 {pendingInquiriesCount}건</p>
-                            </div>
-                          </div>
-                          <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
-                            {pendingInquiriesCount}건
-                          </span>
-                        </div>
-                      )}
-
                       {unreadChatCount > 0 && (
                         <div
                           onClick={() => {
@@ -982,11 +955,14 @@ export default function AdminPage() {
               <MessageSquare className="w-4 h-4 text-neutral-900" />
               <span>CS 관리</span>
             </div>
-            {(chatSessionsList.length > 0 || (Array.isArray(inquiriesList) && inquiriesList.some((i: any) => i.status !== "completed"))) && (
-              <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
-                {chatSessionsList.length + (inquiriesList.filter((i: any) => i.status !== "completed").length)}
-              </span>
-            )}
+            {(() => {
+              const activeChatCount = (chatSessionsList || []).filter((s: any) => s.status !== "ended").length;
+              return activeChatCount > 0 ? (
+                <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+                  {activeChatCount}
+                </span>
+              ) : null;
+            })()}
           </button>
 
           {/* 3. 상품 관리 */}

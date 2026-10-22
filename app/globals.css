@@ -105,6 +105,11 @@ input[type="number"] {
     100% { transform: translateX(-50%); }
   }
 
+  @keyframes marquee-unit {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(var(--marquee-offset, -100%), 0, 0); }
+  }
+
   .animate-marquee {
     display: flex;
     width: max-content;
@@ -190,45 +195,15 @@ body {
   scroll-behavior: smooth;
 }
 
-/* Hide All Google Translate Top Banner iFrames, Tooltips & Offsets */
-.goog-te-banner-frame,
-iframe.goog-te-banner-frame,
-iframe.VIpgJd-Z69jMc-ahb-wL2fd1,
-iframe[class*="VIpgJd"],
-iframe[id*=":1.container"],
-iframe[src*="translate.google.com"],
-iframe[src*="translate.googleapis.com"],
-.goog-te-banner,
-#goog-gt-tt,
-.goog-te-balloon-frame,
-.goog-tooltip,
-.goog-tooltip:hover,
-.goog-te-gadget,
-#google_translate_element {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  height: 0 !important;
-  width: 0 !important;
-  position: absolute !important;
-  top: -9999px !important;
-  left: -9999px !important;
-  pointer-events: none !important;
-}
-
+/* Page Reset */
 html {
-  top: 0px !important;
+  top: 0px;
 }
 
 body {
-  top: 0px !important;
-  position: static !important;
-  margin-top: 0px !important;
-}
-
-.goog-text-highlight {
-  background-color: transparent !important;
-  box-shadow: none !important;
+  top: 0px;
+  position: static;
+  margin-top: 0px;
 }
 
 /* Currency Code Protection - Prevent Google Translate from changing CNY/USD/JPY to translated text */

@@ -112,10 +112,35 @@ export const CURRENCY_MAP: Record<string, CurrencyInfo> = {
 };
 
 /**
- * Get current active language code from cookie or window
+ * Get current active language code from cookie, localStorage, or fallback
  */
 export function getCurrentLangCode(): string {
   if (typeof document === "undefined") return "ko";
+
+  // 1. Check choicomma_lang standard cookie
+  const choiMatch = document.cookie.match(/(?:^|; )choicomma_lang=([^;]*)/);
+  if (choiMatch && choiMatch[1]) {
+    const code = choiMatch[1].trim();
+    if (code) {
+      const lower = code.toLowerCase();
+      if (lower === "zh-cn" || lower === "zh") return "zh-CN";
+      if (CURRENCY_MAP[lower]) return lower;
+      if (CURRENCY_MAP[code]) return code;
+    }
+  }
+
+  // 2. Check localStorage
+  try {
+    const saved = localStorage.getItem("choicomma_lang");
+    if (saved) {
+      const lower = saved.toLowerCase();
+      if (lower === "zh-cn" || lower === "zh") return "zh-CN";
+      if (CURRENCY_MAP[lower]) return lower;
+      if (CURRENCY_MAP[saved]) return saved;
+    }
+  } catch (e) {}
+
+  // 3. Fallback to legacy googtrans cookie
   const match = document.cookie.match(/(?:^|; )googtrans=([^;]*)/);
   if (match) {
     const code = match[1].split("/").pop();

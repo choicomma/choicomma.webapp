@@ -10,7 +10,14 @@ import { ProductImage } from "./product-image";
 import { QuickOptionModal } from "@/components/products/quick-option-modal";
 import { Sparkles, Plus, Clock, ChevronLeft, ChevronRight, Lock, Sliders, Edit3, ExternalLink, X } from "lucide-react";
 
-import { translateProductTitle, translateProductDescription, translateUiText, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
+import {
+  translateProductTitle,
+  translateProductDescription,
+  translateUiText,
+  getCurrentLanguage,
+  fetchAsyncTranslation,
+  useProductTranslation,
+} from "@/lib/i18n/translation";
 import { ProductCardImageSlider, extractProductImages } from "@/components/products/product-card-image-slider";
 import { reorderProduct } from "@/lib/products/reorder-helper";
 import { formatReleaseDateBadge } from "@/lib/product-availability";
@@ -35,65 +42,114 @@ interface MarqueeProductTitleProps {
 export const MarqueeProductTitle = ({ title, className = "" }: MarqueeProductTitleProps) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const textRef = React.useRef<HTMLSpanElement>(null);
-  const [isOverflowing, setIsOverflowing] = React.useState(false);
+  const [metrics, setMetrics] = React.useState<{
+    isOverflowing: boolean;
+    unitWidth: number;
+    duration: number;
+    repeatCount: number;
+  }>({
+    isOverflowing: false,
+    unitWidth: 0,
+    duration: 0,
+    repeatCount: 2,
+  });
+
+  const GAP = 36; // 글자 사이 고정 간격 (36px)
+  const SPEED = 35; // 모든 상품명의 일정한 이동 속도 (초당 35픽셀)
 
   React.useEffect(() => {
     const el = containerRef.current;
     const txt = textRef.current;
     if (!el || !txt) return;
 
-    const checkOverflow = () => {
+    const measure = () => {
       if (containerRef.current && textRef.current) {
-        setIsOverflowing(textRef.current.scrollWidth > containerRef.current.clientWidth + 1);
+        const textWidth = textRef.current.scrollWidth;
+        const containerWidth = containerRef.current.clientWidth;
+        const isOver = textWidth > containerWidth + 2;
+
+        if (isOver) {
+          const unitWidth = Math.round(textWidth + GAP);
+          // 모든 상품명 속도 일치: 이동 거리(unitWidth) / 속도(SPEED)
+          const duration = Math.max(3, parseFloat((unitWidth / SPEED).toFixed(2)));
+          // 화면에 여백이 절대 생기지 않도록 충분한 복제 트랙(최소 4개 이상) 생성
+          const repeatCount = Math.max(4, Math.ceil((containerWidth * 2) / unitWidth) + 2);
+
+          setMetrics({
+            isOverflowing: true,
+            unitWidth,
+            duration,
+            repeatCount,
+          });
+        } else {
+          setMetrics({
+            isOverflowing: false,
+            unitWidth: 0,
+            duration: 0,
+            repeatCount: 1,
+          });
+        }
       }
     };
 
-    checkOverflow();
-    const timer = setTimeout(checkOverflow, 200);
+    measure();
+    const timer = setTimeout(measure, 150);
 
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(() => checkOverflow());
+      ro = new ResizeObserver(() => measure());
       ro.observe(el);
     }
-    window.addEventListener("resize", checkOverflow);
+    window.addEventListener("resize", measure);
 
     return () => {
       clearTimeout(timer);
       if (ro) ro.disconnect();
-      window.removeEventListener("resize", checkOverflow);
+      window.removeEventListener("resize", measure);
     };
   }, [title]);
+
+  // flex 인라인 트랙의 너비를 방해하는 block, w-full, truncate 클래스 정리
+  const itemClassName = className
+    .replace(/\b(w-full|block|truncate)\b/g, "")
+    .trim();
 
   return (
     <div
       ref={containerRef}
       className="overflow-hidden w-full whitespace-nowrap relative select-none"
     >
-      {/* Off-screen measurement span to accurately compare scrollWidth with container clientWidth */}
+      {/* 텍스트 실제 폭 정밀 측정용 가상 스팬 */}
       <span
         ref={textRef}
         aria-hidden="true"
-        className={`invisible pointer-events-none whitespace-nowrap fixed left-[-9999px] top-[-9999px] ${className}`}
+        className={`invisible pointer-events-none whitespace-nowrap fixed left-[-9999px] top-[-9999px] ${itemClassName}`}
       >
         {title}
       </span>
 
-      {isOverflowing ? (
+      {metrics.isOverflowing ? (
         <div
           className="inline-flex will-change-transform hover:[animation-play-state:paused] active:[animation-play-state:paused]"
-          style={{
-            display: "inline-flex",
-            width: "max-content",
-            animation: "marquee 14s linear infinite",
-          }}
+          style={
+            {
+              display: "inline-flex",
+              width: "max-content",
+              "--marquee-offset": `-${metrics.unitWidth}px`,
+              animation: `marquee-unit ${metrics.duration}s linear infinite`,
+            } as React.CSSProperties
+          }
         >
-          <span className={`pr-8 shrink-0 whitespace-nowrap ${className}`}>
-            {title}
-          </span>
-          <span className={`pr-8 shrink-0 whitespace-nowrap ${className}`} aria-hidden="true">
-            {title}
-          </span>
+          {Array.from({ length: metrics.repeatCount }).map((_, idx) => (
+            <span
+              key={idx}
+              style={{ paddingRight: `${GAP}px` }}
+              className={`inline-block shrink-0 whitespace-nowrap ${itemClassName}`}
+              aria-hidden={idx > 0 ? "true" : undefined}
+            >
+              {title}
+            </span>
+          ))}
         </div>
       ) : (
         <span className={`block truncate w-full ${className}`}>
@@ -361,6 +417,12 @@ export const ProductCard = ({
 
   const currCode = product.currencyCode || product.priceRange?.minVariantPrice?.currencyCode || "KRW";
 
+  const cleanTitle = React.useMemo(
+    () => product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name",
+    [product.title]
+  );
+  const displayTitle = useProductTranslation(cleanTitle);
+
   const productImages = React.useMemo(() => extractProductImages(product), [product]);
 
   return (
@@ -378,12 +440,12 @@ export const ProductCard = ({
           router.push(`/product/${product.handle || "item"}`);
         }
       }}
-      className={`group relative flex flex-col items-center justify-between aspect-[3/4] sm:aspect-[4/5] overflow-hidden border-b border-r border-neutral-200 bg-white w-full cursor-pointer select-none ${
+      className={`group relative flex flex-col items-center justify-between aspect-[3/5] sm:aspect-[4/5] overflow-hidden border-b border-r border-neutral-200 bg-white w-full cursor-pointer select-none ${
         isOverlayActive ? "z-30 ring-2 ring-blue-600 shadow-xl" : ""
       }`}
     >
-      {/* [1단] 상단 뱃지 영역: 고정 높이(h-[32px] sm:h-[36px])를 주어 뱃지 유무와 상관없이 모든 카드의 상품명 높이 100% 일치 */}
-      <div className="w-full px-2 pt-2 pb-1 sm:px-3 sm:pt-3 md:px-4 md:pt-4 flex items-center justify-center md:justify-start gap-1 sm:gap-1.5 flex-wrap z-10 pointer-events-none h-[32px] sm:h-[36px] shrink-0">
+      {/* [1단] 상단 뱃지 영역: 고정 높이(h-[28px] sm:h-[36px])를 주어 뱃지 유무와 상관없이 모든 카드의 상품명 높이 100% 일치 */}
+      <div className="w-full px-2 pt-1.5 pb-0.5 sm:px-3 sm:pt-3 md:px-4 md:pt-4 flex items-center justify-center md:justify-start gap-1 sm:gap-1.5 flex-wrap z-10 pointer-events-none h-[28px] sm:h-[36px] shrink-0">
         {(product as any).productLabel && (
           <span
             className={`hidden md:inline-flex text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs shrink-0 whitespace-nowrap shadow-2xs ${
@@ -422,20 +484,20 @@ export const ProductCard = ({
           <span className="mx-auto md:mx-0 text-[9px] sm:text-[11px] md:text-xs font-black px-2 sm:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
             <Clock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-neutral-950" />
             <span className="md:hidden">{formatReleaseDateBadge(product.releaseDate)}</span>
-            <span className="hidden md:inline">오픈 예정</span>
+            <span className="hidden md:inline">{translateUiText("오픈 예정")}</span>
           </span>
         ) : ((product as any).stock !== undefined &&
             (product as any).stock !== null &&
             Number((product as any).stock) <= 0) ||
           (product.availableForSale === false && !(product.releaseDate && new Date(product.releaseDate).getTime() <= Date.now())) ? (
           <span className="mx-auto md:mx-0 text-[9px] sm:text-[11px] md:text-xs font-black px-2 sm:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
-            품절
+            {translateUiText("품절")}
           </span>
         ) : null}
       </div>
 
       {/* [2단] 중앙 제품 이미지 영역: 남는 높이를 100% 온전히 차지하며 잘림/가림 0% 보장 (flex-1 safe area) */}
-      <div className="relative w-full flex-1 min-h-0 bg-white flex items-center justify-center px-2 py-1 sm:px-4 sm:py-2 overflow-hidden">
+      <div className="relative w-full flex-1 min-h-0 bg-white flex items-center justify-center px-1 py-0.5 sm:px-4 sm:py-2 overflow-hidden">
         <ProductCardImageSlider
           images={productImages}
           alt={product.title || "Product"}
@@ -546,9 +608,9 @@ export const ProductCard = ({
       </div>
 
       {/* [3단] 하단 정보 바: 상품명(2배) & 가격(1.5배), 독립 Flex 하단 아이템으로 절대 이미지를 침범하지 않음 */}
-      <div className="w-full px-2.5 pb-2 pt-1 sm:px-4 sm:pb-3 sm:pt-2 md:px-5 md:pb-4 flex flex-col gap-0.5 sm:gap-1.5 z-10 bg-white shrink-0">
+      <div className="w-full px-2.5 pb-2.5 pt-1 sm:px-4 sm:pb-3 sm:pt-2 md:px-5 md:pb-4 flex flex-col gap-0.5 sm:gap-1.5 z-10 bg-white shrink-0">
         <MarqueeProductTitle
-          title={product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
+          title={displayTitle}
           className="text-2xl sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight block w-full leading-tight md:leading-normal"
         />
 

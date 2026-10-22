@@ -1,38 +1,31 @@
 [
   {
-    "id": "soso7812@naver.com",
-    "customerName": "수빈",
-    "customerEmail": "soso7812@naver.com",
-    "customerPhone": "010-9953-9612",
-    "status": "active",
-    "created_at": "2026-10-21T13:11:52.857183+00:00",
-    "updated_at": "2026-10-21T13:12:15.187+00:00"
-  },
-  {
-    "id": "admin@choicomma.com",
-    "customerName": "최고관리자 (Admin)",
-    "customerEmail": "admin@choicomma.com",
-    "customerPhone": "",
-    "status": "online",
-    "created_at": "2026-10-21T14:52:00.840222+00:00",
-    "updated_at": "2026-10-21T14:52:00.643+00:00"
-  },
-  {
     "id": "cho@findcategory.co.kr",
     "customerName": "방문자",
     "customerEmail": "cho@findcategory.co.kr",
     "customerPhone": "010-7576-3031",
     "status": "active",
     "created_at": "2026-10-21T14:47:19.252418+00:00",
-    "updated_at": "2026-10-21T14:50:16.302+00:00"
+    "updated_at": "2026-10-22T08:53:58.322Z",
+    "lastMessage": "{\"type\":\"EXCHANGE_REQUEST\",\"title\":\"교환 접수 안내 및 신청서\",\"text\":\"교환을 원하시는 주문건과 교환 사유를 입력해 주시면, 왕복 배송비(16,000원) 결제 후 교환 접수가 안전하게 완료됩니다.\",\"exchangeFee\":16000,\"requestedAt\":\"2026-10-22T08:53:58.286Z\"}",
+    "lastMessageAt": "2026-10-22T08:53:58.319Z"
   },
   {
     "id": "guest@customer.choicomma.com",
-    "customerName": "방문자",
+    "customerName": "실시간 방문 고객",
     "customerEmail": "guest@customer.choicomma.com",
     "customerPhone": "",
+    "status": "online",
+    "created_at": "2026-10-22T08:56:49.712505+00:00",
+    "updated_at": "2026-10-22T08:56:57.655+00:00"
+  },
+  {
+    "id": "admin@choicomma.com",
+    "customerName": "방문자",
+    "customerEmail": "admin@choicomma.com",
+    "customerPhone": "",
     "status": "ended",
-    "created_at": "2026-10-21T14:12:32.179304+00:00",
-    "updated_at": "2026-10-21T14:12:31.223+00:00"
+    "created_at": "2026-10-21T14:52:00.840222+00:00",
+    "updated_at": "2026-10-22T08:55:57.834+00:00"
   }
 ]

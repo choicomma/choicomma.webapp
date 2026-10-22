@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import {
   MessageSquare,
@@ -28,12 +28,13 @@ import {
   Truck,
   Search,
   Image as ImageIcon,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
+import { playNotificationSound } from "@/lib/audio/notification-sound";
 import { getProductThumbnail, getProductInitial, getProductBadgeColor } from "@/lib/products/thumbnail-helper";
 import { explodeOrderToSingleItems, type ExplodedExchangeItem } from "@/lib/shipping/exchange-item-helper";
 import { TossRefundModal } from "@/components/chat/toss-refund-modal";
-import { RefundFormBubble } from "@/components/chat/refund-form-bubble";
-import { ExchangeFormBubble } from "@/components/chat/exchange-form-bubble";
 import { restoreCouponByOrder } from "@/lib/membership/coupons";
 import { safeSaveShipmentsToStorage, safeSaveOrdersToStorage } from "@/lib/shipping/safe-shipments-storage";
 
@@ -105,6 +106,247 @@ const DEFAULT_TEMPLATES: TemplateItem[] = [
   },
 ];
 
+// Action Toolbar Component with Isolated Dropdown State (0ms Lag & Instant Interaction)
+interface LiveChatActionToolbarProps {
+  activeSessionId: string;
+  customerName?: string;
+  onRequestOrderSelection: () => void;
+  onRequestExchangeForm: () => void;
+  onOpenExchangePickupModal: () => void;
+  onRequestRefundForm: () => void;
+  onOpenRefundModal: () => void;
+  onOpenRefundPickupModal: () => void;
+}
+
+const LiveChatActionToolbar = React.memo(function LiveChatActionToolbar({
+  activeSessionId,
+  customerName,
+  onRequestOrderSelection,
+  onRequestExchangeForm,
+  onOpenExchangePickupModal,
+  onRequestRefundForm,
+  onOpenRefundModal,
+  onOpenRefundPickupModal,
+}: LiveChatActionToolbarProps) {
+  const [isExchangeMenuOpen, setIsExchangeMenuOpen] = useState(false);
+  const [isRefundMenuOpen, setIsRefundMenuOpen] = useState(false);
+
+  return (
+    <div className="pt-2 pb-0.5 shrink-0 flex items-center justify-between border-t border-neutral-100">
+      <div className="flex items-center gap-2">
+        {/* 1. 주문선택 요청 */}
+        <button
+          type="button"
+          onClick={onRequestOrderSelection}
+          className="inline-flex items-center gap-1.5 text-xs font-black bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 px-3.5 py-1.5 rounded-xl transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          title="고객에게 직접 문의할 주문건을 선택하도록 요청 카드를 즉시 전송합니다"
+        >
+          <Package className="w-3.5 h-3.5 text-neutral-800" />
+          <span>주문선택 요청</span>
+        </button>
+
+        {/* 2. 교환 접수 메뉴 */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              setIsRefundMenuOpen(false);
+              setIsExchangeMenuOpen((prev) => !prev);
+            }}
+            className={`inline-flex items-center gap-1.5 text-xs font-black px-3.5 py-1.5 rounded-xl transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+              isExchangeMenuOpen
+                ? "bg-blue-600 text-white border border-blue-700 shadow-md"
+                : "bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300"
+            }`}
+            title="교환접수요청서 또는 수거접수를 선택하여 진행합니다"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isExchangeMenuOpen ? "text-white" : "text-neutral-900"}`} />
+            <span>교환 접수</span>
+            <ChevronUp className={`w-3.5 h-3.5 transition-transform duration-200 ${isExchangeMenuOpen ? "rotate-180 text-white" : "text-neutral-500"}`} />
+          </button>
+
+          {isExchangeMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsExchangeMenuOpen(false)}
+              />
+              <div className="absolute bottom-full mb-2 left-0 w-72 bg-white border border-neutral-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="text-[10px] font-black text-neutral-400 px-2 py-1 uppercase tracking-wider">
+                  교환 전송 옵션 선택
+                </div>
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onRequestExchangeForm();
+                      setIsExchangeMenuOpen(false);
+                    }}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
+                        <span>교환접수요청서 전송</span>
+                        <span className="text-[10px] font-mono font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">
+                          16,000원 결제 포함
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                        반품 불가 안내, 교환 주문건 선택, 사유 입력 및 왕복 배송비(16,000원) 결제 양식
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenExchangePickupModal();
+                      setIsExchangeMenuOpen(false);
+                    }}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer border-t border-neutral-100 pt-2"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
+                      <Truck className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
+                        <span>수거접수진행</span>
+                        <span className="text-[10px] font-bold text-neutral-700 bg-neutral-100 border border-neutral-200 px-1.5 py-0.2 rounded-full">
+                          CJ대한통운
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                        실제 CJ대한통운 시스템으로 교환접수 및 주문 관리 등록
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 3. 환불 접수 메뉴 */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              setIsExchangeMenuOpen(false);
+              setIsRefundMenuOpen((prev) => !prev);
+            }}
+            className={`inline-flex items-center gap-1.5 text-xs font-black px-3.5 py-1.5 rounded-xl transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+              isRefundMenuOpen
+                ? "bg-blue-600 text-white border border-blue-700 shadow-md"
+                : "bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300"
+            }`}
+            title="환불접수요청서, 토스 결제 취소/환불 또는 수거접수를 선택하여 진행합니다"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${isRefundMenuOpen ? "text-white" : "text-neutral-900"}`} />
+            <span>환불 접수</span>
+            <ChevronUp className={`w-3.5 h-3.5 transition-transform duration-200 ${isRefundMenuOpen ? "rotate-180 text-white" : "text-neutral-500"}`} />
+          </button>
+
+          {isRefundMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsRefundMenuOpen(false)}
+              />
+              <div className="absolute bottom-full mb-2 left-0 w-72 bg-white border border-neutral-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="text-[10px] font-black text-neutral-400 px-2 py-1 uppercase tracking-wider">
+                  환불 전송 옵션 선택
+                </div>
+                <div className="space-y-1">
+                  {/* 1) 환불접수요청서 전송 */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onRequestRefundForm();
+                      setIsRefundMenuOpen(false);
+                    }}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-neutral-900 group-hover:text-black">
+                        환불접수요청서 전송
+                      </div>
+                      <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                        환불 규정 안내, 주문건 선택, 사유 입력 양식
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 2) 환불 접수 (토스페이먼츠 구매금액 취소/환불) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenRefundModal();
+                      setIsRefundMenuOpen(false);
+                    }}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                      <CreditCard className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
+                        <span>환불 접수</span>
+                        <span className="text-[10px] font-mono font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">
+                          토스 결제취소
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                        토스페이먼츠 PG를 통한 실제 구매금액 결제 취소/환불
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 3) 수거 접수 진행 (CJ대한통운 반품 수거) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenRefundPickupModal();
+                      setIsRefundMenuOpen(false);
+                    }}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer border-t border-neutral-100 pt-2"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
+                      <Truck className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
+                        <span>수거접수진행</span>
+                        <span className="text-[10px] font-bold text-neutral-700 bg-neutral-100 border border-neutral-200 px-1.5 py-0.2 rounded-full">
+                          CJ대한통운
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
+                        실제 CJ대한통운 시스템으로 반품 수거 및 회수 예약
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {activeSessionId && (
+        <span className="text-[11px] text-neutral-400 font-bold">
+          {customerName || "고객"}님 상담 중
+        </span>
+      )}
+    </div>
+  );
+});
+
 interface InquiriesManagementProps {
   adminLiveChatMessages: any[];
   chatSessionsList: any[];
@@ -160,8 +402,34 @@ export function InquiriesManagement({
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Order Selection Request Handler (고객에게 주문 직접 선택 즉시 요청)
-  const handleRequestOrderSelection = () => {
+  // Sound Notification Toggle State
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("admin_chat_sound_enabled");
+      if (saved !== null) {
+        setIsSoundEnabled(saved !== "false");
+      }
+    }
+  }, []);
+
+  const toggleSoundNotification = () => {
+    const nextState = !isSoundEnabled;
+    setIsSoundEnabled(nextState);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin_chat_sound_enabled", String(nextState));
+    }
+    if (nextState) {
+      playNotificationSound();
+      toast.success("상담 알림음이 켜졌습니다. (새 메시지 도착 시 차임벨 재생)");
+    } else {
+      toast.info("상담 알림음이 꺼졌습니다. (무음)");
+    }
+  };
+
+  // Order Selection Request Handler (고객에게 주문 직접 선택 즉시 요청 - useCallback 최적화)
+  const handleRequestOrderSelection = useCallback(() => {
     if (!activeSessionId || chatSessionsList.length === 0) {
       alert("좌측 라이브 세션 목록에서 상담을 진행할 고객을 먼저 선택해 주세요.");
       return;
@@ -173,13 +441,10 @@ export function InquiriesManagement({
       requestedAt: new Date().toISOString(),
     });
     handleAdminSendLiveChat(orderSelectPayload);
-  };
+  }, [activeSessionId, chatSessionsList, handleAdminSendLiveChat]);
 
-  // Exchange Popover Menu State
-  const [isExchangeMenuOpen, setIsExchangeMenuOpen] = useState(false);
-
-  // 1) 교환접수요청서 전송 핸들러 (반품 불가 안내, 주문건 선택, 사유 입력)
-  const handleRequestExchangeForm = () => {
+  // 1) 교환접수요청서 전송 핸들러 (useCallback 최적화)
+  const handleRequestExchangeForm = useCallback(() => {
     if (!activeSessionId || chatSessionsList.length === 0) {
       alert("좌측 라이브 세션 목록에서 상담을 진행할 고객을 먼저 선택해 주세요.");
       return;
@@ -192,34 +457,16 @@ export function InquiriesManagement({
       requestedAt: new Date().toISOString(),
     });
     handleAdminSendLiveChat(exchangePayload);
-  };
+  }, [activeSessionId, chatSessionsList, handleAdminSendLiveChat]);
 
-  // 2) 교환접수비용결제창 전송 핸들러 (토스페이먼츠 16,000원 결제창 전송)
-  const handleRequestExchangePayment = () => {
-    if (!activeSessionId || chatSessionsList.length === 0) {
-      alert("좌측 라이브 세션 목록에서 상담을 진행할 고객을 먼저 선택해 주세요.");
-      return;
-    }
-    const exchangePayPayload = JSON.stringify({
-      type: "EXCHANGE_PAY_REQUEST",
-      title: "교환 왕복 배송비 결제 요청",
-      text: "상담원 확인 후 교환 왕복 배송비(16,000원) 결제창이 전송되었습니다. 결제 완료 시 안전하게 교환 수거 및 재출고가 진행됩니다.",
-      amount: 16000,
-      fee: 16000,
-      requestedAt: new Date().toISOString(),
-    });
-    handleAdminSendLiveChat(exchangePayPayload);
-  };
-
-  // Refund Popover Menu & Modal State
-  const [isRefundMenuOpen, setIsRefundMenuOpen] = useState(false);
+  // Refund Modal State
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [refundCustomerOrders, setRefundCustomerOrders] = useState<ExplodedExchangeItem[]>([]);
   const [selectedRefundPrefillOrder, setSelectedRefundPrefillOrder] = useState<ExplodedExchangeItem | null>(null);
   const [pickupBookingType, setPickupBookingType] = useState<"EXCHANGE" | "REFUND">("EXCHANGE");
 
-  // 1) 환불접수요청서 전송 핸들러
-  const handleRequestRefundForm = () => {
+  // 1) 환불접수요청서 전송 핸들러 (useCallback 최적화)
+  const handleRequestRefundForm = useCallback(() => {
     if (!activeSessionId || chatSessionsList.length === 0) {
       alert("좌측 라이브 세션 목록에서 상담을 진행할 고객을 먼저 선택해 주세요.");
       return;
@@ -231,7 +478,7 @@ export function InquiriesManagement({
       requestedAt: new Date().toISOString(),
     });
     handleAdminSendLiveChat(refundPayload);
-  };
+  }, [activeSessionId, chatSessionsList, handleAdminSendLiveChat]);
 
   // 2) 토스 환불 모달 열기 핸들러
   const handleOpenRefundModal = () => {
@@ -241,8 +488,9 @@ export function InquiriesManagement({
     }
 
     const currentSession = chatSessionsList.find((s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim());
-    const sessionEmail = (currentSession?.email || "").toLowerCase().trim();
-    const sessionName = (currentSession?.name || "").trim();
+    const sessionEmail = (currentSession?.email || currentSession?.customerEmail || "").toLowerCase().trim();
+    const sessionName = (currentSession?.name || currentSession?.customerName || "").trim();
+    const sessionPhone = (currentSession?.phone || currentSession?.customerPhone || "").replace(/[^0-9]/g, "");
 
     let allOrders: any[] = [];
     if (typeof window !== "undefined") {
@@ -281,17 +529,17 @@ export function InquiriesManagement({
       } catch (e) {}
     }
 
+    // 현재 상담 세션 고객과 정확히 일치하는 주문건만 필터링 (타 고객 주문 누출 차단)
     let matched = allOrders.filter((ord: any) => {
       const ordRecipient = (ord.recipient || ord.customerName || ord.ordererName || "").trim();
       const ordEmail = (ord.recipientEmail || ord.customerEmail || ord.email || "").toLowerCase().trim();
-      if (sessionEmail && ordEmail === sessionEmail) return true;
-      if (sessionName && ordRecipient && (ordRecipient.includes(sessionName) || sessionName.includes(ordRecipient))) return true;
+      const ordPhone = (ord.phone || ord.customerPhone || "").replace(/[^0-9]/g, "");
+
+      if (sessionEmail && ordEmail && ordEmail === sessionEmail) return true;
+      if (sessionPhone && ordPhone && ordPhone.length >= 8 && (ordPhone === sessionPhone || sessionPhone.endsWith(ordPhone) || ordPhone.endsWith(sessionPhone))) return true;
+      if (sessionName && ordRecipient && sessionName.length >= 2 && (ordRecipient === sessionName || ordRecipient.includes(sessionName) || sessionName.includes(ordRecipient))) return true;
       return false;
     });
-
-    if (matched.length === 0 && allOrders.length > 0) {
-      matched = allOrders.slice(0, 5);
-    }
 
     const exploded = explodeOrderToSingleItems(matched);
     setRefundCustomerOrders(exploded);
@@ -512,8 +760,9 @@ export function InquiriesManagement({
     }
 
     const currentSession = chatSessionsList.find((s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim());
-    const sessionEmail = (currentSession?.email || "").toLowerCase().trim();
-    const sessionName = (currentSession?.name || "").trim();
+    const sessionEmail = (currentSession?.email || currentSession?.customerEmail || "").toLowerCase().trim();
+    const sessionName = (currentSession?.name || currentSession?.customerName || "").trim();
+    const sessionPhone = (currentSession?.phone || currentSession?.customerPhone || "").replace(/[^0-9]/g, "");
 
     // 1. 고객의 주문 건 목록 수집 (admin_shipments 및 admin_orders)
     let allOrders: any[] = [];
@@ -537,6 +786,7 @@ export function InquiriesManagement({
                   id: ord.id || ord.orderNumber,
                   orderId: ord.orderNumber || ord.id,
                   recipient: ord.customerName || ord.recipient,
+                  recipientEmail: ord.customerEmail || ord.email,
                   phone: ord.customerPhone || ord.phone,
                   address: ord.address || "",
                   detailAddress: ord.detailAddress || "",
@@ -552,18 +802,17 @@ export function InquiriesManagement({
       } catch (e) {}
     }
 
-    // 고객 매칭 (이메일 또는 고객명 일치)
+    // 현재 상담 세션 고객과 정확히 일치하는 주문건만 필터링 (타 고객 최근 주문 누출 차단)
     let matched = allOrders.filter((ord: any) => {
       const ordRecipient = (ord.recipient || ord.customerName || ord.ordererName || "").trim();
       const ordEmail = (ord.recipientEmail || ord.customerEmail || ord.email || "").toLowerCase().trim();
-      if (sessionEmail && ordEmail === sessionEmail) return true;
-      if (sessionName && ordRecipient && (ordRecipient.includes(sessionName) || sessionName.includes(ordRecipient))) return true;
+      const ordPhone = (ord.phone || ord.customerPhone || "").replace(/[^0-9]/g, "");
+
+      if (sessionEmail && ordEmail && ordEmail === sessionEmail) return true;
+      if (sessionPhone && ordPhone && ordPhone.length >= 8 && (ordPhone === sessionPhone || sessionPhone.endsWith(ordPhone) || ordPhone.endsWith(sessionPhone))) return true;
+      if (sessionName && ordRecipient && sessionName.length >= 2 && (ordRecipient === sessionName || ordRecipient.includes(sessionName) || sessionName.includes(ordRecipient))) return true;
       return false;
     });
-
-    if (matched.length === 0 && allOrders.length > 0) {
-      matched = allOrders.slice(0, 5); // 매칭건이 없으면 최근 주문 표시
-    }
 
     // 복수 상품 주문인 경우 개별 제품(1개 상품 단위)으로 낱개 분리하여 리스트업
     const exploded = explodeOrderToSingleItems(matched);
@@ -571,10 +820,10 @@ export function InquiriesManagement({
 
     const initialOrder = exploded[0] || null;
     setSelectedPickupOrder(initialOrder);
-    setPickupRecipient(initialOrder?.recipient || sessionName || "고객");
-    setPickupPhone(initialOrder?.phone || "");
-    setPickupZipCode(initialOrder?.zipCode || "04524");
-    setPickupAddress(initialOrder?.address || "서울특별시 중구 세종대로 110");
+    setPickupRecipient(initialOrder?.recipient || sessionName || "");
+    setPickupPhone(initialOrder?.phone || sessionPhone || "");
+    setPickupZipCode(initialOrder?.zipCode || "");
+    setPickupAddress(initialOrder?.address || "");
     setPickupDetailAddress(initialOrder?.detailAddress || "");
     setPickupOriginalInvoice(initialOrder?.trackingNumber && initialOrder.trackingNumber !== "-" ? initialOrder.trackingNumber : "");
     setPickupReason(type === "REFUND" ? "반품 / 환불 수거" : "사이즈 교환");
@@ -1305,6 +1554,28 @@ export function InquiriesManagement({
             )}
           </div>
 
+          {/* Sound Notification Toggle */}
+          <button
+            type="button"
+            onClick={toggleSoundNotification}
+            className={`flex items-center gap-1.5 font-black text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer border ${
+              isSoundEnabled
+                ? "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300"
+                : "bg-neutral-100 hover:bg-neutral-200 text-neutral-500 border-neutral-300"
+            }`}
+            title={isSoundEnabled ? "새 문의 인입 시 차임벨 알림 켜짐 (클릭하여 끄기)" : "새 문의 인입 시 무음 (클릭하여 켜기)"}
+          >
+            {isSoundEnabled ? (
+              <Volume2 className="w-3.5 h-3.5 text-amber-700" />
+            ) : (
+              <VolumeX className="w-3.5 h-3.5 text-neutral-500" />
+            )}
+            <span>알림음</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${isSoundEnabled ? "bg-amber-600 text-white" : "bg-neutral-300 text-neutral-700"}`}>
+              {isSoundEnabled ? "ON" : "OFF"}
+            </span>
+          </button>
+
           {/* Auto-reply Settings */}
           <button
             type="button"
@@ -1639,34 +1910,33 @@ export function InquiriesManagement({
                           );
                         }
                         if (parsed?.type === "EXCHANGE_REQUEST") {
-                          const activeSessionObj = chatSessionsList.find(
-                            (s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim()
-                          );
                           return (
                             <div className="space-y-2 text-left notranslate max-w-[340px] whitespace-normal" translate="no">
-                              <div className="flex items-center gap-1.5 text-white font-black text-xs pb-1 border-b border-neutral-800">
-                                <RefreshCw className="w-4 h-4 text-blue-400" />
-                                <span>교환접수요청서 전송됨</span>
+                              <div className="flex items-center justify-between pb-1.5 border-b border-neutral-800">
+                                <div className="flex items-center gap-1.5 text-white font-black text-xs">
+                                  <RefreshCw className="w-4 h-4 text-blue-400" />
+                                  <span>교환접수요청서 전송됨</span>
+                                </div>
+                                <span className="text-[10px] font-bold text-blue-300 bg-blue-950/80 border border-blue-800/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                                  고객 작성 대기 중
+                                </span>
                               </div>
                               <p className="text-[11px] text-neutral-300 font-medium leading-relaxed">
-                                {parsed.text || "고객님께 교환 접수 및 배송비 결제 양식을 전송했습니다."}
+                                {parsed.text || "고객님께 교환 접수 및 왕복 배송비(16,000원) 결제 양식을 전송했습니다."}
                               </p>
-                              <div className="pt-1">
-                                <ExchangeFormBubble
-                                  customerEmail={activeSessionObj?.customerEmail || activeSessionObj?.email || activeSessionId}
-                                  customerName={activeSessionObj?.customerName || activeSessionObj?.name}
-                                  customerPhone={activeSessionObj?.customerPhone || activeSessionObj?.phone}
-                                  isAdminView={true}
-                                  onCompleteExchange={(exchangeData) => {
-                                    const payload = JSON.stringify({
-                                      type: "EXCHANGE_COMPLETED",
-                                      ...exchangeData,
-                                      completedAt: new Date().toISOString(),
-                                    });
-                                    handleAdminSendLiveChat(payload);
-                                    toast.success("교환 접수가 안전하게 완료되었습니다!");
-                                  }}
-                                />
+                              <div className="p-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 space-y-1 text-[11px]">
+                                <div className="flex justify-between text-neutral-400">
+                                  <span>• 안내 규정</span>
+                                  <span className="text-neutral-300 font-medium">반품/교환 불가 사유 안내문 포함</span>
+                                </div>
+                                <div className="flex justify-between text-neutral-400">
+                                  <span>• 왕복 배송비</span>
+                                  <span className="text-blue-400 font-mono font-bold">16,000원 (토스 결제 연동)</span>
+                                </div>
+                              </div>
+                              <div className="text-[10px] text-neutral-400 font-bold pt-0.5">
+                                ⏳ 고객이 교환 신청 및 결제를 완료하면 이곳에 접수 상세 내역이 자동 표시됩니다.
                               </div>
                             </div>
                           );
@@ -1844,40 +2114,33 @@ export function InquiriesManagement({
                         }
 
                         if (parsed?.type === "REFUND_REQUEST") {
-                          const activeSessionObj = chatSessionsList.find(
-                            (s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim()
-                          );
                           return (
                             <div className="space-y-2 text-left notranslate max-w-[340px] whitespace-normal" translate="no">
-                              <div className="flex items-center gap-1.5 text-white font-black text-xs pb-1 border-b border-neutral-800">
-                                <RotateCcw className="w-4 h-4 text-blue-400" />
-                                <span>환불접수요청서 전송됨</span>
+                              <div className="flex items-center justify-between pb-1.5 border-b border-neutral-800">
+                                <div className="flex items-center gap-1.5 text-white font-black text-xs">
+                                  <RotateCcw className="w-4 h-4 text-blue-400" />
+                                  <span>환불접수요청서 전송됨</span>
+                                </div>
+                                <span className="text-[10px] font-bold text-blue-300 bg-blue-950/80 border border-blue-800/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                                  고객 작성 대기 중
+                                </span>
                               </div>
                               <p className="text-[11px] text-neutral-300 font-medium leading-relaxed">
                                 {parsed.text || "고객님께 환불 접수 및 구매금액 취소 신청서 양식을 전송했습니다."}
                               </p>
-                              <div className="pt-1">
-                                <RefundFormBubble
-                                  customerEmail={activeSessionObj?.customerEmail || activeSessionObj?.email || activeSessionId}
-                                  customerName={activeSessionObj?.customerName || activeSessionObj?.name}
-                                  customerPhone={activeSessionObj?.customerPhone || activeSessionObj?.phone}
-                                  isAdminView={true}
-                                  onSubmitRefund={(ref) => {
-                                    const payload = JSON.stringify({
-                                      type: "REFUND_SUBMITTED",
-                                      orderId: ref.orderId,
-                                      orderNumber: ref.orderNumber,
-                                      items: ref.items,
-                                      image: ref.image,
-                                      amount: ref.amount,
-                                      reason: ref.reason,
-                                      details: ref.details,
-                                      submittedAt: new Date().toISOString(),
-                                    });
-                                    handleAdminSendLiveChat(payload);
-                                    toast.success("환불 신청서가 성공적으로 접수되었습니다!");
-                                  }}
-                                />
+                              <div className="p-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 space-y-1 text-[11px]">
+                                <div className="flex justify-between text-neutral-400">
+                                  <span>• 양식 내용</span>
+                                  <span className="text-neutral-300 font-medium">환불 주문건 선택 및 사유 입력</span>
+                                </div>
+                                <div className="flex justify-between text-neutral-400">
+                                  <span>• 처리 방식</span>
+                                  <span className="text-neutral-300 font-medium">토스 결제 취소 또는 계좌 환불</span>
+                                </div>
+                              </div>
+                              <div className="text-[10px] text-neutral-400 font-bold pt-0.5">
+                                ⏳ 고객이 환불 신청서를 제출하면 이곳에 환불 신청 내역이 자동 표시됩니다.
                               </div>
                             </div>
                           );
@@ -2207,231 +2470,17 @@ export function InquiriesManagement({
           )}
         </div>
 
-          {/* Action Toolbar directly above Reply Input */}
-          <div className="pt-2 pb-0.5 shrink-0 flex items-center justify-between border-t border-neutral-100">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleRequestOrderSelection()}
-                className="inline-flex items-center gap-1.5 text-xs font-black bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 px-3.5 py-1.5 rounded-xl transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                title="고객에게 직접 문의할 주문건을 선택하도록 요청 카드를 즉시 전송합니다"
-              >
-                <Package className="w-3.5 h-3.5 text-neutral-800" />
-                <span>주문선택 요청</span>
-              </button>
-
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsExchangeMenuOpen((prev) => !prev)}
-                  className={`inline-flex items-center gap-1.5 text-xs font-black px-3.5 py-1.5 rounded-xl transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-                    isExchangeMenuOpen
-                      ? "bg-blue-600 text-white border border-blue-700 shadow-md"
-                      : "bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300"
-                  }`}
-                  title="교환접수요청서 또는 결제창을 선택하여 전송합니다"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isExchangeMenuOpen ? "text-white" : "text-neutral-900"}`} />
-                  <span>교환 접수</span>
-                  <ChevronUp className={`w-3.5 h-3.5 transition-transform duration-200 ${isExchangeMenuOpen ? "rotate-180 text-white" : "text-neutral-500"}`} />
-                </button>
-
-                {isExchangeMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setIsExchangeMenuOpen(false)}
-                    />
-                    <div className="absolute bottom-full mb-2 left-0 w-72 bg-white border border-neutral-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                      <div className="text-[10px] font-black text-neutral-400 px-2 py-1 uppercase tracking-wider">
-                        교환 전송 옵션 선택
-                      </div>
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleRequestExchangeForm();
-                            setIsExchangeMenuOpen(false);
-                          }}
-                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
-                            <RefreshCw className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-black text-neutral-900 group-hover:text-black">
-                              교환접수요청서 전송
-                            </div>
-                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
-                              반품 불가 사유 안내, 주문건 선택, 사유 입력 양식
-                            </div>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleRequestExchangePayment();
-                            setIsExchangeMenuOpen(false);
-                          }}
-                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                            <CreditCard className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
-                              <span>교환접수비용결제창 전송</span>
-                              <span className="text-[10px] font-mono font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">
-                                16,000원
-                              </span>
-                            </div>
-                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
-                              토스페이먼츠 왕복 배송비(16,000원) 즉시 결제창
-                            </div>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleOpenPickupModal();
-                            setIsExchangeMenuOpen(false);
-                          }}
-                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer border-t border-neutral-100 pt-2"
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
-                            <Truck className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
-                              <span>수거접수진행</span>
-                              <span className="text-[10px] font-bold text-neutral-700 bg-neutral-100 border border-neutral-200 px-1.5 py-0.2 rounded-full">
-                                CJ대한통운
-                              </span>
-                            </div>
-                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
-                              실제 CJ대한통운 시스템으로 교환접수 및 주문 관리 등록
-                            </div>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* 환불 접수 메뉴 */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsRefundMenuOpen((prev) => !prev)}
-                  className={`inline-flex items-center gap-1.5 text-xs font-black px-3.5 py-1.5 rounded-xl transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-                    isRefundMenuOpen
-                      ? "bg-blue-600 text-white border border-blue-700 shadow-md"
-                      : "bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300"
-                  }`}
-                  title="환불접수요청서, 토스 결제 취소/환불 또는 수거접수를 선택하여 진행합니다"
-                >
-                  <RotateCcw className={`w-3.5 h-3.5 ${isRefundMenuOpen ? "text-white" : "text-neutral-900"}`} />
-                  <span>환불 접수</span>
-                  <ChevronUp className={`w-3.5 h-3.5 transition-transform duration-200 ${isRefundMenuOpen ? "rotate-180 text-white" : "text-neutral-500"}`} />
-                </button>
-
-                {isRefundMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setIsRefundMenuOpen(false)}
-                    />
-                    <div className="absolute bottom-full mb-2 left-0 w-72 bg-white border border-neutral-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                      <div className="text-[10px] font-black text-neutral-400 px-2 py-1 uppercase tracking-wider">
-                        환불 전송 옵션 선택
-                      </div>
-                      <div className="space-y-1">
-                        {/* 1. 환불접수요청서 전송 */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleRequestRefundForm();
-                            setIsRefundMenuOpen(false);
-                          }}
-                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-black text-neutral-900 group-hover:text-black">
-                              환불접수요청서 전송
-                            </div>
-                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
-                              환불 규정 안내, 주문건 선택, 사유 입력 양식
-                            </div>
-                          </div>
-                        </button>
-
-                        {/* 2. 환불 접수 (토스페이먼츠 구매금액 취소/환불) */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleOpenRefundModal();
-                            setIsRefundMenuOpen(false);
-                          }}
-                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer"
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                            <CreditCard className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
-                              <span>환불 접수</span>
-                              <span className="text-[10px] font-mono font-bold text-white bg-blue-600 px-2 py-0.5 rounded-full">
-                                토스 결제취소
-                              </span>
-                            </div>
-                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
-                              토스페이먼츠 PG를 통한 실제 구매금액 결제 취소/환불
-                            </div>
-                          </div>
-                        </button>
-
-                        {/* 3. 수거 접수 진행 (CJ대한통운 반품 수거) */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleOpenPickupModal("REFUND");
-                            setIsRefundMenuOpen(false);
-                          }}
-                          className="w-full text-left p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-900 transition-all flex items-start gap-2.5 group cursor-pointer border-t border-neutral-100 pt-2"
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-neutral-950 group-hover:text-white transition-colors">
-                            <Truck className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-black text-neutral-900 group-hover:text-black flex items-center gap-1.5">
-                              <span>수거접수진행</span>
-                              <span className="text-[10px] font-bold text-neutral-700 bg-neutral-100 border border-neutral-200 px-1.5 py-0.2 rounded-full">
-                                CJ대한통운
-                              </span>
-                            </div>
-                            <div className="text-[10px] text-neutral-500 font-medium leading-tight mt-0.5">
-                              실제 CJ대한통운 시스템으로 반품 수거 및 회수 예약
-                            </div>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-            {activeSessionId && (
-              <span className="text-[11px] text-neutral-400 font-bold">
-                {chatSessionsList.find((s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim())?.name || "고객"}님 상담 중
-              </span>
-            )}
-          </div>
+          {/* Action Toolbar directly above Reply Input (Isolated Dropdown State - 0ms lag) */}
+          <LiveChatActionToolbar
+            activeSessionId={activeSessionId}
+            customerName={chatSessionsList.find((s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim())?.name}
+            onRequestOrderSelection={handleRequestOrderSelection}
+            onRequestExchangeForm={handleRequestExchangeForm}
+            onOpenExchangePickupModal={() => handleOpenPickupModal("EXCHANGE")}
+            onRequestRefundForm={handleRequestRefundForm}
+            onOpenRefundModal={handleOpenRefundModal}
+            onOpenRefundPickupModal={() => handleOpenPickupModal("REFUND")}
+          />
 
           {/* Admin Reply Input Bar */}
           <div className="pt-2 shrink-0 flex gap-2">

@@ -86,7 +86,7 @@ export function CartItemCard({
               prefetch
             >
               <span className="text-xs font-black text-neutral-900 dark:text-white line-clamp-1 hover:underline">
-                {item.merchandise.product.title}
+                {translateProductTitle(item.merchandise.product.title)}
               </span>
             </Link>
             {validOptions.length > 0 && (
