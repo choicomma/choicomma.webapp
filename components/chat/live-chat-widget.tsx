@@ -37,6 +37,7 @@ import { ExchangeFormBubble } from "./exchange-form-bubble";
 import { ExchangePayRequestBubble } from "./exchange-pay-request-bubble";
 import { RefundFormBubble } from "./refund-form-bubble";
 import { filterOrdersForCustomer } from "@/lib/shipping/customer-order-filter";
+import { supabase, isSupabaseClientConfigured } from "@/lib/supabase/client";
 
 export interface ChatMessage {
   id: string;
@@ -448,6 +449,33 @@ function OrderSelectorBubble({
         </div>
       )}
     </div>
+  );
+}
+
+function isCustomerMessageMatch(targetSid?: string, targetEmail?: string, targetPhone?: string): boolean {
+  if (typeof window === "undefined") return false;
+  const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
+  const phone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
+  const loginId = (localStorage.getItem("membership_user_login_id") || "").toLowerCase().trim();
+  const userId = (localStorage.getItem("membership_user_id") || "").toLowerCase().trim();
+  const rawId = (email || phone).toLowerCase().trim();
+  const rawClean = rawId.replace(/[^0-9]/g, "");
+
+  const sId = (targetSid || "").toLowerCase().trim();
+  const sEmail = (targetEmail || "").toLowerCase().trim();
+  const sPhone = (targetPhone || "").replace(/[^0-9]/g, "");
+  const sIdClean = sId.replace(/[^0-9]/g, "");
+
+  return Boolean(
+    !sId ||
+    sId === rawId ||
+    (rawClean.length >= 7 && sIdClean.length >= 7 && rawClean === sIdClean) ||
+    (email && (sId === email || sId.includes(email) || email.includes(sId))) ||
+    (email && sEmail && (email === sEmail || email.includes(sEmail) || sEmail.includes(email))) ||
+    (phone && sPhone && (phone === sPhone || phone.includes(sPhone) || sPhone.includes(phone))) ||
+    (phone && sIdClean.length >= 7 && sIdClean === phone) ||
+    (loginId && (sId.includes(loginId) || loginId.includes(sId))) ||
+    (userId && sId === userId)
   );
 }
 
@@ -1171,29 +1199,11 @@ export function LiveChatWidget() {
       try {
         bc = new BroadcastChannel("choicomma_live_chat_sync");
         bc.onmessage = (event) => {
-
-          const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
-          const phone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
-          const loginId = (localStorage.getItem("membership_user_login_id") || "").toLowerCase().trim();
-          const userId = (localStorage.getItem("membership_user_id") || "").toLowerCase().trim();
-          const rawId = (email || phone).toLowerCase().trim();
-          const rawClean = rawId.replace(/[^0-9]/g, "");
-
-          const targetSid = (event.data?.sessionId || "").toLowerCase().trim();
-          const targetEmail = (event.data?.sessionEmail || "").toLowerCase().trim();
-          const targetPhone = (event.data?.sessionPhone || "").replace(/[^0-9]/g, "");
-          const targetSidClean = targetSid.replace(/[^0-9]/g, "");
-
-          const isMatchForCustomer =
-            !targetSid ||
-            targetSid === rawId ||
-            (rawClean.length >= 7 && targetSidClean.length >= 7 && rawClean === targetSidClean) ||
-            (email && (targetSid === email || targetSid.includes(email) || email.includes(targetSid))) ||
-            (email && targetEmail && (email === targetEmail || email.includes(targetEmail) || targetEmail.includes(email))) ||
-            (phone && targetPhone && (phone === targetPhone || phone.includes(targetPhone) || targetPhone.includes(phone))) ||
-            (phone && targetSidClean.length >= 7 && targetSidClean === phone) ||
-            (loginId && (targetSid.includes(loginId) || loginId.includes(targetSid))) ||
-            (userId && targetSid === userId);
+          const isMatchForCustomer = isCustomerMessageMatch(
+            event.data?.sessionId,
+            event.data?.sessionEmail,
+            event.data?.sessionPhone
+          );
 
           if (isMatchForCustomer) {
             if (event.data?.type === "ADMIN_REPLY" && event.data.message) {
@@ -1223,6 +1233,95 @@ export function LiveChatWidget() {
       } catch (e) {}
     }
 
+    // Supabase Realtime WebSocket for instant cross-device / cross-browser sync
+    let supabaseChannel: any = null;
+    if (isSupabaseClientConfigured) {
+      try {
+        const email = (typeof window !== "undefined" ? localStorage.getItem("membership_user_email") || "" : "").toLowerCase().trim();
+        const phone = (typeof window !== "undefined" ? localStorage.getItem("membership_user_phone") || "" : "").replace(/[^0-9]/g, "");
+        const rawId = (email || phone || "guest").replace(/[^a-zA-Z0-9_-]/g, "_");
+
+        supabaseChannel = supabase
+          .channel(`customer_live_chat_${rawId}_${Date.now()}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "chat_messages",
+            },
+            (payload) => {
+              if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+                const newRow = payload.new;
+                if (!newRow || !newRow.id) return;
+
+                const sid = String(newRow.sessionId || "").toLowerCase().trim();
+                if (isCustomerMessageMatch(sid)) {
+                  if (newRow.sender === "admin") {
+                    cancelAutoReply();
+                    const d = new Date(newRow.created_at || Date.now());
+                    const hours = String(d.getHours()).padStart(2, "0");
+                    const mins = String(d.getMinutes()).padStart(2, "0");
+                    const newMsg: ChatMessage = {
+                      id: newRow.id,
+                      sender: "admin",
+                      senderName: t.teamName,
+                      text: newRow.text || "",
+                      timestamp: `${hours}:${mins}`,
+                      created_at: newRow.created_at,
+                    };
+
+                    setMessages((prev) => {
+                      if (prev.some((m) => m.id === newMsg.id)) return prev;
+                      const next = [...prev, newMsg];
+                      const chatKey = getUserChatKey();
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem(chatKey, JSON.stringify(next));
+                      }
+                      return next;
+                    });
+
+                    if (!isOpen) {
+                      setUnreadCount((c) => c + 1);
+                    }
+                  }
+                }
+              } else if (payload.eventType === "DELETE") {
+                const oldRow = payload.old;
+                if (oldRow && isCustomerMessageMatch(oldRow.sessionId)) {
+                  handleResetChat(true);
+                }
+              }
+            }
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "chat_sessions",
+            },
+            (payload) => {
+              const updatedSession = payload.new;
+              if (updatedSession && isCustomerMessageMatch(updatedSession.id, updatedSession.customerEmail, updatedSession.customerPhone)) {
+                if (updatedSession.status === "ended") {
+                  setIsOpen(false);
+                  setIsMinimized(false);
+                  setMessages([]);
+                }
+              }
+            }
+          )
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              console.log("⚡ [Supabase Realtime] Customer live chat connected");
+            }
+          });
+      } catch (err) {
+        console.warn("Notice: Failed to initialize customer Supabase Realtime channel:", err);
+      }
+    }
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("auth_changed", handleStorageChange);
@@ -1230,6 +1329,9 @@ export function LiveChatWidget() {
       window.removeEventListener("live_chat_ended", handleChatEnded);
       window.removeEventListener("open_live_chat", handleOpenChat);
       if (bc) bc.close();
+      if (supabaseChannel) {
+        supabase.removeChannel(supabaseChannel);
+      }
     };
   }, [currentLang, isOpen]);
 
@@ -1251,7 +1353,7 @@ export function LiveChatWidget() {
       } finally {
         pollInFlight = false;
       }
-    }, isOpen ? 500 : 3000);
+    }, isOpen ? 2500 : 8000);
 
     // 탭 전환 및 창 포커스 시 즉각 0ms 동기화 실행
     const handleCustomerVisibilityOrFocus = () => {

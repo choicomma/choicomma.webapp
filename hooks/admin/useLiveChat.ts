@@ -2,7 +2,41 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { playNotificationSound } from "@/lib/audio/notification-sound";
+import { supabase, isSupabaseClientConfigured } from "@/lib/supabase/client";
 
+/**
+ * 이메일, 전화번호, ID 등 다중 식별자로 파편화된 세션을 상호 교차 검증하는 단일 헬퍼
+ */
+export function isSessionMatching(sid1?: string, sid2?: string, sessions: any[] = []): boolean {
+  if (!sid1 || !sid2) return false;
+  const s1 = String(sid1).toLowerCase().trim();
+  const s2 = String(sid2).toLowerCase().trim();
+  if (s1 === s2) return true;
+
+  const c1 = s1.replace(/[^0-9]/g, "");
+  const c2 = s2.replace(/[^0-9]/g, "");
+  if (c1.length >= 7 && c2.length >= 7 && c1 === c2) return true;
+
+  // Check s2 in sessions
+  const rec2 = sessions.find((s) => (s.id || "").toLowerCase().trim() === s2);
+  if (rec2) {
+    const email2 = (rec2.customerEmail || rec2.email || "").toLowerCase().trim();
+    const phone2 = (rec2.customerPhone || rec2.phone || "").replace(/[^0-9]/g, "");
+    if (email2 && (s1 === email2 || s1.includes(email2) || email2.includes(s1))) return true;
+    if (phone2.length >= 7 && c1.length >= 7 && (c1 === phone2 || phone2.includes(c1) || c1.includes(phone2))) return true;
+  }
+
+  // Check s1 in sessions
+  const rec1 = sessions.find((s) => (s.id || "").toLowerCase().trim() === s1);
+  if (rec1) {
+    const email1 = (rec1.customerEmail || rec1.email || "").toLowerCase().trim();
+    const phone1 = (rec1.customerPhone || rec1.phone || "").replace(/[^0-9]/g, "");
+    if (email1 && (s2 === email1 || s2.includes(email1) || email1.includes(s2))) return true;
+    if (phone1.length >= 7 && c2.length >= 7 && (c2 === phone1 || phone1.includes(c2) || c2.includes(phone1))) return true;
+  }
+
+  return false;
+}
 
 export function useLiveChat(triggerToast: (msg: string) => void) {
   // Live Chat Admin State & Storage Sync
@@ -417,30 +451,10 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
             const sidClean = sid.replace(/[^0-9]/g, "");
             const curClean = currentActiveId.replace(/[^0-9]/g, "");
 
-            // 1. 활성 세션 일치 여부 다각도 검증 (ID, 이메일, 전화번호 교차 체크)
+            // 1. 활성 세션 일치 여부 다각도 검증 (단일 헬퍼 활용)
             let isCurrentSession = false;
             if (currentActiveId) {
-              if (sid && (currentActiveId === sid || currentActiveId.includes(sid) || sid.includes(currentActiveId))) {
-                isCurrentSession = true;
-              } else if (sEmail && (currentActiveId === sEmail || currentActiveId.includes(sEmail) || sEmail.includes(currentActiveId))) {
-                isCurrentSession = true;
-              } else if (sidClean.length >= 7 && curClean.length >= 7 && sidClean === curClean) {
-                isCurrentSession = true;
-              } else if (sPhone && currentActiveId.replace(/[^0-9]/g, "") === sPhone) {
-                isCurrentSession = true;
-              } else {
-                // 활성 세션 레코드의 이메일/전화번호와 정확 일치하는지 교차 검증
-                const activeRec = chatSessionsListRef.current.find(
-                  (s: any) => (s.id || "").toLowerCase().trim() === currentActiveId
-                );
-                if (activeRec) {
-                  const aEmail = (activeRec.customerEmail || activeRec.email || "").toLowerCase().trim();
-                  const aPhone = (activeRec.customerPhone || activeRec.phone || "").replace(/[^0-9]/g, "");
-                  if ((sEmail && aEmail && aEmail === sEmail) || (sPhone && aPhone && aPhone === sPhone) || (sidClean.length >= 7 && aPhone.length >= 7 && sidClean === aPhone)) {
-                    isCurrentSession = true;
-                  }
-                }
-              }
+              isCurrentSession = isSessionMatching(sid, currentActiveId, chatSessionsListRef.current);
             } else if (sid) {
               // 활성 세션이 아직 선택되지 않았으면 들어온 세션을 즉시 활성 세션으로 설정
               isCurrentSession = true;
@@ -523,7 +537,119 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       } catch (e) {}
     }
 
-    // 1. 초고속 실시간 활성 대화 동기화 (450ms) - 고객 입력 즉시 관리자 화면에 반영
+    // 2. Supabase Realtime WebSocket (카카오톡급 0.1초 크로스 디바이스/브라우저 실시간 수신)
+    let supabaseChannel: any = null;
+    if (isSupabaseClientConfigured) {
+      try {
+        supabaseChannel = supabase
+          .channel("admin_live_chat_realtime")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "chat_messages",
+            },
+            (payload) => {
+              if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+                const newRow = payload.new;
+                if (!newRow || !newRow.id) return;
+
+                const sid = String(newRow.sessionId || "").toLowerCase().trim();
+                const currentActiveId = (activeSessionIdRef.current || "").toLowerCase().trim();
+                const isCurrent = isSessionMatching(sid, currentActiveId, chatSessionsListRef.current);
+
+                // 고객이 보낸 메시지인 경우 알림음 재생
+                if (newRow.sender === "user" || newRow.sender === "customer") {
+                  playNotificationSound();
+                }
+
+                const d = new Date(newRow.created_at || Date.now());
+                const hours = String(d.getHours()).padStart(2, "0");
+                const mins = String(d.getMinutes()).padStart(2, "0");
+
+                const formattedMsg = {
+                  id: newRow.id,
+                  sessionId: sid,
+                  sender: newRow.sender === "admin" ? "admin" : "user",
+                  senderName: newRow.sender === "admin" ? "choicomma VIP 케어팀" : "고객",
+                  content: newRow.text || "",
+                  text: newRow.text || "",
+                  created_at: newRow.created_at || new Date().toISOString(),
+                  timestamp: `${hours}:${mins}`,
+                };
+
+                // 현재 활성 대화창인 경우 0ms 즉각 화면 노출
+                if (isCurrent) {
+                  setAdminLiveChatMessages((prev) => {
+                    if (prev.some((m) => m.id === formattedMsg.id)) return prev;
+                    return [...prev, formattedMsg];
+                  });
+
+                  try {
+                    const sessionKey = `site_live_chat_messages_${currentActiveId || sid}`;
+                    const savedStr = localStorage.getItem(sessionKey);
+                    const list = savedStr ? JSON.parse(savedStr) : [];
+                    if (Array.isArray(list) && !list.some((m: any) => m.id === formattedMsg.id)) {
+                      list.push(formattedMsg);
+                      localStorage.setItem(sessionKey, JSON.stringify(list));
+                    }
+                  } catch (e) {}
+                }
+
+                // 좌측 세션 목록 갱신
+                setChatSessionsList((prev) => {
+                  return prev.map((s) => {
+                    const sId = (s.id || "").toLowerCase().trim();
+                    if (isSessionMatching(sId, sid, prev)) {
+                      return {
+                        ...s,
+                        lastMessage: formattedMsg.text,
+                        lastMessageAt: formattedMsg.created_at,
+                        status: "active",
+                        updated_at: new Date().toISOString(),
+                      };
+                    }
+                    return s;
+                  });
+                });
+
+                // 신규 세션일 수 있으므로 세션 목록 리로드
+                loadSessions();
+              } else if (payload.eventType === "DELETE") {
+                const oldRow = payload.old;
+                if (oldRow?.sessionId) {
+                  const sid = String(oldRow.sessionId).toLowerCase().trim();
+                  const currentActiveId = (activeSessionIdRef.current || "").toLowerCase().trim();
+                  if (isSessionMatching(sid, currentActiveId, chatSessionsListRef.current)) {
+                    syncAdminLiveChat(currentActiveId);
+                  }
+                }
+              }
+            }
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "chat_sessions",
+            },
+            () => {
+              loadSessions();
+            }
+          )
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              console.log("⚡ [Supabase Realtime] Admin live chat channel connected successfully");
+            }
+          });
+      } catch (err) {
+        console.warn("Notice: Failed to initialize Supabase Realtime channel:", err);
+      }
+    }
+
+    // 3. 백그라운드 안전망 폴링 (WebSocket 보완용)
     let msgSyncInFlight = false;
     const msgInterval = setInterval(async () => {
       if (msgSyncInFlight) return;
@@ -537,9 +663,9 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       } finally {
         msgSyncInFlight = false;
       }
-    }, 450);
+    }, 2000);
 
-    // 2. 백그라운드 세션 목록 동기화 (3000ms)
+    // 4. 백그라운드 세션 목록 동기화 (3000ms)
     let sessionPollInFlight = false;
     const sessionInterval = setInterval(async () => {
       if (sessionPollInFlight) return;
@@ -552,7 +678,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       }
     }, 3000);
 
-    // 3. 브라우저 탭 활성화/포커스 시 지연 없이 즉각 동기화 실행
+    // 5. 브라우저 탭 활성화/포커스 시 지연 없이 즉각 동기화 실행
     const handleAdminFocusOrVisible = () => {
       if (typeof document !== "undefined" && document.visibilityState === "visible") {
         syncAdminLiveChat();
@@ -572,6 +698,9 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
         window.removeEventListener("focus", handleAdminFocusOrVisible);
       }
       if (bc) bc.close();
+      if (supabaseChannel) {
+        supabase.removeChannel(supabaseChannel);
+      }
       clearInterval(msgInterval);
       clearInterval(sessionInterval);
     };
@@ -590,22 +719,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     const currentActive = (activeSessionId || "").toLowerCase().trim();
     if (!currentActive) return false;
     if (m.sessionId) {
-      const mSid = String(m.sessionId).toLowerCase().trim();
-      if (mSid === currentActive) return true;
-      const mClean = mSid.replace(/[^0-9]/g, "");
-      const curClean = currentActive.replace(/[^0-9]/g, "");
-      if (mClean.length >= 7 && curClean.length >= 7 && mClean === curClean) return true;
-      // Cross check active session record in chatSessionsList
-      const activeSessionRec = chatSessionsListRef.current.find(
-        (s) => (s.id || "").toLowerCase().trim() === currentActive
-      );
-      if (activeSessionRec) {
-        const aEmail = (activeSessionRec.customerEmail || activeSessionRec.email || "").toLowerCase().trim();
-        const aPhone = (activeSessionRec.customerPhone || activeSessionRec.phone || "").replace(/[^0-9]/g, "");
-        if (aEmail && (mSid === aEmail || mSid.includes(aEmail) || aEmail.includes(mSid))) return true;
-        if (aPhone.length >= 7 && mClean.length >= 7 && (mClean === aPhone || aPhone.includes(mClean))) return true;
-      }
-      return false;
+      return isSessionMatching(m.sessionId, currentActive, chatSessionsListRef.current);
     }
     return pendingAdminMsgIdsRef.current.has(m.id) || !m.sessionId;
   });

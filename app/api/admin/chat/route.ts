@@ -341,19 +341,19 @@ export async function POST(req: NextRequest) {
           id: normId,
           customerName: body.customerName || body.name || "방문자",
           customerEmail: body.customerEmail || (normId.includes("@") ? normId : ""),
-          customerPhone: body.customerPhone || body.phone || "",
+          customerPhone: body.customerPhone || body.phone || (normId.replace(/[^0-9]/g, "").length >= 7 ? normId : ""),
           status: body.status || "active",
           updated_at: new Date().toISOString(),
         };
 
-        // 백그라운드 실행: 로컬 저장이 기준 데이터이므로 응답을 기다리지 않아 직렬 락을 즉시 해제
-        runSafeSupabaseQuery(
-          async (supabase) => supabase.from("chat_sessions").upsert([supabaseSession], { onConflict: "id" }),
-          2500
-        ).catch((err) => {
+        try {
+          await runSafeSupabaseQuery(
+            async (supabase) => supabase.from("chat_sessions").upsert([supabaseSession], { onConflict: "id" }),
+            2000
+          );
+        } catch (err) {
           console.warn("[Chat Session Supabase Dual-Write Warning]:", err);
-        });
-
+        }
 
         return NextResponse.json({ success: true, session: sessionRecord }, { headers: NO_CACHE_HEADERS });
       }
@@ -417,34 +417,29 @@ export async function POST(req: NextRequest) {
         created_at: newMsg.created_at || new Date().toISOString(),
       };
 
-      runSafeSupabaseQuery(
-        async (supabase) => {
-          // 세션 존재 보장
-          await supabase.from("chat_sessions").upsert(
-            {
-              id: normSessionId,
-              customerName: body.customerName || body.name || "방문자",
-              customerEmail: body.customerEmail || (normSessionId.includes("@") ? normSessionId : ""),
-              status: "active",
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "id" }
-          );
-          // 메시지 적재
-          return await supabase.from("chat_messages").upsert([supabaseMsg], { onConflict: "id" });
-        },
-        2500
-      )
-        .then((res) => {
-          if (res.error) {
-            console.warn("[Chat Message Supabase Dual-Write Notice]:", res.error.message || res.error);
-          } else {
-            console.log(`[Chat Message Supabase Dual-Write Success] Msg ID: ${msgId}`);
-          }
-        })
-        .catch((err) => {
-          console.warn("[Chat Message Supabase Dual-Write Warning]:", err);
-        });
+      try {
+        await runSafeSupabaseQuery(
+          async (supabase) => {
+            // 세션 존재 보장
+            await supabase.from("chat_sessions").upsert(
+              {
+                id: normSessionId,
+                customerName: body.customerName || body.name || (normSessionId.includes("@") ? normSessionId.split("@")[0] : "고객"),
+                customerEmail: body.customerEmail || (normSessionId.includes("@") ? normSessionId : ""),
+                customerPhone: body.customerPhone || (normSessionId.replace(/[^0-9]/g, "").length >= 7 ? normSessionId : ""),
+                status: "active",
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "id" }
+            );
+            // 메시지 적재
+            return await supabase.from("chat_messages").upsert([supabaseMsg], { onConflict: "id" });
+          },
+          2000
+        );
+      } catch (err) {
+        console.warn("[Chat Message Supabase Dual-Write Warning]:", err);
+      }
 
       return NextResponse.json({ success: true, message: newMsg }, { headers: NO_CACHE_HEADERS });
     } catch (err: any) {
