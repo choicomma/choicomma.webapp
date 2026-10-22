@@ -337,10 +337,10 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            // 다른 세션의 오염된 메시지 엄격 배제: sessionId가 정확히 targetId인 것만 허용
-            const clean = parsed.filter(
-              (m: any) => m && m.sessionId && m.sessionId.toLowerCase().trim() === targetId
-            );
+            // 다른 세션의 오염된 메시지 엄격 배제: sessionId가 없거나 정확히 targetId인 것만 허용하고 sessionId 보정
+            const clean = parsed
+              .filter((m: any) => m && (!m.sessionId || m.sessionId.toLowerCase().trim() === targetId))
+              .map((m: any) => ({ ...m, sessionId: targetId }));
             setAdminLiveChatMessages(clean);
           } else {
             setAdminLiveChatMessages([]);
@@ -381,9 +381,13 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
             if (activeSessionIdRef.current.toLowerCase().trim() === sid) {
               syncAdminLiveChat(sid);
               if (event.data?.message) {
+                const incomingMsg = {
+                  ...event.data.message,
+                  sessionId: sid || event.data.message.sessionId || activeSessionIdRef.current.toLowerCase().trim(),
+                };
                 setAdminLiveChatMessages((prev) => {
-                  if (prev.some((m) => m.id === event.data.message.id)) return prev;
-                  return [...prev, event.data.message];
+                  if (prev.some((m) => m.id === incomingMsg.id)) return prev;
+                  return [...prev, incomingMsg];
                 });
               }
             }
@@ -439,7 +443,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     if (m.sessionId) {
       return m.sessionId.toLowerCase().trim() === currentActive;
     }
-    return pendingAdminMsgIdsRef.current.has(m.id);
+    return pendingAdminMsgIdsRef.current.has(m.id) || !m.sessionId;
   });
   const lastLiveChatMsg = activeSessionMessages[activeSessionMessages.length - 1];
   const isLiveChatSessionEnded = Boolean(
@@ -465,6 +469,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
 
     const newReply = {
       id: `admin-reply-${Date.now()}`,
+      sessionId: normalizedSessionId,
       sender: "admin",
       senderName: "choicomma VIP 케어팀",
       text: textToSend.trim(),

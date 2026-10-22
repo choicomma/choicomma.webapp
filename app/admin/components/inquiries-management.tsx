@@ -32,6 +32,8 @@ import {
 import { getProductThumbnail, getProductInitial, getProductBadgeColor } from "@/lib/products/thumbnail-helper";
 import { explodeOrderToSingleItems, type ExplodedExchangeItem } from "@/lib/shipping/exchange-item-helper";
 import { TossRefundModal } from "@/components/chat/toss-refund-modal";
+import { RefundFormBubble } from "@/components/chat/refund-form-bubble";
+import { ExchangeFormBubble } from "@/components/chat/exchange-form-bubble";
 import { restoreCouponByOrder } from "@/lib/membership/coupons";
 import { safeSaveShipmentsToStorage, safeSaveOrdersToStorage } from "@/lib/shipping/safe-shipments-storage";
 
@@ -1637,17 +1639,34 @@ export function InquiriesManagement({
                           );
                         }
                         if (parsed?.type === "EXCHANGE_REQUEST") {
+                          const activeSessionObj = chatSessionsList.find(
+                            (s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim()
+                          );
                           return (
-                            <div className="space-y-1.5 text-left notranslate" translate="no">
-                              <div className="flex items-center gap-1.5 text-white font-black text-xs">
+                            <div className="space-y-2 text-left notranslate max-w-[340px] whitespace-normal" translate="no">
+                              <div className="flex items-center gap-1.5 text-white font-black text-xs pb-1 border-b border-neutral-800">
                                 <RefreshCw className="w-4 h-4 text-blue-400" />
                                 <span>교환접수요청서 전송됨</span>
                               </div>
                               <p className="text-[11px] text-neutral-300 font-medium leading-relaxed">
                                 {parsed.text || "고객님께 교환 접수 및 배송비 결제 양식을 전송했습니다."}
                               </p>
-                              <div className="text-[10px] text-neutral-400 font-bold pt-0.5">
-                                ⏳ 고객이 교환 정보를 입력하고 왕복 배송비(16,000원)를 결제하면 교환 접수 내역이 이곳에 표시됩니다.
+                              <div className="pt-1">
+                                <ExchangeFormBubble
+                                  customerEmail={activeSessionObj?.customerEmail || activeSessionObj?.email || activeSessionId}
+                                  customerName={activeSessionObj?.customerName || activeSessionObj?.name}
+                                  customerPhone={activeSessionObj?.customerPhone || activeSessionObj?.phone}
+                                  isAdminView={true}
+                                  onCompleteExchange={(exchangeData) => {
+                                    const payload = JSON.stringify({
+                                      type: "EXCHANGE_COMPLETED",
+                                      ...exchangeData,
+                                      completedAt: new Date().toISOString(),
+                                    });
+                                    handleAdminSendLiveChat(payload);
+                                    toast.success("교환 접수가 안전하게 완료되었습니다!");
+                                  }}
+                                />
                               </div>
                             </div>
                           );
@@ -1825,17 +1844,40 @@ export function InquiriesManagement({
                         }
 
                         if (parsed?.type === "REFUND_REQUEST") {
+                          const activeSessionObj = chatSessionsList.find(
+                            (s) => (s.id || "").toLowerCase().trim() === (activeSessionId || "").toLowerCase().trim()
+                          );
                           return (
-                            <div className="space-y-1.5 text-left notranslate" translate="no">
-                              <div className="flex items-center gap-1.5 text-white font-black text-xs">
+                            <div className="space-y-2 text-left notranslate max-w-[340px] whitespace-normal" translate="no">
+                              <div className="flex items-center gap-1.5 text-white font-black text-xs pb-1 border-b border-neutral-800">
                                 <RotateCcw className="w-4 h-4 text-blue-400" />
                                 <span>환불접수요청서 전송됨</span>
                               </div>
                               <p className="text-[11px] text-neutral-300 font-medium leading-relaxed">
                                 {parsed.text || "고객님께 환불 접수 및 구매금액 취소 신청서 양식을 전송했습니다."}
                               </p>
-                              <div className="text-[10px] text-neutral-400 font-bold pt-0.5">
-                                ⏳ 고객이 환불 신청서를 제출하면 환불 상품 및 사유가 이곳에 표시되며, 즉시 토스 결제 취소를 진행할 수 있습니다.
+                              <div className="pt-1">
+                                <RefundFormBubble
+                                  customerEmail={activeSessionObj?.customerEmail || activeSessionObj?.email || activeSessionId}
+                                  customerName={activeSessionObj?.customerName || activeSessionObj?.name}
+                                  customerPhone={activeSessionObj?.customerPhone || activeSessionObj?.phone}
+                                  isAdminView={true}
+                                  onSubmitRefund={(ref) => {
+                                    const payload = JSON.stringify({
+                                      type: "REFUND_SUBMITTED",
+                                      orderId: ref.orderId,
+                                      orderNumber: ref.orderNumber,
+                                      items: ref.items,
+                                      image: ref.image,
+                                      amount: ref.amount,
+                                      reason: ref.reason,
+                                      details: ref.details,
+                                      submittedAt: new Date().toISOString(),
+                                    });
+                                    handleAdminSendLiveChat(payload);
+                                    toast.success("환불 신청서가 성공적으로 접수되었습니다!");
+                                  }}
+                                />
                               </div>
                             </div>
                           );

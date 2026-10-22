@@ -13,6 +13,10 @@ import {
 import { requestTossExchangePayment, type ExchangePaymentMethod } from "./exchange-payment-service";
 
 interface ExchangeFormBubbleProps {
+  customerEmail?: string;
+  customerName?: string;
+  customerPhone?: string;
+  isAdminView?: boolean;
   onCompleteExchange: (exchangeData: {
     orderId: string;
     orderNumber: string;
@@ -29,7 +33,13 @@ interface ExchangeFormBubbleProps {
   }) => void;
 }
 
-export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubbleProps) {
+export function ExchangeFormBubble({
+  customerEmail,
+  customerName,
+  customerPhone,
+  isAdminView,
+  onCompleteExchange,
+}: ExchangeFormBubbleProps) {
   const [orders, setOrders] = useState<ExplodedExchangeItem[]>([]);
   const [selectedUniqueId, setSelectedUniqueId] = useState<string | null>(null);
   const [selectedOrderNum, setSelectedOrderNum] = useState<string | null>(null);
@@ -81,7 +91,19 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
       }
 
       // 1. 고객 본인의 주문만 엄격 매칭 (비로그인은 빈 배열, 관리자는 본인 테스트 주문만)
-      const userOrders = filterOrdersForCustomer(list);
+      const normEmail = (customerEmail || "").toLowerCase().trim();
+      const isTargetAdmin = normEmail === "admin@choicomma.com" || (customerName || "").includes("최고관리자");
+      let userOrders = filterOrdersForCustomer(list, {
+        email: customerEmail,
+        name: customerName,
+        phone: customerPhone,
+        isAdmin: isTargetAdmin,
+      });
+
+      // 관리자 화면이거나 매칭 주문이 없을 때 최근 등록된 주문이 있으면 기본 표시
+      if (userOrders.length === 0 && (isAdminView || isTargetAdmin) && list.length > 0) {
+        userOrders = list.slice(0, 5);
+      }
 
       // 2. 배송완료 상태 및 14일 이내 교환 가능 주문건 추출
       const eligibleList = userOrders.filter((s: any) => {
@@ -184,7 +206,7 @@ export function ExchangeFormBubble({ onCompleteExchange }: ExchangeFormBubblePro
           });
       }
     }
-  }, []);
+  }, [customerEmail, customerName, customerPhone, isAdminView]);
 
   const activeOrder = orders.find((o) => (selectedUniqueId ? o.uniqueSelectId === selectedUniqueId : o.orderNumber === selectedOrderNum)) || {
     id: `MANUAL-${Date.now()}`,

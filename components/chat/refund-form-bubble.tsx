@@ -7,7 +7,11 @@ import { explodeOrderToSingleItems, type ExplodedExchangeItem } from "@/lib/ship
 import { filterOrdersForCustomer } from "@/lib/shipping/customer-order-filter";
 
 interface RefundFormBubbleProps {
-  onSubmitRefund: (refundData: {
+  customerEmail?: string;
+  customerName?: string;
+  customerPhone?: string;
+  isAdminView?: boolean;
+  onSubmitRefund?: (refundData: {
     orderId: string;
     orderNumber: string;
     items: string;
@@ -18,7 +22,13 @@ interface RefundFormBubbleProps {
   }) => void;
 }
 
-export function RefundFormBubble({ onSubmitRefund }: RefundFormBubbleProps) {
+export function RefundFormBubble({
+  customerEmail,
+  customerName,
+  customerPhone,
+  isAdminView,
+  onSubmitRefund,
+}: RefundFormBubbleProps) {
   const [orders, setOrders] = useState<ExplodedExchangeItem[]>([]);
   const [selectedUniqueId, setSelectedUniqueId] = useState<string | null>(null);
   const [selectedOrderNum, setSelectedOrderNum] = useState<string | null>(null);
@@ -64,7 +74,19 @@ export function RefundFormBubble({ onSubmitRefund }: RefundFormBubbleProps) {
       }
 
       // 고객 본인의 주문만 엄격 매칭 (비로그인은 빈 배열, 관리자는 본인 테스트 주문만)
-      const userOrders = filterOrdersForCustomer(list);
+      const normEmail = (customerEmail || "").toLowerCase().trim();
+      const isTargetAdmin = normEmail === "admin@choicomma.com" || (customerName || "").includes("최고관리자");
+      let userOrders = filterOrdersForCustomer(list, {
+        email: customerEmail,
+        name: customerName,
+        phone: customerPhone,
+        isAdmin: isTargetAdmin,
+      });
+
+      // 관리자 화면이거나 매칭 주문이 없을 때 최근 등록된 주문이 있으면 기본 표시
+      if (userOrders.length === 0 && (isAdminView || isTargetAdmin) && list.length > 0) {
+        userOrders = list.slice(0, 5);
+      }
 
       const filtered = userOrders.map((s: any) => ({
         id: s.id,
@@ -85,7 +107,7 @@ export function RefundFormBubble({ onSubmitRefund }: RefundFormBubbleProps) {
         setSelectedOrderNum(exploded[0].orderNumber);
       }
     }
-  }, []);
+  }, [customerEmail, customerName, customerPhone, isAdminView]);
 
   const selectedOrder = orders.find((o) => o.uniqueSelectId === selectedUniqueId);
   const activeOrder = selectedOrder || {
@@ -113,15 +135,17 @@ export function RefundFormBubble({ onSubmitRefund }: RefundFormBubbleProps) {
     }
 
     setIsSubmitted(true);
-    onSubmitRefund({
-      orderId: activeOrder.id,
-      orderNumber: activeOrder.orderNumber,
-      items: activeOrder.items,
-      image: activeOrder.image || getProductThumbnail(activeOrder.items),
-      amount: activeOrder.amount,
-      reason: selectedReason,
-      details: detailedReason.trim(),
-    });
+    if (onSubmitRefund) {
+      onSubmitRefund({
+        orderId: activeOrder.id,
+        orderNumber: activeOrder.orderNumber,
+        items: activeOrder.items,
+        image: activeOrder.image || getProductThumbnail(activeOrder.items),
+        amount: activeOrder.amount,
+        reason: selectedReason,
+        details: detailedReason.trim(),
+      });
+    }
   };
 
   if (isSubmitted) {
@@ -305,7 +329,7 @@ export function RefundFormBubble({ onSubmitRefund }: RefundFormBubbleProps) {
         className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
       >
         <FileText className="w-3.5 h-3.5" />
-        <span>환불 접수 신청서 제출하기</span>
+        <span>{isAdminView ? "환불 접수 신청서 제출 (고객 대리 접수)" : "환불 접수 신청서 제출하기"}</span>
       </button>
     </div>
   );
