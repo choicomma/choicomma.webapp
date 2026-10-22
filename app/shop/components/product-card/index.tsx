@@ -8,12 +8,12 @@ import { Product } from "@/lib/sfcc/types";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { ProductImage } from "./product-image";
 import { QuickOptionModal } from "@/components/products/quick-option-modal";
-import { FeaturedProductLabel } from "@/components/products/featured-product-label";
 import { Sparkles, Plus, Clock, ChevronLeft, ChevronRight, Lock, Sliders, Edit3, ExternalLink, X } from "lucide-react";
 
 import { translateProductTitle, translateProductDescription, translateUiText, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
 import { ProductCardImageSlider, extractProductImages } from "@/components/products/product-card-image-slider";
 import { reorderProduct } from "@/lib/products/reorder-helper";
+import { formatReleaseDateBadge } from "@/lib/product-availability";
 import { toast } from "sonner";
 
 export interface ProductCardProps {
@@ -366,20 +366,6 @@ export const ProductCard = ({
     >
       {/* 1. Badges: Moved to Top (상단으로 위치 변경) */}
       <div className="absolute top-2 inset-x-2 sm:top-3 sm:inset-x-3 md:top-4 md:inset-x-4 flex items-center gap-1 sm:gap-1.5 flex-wrap z-20 pointer-events-none">
-        {(product as any).productLabel && (
-          <span
-            className={`text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs shrink-0 whitespace-nowrap shadow-2xs ${
-              (product as any).productLabel === "BLACK_LABEL"
-                ? "bg-black text-white"
-                : (product as any).productLabel === "PREMIUM"
-                ? "bg-neutral-600 text-white"
-                : "bg-neutral-200 text-neutral-800"
-            }`}
-          >
-            {(product as any).productLabel.replace("_", " ")}
-          </span>
-        )}
-
         {/* 타임세일 할인율 Badge: 모바일에선 퍼센트와 OFF만 노출, PC에선 전체 라벨 및 아이콘 노출 */}
         {isTimeSaleActive && timeSaleDiscount && (
           secretSaleInfo ? (
@@ -403,7 +389,7 @@ export const ProductCard = ({
         {product.releaseDate && new Date(product.releaseDate).getTime() > Date.now() ? (
           <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
             <Clock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-neutral-950" />
-            <span>오픈 예정</span>
+            <span>{formatReleaseDateBadge(product.releaseDate)}</span>
           </span>
         ) : ((product as any).stock !== undefined &&
             (product as any).stock !== null &&

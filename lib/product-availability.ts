@@ -84,3 +84,27 @@ export function validatePurchaseItems(products: any[], items: PurchaseCheckInput
   }
   return blocks;
 }
+
+/**
+ * 오픈 예정 상품의 오픈일시를 뱃지에 표시하기 위한 포맷 함수
+ * (예: "10월 27일 10:00 오픈 예정", "10월 27일 오픈 예정")
+ */
+export function formatReleaseDateBadge(dateStr?: string): string {
+  if (!dateStr) return "오픈 예정";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "오픈 예정";
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const hours = d.getHours();
+    const minutes = d.getMinutes();
+    if (hours !== 0 || minutes !== 0) {
+      const timeStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+      return `${month}월 ${day}일 ${timeStr} 오픈 예정`;
+    }
+    return `${month}월 ${day}일 오픈 예정`;
+  } catch {
+    return "오픈 예정";
+  }
+}
+
