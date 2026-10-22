@@ -84,6 +84,7 @@ interface ProductCardImageSliderProps {
   imageClassName?: string;
   intervalMs?: number;
   priority?: boolean;
+  fillContainer?: boolean;
 }
 
 /**
@@ -100,6 +101,7 @@ export function ProductCardImageSlider({
   imageClassName = "object-contain transition-transform duration-700 group-hover:scale-105",
   intervalMs = 2800,
   priority = false,
+  fillContainer = false,
 }: ProductCardImageSliderProps) {
   // Deduplicate and sanitize (실제 이미지가 1장 이상 등록된 경우 더미 플레이스홀더 /product_1.webp 제거)
   const cleanImages = useMemo(() => {
@@ -238,7 +240,8 @@ function PureElementFreeSlider({
   return (
     <div
       className={cn(
-        "relative w-full aspect-square bg-white flex items-center justify-center overflow-hidden select-none",
+        "relative w-full bg-white flex items-center justify-center overflow-hidden select-none",
+        fillContainer ? "h-full" : "aspect-square",
         paddingClass
       )}
       onMouseEnter={() => setIsHovered(true)}

@@ -364,8 +364,8 @@ export const ProductCard = ({
         isOverlayActive ? "z-30 ring-2 ring-blue-600 shadow-xl" : ""
       }`}
     >
-      {/* 1. Badges: Moved to Top (상단으로 위치 변경) - 블랙라벨/프리미엄은 PC(md 이상)에서만 노출, 모바일 미노출 */}
-      <div className="absolute top-2 inset-x-2 sm:top-3 sm:inset-x-3 md:top-4 md:inset-x-4 flex items-center gap-1 sm:gap-1.5 flex-wrap z-20 pointer-events-none">
+      {/* [1단] 상단 뱃지 영역: 독립적인 Flex 상단 아이템 (고정/자연 높이, 아래 이미지 영역을 물리적으로 침범하지 않음) */}
+      <div className="w-full px-2 pt-2 pb-1 sm:px-3 sm:pt-3 md:px-4 md:pt-4 flex items-center gap-1 sm:gap-1.5 flex-wrap z-10 pointer-events-none min-h-[30px] sm:min-h-[34px] shrink-0">
         {(product as any).productLabel && (
           <span
             className={`hidden md:inline-flex text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs shrink-0 whitespace-nowrap shadow-2xs ${
@@ -416,13 +416,14 @@ export const ProductCard = ({
         ) : null}
       </div>
 
-      {/* 1:1 Square Product Image Area with White Background - 뱃지 겹침 방지 상단 여백(mt-10), 상품명 여백 확보 하단 여백(pb-20) */}
-      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-2.5 pt-2 pb-20 sm:p-5 md:p-7 mt-10 sm:mt-8 md:mt-10 overflow-hidden">
+      {/* [2단] 중앙 제품 이미지 영역: 남는 높이를 100% 온전히 차지하며 잘림/가림 0% 보장 (flex-1 safe area) */}
+      <div className="relative w-full flex-1 min-h-0 bg-white flex items-center justify-center px-2 py-1 sm:px-4 sm:py-2 overflow-hidden">
         <ProductCardImageSlider
           images={productImages}
           alt={product.title || "Product"}
           paddingClass="p-0"
           imageClassName="object-contain transition-transform duration-700 group-hover:scale-105"
+          fillContainer={true}
         />
 
         {/* 관리자 상품 액션 오버레이 (제품 이미지 바로 위에 노출) */}
@@ -526,8 +527,8 @@ export const ProductCard = ({
         )}
       </div>
 
-      {/* Bottom Bar: Title on Top & Price on Bottom - 상품명 폰트 2배(text-2xl), 가격 폰트는 그대로 유지 */}
-      <div className="absolute bottom-0 inset-x-0 p-2 sm:p-4 md:p-5 pb-1.5 sm:pb-4 flex flex-col gap-0.5 sm:gap-1.5 z-10 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-2 sm:pt-8">
+      {/* [3단] 하단 정보 바: 상품명(2배) & 가격(1.5배), 독립 Flex 하단 아이템으로 절대 이미지를 침범하지 않음 */}
+      <div className="w-full px-2.5 pb-2 pt-1 sm:px-4 sm:pb-3 sm:pt-2 md:px-5 md:pb-4 flex flex-col gap-0.5 sm:gap-1.5 z-10 bg-white shrink-0">
         <MarqueeProductTitle
           title={product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
           className="text-2xl sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight block w-full leading-tight md:leading-normal"
