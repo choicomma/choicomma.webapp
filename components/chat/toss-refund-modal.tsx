@@ -135,17 +135,21 @@ export function TossRefundModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/70 backdrop-blur-xs animate-in fade-in duration-200 font-sans notranslate" translate="no">
       <div className="bg-white border border-neutral-200 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-4.5 bg-neutral-950 text-white shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#0064FF] text-white flex items-center justify-center font-black text-xs shadow-xs">
+        <div className="flex items-center justify-between px-7 py-6 sm:px-8 sm:py-6.5 bg-neutral-950 text-white shrink-0 border-b border-neutral-900">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-[#0064FF] text-white flex items-center justify-center font-black text-sm shadow-md shrink-0">
               토스
             </div>
             <div>
-              <h3 className="text-sm font-black flex items-center gap-1.5">
-                <span>토스페이먼츠 결제 취소 및 환불</span>
-                <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.2 rounded font-mono">PG 환불</span>
-              </h3>
-              <p className="text-[10px] text-neutral-400 font-medium">
+              <div className="flex items-center gap-2">
+                <h3 className="text-[15px] sm:text-base font-black text-white tracking-tight">
+                  토스페이먼츠 결제 취소 및 환불
+                </h3>
+                <span className="text-[10px] bg-white/15 border border-white/20 text-white px-2 py-0.5 rounded-md font-bold tracking-tight">
+                  PG 환불
+                </span>
+              </div>
+              <p className="text-xs text-neutral-400 font-medium mt-1 leading-relaxed">
                 구매금액 실시간 승인 취소 • 원 결제수단 즉시 환불
               </p>
             </div>
@@ -154,16 +158,17 @@ export function TossRefundModal({
             type="button"
             disabled={isProcessing}
             onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-xl hover:bg-neutral-800 transition-colors cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center text-neutral-400 hover:text-white rounded-2xl hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+            title="닫기"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body Content */}
-        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+        <div className="p-6 sm:p-7 space-y-5.5 max-h-[75vh] overflow-y-auto">
           {/* 1. 주문건 선택 */}
-          <div className="space-y-1.5">
+          <div className="space-y-2.5">
             <label className="text-xs font-black text-neutral-900 flex items-center justify-between">
               <span>환불 대상 주문건 선택</span>
               {customerOrders.length > 0 && (
@@ -174,7 +179,7 @@ export function TossRefundModal({
             </label>
 
             {customerOrders.length > 0 ? (
-              <div className="space-y-1.5 max-h-40 overflow-y-auto pr-0.5 no-scrollbar">
+              <div className="space-y-2 max-h-44 overflow-y-auto pr-0.5 no-scrollbar">
                 {customerOrders.map((ord) => {
                   const isSelected = selectedOrderUniqueId === ord.uniqueSelectId;
                   const itemThumb = getProductThumbnail(ord.itemName || ord.items, ord.image);
@@ -217,7 +222,7 @@ export function TossRefundModal({
                 })}
               </div>
             ) : (
-              <div className="p-3 bg-neutral-50 rounded-xl text-neutral-400 text-xs text-center">
+              <div className="py-4 px-4 bg-neutral-50 border border-neutral-200/60 rounded-2xl text-neutral-400 text-xs text-center font-medium">
                 연결된 고객 주문건이 없습니다.
               </div>
             )}

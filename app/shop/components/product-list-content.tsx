@@ -13,6 +13,7 @@ import { ProductFormModal } from "@/app/admin/components/product-form-modal";
 import { reorderProduct } from "@/lib/products/reorder-helper";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getCurrentLanguage, fetchBatchTranslation } from "@/lib/i18n/translation";
 
 function getPageNumbers(current: number, total: number) {
   if (total <= 5) {
@@ -81,6 +82,28 @@ export function ProductListContent({
       window.removeEventListener("focus", checkAdmin);
     };
   }, []);
+
+  // Prefetch translations in batch for visible products when language is non-Korean
+  useEffect(() => {
+    const prefetchCurrentLanguage = () => {
+      const lang = getCurrentLanguage();
+      if (lang === "ko") return;
+      const cleanTitles = displayProducts
+        .map((p) => p.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim())
+        .filter(Boolean);
+      if (cleanTitles.length > 0) {
+        fetchBatchTranslation(cleanTitles, lang);
+      }
+    };
+
+    prefetchCurrentLanguage();
+    window.addEventListener("language_changed", prefetchCurrentLanguage);
+    window.addEventListener("language-changed", prefetchCurrentLanguage);
+    return () => {
+      window.removeEventListener("language_changed", prefetchCurrentLanguage);
+      window.removeEventListener("language-changed", prefetchCurrentLanguage);
+    };
+  }, [displayProducts]);
 
   const handleSaveProduct = async (savedProduct: any, isNew: boolean) => {
     try {

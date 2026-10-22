@@ -6,7 +6,7 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { mockProducts } from "@/lib/sfcc/mock/products";
 
-import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+import { translateProductTitle, getCurrentLanguage, ProductTranslatedTitle } from "@/lib/i18n/translation";
 import { ProductCardImageSlider, extractProductImages } from "@/components/products/product-card-image-slider";
 
 export function RelatedProducts() {
@@ -118,9 +118,10 @@ export function RelatedProducts() {
                 />
               </div>
               <div className="flex flex-col items-start gap-1">
-                <span className="text-xs font-medium text-neutral-900 uppercase tracking-wider truncate w-full">
-                  {translateProductTitle(product.title, currentLang)?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim()}
-                </span>
+                <ProductTranslatedTitle
+                  title={product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim()}
+                  className="text-xs font-medium text-neutral-900 uppercase tracking-wider truncate w-full block"
+                />
                 <span className="text-xs text-neutral-600 font-bold">{price}</span>
               </div>
             </Link>

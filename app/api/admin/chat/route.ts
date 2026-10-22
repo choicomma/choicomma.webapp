@@ -142,30 +142,45 @@ export async function GET(req: NextRequest) {
   if (type === "sessions") {
     let sessions = readJsonFile(getSessionsFilePath());
 
-    // 비상 복구(Self-Healing): Supabase와 동기화
-    try {
-      const { data, error } = await runSafeSupabaseQuery<any[]>(
-        async (supabase) =>
-          supabase.from("chat_sessions").select("*").order("updated_at", { ascending: false }),
-        2000
-      );
-      if (!error && Array.isArray(data) && data.length > 0) {
-        const sessionMap = new Map<string, any>();
-        data.forEach((s) => {
-          if (s?.id) sessionMap.set(String(s.id).trim().toLowerCase(), s);
-        });
-        sessions.forEach((s) => {
-          if (s?.id) {
-            const key = String(s.id).trim().toLowerCase();
-            const existing = sessionMap.get(key);
-            sessionMap.set(key, { ...existing, ...s });
-          }
-        });
-        sessions = Array.from(sessionMap.values());
-        safeAtomicWriteJson(getSessionsFilePath(), sessions);
+    // 로컬 세션이 비어있는 경우에만 Supabase에서 동기 복구, 있으면 백그라운드 비동기 동기화
+    if (sessions.length === 0) {
+      try {
+        const { data, error } = await runSafeSupabaseQuery<any[]>(
+          async (supabase) =>
+            supabase.from("chat_sessions").select("*").order("updated_at", { ascending: false }),
+          1500
+        );
+        if (!error && Array.isArray(data) && data.length > 0) {
+          sessions = data.filter((s) => !isGuestSession(s?.id, s?.customerEmail));
+          safeAtomicWriteJson(getSessionsFilePath(), sessions);
+        }
+      } catch (fallbackErr) {
+        console.warn("[Chat Sessions Remote Fallback Warning]:", fallbackErr);
       }
-    } catch (fallbackErr) {
-      console.warn("[Chat Sessions Remote Fallback Warning]:", fallbackErr);
+    } else {
+      // 비동기 백그라운드 자가 복구 (UI 대기 0ms)
+      runSafeSupabaseQuery<any[]>(
+        async (supabase) => supabase.from("chat_sessions").select("*").order("updated_at", { ascending: false }),
+        2000
+      ).then(({ data, error }) => {
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const current = readJsonFile(getSessionsFilePath());
+          const sessionMap = new Map<string, any>();
+          data.forEach((s) => {
+            if (s?.id && !isGuestSession(s.id, s.customerEmail)) {
+              sessionMap.set(String(s.id).trim().toLowerCase(), s);
+            }
+          });
+          current.forEach((s) => {
+            if (s?.id && !isGuestSession(s.id, s.customerEmail)) {
+              const key = String(s.id).trim().toLowerCase();
+              const existing = sessionMap.get(key);
+              sessionMap.set(key, { ...existing, ...s });
+            }
+          });
+          safeAtomicWriteJson(getSessionsFilePath(), Array.from(sessionMap.values()));
+        }
+      }).catch(() => {});
     }
 
     sessions = sessions.filter((s) => !isGuestSession(s.id, s.customerEmail || s.email));
@@ -176,9 +191,34 @@ export async function GET(req: NextRequest) {
   let sessions = readJsonFile(getSessionsFilePath());
   let messages = readJsonFile(getMessagesFilePath());
 
-  // 1. Supabase에서 세션 및 메시지 복구 및 비파괴적 병합 (Self-Healing & Two-Way Sync)
-  try {
-    const [sbSessionsRes, sbMessagesRes] = await Promise.all([
+  // 로컬 데이터가 비어있을 때만 동기 복구, 데이터가 있으면 즉시 반환(0ms)하고 백그라운드 비동기 동기화
+  if (sessions.length === 0 && messages.length === 0) {
+    try {
+      const [sbSessionsRes, sbMessagesRes] = await Promise.all([
+        runSafeSupabaseQuery<any[]>(
+          async (supabase) => supabase.from("chat_sessions").select("*").order("updated_at", { ascending: false }),
+          1500
+        ),
+        runSafeSupabaseQuery<any[]>(
+          async (supabase) => supabase.from("chat_messages").select("*").order("created_at", { ascending: true }),
+          1500
+        ),
+      ]);
+
+      if (!sbSessionsRes.error && Array.isArray(sbSessionsRes.data) && sbSessionsRes.data.length > 0) {
+        sessions = sbSessionsRes.data.filter((s) => !isGuestSession(s?.id, s?.customerEmail));
+        safeAtomicWriteJson(getSessionsFilePath(), sessions);
+      }
+      if (!sbMessagesRes.error && Array.isArray(sbMessagesRes.data) && sbMessagesRes.data.length > 0) {
+        messages = sbMessagesRes.data;
+        safeAtomicWriteJson(getMessagesFilePath(), messages);
+      }
+    } catch (syncErr) {
+      console.warn("[Chat API Sync All Warning]:", syncErr);
+    }
+  } else {
+    // 비동기 백그라운드 듀얼 동기화 (0ms 블로킹 방지)
+    Promise.all([
       runSafeSupabaseQuery<any[]>(
         async (supabase) => supabase.from("chat_sessions").select("*").order("updated_at", { ascending: false }),
         2000
@@ -187,50 +227,44 @@ export async function GET(req: NextRequest) {
         async (supabase) => supabase.from("chat_messages").select("*").order("created_at", { ascending: true }),
         2000
       ),
-    ]);
+    ]).then(([sbSessionsRes, sbMessagesRes]) => {
+      let sessionsChanged = false;
+      let messagesChanged = false;
 
-    let sessionsChanged = false;
-    let messagesChanged = false;
+      const curSessions = readJsonFile(getSessionsFilePath());
+      const curMessages = readJsonFile(getMessagesFilePath());
 
-    if (!sbSessionsRes.error && Array.isArray(sbSessionsRes.data) && sbSessionsRes.data.length > 0) {
-      const sessionMap = new Map<string, any>();
-      sbSessionsRes.data.forEach((s) => {
-        if (s?.id) sessionMap.set(String(s.id).trim().toLowerCase(), s);
-      });
-      sessions.forEach((s) => {
-        if (s?.id) {
-          const key = String(s.id).trim().toLowerCase();
-          const existing = sessionMap.get(key);
-          sessionMap.set(key, { ...existing, ...s });
-        }
-      });
-      sessions = Array.from(sessionMap.values());
-      sessionsChanged = true;
-    }
+      if (!sbSessionsRes.error && Array.isArray(sbSessionsRes.data) && sbSessionsRes.data.length > 0) {
+        const sessionMap = new Map<string, any>();
+        sbSessionsRes.data.forEach((s) => {
+          if (s?.id && !isGuestSession(s.id, s.customerEmail)) {
+            sessionMap.set(String(s.id).trim().toLowerCase(), s);
+          }
+        });
+        curSessions.forEach((s) => {
+          if (s?.id && !isGuestSession(s.id, s.customerEmail)) {
+            const key = String(s.id).trim().toLowerCase();
+            const existing = sessionMap.get(key);
+            sessionMap.set(key, { ...existing, ...s });
+          }
+        });
+        safeAtomicWriteJson(getSessionsFilePath(), Array.from(sessionMap.values()));
+      }
 
-    if (!sbMessagesRes.error && Array.isArray(sbMessagesRes.data) && sbMessagesRes.data.length > 0) {
-      const msgMap = new Map<string, any>();
-      sbMessagesRes.data.forEach((m) => {
-        if (m?.id) msgMap.set(String(m.id), m);
-      });
-      messages.forEach((m) => {
-        if (m?.id) {
-          const existing = msgMap.get(String(m.id));
-          msgMap.set(String(m.id), { ...existing, ...m });
-        }
-      });
-      messages = Array.from(msgMap.values());
-      messagesChanged = true;
-    }
-
-    if (sessionsChanged) {
-      safeAtomicWriteJson(getSessionsFilePath(), sessions);
-    }
-    if (messagesChanged) {
-      safeAtomicWriteJson(getMessagesFilePath(), messages);
-    }
-  } catch (syncErr) {
-    console.warn("[Chat API Sync All Warning]:", syncErr);
+      if (!sbMessagesRes.error && Array.isArray(sbMessagesRes.data) && sbMessagesRes.data.length > 0) {
+        const msgMap = new Map<string, any>();
+        sbMessagesRes.data.forEach((m) => {
+          if (m?.id) msgMap.set(String(m.id), m);
+        });
+        curMessages.forEach((m) => {
+          if (m?.id) {
+            const existing = msgMap.get(String(m.id));
+            msgMap.set(String(m.id), { ...existing, ...m });
+          }
+        });
+        safeAtomicWriteJson(getMessagesFilePath(), Array.from(msgMap.values()));
+      }
+    }).catch(() => {});
   }
 
   // GET 요청 시에는 삭제되거나 종료된 세션이 임의로 재등록되지 않도록, 메시지 기반 자동 세션 생성을 비활성화합니다.

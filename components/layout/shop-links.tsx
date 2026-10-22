@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Collection } from "@/lib/sfcc/types";
+import { useTranslation } from "@/lib/i18n/translation";
 
 interface ShopLinksProps {
   collections: Collection[];
@@ -36,11 +39,15 @@ export function ShopLinks({
   colorClass,
   includeShopAll = false,
 }: ShopLinksProps) {
+  const { currentLang, t } = useTranslation();
+
   const textColor =
     colorClass ||
     (align === "right"
       ? "text-white"
       : "text-neutral-900 dark:text-neutral-100");
+
+  const shopAllDisplay = t("전체보기") || "SHOP ALL";
 
   return (
     <div className={align === "right" ? "text-right text-white" : "text-left"}>
@@ -52,12 +59,15 @@ export function ShopLinks({
               prefetch
               className={`text-base md:text-lg font-black uppercase hover:underline transition-all block text-black dark:text-white tracking-wide ${textColor}`}
             >
-              {CATEGORY_KO_MAP["SHOP ALL"]}
+              {shopAllDisplay}
             </Link>
           </li>
         )}
         {collections.map((item) => {
-          const displayTitle = CATEGORY_KO_MAP[item.handle] || CATEGORY_KO_MAP[item.title] || item.title;
+          const koName = CATEGORY_KO_MAP[item.handle] || CATEGORY_KO_MAP[item.title] || item.title;
+          const translated = t(koName);
+          const displayTitle = currentLang === "ko" ? koName : (translated !== koName ? translated : (item.title || item.handle));
+
           return (
             <li key={item.handle}>
               <Link
@@ -74,3 +84,4 @@ export function ShopLinks({
     </div>
   );
 }
+

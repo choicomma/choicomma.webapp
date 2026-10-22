@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
 import { Collection, Product } from "@/lib/sfcc/types";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/translation";
 
 const sortOptions = [
   { label: "낮은 가격순", value: "price-asc" },
@@ -59,16 +60,17 @@ export default function ResultsControls({
   products: Product[];
   className?: string;
 }) {
+  const { currentLang, t } = useTranslation();
   const params = useParams<{ collection: string }>();
   const [sort, setSort] = useQueryState("sort", parseAsString);
 
   const renderCategoryBreadcrumb = () => {
-    if (params.collection === undefined) return "전체보기";
+    if (params.collection === undefined) return t("전체보기") || "전체보기";
     const collection = collections.find((c) => c.handle === params.collection);
-    return (
-      CATEGORY_KO_MAP[params.collection] ||
-      (collection ? CATEGORY_KO_MAP[collection.handle] || CATEGORY_KO_MAP[collection.title] || collection.title : "전체보기")
-    );
+    const koName = CATEGORY_KO_MAP[params.collection] ||
+      (collection ? CATEGORY_KO_MAP[collection.handle] || CATEGORY_KO_MAP[collection.title] || collection.title : "전체보기");
+    const translated = t(koName);
+    return currentLang === "ko" ? koName : (translated !== koName ? translated : (collection?.title || params.collection));
   };
 
   return (
@@ -81,12 +83,12 @@ export default function ResultsControls({
       {/* Sort dropdown - aligned to left */}
       <Select value={sort ?? undefined} onValueChange={setSort}>
         <SelectTrigger className="-ml-2 md:w-[130px] bg-transparent border-none shadow-none hover:bg-muted/50 font-medium justify-self-start text-xs">
-          <SelectValue placeholder="정렬 기준" />
+          <SelectValue placeholder={t("정렬 기준")} />
         </SelectTrigger>
         <SelectContent align="start">
           <SelectGroup>
             <div className="flex items-center justify-between pr-1">
-              <SelectLabel className="text-xs">정렬</SelectLabel>
+              <SelectLabel className="text-xs">{t("정렬")}</SelectLabel>
               <Button
                 type="button"
                 variant="ghost"
@@ -94,13 +96,13 @@ export default function ResultsControls({
                 className="px-1 h-5 text-xs text-muted-foreground"
                 onClick={() => setSort(null)}
               >
-                초기화
+                {t("초기화")}
               </Button>
             </div>
             <SelectSeparator />
             {sortOptions.map((option) => (
               <SelectItem key={option.value} value={option.value} className="text-xs">
-                {option.label}
+                {t(option.label) || option.label}
               </SelectItem>
             ))}
           </SelectGroup>

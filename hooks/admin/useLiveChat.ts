@@ -326,6 +326,15 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       ) {
         return prev;
       }
+
+      // 새 메시지 감지: 이전 상태보다 늘어났고 최신 메시지가 고객 메시지인 경우 사운드 재생 (시크릿 창/타 브라우저 연동 보장)
+      if (finalList.length > prev.length) {
+        const lastNew = finalList[finalList.length - 1];
+        if (lastNew?.sender === "user" || lastNew?.sender === "customer") {
+          playNotificationSound();
+        }
+      }
+
       return finalList;
     });
   }, []);
@@ -490,26 +499,39 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       } catch (e) {}
     }
 
-    // Resilient Polling (every 3.5 seconds)
-    let pollInFlight = false;
-    const interval = setInterval(async () => {
-      if (pollInFlight) return;
+    // 1. 초고속 실시간 활성 대화 동기화 (800ms) - 고객 입력 즉시 관리자 화면에 반영
+    let msgSyncInFlight = false;
+    const msgInterval = setInterval(async () => {
+      if (msgSyncInFlight) return;
       if (isSendingLiveChatRef.current) return;
-      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
-      pollInFlight = true;
+      msgSyncInFlight = true;
       try {
-        await Promise.all([loadSessions(), syncAdminLiveChat()]);
+        await syncAdminLiveChat();
       } catch (e) {
       } finally {
-        pollInFlight = false;
+        msgSyncInFlight = false;
       }
-    }, 3500);
+    }, 800);
+
+    // 2. 백그라운드 세션 목록 동기화 (3000ms)
+    let sessionPollInFlight = false;
+    const sessionInterval = setInterval(async () => {
+      if (sessionPollInFlight) return;
+      sessionPollInFlight = true;
+      try {
+        await loadSessions();
+      } catch (e) {
+      } finally {
+        sessionPollInFlight = false;
+      }
+    }, 3000);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("live_chat_updated", handleStorageChange);
       if (bc) bc.close();
-      clearInterval(interval);
+      clearInterval(msgInterval);
+      clearInterval(sessionInterval);
     };
   }, [loadSessions, syncAdminLiveChat]);
 

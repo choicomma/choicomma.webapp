@@ -11,21 +11,12 @@
     "lastMessageAt": "2026-10-22T08:53:58.319Z"
   },
   {
-    "id": "guest@customer.choicomma.com",
-    "customerName": "실시간 방문 고객",
-    "customerEmail": "guest@customer.choicomma.com",
-    "customerPhone": "",
-    "status": "online",
-    "created_at": "2026-10-22T08:56:49.712505+00:00",
-    "updated_at": "2026-10-22T08:56:57.655+00:00"
-  },
-  {
     "id": "admin@choicomma.com",
-    "customerName": "방문자",
+    "customerName": "최고관리자 (Admin)",
     "customerEmail": "admin@choicomma.com",
     "customerPhone": "",
-    "status": "ended",
+    "status": "online",
     "created_at": "2026-10-21T14:52:00.840222+00:00",
-    "updated_at": "2026-10-22T08:55:57.834+00:00"
+    "updated_at": "2026-10-22T11:55:41.086Z"
   }
 ]

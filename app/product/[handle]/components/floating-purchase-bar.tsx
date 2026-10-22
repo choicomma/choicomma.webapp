@@ -10,7 +10,7 @@ import { useCart } from "@/components/cart/cart-context";
 import { ShoppingBag, Zap, ChevronUp, Check, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { getCurrentLanguage } from "@/lib/i18n/translation";
+import { getCurrentLanguage, translateUiText, useProductTranslation } from "@/lib/i18n/translation";
 import { trackCustomerJourney } from "@/lib/logging/journey-tracker";
 import { isCustomerLoggedIn } from "@/lib/auth/customer-session";
 
@@ -24,6 +24,9 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
   const { addCartItem } = useCart();
   const [isVisible, setIsVisible] = useState(false);
   const [currentLang, setCurrentLang] = useState("ko");
+
+  const cleanTitle = useMemo(() => cleanProductTitle(product.title), [product.title]);
+  const translatedTitle = useProductTranslation(cleanTitle);
 
   // Options State
   const [selectedColor, setSelectedColor] = useState<string>("");
@@ -561,7 +564,7 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
           </div>
           <div className="min-w-0 flex flex-col justify-center">
             <h4 className="text-xs sm:text-[13px] font-bold text-neutral-900 dark:text-white truncate">
-              {cleanProductTitle(product.title)}
+              {translatedTitle || cleanTitle}
             </h4>
             <div className="flex items-baseline gap-1.5 sm:gap-2 mt-0.5">
               {/* 할인가 (기본 검정/화이트 색상) */}
@@ -729,7 +732,7 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
                         >
                           <span className="font-mono">{size}</span>
                           {isSoldOut ? (
-                            <span className="text-[10px] text-rose-500 font-bold">품절</span>
+                            <span className="text-[10px] text-rose-500 font-bold">{translateUiText("품절", currentLang)}</span>
                           ) : isSelected ? (
                             <Check className="w-3.5 h-3.5 stroke-[3] shrink-0" />
                           ) : null}
@@ -771,8 +774,8 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAddingToCart}
             className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl border border-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-950 dark:text-white flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0 disabled:opacity-40 disabled:cursor-not-allowed group"
-            title="장바구니 담기"
-            aria-label="장바구니 담기"
+            title={translateUiText("장바구니 담기", currentLang)}
+            aria-label={translateUiText("장바구니 담기", currentLang)}
           >
             {isAddingToCart ? (
               <span className="w-3.5 h-3.5 border-2 border-neutral-900 border-t-transparent rounded-full animate-spin" />
@@ -787,10 +790,10 @@ export function FloatingPurchaseBar({ product, sharedPrices }: FloatingPurchaseB
             onClick={handleBuyNow}
             disabled={isOutOfStock}
             className="flex-[1.4] sm:flex-initial min-w-[85px] sm:min-w-0 h-10 sm:h-11 px-3 sm:px-6 rounded-xl bg-neutral-950 hover:bg-black text-white text-xs sm:text-sm font-black flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-98 shrink-0 whitespace-nowrap disabled:bg-neutral-300 disabled:cursor-not-allowed"
-            title={isScheduled ? `오픈 예정 (${scheduledDateStr} 오픈)` : isOutOfStock ? "품절된 상품입니다." : "주문서로 바로 이동"}
+            title={isScheduled ? `${translateUiText("오픈 예정", currentLang)} (${scheduledDateStr})` : isOutOfStock ? translateUiText("품절", currentLang) : translateUiText("구매하기", currentLang)}
           >
             {!isScheduled && <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />}
-            <span>{isScheduled ? `오픈 예정 (${scheduledDateStr} 오픈)` : isOutOfStock ? "품절" : "구매하기"}</span>
+            <span>{isScheduled ? `${translateUiText("오픈 예정", currentLang)} (${scheduledDateStr})` : isOutOfStock ? translateUiText("품절", currentLang) : translateUiText("구매하기", currentLang)}</span>
           </button>
         </div>
       </div>

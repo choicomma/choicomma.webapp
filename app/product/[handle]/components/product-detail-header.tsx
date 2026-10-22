@@ -8,7 +8,7 @@ import { Sparkles, Check, Clock, Ticket, ShoppingBag, Lock, Flame } from "lucide
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/cart/cart-context";
-import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation } from "@/lib/i18n/translation";
+import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation, useProductTranslation } from "@/lib/i18n/translation";
 import { getAvailableCoupons, getUserCoupons } from "@/lib/membership/coupons";
 import { getAllProductOptions, getProductDirectColor } from "./product-options-helper";
 import { ProductSizeRecommendationWidget } from "@/components/product/product-size-recommendation-widget";
@@ -198,30 +198,13 @@ export function ProductDetailHeader({
   const { addCartItem } = useCart();
   const [isAdding, setIsAdding] = useState(false);
 
-  const [displayTitle, setDisplayTitle] = useState(cleanProductTitle(product.title));
+  const cleanOriginal = cleanProductTitle(product.title);
+  const displayTitle = useProductTranslation(cleanOriginal);
 
   useEffect(() => {
-    const lang = getCurrentLanguage();
-
-    const updateTranslations = (targetLang: string) => {
-      const cleanOriginal = cleanProductTitle(product.title);
-      if (targetLang === "ko") {
-        setDisplayTitle(cleanOriginal);
-        return;
-      }
-      setDisplayTitle(cleanProductTitle(translateProductTitle(cleanOriginal, targetLang)));
-
-      fetchAsyncTranslation(cleanOriginal, targetLang, "title").then((res) => {
-        if (res) setDisplayTitle(cleanProductTitle(res));
-      });
-    };
-
-    updateTranslations(lang);
-
     const handleLangChange = () => {
       const newLang = getCurrentLanguage();
       setCurrentLang(newLang);
-      updateTranslations(newLang);
     };
 
     window.addEventListener("language_changed", handleLangChange);
@@ -230,7 +213,7 @@ export function ProductDetailHeader({
       window.removeEventListener("language_changed", handleLangChange);
       window.removeEventListener("language-changed", handleLangChange);
     };
-  }, [product.title]);
+  }, []);
 
   useEffect(() => {
     const updateTimeSaleProduct = () => {

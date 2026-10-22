@@ -13,6 +13,7 @@ import { MainNoticeBanner } from "@/components/home/main-client-features";
 import { LanguageSelector } from "./language-selector";
 import { validateCustomerSession, logoutUser } from "@/lib/auth/customer-session";
 import { syncSecretTimesalesFromServer } from "@/lib/membership/timesales";
+import { useTranslation } from "@/lib/i18n/translation";
 
 export const navItems: NavItem[] = [
   {
@@ -42,6 +43,7 @@ interface HeaderProps {
 }
 
 export function Header({ collections }: HeaderProps) {
+  const { currentLang, t } = useTranslation();
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
@@ -217,7 +219,7 @@ export function Header({ collections }: HeaderProps) {
                       )}
                       prefetch
                     >
-                      <span>{item.label}</span>
+                      <span>{t(item.label) || item.label}</span>
                     </Link>
                   </li>
                 ))}
@@ -227,9 +229,9 @@ export function Header({ collections }: HeaderProps) {
                       type="button"
                       onClick={handleLogout}
                       className="font-bold text-xs lg:text-sm transition-colors duration-300 uppercase flex items-center gap-1 whitespace-nowrap text-neutral-700 hover:text-rose-600 cursor-pointer"
-                      title="로그아웃"
+                      title={t("로그아웃")}
                     >
-                      <span>로그아웃</span>
+                      <span>{t("로그아웃")}</span>
                     </button>
                   </li>
                 )}

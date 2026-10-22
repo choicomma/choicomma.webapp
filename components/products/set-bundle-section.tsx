@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Sparkles, Gift, Percent } from "lucide-react";
 import { toast } from "sonner";
-import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+import { translateProductTitle, getCurrentLanguage, ProductTranslatedTitle } from "@/lib/i18n/translation";
 
 import { mockProducts } from "@/lib/sfcc/mock/products";
 
@@ -220,9 +220,10 @@ export function SetBundleSection({ products }: SetBundleSectionProps) {
                         )}
                       </div>
                       <div className="min-w-0 max-w-[120px]">
-                        <p className="text-[11px] font-bold text-neutral-900 truncate">
-                          {translateProductTitle(item.product.title, currentLang)}
-                        </p>
+                        <ProductTranslatedTitle
+                          title={item.product.title}
+                          className="text-[11px] font-bold text-neutral-900 truncate block"
+                        />
                         <p className="text-[11px] text-neutral-500 font-semibold">
                           {formatPrice(item.product.priceRange.minVariantPrice.amount)}
                         </p>

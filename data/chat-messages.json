@@ -134,5 +134,26 @@
     "sender": "user",
     "text": "상담요청",
     "created_at": "2026-10-22T09:30:56.716+00:00"
+  },
+  {
+    "id": "admin-reply-1792662800606",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "admin",
+    "text": "{\"type\":\"ORDER_SELECT_REQUEST\",\"title\":\"문의하실 주문건을 선택해 주세요\",\"text\":\"고객님의 주문 내역 중 상담을 원하시는 주문건을 선택해 주시면 확인 후 신속하게 도와드리겠습니다.\",\"requestedAt\":\"2026-10-22T09:53:20.605Z\"}",
+    "created_at": "2026-10-22T09:53:20.79+00:00"
+  },
+  {
+    "id": "user-msg-1792670197794",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "user",
+    "text": "대답해라",
+    "created_at": "2026-10-22T11:56:38.797+00:00"
+  },
+  {
+    "id": "user-msg-1792670224797",
+    "sessionId": "cho@findcategory.co.kr",
+    "sender": "user",
+    "text": "대답안하냐",
+    "created_at": "2026-10-22T11:57:04.946+00:00"
   }
 ]

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 export interface LanguageOption {
   code: string;
@@ -71,6 +71,259 @@ initCacheFromStorage();
 
 // Instant UI Dictionary for e-commerce phrases
 const UI_DICTIONARY: Record<string, Record<string, string>> = {
+  "홈": {
+    en: "Home",
+    ja: "ホーム",
+    "zh-cn": "首页",
+    es: "Inicio",
+    fr: "Accueil",
+    de: "Startseite",
+    vi: "Trang chủ",
+    th: "หน้าแรก",
+    id: "Beranda",
+  },
+  "메뉴": {
+    en: "Menu",
+    ja: "メニュー",
+    "zh-cn": "菜单",
+    es: "Menú",
+    fr: "Menu",
+    de: "Menü",
+    vi: "Menu",
+    th: "เมนู",
+    id: "Menu",
+  },
+  "MENU": {
+    en: "MENU",
+    ja: "MENU",
+    "zh-cn": "菜单",
+    es: "MENÚ",
+    fr: "MENU",
+    de: "MENÜ",
+    vi: "MENU",
+    th: "เมนู",
+    id: "MENU",
+  },
+  "닫기": {
+    en: "Close",
+    ja: "閉じる",
+    "zh-cn": "关闭",
+    es: "Cerrar",
+    fr: "Fermer",
+    de: "Schließen",
+    vi: "Đóng",
+    th: "ปิด",
+    id: "Tutup",
+  },
+  "마이페이지": {
+    en: "My Page",
+    ja: "マイページ",
+    "zh-cn": "个人中心",
+    es: "Mi Página",
+    fr: "Mon Compte",
+    de: "Mein Konto",
+    vi: "Trang cá nhân",
+    th: "หน้าของฉัน",
+    id: "Halaman Saya",
+  },
+  "주문내역/배송조회": {
+    en: "Orders & Tracking",
+    ja: "注文履歴・配送照会",
+    "zh-cn": "订单/物流查询",
+    es: "Pedidos y Envíos",
+    fr: "Commandes et Suivi",
+    de: "Bestellungen & Sendungsverfolgung",
+    vi: "Đơn hàng & Vận chuyển",
+    th: "ประวัติการสั่งซื้อ/ติดตามพัสดุ",
+    id: "Pesanan & Pelacakan",
+  },
+  "주문내역 / 배송조회": {
+    en: "Orders & Tracking",
+    ja: "注文履歴・配送照会",
+    "zh-cn": "订单/物流查询",
+    es: "Pedidos y Envíos",
+    fr: "Commandes et Suivi",
+    de: "Bestellungen & Sendungsverfolgung",
+    vi: "Đơn hàng & Vận chuyển",
+    th: "ประวัติการสั่งซื้อ/ติดตามพัสดุ",
+    id: "Pesanan & Pelacakan",
+  },
+  "주문내역": {
+    en: "Orders",
+    ja: "注文履歴",
+    "zh-cn": "订单历史",
+    es: "Pedidos",
+    fr: "Commandes",
+    de: "Bestellungen",
+    vi: "Đơn hàng",
+    th: "ประวัติการสั่งซื้อ",
+    id: "Pesanan",
+  },
+  "배송조회": {
+    en: "Tracking",
+    ja: "配送照会",
+    "zh-cn": "物流查询",
+    es: "Seguimiento",
+    fr: "Suivi",
+    de: "Sendungsverfolgung",
+    vi: "Vận chuyển",
+    th: "ติดตามพัสดุ",
+    id: "Pelacakan",
+  },
+  "상품 검색어 입력...": {
+    en: "Search products...",
+    ja: "商品を検索...",
+    "zh-cn": "搜索商品...",
+    es: "Buscar productos...",
+    fr: "Rechercher des produits...",
+    de: "Produkte suchen...",
+    vi: "Tìm kiếm sản phẩm...",
+    th: "ค้นหาสินค้า...",
+    id: "Cari produk...",
+  },
+  "검색": {
+    en: "Search",
+    ja: "検索",
+    "zh-cn": "搜索",
+    es: "Buscar",
+    fr: "Rechercher",
+    de: "Suchen",
+    vi: "Tìm kiếm",
+    th: "ค้นหา",
+    id: "Cari",
+  },
+  "카테고리": {
+    en: "Categories",
+    ja: "カテゴリー",
+    "zh-cn": "商品分类",
+    es: "Categorías",
+    fr: "Catégories",
+    de: "Kategorien",
+    vi: "Danh mục",
+    th: "หมวดหมู่",
+    id: "Kategori",
+  },
+  "아우터": {
+    en: "Outer",
+    ja: "アウター",
+    "zh-cn": "外套",
+    es: "Abrigos",
+    fr: "Manteaux",
+    de: "Jacken",
+    vi: "Áo khoác",
+    th: "เสื้อตัวนอก",
+    id: "Outer",
+  },
+  "상의": {
+    en: "Tops",
+    ja: "トップス",
+    "zh-cn": "上装",
+    es: "Tops",
+    fr: "Hauts",
+    de: "Oberteile",
+    vi: "Áo",
+    th: "เสื้อ",
+    id: "Atasan",
+  },
+  "하의": {
+    en: "Bottoms",
+    ja: "ボトムス",
+    "zh-cn": "下装",
+    es: "Pantalones",
+    fr: "Bas",
+    de: "Unterteile",
+    vi: "Quần",
+    th: "กางเกง",
+    id: "Bawahan",
+  },
+  "가방": {
+    en: "Bags",
+    ja: "バッグ",
+    "zh-cn": "包袋",
+    es: "Bolsos",
+    fr: "Sacs",
+    de: "Taschen",
+    vi: "Túi xách",
+    th: "กระเป๋า",
+    id: "Tas",
+  },
+  "신발": {
+    en: "Shoes",
+    ja: "シューズ",
+    "zh-cn": "鞋履",
+    es: "Zapatos",
+    fr: "Chaussures",
+    de: "Schuhe",
+    vi: "Giày dép",
+    th: "รองเท้า",
+    id: "Sepatu",
+  },
+  "악세사리": {
+    en: "Accessories",
+    ja: "アクセサリー",
+    "zh-cn": "配饰",
+    es: "Accesorios",
+    fr: "Accessoires",
+    de: "Accessoires",
+    vi: "Phụ kiện",
+    th: "เครื่องประดับ",
+    id: "Aksesoris",
+  },
+  "베스트": {
+    en: "Best Sellers",
+    ja: "ベストセラー",
+    "zh-cn": "热销榜",
+    es: "Los Más Vendidos",
+    fr: "Meilleures Ventes",
+    de: "Bestseller",
+    vi: "Bán chạy nhất",
+    th: "สินค้าขายดี",
+    id: "Terlaris",
+  },
+  "관리자": {
+    en: "Admin",
+    ja: "管理者",
+    "zh-cn": "管理员",
+    es: "Admin",
+    fr: "Admin",
+    de: "Admin",
+    vi: "Quản trị viên",
+    th: "ผู้ดูแลระบบ",
+    id: "Admin",
+  },
+  "회원": {
+    en: "Member",
+    ja: "会員",
+    "zh-cn": "会员",
+    es: "Miembro",
+    fr: "Membre",
+    de: "Mitglied",
+    vi: "Thành viên",
+    th: "สมาชิก",
+    id: "Anggota",
+  },
+  "회원님": {
+    en: "Member",
+    ja: "会員様",
+    "zh-cn": "会员",
+    es: "Estimado cliente",
+    fr: "Cher client",
+    de: "Lieber Kunde",
+    vi: "Quý khách",
+    th: "ท่านสมาชิก",
+    id: "Pelanggan",
+  },
+  "로그인 중": {
+    en: "Logged In",
+    ja: "ログイン中",
+    "zh-cn": "已登录",
+    es: "Conectado",
+    fr: "Connecté",
+    de: "Angemeldet",
+    vi: "Đã đăng nhập",
+    th: "เข้าสู่ระบบแล้ว",
+    id: "Sedang Masuk",
+  },
   "오픈 예정": {
     en: "Coming Soon",
     ja: "オープン予定",
@@ -203,6 +456,259 @@ const UI_DICTIONARY: Record<string, Record<string, string>> = {
     th: "ลดราคาจำกัดเวลา",
     id: "Promo Terbatas",
   },
+  "결제하기": {
+    en: "Checkout",
+    ja: "レジへ進む",
+    "zh-cn": "去结算",
+    es: "Pagar",
+    fr: "Commander",
+    de: "Zur Kasse",
+    vi: "Thanh toán",
+    th: "ชำระเงิน",
+    id: "Bayar Sekarang",
+  },
+  "쇼핑 계속하기": {
+    en: "Continue Shopping",
+    ja: "お買い物を続ける",
+    "zh-cn": "继续购物",
+    es: "Continuar comprando",
+    fr: "Continuer vos achats",
+    de: "Weiter einkaufen",
+    vi: "Tiếp tục mua sắm",
+    th: "ซื้อสินค้าต่อ",
+    id: "Lanjut Belanja",
+  },
+  "담은 상품": {
+    en: "Items",
+    ja: "選択した商品",
+    "zh-cn": "已选商品",
+    es: "Artículos",
+    fr: "Articles",
+    de: "Artikel",
+    vi: "Sản phẩm đã chọn",
+    th: "สินค้าที่เลือก",
+    id: "Item Terpilih",
+  },
+  "총 결제금액": {
+    en: "Total",
+    ja: "合計金額",
+    "zh-cn": "合计金额",
+    es: "Total",
+    fr: "Total",
+    de: "Gesamtsumme",
+    vi: "Tổng thanh toán",
+    th: "ยอดรวมทั้งหมด",
+    id: "Total Pembayaran",
+  },
+  "장바구니가 비어 있습니다.": {
+    en: "Your cart is empty.",
+    ja: "カートは空です。",
+    "zh-cn": "购物车是空的。",
+    es: "Tu carrito está vacío.",
+    fr: "Votre panier est vide.",
+    de: "Ihr Warenkorb ist leer.",
+    vi: "Giỏ hàng đang trống.",
+    th: "รถเข็นของคุณว่างเปล่า",
+    id: "Keranjang belanja Anda kosong.",
+  },
+  "원하시는 상품을 장바구니에 담아보세요.": {
+    en: "Add products you like to your cart.",
+    ja: "お気に入りの商品をカートに追加してください。",
+    "zh-cn": "快去挑选喜欢的商品吧。",
+    es: "Agrega productos a tu carrito.",
+    fr: "Ajoutez des produits à votre panier.",
+    de: "Legen Sie Artikel in den Warenkorb.",
+    vi: "Hãy thêm sản phẩm yêu thích vào giỏ hàng.",
+    th: "เพิ่มสินค้าที่คุณต้องการลงในรถเข็น",
+    id: "Tambahkan produk pilihan Anda ke keranjang.",
+  },
+  "낮은 가격순": {
+    en: "Price: Low to High",
+    ja: "価格の安い順",
+    "zh-cn": "价格从低到高",
+    es: "Precio: menor a mayor",
+    fr: "Prix croissant",
+    de: "Preis aufsteigend",
+    vi: "Giá: Thấp đến cao",
+    th: "ราคา: ต่ำไปสูง",
+    id: "Harga: Rendah ke Tinggi",
+  },
+  "높은 가격순": {
+    en: "Price: High to Low",
+    ja: "価格の高い順",
+    "zh-cn": "价格从高到低",
+    es: "Precio: mayor a menor",
+    fr: "Prix décroissant",
+    de: "Preis absteigend",
+    vi: "Giá: Cao đến thấp",
+    th: "ราคา: สูงไปต่ำ",
+    id: "Harga: Tinggi ke Rendah",
+  },
+  "최신 등록순": {
+    en: "Newest",
+    ja: "新着順",
+    "zh-cn": "最新上架",
+    es: "Más nuevos",
+    fr: "Nouveautés",
+    de: "Neueste",
+    vi: "Mới nhất",
+    th: "ใหม่ล่าสุด",
+    id: "Terbaru",
+  },
+  "오래된순": {
+    en: "Oldest",
+    ja: "古い順",
+    "zh-cn": "最早上架",
+    es: "Más antiguos",
+    fr: "Plus anciens",
+    de: "Älteste",
+    vi: "Cũ nhất",
+    th: "เก่าที่สุด",
+    id: "Terlama",
+  },
+  "정렬 기준": {
+    en: "Sort by",
+    ja: "並び替え",
+    "zh-cn": "排序方式",
+    es: "Ordenar por",
+    fr: "Trier par",
+    de: "Sortieren nach",
+    vi: "Sắp xếp theo",
+    th: "จัดเรียงตาม",
+    id: "Urutkan",
+  },
+  "정렬": {
+    en: "Sort",
+    ja: "並び替え",
+    "zh-cn": "排序",
+    es: "Ordenar",
+    fr: "Trier",
+    de: "Sortieren",
+    vi: "Sắp xếp",
+    th: "จัดเรียง",
+    id: "Urutkan",
+  },
+  "초기화": {
+    en: "Reset",
+    ja: "リセット",
+    "zh-cn": "重置",
+    es: "Restablecer",
+    fr: "Réinitialiser",
+    de: "Zurücksetzen",
+    vi: "Đặt lại",
+    th: "รีเซ็ต",
+    id: "Atur Ulang",
+  },
+  "정상가": {
+    en: "Regular Price",
+    ja: "通常価格",
+    "zh-cn": "原价",
+    es: "Precio original",
+    fr: "Prix initial",
+    de: "Normalpreis",
+    vi: "Giá gốc",
+    th: "ราคาปกติ",
+    id: "Harga Normal",
+  },
+  "할인가": {
+    en: "Sale Price",
+    ja: "セール価格",
+    "zh-cn": "特价",
+    es: "Precio de oferta",
+    fr: "Prix réduit",
+    de: "Aktionspreis",
+    vi: "Giá ưu đãi",
+    th: "ราคาลด",
+    id: "Harga Promo",
+  },
+  "색상": {
+    en: "Color",
+    ja: "色",
+    "zh-cn": "颜色",
+    es: "Color",
+    fr: "Couleur",
+    de: "Farbe",
+    vi: "Màu sắc",
+    th: "สี",
+    id: "Warna",
+  },
+  "사이즈": {
+    en: "Size",
+    ja: "サイズ",
+    "zh-cn": "尺码",
+    es: "Talla",
+    fr: "Taille",
+    de: "Größe",
+    vi: "Kích cỡ",
+    th: "ขนาด",
+    id: "Ukuran",
+  },
+  "수량": {
+    en: "Quantity",
+    ja: "数量",
+    "zh-cn": "数量",
+    es: "Cantidad",
+    fr: "Quantité",
+    de: "Menge",
+    vi: "Số lượng",
+    th: "จำนวน",
+    id: "Jumlah",
+  },
+  "관련 상품": {
+    en: "Related Products",
+    ja: "関連商品",
+    "zh-cn": "相关商品",
+    es: "Productos relacionados",
+    fr: "Produits associés",
+    de: "Ähnliche Produkte",
+    vi: "Sản phẩm liên quan",
+    th: "สินค้าที่เกี่ยวข้อง",
+    id: "Produk Terkait",
+  },
+  "최신 컬렉션": {
+    en: "Latest Collection",
+    ja: "最新コレクション",
+    "zh-cn": "最新系列",
+    es: "Última Colección",
+    fr: "Dernière Collection",
+    de: "Neueste Kollektion",
+    vi: "Bộ sưu tập mới nhất",
+    th: "คอลเลกชันล่าสุด",
+    id: "Koleksi Terbaru",
+  },
+  "추천 상품": {
+    en: "Recommended",
+    ja: "おすすめ商品",
+    "zh-cn": "推荐商品",
+    es: "Recomendados",
+    fr: "Recommandés",
+    de: "Empfohlen",
+    vi: "Gợi ý cho bạn",
+    th: "สินค้าแนะนำ",
+    id: "Rekomendasi",
+  },
+  "세트 상품": {
+    en: "Set Bundles",
+    ja: "セット商品",
+    "zh-cn": "套装商品",
+    es: "Conjuntos",
+    fr: "Ensembles",
+    de: "Set-Angebote",
+    vi: "Bộ sản phẩm",
+    th: "เซ็ตสินค้า",
+    id: "Produk Set",
+  },
+  "세트 특가": {
+    en: "Set Sale",
+    ja: "セット特別価格",
+    "zh-cn": "套装特惠",
+    es: "Oferta en Set",
+    fr: "Offre Ensemble",
+    de: "Set-Sonderpreis",
+    vi: "Giá ưu đãi combo",
+    th: "โปรโมชั่นเซ็ต",
+    id: "Promo Spesial Set",
+  },
   "앞으로 가기": {
     en: "Move Forward",
     ja: "前へ",
@@ -281,6 +787,7 @@ export function setLanguage(lang: string): void {
 
   // 4. Dispatch custom event so all listening components update instantly
   window.dispatchEvent(new Event("language_changed"));
+  window.dispatchEvent(new Event("language-changed"));
 }
 
 /**
@@ -483,7 +990,11 @@ export function useTranslation() {
     const update = () => setCurrentLang(getCurrentLanguage());
     update();
     window.addEventListener("language_changed", update);
-    return () => window.removeEventListener("language_changed", update);
+    window.addEventListener("language-changed", update);
+    return () => {
+      window.removeEventListener("language_changed", update);
+      window.removeEventListener("language-changed", update);
+    };
   }, []);
 
   return {
@@ -498,19 +1009,48 @@ export function useTranslation() {
  * React Hook for a single product title with auto-translation and re-render
  */
 export function useProductTranslation(originalTitle: string, targetLang?: string) {
-  const [translated, setTranslated] = useState(() => translateProductTitle(originalTitle, targetLang));
+  const [currentLang, setCurrentLang] = useState(() => (targetLang || getCurrentLanguage()).toLowerCase());
 
   useEffect(() => {
-    const lang = targetLang || getCurrentLanguage();
+    if (targetLang) {
+      setCurrentLang(targetLang.toLowerCase());
+      return;
+    }
+    const update = () => setCurrentLang(getCurrentLanguage().toLowerCase());
+    update();
+    window.addEventListener("language_changed", update);
+    window.addEventListener("language-changed", update);
+    return () => {
+      window.removeEventListener("language_changed", update);
+      window.removeEventListener("language-changed", update);
+    };
+  }, [targetLang]);
+
+  const [translated, setTranslated] = useState(() => {
+    if (!originalTitle) return "";
+    const lang = currentLang;
+    if (lang === "ko") return originalTitle;
+    return translateProductTitle(originalTitle, lang);
+  });
+
+  useEffect(() => {
+    if (!originalTitle) {
+      setTranslated("");
+      return;
+    }
+    const lang = currentLang;
     if (lang === "ko") {
       setTranslated(originalTitle);
       return;
     }
 
-    setTranslated(translateProductTitle(originalTitle, lang));
+    // 1. Immediately show cached or dictionary title if available
+    const syncVal = translateProductTitle(originalTitle, lang);
+    setTranslated(syncVal);
 
+    // 2. Asynchronously fetch from DeepL if not cached
     let isMounted = true;
-    fetchAsyncTranslation(originalTitle, lang).then((res) => {
+    fetchAsyncTranslation(originalTitle, lang, "title").then((res) => {
       if (isMounted && res) {
         setTranslated(res);
       }
@@ -519,7 +1059,28 @@ export function useProductTranslation(originalTitle: string, targetLang?: string
     return () => {
       isMounted = false;
     };
-  }, [originalTitle, targetLang]);
+  }, [originalTitle, currentLang]);
 
   return translated;
 }
+
+/**
+ * Helper React Component to render auto-translated product titles cleanly
+ */
+export function ProductTranslatedTitle({
+  title,
+  targetLang,
+  className,
+}: {
+  title: string;
+  targetLang?: string;
+  className?: string;
+}) {
+  const translated = useProductTranslation(title, targetLang);
+  if (className) {
+    return React.createElement("span", { className }, translated);
+  }
+  return React.createElement(React.Fragment, null, translated);
+}
+
+

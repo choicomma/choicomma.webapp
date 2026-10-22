@@ -46,8 +46,8 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
   return (
     <div className="flex h-full flex-col justify-between overflow-hidden">
       <div className="flex justify-between text-xs font-black uppercase tracking-wider text-neutral-600 dark:text-neutral-400 px-1">
-        <span>담은 상품</span>
-        <span>{cart.lines.length}개</span>
+        <span>{translateUiText("담은 상품", currentLang)}</span>
+        <span>{cart.lines.length}{currentLang === "ko" ? "개" : " item(s)"}</span>
       </div>
       <div className="grow overflow-auto py-3 space-y-3">
         <AnimatePresence>
@@ -77,7 +77,7 @@ const CartItems = ({ closeCart, openTossModal }: { closeCart: () => void; openTo
       </div>
       <div className="py-3 text-xs font-bold text-neutral-600 dark:text-neutral-300 border-t border-neutral-200 dark:border-neutral-800">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-black text-neutral-900 dark:text-white">총 결제금액</p>
+          <p className="text-sm font-black text-neutral-900 dark:text-white">{translateUiText("총 결제금액", currentLang)}</p>
           <p className="text-right text-lg font-black text-neutral-900 dark:text-white font-mono">
             {formatPrice(
               cart.cost.totalAmount.amount,
@@ -167,11 +167,11 @@ export function CartDrawer() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      aria-label="장바구니 닫기"
+                      aria-label={translateUiText("닫기", currentLang)}
                       onClick={closeCart}
                       className="font-extrabold text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white cursor-pointer"
                     >
-                      닫기
+                      {translateUiText("닫기", currentLang)}
                     </Button>
                   </div>
 

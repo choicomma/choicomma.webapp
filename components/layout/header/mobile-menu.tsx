@@ -15,6 +15,7 @@ import { LanguageSelector } from "./language-selector";
 import { cn } from "@/lib/utils";
 import { ShoppingBag, Menu, Search, X, LogOut } from "lucide-react";
 import { validateCustomerSession, logoutUser } from "@/lib/auth/customer-session";
+import { useTranslation } from "@/lib/i18n/translation";
 
 interface MobileMenuProps {
   collections: Collection[];
@@ -23,6 +24,7 @@ interface MobileMenuProps {
 }
 
 function MobileMenuContent({ collections, isScrolled, className }: MobileMenuProps) {
+  const { currentLang, t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
@@ -167,7 +169,7 @@ function MobileMenuContent({ collections, isScrolled, className }: MobileMenuPro
             >
               {/* Header Row: MENU title, Language Selector, Close button */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-100 shrink-0">
-                <p className="text-xl font-black text-neutral-950 tracking-tight">MENU</p>
+                <p className="text-xl font-black text-neutral-950 tracking-tight">{t("MENU") || "MENU"}</p>
                 <div className="flex items-center gap-2">
                   <LanguageSelector isScrolled={false} align="right" />
                   <Button
@@ -177,7 +179,7 @@ function MobileMenuContent({ collections, isScrolled, className }: MobileMenuPro
                     onClick={closeMobileMenu}
                     className="font-extrabold text-sm hover:bg-neutral-100 text-neutral-900 px-3 py-1.5 rounded-xl cursor-pointer"
                   >
-                    닫기
+                    {t("닫기")}
                   </Button>
                 </div>
               </div>
@@ -193,21 +195,21 @@ function MobileMenuContent({ collections, isScrolled, className }: MobileMenuPro
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-black text-neutral-950 truncate">
-                          {userName ? `${userName} 님` : "회원님"}
+                          {userName ? `${userName}${currentLang === "ko" ? " 님" : ""}` : t("회원님")}
                         </p>
                         <p className="text-[10px] font-bold text-neutral-400">
-                          {isAdmin ? "관리자 (Admin)" : "로그인 중"}
+                          {isAdmin ? `${t("관리자")} (Admin)` : t("로그인 중")}
                         </p>
                       </div>
                     </div>
                     <span className="text-[11px] font-bold text-neutral-600 bg-white border border-neutral-200/80 px-2.5 py-1 rounded-xl shadow-2xs shrink-0 flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      {isAdmin ? "관리자" : "회원"}
+                      {isAdmin ? t("관리자") : t("회원")}
                     </span>
                   </div>
                 )}
 
-                {/* Top Quick Actions Grid: 로그인 시에만 주문내역/배송조회 및 장바구니 노출, 비로그인 시 로그인 버튼만 노출 */}
+                {/* Top Quick Actions Grid */}
                 {isLoggedIn ? (
                   <nav className="grid grid-cols-2 gap-2.5">
                     {/* 1. 마이페이지 */}
@@ -219,7 +221,7 @@ function MobileMenuContent({ collections, isScrolled, className }: MobileMenuPro
                       asChild
                     >
                       <Link href={isAdmin ? "/admin" : "/membership"} prefetch>
-                        마이페이지
+                        {t("마이페이지")}
                       </Link>
                     </Button>
 
@@ -232,7 +234,7 @@ function MobileMenuContent({ collections, isScrolled, className }: MobileMenuPro
                       asChild
                     >
                       <Link href="/membership?tab=orders" prefetch>
-                        <span>주문내역 / 배송조회</span>
+                        <span>{t("주문내역 / 배송조회")}</span>
                       </Link>
                     </Button>
 
@@ -249,7 +251,7 @@ function MobileMenuContent({ collections, isScrolled, className }: MobileMenuPro
                       className="bg-neutral-50 hover:bg-neutral-100 text-neutral-900 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm shadow-2xs rounded-xl gap-2 cursor-pointer"
                     >
                       <ShoppingBag className="w-4 h-4 shrink-0" />
-                      <span>장바구니 ({cart?.totalQuantity || 0})</span>
+                      <span>{t("장바구니")} ({cart?.totalQuantity || 0})</span>
                     </Button>
 
                     {/* 4. 로그아웃 */}
@@ -260,12 +262,11 @@ function MobileMenuContent({ collections, isScrolled, className }: MobileMenuPro
                       className="bg-neutral-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-neutral-700 border border-neutral-200 justify-center font-bold py-4 text-xs sm:text-sm shadow-2xs rounded-xl gap-1.5 cursor-pointer transition-colors"
                     >
                       <LogOut className="w-3.5 h-3.5 shrink-0" />
-                      <span>로그아웃</span>
+                      <span>{t("로그아웃")}</span>
                     </Button>
                   </nav>
                 ) : (
                   <nav className="w-full">
-                    {/* 비로그인 방문자: 로그인 버튼만 노출 (주문내역/배송조회 및 장바구니 숨김) */}
                     <Button
                       size="lg"
                       variant="secondary"
@@ -274,7 +275,7 @@ function MobileMenuContent({ collections, isScrolled, className }: MobileMenuPro
                       asChild
                     >
                       <Link href="/login" prefetch>
-                        로그인
+                        {t("로그인")}
                       </Link>
                     </Button>
                   </nav>
@@ -287,12 +288,12 @@ function MobileMenuContent({ collections, isScrolled, className }: MobileMenuPro
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="상품 검색어 입력..."
+                      placeholder={t("상품 검색어 입력...")}
                       className="w-full bg-neutral-50 hover:bg-neutral-100/80 focus:bg-white text-neutral-900 placeholder:text-neutral-400 text-sm font-medium pl-10 pr-9 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:border-neutral-900 transition-all"
                     />
                     <button
                       type="submit"
-                      aria-label="검색"
+                      aria-label={t("검색")}
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 cursor-pointer"
                     >
                       <Search className="w-4 h-4" />
@@ -301,7 +302,7 @@ function MobileMenuContent({ collections, isScrolled, className }: MobileMenuPro
                       <button
                         type="button"
                         onClick={handleClearSearch}
-                        aria-label="검색어 지우기"
+                        aria-label={t("검색")}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 cursor-pointer"
                       >
                         <X className="w-3.5 h-3.5" />

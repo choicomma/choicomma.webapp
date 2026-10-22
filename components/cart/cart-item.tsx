@@ -11,7 +11,7 @@ import { UpdateType } from "./cart-context";
 import { formatPrice } from "@/lib/sfcc/utils";
 import { ColorSwatch } from "@/components/ui/color-picker";
 import { useProductImages } from "../products/variant-selector";
-import { translateProductTitle, getCurrentLanguage } from "@/lib/i18n/translation";
+import { ProductTranslatedTitle, getCurrentLanguage } from "@/lib/i18n/translation";
 import { useState, useEffect } from "react";
 
 type MerchandiseSearchParams = {
@@ -85,9 +85,10 @@ export function CartItemCard({
               className="block z-30"
               prefetch
             >
-              <span className="text-xs font-black text-neutral-900 dark:text-white line-clamp-1 hover:underline">
-                {translateProductTitle(item.merchandise.product.title)}
-              </span>
+              <ProductTranslatedTitle
+                title={item.merchandise.product.title}
+                className="text-xs font-black text-neutral-900 dark:text-white line-clamp-1 hover:underline"
+              />
             </Link>
             {validOptions.length > 0 && (
               <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-bold mt-0.5">

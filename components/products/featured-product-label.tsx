@@ -300,13 +300,13 @@ export function FeaturedProductLabel({
               href={`/product/${product.handle}`}
               className="block text-xl md:text-2xl font-bold text-neutral-950 hover:underline leading-snug tracking-tight line-clamp-2"
             >
-              {product.title}
+              {displayTitle || product.title}
             </Link>
           </div>
 
           {/* Right Column: Description */}
           <div className="text-xs md:text-sm font-medium text-neutral-700 leading-relaxed line-clamp-3">
-            {product.description || "The Verde Lounge Chair is a bold blend of sculptural form and deep comfort."}
+            {displayDesc || product.description || "The Verde Lounge Chair is a bold blend of sculptural form and deep comfort."}
           </div>
         </div>
 
@@ -369,7 +369,7 @@ export function FeaturedProductLabel({
           href={`/product/${product.handle}`}
           className="block text-sm md:text-base font-bold text-neutral-950 hover:underline leading-tight tracking-tight line-clamp-2"
         >
-          {product.title}
+          {displayTitle || product.title}
         </Link>
       </div>
 
