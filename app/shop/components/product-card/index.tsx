@@ -483,15 +483,15 @@ export const ProductCard = ({
         {product.releaseDate && new Date(product.releaseDate).getTime() > Date.now() ? (
           <span className="mx-auto md:mx-0 text-[9px] sm:text-[11px] md:text-xs font-black px-2 sm:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
             <Clock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-neutral-950" />
-            <span className="md:hidden">{formatReleaseDateBadge(product.releaseDate)}</span>
-            <span className="hidden md:inline">{translateUiText("오픈 예정")}</span>
+            <span className="md:hidden">{formatReleaseDateBadge(product.releaseDate, currentLang)}</span>
+            <span className="hidden md:inline">{formatReleaseDateBadge(product.releaseDate, currentLang)}</span>
           </span>
         ) : ((product as any).stock !== undefined &&
             (product as any).stock !== null &&
             Number((product as any).stock) <= 0) ||
           (product.availableForSale === false && !(product.releaseDate && new Date(product.releaseDate).getTime() <= Date.now())) ? (
           <span className="mx-auto md:mx-0 text-[9px] sm:text-[11px] md:text-xs font-black px-2 sm:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
-            {translateUiText("품절")}
+            {translateUiText("품절", currentLang)}
           </span>
         ) : null}
       </div>

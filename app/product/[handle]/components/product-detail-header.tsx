@@ -8,7 +8,8 @@ import { Sparkles, Check, Clock, Ticket, ShoppingBag, Lock, Flame } from "lucide
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/cart/cart-context";
-import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation, useProductTranslation } from "@/lib/i18n/translation";
+import { translateProductTitle, translateProductDescription, getCurrentLanguage, fetchAsyncTranslation, useProductTranslation, translateUiText } from "@/lib/i18n/translation";
+import { formatReleaseDateBadge } from "@/lib/product-availability";
 import { getAvailableCoupons, getUserCoupons } from "@/lib/membership/coupons";
 import { getAllProductOptions, getProductDirectColor } from "./product-options-helper";
 import { ProductSizeRecommendationWidget } from "@/components/product/product-size-recommendation-widget";
@@ -806,11 +807,11 @@ export function ProductDetailHeader({
           {isScheduled ? (
             <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-neutral-950" />
-              <span>{scheduledDateStr} 오픈 예정</span>
+              <span>{formatReleaseDateBadge(product.releaseDate, currentLang)}</span>
             </span>
           ) : product.availableForSale === false || isStockEmpty ? (
             <span className="text-[11px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-wider rounded-sm bg-neutral-900 text-white shadow-2xs shrink-0 whitespace-nowrap">
-              품절
+              {translateUiText("품절", currentLang)}
             </span>
           ) : null}
         </div>
@@ -822,7 +823,7 @@ export function ProductDetailHeader({
         {/* 2. 정상가 표시 및 하단 라인 추가 (볼드 해제) */}
         <div className="flex items-baseline justify-between w-full mt-2.5 mb-1">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-xs sm:text-sm font-normal text-neutral-500 whitespace-nowrap">정상가</span>
+            <span className="text-xs sm:text-sm font-normal text-neutral-500 whitespace-nowrap">{translateUiText("정상가", currentLang)}</span>
             {quantity > 1 && (
               <span className="text-[11px] text-neutral-400 font-medium whitespace-nowrap">({quantity}개)</span>
             )}

@@ -86,25 +86,85 @@ export function validatePurchaseItems(products: any[], items: PurchaseCheckInput
 }
 
 /**
- * 오픈 예정 상품의 오픈일시를 뱃지에 표시하기 위한 포맷 함수
- * (예: "10월 27일 10:00 오픈 예정", "10월 27일 오픈 예정")
+ * 오픈 예정 상품의 오픈일시를 뱃지에 표시하기 위한 다국어 포맷 함수
+ * (예: KO: "10월 27일 10:00 오픈 예정", EN: "Oct 27 10:00 Coming Soon")
  */
-export function formatReleaseDateBadge(dateStr?: string): string {
-  if (!dateStr) return "오픈 예정";
+export function formatReleaseDateBadge(dateStr?: string, lang: string = "ko"): string {
+  const normLang = (lang || "ko").toLowerCase();
+
+  const COMING_SOON_TEXT: Record<string, string> = {
+    ko: "오픈 예정",
+    en: "Coming Soon",
+    ja: "オープン予定",
+    "zh-cn": "即将发售",
+    zh: "即将发售",
+    es: "Próximamente",
+    fr: "Prochainement",
+    de: "Demnächst",
+    vi: "Sắp mở bán",
+    th: "เร็วๆ นี้",
+    id: "Segera Hadir",
+  };
+
+  const defaultText = COMING_SOON_TEXT[normLang] || COMING_SOON_TEXT.ko;
+
+  if (!dateStr) return defaultText;
+
   try {
     const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return "오픈 예정";
+    if (isNaN(d.getTime())) return defaultText;
+
     const month = d.getMonth() + 1;
     const day = d.getDate();
     const hours = d.getHours();
     const minutes = d.getMinutes();
-    if (hours !== 0 || minutes !== 0) {
-      const timeStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-      return `${month}월 ${day}일 ${timeStr} 오픈 예정`;
+    const hasTime = hours !== 0 || minutes !== 0;
+    const timeStr = hasTime ? `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}` : "";
+
+    const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    if (normLang === "en") {
+      const mStr = EN_MONTHS[d.getMonth()] || `${month}`;
+      return hasTime ? `${mStr} ${day} ${timeStr} Coming Soon` : `${mStr} ${day} Coming Soon`;
     }
-    return `${month}월 ${day}일 오픈 예정`;
+
+    if (normLang === "ja") {
+      return hasTime ? `${month}月${day}日 ${timeStr} オープン予定` : `${month}月${day}日 オープン予定`;
+    }
+
+    if (normLang === "zh-cn" || normLang === "zh") {
+      return hasTime ? `${month}月${day}日 ${timeStr} 即将发售` : `${month}月${day}日 即将发售`;
+    }
+
+    if (normLang === "es") {
+      return hasTime ? `${day} oct ${timeStr} Próximamente` : `${day} oct Próximamente`;
+    }
+
+    if (normLang === "fr") {
+      return hasTime ? `${day} oct. ${timeStr} Prochainement` : `${day} oct. Prochainement`;
+    }
+
+    if (normLang === "de") {
+      return hasTime ? `${day}. Okt. ${timeStr} Demnächst` : `${day}. Okt. Demnächst`;
+    }
+
+    if (normLang === "vi") {
+      return hasTime ? `${day}/${month} ${timeStr} Sắp mở bán` : `${day}/${month} Sắp mở bán`;
+    }
+
+    if (normLang === "th") {
+      return hasTime ? `${day}/${month} ${timeStr} เร็วๆ นี้` : `${day}/${month} เร็วๆ นี้`;
+    }
+
+    if (normLang === "id") {
+      return hasTime ? `${day}/${month} ${timeStr} Segera Hadir` : `${day}/${month} Segera Hadir`;
+    }
+
+    // Default: ko
+    return hasTime ? `${month}월 ${day}일 ${timeStr} 오픈 예정` : `${month}월 ${day}일 오픈 예정`;
   } catch {
-    return "오픈 예정";
+    return defaultText;
   }
 }
+
 

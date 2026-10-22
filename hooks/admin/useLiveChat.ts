@@ -414,13 +414,17 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
             const incomingMsg = event.data?.message;
 
             const currentActiveId = (activeSessionIdRef.current || "").toLowerCase().trim();
+            const sidClean = sid.replace(/[^0-9]/g, "");
+            const curClean = currentActiveId.replace(/[^0-9]/g, "");
 
             // 1. 활성 세션 일치 여부 다각도 검증 (ID, 이메일, 전화번호 교차 체크)
             let isCurrentSession = false;
             if (currentActiveId) {
               if (sid && (currentActiveId === sid || currentActiveId.includes(sid) || sid.includes(currentActiveId))) {
                 isCurrentSession = true;
-              } else if (sEmail && (currentActiveId === sEmail || currentActiveId.includes(sEmail))) {
+              } else if (sEmail && (currentActiveId === sEmail || currentActiveId.includes(sEmail) || sEmail.includes(currentActiveId))) {
+                isCurrentSession = true;
+              } else if (sidClean.length >= 7 && curClean.length >= 7 && sidClean === curClean) {
                 isCurrentSession = true;
               } else if (sPhone && currentActiveId.replace(/[^0-9]/g, "") === sPhone) {
                 isCurrentSession = true;
@@ -432,11 +436,15 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
                 if (activeRec) {
                   const aEmail = (activeRec.customerEmail || activeRec.email || "").toLowerCase().trim();
                   const aPhone = (activeRec.customerPhone || activeRec.phone || "").replace(/[^0-9]/g, "");
-                  if ((sEmail && aEmail && aEmail === sEmail) || (sPhone && aPhone && aPhone === sPhone)) {
+                  if ((sEmail && aEmail && aEmail === sEmail) || (sPhone && aPhone && aPhone === sPhone) || (sidClean.length >= 7 && aPhone.length >= 7 && sidClean === aPhone)) {
                     isCurrentSession = true;
                   }
                 }
               }
+            } else if (sid) {
+              // 활성 세션이 아직 선택되지 않았으면 들어온 세션을 즉시 활성 세션으로 설정
+              isCurrentSession = true;
+              setActiveSessionId(sid);
             }
 
             // 2. 좌측 세션 목록 0ms 실시간 업데이트 (미리보기 메시지, 갱신 시각, 활성 상태)
@@ -494,8 +502,10 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
                 }
               } catch (e) {}
 
-              // (3) 서버 확인 동기화를 지연 없이 즉시 백그라운드 실행
-              syncAdminLiveChat(targetKeyId);
+              // (3) 서버 확인 동기화는 클라이언트 DB 쓰기 여유를 위해 1200ms 후 실행 (메시지 증발 방지)
+              setTimeout(() => {
+                syncAdminLiveChat(targetKeyId);
+              }, 1200);
             } else {
               loadSessions();
             }
@@ -542,9 +552,25 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       }
     }, 3000);
 
+    // 3. 브라우저 탭 활성화/포커스 시 지연 없이 즉각 동기화 실행
+    const handleAdminFocusOrVisible = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        syncAdminLiveChat();
+        loadSessions();
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("visibilitychange", handleAdminFocusOrVisible);
+      window.addEventListener("focus", handleAdminFocusOrVisible);
+    }
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("live_chat_updated", handleStorageChange);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("visibilitychange", handleAdminFocusOrVisible);
+        window.removeEventListener("focus", handleAdminFocusOrVisible);
+      }
       if (bc) bc.close();
       clearInterval(msgInterval);
       clearInterval(sessionInterval);
@@ -558,13 +584,28 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     }
   }, [activeSessionId, syncAdminLiveChat]);
 
-  // Active session messages strictly partitioned by activeSessionId
+  // Active session messages strictly partitioned by activeSessionId with multi-alias cross-matching
   const activeSessionMessages = adminLiveChatMessages.filter((m: any) => {
     if (!m) return false;
     const currentActive = (activeSessionId || "").toLowerCase().trim();
     if (!currentActive) return false;
     if (m.sessionId) {
-      return m.sessionId.toLowerCase().trim() === currentActive;
+      const mSid = String(m.sessionId).toLowerCase().trim();
+      if (mSid === currentActive) return true;
+      const mClean = mSid.replace(/[^0-9]/g, "");
+      const curClean = currentActive.replace(/[^0-9]/g, "");
+      if (mClean.length >= 7 && curClean.length >= 7 && mClean === curClean) return true;
+      // Cross check active session record in chatSessionsList
+      const activeSessionRec = chatSessionsListRef.current.find(
+        (s) => (s.id || "").toLowerCase().trim() === currentActive
+      );
+      if (activeSessionRec) {
+        const aEmail = (activeSessionRec.customerEmail || activeSessionRec.email || "").toLowerCase().trim();
+        const aPhone = (activeSessionRec.customerPhone || activeSessionRec.phone || "").replace(/[^0-9]/g, "");
+        if (aEmail && (mSid === aEmail || mSid.includes(aEmail) || aEmail.includes(mSid))) return true;
+        if (aPhone.length >= 7 && mClean.length >= 7 && (mClean === aPhone || aPhone.includes(mClean))) return true;
+      }
+      return false;
     }
     return pendingAdminMsgIdsRef.current.has(m.id) || !m.sessionId;
   });
@@ -630,9 +671,14 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       try {
         const sendBc = new BroadcastChannel("choicomma_live_chat_sync");
+        const currentSession = chatSessionsListRef.current.find(
+          (s) => (s.id || "").toLowerCase().trim() === normalizedSessionId
+        );
         sendBc.postMessage({
           type: "ADMIN_REPLY",
           sessionId: normalizedSessionId,
+          sessionEmail: (currentSession?.email || currentSession?.customerEmail || normalizedSessionId).toLowerCase().trim(),
+          sessionPhone: (currentSession?.phone || currentSession?.customerPhone || "").replace(/[^0-9]/g, ""),
           message: newReply,
         });
         sendBc.close();

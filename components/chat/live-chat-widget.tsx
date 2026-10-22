@@ -1032,15 +1032,7 @@ export function LiveChatWidget() {
 
     // Sync from Git chat API (/api/admin/chat) with non-destructive merge
     if (rawId) {
-      // 이전 조회가 아직 응답 중이면 같은 조회를 또 보내지 않는다 (서버가 느릴 때 요청이 쌓이는 것을 방지)
-      const chatWin = window as unknown as { __chatSyncInFlight?: boolean };
-      (chatWin.__chatSyncInFlight
-        ? Promise.resolve({ ok: false } as Response)
-        : ((chatWin.__chatSyncInFlight = true),
-          fetch(`/api/admin/chat?type=messages&sessionId=${encodeURIComponent(rawId)}`, { cache: "no-store" }).finally(() => {
-            chatWin.__chatSyncInFlight = false;
-          }))
-      )
+      fetch(`/api/admin/chat?type=messages&sessionId=${encodeURIComponent(rawId)}`, { cache: "no-store" })
         .then((res) => (res.ok ? res.json() : null))
         .then((json) => {
           // If a reset occurred within the last 1.5s, ignore any in-flight stale data
@@ -1066,7 +1058,7 @@ export function LiveChatWidget() {
                 id: m.id,
                 sender: m.sender || "user",
                 senderName: m.sender === "admin" ? t.teamName : (t.userName || "Customer"),
-                text: m.text,
+                text: m.text || m.content || m.message || "",
                 timestamp: `${hours}:${mins}`,
                 created_at: m.created_at,
               };
@@ -1185,20 +1177,22 @@ export function LiveChatWidget() {
           const loginId = (localStorage.getItem("membership_user_login_id") || "").toLowerCase().trim();
           const userId = (localStorage.getItem("membership_user_id") || "").toLowerCase().trim();
           const rawId = (email || phone).toLowerCase().trim();
+          const rawClean = rawId.replace(/[^0-9]/g, "");
 
           const targetSid = (event.data?.sessionId || "").toLowerCase().trim();
           const targetEmail = (event.data?.sessionEmail || "").toLowerCase().trim();
           const targetPhone = (event.data?.sessionPhone || "").replace(/[^0-9]/g, "");
+          const targetSidClean = targetSid.replace(/[^0-9]/g, "");
 
           const isMatchForCustomer =
             !targetSid ||
             targetSid === rawId ||
-            (email && targetSid === email) ||
-            (email && targetSid.includes(email)) ||
-            (email && targetEmail && email === targetEmail) ||
-            (phone && targetPhone && phone === targetPhone) ||
-            (phone && targetSid.replace(/[^0-9]/g, "") === phone) ||
-            (loginId && targetSid.includes(loginId)) ||
+            (rawClean.length >= 7 && targetSidClean.length >= 7 && rawClean === targetSidClean) ||
+            (email && (targetSid === email || targetSid.includes(email) || email.includes(targetSid))) ||
+            (email && targetEmail && (email === targetEmail || email.includes(targetEmail) || targetEmail.includes(email))) ||
+            (phone && targetPhone && (phone === targetPhone || phone.includes(targetPhone) || targetPhone.includes(phone))) ||
+            (phone && targetSidClean.length >= 7 && targetSidClean === phone) ||
+            (loginId && (targetSid.includes(loginId) || loginId.includes(targetSid))) ||
             (userId && targetSid === userId);
 
           if (isMatchForCustomer) {
@@ -1246,11 +1240,10 @@ export function LiveChatWidget() {
 
     loadMessages();
 
-    // 이전 조회가 끝나기 전에는 새로 보내지 않고, 화면에 보이지 않는 탭에서는 조회하지 않는다 (서버 과부하 방지)
+    // 이전 조회가 끝나기 전에는 새로 보내지 않고 부하 방지
     let pollInFlight = false;
     const interval = setInterval(async () => {
       if (pollInFlight) return;
-      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       pollInFlight = true;
       try {
         await Promise.resolve(loadMessages());
@@ -1258,10 +1251,25 @@ export function LiveChatWidget() {
       } finally {
         pollInFlight = false;
       }
-    }, isOpen ? 3000 : 15000);
+    }, isOpen ? 500 : 3000);
+
+    // 탭 전환 및 창 포커스 시 즉각 0ms 동기화 실행
+    const handleCustomerVisibilityOrFocus = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        loadMessages();
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("visibilitychange", handleCustomerVisibilityOrFocus);
+      window.addEventListener("focus", handleCustomerVisibilityOrFocus);
+    }
 
     return () => {
       clearInterval(interval);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("visibilitychange", handleCustomerVisibilityOrFocus);
+        window.removeEventListener("focus", handleCustomerVisibilityOrFocus);
+      }
     };
   }, [isOpen]);
 

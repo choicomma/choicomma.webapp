@@ -32,14 +32,8 @@ function getMessagesFilePath() {
 }
 
 function isGuestSession(id?: string, email?: string): boolean {
-  const normId = String(id || "").toLowerCase().trim();
-  const normEmail = String(email || "").toLowerCase().trim();
-  return (
-    normId === "guest" ||
-    normId.startsWith("guest@") ||
-    normEmail === "guest" ||
-    normEmail.startsWith("guest@")
-  );
+  // Allow all sessions including guests/visitors to communicate seamlessly
+  return false;
 }
 
 function readJsonFile(filePath: string): any[] {
@@ -104,8 +98,42 @@ export async function GET(req: NextRequest) {
 
   if (type === "messages" && sessionId) {
     const norm = sessionId.trim().toLowerCase();
+    const cleanPhone = norm.replace(/[^0-9]/g, "");
+    const sessions = readJsonFile(getSessionsFilePath());
+
+    // Resolve all possible session ID aliases (id, email, phone)
+    const matchIds = new Set<string>([norm]);
+    if (cleanPhone.length >= 7) matchIds.add(cleanPhone);
+
+    const matchedSession = sessions.find((s) => {
+      const sId = String(s.id || "").trim().toLowerCase();
+      const sEmail = String(s.customerEmail || s.email || "").trim().toLowerCase();
+      const sPhone = String(s.customerPhone || s.phone || "").replace(/[^0-9]/g, "");
+      return (
+        sId === norm ||
+        (sEmail && sEmail === norm) ||
+        (cleanPhone.length >= 7 && sPhone && sPhone === cleanPhone) ||
+        (sId.replace(/[^0-9]/g, "") && cleanPhone.length >= 7 && sId.replace(/[^0-9]/g, "") === cleanPhone)
+      );
+    });
+
+    if (matchedSession) {
+      if (matchedSession.id) matchIds.add(String(matchedSession.id).trim().toLowerCase());
+      if (matchedSession.customerEmail) matchIds.add(String(matchedSession.customerEmail).trim().toLowerCase());
+      if (matchedSession.email) matchIds.add(String(matchedSession.email).trim().toLowerCase());
+      if (matchedSession.customerPhone) {
+        matchIds.add(String(matchedSession.customerPhone).trim().toLowerCase());
+        const pClean = String(matchedSession.customerPhone).replace(/[^0-9]/g, "");
+        if (pClean.length >= 7) matchIds.add(pClean);
+      }
+    }
+
     const messages = readJsonFile(getMessagesFilePath());
-    let filtered = messages.filter((m) => String(m.sessionId || "").trim().toLowerCase() === norm);
+    let filtered = messages.filter((m) => {
+      const mSid = String(m.sessionId || "").trim().toLowerCase();
+      const mClean = mSid.replace(/[^0-9]/g, "");
+      return matchIds.has(mSid) || (cleanPhone.length >= 7 && mClean.length >= 7 && mClean === cleanPhone);
+    });
 
     // 비상 복구(Self-Healing): 로컬 메시지가 없는 경우 Supabase에서 복구 시도
     if (filtered.length === 0) {
@@ -115,7 +143,7 @@ export async function GET(req: NextRequest) {
             supabase
               .from("chat_messages")
               .select("*")
-              .eq("sessionId", norm)
+              .or(`sessionId.eq.${norm}${matchedSession?.id ? `,sessionId.eq.${matchedSession.id}` : ""}`)
               .order("created_at", { ascending: true }),
           2000
         );
@@ -331,10 +359,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Default: append or update message
-      const normSessionId = String(body.sessionId || "").trim().toLowerCase();
-      if (isGuestSession(normSessionId, body.customerEmail)) {
-        return NextResponse.json({ error: "Authentication required to chat" }, { status: 401, headers: NO_CACHE_HEADERS });
-      }
+      const normSessionId = String(body.sessionId || "").trim().toLowerCase() || `session_${Date.now()}`;
       const messages = readJsonFile(getMessagesFilePath());
       const msgId = String(body.id || `MSG-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`);
 

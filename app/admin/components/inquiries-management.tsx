@@ -1033,9 +1033,7 @@ export function InquiriesManagement({
   const onSendLiveChat = React.useCallback((text?: string) => {
     handleAdminSendLiveChat(text);
     isAtBottomRef.current = true;
-    setTimeout(() => {
-      scrollToBottom("smooth");
-    }, 50);
+    scrollToBottom("auto");
   }, [handleAdminSendLiveChat, scrollToBottom]);
 
   const getMessageSnippet = React.useCallback((rawText: string) => {
@@ -2202,6 +2200,7 @@ export function InquiriesManagement({
               onChange={(e) => setAdminLiveInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
+                  if (e.nativeEvent.isComposing) return;
                   e.preventDefault();
                   onSendLiveChat();
                 }
