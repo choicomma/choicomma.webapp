@@ -30,7 +30,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentLanguage } from "@/lib/i18n/translation";
-import { DEFAULT_AUTO_RULES, type AutoReplyRule } from "@/app/admin/components/inquiries-management";
 import { splitKoreanAddress } from "@/lib/address";
 import { initCustomerSession } from "@/lib/auth/customer-session";
 import { getProductThumbnail } from "@/lib/products/thumbnail-helper";
@@ -943,22 +942,11 @@ export function LiveChatWidget() {
 
   // Dynamic Welcome / Default Guidance Text (Synced with Admin Settings)
   const getEffectiveWelcomeText = useCallback(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin_auto_reply_fallback");
-      if (saved && saved.trim()) {
-        return saved.trim();
-      }
-    }
     return t.welcomeText;
   }, [t.welcomeText]);
 
   const updateWelcomeMessageInState = useCallback((newFallbackText?: string) => {
-    const fallback = (
-      newFallbackText ||
-      (typeof window !== "undefined" ? localStorage.getItem("admin_auto_reply_fallback") : "") ||
-      ""
-    ).trim();
-    const effectiveWelcome = fallback || t.welcomeText;
+    const effectiveWelcome = t.welcomeText;
     const chatKey = getUserChatKey();
 
     setMessages((prev) => {
@@ -1185,72 +1173,12 @@ export function LiveChatWidget() {
     window.addEventListener("live_chat_ended", handleChatEnded);
     window.addEventListener("open_live_chat", handleOpenChat);
 
-    const handleConfigUpdate = (e: any) => {
-      const fallback = e?.detail?.fallback;
-      if (typeof fallback === "string") {
-        updateWelcomeMessageInState(fallback);
-      }
-    };
-    window.addEventListener("live_chat_config_updated", handleConfigUpdate);
-
-    // Initial sync of auto-reply config from Git site_settings API
-    const syncAutoReplyConfig = async () => {
-      try {
-        const res = await fetch("/api/admin/site-settings?key=chat_auto_reply_config", { cache: "no-store" });
-        if (res.ok) {
-          const json = await res.json();
-          if (json?.success && json?.value) {
-            const val = json.value;
-            if (typeof window !== "undefined") {
-              if (typeof val.enabled === "boolean") {
-                localStorage.setItem("admin_auto_reply_enabled", String(val.enabled));
-              }
-              if (typeof val.delay === "number") {
-                localStorage.setItem("admin_auto_reply_delay", String(val.delay));
-              }
-              if (Array.isArray(val.rules) && val.rules.length > 0) {
-                localStorage.setItem("admin_auto_reply_rules", JSON.stringify(val.rules));
-              }
-              if (typeof val.fallback === "string" && val.fallback.trim()) {
-                localStorage.setItem("admin_auto_reply_fallback", val.fallback.trim());
-              }
-            }
-            if (typeof val.fallback === "string" && val.fallback.trim()) {
-              updateWelcomeMessageInState(val.fallback.trim());
-            }
-          }
-        }
-      } catch (e) {}
-    };
-    syncAutoReplyConfig();
-
     // BroadcastChannel for instant 0ms cross-tab sync with Admin console
     let bc: BroadcastChannel | null = null;
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       try {
         bc = new BroadcastChannel("choicomma_live_chat_sync");
         bc.onmessage = (event) => {
-          if (event.data?.type === "CONFIG_UPDATED" && event.data?.config) {
-            const { fallback, enabled, delay, rules } = event.data.config;
-            if (typeof window !== "undefined") {
-              if (typeof fallback === "string") {
-                localStorage.setItem("admin_auto_reply_fallback", fallback);
-              }
-              if (typeof enabled === "boolean") {
-                localStorage.setItem("admin_auto_reply_enabled", String(enabled));
-              }
-              if (typeof delay === "number") {
-                localStorage.setItem("admin_auto_reply_delay", String(delay));
-              }
-              if (rules) {
-                localStorage.setItem("admin_auto_reply_rules", JSON.stringify(rules));
-              }
-            }
-            if (typeof fallback === "string") {
-              updateWelcomeMessageInState(fallback);
-            }
-            return;
-          }
 
           const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
           const phone = (localStorage.getItem("membership_user_phone") || "").replace(/[^0-9]/g, "");
@@ -1307,7 +1235,6 @@ export function LiveChatWidget() {
       window.removeEventListener("live_chat_updated", handleStorageChange);
       window.removeEventListener("live_chat_ended", handleChatEnded);
       window.removeEventListener("open_live_chat", handleOpenChat);
-      window.removeEventListener("live_chat_config_updated", handleConfigUpdate);
       if (bc) bc.close();
     };
   }, [currentLang, isOpen]);
@@ -1505,111 +1432,6 @@ export function LiveChatWidget() {
       }).catch((e) => console.warn("Git user message insert notice:", e));
     }
 
-    // Auto simulated response based on Admin Smart Auto-reply settings
-    if (
-      customText?.startsWith('{"type":"ORDER_SELECTED"') ||
-      customText?.startsWith('{"type":"EXCHANGE_COMPLETED"') ||
-      customText?.startsWith('{"type":"REFUND_SUBMITTED"')
-    ) {
-      return;
-    }
-
-    let isAutoEnabled = true;
-    let autoDelayMs = 1500;
-    let autoReplyMessage = getEffectiveWelcomeText() || t.autoReplyText;
-    let activeRules: AutoReplyRule[] = DEFAULT_AUTO_RULES;
-
-    if (typeof window !== "undefined") {
-      const savedEnabled = localStorage.getItem("admin_auto_reply_enabled");
-      if (savedEnabled !== null) {
-        isAutoEnabled = savedEnabled === "true";
-      }
-
-      const savedDelay = localStorage.getItem("admin_auto_reply_delay");
-      if (savedDelay !== null) {
-        const parsedDelay = parseFloat(savedDelay);
-        if (!isNaN(parsedDelay) && parsedDelay >= 0) {
-          autoDelayMs = parsedDelay * 1000;
-        }
-      }
-
-      const savedFallback = localStorage.getItem("admin_auto_reply_fallback");
-      if (savedFallback && savedFallback.trim()) {
-        autoReplyMessage = savedFallback.trim();
-      }
-
-      const savedRules = localStorage.getItem("admin_auto_reply_rules");
-      if (savedRules) {
-        try {
-          const rules = JSON.parse(savedRules);
-          if (Array.isArray(rules) && rules.length > 0) {
-            activeRules = rules;
-          }
-        } catch (e) {}
-      }
-    }
-
-    // Keyword match against active rules
-    const userTextLower = (newMsg.text || "").toLowerCase();
-    const matchedRule = activeRules.find((rule: AutoReplyRule) => {
-      if (!rule.enabled) return false;
-      const kws = (rule.keywords || "").split(",").map((k: string) => k.trim().toLowerCase()).filter(Boolean);
-      return kws.some((kw: string) => userTextLower.includes(kw));
-    });
-
-    if (matchedRule && matchedRule.replyText) {
-      autoReplyMessage = matchedRule.replyText;
-    }
-
-    if (isAutoEnabled) {
-      const fixedWaitDelay = 5000; 
-      const typingDuration = Math.max(autoDelayMs, 1000); 
-      const totalDeliveryTime = fixedWaitDelay + typingDuration;
-
-      cancelAutoReply();
-
-      typingTimerRef.current = setTimeout(() => {
-        setIsTyping(true);
-      }, fixedWaitDelay);
-
-      autoReplyTimerRef.current = setTimeout(() => {
-        setIsTyping(false);
-        setMessages((currentMessages) => {
-          const lastMsg = currentMessages[currentMessages.length - 1];
-          // Only auto-reply if the latest message is still user's own message and no admin message has arrived
-          if (lastMsg?.id === newMsg.id && lastMsg?.sender === "user") {
-            const autoReply: ChatMessage = {
-              id: `admin-msg-auto-${Date.now()}`,
-              sender: "admin",
-              senderName: t.teamName,
-              text: autoReplyMessage,
-              timestamp: `${hours}:${mins}`,
-              created_at: new Date().toISOString(),
-            };
-            const updatedWithAuto = [...currentMessages, autoReply];
-            const chatKey = getUserChatKey();
-            if (typeof window !== "undefined") {
-              localStorage.setItem(chatKey, JSON.stringify(updatedWithAuto));
-            }
-            if (rawId) {
-              fetch("/api/admin/chat?type=message", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  id: autoReply.id,
-                  sessionId: rawId,
-                  sender: "admin",
-                  content: autoReply.text,
-                  text: autoReply.text,
-                }),
-              }).catch(() => {});
-            }
-            return updatedWithAuto;
-          }
-          return currentMessages;
-        });
-      }, totalDeliveryTime);
-    }
   };
 
   const handleResetChat = async (skipConfirm = false) => {

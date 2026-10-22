@@ -318,14 +318,14 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         };
 
-        try {
-          await runSafeSupabaseQuery(
-            async (supabase) => supabase.from("chat_sessions").upsert([supabaseSession], { onConflict: "id" }),
-            2500
-          );
-        } catch (err) {
+        // 백그라운드 실행: 로컬 저장이 기준 데이터이므로 응답을 기다리지 않아 직렬 락을 즉시 해제
+        runSafeSupabaseQuery(
+          async (supabase) => supabase.from("chat_sessions").upsert([supabaseSession], { onConflict: "id" }),
+          2500
+        ).catch((err) => {
           console.warn("[Chat Session Supabase Dual-Write Warning]:", err);
-        }
+        });
+
 
         return NextResponse.json({ success: true, session: sessionRecord }, { headers: NO_CACHE_HEADERS });
       }

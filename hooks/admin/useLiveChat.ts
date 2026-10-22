@@ -17,6 +17,10 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
   const activeSessionIdRef = useRef(activeSessionId);
   activeSessionIdRef.current = activeSessionId;
 
+  // 최신 세션 목록 참조 (BroadcastChannel 핸들러에서 이메일/전화번호 교차 매칭용)
+  const chatSessionsListRef = useRef<any[]>([]);
+  chatSessionsListRef.current = chatSessionsList;
+
   // In-flight sending state and pending message preservation
   const isSendingLiveChatRef = useRef(false);
   const [isSendingLiveChat, setIsSendingLiveChat] = useState(false);
@@ -420,6 +424,18 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
                 isCurrentSession = true;
               } else if (sPhone && currentActiveId.replace(/[^0-9]/g, "") === sPhone) {
                 isCurrentSession = true;
+              } else {
+                // 활성 세션 레코드의 이메일/전화번호와 정확 일치하는지 교차 검증
+                const activeRec = chatSessionsListRef.current.find(
+                  (s: any) => (s.id || "").toLowerCase().trim() === currentActiveId
+                );
+                if (activeRec) {
+                  const aEmail = (activeRec.customerEmail || activeRec.email || "").toLowerCase().trim();
+                  const aPhone = (activeRec.customerPhone || activeRec.phone || "").replace(/[^0-9]/g, "");
+                  if ((sEmail && aEmail && aEmail === sEmail) || (sPhone && aPhone && aPhone === sPhone)) {
+                    isCurrentSession = true;
+                  }
+                }
               }
             }
 
@@ -478,10 +494,8 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
                 }
               } catch (e) {}
 
-              // (3) 비동기 API 동기화는 화면 렌더링을 방해하지 않도록 약간의 지연 후 백그라운드에서 실행
-              setTimeout(() => {
-                syncAdminLiveChat(targetKeyId);
-              }, 1200);
+              // (3) 서버 확인 동기화를 지연 없이 즉시 백그라운드 실행
+              syncAdminLiveChat(targetKeyId);
             } else {
               loadSessions();
             }
@@ -499,11 +513,13 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       } catch (e) {}
     }
 
-    // 1. 초고속 실시간 활성 대화 동기화 (800ms) - 고객 입력 즉시 관리자 화면에 반영
+    // 1. 초고속 실시간 활성 대화 동기화 (450ms) - 고객 입력 즉시 관리자 화면에 반영
     let msgSyncInFlight = false;
     const msgInterval = setInterval(async () => {
       if (msgSyncInFlight) return;
       if (isSendingLiveChatRef.current) return;
+      // 보이지 않는 탭은 폴링 부하를 줄이기 위해 건너뜀
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       msgSyncInFlight = true;
       try {
         await syncAdminLiveChat();
@@ -511,7 +527,7 @@ export function useLiveChat(triggerToast: (msg: string) => void) {
       } finally {
         msgSyncInFlight = false;
       }
-    }, 800);
+    }, 450);
 
     // 2. 백그라운드 세션 목록 동기화 (3000ms)
     let sessionPollInFlight = false;
