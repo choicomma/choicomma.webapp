@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const results: { original: string; translated: string }[] = new Array(rawList.length);
+    const results: { original: string; translated: string; failed?: boolean }[] = new Array(rawList.length);
     const missingIndices: number[] = [];
     const missingTexts: string[] = [];
 
@@ -174,13 +174,13 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.DEEPL_API_KEY;
 
     if (!apiKey) {
-      // Fallback: If no DeepL key configured yet, return original text safely
+      // Fallback: If no DeepL key configured yet, return original text with failed flag (do not cache)
       missingIndices.forEach((origIdx, i) => {
-        results[origIdx] = { original: rawList[origIdx], translated: missingTexts[i] };
+        results[origIdx] = { original: rawList[origIdx], translated: missingTexts[i], failed: true };
       });
       return NextResponse.json({
         translations: results,
-        notice: "DEEPL_API_KEY is not configured yet. Set DEEPL_API_KEY in .env.local to activate DeepL AI translations.",
+        notice: "DEEPL_API_KEY is not configured yet. Set DEEPL_API_KEY in Vercel environment variables to activate DeepL AI translations.",
       });
     }
 
@@ -209,9 +209,9 @@ export async function POST(req: NextRequest) {
       const errText = await response.text();
       console.error("[DeepL API Error]", response.status, errText);
 
-      // Fallback to original text on API error
+      // Fallback to original text on API error with failed flag
       missingIndices.forEach((origIdx, i) => {
-        results[origIdx] = { original: rawList[origIdx], translated: missingTexts[i] };
+        results[origIdx] = { original: rawList[origIdx], translated: missingTexts[i], failed: true };
       });
       return NextResponse.json({ translations: results, error: `DeepL API returned ${response.status}` });
     }

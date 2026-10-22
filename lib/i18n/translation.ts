@@ -24,18 +24,56 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 // In-memory client cache
 const memoryCache = new Map<string, string>();
-const LOCAL_STORAGE_KEY = "choicomma_trans_cache_v1";
+const LOCAL_STORAGE_KEY = "choicomma_trans_cache_v2";
+
+/**
+ * Validates whether the translated text is genuinely translated.
+ * Prevents caching untranslated Korean fallbacks when DEEPL_API_KEY is missing or fails.
+ */
+export function isGenuineTranslation(original: string, translated: string, targetLang: string): boolean {
+  if (!translated || typeof translated !== "string") return false;
+  const lang = (targetLang || "").toLowerCase();
+  if (lang === "ko") return true;
+
+  const origTrimmed = original.trim();
+  const transTrimmed = translated.trim();
+
+  // If identical to original and contains Korean characters, it failed to translate
+  if (origTrimmed === transTrimmed && /[가-힣]/.test(origTrimmed)) {
+    return false;
+  }
+
+  // If non-Korean target language still contains significant Korean characters, do not cache
+  if (lang !== "ko") {
+    const koreanChars = (transTrimmed.match(/[가-힣]/g) || []).length;
+    if (koreanChars > 0 && koreanChars >= transTrimmed.length * 0.3) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 // Load localStorage cache into memory on client init
 function initCacheFromStorage() {
   if (typeof window === "undefined") return;
   try {
+    // Purge legacy v1 cache which may contain erroneous Korean fallbacks
+    localStorage.removeItem("choicomma_trans_cache_v1");
+
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (typeof parsed === "object" && parsed !== null) {
         Object.entries(parsed).forEach(([k, v]) => {
-          if (typeof v === "string") memoryCache.set(k, v);
+          if (typeof v === "string") {
+            const parts = k.split(":");
+            const targetLang = parts[1] || "";
+            const original = parts.slice(2).join(":");
+            if (isGenuineTranslation(original, v, targetLang)) {
+              memoryCache.set(k, v);
+            }
+          }
         });
       }
     }
@@ -899,10 +937,13 @@ export async function fetchAsyncTranslation(
 
     const data = await res.json();
     const result = data.translations?.[0]?.translated;
+    const isFailed = Boolean(data.notice || data.error || data.translations?.[0]?.failed);
 
     if (result && typeof result === "string") {
-      memoryCache.set(cacheKey, result);
-      persistCacheToStorage();
+      if (!isFailed && isGenuineTranslation(trimmed, result, lang)) {
+        memoryCache.set(cacheKey, result);
+        persistCacheToStorage();
+      }
       return result;
     }
   } catch (e) {
@@ -959,10 +1000,14 @@ export async function fetchBatchTranslation(
     if (res.ok) {
       const data = await res.json();
       const translations = data.translations || [];
-      translations.forEach((item: { original: string; translated: string }) => {
+      const hasNoticeOrError = Boolean(data.notice || data.error);
+
+      translations.forEach((item: { original: string; translated: string; failed?: boolean }) => {
         if (item.original && item.translated) {
           const cacheKey = `ko:${lang}:${item.original}`;
-          memoryCache.set(cacheKey, item.translated);
+          if (!hasNoticeOrError && !item.failed && isGenuineTranslation(item.original, item.translated, lang)) {
+            memoryCache.set(cacheKey, item.translated);
+          }
           result[item.original] = item.translated;
         }
       });
