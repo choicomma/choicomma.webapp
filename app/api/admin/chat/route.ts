@@ -85,9 +85,10 @@ function safeAtomicWriteJson(filePath: string, data: any): boolean {
 }
 
 const NO_CACHE_HEADERS = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0",
   Pragma: "no-cache",
   Expires: "0",
+  "Surrogate-Control": "no-store",
 };
 
 // GET: 라이브 채팅 세션 및 메시지 조회
@@ -302,6 +303,29 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ success: true, sessions, messages }, { headers: NO_CACHE_HEADERS });
 }
 
+function findMatchingSession(sessions: any[], idOrPhoneOrEmail: string, email?: string, phone?: string): { index: number; session?: any } {
+  const norm = String(idOrPhoneOrEmail || "").trim().toLowerCase();
+  const normEmail = String(email || (norm.includes("@") ? norm : "")).trim().toLowerCase();
+  const cleanPhone = String(phone || norm).replace(/[^0-9]/g, "");
+
+  const index = sessions.findIndex((s) => {
+    const sId = String(s.id || "").trim().toLowerCase();
+    const sEmail = String(s.customerEmail || s.email || "").trim().toLowerCase();
+    const sPhone = String(s.customerPhone || s.phone || "").replace(/[^0-9]/g, "");
+    const sCleanId = sId.replace(/[^0-9]/g, "");
+
+    if (sId === norm) return true;
+    if (normEmail && sEmail && sEmail === normEmail) return true;
+    if (cleanPhone.length >= 7) {
+      if (sPhone && sPhone === cleanPhone) return true;
+      if (sCleanId.length >= 7 && sCleanId === cleanPhone) return true;
+    }
+    return false;
+  });
+
+  return { index, session: index !== -1 ? sessions[index] : undefined };
+}
+
 // POST: 채팅 세션 등록 또는 메시지 추가 (동시성 락 및 Supabase 비동기 듀얼 라이트 적용)
 export async function POST(req: NextRequest) {
   return runWithChatLock(async () => {
@@ -316,16 +340,21 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ success: true, ignored: true, message: "Guest sessions are ignored" }, { headers: NO_CACHE_HEADERS });
         }
         const sessions = readJsonFile(getSessionsFilePath());
-        const idx = sessions.findIndex((s) => String(s.id || "").trim().toLowerCase() === normId);
+        const { index: idx, session: existingSession } = findMatchingSession(sessions, normId, body.customerEmail, body.customerPhone);
+
+        // Canonical session ID: if an existing session has an email-based or earlier ID, preserve it
+        const canonicalId = existingSession ? existingSession.id : normId;
         const sessionRecord = {
+          ...(existingSession || {}),
           ...body,
-          id: normId || body.id,
-          customerEmail: body.customerEmail || (normId.includes("@") ? normId : ""),
+          id: canonicalId,
+          customerEmail: body.customerEmail || existingSession?.customerEmail || (canonicalId.includes("@") ? canonicalId : ""),
+          customerPhone: body.customerPhone || existingSession?.customerPhone || (canonicalId.replace(/[^0-9]/g, "").length >= 7 ? canonicalId : ""),
           updated_at: new Date().toISOString(),
         };
 
         if (idx !== -1) {
-          sessions[idx] = { ...sessions[idx], ...sessionRecord };
+          sessions[idx] = sessionRecord;
         } else {
           sessions.unshift({
             ...sessionRecord,
@@ -338,18 +367,18 @@ export async function POST(req: NextRequest) {
 
         // 2. Supabase 듀얼 라이트 (완료 대기)
         const supabaseSession = {
-          id: normId,
-          customerName: body.customerName || body.name || "방문자",
-          customerEmail: body.customerEmail || (normId.includes("@") ? normId : ""),
-          customerPhone: body.customerPhone || body.phone || (normId.replace(/[^0-9]/g, "").length >= 7 ? normId : ""),
-          status: body.status || "active",
+          id: canonicalId,
+          customerName: body.customerName || body.name || existingSession?.customerName || "방문자",
+          customerEmail: sessionRecord.customerEmail,
+          customerPhone: sessionRecord.customerPhone,
+          status: body.status || existingSession?.status || "active",
           updated_at: new Date().toISOString(),
         };
 
         try {
           await runSafeSupabaseQuery(
             async (supabase) => supabase.from("chat_sessions").upsert([supabaseSession], { onConflict: "id" }),
-            2000
+            3000
           );
         } catch (err) {
           console.warn("[Chat Session Supabase Dual-Write Warning]:", err);
@@ -360,13 +389,17 @@ export async function POST(req: NextRequest) {
 
       // Default: append or update message
       const normSessionId = String(body.sessionId || "").trim().toLowerCase() || `session_${Date.now()}`;
+      const sessions = readJsonFile(getSessionsFilePath());
+      const { index: sIdx, session: matchedSession } = findMatchingSession(sessions, normSessionId, body.customerEmail, body.customerPhone);
+      const canonicalSessionId = matchedSession ? matchedSession.id : normSessionId;
+
       const messages = readJsonFile(getMessagesFilePath());
       const msgId = String(body.id || `MSG-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`);
 
       const newMsg = {
         ...body,
         id: msgId,
-        sessionId: normSessionId,
+        sessionId: canonicalSessionId,
         sender: body.sender || "customer",
         content: body.content || body.message || body.text || "",
         text: body.text || body.content || body.message || "",
@@ -384,20 +417,20 @@ export async function POST(req: NextRequest) {
       safeAtomicWriteJson(getMessagesFilePath(), messages);
 
       // 2. 부모 세션 최신 메시지 갱신 (없으면 신규 세션 자동 등록)
-      const sessions = readJsonFile(getSessionsFilePath());
-      const sIdx = sessions.findIndex((s) => String(s.id || "").trim().toLowerCase() === normSessionId);
       if (sIdx !== -1) {
         sessions[sIdx].lastMessage = newMsg.content;
         sessions[sIdx].lastMessageAt = newMsg.created_at;
         sessions[sIdx].status = "active";
+        if (body.customerEmail && !sessions[sIdx].customerEmail) sessions[sIdx].customerEmail = body.customerEmail;
+        if (body.customerPhone && !sessions[sIdx].customerPhone) sessions[sIdx].customerPhone = body.customerPhone;
         sessions[sIdx].updated_at = new Date().toISOString();
         safeAtomicWriteJson(getSessionsFilePath(), sessions);
       } else {
         const autoSession = {
-          id: normSessionId,
-          customerName: body.customerName || body.senderName || (normSessionId.includes("@") ? normSessionId.split("@")[0] : normSessionId),
-          customerEmail: body.customerEmail || (normSessionId.includes("@") ? normSessionId : ""),
-          customerPhone: body.customerPhone || "",
+          id: canonicalSessionId,
+          customerName: body.customerName || body.senderName || (canonicalSessionId.includes("@") ? canonicalSessionId.split("@")[0] : canonicalSessionId),
+          customerEmail: body.customerEmail || (canonicalSessionId.includes("@") ? canonicalSessionId : ""),
+          customerPhone: body.customerPhone || (canonicalSessionId.replace(/[^0-9]/g, "").length >= 7 ? canonicalSessionId : ""),
           status: "active",
           lastMessage: newMsg.content,
           lastMessageAt: newMsg.created_at,
@@ -411,7 +444,7 @@ export async function POST(req: NextRequest) {
       // 3. Supabase 비동기 듀얼 라이트 (외래키 제약조건 방어: 세션 보장 후 메시지 Upsert)
       const supabaseMsg = {
         id: msgId,
-        sessionId: normSessionId,
+        sessionId: canonicalSessionId,
         sender: body.sender === "admin" ? "admin" : "user",
         text: body.text || body.content || body.message || "",
         created_at: newMsg.created_at || new Date().toISOString(),
@@ -423,10 +456,10 @@ export async function POST(req: NextRequest) {
             // 세션 존재 보장
             await supabase.from("chat_sessions").upsert(
               {
-                id: normSessionId,
-                customerName: body.customerName || body.name || (normSessionId.includes("@") ? normSessionId.split("@")[0] : "고객"),
-                customerEmail: body.customerEmail || (normSessionId.includes("@") ? normSessionId : ""),
-                customerPhone: body.customerPhone || (normSessionId.replace(/[^0-9]/g, "").length >= 7 ? normSessionId : ""),
+                id: canonicalSessionId,
+                customerName: body.customerName || body.name || (canonicalSessionId.includes("@") ? canonicalSessionId.split("@")[0] : "고객"),
+                customerEmail: body.customerEmail || (canonicalSessionId.includes("@") ? canonicalSessionId : ""),
+                customerPhone: body.customerPhone || (canonicalSessionId.replace(/[^0-9]/g, "").length >= 7 ? canonicalSessionId : ""),
                 status: "active",
                 updated_at: new Date().toISOString(),
               },
@@ -435,7 +468,7 @@ export async function POST(req: NextRequest) {
             // 메시지 적재
             return await supabase.from("chat_messages").upsert([supabaseMsg], { onConflict: "id" });
           },
-          2000
+          3000
         );
       } catch (err) {
         console.warn("[Chat Message Supabase Dual-Write Warning]:", err);
@@ -461,18 +494,35 @@ export async function DELETE(req: NextRequest) {
       }
 
       const normTarget = sessionId.trim().toLowerCase();
+      const sessions = readJsonFile(getSessionsFilePath());
+      const { session: matchedSession } = findMatchingSession(sessions, normTarget);
+      const canonicalTarget = matchedSession ? String(matchedSession.id).toLowerCase().trim() : normTarget;
+
+      const targetIds = new Set<string>([normTarget, canonicalTarget]);
+      if (matchedSession) {
+        if (matchedSession.customerEmail) targetIds.add(String(matchedSession.customerEmail).toLowerCase().trim());
+        if (matchedSession.email) targetIds.add(String(matchedSession.email).toLowerCase().trim());
+        if (matchedSession.customerPhone) {
+          targetIds.add(String(matchedSession.customerPhone).toLowerCase().trim());
+          const pClean = String(matchedSession.customerPhone).replace(/[^0-9]/g, "");
+          if (pClean.length >= 7) targetIds.add(pClean);
+        }
+      }
 
       // 1. 로컬 메시지 삭제
       const messages = readJsonFile(getMessagesFilePath());
-      const filteredMessages = messages.filter((m) => String(m.sessionId || "").trim().toLowerCase() !== normTarget);
+      const filteredMessages = messages.filter((m) => {
+        const mSid = String(m.sessionId || "").trim().toLowerCase();
+        return !targetIds.has(mSid);
+      });
       safeAtomicWriteJson(getMessagesFilePath(), filteredMessages);
 
       // 2. 로컬 세션 처리
-      const sessions = readJsonFile(getSessionsFilePath());
       if (clearOnly) {
         // 대화내용만 비우고 세션은 유지
         const updatedSessions = sessions.map((s) => {
-          if (String(s.id || "").trim().toLowerCase() === normTarget) {
+          const sId = String(s.id || "").trim().toLowerCase();
+          if (targetIds.has(sId)) {
             return { ...s, lastMessage: "", lastMessageAt: "", updated_at: new Date().toISOString() };
           }
           return s;
@@ -482,7 +532,7 @@ export async function DELETE(req: NextRequest) {
         // Supabase 메시지만 듀얼 삭제 (완료 대기)
         try {
           await runSafeSupabaseQuery(
-            async (supabase) => supabase.from("chat_messages").delete().eq("sessionId", normTarget),
+            async (supabase) => supabase.from("chat_messages").delete().in("sessionId", Array.from(targetIds)),
             2500
           );
         } catch (err) {
@@ -490,15 +540,18 @@ export async function DELETE(req: NextRequest) {
         }
       } else {
         // 세션 완전 삭제
-        const filteredSessions = sessions.filter((s) => String(s.id || "").trim().toLowerCase() !== normTarget);
+        const filteredSessions = sessions.filter((s) => {
+          const sId = String(s.id || "").trim().toLowerCase();
+          return !targetIds.has(sId);
+        });
         safeAtomicWriteJson(getSessionsFilePath(), filteredSessions);
 
         // Supabase 세션 및 메시지 듀얼 삭제 (완료 대기)
         try {
           await runSafeSupabaseQuery(
             async (supabase) => {
-              await supabase.from("chat_messages").delete().eq("sessionId", normTarget);
-              return await supabase.from("chat_sessions").delete().eq("id", normTarget);
+              await supabase.from("chat_messages").delete().in("sessionId", Array.from(targetIds));
+              return await supabase.from("chat_sessions").delete().in("id", Array.from(targetIds));
             },
             2500
           );

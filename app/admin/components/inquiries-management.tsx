@@ -1393,13 +1393,20 @@ export function InquiriesManagement({
                           {badgeInfo.tier}
                         </span>
                       </div>
-                      <span className={`text-[9px] font-mono font-black px-1.5 py-0.5 rounded shrink-0 ${
-                        isEnded
-                          ? "bg-neutral-200 text-neutral-600"
-                          : "bg-blue-600 text-white"
-                      }`}>
-                        {isEnded ? "상담종료" : "접속중"}
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {Number(session.unreadCount) > 0 && !isSelected && (
+                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-500 text-white animate-pulse">
+                            +{session.unreadCount} NEW
+                          </span>
+                        )}
+                        <span className={`text-[9px] font-mono font-black px-1.5 py-0.5 rounded shrink-0 ${
+                          isEnded
+                            ? "bg-neutral-200 text-neutral-600"
+                            : "bg-blue-600 text-white"
+                        }`}>
+                          {isEnded ? "상담종료" : "접속중"}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Latest inquiry message preview */}

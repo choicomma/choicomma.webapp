@@ -615,6 +615,9 @@ export function LiveChatWidget() {
       const isLoggedInFlag = localStorage.getItem("is_logged_in") === "true";
       const email = (localStorage.getItem("membership_user_email") || "").toLowerCase().trim();
       const name = (localStorage.getItem("membership_user_name") || "").trim();
+      const phone = (localStorage.getItem("membership_user_phone") || "").trim();
+      const loginId = (localStorage.getItem("membership_user_login_id") || "").trim();
+      const userId = (localStorage.getItem("membership_user_id") || "").trim();
       const role = (localStorage.getItem("user_role") || "").toLowerCase().trim();
       const isAdminSession = sessionStorage.getItem("choicomma_admin_authenticated") === "true";
 
@@ -622,6 +625,9 @@ export function LiveChatWidget() {
         isLoggedInFlag ||
         (email && email.length > 0) ||
         (name && name.length > 0) ||
+        (phone && phone.length > 0) ||
+        (loginId && loginId.length > 0) ||
+        (userId && userId.length > 0) ||
         role === "admin" ||
         role === "staff" ||
         isAdminSession
@@ -966,6 +972,7 @@ export function LiveChatWidget() {
     }
 
     window.dispatchEvent(new CustomEvent("live_chat_updated"));
+    return updatedSession;
   };
 
   // Dynamic Welcome / Default Guidance Text (Synced with Admin Settings)
@@ -1353,7 +1360,7 @@ export function LiveChatWidget() {
       } finally {
         pollInFlight = false;
       }
-    }, isOpen ? 2500 : 8000);
+    }, isOpen ? 800 : 5000);
 
     // 탭 전환 및 창 포커스 시 즉각 0ms 동기화 실행
     const handleCustomerVisibilityOrFocus = () => {
@@ -1450,6 +1457,7 @@ export function LiveChatWidget() {
     const authed = checkAuth();
     if (!authed) {
       setIsLoggedIn(false);
+      toast.error(t.loginModalDesc || "1:1 라이브 상담은 회원 전용 서비스입니다. 로그인 후 이용해 주세요.");
       return;
     }
 
@@ -1503,7 +1511,7 @@ export function LiveChatWidget() {
     if (!rawId) return;
 
     // Register active user to admin chat sessions list with accurate grade/tier & Supabase
-    registerUserSession("active");
+    const sessionObj = registerUserSession("active");
 
     // Broadcast user message across tabs (Admin console) immediately (0ms latency)
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
@@ -1514,6 +1522,7 @@ export function LiveChatWidget() {
           sessionId: rawId,
           sessionEmail: email || `${rawId}@customer.choicomma.com`,
           sessionPhone: phone || "",
+          session: sessionObj,
           message: newMsg,
         });
         sendBc.close();
