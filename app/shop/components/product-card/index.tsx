@@ -364,8 +364,22 @@ export const ProductCard = ({
         isOverlayActive ? "z-30 ring-2 ring-blue-600 shadow-xl" : ""
       }`}
     >
-      {/* 1. Badges: Moved to Top (상단으로 위치 변경) */}
+      {/* 1. Badges: Moved to Top (상단으로 위치 변경) - 블랙라벨/프리미엄은 PC(md 이상)에서만 노출, 모바일 미노출 */}
       <div className="absolute top-2 inset-x-2 sm:top-3 sm:inset-x-3 md:top-4 md:inset-x-4 flex items-center gap-1 sm:gap-1.5 flex-wrap z-20 pointer-events-none">
+        {(product as any).productLabel && (
+          <span
+            className={`hidden md:inline-flex text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs shrink-0 whitespace-nowrap shadow-2xs ${
+              (product as any).productLabel === "BLACK_LABEL"
+                ? "bg-black text-white"
+                : (product as any).productLabel === "PREMIUM"
+                ? "bg-neutral-600 text-white"
+                : "bg-neutral-200 text-neutral-800"
+            }`}
+          >
+            {(product as any).productLabel.replace("_", " ")}
+          </span>
+        )}
+
         {/* 타임세일 할인율 Badge: 모바일에선 퍼센트와 OFF만 노출, PC에선 전체 라벨 및 아이콘 노출 */}
         {isTimeSaleActive && timeSaleDiscount && (
           secretSaleInfo ? (
@@ -389,7 +403,8 @@ export const ProductCard = ({
         {product.releaseDate && new Date(product.releaseDate).getTime() > Date.now() ? (
           <span className="text-[9px] sm:text-[11px] md:text-xs font-black px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 uppercase tracking-wider rounded-xs bg-amber-500 text-neutral-950 shadow-2xs shrink-0 whitespace-nowrap flex items-center gap-1">
             <Clock className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-neutral-950" />
-            <span>{formatReleaseDateBadge(product.releaseDate)}</span>
+            <span className="md:hidden">{formatReleaseDateBadge(product.releaseDate)}</span>
+            <span className="hidden md:inline">오픈 예정</span>
           </span>
         ) : ((product as any).stock !== undefined &&
             (product as any).stock !== null &&
@@ -402,7 +417,7 @@ export const ProductCard = ({
       </div>
 
       {/* 1:1 Square Product Image Area with White Background (Element-free slider when multiple images exist) */}
-      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-3 sm:p-5 md:p-7 mt-6 sm:mt-8 md:mt-10 overflow-hidden">
+      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-2.5 pb-6 sm:p-5 md:p-7 mt-3 sm:mt-8 md:mt-10 overflow-hidden">
         <ProductCardImageSlider
           images={productImages}
           alt={product.title || "Product"}
@@ -511,38 +526,37 @@ export const ProductCard = ({
         )}
       </div>
 
-      {/* Bottom Bar: Title on Top & Price on Bottom */}
-      <div className="absolute bottom-0 inset-x-0 p-2.5 sm:p-4 md:p-5 flex flex-col gap-1 sm:gap-1.5 z-10 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-8 sm:pt-8">
-        {/* 모바일 2열: 상품명이 긴 경우 잘리지 않고 천천히 지나가는 마키 기능 + 모바일 폰트 2배 (text-2xl) */}
+      {/* Bottom Bar: Title on Top & Price on Bottom - 모바일 이미지 겹침 방지(pt 축소 및 하단 밀착), 상품명/가격 폰트 최적화 */}
+      <div className="absolute bottom-0 inset-x-0 p-2 sm:p-4 md:p-5 pb-1.5 sm:pb-4 flex flex-col gap-0.5 sm:gap-1.5 z-10 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-3 sm:pt-8">
         <MarqueeProductTitle
           title={product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
-          className="text-2xl sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight block w-full leading-tight md:leading-normal"
+          className="text-xs sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight block w-full leading-tight md:leading-normal"
         />
 
-        {/* 가격 정보: 모바일은 정상가가 할인가 위로, 할인 퍼센트는 할인가 왼쪽 옆으로 배치, 전체 크기는 상품명과 같이 2배로 확대 */}
-        <div className="flex flex-col items-end w-full sm:flex-row sm:items-baseline sm:justify-end sm:gap-2 md:gap-2.5">
-          {/* 정상가 (취소선): 모바일에서는 할인가 위로 배치 */}
+        {/* 가격 정보: 모바일 폰트 축소 및 깔끔한 가로 정렬 */}
+        <div className="flex items-baseline justify-end gap-1.5 sm:gap-2 flex-wrap sm:flex-row sm:items-baseline sm:justify-end sm:gap-2 md:gap-2.5">
+          {/* 정상가 (취소선) */}
           {strikethroughPriceNum !== null && (
             <span
-              className="text-base sm:text-xs md:text-sm text-neutral-400 line-through font-bold whitespace-nowrap sm:order-2 notranslate"
+              className="text-[10px] sm:text-xs md:text-sm text-neutral-400 line-through font-bold whitespace-nowrap sm:order-2 notranslate"
               translate="no"
             >
               {formatPrice(strikethroughPriceNum.toString(), currCode)}
             </span>
           )}
 
-          {/* 할인가 및 할인 퍼센트 (할인 퍼센트가 할인가 왼쪽 옆에 위치) */}
-          <div className="flex items-baseline justify-end gap-1.5 sm:gap-2 sm:contents">
+          {/* 할인가 및 할인 퍼센트 */}
+          <div className="flex items-baseline justify-end gap-1 sm:gap-2 sm:contents">
             {isTimeSaleActive && timeSaleDiscount && (
               <span
-                className="text-2xl sm:text-base md:text-lg font-black text-red-600 whitespace-nowrap sm:order-1 notranslate"
+                className="text-xs sm:text-base md:text-lg font-black text-red-600 whitespace-nowrap sm:order-1 notranslate"
                 translate="no"
               >
                 {timeSaleDiscount}%
               </span>
             )}
             <span
-              className="text-2xl sm:text-base md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap sm:order-3 notranslate"
+              className="text-xs sm:text-base md:text-xl font-black text-neutral-950 uppercase whitespace-nowrap sm:order-3 notranslate"
               translate="no"
             >
               {formatPrice(finalPriceNum.toString(), currCode)}
