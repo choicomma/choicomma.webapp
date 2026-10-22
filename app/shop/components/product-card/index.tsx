@@ -416,8 +416,8 @@ export const ProductCard = ({
         ) : null}
       </div>
 
-      {/* 1:1 Square Product Image Area with White Background (Element-free slider when multiple images exist) */}
-      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-2.5 pb-6 sm:p-5 md:p-7 mt-3 sm:mt-8 md:mt-10 overflow-hidden">
+      {/* 1:1 Square Product Image Area with White Background - 뱃지 겹침 방지 상단 여백(mt-9), 상품명 여백 확보 하단 여백(pb-16) */}
+      <div className="relative w-full aspect-square bg-white flex items-center justify-center p-2.5 pt-2 pb-16 sm:p-5 md:p-7 mt-9 sm:mt-8 md:mt-10 overflow-hidden">
         <ProductCardImageSlider
           images={productImages}
           alt={product.title || "Product"}
@@ -526,11 +526,11 @@ export const ProductCard = ({
         )}
       </div>
 
-      {/* Bottom Bar: Title on Top & Price on Bottom - 모바일 이미지 겹침 방지(pt 축소 및 하단 밀착), 상품명/가격 폰트 최적화 */}
-      <div className="absolute bottom-0 inset-x-0 p-2 sm:p-4 md:p-5 pb-1.5 sm:pb-4 flex flex-col gap-0.5 sm:gap-1.5 z-10 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-3 sm:pt-8">
+      {/* Bottom Bar: Title on Top & Price on Bottom - 상품명 폰트 2배(text-2xl), 가격 폰트는 그대로 유지 */}
+      <div className="absolute bottom-0 inset-x-0 p-2 sm:p-4 md:p-5 pb-1.5 sm:pb-4 flex flex-col gap-0.5 sm:gap-1.5 z-10 w-full bg-gradient-to-t from-white via-white/95 to-transparent pt-2 sm:pt-8">
         <MarqueeProductTitle
           title={product.title?.replace(/\[?(PREMIUM|BLACK_LABEL|BLACK LABEL)\]?/gi, "").trim() || "Product Name"}
-          className="text-xs sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight block w-full leading-tight md:leading-normal"
+          className="text-2xl sm:text-base md:text-lg font-black text-neutral-950 uppercase tracking-tight block w-full leading-tight md:leading-normal"
         />
 
         {/* 가격 정보: 모바일 폰트 축소 및 깔끔한 가로 정렬 */}
